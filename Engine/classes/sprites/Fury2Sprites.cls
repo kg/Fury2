@@ -163,7 +163,6 @@ End Function
 Public Function SpriteFromScreenPoint(X, Y, Optional ByRef Exclude = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1)
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
-<<<<<<< Fury2Sprites.cls
 Dim l_rctArea As FRect
     Set SpriteFromScreenPoint = Nothing
     If mCol.Count < 1 Then Exit Function
@@ -187,9 +186,6 @@ Dim l_rctArea As FRect
     l_rctArea.x2 = Area.Right
     l_rctArea.y2 = Area.Bottom
     Set SpriteFromArea = Nothing
-=======
-    Set SpriteFromArea = Nothing
->>>>>>> 1.8
     If mCol.Count < 1 Then Exit Function
     l_lngExclude = Exclude.Pointer
     l_lngResult = SoftFX.FindSprite(mCol.Item(1).Pointer, l_rctArea, l_lngExclude, CLng(MustBeSolid), Class, ExcludedClass)

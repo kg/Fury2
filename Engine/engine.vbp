@@ -98,11 +98,7 @@ CompatibleMode="1"
 CompatibleEXE32="..\..\binary\sys\engine.dll"
 MajorVer=1
 MinorVer=0
-<<<<<<< engine.vbp
-RevisionVer=1066
-=======
-RevisionVer=1024
->>>>>>> 1.31
+RevisionVer=1067
 AutoIncrementVer=1
 ServerSupportFiles=0
 DllBaseAddress=&H23000000

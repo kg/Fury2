@@ -125,7 +125,7 @@ End Property
 
 Private Property Get iPlugin_Icon() As stdole.Picture
 On Error Resume Next
-    Set iPlugin_Icon = LoadResPicture("SHOWPICTURE", vbResIcon)
+    Set iPlugin_Icon = LoadResPicture("IMAGE", vbResIcon)
 End Property
 
 Private Sub iPlugin_Initialize()

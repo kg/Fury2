@@ -44,6 +44,11 @@ Private mvarFrames As Fury2PoseFrames
 Private mvarBlocking As Fury2Blocking
 Private mvarName As String
 
+Public Property Get Parent() As Fury2Sprite
+On Error Resume Next
+    Set Parent = mvarParent
+End Property
+
 Public Property Get EndScript() As String
 Attribute EndScript.VB_Description = "*"
 Attribute EndScript.VB_MemberFlags = "40"
@@ -97,7 +102,7 @@ End Sub
 Sub RunEndScript()
 Attribute RunEndScript.VB_Description = "Runs the pose's end script."
 On Error Resume Next
-    mvarFrames(mvarFrames.Count).RunScript mvarParent
+    mvarFrames(mvarFrames.Count).RunScript
 End Sub
 
 Sub Play()
@@ -121,7 +126,13 @@ On Error Resume Next
 End Sub
 
 Friend Sub SetParent(Parent As Fury2Sprite)
+On Error Resume Next
+Dim l_fraFrame As Fury2PoseFrame
     Set mvarParent = Parent
+    If mvarFrames.Count = 0 Then Exit Sub
+    For Each l_fraFrame In mvarFrames
+        l_fraFrame.SetParent Me
+    Next l_fraFrame
 End Sub
 
 Public Property Set Frames(NewFrames As Fury2PoseFrames)
@@ -193,12 +204,15 @@ Public Property Let Name(NewName As String)
 End Property
 
 Private Sub Class_Initialize()
+On Error Resume Next
     Set mvarBlocking = New Fury2Blocking
     Set mvarFrames = New Fury2PoseFrames
+    mvarFrames.SetParent Me
     mvarName = "New Pose"
 End Sub
 
 Private Sub Class_Terminate()
+On Error Resume Next
     Set mvarFrames = Nothing
     Set mvarBlocking = Nothing
 End Sub
@@ -215,6 +229,8 @@ Dim l_strTemp As String
                 .Load mvarLoopMode
             .ReadSegment_End
             .Load mvarBlocking
+            Set mvarFrames = New Fury2PoseFrames
+            mvarFrames.SetParent Me
             .Load mvarFrames
             .Load l_strTemp
             If Len(l_strTemp) > 0 Then

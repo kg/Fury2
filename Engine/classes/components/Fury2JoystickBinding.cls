@@ -46,10 +46,19 @@ Private mvarBindType As Long
 Private mvarBindIndex As Long
 Private mvarEnabled As Boolean
 Private mvarBindControl As Fury2InputControl
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Sub Rebind()
 On Error Resume Next
-    Set mvarBindControl = m_Engine.Controls(mvarControlName)
+    Set mvarBindControl = Engine.Controls(mvarControlName)
 End Sub
 
 Public Property Let Name(ByVal vData As String)
@@ -200,7 +209,7 @@ Dim l_ctlControl As Fury2InputControl
         .Load mvarBindIndex
         .Load mvarEnabled
         .Load mvarControlName
-        For Each l_ctlControl In m_Engine.Controls
+        For Each l_ctlControl In Engine.Controls
             If Trim(LCase(l_ctlControl.Name)) = Trim(LCase(mvarControlName)) Then
                 Set mvarBindControl = l_ctlControl
             End If

@@ -136,7 +136,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(BlitSimple_Lightmap_RGB_Opacity) \
   defItem(BlitSimple_Matte) \
   defItem(BlitSimple_Matte_Opacity) \
-  defItem(BlitSimple_Matte_ColorFilter_Opacity) \
   defItem(BlitSimple_Matte_Tint) \
   defItem(BlitSimple_Matte_Tint_Opacity) \
   defItem(BlitSimple_Matte_Solid_Tint) \
@@ -155,10 +154,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(BlitSimple_Screen_Opacity) \
   defItem(BlitSimple_SourceAlpha) \
   defItem(BlitSimple_SourceAlpha_Opacity) \
-  defItem(BlitSimple_SourceAlpha_ColorFilter_Opacity) \
   defItem(BlitSimple_SourceAlpha_Solid_Tint) \
   defItem(BlitSimple_SourceAlpha_Tint) \
   defItem(BlitSimple_SourceAlpha_Tint_Opacity) \
+  defItem(BlitSimple_SourceAlpha_ColorMask) \
   defItem(BlitSimple_SourceAlphaMatte) \
   defItem(BlitSimple_SourceAlphaMatte_Opacity) \
   defItem(BlitSimple_Subtractive) \

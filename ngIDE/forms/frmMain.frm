@@ -41,9 +41,15 @@ Begin VB.MDIForm frmMain
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   555
       TabIndex        =   0
-      Top             =   0
+      Top             =   30
       Visible         =   0   'False
       Width           =   8325
+      Begin VB.Timer tmrPlayGame 
+         Enabled         =   0   'False
+         Interval        =   1
+         Left            =   2490
+         Top             =   885
+      End
       Begin VB.Timer tmrFocusTracker 
          Enabled         =   0   'False
          Interval        =   250
@@ -97,6 +103,7 @@ Begin VB.MDIForm frmMain
             Indentation     =   16
             LineColor       =   -2147483632
             LineStyle       =   0
+            LabelEdit       =   -1  'True
             ScaleMode       =   3
             OLEDropMode     =   1
             DragAutoExpand  =   -1
@@ -182,7 +189,7 @@ Begin VB.MDIForm frmMain
       Height          =   30
       Left            =   0
       TabIndex        =   4
-      Top             =   3735
+      Top             =   0
       Width           =   8325
       _ExtentX        =   14684
       _ExtentY        =   53
@@ -270,6 +277,10 @@ Private m_cmnLastDocument As iCustomMenus
 Public Sub RefreshGameState()
 On Error Resume Next
     tbrMain.ButtonEnabled("File:Open") = GameIsLoaded
+    tbrGame.ButtonEnabled("Game:Play") = GameIsLoaded
+    tbrGame.ButtonChecked("Game:Play") = GameIsRunning
+    tbrGame.ButtonEnabled("Game:Pause") = GameIsRunning And GameIsLoaded
+    tbrGame.ButtonChecked("Game:Pause") = GameIsPaused
 End Sub
 
 Private Function GetToolbarX(Toolbar As cToolbar, Optional Docked As Boolean = True)
@@ -309,7 +320,7 @@ Dim l_mgrForm As cChildManager
     For Each l_mgrForm In m_colChildWindows
         If (l_mgrForm.Form.hwnd = l_lnghWnd) Then
             l_mgrForm.Visible = True
-        ElseIf (l_mgrForm.Form.Extender.hwnd = l_lnghWnd) Then
+        ElseIf (l_mgrForm.Form.extender.hwnd = l_lnghWnd) Then
             l_mgrForm.Visible = True
         Else
             l_mgrForm.Visible = False
@@ -331,7 +342,7 @@ Dim l_mgrForm As cChildManager
         If (l_mgrForm.Form.hwnd = l_lnghWnd) Then
             Set ActiveChild = l_mgrForm
             Exit For
-        ElseIf (l_mgrForm.Form.Extender.hwnd = l_lnghWnd) Then
+        ElseIf (l_mgrForm.Form.extender.hwnd = l_lnghWnd) Then
             Set ActiveChild = l_mgrForm
             Exit For
         End If
@@ -420,7 +431,7 @@ Dim l_mgrManager As cChildManager
     l_mgrManager.Attach Child
     m_colChildWindows.Add l_mgrManager
     Child.WindowState = 2
-    Child.Extender.WindowState = 2
+    Child.extender.WindowState = 2
     Child.Show
     m_mdiTabs.ForceRefresh
     g_edEditor.Event_DocumentActivate l_mgrManager
@@ -807,7 +818,7 @@ On Error Resume Next
     docks_LostFocusHandler
 End Sub
 
-Private Sub dockRight_Validate(Cancel As Boolean)
+Private Sub dockRight_Validate(cancel As Boolean)
 On Error Resume Next
     StatusBarReposition
     ResizeSidebars
@@ -837,7 +848,7 @@ On Error Resume Next
     tbrGame.Wrappable = True
     DefineToolbar tbrGame, frmIcons.ilIcons, _
     Buttons(ButtonString("Open Game", , "Game:Open", "OPEN GAME", , CTBDropDown), "-", _
-    ButtonString("Play Game", , "Game:Play", "PLAY"))
+    ButtonString("Play Game", , "Game:Play", "PLAY", False, CTBCheck), ButtonString("Pause Game", , "Game:Pause", "PAUSE", False, CTBCheck))
     RefreshPluginToolbar
 End Sub
 
@@ -905,7 +916,7 @@ On Error Resume Next
     ResizeSidebars
 End Sub
 
-Private Sub dockTop_Validate(Cancel As Boolean)
+Private Sub dockTop_Validate(cancel As Boolean)
 On Error Resume Next
     StatusBarReposition
     ResizeSidebars
@@ -1007,21 +1018,21 @@ Dim l_dckContainer As vbalDockContainer
     m_mdiTabs.ForceRefresh
 End Sub
 
-Private Sub m_mdiTabs_BeforeWindowSwitch(ByVal hwnd As Long, Cancel As Boolean)
+Private Sub m_mdiTabs_BeforeWindowSwitch(ByVal hwnd As Long, cancel As Boolean)
 On Error Resume Next
 Dim l_booFound As Boolean
 Dim l_mgrForm As cChildManager
     If Me.Enabled = False Then
-        Cancel = True
+        cancel = True
     Else
         For Each l_mgrForm In m_colChildWindows
             Err.Clear
             If (l_mgrForm.Form.hwnd = hwnd) Then
                 l_booFound = True
                 Exit For
-            ElseIf l_mgrForm.Extender Is Nothing Then
+            ElseIf l_mgrForm.extender Is Nothing Then
             Else
-                If l_mgrForm.Extender.hwnd = hwnd Then
+                If l_mgrForm.extender.hwnd = hwnd Then
                     l_booFound = True
                     Exit For
                 End If
@@ -1029,7 +1040,7 @@ Dim l_mgrForm As cChildManager
         Next l_mgrForm
         If l_booFound Then
         Else
-            Cancel = True
+            cancel = True
         End If
     End If
 End Sub
@@ -1037,6 +1048,7 @@ End Sub
 Private Sub m_mdiTabs_CloseWindow(ByVal hwnd As Long)
 On Error Resume Next
     If Not Me.Enabled Then Exit Sub
+    If TypeOf Me.ActiveChild.Form Is frmGameDebugger Then Exit Sub
     SetBusyState True
     g_edEditor.Action_CloseWindow
     SetBusyState False
@@ -1051,9 +1063,9 @@ Dim l_mgrForm As cChildManager
         If (l_mgrForm.Form.hwnd = hwnd) Then
             l_mgrForm.Activate
             Exit For
-        ElseIf l_mgrForm.Extender Is Nothing Then
+        ElseIf l_mgrForm.extender Is Nothing Then
         Else
-            If l_mgrForm.Extender.hwnd = hwnd Then
+            If l_mgrForm.extender.hwnd = hwnd Then
                 l_mgrForm.Activate
                 Exit For
             End If
@@ -1090,15 +1102,16 @@ On Error Resume Next
     InitMenus
     LoadFormPosition Me
     StatusBarReposition
+    SetAppIcon Me
 End Sub
 
-Private Sub MDIForm_QueryUnload(Cancel As Integer, UnloadMode As Integer)
+Private Sub MDIForm_QueryUnload(cancel As Integer, UnloadMode As Integer)
 On Error Resume Next
 Dim l_lngForms As Long
     tvFileTree.ImageList = 0
     Select Case UnloadMode
     Case 0
-        Cancel = True
+        cancel = True
         ExitProgram
     Case Else
         SaveFormPosition Me
@@ -1115,7 +1128,7 @@ Private Sub MDIForm_Resize()
 On Error Resume Next
 End Sub
 
-Private Sub MDIForm_Unload(Cancel As Integer)
+Private Sub MDIForm_Unload(cancel As Integer)
     g_booMainWindowLoaded = False
 End Sub
 
@@ -1140,25 +1153,25 @@ On Error Resume Next
     StatusBarReposition
 End Sub
 
-Private Sub sbStatus_DrawItem(ByVal lHDC As Long, ByVal iPanel As Long, ByVal lLeftPixels As Long, ByVal lTopPixels As Long, ByVal lRightPixels As Long, ByVal lBottomPixels As Long)
+Private Sub sbStatus_DrawItem(ByVal lhDC As Long, ByVal iPanel As Long, ByVal lLeftPixels As Long, ByVal lTopPixels As Long, ByVal lRightPixels As Long, ByVal lBottomPixels As Long)
 On Error Resume Next
 Dim l_rctProgress As RECT
 Dim l_lngBrush As Long
     If LCase(sbStatus.PanelKey(iPanel)) = "progress" Then
         With l_rctProgress
-            .left = lLeftPixels
-            .tOp = lTopPixels
+            .Left = lLeftPixels
+            .Top = lTopPixels
             .Right = lRightPixels
             .Bottom = lBottomPixels
         End With
         l_lngBrush = gdi32.CreateSolidBrush(GetSystemColor(SystemColor_Button_Face))
-        user32.FillRect lHDC, l_rctProgress, l_lngBrush
+        user32.FillRect lhDC, l_rctProgress, l_lngBrush
         DeleteObject l_lngBrush
         With l_rctProgress
             .Right = ClipValue(lLeftPixels + ((lRightPixels - lLeftPixels) * m_sngProgress), lLeftPixels, lRightPixels)
         End With
         l_lngBrush = gdi32.CreateSolidBrush(GetSystemColor(SystemColor_Highlight))
-        user32.FillRect lHDC, l_rctProgress, l_lngBrush
+        user32.FillRect lhDC, l_rctProgress, l_lngBrush
         DeleteObject l_lngBrush
     End If
 End Sub
@@ -1490,19 +1503,25 @@ Dim l_lngDocument As Long, l_lngControl As Long
     End If
 End Sub
 
+Private Sub tmrPlayGame_Timer()
+On Error Resume Next
+    tmrPlayGame.Enabled = False
+    PlayGame
+End Sub
+
 Private Sub tmrRefreshFileSidebar_Timer()
 On Error Resume Next
     tmrRefreshFileSidebar.Enabled = False
     If tsFileTabs.SelectedTab.key = "Game" Then
         Err.Clear
-        If Engine.Engine Is Nothing Then
+        If g_engEngine Is Nothing Then
             tvFileTree.Nodes.Clear
             tvFileTree.Enabled = False
-        ElseIf Engine.Engine.Filesystem Is Nothing Then
+        ElseIf g_engEngine.Filesystem Is Nothing Then
             tvFileTree.Nodes.Clear
             tvFileTree.Enabled = False
         Else
-            EnumFilesystem tvFileTree, Engine.Engine.Filesystem
+            EnumFilesystem tvFileTree, g_engEngine.Filesystem
             tvFileTree.Enabled = True
         End If
     Else
@@ -1516,13 +1535,35 @@ On Error Resume Next
     RefreshFileSidebar
 End Sub
 
+Private Sub tvFileTree_AfterLabelEdit(node As vbalTreeViewLib6.cTreeViewNode, NewString As String, cancel As Boolean)
+On Error Resume Next
+Dim l_strPath As String, l_strNewPath As String
+Dim l_fsFilesystem As Fury2Filesystem
+    If tsFileTabs.SelectedTab.key = "Game" Then
+        Set l_fsFilesystem = g_engEngine.Filesystem
+    Else
+        Set l_fsFilesystem = g_fsFilesystem
+    End If
+    If Right(node.key, 1) = "/" Then
+        ' Folder
+        l_strPath = Replace(l_fsFilesystem.Root & Replace(node.key, "/", "\"), "\\", "\")
+        l_strNewPath = Left(l_strPath, InStrRev(l_strPath, node.Text) - 1) & NewString
+        Name l_strPath As l_strNewPath
+    Else
+        ' File
+        l_strPath = Replace(l_fsFilesystem.Root & Replace(node.key, "/", "\"), "\\", "\")
+        l_strNewPath = Left(l_strPath, InStrRev(l_strPath, node.Text) - 1) & NewString
+        Name l_strPath As l_strNewPath
+    End If
+End Sub
+
 Private Sub tvFileTree_DblClick()
 On Error Resume Next
 Dim l_strFilename As String
 Dim l_filFile As Fury2File
     If Right(Trim(tvFileTree.SelectedItem.key), 1) = "/" Then Exit Sub
     If tsFileTabs.SelectedTab.key = "Game" Then
-        Set l_filFile = Engine.Engine.Filesystem.File(tvFileTree.SelectedItem.key)
+        Set l_filFile = g_engEngine.Filesystem.File(tvFileTree.SelectedItem.key)
         l_strFilename = l_filFile.GetRealFilename
         g_edEditor.File_Open l_strFilename
     Else
@@ -1548,6 +1589,60 @@ Dim l_lngFiles As Long
             End If
         Next l_lngFiles
         RefreshFileSidebar
+    End If
+End Sub
+
+Private Sub tvFileTree_Expand(node As vbalTreeViewLib6.cTreeViewNode)
+On Error Resume Next
+End Sub
+
+Private Sub tvFileTree_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+Dim l_nodNode As cTreeViewNode
+Dim l_strFolderName As String
+Dim l_fsFilesystem As Fury2Filesystem
+    If tsFileTabs.SelectedTab.key = "Game" Then
+        Set l_fsFilesystem = g_engEngine.Filesystem
+    Else
+        Set l_fsFilesystem = g_fsFilesystem
+    End If
+    If Button = 2 Then
+        Set l_nodNode = tvFileTree.hitTest(X, Y)
+        If l_nodNode Is Nothing Then
+            ' Blank
+            Select Case QuickShowMenu(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+                Menus("New Folder"))
+            Case 1
+                l_strFolderName = InputBox("Folder Name", "New Folder", "New Folder")
+                MkDir l_fsFilesystem.Root & l_strFolderName
+                RefreshFileSidebar
+            Case Else
+            End Select
+        Else
+            If Right(l_nodNode.key, 1) = "/" Then
+                ' Folder
+                Select Case QuickShowMenu(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+                    Menus("Expand", "-", "Delete", "-", "New Folder"))
+                Case 1
+                    l_nodNode.Expanded = True
+                Case 3
+                Case 5
+                    l_strFolderName = InputBox("Folder Name", "New Folder", "New Folder")
+                    MkDir l_fsFilesystem.Root & Replace(l_nodNode.key, "/", "\") & l_strFolderName
+                    RefreshFileSidebar
+                Case Else
+                End Select
+            Else
+                ' File
+                Select Case QuickShowMenu(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+                    Menus("Open", "-", "Delete"))
+                Case 1
+                    g_edEditor.File_Open l_fsFilesystem.File(l_nodNode.key).GetRealFilename
+                Case 3
+                Case Else
+                End Select
+            End If
+        End If
     End If
 End Sub
 

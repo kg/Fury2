@@ -132,7 +132,10 @@ End Property
 
 Private Function IVirtualFileCollection_CreateNew() As Object
 On Error Resume Next
-    Set IVirtualFileCollection_CreateNew = New Fury2JoystickBinding
+Dim l_bndNew As Fury2JoystickBinding
+    Set l_bndNew = New Fury2JoystickBinding
+    l_bndNew.SetEngine Me.Parent.Engine
+    Set IVirtualFileCollection_CreateNew = l_bndNew
 End Function
 
 Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object

@@ -153,68 +153,92 @@ Public Enum Fury2WrapModes
     F2WM_Word = 0
     F2WM_None = 1
 End Enum
+Private l_lngF2State As Long
 
-Public Function Engine() As Fury2Engine
-Attribute Engine.VB_Description = "Returns the current Fury² Engine object."
-    Set Engine = m_Engine
-End Function
+'Public Function Engine() As Fury2Engine
+'    Set Engine = m_Engine
+'End Function
 
 Sub Fury2Initialize(Optional Editor As Boolean = False)
 Attribute Fury2Initialize.VB_Description = "Initializes the engine library."
 On Error Resume Next
-    F2Init
-    Randomize Timer
-    m_booEditor = Editor
+    If l_lngF2State = 0 Then F2Init
+    l_lngF2State = l_lngF2State + 1
     SetProfilerCallbacks AddressOf ProfileClear, AddressOf ProfilePrint, AddressOf ProfileQuery
-    Set m_Engine = New Fury2Engine
 End Sub
 
 Sub Fury2Terminate()
 Attribute Fury2Terminate.VB_Description = "Unloads the library from memory."
-    If InIDE Then Else TerminateProcess GetCurrentProcess, 0
+On Error Resume Next
+    If InIDE Then
+    Else
+        TerminateProcess GetCurrentProcess, 0
+    End If
 End Sub
 
-Public Property Get Fury2Engine() As Fury2Engine
+'Public Property Get Fury2Engine() As Fury2Engine
+'On Error Resume Next
+'    Set Fury2Engine = m_Engine
+'End Property
+'
+'Sub Fury2Hook(Obj As Object)
+'On Error Resume Next
+'    m_Engine.HookEvents Obj
+'End Sub
+
+Public Property Get DefaultEngine() As Fury2Engine
 On Error Resume Next
-    Set Fury2Engine = m_Engine
+    Set DefaultEngine = mdlFury2.DefaultEngine
 End Property
 
-Sub Fury2Hook(Obj As Object)
-Attribute Fury2Hook.VB_Description = "Sets the object that will recieve notification of engine events."
+Public Property Set DefaultEngine(NewEngine As Fury2Engine)
 On Error Resume Next
-    m_Engine.HookEvents Obj
-End Sub
+    Set mdlFury2.DefaultEngine = NewEngine
+End Property
 
-Function Fury2Load(Optional Parameters As String = "", Optional Mode As Fury2EngineModes = EM_Normal, Optional Notify As Object = Nothing, Optional Window As Long = 0) As Fury2Engine
+Friend Function CreateEngine() As Fury2Engine
 On Error Resume Next
-    Set m_Notify = Notify
+    Set CreateEngine = New Fury2Engine
+End Function
+
+Function Fury2Load(Optional ByVal Parameters As String = "", Optional Mode As Fury2EngineModes = EM_Normal, Optional Notify As Object = Nothing, Optional ByRef Debugger As Fury2Debugger = Nothing, Optional ByRef EngineOut As Fury2Engine = Nothing) As Fury2Engine
+On Error Resume Next
+Dim l_engNew As Fury2Engine
+    Set l_engNew = CreateEngine
+    Set Fury2Load = l_engNew
+    Set EngineOut = l_engNew
+    Set DefaultEngine = l_engNew
+    m_booIDE = InIDE
+    If Not (Trim(Parameters) = "") Then
+        If Left(Parameters, 1) = """" Then Parameters = Mid(Parameters, 2)
+        If Right(Parameters, 1) = """" Then Parameters = Left(Parameters, Len(Parameters) - 1)
+    End If
     Select Case Mode
     Case EM_Library
-        Fury2Initialize True
-        m_booEditor = True
-        m_Engine.HideLog = True
-        mdlFury2.Main Parameters
+        l_engNew.EditMode = True
+        l_engNew.SetNotify Notify
+        Fury2Initialize
+        l_engNew.HideLog = True
+        l_engNew.Init Parameters
     Case Else
-        Fury2Initialize False
+        l_engNew.EditMode = False
+        l_engNew.SetNotify Notify
+        Set l_engNew.Debugger = Debugger
+        Fury2Initialize
         #If DebugFeatures = 1 Then
             frmLog.Show
         #End If
-        mdlFury2.Main Parameters
+        l_engNew.Init Parameters
     End Select
     Err.Clear
-    Set Fury2Load = m_Engine
 End Function
 
-Sub Fury2Shutdown()
-Attribute Fury2Shutdown.VB_Description = "Shuts down the engine library."
-On Error Resume Next
-    DoEvents
-    DoEvents
-    DoEvents
-    If m_Engine Is Nothing Then Else m_Engine.iTerminate
-    Set m_Engine = Nothing
-    F2Shutdown
-End Sub
+'Sub Fury2Shutdown()
+'On Error Resume Next
+'    If m_Engine Is Nothing Then Else m_Engine.iTerminate
+'    Set m_Engine = Nothing
+'    F2Shutdown
+'End Sub
 
 Public Function SaveToFile(ByRef Obj As Object, ByRef File As Object) As Boolean
 On Error Resume Next

@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "cCustomClipboard"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
@@ -308,7 +308,7 @@ Dim lR As Long
         sBuf = String$(lSize, 0)
         lR = GetClipboardFormatName(lFormatId, sBuf, lSize)
         If (lR <> 0) Then
-            FormatName = Left$(sBuf, lR)
+            FormatName = left$(sBuf, lR)
         End If
     End If
 End Property
@@ -545,7 +545,7 @@ Dim iPos As Long
             DragQueryFile hDrop, iFile - 1, sFileName, Len(sFileName)
             iPos = InStr(sFileName, vbNullChar)
             If (iPos <> 0) Then
-               sFiles(iFile) = Left$(sFileName, iPos - 1)
+               sFiles(iFile) = left$(sFileName, iPos - 1)
             Else
                sFiles(iFile) = sFileName
             End If

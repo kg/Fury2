@@ -35,21 +35,22 @@ Option Explicit
 Implements Fury2Object
 Public StartTime As Double
 Public EndTime As Double
+Public Engine As Fury2Engine
 
 Public Property Get Finished() As Boolean
 On Error Resume Next
-    Finished = m_Engine.HiTimer >= EndTime
+    Finished = Engine.HiTimer >= EndTime
 End Property
 
 Public Property Get Progress() As Double
 On Error Resume Next
-    Progress = (m_Engine.HiTimer - StartTime) / (EndTime - StartTime)
+    Progress = (Engine.HiTimer - StartTime) / (EndTime - StartTime)
     If Progress < 0 Then Progress = 0
     If Progress > 1 Then Progress = 1
 End Property
 
 Public Sub Start(Length)
 On Error Resume Next
-    StartTime = m_Engine.HiTimer
+    StartTime = Engine.HiTimer
     EndTime = StartTime + CDbl(Length)
 End Sub

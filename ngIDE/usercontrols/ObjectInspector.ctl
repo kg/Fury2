@@ -159,9 +159,12 @@ Private Type ObjectItem
     DropdownText() As String
 End Type
 
+Public InspectAny As Boolean
+
 Private m_booVisible As Boolean
 
 Private m_booHaveFocus As Boolean
+Private m_booEditBoxActive As Boolean
 
 Private m_splSplitter As New cSplitter
 
@@ -257,6 +260,7 @@ End Property
 
 Public Sub RefreshEditBox(Optional SelectText As Boolean = True)
 On Error Resume Next
+Static l_lngOldIndex As Long
 Dim l_lngNameWidth As Long
 Dim l_vtType As VbVarType
 Dim l_lngButtonWidth As Long
@@ -294,7 +298,7 @@ Dim l_lngItems As Long, l_lngY As Long
             ElseIf TypeOf .Value Is IInspectable Then
                 .CanInspect = True
             Else
-                .CanInspect = False
+                .CanInspect = InspectAny
             End If
         End If
         If .SpecialType = OIT_Color Then
@@ -306,9 +310,11 @@ Dim l_lngItems As Long, l_lngY As Long
             .ShowElipsis = True
         ElseIf .SpecialType = OIT_WindowsFilename Then
             .ShowElipsis = True
+        ElseIf .CanInspect Then
+            .ShowElipsis = True
         End If
         txtEdit.Visible = False
-        txtEdit.Text = .ValueText
+        If (Not m_booEditBoxActive) Or (txtEdit.Locked) Or (l_lngOldIndex <> m_lngSelectedItem) Then txtEdit.Text = .ValueText
         If (.ShowDropdown) Then
             cmdDropDown.Move vsScroll.Left - cmdDropDown.Width - 1, m_lngEditY - vsScroll.Value + 1 + picHierarchy.Height, cmdDropDown.Width, m_lngItemHeight - 1
             cmdDropDown.Visible = True
@@ -358,6 +364,7 @@ Dim l_lngItems As Long, l_lngY As Long
             End If
         End If
     End With
+    l_lngOldIndex = m_lngSelectedItem
 End Sub
 
 Public Property Get CurrentObject() As Object
@@ -428,7 +435,11 @@ Dim m_itValue As IInspectorType
                             End If
                         Next l_lngEnumItems
                     Case Else
-                        .ValueText = Fury2Globals.ToString(.Value)
+                        If VarType(.Value) = vbString Then
+                            .ValueText = .Value
+                        Else
+                            .ValueText = Fury2Globals.ToString(.Value, True)
+                        End If
                     End Select
                 End If
                 If (.DataType And VT_BOOL) = VT_BOOL Then
@@ -471,7 +482,7 @@ End Sub
 Private Sub SortItems(Optional Descending As Boolean = False)
 On Error Resume Next
 Dim m_lngLB As Long, m_lngUB As Long, m_lngCount As Long
-Dim P As Long, K As Long, H As Long, i As Long, J As Long
+Dim p As Long, K As Long, H As Long, i As Long, J As Long
 Dim Temp As ObjectItem
     Err.Clear
     m_lngLB = LBound(m_oiItems)
@@ -480,29 +491,29 @@ Dim Temp As ObjectItem
     If Err <> 0 Or m_lngUB < 0 Then Exit Sub
     Err.Clear
     If m_lngCount < 2 Then Exit Sub
-    For P = m_lngLB To ClipValue(m_lngUB - 1, m_lngLB, m_lngUB)
-        H = P
+    For p = m_lngLB To ClipValue(m_lngUB - 1, m_lngLB, m_lngUB)
+        H = p
         If Descending Then
-            For K = P + 1 To m_lngUB
+            For K = p + 1 To m_lngUB
                 If m_oiItems(K).Name > m_oiItems(H).Name Then H = K
             Next K
         Else
-            For K = P + 1 To m_lngUB
+            For K = p + 1 To m_lngUB
                 If m_oiItems(K).Name < m_oiItems(H).Name Then H = K
             Next K
         End If
-        If P <> H Then
+        If p <> H Then
             i = H
-            J = P
+            J = p
             Temp = m_oiItems(i)
             m_oiItems(i) = m_oiItems(J)
             m_oiItems(J) = Temp
         End If
-    Next P
+    Next p
     Err.Clear
 End Sub
 
-Public Sub Inspect(Obj As Object, Optional ByVal Title As String = "Object", Optional TopLevel As Boolean = True, Optional IgnoreStack As Boolean = False)
+Public Sub Inspect(Obj As Object, Optional ByVal Title As String = "Object", Optional ByVal TopLevel As Boolean = True, Optional ByVal IgnoreStack As Boolean = False, Optional ByVal Force As Boolean = False)
 On Error Resume Next
 Dim l_iifObject As InterfaceInfo
 Dim l_lngItems As Long
@@ -512,9 +523,6 @@ Dim l_lngStack As Long, l_booFound As Boolean
 Dim l_strInfo As String
 Dim l_lngOldIndex As Long, l_lngIndex As Long, l_objFind As Object
 Dim l_strSelectedItem As String
-    txtEdit_LostFocus
-    txtEdit.Locked = True
-    l_strSelectedItem = m_oiItems(m_lngSelectedItem).Name
     If Obj Is Nothing Then
         ClearStack
         Erase m_oiItems
@@ -525,7 +533,7 @@ Dim l_strSelectedItem As String
         Redraw
         Exit Sub
     End If
-    If TypeOf Obj Is IInspectable Then
+    If (TypeOf Obj Is IInspectable) Or (Force) Or (InspectAny) Then
     Else
         Erase m_oiItems
         ReDim m_oiItems(0 To 0)
@@ -539,11 +547,6 @@ Dim l_strSelectedItem As String
         Set m_colObjectStack = New Collection
         Set m_colNameStack = New Collection
     End If
-    Screen.MousePointer = 11
-    ReDim m_oiItems(0 To 0)
-    txtEdit.Visible = False
-    cmdElipsis.Visible = False
-    cmdDropDown.Visible = False
     l_lngIndex = 1
     For Each l_objFind In m_colObjectStack
         If l_objFind Is m_objObject Then
@@ -553,21 +556,6 @@ Dim l_strSelectedItem As String
         l_lngIndex = l_lngIndex + 1
     Next l_objFind
     Set m_objObject = Obj
-    Set l_iifObject = InterfaceInfoFromObject(Obj)
-    If l_iifObject Is Nothing Then
-        Erase m_oiItems
-        ReDim m_oiItems(0 To 0)
-        Set m_objObject = Nothing
-        Screen.MousePointer = 0
-        Exit Sub
-    End If
-    If l_iifObject.Members.Count < 1 Then
-        Erase m_oiItems
-        Set m_objObject = Nothing
-        Screen.MousePointer = 0
-        Exit Sub
-    End If
-    l_booFound = False
     If Not IgnoreStack Then
         For Each l_objFind In m_colObjectStack
             If l_objFind Is Obj Then
@@ -586,12 +574,51 @@ Dim l_strSelectedItem As String
             m_colNameStack.Add Title
         End If
     End If
+    Reinspect
+End Sub
+
+Public Sub Reinspect()
+On Error Resume Next
+Dim l_iifObject As InterfaceInfo
+Dim l_lngItems As Long
+Dim l_lngItemCount As Long
+Dim l_booAddNew As Boolean
+Dim l_lngStack As Long, l_booFound As Boolean
+Dim l_strInfo As String
+Dim l_lngOldIndex As Long, l_lngIndex As Long, l_objFind As Object
+Dim l_strSelectedItem As String
+    EditBoxChanged
+    m_booEditBoxActive = False
+    l_strSelectedItem = m_oiItems(m_lngSelectedItem).Name
+    Screen.MousePointer = 11
+    ReDim m_oiItems(0 To 0)
+    txtEdit.Visible = False
+    txtEdit.Locked = True
+    txtEdit.Text = ""
+    cmdElipsis.Visible = False
+    cmdDropDown.Visible = False
+    Screen.MousePointer = 0
+    Set l_iifObject = InterfaceInfoFromObject(m_objObject)
+    If l_iifObject Is Nothing Then
+        Erase m_oiItems
+        ReDim m_oiItems(0 To 0)
+        Set m_objObject = Nothing
+        Screen.MousePointer = 0
+        Exit Sub
+    End If
+    If l_iifObject.Members.Count < 1 Then
+        Erase m_oiItems
+        Set m_objObject = Nothing
+        Screen.MousePointer = 0
+        Exit Sub
+    End If
+    l_booFound = False
     With l_iifObject.Members
         For l_lngItems = 1 To .Count
             With .Item(l_lngItems)
                 l_booAddNew = True
                 Select Case .InvokeKind
-                Case VbGet, VbLet, VbSet
+                Case VbGet, VbLet, VbSet, 0
                     If .Parameters.Count = 0 Then
                         l_strInfo = .HelpString
                         If Left(l_strInfo, 1) = "*" Then
@@ -646,7 +673,11 @@ Dim l_strSelectedItem As String
                                 End If
                                 m_oiItems(l_lngItemCount - 1).Description = l_strInfo
                             End If
-                            m_oiItems(l_lngItemCount - 1).CallTypes = m_oiItems(l_lngItemCount - 1).CallTypes Or .InvokeKind
+                            If .InvokeKind = 0 Then
+                                m_oiItems(l_lngItemCount - 1).CallTypes = VbGet Or VbLet Or VbSet
+                            Else
+                                m_oiItems(l_lngItemCount - 1).CallTypes = m_oiItems(l_lngItemCount - 1).CallTypes Or .InvokeKind
+                            End If
                         End If
                     End If
                 Case Else
@@ -654,6 +685,7 @@ Dim l_strSelectedItem As String
             End With
         Next l_lngItems
     End With
+    If l_lngItemCount = 0 Then txtEdit.Visible = False
     CalculateSize
     RefreshValues
     SortItems False
@@ -661,7 +693,7 @@ Dim l_strSelectedItem As String
     vsScroll.Value = 0
     SelectItemByName l_strSelectedItem, False
     Redraw
-    Screen.MousePointer = 0
+    RefreshEditBox
 End Sub
 
 Private Sub cmdDropDown_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -672,7 +704,7 @@ Dim l_varItems As Variant
     l_varItems = MenusFromStringArray(m_oiItems(m_lngSelectedItem).DropdownText)
     l_lngSelection = QuickShowMenu(picItems, cmdDropDown.Left * Screen.TwipsPerPixelX, (cmdDropDown.Top + cmdDropDown.Height) * Screen.TwipsPerPixelY, l_varItems, LeftButtonOnly:=True)
     txtEdit.Text = CStr(m_oiItems(m_lngSelectedItem).DropdownValues(l_lngSelection - 1))
-    txtEdit_LostFocus
+    EditBoxChanged
 End Sub
 
 Private Sub cmdElipsis_Click()
@@ -680,25 +712,28 @@ On Error Resume Next
 Dim l_objValue As Object
 Dim l_lngValue As Long
 Dim l_strValue As String
+Dim l_booOldLocked As Boolean
     Err.Clear
+    l_booOldLocked = txtEdit.Locked
+    txtEdit.Locked = True
     Set l_objValue = Nothing
     Set l_objValue = m_oiItems(m_lngSelectedItem).Value
     If l_objValue Is Nothing Then
         If m_oiItems(m_lngSelectedItem).SpecialType = OIT_Color Then
             l_lngValue = SelectColor(m_oiItems(m_lngSelectedItem).Value)
             txtEdit.Text = Hex(l_lngValue)
-            txtEdit_LostFocus
+            EditBoxChanged
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_WindowsFilename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
                 txtEdit.Text = l_strValue
-                txtEdit_LostFocus
+                EditBoxChanged
             End If
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, Engine.Engine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, Engine.Engine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                 Else
@@ -707,13 +742,13 @@ Dim l_strValue As String
                         txtEdit.Text = l_strValue
                     End Select
                 End If
-                txtEdit_LostFocus
+                EditBoxChanged
             End If
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, Engine.Engine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, Engine.Engine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                 Else
@@ -722,18 +757,19 @@ Dim l_strValue As String
                         txtEdit.Text = l_strValue
                     End Select
                 End If
-                txtEdit_LostFocus
+                EditBoxChanged
             End If
         Else
             RaiseEvent EllipsisPressed(m_lngSelectedItem)
         End If
     Else
-        If TypeOf l_objValue Is IInspectable Then
+        If (TypeOf l_objValue Is IInspectable) Or InspectAny Then
             Inspect l_objValue, m_oiItems(m_lngSelectedItem).Name, False
         Else
             RaiseEvent EllipsisPressed(m_lngSelectedItem)
         End If
     End If
+    txtEdit.Locked = l_booOldLocked
 End Sub
 
 Private Sub picHierarchy_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -759,7 +795,7 @@ Dim l_lngSpace As Long
         picHierarchy.Font.Bold = (m_colObjectStack(l_lngNames) Is m_objObject)
         l_lngWidth = l_lngX + picHierarchy.TextWidth(m_colNameStack(l_lngNames))
         If (X >= l_lngX) And (X < l_lngWidth) Then
-            If (TypeOf m_colObjectStack(l_lngNames) Is IInspectable) Then
+            If (TypeOf m_colObjectStack(l_lngNames) Is IInspectable) Or (InspectAny) Then
                 Inspect m_colObjectStack(l_lngNames), m_colNameStack(l_lngNames), False
                 Exit Sub
             End If
@@ -790,7 +826,7 @@ Dim l_lngSpace As Long
     picHierarchy.CurrentY = 1
     For l_lngNames = 1 To m_colNameStack.Count
         picHierarchy.Font.Bold = (m_colObjectStack(l_lngNames) Is m_objObject)
-        picHierarchy.Font.Underline = (TypeOf m_colObjectStack(l_lngNames) Is IInspectable)
+        picHierarchy.Font.Underline = (TypeOf m_colObjectStack(l_lngNames) Is IInspectable) Or (InspectAny)
         picHierarchy.Print m_colNameStack(l_lngNames);
         picHierarchy.Font.Underline = False
         picHierarchy.Font.Bold = False
@@ -846,7 +882,7 @@ On Error Resume Next
             cmdElipsis_Click
         ElseIf cmdDropDown.Visible Then
             txtEdit.Text = CStr(Not (CBool(txtEdit.Text)))
-            txtEdit_LostFocus
+            EditBoxChanged
         Else
             RaiseEvent ItemTitleDoubleClick(m_lngSelectedItem)
         End If
@@ -858,7 +894,7 @@ On Error Resume Next
 Dim l_lngItems As Long
 Dim l_lngY As Long
 Dim l_lngIndex As Long
-    txtEdit_LostFocus
+    EditBoxChanged
     l_lngIndex = -1
     l_lngY = picHierarchy.Height - vsScroll.Value
     For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
@@ -1052,17 +1088,25 @@ End Sub
 
 Private Sub txtEdit_GotFocus()
 On Error Resume Next
+    m_booEditBoxActive = True
 End Sub
 
 Private Sub txtEdit_KeyPress(KeyAscii As Integer)
 On Error Resume Next
     If KeyAscii = 13 Then
         KeyAscii = 0
-        txtEdit_LostFocus
+        EditBoxChanged
     End If
 End Sub
 
 Private Sub txtEdit_LostFocus()
+On Error Resume Next
+    If txtEdit.Locked Then Exit Sub
+    m_booEditBoxActive = False
+    EditBoxChanged
+End Sub
+
+Private Sub EditBoxChanged()
 On Error Resume Next
 Dim l_booCancel As Boolean
 Dim l_varOldValue As Variant
@@ -1074,7 +1118,6 @@ Dim l_itValue As IInspectorType
 Dim l_vtType As VbVarType
 Dim l_strText As String
 Dim l_lngValues As Long
-    If txtEdit.Locked Then Exit Sub
     l_strText = txtEdit.Text
     If l_strText = m_oiItems(m_lngSelectedItem).ValueText Then Exit Sub
     Select Case m_oiItems(m_lngSelectedItem).SpecialType
@@ -1136,6 +1179,11 @@ Dim l_lngValues As Long
     RefreshEditBox
 End Sub
 
+Private Sub txtEdit_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+    m_booEditBoxActive = True
+End Sub
+
 Private Sub UserControl_EnterFocus()
 On Error Resume Next
     If Not m_booHaveFocus Then
@@ -1147,7 +1195,7 @@ End Sub
 
 Private Sub UserControl_Hide()
 On Error Resume Next
-    txtEdit_LostFocus
+    EditBoxChanged
     m_booHaveFocus = False
     m_booVisible = False
     ClearStack
@@ -1167,13 +1215,13 @@ Dim l_lngIndex As Long
     Select Case KeyCode
     Case vbKeyReturn
         KeyCode = 0
-        txtEdit_LostFocus
+        EditBoxChanged
     Case vbKeyDown
-        txtEdit_LostFocus
+        EditBoxChanged
         l_lngIndex = m_lngSelectedItem + 1
         KeyCode = 0
     Case vbKeyUp
-        txtEdit_LostFocus
+        EditBoxChanged
         l_lngIndex = m_lngSelectedItem - 1
         KeyCode = 0
     Case Else

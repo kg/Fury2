@@ -452,7 +452,7 @@ End Sub
 Private Sub Form_Load()
 On Error Resume Next
 '    vsFont.Width = GetScrollbarSize(vsFont)
-    Set m_fntFont = New Fury2Font
+    Set m_fntFont = DefaultEngine.F2Font()
     InitViews
     Form_Activate
 End Sub

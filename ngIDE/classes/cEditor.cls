@@ -8,10 +8,11 @@ BEGIN
 END
 Attribute VB_Name = "cEditor"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
+Implements Fury2Debugger
 Private Const EM_CANUNDO = &HC6
 Private Const EM_UNDO = &HC7
 
@@ -21,6 +22,7 @@ Public CanCut As Boolean, CanCopy As Boolean, CanPaste As Boolean, CanDelete As 
 Private m_strGamePath As String
 Private m_docChild As cChildManager
 Private m_amgAccelerators As cAcceleratorManager
+Private m_dbgDebugger As frmGameDebugger
 Private WithEvents m_clpClipboard As cClipboardViewer
 Attribute m_clpClipboard.VB_VarHelpID = -1
 
@@ -69,7 +71,7 @@ End Sub
 
 Public Property Get Filesystem() As Fury2Filesystem
 On Error Resume Next
-    Set Filesystem = Fury2Globals.Engine.Filesystem
+    Set Filesystem = DefaultEngine.Filesystem
 End Property
 
 Public Sub CustomMenu(Index)
@@ -101,6 +103,97 @@ On Error Resume Next
     m_clpClipboard.InitClipboardChangeNotification frmMain.hwnd
 End Sub
 
+Private Sub Fury2Debugger_CriticalError(Source As String, Location As String, Description As String)
+On Error Resume Next
+    m_dbgDebugger.ConsoleAppend Description & " (" & Source & ", " & Location & ")", m_dbgDebugger.TextColor(TextColors_CriticalError)
+    m_dbgDebugger.ShowConsole
+    m_dbgDebugger.SetFocus
+End Sub
+
+Public Sub ShowDebugger()
+On Error Resume Next
+    Set m_dbgDebugger = New frmGameDebugger
+    Load m_dbgDebugger
+    NewDocument m_dbgDebugger
+End Sub
+
+Public Sub HideDebugger()
+On Error Resume Next
+    CloseDocument m_dbgDebugger
+    Unload m_dbgDebugger
+    Set m_dbgDebugger = Nothing
+End Sub
+
+Private Function Fury2Debugger_DebugCreateOutputPlugin() As Object
+End Function
+
+Private Sub Fury2Debugger_DebugFrameEnd()
+End Sub
+
+Private Sub Fury2Debugger_DebugFrameStart()
+End Sub
+
+Private Sub Fury2Debugger_DebugGameEnd()
+On Error Resume Next
+    GameIsRunning = False
+    frmMain.RefreshGameState
+End Sub
+
+Private Sub Fury2Debugger_DebugGameStart()
+On Error Resume Next
+    GameIsRunning = True
+    frmMain.RefreshGameState
+End Sub
+
+Private Sub Fury2Debugger_DebugHalted()
+    GameIsPaused = True
+    frmMain.RefreshGameState
+    m_dbgDebugger.RefreshView
+End Sub
+
+Private Sub Fury2Debugger_DebugOut(Text As String)
+    m_dbgDebugger.ConsoleAppend Text, m_dbgDebugger.TextColor(TextColors_DebugMessage)
+End Sub
+
+Private Sub Fury2Debugger_DebugRedrawEnd()
+
+End Sub
+
+Private Sub Fury2Debugger_DebugRedrawStart()
+
+End Sub
+
+Private Sub Fury2Debugger_DebugSubthreadEnd()
+    Debug.Print "SubthreadEnd"
+End Sub
+
+Private Sub Fury2Debugger_DebugSubthreadStart()
+    Debug.Print "SubthreadStart"
+End Sub
+
+Private Sub Fury2Debugger_DebugTextOut(Text As String)
+    m_dbgDebugger.ConsoleAppend Text
+End Sub
+
+Private Sub Fury2Debugger_DebugUnhalted()
+    GameIsPaused = False
+    frmMain.RefreshGameState
+    m_dbgDebugger.RefreshView
+End Sub
+
+Private Sub Fury2Debugger_Error(Error As String, Details As String)
+On Error Resume Next
+    m_dbgDebugger.ConsoleAppend Error & vbCrLf & Details, m_dbgDebugger.TextColor(TextColors_Error)
+End Sub
+
+Private Sub Fury2Debugger_EventBound(NewEvent As Engine.Fury2Event)
+On Error Resume Next
+End Sub
+
+Private Sub Fury2Debugger_MapSwitch(NewMap As String)
+On Error Resume Next
+End Sub
+
 Private Sub m_clpClipboard_ClipboardChanged()
 On Error Resume Next
     Event_ClipboardChanged
@@ -108,7 +201,7 @@ End Sub
 
 Public Property Get Engine() As Fury2Engine
 On Error Resume Next
-    Set Engine = Fury2Globals.Engine
+    Set Engine = g_engEngine
 End Property
 
 Public Sub ActionUpdate()
@@ -335,6 +428,10 @@ End Sub
 
 Public Sub Help_About()
 On Error Resume Next
+    If g_engEngine Is Nothing Then
+        Beep
+        Exit Sub
+    End If
     Load frmAbout
     frmAbout.Show vbModal, frmMain
 End Sub
@@ -575,6 +672,19 @@ Dim l_lngIndex As Long
     Err.Clear
 End Sub
 
+Public Sub CloseDocument(ByRef Doc As iDocument)
+On Error Resume Next
+Dim l_lngIndex As Long
+    l_lngIndex = frmMain.Documents.Find(Doc)
+    frmMain.Documents(l_lngIndex).Hide
+    Err.Clear
+    frmMain.Documents(l_lngIndex).Activate
+    If Err <> 0 Then
+        Err.Clear
+        frmMain.Documents(1).Activate
+    End If
+End Sub
+
 Public Sub Action_CloseWindow()
 On Error Resume Next
 Dim l_lngIndex As Long
@@ -657,12 +767,25 @@ End Sub
 
 Public Sub Game_Play()
 On Error Resume Next
-    If InIDE Then
-        Shell App.Path & "\..\..\binary\sys\fury².exe " & GamePath
+    If GameIsRunning Then
+        If GameIsPaused Then
+            g_dbgDebugger.GameEngine.Halted = False
+        End If
+        g_dbgDebugger.GameEngine.Quit
     Else
-        Shell App.Path & "\fury².exe " & GamePath
+        frmMain.tmrPlayGame.Enabled = True
     End If
+'    If InIDE Then
+'        Shell App.Path & "\..\..\binary\sys\fury².exe " & GamePath
+'    Else
+'        Shell App.Path & "\fury².exe " & GamePath
+'    End If
     Err.Clear
+End Sub
+
+Public Sub Game_Pause()
+On Error Resume Next
+    g_dbgDebugger.GameEngine.Halted = Not g_dbgDebugger.GameEngine.Halted
 End Sub
 
 Public Sub Game_New()

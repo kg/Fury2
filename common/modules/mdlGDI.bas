@@ -1,7 +1,7 @@
 Attribute VB_Name = "mdlGDI"
 Option Explicit
 
-Public Sub GDIFill(hdc As Long, Rectangle As Win32.Rect, Color As Long)
+Public Sub GDIFill(hdc As Long, Rectangle As Win32.RECT, Color As Long)
 On Error Resume Next
 Dim m_lngBrush As Long
     m_lngBrush = CreateSolidBrush(Color)
@@ -9,16 +9,16 @@ Dim m_lngBrush As Long
     DeleteObject m_lngBrush
 End Sub
 
-Public Function GDIRect(x1 As Long, y1 As Long, x2 As Long, y2 As Long, Optional Absolute As Boolean = True) As Win32.Rect
+Public Function GDIRect(X1 As Long, y1 As Long, x2 As Long, y2 As Long, Optional Absolute As Boolean = True) As Win32.RECT
 On Error Resume Next
     With GDIRect
-        .Left = x1
-        .Top = y1
+        .left = X1
+        .tOp = y1
         If Absolute Then
             .Right = x2
             .Bottom = y2
         Else
-            .Right = x1 + x2
+            .Right = X1 + x2
             .Bottom = y1 + y2
         End If
     End With
@@ -64,19 +64,19 @@ On Error Resume Next
     Dim picDesc As PictureDescriptor
     Dim Pic As IPictureDisp
     ' IID_IPictureDisp
-    picGuid.x = &H7BF80981
+    picGuid.X = &H7BF80981
     picGuid.S1 = &HBF32
     picGuid.S2 = &H101A
-    picGuid.C(0) = &H8B
-    picGuid.C(1) = &HBB
-    picGuid.C(2) = &H0
-    picGuid.C(3) = &HAA
-    picGuid.C(4) = &H0
-    picGuid.C(5) = &H30
-    picGuid.C(6) = &HC
-    picGuid.C(7) = &HAB
+    picGuid.c(0) = &H8B
+    picGuid.c(1) = &HBB
+    picGuid.c(2) = &H0
+    picGuid.c(3) = &HAA
+    picGuid.c(4) = &H0
+    picGuid.c(5) = &H30
+    picGuid.c(6) = &HC
+    picGuid.c(7) = &HAB
     picDesc.Size = Len(picDesc)
-    picDesc.Bitmap = Handle
+    picDesc.BITMAP = Handle
     picDesc.Type = PicType_Icon
     If CreatePictureIndirect(picDesc, picGuid, True, Pic) <> 0 Then
         Exit Function
@@ -91,19 +91,19 @@ On Error Resume Next
     Dim picDesc As PictureDescriptor
     Dim Pic As IPictureDisp
     ' IID_IPictureDisp
-    picGuid.x = &H7BF80981
+    picGuid.X = &H7BF80981
     picGuid.S1 = &HBF32
     picGuid.S2 = &H101A
-    picGuid.C(0) = &H8B
-    picGuid.C(1) = &HBB
-    picGuid.C(2) = &H0
-    picGuid.C(3) = &HAA
-    picGuid.C(4) = &H0
-    picGuid.C(5) = &H30
-    picGuid.C(6) = &HC
-    picGuid.C(7) = &HAB
+    picGuid.c(0) = &H8B
+    picGuid.c(1) = &HBB
+    picGuid.c(2) = &H0
+    picGuid.c(3) = &HAA
+    picGuid.c(4) = &H0
+    picGuid.c(5) = &H30
+    picGuid.c(6) = &HC
+    picGuid.c(7) = &HAB
     picDesc.Size = Len(picDesc)
-    picDesc.Bitmap = Handle
+    picDesc.BITMAP = Handle
     picDesc.Type = PicType_Bitmap
     If CreatePictureIndirect(picDesc, picGuid, True, Pic) <> 0 Then
         Exit Function
@@ -113,10 +113,10 @@ On Error Resume Next
 End Function
 
 Sub SetFormIcon(Frm As Form, Ico As IPictureDisp)
-    SendMessage Frm.hWnd, WM_SetIcon, 0, ByVal Ico.Handle
+    SendMessage Frm.hwnd, WM_SetIcon, 0, ByVal Ico.Handle
 End Sub
 
-Sub ArrayToDC(ByVal hdc As Long, ByVal x As Long, ByVal y As Long, ByRef Data() As Long)
+Sub ArrayToDC(ByVal hdc As Long, ByVal X As Long, ByVal Y As Long, ByRef Data() As Long)
 On Error Resume Next
 Dim bitDesc As BitmapInfo
     With bitDesc.Header
@@ -132,10 +132,10 @@ Dim bitDesc As BitmapInfo
         .ColorImportant = vbNull
         .ColorUsed = vbNull
     End With
-    StretchDIBits hdc, x, y, UBound(Data, 1) + 1, UBound(Data, 2) + 1, 0, 0, UBound(Data, 1) + 1, UBound(Data, 2) + 1, VarPtr(Data(0, 0)), bitDesc, DIBMode_RGB, vbSrcCopy
+    StretchDIBits hdc, X, Y, UBound(Data, 1) + 1, UBound(Data, 2) + 1, 0, 0, UBound(Data, 1) + 1, UBound(Data, 2) + 1, VarPtr(Data(0, 0)), bitDesc, DIBMode_RGB, vbSrcCopy
 End Sub
 
-Sub ArrayPtrToDC(ByVal hdc As Long, ByVal x As Long, ByVal y As Long, ByVal Width As Long, ByVal Height As Long, ByVal Ptr As Long)
+Sub ArrayPtrToDC(ByVal hdc As Long, ByVal X As Long, ByVal Y As Long, ByVal Width As Long, ByVal Height As Long, ByVal Ptr As Long)
 On Error Resume Next
 Dim bitDesc As BitmapInfo
     With bitDesc.Header
@@ -146,10 +146,10 @@ Dim bitDesc As BitmapInfo
         .Width = Width
         .Height = -(Height)
     End With
-    StretchDIBits hdc, x, y, Width, Height, 0, 0, Width, Height, Ptr, bitDesc, DIBMode_RGB, vbSrcCopy
+    StretchDIBits hdc, X, Y, Width, Height, 0, 0, Width, Height, Ptr, bitDesc, DIBMode_RGB, vbSrcCopy
 End Sub
 
-Sub ArrayPtrToDCNF(ByVal hdc As Long, ByVal x As Long, ByVal y As Long, ByVal Width As Long, ByVal Height As Long, ByVal Ptr As Long)
+Sub ArrayPtrToDCNF(ByVal hdc As Long, ByVal X As Long, ByVal Y As Long, ByVal Width As Long, ByVal Height As Long, ByVal Ptr As Long)
 On Error Resume Next
 Dim bitDesc As BitmapInfo
     With bitDesc.Header
@@ -160,7 +160,7 @@ Dim bitDesc As BitmapInfo
         .Width = Width
         .Height = (Height)
     End With
-    StretchDIBits hdc, x, y, Width, Height, 0, 0, Width, Height, Ptr, bitDesc, DIBMode_RGB, vbSrcCopy
+    StretchDIBits hdc, X, Y, Width, Height, 0, 0, Width, Height, Ptr, bitDesc, DIBMode_RGB, vbSrcCopy
 End Sub
 
 Sub ArrayToPictureBox(ByRef PictureBox As PictureBox, ByRef ImageArray() As Long)
@@ -445,7 +445,7 @@ Dim DIBitsDest() As RGBQuad
    
 End Sub
 
-Sub BytePtrToBitmap(ByVal Bitmap As Long, ByVal Ptr As Long)
+Sub BytePtrToBitmap(ByVal BITMAP As Long, ByVal Ptr As Long)
 On Error Resume Next
 Dim bmiDest As BitmapInfo
 Dim DC As Long
@@ -458,7 +458,7 @@ Dim DC As Long
    End With
    
    ' Get header information (interested mainly in size)
-   If 0 = GetDIBits(DC, Bitmap, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
+   If 0 = GetDIBits(DC, BITMAP, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
        Exit Sub
    End If
 
@@ -468,7 +468,7 @@ Dim DC As Long
        .Height = -.Height
    End With
      
-   Call SetDIBits(DC, Bitmap, 0, -bmiDest.Header.Height, ByVal Ptr, bmiDest, DIBMode_RGB)
+   Call SetDIBits(DC, BITMAP, 0, -bmiDest.Header.Height, ByVal Ptr, bmiDest, DIBMode_RGB)
    
    DeleteMemoryDC DC
    
@@ -650,7 +650,7 @@ Dim DC As Long
    
 End Sub
 
-Sub GetBitmapArrayPtr(ByVal Bitmap As Long, ByVal Ptr As Long)
+Sub GetBitmapArrayPtr(ByVal BITMAP As Long, ByVal Ptr As Long)
 On Error Resume Next
 Dim MinX As Long, MinY As Long
 Dim MaxX As Long, MaxY As Long
@@ -667,7 +667,7 @@ Dim DC As Long
    End With
    
    ' Get header information (interested mainly in size)
-   If 0 = GetDIBits(DC, Bitmap, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
+   If 0 = GetDIBits(DC, BITMAP, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
        DeleteMemoryDC DC
        Exit Sub
    End If
@@ -680,7 +680,7 @@ Dim DC As Long
    bmiDest.Header.Height = -bmiDest.Header.Height
    
    ' Now get the bits
-   If 0 = GetDIBits(DC, Bitmap, 0, Abs(bmiDest.Header.Height), ByVal Ptr, bmiDest, DIBMode_RGB) Then
+   If 0 = GetDIBits(DC, BITMAP, 0, Abs(bmiDest.Header.Height), ByVal Ptr, bmiDest, DIBMode_RGB) Then
        DeleteMemoryDC DC
        Exit Sub
    End If
@@ -783,7 +783,7 @@ Dim DC As Long
 End Function
 
 
-Function GetBitmapWidth(ByVal Bitmap As Long) As Long
+Function GetBitmapWidth(ByVal BITMAP As Long) As Long
 On Error Resume Next
 Dim bmiDest As BitmapInfo
 Dim DC As Long
@@ -796,7 +796,7 @@ Dim DC As Long
    End With
    
    ' Get header information (interested mainly in size)
-   If 0 = GetDIBits(DC, Bitmap, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
+   If 0 = GetDIBits(DC, BITMAP, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
        DeleteMemoryDC DC
        Exit Function
    End If
@@ -807,7 +807,7 @@ Dim DC As Long
    
 End Function
 
-Function GetBitmapHeight(ByVal Bitmap As Long) As Long
+Function GetBitmapHeight(ByVal BITMAP As Long) As Long
 On Error Resume Next
 Dim bmiDest As BitmapInfo
 Dim DC As Long
@@ -820,7 +820,7 @@ Dim DC As Long
    End With
    
    ' Get header information (interested mainly in size)
-   If 0 = GetDIBits(DC, Bitmap, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
+   If 0 = GetDIBits(DC, BITMAP, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
        DeleteMemoryDC DC
        Exit Function
    End If
@@ -834,11 +834,11 @@ End Function
 Public Function ColorFromString(Text As String) As Long
 On Error Resume Next
 Dim cR As Long, cG As Long, cB As Long
-    If Left(Text, 2) = "&H" Then
+    If left(Text, 2) = "&H" Then
         ColorFromString = CLng(Text)
         Exit Function
     End If
-    If Left(Text, 1) = "#" Then
+    If left(Text, 1) = "#" Then
         ColorFromString = CLng("&H" + Mid(Text, 2))
         cR = ColorFromString Mod 256
         cG = Int((ColorFromString \ 256)) Mod 256
@@ -846,12 +846,12 @@ Dim cR As Long, cG As Long, cB As Long
         ColorFromString = RGB(cB, cG, cR)
         Exit Function
     End If
-    If Left(Text, 1) = "." Then
+    If left(Text, 1) = "." Then
         ColorFromString = CLng(Mid(Text, 2))
         Exit Function
     End If
     If (InStr(Text, ",")) Then
-        cR = CLng(Left(Text, InStr(Text, ",") - 1))
+        cR = CLng(left(Text, InStr(Text, ",") - 1))
         cG = CLng(Mid(Text, InStr(Text, ",") + 1, ((InStrRev(Text, ",") - 1) - (InStr(Text, ",")))))
         cB = CLng(Mid(Text, InStrRev(Text, ",") + 1))
         ColorFromString = RGB(cR, cG, cB)
@@ -1169,27 +1169,27 @@ On Error Resume Next
     DeleteDC hdc
 End Sub
 
-Public Function CapturePicture(ByVal hdc As Long, ByVal Left As Long, ByVal Top As Long, ByVal Width As Long, ByVal Height As Long) As IPictureDisp
+Public Function CapturePicture(ByVal hdc As Long, ByVal left As Long, ByVal tOp As Long, ByVal Width As Long, ByVal Height As Long) As IPictureDisp
     Dim picGuid As IId
     Dim picDesc As PictureDescriptor
     Dim hdcMem As Long
     Dim hBmp As Long
     Dim hOldBmp As Long
     Dim Pic As IPictureDisp
-    Dim rcBitmap As Win32.Rect
+    Dim rcBitmap As Win32.RECT
     
     ' IID_IPictureDisp
-    picGuid.x = &H7BF80981
+    picGuid.X = &H7BF80981
     picGuid.S1 = &HBF32
     picGuid.S2 = &H101A
-    picGuid.C(0) = &H8B
-    picGuid.C(1) = &HBB
-    picGuid.C(2) = &H0
-    picGuid.C(3) = &HAA
-    picGuid.C(4) = &H0
-    picGuid.C(5) = &H30
-    picGuid.C(6) = &HC
-    picGuid.C(7) = &HAB
+    picGuid.c(0) = &H8B
+    picGuid.c(1) = &HBB
+    picGuid.c(2) = &H0
+    picGuid.c(3) = &HAA
+    picGuid.c(4) = &H0
+    picGuid.c(5) = &H30
+    picGuid.c(6) = &HC
+    picGuid.c(7) = &HAB
     
     picDesc.Size = Len(picDesc)
     hdcMem = CreateCompatibleDC(hdc)
@@ -1202,8 +1202,8 @@ Public Function CapturePicture(ByVal hdc As Long, ByVal Left As Long, ByVal Top 
         Exit Function
     End If
     hOldBmp = SelectObject(hdcMem, hBmp)
-    If Left >= 0 And Top >= 0 Then
-        If BitBlt(hdcMem, 0, 0, Width, Height, hdc, Left, Top, vbSrcCopy) = 0 Then
+    If left >= 0 And tOp >= 0 Then
+        If BitBlt(hdcMem, 0, 0, Width, Height, hdc, left, tOp, vbSrcCopy) = 0 Then
             SelectObject hdcMem, hOldBmp
             DeleteDC hdcMem
             DeleteObject hBmp
@@ -1211,15 +1211,15 @@ Public Function CapturePicture(ByVal hdc As Long, ByVal Left As Long, ByVal Top 
         End If
     Else
         With rcBitmap
-           .Left = 0
-           .Top = 0
+           .left = 0
+           .tOp = 0
            .Right = Width
            .Bottom = Height
         End With
         FillRect hdcMem, rcBitmap, GetStockObject(StockObject_Brush_Black)
     End If
     SelectObject hdcMem, hOldBmp
-    picDesc.Bitmap = hBmp
+    picDesc.BITMAP = hBmp
     picDesc.Palette = GetCurrentObject(hdc, Object_Palette)
     picDesc.Type = PicType_Bitmap
     If CreatePictureIndirect(picDesc, picGuid, True, Pic) <> 0 Then
@@ -1239,24 +1239,24 @@ Public Function CreatePicture(ByVal Width As Long, ByVal Height As Long) As IPic
     Dim hBmp As Long
     Dim hOldBmp As Long
     Dim Pic As IPictureDisp
-    Dim rcBitmap As Win32.Rect
+    Dim rcBitmap As Win32.RECT
     Dim deskWnd As Long, deskDC As Long
     
     deskWnd = GetDesktopWindow
     deskDC = GetDC(deskWnd)
     
     ' IID_IPictureDisp
-    picGuid.x = &H7BF80981
+    picGuid.X = &H7BF80981
     picGuid.S1 = &HBF32
     picGuid.S2 = &H101A
-    picGuid.C(0) = &H8B
-    picGuid.C(1) = &HBB
-    picGuid.C(2) = &H0
-    picGuid.C(3) = &HAA
-    picGuid.C(4) = &H0
-    picGuid.C(5) = &H30
-    picGuid.C(6) = &HC
-    picGuid.C(7) = &HAB
+    picGuid.c(0) = &H8B
+    picGuid.c(1) = &HBB
+    picGuid.c(2) = &H0
+    picGuid.c(3) = &HAA
+    picGuid.c(4) = &H0
+    picGuid.c(5) = &H30
+    picGuid.c(6) = &HC
+    picGuid.c(7) = &HAB
     
     picDesc.Size = Len(picDesc)
     hdcMem = CreateMemoryDC
@@ -1269,7 +1269,7 @@ Public Function CreatePicture(ByVal Width As Long, ByVal Height As Long) As IPic
         ReleaseDC deskWnd, deskDC
         Exit Function
     End If
-    picDesc.Bitmap = hBmp
+    picDesc.BITMAP = hBmp
     picDesc.Palette = GetCurrentObject(deskDC, Object_Palette)
     picDesc.Type = PicType_Bitmap
     If CreatePictureIndirect(picDesc, picGuid, True, Pic) <> 0 Then
@@ -1292,7 +1292,7 @@ On Error Resume Next
     Dim hBmp As Long
     Dim hOldBmp As Long
     Dim Pic As IPictureDisp
-    Dim rcBitmap As Win32.Rect
+    Dim rcBitmap As Win32.RECT
     Dim deskWnd As Long, deskDC As Long
     Dim m_lngPixels() As Long
     Dim m_lngX As Long, m_lngY As Long
@@ -1303,17 +1303,17 @@ On Error Resume Next
     deskDC = GetDC(deskWnd)
     
     ' IID_IPictureDisp
-    picGuid.x = &H7BF80981
+    picGuid.X = &H7BF80981
     picGuid.S1 = &HBF32
     picGuid.S2 = &H101A
-    picGuid.C(0) = &H8B
-    picGuid.C(1) = &HBB
-    picGuid.C(2) = &H0
-    picGuid.C(3) = &HAA
-    picGuid.C(4) = &H0
-    picGuid.C(5) = &H30
-    picGuid.C(6) = &HC
-    picGuid.C(7) = &HAB
+    picGuid.c(0) = &H8B
+    picGuid.c(1) = &HBB
+    picGuid.c(2) = &H0
+    picGuid.c(3) = &HAA
+    picGuid.c(4) = &H0
+    picGuid.c(5) = &H30
+    picGuid.c(6) = &HC
+    picGuid.c(7) = &HAB
     
     picDesc.Size = Len(picDesc)
     hdcMem = CreateMemoryDC
@@ -1326,7 +1326,7 @@ On Error Resume Next
         ReleaseDC deskWnd, deskDC
         Exit Function
     End If
-    picDesc.Bitmap = hBmp
+    picDesc.BITMAP = hBmp
     picDesc.Palette = GetCurrentObject(deskDC, Object_Palette)
     picDesc.Type = PicType_Bitmap
     If CreatePictureIndirect(picDesc, picGuid, True, Pic) <> 0 Then
@@ -1356,7 +1356,7 @@ On Error Resume Next
     Dim hBmp As Long
     Dim hOldBmp As Long
     Dim Pic As IPictureDisp
-    Dim rcBitmap As Win32.Rect
+    Dim rcBitmap As Win32.RECT
     Dim deskWnd As Long, deskDC As Long
     Dim m_lngPixels() As Long
     Dim m_lngX As Long, m_lngY As Long
@@ -1367,17 +1367,17 @@ On Error Resume Next
     deskDC = GetDC(deskWnd)
     
     ' IID_IPictureDisp
-    picGuid.x = &H7BF80981
+    picGuid.X = &H7BF80981
     picGuid.S1 = &HBF32
     picGuid.S2 = &H101A
-    picGuid.C(0) = &H8B
-    picGuid.C(1) = &HBB
-    picGuid.C(2) = &H0
-    picGuid.C(3) = &HAA
-    picGuid.C(4) = &H0
-    picGuid.C(5) = &H30
-    picGuid.C(6) = &HC
-    picGuid.C(7) = &HAB
+    picGuid.c(0) = &H8B
+    picGuid.c(1) = &HBB
+    picGuid.c(2) = &H0
+    picGuid.c(3) = &HAA
+    picGuid.c(4) = &H0
+    picGuid.c(5) = &H30
+    picGuid.c(6) = &HC
+    picGuid.c(7) = &HAB
     
     picDesc.Size = Len(picDesc)
     hdcMem = CreateMemoryDC
@@ -1390,7 +1390,7 @@ On Error Resume Next
         ReleaseDC deskWnd, deskDC
         Exit Function
     End If
-    picDesc.Bitmap = hBmp
+    picDesc.BITMAP = hBmp
     picDesc.Palette = GetCurrentObject(deskDC, Object_Palette)
     picDesc.Type = PicType_Bitmap
     If CreatePictureIndirect(picDesc, picGuid, True, Pic) <> 0 Then
@@ -1419,24 +1419,24 @@ Public Function CreatePictureFromIcon(ByVal Width As Long, ByVal Height As Long,
     Dim hBmp As Long
     Dim hOldBmp As Long
     Dim Pic As IPictureDisp
-    Dim rcBitmap As Win32.Rect
+    Dim rcBitmap As Win32.RECT
     Dim deskWnd As Long, deskDC As Long
     
     deskWnd = GetDesktopWindow
     deskDC = GetDC(deskWnd)
     
     ' IID_IPictureDisp
-    picGuid.x = &H7BF80981
+    picGuid.X = &H7BF80981
     picGuid.S1 = &HBF32
     picGuid.S2 = &H101A
-    picGuid.C(0) = &H8B
-    picGuid.C(1) = &HBB
-    picGuid.C(2) = &H0
-    picGuid.C(3) = &HAA
-    picGuid.C(4) = &H0
-    picGuid.C(5) = &H30
-    picGuid.C(6) = &HC
-    picGuid.C(7) = &HAB
+    picGuid.c(0) = &H8B
+    picGuid.c(1) = &HBB
+    picGuid.c(2) = &H0
+    picGuid.c(3) = &HAA
+    picGuid.c(4) = &H0
+    picGuid.c(5) = &H30
+    picGuid.c(6) = &HC
+    picGuid.c(7) = &HAB
     
     picDesc.Size = Len(picDesc)
     hdcMem = CreateMemoryDC
@@ -1452,7 +1452,7 @@ Public Function CreatePictureFromIcon(ByVal Width As Long, ByVal Height As Long,
     hOldBmp = SelectObject(hdcMem, hBmp)
     DrawIconEx hdcMem, 0, 0, Icon.Handle, Width, Height, 0, 0, 2
     SelectObject hdcMem, hOldBmp
-    picDesc.Bitmap = hBmp
+    picDesc.BITMAP = hBmp
     picDesc.Palette = GetCurrentObject(deskDC, Object_Palette)
     picDesc.Type = PicType_Bitmap
     If CreatePictureIndirect(picDesc, picGuid, True, Pic) <> 0 Then
@@ -1474,24 +1474,24 @@ Public Function LoadResIcon(ByVal Resname As String, Optional ByVal Width As Lon
     Dim hIcon As Long
     Dim hOldBmp As Long
     Dim Pic As IPictureDisp
-    Dim rcBitmap As Win32.Rect
+    Dim rcBitmap As Win32.RECT
     
     ' IID_IPictureDisp
-    picGuid.x = &H7BF80981
+    picGuid.X = &H7BF80981
     picGuid.S1 = &HBF32
     picGuid.S2 = &H101A
-    picGuid.C(0) = &H8B
-    picGuid.C(1) = &HBB
-    picGuid.C(2) = &H0
-    picGuid.C(3) = &HAA
-    picGuid.C(4) = &H0
-    picGuid.C(5) = &H30
-    picGuid.C(6) = &HC
-    picGuid.C(7) = &HAB
+    picGuid.c(0) = &H8B
+    picGuid.c(1) = &HBB
+    picGuid.c(2) = &H0
+    picGuid.c(3) = &HAA
+    picGuid.c(4) = &H0
+    picGuid.c(5) = &H30
+    picGuid.c(6) = &HC
+    picGuid.c(7) = &HAB
     
     hdcMem = CreateMemoryDC
     
-    hIcon = LoadIcon(App.hInstance, Resname)
+    hIcon = LoadImage(App.hInstance, Resname, Image_Icon, Width, Height, LoadImage_Shared)
     
     If hIcon = 0 Then
         DeleteMemoryDC hdcMem
@@ -1499,7 +1499,7 @@ Public Function LoadResIcon(ByVal Resname As String, Optional ByVal Width As Lon
     End If
     
     picDesc.Size = Len(picDesc)
-    picDesc.Bitmap = hIcon
+    picDesc.BITMAP = hIcon
     picDesc.Type = PicType_Icon
     If CreatePictureIndirect(picDesc, picGuid, True, Pic) <> 0 Then
         DeleteMemoryDC hdcMem
@@ -1509,5 +1509,6 @@ Public Function LoadResIcon(ByVal Resname As String, Optional ByVal Width As Lon
     Set Pic = Nothing
     DeleteMemoryDC hdcMem
 End Function
+
 
 

@@ -28,14 +28,14 @@ Dim l_mapNew As Fury2Map
 Dim l_tstTileset As Fury2Tileset
 Dim l_lngLayers As Long, l_lngX As Long, l_lngY As Long
     Commonboard.openBoard Options.Filename, l_brdBoard
-    Set l_tstTileset = New Fury2Tileset
+    Set l_tstTileset = DefaultEngine.F2Tileset(, 32, 32)
     With l_tstTileset
         .TileWidth = 32
         .TileHeight = 32
         .HasAlpha = False
         .TransparentTile = -1
     End With
-    Set l_mapNew = New Fury2Map
+    Set l_mapNew = DefaultEngine.F2Map()
     l_mapNew.EditMode = True
     With l_brdBoard
         l_mapNew.CreateNew .boardTitle(0), .bSizeX, .bSizeY, .bSizeL, l_tstTileset
@@ -79,7 +79,7 @@ Private Property Set iPlugin_Editor(RHS As Object)
 End Property
 
 Private Property Get iPlugin_Icon() As stdole.Picture
-    Set iPlugin_Icon = LoadResPicture("SPRITES", vbResIcon)
+    Set iPlugin_Icon = LoadResPicture("TILESET", vbResIcon)
 End Property
 
 Private Sub iPlugin_Initialize()

@@ -70,7 +70,7 @@ Public Sub SetCaption(Text As String)
     If Fullscreen Then
         If m_OutForm.Caption <> "" Then
             m_OutForm.Caption = ""
-            SetWindowText m_OutForm.hWnd, Text
+            SetWindowText m_OutForm.hwnd, Text
         End If
     Else
         If m_OutForm.Caption <> Text Then m_OutForm.Caption = Text
@@ -116,9 +116,7 @@ End Sub
 
 Public Sub Init(ByVal XRes As Long, ByVal YRes As Long, ByVal BPP As Long, ByVal Caption As String, Optional ByVal Windowed As Boolean = False, Optional ByVal ScreenX = 0, Optional ByVal ScreenY = 0, Optional ByVal Window As Long = 0)
 On Error Resume Next
-    If F2Initialized = False Then
-        Exit Sub
-    End If
+    If Not F2Initialized Then Exit Sub
     Set m_OutForm = New frmGDI
     Load m_OutForm
     m_OutForm.Caption = Caption

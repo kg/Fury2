@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "TextField"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
@@ -33,6 +33,15 @@ Public Skin As Skin
 Public Rectangle As Fury2Rect
 Public HaveFocus As Boolean
 Private m_wdgMe As iWidget
+Private m_engEngine As Fury2Engine
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
+
+Friend Sub SetEngine(NewEngine As Fury2Engine)
+    Set m_engEngine = NewEngine
+End Sub
 
 Public Property Get iWidget_CanGetFocus() As Boolean
     iWidget_CanGetFocus = True

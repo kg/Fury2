@@ -102,6 +102,15 @@ Public Tag As String
 Attribute Tag.VB_VarDescription = "An additional piece of data."
 Public AnimationMultiplier As Single
 Public Ignore As Boolean
+Private mvarEngine As Fury2Engine
+
+Friend Sub SetEngine(NewEngine As Fury2Engine)
+    Set mvarEngine = NewEngine
+End Sub
+
+Friend Property Get Engine() As Fury2Engine
+    Set Engine = mvarEngine
+End Property
 
 Public Property Get DiffuseLight() As Boolean
     DiffuseLight = m_spParam.Params.DiffuseLight <> 0
@@ -234,7 +243,7 @@ End Property
 
 Private Sub Dirty()
 On Error Resume Next
-'    m_Engine.Cameras.Dirty
+'    Engine.Cameras.Dirty
 End Sub
 
 Public Function Class_ToString() As String
@@ -244,7 +253,7 @@ End Function
 
 Function SupportsAction(ByVal Name As String) As Boolean
 On Error Resume Next
-    With m_Engine.ScriptEngine.Language
+    With mvarEngine.ScriptEngine.Language
         Select Case LCase(Trim(Name))
         Case "update"
             SupportsAction = m_booScript_Update
@@ -276,7 +285,7 @@ End Function
 Function Action(Optional ByVal Activator As Object, Optional ByVal ActionName As String = "Activate") As Boolean
 On Error Resume Next
     Action = True
-    m_Engine.ContextLevelAdd "Sprite_" + ActionName
+    mvarEngine.ContextLevelAdd "Sprite_" + ActionName
     If m_objScript Is Nothing Then Action = False
     If m_objScript Is Nothing Then Else CallByName m_objScript, ActionName, VbMethod, Activator
     If Err.Number <> 0 Then
@@ -284,7 +293,7 @@ On Error Resume Next
         If m_objScript Is Nothing Then Else CallByName m_objScript, ActionName, VbMethod
         If Err.Number <> 0 Then Action = False
     End If
-    m_Engine.ContextLevelRemove
+    mvarEngine.ContextLevelRemove
 End Function
 
 Function ActionAhead(Optional ByVal Distance As Single = -1, Optional ByVal ActionName As String = "Activate", Optional ByVal Class As Long = -1) As Boolean
@@ -292,7 +301,7 @@ On Error Resume Next
 Dim l_objTarget As Object
 Dim l_sprTarget As Fury2Sprite, l_araTarget As Fury2Area
     If Distance = -1 Then
-        Distance = m_Engine.ActivationDistance
+        Distance = mvarEngine.ActivationDistance
     End If
     Set l_objTarget = Me.ObjectCollisionCheck(Sin(m_spParam.Velocity.B * c_dblRadian) * Distance, -Cos(m_spParam.Velocity.B * c_dblRadian) * Distance, Class)
     If l_objTarget Is Nothing Then
@@ -382,6 +391,7 @@ Public Sub PushPath()
 On Error Resume Next
     SavedPaths.Add m_pthPath
     Set m_pthPath = New Fury2Path
+    m_pthPath.SetParent Me
 End Sub
 
 Public Sub PopPath()
@@ -394,8 +404,10 @@ Private Sub Class_Initialize()
 On Error Resume Next
     Set SavedPaths = New Fury2Collection
     Set m_posPoses = New Fury2Poses
+    m_posPoses.SetParent Me
     Set m_staStates = New Fury2States
     Set m_pthPath = New Fury2Path
+    m_pthPath.SetParent Me
     m_lngAnimationDirection = 1
     m_lngState = 1
     m_lngPose = 1
@@ -515,13 +527,13 @@ On Error Resume Next
 Dim l_lyrLayer As Fury2MapLayer
     Dirty
     m_booDestroyed = True
-    m_Engine.ContextLevelAdd Name + " : Die"
+    mvarEngine.ContextLevelAdd Name + " : Die"
     m_objScript.Die
     For Each l_lyrLayer In m_mapMap.Layers
         l_lyrLayer.Sprites.Remove Me
     Next l_lyrLayer
     m_mapMap.Sprites.Remove Me
-    m_Engine.ContextLevelRemove
+    mvarEngine.ContextLevelRemove
 End Sub
 
 Public Function Duplicate() As Fury2Sprite
@@ -543,7 +555,7 @@ End Property
 
 Public Sub Face(ByRef OtherSprite)
 On Error Resume Next
-    Angle = m_Engine.AngleBetween(X, Y, OtherSprite.X, OtherSprite.Y)
+    Angle = mvarEngine.AngleBetween(X, Y, OtherSprite.X, OtherSprite.Y)
 End Sub
 
 Public Sub Fade(Optional ByVal FromAlpha = -1, Optional ByVal ToAlpha = -1, Optional ByVal Speed = 1 / 60)
@@ -600,12 +612,21 @@ Dim l_posPose As Fury2Pose
     Set m_staState = Nothing
     Set m_posPose = Nothing
     Set m_fraFrame = Nothing
-    For Each l_posPose In m_posPoses
-        l_posPose.Free
-    Next l_posPose
-    m_pthPath.Clear
-    m_posPoses.Clear
-    m_staStates.Clear
+    If m_posPoses Is Nothing Then
+    Else
+        For Each l_posPose In m_posPoses
+            l_posPose.Free
+        Next l_posPose
+        m_posPoses.Clear
+    End If
+    If m_pthPath Is Nothing Then
+    Else
+        m_pthPath.Clear
+    End If
+    If m_staStates Is Nothing Then
+    Else
+        m_staStates.Clear
+    End If
     Set SavedPaths = Nothing
     Set AttachedGraphic = Nothing
     Set m_posPoses = Nothing
@@ -648,6 +669,7 @@ On Error Resume Next
 Dim l_booValue As Boolean, l_sngValue As Single, l_lngValue As Long, l_bytValue As Byte
 Dim l_sngStateVelocity As Single, l_staState As Fury2State
     With File
+        DoEvents
         .ReadSegment_Begin
             .ReadSegment_Begin
                 .Load m_strName
@@ -769,9 +791,13 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
             .ReadSegment_Begin
             .ReadSegment_End
             
+            Set m_posPoses = New Fury2Poses
+            m_posPoses.SetParent Me
             .Load m_posPoses
             
             ' path
+            Set m_pthPath = New Fury2Path
+            m_pthPath.SetParent Me
             .Load m_pthPath
             
             ' ai
@@ -782,6 +808,7 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
         .ReadSegment_End
         VelocityMultiplier = 1
         AnimationMultiplier = 1
+        DoEvents
     End With
 End Sub
 
@@ -893,7 +920,7 @@ End Property
 
 Public Sub Load()
 On Error Resume Next
-    If m_booEditor Then
+    If Engine.EditMode Then
     Else
         Script.Load
     End If
@@ -913,7 +940,7 @@ Dim l_sprTemplate As Fury2Sprite, l_strTemplateSprite As String, l_strTemplateIn
     Else
         l_strTemplateSprite = Left(m_strTemplate, InStrRev(m_strTemplate, ":") - 1)
         l_strTemplateIndex = Mid(m_strTemplate, InStrRev(m_strTemplate, ":") + 1)
-        Set l_sprTemplate = m_Engine.LoadSprite(l_strTemplateSprite, l_strTemplateIndex)
+        Set l_sprTemplate = mvarEngine.LoadSprite(l_strTemplateSprite, l_strTemplateIndex)
         If l_sprTemplate Is Nothing Then
         Else
             l_sprTemplate.CopyTo Me, True
@@ -962,6 +989,10 @@ Dim l_sprSprite As Fury2Sprite, l_araArea As Fury2Area
     Err.Clear
 End Function
 
+Friend Sub SetParent(Parent As Fury2Map)
+    Set m_mapMap = Parent
+End Sub
+
 Public Property Get Parent() As Fury2Map
 Attribute Parent.VB_Description = "*The sprite's parent (if any)."
     Set Parent = m_mapMap
@@ -969,7 +1000,7 @@ End Property
 
 Public Function PerformAction(Optional ByVal Activator = Nothing, Optional ByRef Action = "Activate") As Boolean
 On Error Resume Next
-    m_Engine.ContextLevelAdd Name + " : PerformAction(" + Action + ")"
+    mvarEngine.ContextLevelAdd Name + " : PerformAction(" + Action + ")"
     Err.Clear
     CallByName m_objScript, Action, VbMethod, Activator
     If Err.Number <> 0 Then
@@ -978,7 +1009,7 @@ On Error Resume Next
         If Err.Number <> 0 Then PerformAction = False
     End If
     Err.Clear
-    m_Engine.ContextLevelRemove
+    mvarEngine.ContextLevelRemove
 End Function
 
 Public Property Get Pointer() As Long
@@ -1162,11 +1193,11 @@ Dim l_strName As String
     If m_objScript Is Nothing Then
         If (m_booScriptLoadFailed = False) Then
             Err.Clear
-            m_Engine.SpriteObjectCount = m_Engine.SpriteObjectCount + 1
+            mvarEngine.SpriteObjectCount = mvarEngine.SpriteObjectCount + 1
             If Left(Trim(m_strScript), 2) = "<@" Then
                 l_strScript = Trim(m_strScript)
                 l_strName = Mid(l_strScript, 3, Len(l_strScript) - 3)
-                Set m_objScript = m_Engine.ScriptEngine.Eval(l_strName)
+                Set m_objScript = mvarEngine.ScriptEngine.Eval(l_strName)
                 m_booScript_Update = m_objScript.ImplementsMethod("Update")
                 m_booScript_Hit = m_objScript.ImplementsMethod("Hit")
                 m_booScript_HitMap = m_objScript.ImplementsMethod("HitMap")
@@ -1178,14 +1209,14 @@ Dim l_strName As String
                 m_booScript_Step = m_objScript.ImplementsMethod("Step")
                 m_booScript_FadeOut = m_objScript.ImplementsMethod("FadeOut")
             Else
-                l_strName = m_Engine.VariableName("ss" & m_Engine.SpriteObjectCount)
-                With m_Engine.ScriptEngine.Language
-                    l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
-                    .GenerateClassVariable("Map") & .LineTerminator & _
+                l_strName = mvarEngine.VariableName("ss" & mvarEngine.SpriteObjectCount)
+                With mvarEngine.ScriptEngine.Language
+                    l_strScript = .GenerateClassVariable("Object") & _
+                    .GenerateClassVariable("Map") & _
                     .GenerateClassMethod("F2OInit", Array("T", "M"), _
                     .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
-                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
-                    ) & .LineTerminator & m_strScript
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) & .LineTerminator _
+                    ) & m_strScript
                     m_booScript_Update = .ImplementsMethod(l_strScript, "Update")
                     m_booScript_Hit = .ImplementsMethod(l_strScript, "Hit")
                     m_booScript_HitMap = .ImplementsMethod(l_strScript, "HitMap")
@@ -1196,16 +1227,18 @@ Dim l_strName As String
                     m_booScript_Died = .ImplementsMethod(l_strScript, "Died")
                     m_booScript_Step = .ImplementsMethod(l_strScript, "Step")
                     m_booScript_FadeOut = .ImplementsMethod(l_strScript, "FadeOut")
-                    m_Engine.CacheScript l_strName, .GenerateClass(l_strName, l_strScript)
-                    m_Engine.ScriptEngine.AddCode .GenerateAssignment("New" & l_strName, .GenerateInstantiation(l_strName), True)
-                    Set m_objScript = m_Engine.ScriptEngine.Eval("New" & l_strName)
+                    mvarEngine.CacheScript l_strName, .GenerateClass(l_strName, l_strScript)
+                    Set m_objScript = mvarEngine.ScriptEngine.Eval(.GenerateInstantiation(l_strName))
                 End With
             End If
-            Set m_Engine.IObjThis = Me
+            Set mvarEngine.IObjThis = Me
         
             m_objScript.F2OInit Me, m_mapMap
         
-            If (Err.Number <> 0) Or (m_objScript Is Nothing) Then m_booScriptLoadFailed = True
+            If (m_objScript Is Nothing) Then
+                Engine.DebugOut "Unable to load script for sprite """ & Name & """"
+                m_booScriptLoadFailed = True
+            End If
         End If
     End If
     Set Script = m_objScript
@@ -1359,9 +1392,9 @@ Dim l_sprCollided As Fury2Sprite
     If m_lngAIDelay > m_lngAIUpdateRate Then
         m_lngAIDelay = 0
         If m_booScript_AIUpdate Then
-            m_Engine.ContextLevelAdd "Sprite_AIUpdate"
+            mvarEngine.ContextLevelAdd "Sprite_AIUpdate"
             m_objScript.AIUpdate
-            m_Engine.ContextLevelRemove
+            mvarEngine.ContextLevelRemove
         End If
     End If
 
@@ -1394,28 +1427,28 @@ Dim l_sprCollided As Fury2Sprite
     ProfileStart "Sprite Scripts"
     If (CLng(m_spParam.Position.X) <> CLng(m_spOldParam.Position.X)) Or (CLng(m_spParam.Position.Y) <> CLng(m_spOldParam.Position.Y)) Then
         If m_booScript_Step Then
-            m_Engine.ContextLevelAdd "Sprite_Step"
+            mvarEngine.ContextLevelAdd "Sprite_Step"
             Err.Clear
         
             m_objScript.Step
         
             Err.Clear
-            m_Engine.ContextLevelRemove
+            mvarEngine.ContextLevelRemove
         End If
     End If
     
     If m_spParam.Events.FadedOut Then
-        m_Engine.ContextLevelAdd "Sprite_FadeOut"
+        mvarEngine.ContextLevelAdd "Sprite_FadeOut"
         Err.Clear
     
         m_objScript.FadeOut
     
         Err.Clear
-        m_Engine.ContextLevelRemove
+        mvarEngine.ContextLevelRemove
     End If
     
     If m_spParam.Events.CollidedWith <> 0 Then
-        m_Engine.ContextLevelAdd "Sprite_Hit"
+        mvarEngine.ContextLevelAdd "Sprite_Hit"
         Err.Clear
         Set l_sprCollided = m_mapMap.Layers(m_lngLayer).Sprites(m_spParam.Events.CollidedWith)
     
@@ -1427,15 +1460,15 @@ Dim l_sprCollided As Fury2Sprite
             m_objScript.Hit
         
         End If
-        m_Engine.ContextLevelRemove
+        mvarEngine.ContextLevelRemove
     ElseIf m_spParam.Events.CollidedWithMap Then
-        m_Engine.ContextLevelAdd "Sprite_HitMap"
+        mvarEngine.ContextLevelAdd "Sprite_HitMap"
         Err.Clear
     
         m_objScript.HitMap
     
         Err.Clear
-        m_Engine.ContextLevelRemove
+        mvarEngine.ContextLevelRemove
     End If
     ProfileStop "Sprite Scripts"
     
@@ -1471,7 +1504,7 @@ Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
         Else
             If State = IdleState Then State = WalkState
             With m_pthPath(1)
-                l_sngPathDistance = m_Engine.DistanceBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
+                l_sngPathDistance = mvarEngine.DistanceBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
                 l_lngRCX = CLng(m_spParam.Position.X)
                 l_lngRCY = CLng(m_spParam.Position.Y)
                 l_lngRPX = CLng(m_spOldParam.Position.X)
@@ -1489,8 +1522,8 @@ Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
                     End If
                 Else
                     If (Abs(l_sngPathDistance) >= (Velocity)) Then
-                        Angle = m_Engine.AngleBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
-                        Velocity = Velocity + m_Engine.VelocityDecay
+                        Angle = mvarEngine.AngleBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
+                        Velocity = Velocity + mvarEngine.VelocityDecay
                         If Velocity < 0 Then Velocity = 0
                         If Velocity > WalkSpeed Then Velocity = WalkSpeed
                         If Velocity > l_sngPathDistance Then Velocity = l_sngPathDistance
@@ -1532,9 +1565,9 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
                 l_lngPreFrame = m_lngFrame
                 l_lngPrePose = m_lngPose
                 l_lngPreState = m_lngState
-                m_posPose.Frames(m_lngFrame).RunScript Me
+                m_posPose.Frames(m_lngFrame).RunScript
                 If (l_lngPreFrame <> m_lngFrame) Or (l_lngPrePose <> m_lngPose) Or (l_lngPreState <> m_lngState) Then
-                    m_Engine.Cameras.Dirty
+                    mvarEngine.Cameras.Dirty
                     ProfileStop "Sprite.UpdateAnimation"
                     Exit Sub
                 End If
@@ -1576,7 +1609,7 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
         End If
     End If
     If m_lngFrame <> l_lngOldFrame Then
-        m_Engine.Cameras.Dirty
+        mvarEngine.Cameras.Dirty
     End If
     ProfileStop "Sprite.UpdateAnimation"
 End Sub

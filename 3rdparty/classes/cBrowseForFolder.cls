@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "cBrowseForFolder"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
@@ -17,7 +17,7 @@ Option Explicit
 Private Const S_OK = 0           ' indicates success
 Private Const S_FALSE = 1&   ' special HRESULT value
 Private Type BROWSEINFO
-    hwndOwner As Long
+    hWndOwner As Long
     pidlRoot As Long
     pszDisplayName As Long ';// Return display name of item selected.
     lpszTitle As Long ';      // text to go in the banner over the tree.
@@ -29,7 +29,7 @@ End Type
 Private Declare Function SHBrowseForFolder Lib "shell32.dll" Alias "SHBrowseForFolderA" _
    (lpbi As BROWSEINFO) As Long
 Private Declare Function SHGetSpecialFolderLocation Lib "shell32.dll" _
-   (ByVal hwndOwner As Long, _
+   (ByVal hWndOwner As Long, _
     ByVal nFolder As Long, _
     pidl As Long) As Long
 Private Declare Function SHGetDesktopFolder Lib "shell32.dll" _
@@ -189,10 +189,10 @@ End Property
 Public Property Let Title(ByVal sTitle As String)
    m_sTitle = sTitle
 End Property
-Public Property Get hwndOwner() As Long
-   hwndOwner = m_hWndOwner
+Public Property Get hWndOwner() As Long
+   hWndOwner = m_hWndOwner
 End Property
-Public Property Let hwndOwner(ByVal lhWnd As Long)
+Public Property Let hWndOwner(ByVal lhWnd As Long)
    m_hWndOwner = lhWnd
 End Property
 Public Property Get InitialDir() As String
@@ -240,7 +240,7 @@ Dim pidlInitial As Long
 Dim pidlOut As Long
 Dim sPath As String
 
-   tBI.hwndOwner = m_hWndOwner
+   tBI.hWndOwner = m_hWndOwner
    sOut = String$(MAX_PATH, 0)
    tBI.pszDisplayName = StrPtr(sOut)
    sTitle = StrConv(m_sTitle, vbFromUnicode)

@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "cChildManager"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 ' Handles notifying the main form of child changes
@@ -22,7 +22,7 @@ On Error Resume Next
     With m_frmForm
         .Visible = NewValue
     End With
-    With Extender
+    With extender
         .Visible = NewValue
     End With
 End Property
@@ -32,7 +32,7 @@ On Error Resume Next
 Dim l_objForm As Object
     SetBusyState True
     Err.Clear
-    With Extender
+    With extender
         .SetFocus
     End With
     m_frmForm.Form_Activate
@@ -53,11 +53,11 @@ On Error Resume Next
     SetBusyState False
 End Sub
 
-Public Property Get Extender() As MDIActiveX
+Public Property Get extender() As MDIActiveX
 On Error Resume Next
 Dim l_objForm As iExtendedForm
     Set l_objForm = m_frmForm
-    Set Extender = l_objForm.Extender
+    Set extender = l_objForm.extender
     Err.Clear
 End Property
 

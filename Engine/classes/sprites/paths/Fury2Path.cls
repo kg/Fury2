@@ -42,6 +42,12 @@ Implements IVirtualFileCollection
 
 Private mCol As Collection
 Private mvarLooping As Boolean
+Private mvarParent As Fury2Sprite
+
+Friend Sub SetParent(ByRef Parent As Fury2Sprite)
+On Error Resume Next
+    Set Parent = mvarParent
+End Sub
 
 Public Sub Completed()
 On Error Resume Next
@@ -53,7 +59,7 @@ Dim l_objWaypoint As Fury2Waypoint
         l_objWaypoint.WaitRemainder = l_objWaypoint.Wait
     End If
     If l_objWaypoint.ReachedEvent <> "" Then
-        m_Engine.ScriptEngine.AddCode l_objWaypoint.ReachedEvent
+        mvarParent.Map.Engine.ScriptEngine.AddCode l_objWaypoint.ReachedEvent
     End If
 End Sub
 

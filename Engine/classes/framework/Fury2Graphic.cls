@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "Fury2Graphic"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
@@ -48,10 +48,20 @@ Public AnimationFrame As Long
 Private m_parParam As AnimatedGraphicParam
 Private m_lngImages() As Long
 Private AnimationDelayBuildup As Long
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Function Duplicate() As Fury2Graphic
     Set Duplicate = New Fury2Graphic
     With Duplicate
+        Duplicate.SetEngine Engine
         Set .Images = Images
         Set .ImageFilenames = ImageFilenames
         .Name = Name
@@ -110,8 +120,8 @@ End Property
 
 Function Show(ByVal X, ByVal Y, Optional ByVal Alpha = 1, Optional ByVal Slot = -1) As Long
 On Error Resume Next
-    If Slot = -1 Then Slot = m_Engine.ActivePictureSlots
-    m_Engine.ShowPicture Slot, Images(AnimationFrame), Floor(CSng(X) - XCenter), Floor(CSng(Y) - YCenter), , , , , BlitMode, Alpha
+    If Slot = -1 Then Slot = Engine.ActivePictureSlots
+    Engine.ShowPicture Slot, Images(AnimationFrame), Floor(CSng(X) - XCenter), Floor(CSng(Y) - YCenter), , , , , BlitMode, Alpha
     Show = Slot
 End Function
 
@@ -163,7 +173,7 @@ Dim l_lngImage As Long, l_imgFile As Fury2Image
     If ImageFilenames.Count > 0 Then
         For l_lngImage = 1 To ImageFilenames.Count
             Set l_imgFile = Nothing
-            Set l_imgFile = m_Engine.LoadImage(CStr(ImageFilenames(l_lngImage)))
+            Set l_imgFile = Engine.LoadImage(CStr(ImageFilenames(l_lngImage)))
             Images.Add l_imgFile
             Err.Clear
         Next

@@ -237,28 +237,6 @@ BLITTERSIMPLE_LOOPBEGIN
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
 
-BLITTERSIMPLE_SIGNATURE(Matte_ColorFilter_Opacity)
-    , ColorFilter *Filter, int FilterOpacity, int Opacity) {
-BLITTERSIMPLE_INIT
-    if (!Filter) return Failure;
-    _BOS(BlitSimple_Matte_ColorFilter_Opacity, 3) , Filter, FilterOpacity, Opacity _BOE
-    Pixel MaskColor = Source->MatteColor;
-BLITTERSIMPLE_BEGIN
-    AlphaLevel *aSource, *aDest;
-    AlphaLevel *aFilterSource, *aFilterDest;
-    aSource = AlphaLevelLookup( ClipByte(Opacity) );
-    aDest = AlphaLevelLookup( ClipByte(Opacity) ^ 0xFF );
-    aFilterSource = AlphaLevelLookup( ClipByte(FilterOpacity) );
-    aFilterDest = AlphaLevelLookup( ClipByte(FilterOpacity) ^ 0xFF );
-BLITTERSIMPLE_LOOPBEGIN
-    if (pSource->V != MaskColor.V) {
-        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, AlphaFromLevel2(aFilterDest, (*pSource)[::Blue], aFilterSource, Filter->Blue[(*pSource)[::Blue]]));
-        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, AlphaFromLevel2(aFilterDest, (*pSource)[::Green], aFilterSource, Filter->Green[(*pSource)[::Green]]));
-        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, AlphaFromLevel2(aFilterDest, (*pSource)[::Red], aFilterSource, Filter->Red[(*pSource)[::Red]]));
-    }
-BLITTERSIMPLE_LOOPEND
-BLITTERSIMPLE_END
-
 BLITTERSIMPLE_SIGNATURE(Matte_Tint_Opacity)
     , Pixel Tint, int Opacity) {
 BLITTERSIMPLE_INIT
@@ -862,28 +840,6 @@ BLITTERSIMPLE_LOOPBEGIN
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
 
-BLITTERSIMPLE_SIGNATURE(SourceAlpha_ColorFilter_Opacity)
-    , ColorFilter *Filter, int FilterOpacity, int Opacity) {
-BLITTERSIMPLE_INIT
-    if (!Filter) return Failure;
-    _BOS(BlitSimple_SourceAlpha_ColorFilter_Opacity, 3) , Filter, FilterOpacity, Opacity _BOE
-BLITTERSIMPLE_BEGIN
-    AlphaLevel *aSource, *aDest, *aScale;
-    AlphaLevel *aFilterSource, *aFilterDest;
-    aScale = AlphaLevelLookup( ClipByte(Opacity) );
-    aFilterSource = AlphaLevelLookup( ClipByte(FilterOpacity) );
-    aFilterDest = AlphaLevelLookup( ClipByte(FilterOpacity) ^ 0xFF );
-BLITTERSIMPLE_LOOPBEGIN
-    if ((*pSource)[::Alpha]) {
-        aSource = AlphaLevelLookup( AlphaFromLevel(aScale, (*pSource)[::Alpha]) );
-        aDest = AlphaLevelLookup( AlphaFromLevel(aScale, (*pSource)[::Alpha]) ^ 0xFF );
-        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, AlphaFromLevel2(aFilterDest, (*pSource)[::Blue], aFilterSource, Filter->Blue[(*pSource)[::Blue]]));
-        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, AlphaFromLevel2(aFilterDest, (*pSource)[::Green], aFilterSource, Filter->Green[(*pSource)[::Green]]));
-        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, AlphaFromLevel2(aFilterDest, (*pSource)[::Red], aFilterSource, Filter->Red[(*pSource)[::Red]]));
-    }
-BLITTERSIMPLE_LOOPEND
-BLITTERSIMPLE_END
-
 BLITTERSIMPLE_SIGNATURE(SourceAlpha_Solid_Tint)
     , Pixel Tint) {
 BLITTERSIMPLE_INIT
@@ -922,6 +878,30 @@ BLITTERSIMPLE_LOOPBEGIN
         (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, AlphaFromLevel(aTint, (*pSource)[::Blue]) + tB);
         (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, AlphaFromLevel(aTint, (*pSource)[::Green]) + tG);
         (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, AlphaFromLevel(aTint, (*pSource)[::Red]) + tR);
+    }
+BLITTERSIMPLE_LOOPEND
+BLITTERSIMPLE_END
+
+BLITTERSIMPLE_SIGNATURE(SourceAlpha_ColorMask)
+    , Pixel Mask) {
+BLITTERSIMPLE_INIT
+    if (Mask[::Alpha] == 0) return Trivial_Success;
+    if (Mask.V == 0xFFFFFFFF) return BlitSimple_SourceAlpha(Dest, Source, Rect, SX, SY);
+    if ((Mask[::Red] == 255) && (Mask[::Green] == 255) && (Mask[::Blue] == 255)) return BlitSimple_SourceAlpha_Opacity(Dest, Source, Rect, SX, SY, Mask[::Alpha]);
+    _BOS(BlitSimple_SourceAlpha_ColorMask, 1) , Mask _BOE
+BLITTERSIMPLE_BEGIN
+    AlphaLevel *aMask[4], *aSource, *aDest;
+    for (int i = 0; i < 4; i++) {
+      aMask[i] = AlphaLevelLookup(Mask[i]);
+    }
+BLITTERSIMPLE_LOOPBEGIN
+    if ((*pSource)[::Alpha]) {
+        Byte a = AlphaFromLevel(aMask[::Alpha], (*pSource)[::Alpha]);
+        aSource = AlphaLevelLookup( a );
+        aDest = AlphaLevelLookup( a ^ 0xFF );
+        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, AlphaFromLevel(aMask[::Blue], (*pSource)[::Blue]));
+        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, AlphaFromLevel(aMask[::Green], (*pSource)[::Green]));
+        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, AlphaFromLevel(aMask[::Red], (*pSource)[::Red]));
     }
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END

@@ -56,7 +56,7 @@ End Sub
 
 Friend Sub ReloadImage()
 On Error Resume Next
-    Set Image = Engine.Engine.LoadImage(m_strFilename, True)
+    Set Image = DefaultEngine.LoadImage(m_strFilename, True)
 End Sub
 
 Public Property Get Filename() As String

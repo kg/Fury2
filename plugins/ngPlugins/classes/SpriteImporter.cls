@@ -29,7 +29,7 @@ Dim Doc As frmSprites
     Set Doc = Document
     With Options
 '        Set l_imgImage = F2LoadImage(Options.Image)
-        Set l_imgImage = Engine.Engine.LoadImage(Options.Image, True)
+        Set l_imgImage = DefaultEngine.LoadImage(Options.Image, True)
         If l_imgImage Is Nothing Then
             MsgBox "Unable to load image.", vbExclamation, "Error"
             Exit Sub
@@ -54,7 +54,7 @@ Dim Doc As frmSprites
                     l_posPose.Frames.Add l_fraFrame.Duplicate
                 End If
             Next l_lngX
-            l_posPose.Name = "Imported Pose #" & l_lngCellsY
+            l_posPose.Name = "Imported Pose #" & l_lngY
             Doc.SelectedSprite.Poses.Add l_posPose, , l_lngInsertionPoint + l_lngY + 1
         Next l_lngY
         Doc.SelectedSprite.Initialize

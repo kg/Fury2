@@ -32,11 +32,11 @@ Name "Fury²"
   ;Language
   !insertmacro MUI_LANGUAGE "English"
   
-  Icon "icon.ico"
-  UninstallIcon "icon.ico"
+  Icon "res\icon.ico"
+  UninstallIcon "res\icon.ico"
 
   ;General
-  OutFile "fury2_beta_05.exe"
+  OutFile "fury2_beta_07.exe"
 
   ;Folder-selection page
   InstallDir "$PROGRAMFILES\${NAME}"
@@ -48,7 +48,7 @@ Section "-Engine"
 	SetOutPath "$INSTDIR"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayName" "${NAME}"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "UninstallString" "$INSTDIR\Uninstall.exe"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "0.5"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "0.7"
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoModify" 1
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoRepair" 1
 	WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -114,9 +114,12 @@ Section "Editor"
 	File "J:\development\binary\sys\compressed\ngInterfaces.dll"
 	File "J:\development\binary\sys\compressed\ngCommon.dll"
 	File "J:\development\binary\sys\compressed\ng.dll"
+	File "J:\development\binary\sys\compressed\tk.dll"
+	File "J:\development\binary\sys\compressed\debugger.dll"
     
 	SetOutPath "$INSTDIR\sys\editor"
-    File "J:\development\binary\sys\editor\*.*"
+    File "J:\development\binary\sys\editor\*.dll"
+    File "J:\development\binary\sys\editor\*.ocx"
     
     RegDLL "$INSTDIR\sys\editor\SSubTmr6.dll"
     RegDLL "$INSTDIR\sys\editor\vbalHook6.dll"
@@ -131,6 +134,7 @@ Section "Editor"
     RegDLL "$INSTDIR\sys\editor\vbalScrb6.ocx"
     RegDLL "$INSTDIR\sys\editor\vbalTbar6.ocx"
     RegDLL "$INSTDIR\sys\editor\vbalTreeView6.ocx"
+    RegDLL "$INSTDIR\sys\editor\vbalEdit.ocx"
     RegDLL "$INSTDIR\sys\editor\cNewMenu6.dll"
     RegDLL "$INSTDIR\sys\editor\vbalHook6.dll"
     RegDLL "$INSTDIR\sys\editor\vbalMDITabs6.dll"
@@ -140,6 +144,8 @@ Section "Editor"
 	RegDLL "$INSTDIR\sys\ngInterfaces.dll"
 	RegDLL "$INSTDIR\sys\ngCommon.dll"
 	RegDLL "$INSTDIR\sys\ng.dll"
+	RegDLL "$INSTDIR\sys\tk.dll"
+	RegDLL "$INSTDIR\sys\debugger.dll"
 
 	SetOutPath "$INSTDIR\"
 SectionEnd
@@ -216,6 +222,8 @@ Section "Uninstall"
 
     IfFileExists "$INSTDIR\sys\ngIDE.exe" UninstallEditor SkipEditor
 UninstallEditor:
+	UnRegDLL "$INSTDIR\sys\debugger.dll"
+	UnRegDLL "$INSTDIR\sys\tk.dll"
 	UnRegDLL "$INSTDIR\sys\ng.dll"
 	UnRegDLL "$INSTDIR\sys\ngInterfaces.dll"
 	UnRegDLL "$INSTDIR\sys\ngCommon.dll"
@@ -224,6 +232,7 @@ UninstallEditor:
     UnRegDLL "$INSTDIR\sys\editor\MDIActiveX.ocx"
     UnRegDLL "$INSTDIR\sys\editor\cFScroll.ocx"
     UnRegDLL "$INSTDIR\sys\editor\cmcs21.ocx"
+    UnRegDLL "$INSTDIR\sys\editor\vbalEdit.ocx"
     UnRegDLL "$INSTDIR\sys\editor\vbalCbEx.ocx"
     UnRegDLL "$INSTDIR\sys\editor\vbalDkTb6.ocx"
     UnRegDLL "$INSTDIR\sys\editor\vbalDTab6.ocx"

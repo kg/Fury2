@@ -72,7 +72,7 @@ End Sub
 Friend Sub LogError(Error As String)
 On Error Resume Next
     Debug.Print Error
-    OutputHook.TextOut Error
+    OutputHook.DebugOut Error
 End Sub
 
 Public Function AutoSelectExtension(ByVal Filename As String, Optional ByVal Extensions As String = "*") As String

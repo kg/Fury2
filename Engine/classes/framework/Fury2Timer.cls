@@ -44,6 +44,15 @@ Private mvarLastFiring As Long
 Private mvarRealtime As Boolean
 Private mvarGameOnly As Boolean
 Private mvarOneShot As Boolean
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Property Let OneShot(ByVal vData As Boolean)
     mvarOneShot = vData
@@ -71,7 +80,7 @@ End Property
 
 Public Property Let Enabled(ByVal vData As Boolean)
     mvarEnabled = vData
-    mvarLastFiring = CLng(m_Engine.HiTimer * 1000)
+    mvarLastFiring = CLng(Engine.HiTimer * 1000)
 End Property
 
 Public Property Get Enabled() As Boolean
@@ -101,7 +110,7 @@ Dim m_lngUpdatesDue As Long
 Dim m_lngUpdates As Long
     If Not mvarEnabled Then Exit Sub
     Err.Clear
-    m_lngTime = CLng(m_Engine.HiTimer * 1000)
+    m_lngTime = CLng(Engine.HiTimer * 1000)
     If mvarRealtime Then
         mvarBuildup = mvarBuildup + (m_lngTime - mvarLastFiring)
         mvarLastFiring = m_lngTime
@@ -110,28 +119,28 @@ Dim m_lngUpdates As Long
         If m_lngUpdatesDue <= 0 Then Err.Clear: Exit Sub
         If m_lngUpdatesDue > c_lngMaxTimerUpdates Then m_lngUpdatesDue = c_lngMaxTimerUpdates
         For m_lngUpdates = 1 To m_lngUpdatesDue
-            If (m_Engine.Paused = False) Or (mvarGameOnly = False) Then
+            If (Engine.Paused = False) Or (mvarGameOnly = False) Then
                 If mvarOneShot Then mvarEnabled = False
-                m_Engine.ContextLevelAdd "Timer_Fire"
+                Engine.ContextLevelAdd "Timer_Fire"
                 Err.Clear
-                m_Engine.ScriptEngine.AddCode mvarFireCode
+                Engine.ScriptEngine.AddCode mvarFireCode
                 If Err <> 0 Then mvarEnabled = False
                 Err.Clear
-                m_Engine.ContextLevelRemove
+                Engine.ContextLevelRemove
             End If
         Next m_lngUpdates
         Err.Clear
     Else
         If (m_lngTime) >= (mvarLastFiring + mvarDelay) Then
-            If (m_Engine.Paused = False) Or (mvarGameOnly = False) Then
+            If (Engine.Paused = False) Or (mvarGameOnly = False) Then
                 If mvarOneShot Then mvarEnabled = False
                 mvarLastFiring = m_lngTime
-                m_Engine.ContextLevelAdd "Timer_Fire"
+                Engine.ContextLevelAdd "Timer_Fire"
                 Err.Clear
-                m_Engine.ScriptEngine.AddCode mvarFireCode
+                Engine.ScriptEngine.AddCode mvarFireCode
                 If Err <> 0 Then mvarEnabled = False
                 Err.Clear
-                m_Engine.ContextLevelRemove
+                Engine.ContextLevelRemove
             End If
         End If
     End If
@@ -140,7 +149,7 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error Resume Next
-    mvarLastFiring = m_Engine.HiTimer * 1000
+    mvarLastFiring = Engine.HiTimer * 1000
 End Sub
 
 Private Sub Class_Terminate()

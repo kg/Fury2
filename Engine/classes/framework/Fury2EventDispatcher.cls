@@ -60,6 +60,11 @@ Public Enabled As Boolean
 Public DrawBehind As Boolean
 Public Backbuffer As Fury2Image
 Private m_booEventsEnabled(DispEvt_Max_Value) As Boolean
+Private m_engEngine As Fury2Engine
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Private Function CanDispatch(ByVal Evt As DispatcherEvents) As Boolean
 On Error Resume Next
@@ -125,7 +130,7 @@ End Property
 Private Sub Class_Initialize()
 On Error Resume Next
     Enabled = True
-    Set Backbuffer = m_Engine.Backbuffer
+    Set Backbuffer = Engine.Backbuffer
 End Sub
 
 Private Sub Fury2Plugin_ControlActivate(Control As Engine.Fury2InputControl)
@@ -147,10 +152,11 @@ Private Property Get Fury2Plugin_DrawBehind() As Boolean
 End Property
 
 Private Property Set Fury2Plugin_Engine(ByVal RHS As Engine.Fury2Engine)
+    Set m_engEngine = RHS
 End Property
 
 Private Property Get Fury2Plugin_Engine() As Engine.Fury2Engine
-    Set Fury2Plugin_Engine = m_Engine
+    Set Fury2Plugin_Engine = m_engEngine
 End Property
 
 Private Sub Fury2Plugin_Init()
@@ -250,3 +256,7 @@ On Error Resume Next
         Dispatchee.Event_Update Nothing
     End If
 End Sub
+
+Private Sub Fury2Plugin_OutputPluginChanged()
+End Sub
+

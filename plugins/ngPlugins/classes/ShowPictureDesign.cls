@@ -39,7 +39,7 @@ Dim l_lngIndex As Long
 Dim l_strScript As String
 Dim l_picPicture As Picture
 Dim se As IScriptLanguage
-    Set se = Engine.Engine.ScriptEngine.Language
+    Set se = DefaultEngine.ScriptEngine.Language
     l_strScript = se.GenerateAssignment("Slot", "0", False) & se.LineTerminator
     For Each l_picPicture In Pictures
         With l_picPicture

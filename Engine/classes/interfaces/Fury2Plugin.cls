@@ -89,6 +89,9 @@ End Sub
 Public Sub Unload()
 End Sub
 
+Public Sub OutputPluginChanged()
+End Sub
+
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
     With File

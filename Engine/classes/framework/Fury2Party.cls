@@ -44,6 +44,15 @@ Private mvarMembers As Collection
 Public Money As Long
 Public Leader As Long
 Public Controller As Fury2Controller
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Property Get Revision() As Fury2RevisionData
     Set Revision = mvarRevision
@@ -61,22 +70,22 @@ Dim m_lngItems As Long
     If mvarMembers.Count > 0 Then
         If Controller Is Nothing Then
         Else
-            m_Engine.UnHookEvents Controller
+            Engine.UnHookEvents Controller
             Set Controller = Nothing
         End If
-        Set Controller = m_Engine.F2Controller(mvarMembers(Leader).Sprite, m_Engine.Cameras(1))
+        Set Controller = Engine.F2Controller(mvarMembers(Leader).Sprite, Engine.Cameras(1))
         If Controller Is Nothing Then
             Set Controller = New Fury2Controller
-            Set Controller.Camera = m_Engine.Cameras(1)
+            Set Controller.Camera = Engine.Cameras(1)
         End If
-        m_Engine.HookEvents Controller
+        Engine.HookEvents Controller
     End If
 End Sub
 
 Public Function CreateMember() As Object
 On Error Resume Next
     Err.Clear
-    With m_Engine.ScriptEngine
+    With Engine.ScriptEngine
         .AddCode .Language.GenerateAssignment("NewPartyMember", .Language.GenerateInstantiation("PartyMember"), True)
         Set CreateMember = .Eval("NewPartyMember")
     End With

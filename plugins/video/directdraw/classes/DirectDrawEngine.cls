@@ -42,7 +42,7 @@ Public Sub SetCaption(Text As String)
     If Fullscreen Then
         If m_OutForm.Caption <> "" Then
             m_OutForm.Caption = ""
-            SetWindowText m_OutForm.hWnd, Text
+            SetWindowText m_OutForm.hwnd, Text
         End If
     Else
         If m_OutForm.Caption <> Text Then m_OutForm.Caption = Text
@@ -82,19 +82,18 @@ On Error Resume Next
     DDUnInitScreen
     SetFormSize m_OutForm, XSize * ScaleRatio, YSize * ScaleRatio, True
     DDInitScreen Fullscreen, XSize * ScaleRatio, YSize * ScaleRatio, m_Hooked.BitDepth, HWFlip
+    InitClipper
 End Sub
 
 Public Sub Init(ByVal XRes As Long, ByVal YRes As Long, ByVal BPP As Long, ByVal Caption As String, Optional ByVal Windowed As Boolean = False, Optional ByVal ScreenX = 0, Optional ByVal ScreenY = 0, Optional ByVal Window As Long = 0)
 On Error Resume Next
-    If F2Initialized = False Then
-        Exit Sub
-    End If
+    If Not F2Initialized Then Exit Sub
     Fullscreen = Not Windowed
     HWFlip = Fullscreen
     m_lngWidth = XRes
     m_lngHeight = YRes
     LoadForm
-    DDInit m_OutForm.hWnd
+    DDInit m_OutForm.hwnd
     DDInitScreen Not Windowed, XRes * ScaleRatio, YRes * ScaleRatio, BPP, HWFlip
     Reallocate
 End Sub
@@ -121,8 +120,8 @@ End Sub
 
 Public Sub Flip()
 On Error Resume Next
-Dim l_rctDest As DxVBLib.Rect
-Dim l_rctSource As DxVBLib.Rect
+Dim l_rctDest As DxVBLib.RECT
+Dim l_rctSource As DxVBLib.RECT
     If m_Closed Then Exit Sub
     LockBackbuffer
     If m_ddsBackbuffer.isLost Then
@@ -136,7 +135,7 @@ Dim l_rctSource As DxVBLib.Rect
         DDInitScreen Fullscreen, m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, m_Hooked.BitDepth, HWFlip
         InitClipper
     End If
-    m_DX7.GetWindowRect m_OutForm.picBuffer.hWnd, l_rctDest
+    m_DX7.GetWindowRect m_OutForm.picBuffer.hwnd, l_rctDest
     l_rctSource.Right = Backbuffer.Width
     l_rctSource.Bottom = Backbuffer.Height
     m_ddsHWBuffer.BltFast 0, 0, m_ddsBackbuffer, l_rctSource, DDBLTFAST_WAIT
@@ -174,7 +173,7 @@ On Error Resume Next
     DDUnInitScreen
     DDShutdown
     LoadForm
-    DDInit m_OutForm.hWnd
+    DDInit m_OutForm.hwnd
     DDInitScreen Fullscreen, m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, m_Hooked.BitDepth, HWFlip
     Allocate
 End Sub
@@ -187,14 +186,14 @@ On Error Resume Next
     DDUnInitScreen
     DDShutdown
     LoadForm
-    DDInit m_OutForm.hWnd
+    DDInit m_OutForm.hwnd
     DDInitScreen Fullscreen, m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, m_Hooked.BitDepth, HWFlip
     Allocate
 End Sub
 
 Friend Sub LockBackbuffer()
 On Error Resume Next
-Dim l_rcLock As DxVBLib.Rect
+Dim l_rcLock As DxVBLib.RECT
     SoftFX.SetImagePitch Backbuffer.Handle, 0
     SoftFX.SetImagePointer Backbuffer.Handle, 0
     SoftFX.SetImageLocked Backbuffer.Handle, 1
@@ -208,7 +207,7 @@ End Sub
 Friend Sub UnlockBackbuffer()
 On Error Resume Next
 Dim l_sdDesc As DDSURFACEDESC2
-Dim l_rcLock As DxVBLib.Rect
+Dim l_rcLock As DxVBLib.RECT
     m_ddsBackbuffer.GetSurfaceDesc l_sdDesc
     SoftFX.SetImagePointer Backbuffer.Handle, 0
     SoftFX.SetImageLocked Backbuffer.Handle, 1
@@ -241,13 +240,13 @@ End Sub
 Sub InitClipper()
 On Error Resume Next
     Set m_ddcClip = m_DD7.CreateClipper(0)
-    m_ddcClip.SetHWnd m_OutForm.picBuffer.hWnd
+    m_ddcClip.SetHWnd m_OutForm.picBuffer.hwnd
     m_ddsScreen.SetClipper m_ddcClip
 End Sub
 
 Public Sub Allocate()
 On Error Resume Next
-Dim l_rctSurface As DxVBLib.Rect
+Dim l_rctSurface As DxVBLib.RECT
     SoftFX.SetImageWidth Backbuffer.Handle, m_lngWidth
     SoftFX.SetImageHeight Backbuffer.Handle, m_lngHeight
     SoftFX.SetImagePitch Backbuffer.Handle, 0
@@ -347,4 +346,5 @@ On Error Resume Next
     If m_OutForm.WindowState = 2 Then
         GoFullscreen
     End If
+    InitClipper
 End Sub

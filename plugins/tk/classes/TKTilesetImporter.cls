@@ -49,7 +49,7 @@ Private Property Set iPlugin_Editor(RHS As Object)
 End Property
 
 Private Property Get iPlugin_Icon() As stdole.Picture
-    Set iPlugin_Icon = LoadResPicture("SPRITES", vbResIcon)
+    Set iPlugin_Icon = LoadResPicture("TILESET", vbResIcon)
 End Property
 
 Private Sub iPlugin_Initialize()

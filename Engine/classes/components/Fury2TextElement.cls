@@ -59,7 +59,7 @@ On Error Resume Next
     If Realtime Then
     Else
         If InStr(m_strText, "<%=") Then
-            m_strText = m_Engine.ParseString(m_strText)
+            m_strText = Engine.ParseString(m_strText)
         End If
     End If
 End Property
@@ -76,7 +76,7 @@ Dim m_lngXOffset As Long, m_lngYOffset As Long
     If Realtime Then
         If InStr(m_strText, "<%=") Then
             Err.Clear
-            m_strText2 = m_Engine.ParseString(m_strText)
+            m_strText2 = Engine.ParseString(m_strText)
             If Err <> 0 Then
                 Realtime = False
                 Err.Clear
@@ -107,7 +107,7 @@ Sub Update()
     ElseIf FadeSpeed < 0 Then
         Alpha = Alpha + FadeSpeed
         If Alpha > 1 Then Alpha = 1
-        If Alpha < 0 Then Alpha = 0: FadeSpeed = 0: m_Engine.UnHookEvents Me
+        If Alpha < 0 Then Alpha = 0: FadeSpeed = 0: Engine.UnHookEvents Me
     End If
 End Sub
 
@@ -115,7 +115,7 @@ Private Sub Class_Initialize()
 On Error Resume Next
     Alpha = 1
     Set Rectangle = New Fury2Rect
-    Set Me.Font = m_Engine.Font
+    Set Me.Font = Engine.Font
 End Sub
 
 Private Property Get Fury2Plugin_DrawBehind() As Boolean
@@ -195,4 +195,6 @@ On Error Resume Next
     End With
 End Sub
 
+Private Sub Fury2Plugin_OutputPluginChanged()
+End Sub
 

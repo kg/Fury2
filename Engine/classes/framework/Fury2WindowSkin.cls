@@ -46,6 +46,15 @@ Private m_booEdgeOverlap As Boolean
 Private m_strTitle As String
 Private m_strAuthor As String
 Private m_strFilename As String
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Function Class_ToString() As String
 On Error Resume Next
@@ -241,7 +250,7 @@ End Sub
 Function ImportImage(ByVal Filename, Optional ByVal CornerWidth As Long = 8, Optional ByVal CornerHeight As Long = 8, Optional ByVal MiddleWidth As Long = 48, Optional ByVal MiddleHeight As Long = 48, Optional ByVal MaskColor As Long = 0) As Boolean
 On Error Resume Next
 Dim l_imgFile As Fury2Image
-    Set l_imgFile = m_Engine.LoadImage(Filename, True)
+    Set l_imgFile = Engine.LoadImage(Filename, True)
     If l_imgFile Is Nothing Then ImportImage = False: Exit Function
     If (CornerWidth < 1) Or (CornerHeight < 1) Or (MiddleWidth < 1) Or (MiddleHeight < 1) Then ImportImage = False: Exit Function
     Set m_imgImages(WS_TopLeft) = l_imgFile.Subimage(F2Rect(0, 0, CornerWidth, CornerHeight, False))
@@ -290,8 +299,8 @@ Dim l_vfSkin As VirtualFile
 Dim l_lngLoadBitmaps As Long
 Dim l_intWidth As Integer, l_intHeight As Integer
 Dim l_rwsHeader As RWS_Header
-    If Not m_Engine.Filesystem.FileExists(Filename) Then Exit Function
-    Set l_vfSkin = m_Engine.Filesystem.File(Filename).Load
+    If Not Engine.Filesystem.FileExists(Filename) Then Exit Function
+    Set l_vfSkin = Engine.Filesystem.File(Filename).Load
     l_vfSkin.Skip 4
     l_vfSkin.Load l_rwsHeader.Version
     l_vfSkin.Load l_rwsHeader.EdgeWidth
@@ -354,7 +363,7 @@ Dim l_strExtension As String
     Case "rws"
         Load = ImportRWS(Filename)
     Case "f2ws"
-        Load = m_Engine.LoadFromFile(Me, m_Engine.Filesystem.File(Filename))
+        Load = Engine.LoadFromFile(Me, Engine.Filesystem.File(Filename))
         m_strTitle = Filename
     Case Else
         Load = ImportImage(Filename)
@@ -364,7 +373,7 @@ End Function
 Function Save(ByVal Filename) As Boolean
 On Error Resume Next
     m_strFilename = Filename
-    Save = m_Engine.SaveToFile(Me, m_Engine.Filesystem.File(Filename))
+    Save = Engine.SaveToFile(Me, Engine.Filesystem.File(Filename))
 End Function
 
 Function Duplicate() As Fury2WindowSkin

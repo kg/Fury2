@@ -46,15 +46,25 @@ Private mvarMatteColor As Long
 Private mvarDelay As Long
 Private mvarImage As Fury2Image
 Private mvarScript As String
+Private mvarParent As Fury2Pose
 
-Public Sub RunScript(Parent As Fury2Sprite)
+Public Property Get Parent() As Fury2Pose
+    Set Parent = mvarParent
+End Property
+
+Friend Sub SetParent(ByRef Parent As Fury2Pose)
+On Error Resume Next
+    Set mvarParent = Parent
+End Sub
+
+Public Sub RunScript()
 On Error Resume Next
     If Len(mvarScript) < 1 Then Exit Sub
-    With m_Engine.ScriptEngine
-        Set m_Engine.IObjThis = Parent
+    With mvarParent.Parent.Engine.ScriptEngine
+        Set mvarParent.Parent.Engine.IObjThis = mvarParent.Parent
         .AddCode .Language.GenerateAssignment("Object", "IObjThis", True)
         .AddCode mvarScript
-        Set m_Engine.IObjThis = Nothing
+        Set mvarParent.Parent.Engine.IObjThis = Nothing
         .AddCode .Language.GenerateAssignment("Object", "IObjThis", True)
     End With
 End Sub
@@ -76,10 +86,10 @@ On Error Resume Next
         End If
     End If
     If mvarImage Is Nothing Then
-        Set mvarImage = m_Engine.LoadImage(mvarFilename)
+        Set mvarImage = mvarParent.Parent.Engine.LoadImage(mvarFilename)
     End If
     If mvarImage Is Nothing Then
-        CriticalError "LoadGFX", "Unable to load frame: " + mvarFilename
+        mvarParent.Parent.Engine.CriticalError "Fury2PoseFrame.LoadGraphics", "Unable to load frame: " + mvarFilename
     Else
         mvarImage.MatteColor = mvarMatteColor
     End If
@@ -97,9 +107,9 @@ On Error Resume Next
     Set Duplicate = New Fury2PoseFrame
     With Duplicate
         .MatteColor = mvarMatteColor
-        .Filename = mvarFilename
         Set .Rectangle = mvarRectangle.Copy
         Set .Image = mvarImage
+        .SetFilename mvarFilename
         .XCenter = mvarXCenter
         .YCenter = mvarYCenter
         .Delay = mvarDelay
@@ -140,6 +150,11 @@ End Property
 Public Property Get MaskColor() As Long
     MaskColor = mvarMatteColor
 End Property
+
+Friend Sub SetFilename(ByRef Filename As String)
+On Error Resume Next
+    mvarFilename = Filename
+End Sub
 
 Public Property Let Filename(ByVal vData As String)
 Attribute Filename.VB_Description = "The name of the file the frame is stored in.{ImagePath}"

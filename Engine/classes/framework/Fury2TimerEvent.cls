@@ -38,6 +38,15 @@ Private m_lngType As Long
 Private m_lngBeginTime As Long, m_lngEndTime As Long
 Private m_booRepeats As Boolean, m_lngRepeatTiming As Long
 Private m_booTriggered As Boolean, m_booEnded As Boolean
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Sub Free()
 On Error Resume Next
@@ -120,8 +129,8 @@ Dim l_lngLength As Long
     If m_booRepeats Then
         m_booTriggered = False
         l_lngLength = m_lngEndTime - m_lngBeginTime
-        m_lngBeginTime = m_Engine.GameTime + m_lngRepeatTiming
-        m_lngEndTime = m_Engine.GameTime + m_lngRepeatTiming + l_lngLength
+        m_lngBeginTime = Engine.GameTime + m_lngRepeatTiming
+        m_lngEndTime = Engine.GameTime + m_lngRepeatTiming + l_lngLength
     End If
     Script.Ended
 End Sub
@@ -130,9 +139,9 @@ Public Property Get Active() As Boolean
 On Error Resume Next
     Select Case m_lngType
     Case Fury2TimerEventTypes.F2TE_Normal
-        Active = (m_Engine.GameTime >= m_lngBeginTime) And (m_Engine.GameTime <= m_lngEndTime)
+        Active = (Engine.GameTime >= m_lngBeginTime) And (Engine.GameTime <= m_lngEndTime)
     Case Fury2TimerEventTypes.F2TE_Exact
-        Active = ((m_Engine.GameTime >= m_lngBeginTime) And (m_Engine.GameTime <= m_lngEndTime)) And (m_booTriggered)
+        Active = ((Engine.GameTime >= m_lngBeginTime) And (Engine.GameTime <= m_lngEndTime)) And (m_booTriggered)
     Case Else
     End Select
 End Property
@@ -142,8 +151,8 @@ On Error Resume Next
 Dim l_lngMissed As Long, l_lngLength As Long
 
     If m_booRepeats Then
-        If m_Engine.GameTime > m_lngEndTime Then
-            l_lngMissed = Ceil((m_Engine.GameTime - m_lngEndTime) / m_lngRepeatTiming)
+        If Engine.GameTime > m_lngEndTime Then
+            l_lngMissed = Ceil((Engine.GameTime - m_lngEndTime) / m_lngRepeatTiming)
             l_lngLength = m_lngEndTime - m_lngBeginTime
             m_lngBeginTime = m_lngEndTime + (m_lngRepeatTiming * l_lngMissed)
             m_lngEndTime = m_lngBeginTime + l_lngLength
@@ -153,12 +162,12 @@ Dim l_lngMissed As Long, l_lngLength As Long
     If m_booTriggered Then
     Else
         If m_lngType = Fury2TimerEventTypes.F2TE_Exact Then
-            If m_Engine.GameTime = m_lngBeginTime Then
+            If Engine.GameTime = m_lngBeginTime Then
                 Began
             End If
         Else
             If Active Then
-                If m_Engine.GameTime = m_lngBeginTime Then
+                If Engine.GameTime = m_lngBeginTime Then
                     Began
                 Else
                     AlreadyBegan
@@ -180,19 +189,18 @@ Dim l_strScript As String
     If m_objScript Is Nothing Then
         If (m_booScriptFailed = False) Then
             Err.Clear
-            m_Engine.TimerEventObjectCount = m_Engine.TimerEventObjectCount + 1
-            With m_Engine.ScriptEngine.Language
+            Engine.TimerEventObjectCount = Engine.TimerEventObjectCount + 1
+            With Engine.ScriptEngine.Language
                 l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                 .GenerateClassVariable("Map") & .LineTerminator & _
                 .GenerateClassMethod("F2OInit", Array("T", "M"), _
                 .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
                 .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
                 ) & .LineTerminator & ScriptSource
-                m_Engine.CacheScript "TE" & m_Engine.TimerEventObjectCount, .GenerateClass("TE" & m_Engine.TimerEventObjectCount, l_strScript)
-                m_Engine.ScriptEngine.AddCode .GenerateAssignment("NewTE" & m_Engine.TimerEventObjectCount, .GenerateInstantiation("TE" & m_Engine.TimerEventObjectCount), True)
-                Set m_objScript = m_Engine.ScriptEngine.Eval("NewTE" & m_Engine.TimerEventObjectCount)
+                Engine.CacheScript "TE" & Engine.TimerEventObjectCount, .GenerateClass("TE" & Engine.TimerEventObjectCount, l_strScript)
+                Set m_objScript = Engine.ScriptEngine.Eval(.GenerateInstantiation("TE" & Engine.TimerEventObjectCount))
             End With
-            Set m_Engine.IObjThis = Me
+            Set Engine.IObjThis = Me
             m_objScript.F2OInit Me, m_mapMap
             m_objScript.Initialize
             If (Err.Number <> 0) Or (m_objScript Is Nothing) Then m_booScriptFailed = True

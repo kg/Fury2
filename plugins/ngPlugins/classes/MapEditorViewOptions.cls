@@ -25,11 +25,20 @@ Private m_lngPathNodeColor As Long
 Private m_lngZoom As Long
 Private m_booAutoScroll As Boolean
 Private m_booAlwaysShowLighting As Boolean
+Private m_booAlwaysShowSprites As Boolean
 Private m_booShowGrid As Boolean
 Private m_booSnapToGrid As Boolean
 Private m_booEnableWrapping As Boolean
 Private m_booEnableParallax As Boolean
 Private m_booPreserveTilesetRows As Boolean
+
+Public Property Get AlwaysShowSprites() As Boolean
+    AlwaysShowSprites = m_booAlwaysShowSprites
+End Property
+
+Public Property Let AlwaysShowSprites(ByVal NewValue As Boolean)
+    m_booAlwaysShowSprites = NewValue
+End Property
 
 Public Property Get AlwaysShowLighting() As Boolean
     AlwaysShowLighting = m_booAlwaysShowLighting
@@ -181,6 +190,7 @@ On Error Resume Next
         .Load m_lngPathColor
         .Load m_lngPathNodeColor
         .Load m_booAlwaysShowLighting
+        .Load m_booAlwaysShowSprites
     End With
 End Sub
 
@@ -201,5 +211,6 @@ On Error Resume Next
         .Save m_lngPathColor
         .Save m_lngPathNodeColor
         .Save m_booAlwaysShowLighting
+        .Save m_booAlwaysShowSprites
     End With
 End Sub

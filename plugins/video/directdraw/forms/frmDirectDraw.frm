@@ -17,7 +17,7 @@ Begin VB.Form frmDirectDraw
    Icon            =   "frmDirectDraw.frx":0000
    KeyPreview      =   -1  'True
    LinkTopic       =   "Form1"
-   MouseIcon       =   "frmDirectDraw.frx":000C
+   MouseIcon       =   "frmDirectDraw.frx":492A
    ScaleHeight     =   240
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   320
@@ -41,6 +41,10 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+Private Sub Form_Load()
+    SetAppIcon Me
+End Sub
+
 Private Sub Form_Resize()
 On Error Resume Next
     picBuffer.Move 0, 0, Me.ScaleWidth, Me.ScaleHeight

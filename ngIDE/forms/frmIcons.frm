@@ -8,6 +8,7 @@ Begin VB.Form frmIcons
    ClientTop       =   300
    ClientWidth     =   1620
    ControlBox      =   0   'False
+   Icon            =   "frmIcons.frx":0000
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
@@ -21,26 +22,26 @@ Begin VB.Form frmIcons
       Top             =   0
       _ExtentX        =   953
       _ExtentY        =   953
-      ColourDepth     =   24
-      Size            =   49364
-      Images          =   "frmIcons.frx":0000
+      ColourDepth     =   8
+      Size            =   50512
+      Images          =   "frmIcons.frx":000C
       Version         =   131072
-      KeyCount        =   43
-      Keys            =   $"frmIcons.frx":C0F4
+      KeyCount        =   44
+      Keys            =   $"frmIcons.frx":C57C
    End
    Begin vbalIml6.vbalImageList ilWindowIcons 
       Left            =   540
       Top             =   0
       _ExtentX        =   953
       _ExtentY        =   953
-      ColourDepth     =   24
+      ColourDepth     =   8
    End
    Begin vbalIml6.vbalImageList ilPluginIcons 
       Left            =   1080
       Top             =   0
       _ExtentX        =   953
       _ExtentY        =   953
-      ColourDepth     =   24
+      ColourDepth     =   8
    End
 End
 Attribute VB_Name = "frmIcons"

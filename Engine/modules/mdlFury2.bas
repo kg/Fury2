@@ -22,21 +22,16 @@ Option Explicit
 
 Public m_booIDE As Boolean
 Private m_lngLog As Long
-Public m_booEditor As Boolean
+'Public m_booEditor As Boolean
 Public m_booTrace As Boolean
-Public m_booCritical As Boolean
-Public m_booShutdown As Boolean
-Public m_Engine As Fury2Engine
+'Public m_booCritical As Boolean
+'Public m_booShutdown As Boolean
+Public DefaultEngine As Fury2Engine
+'Public m_Engine As Fury2Engine
 Public m_Globals As New Fury2Globals
-Public m_Backbuffer As Fury2Image
-Public m_GFX As Object
-Public WindowIcon As IPictureDisp, AppIcon As IPictureDisp
 Public SystemRoot As String
 Public m_booMouseVisible As Boolean, m_booOldMouse As Boolean
 Public g_lngMouseX As Single, g_lngMouseY As Single, g_lngMouseButtons As Long
-Public m_Notify As Object, m_booNotifyNoLogging As Boolean
-Public m_imgMouseBuffer As Fury2Image
-Public LogItems As Fury2Collection
 
 Public Function FRound(ByVal Value As Single) As Long
 On Error Resume Next
@@ -75,18 +70,18 @@ End Function
 
 Sub ProgressUpdate(Amount As Single)
 On Error Resume Next
-    If m_booEditor Then
-        Load frmProgress
-        frmProgress.Show
-        frmProgress.SetProgress Amount
-    End If
+'    If m_booEditor Then
+'        Load frmProgress
+'        frmProgress.Show
+'        frmProgress.SetProgress Amount
+'    End If
 End Sub
 
 Sub ProgressHide()
 On Error Resume Next
-    If m_booEditor Then
-        Unload frmProgress
-    End If
+'    If m_booEditor Then
+'        Unload frmProgress
+'    End If
 End Sub
 
 Sub LoadRect(ByVal FileHandle As Integer, ByRef Rct As Fury2Rect)
@@ -105,22 +100,8 @@ Dim m_lngValue As Long
     Err.Clear
 End Sub
 
-Sub ShowError(Error, Details)
-On Error Resume Next
-    #If DebugFeatures = 1 Then
-    If m_Engine.Running Then Else Exit Sub
-    If Trim(LCase(Details)) = "name redefined" Then Exit Sub
-    m_Engine.ErrorOccurred = True
-    LogEntry Error & vbCrLf & Details
-    #End If
-End Sub
-
 Public Function DefaultPath() As String
     DefaultPath = "/"
-End Function
-
-Public Function LibraryPath() As String
-    LibraryPath = "/library/"
 End Function
 
 Public Function RootPath() As String
@@ -138,119 +119,6 @@ Public Function FixPath(ByVal Filename As String) As String
     End If
 End Function
 
-Sub LogEntry(Optional Text)
-On Error Resume Next
-Dim l_strCBoard As String
-Dim l_strText As String
-    l_strText = CStr(Text)
-    If m_Engine.LogToClipboard Then
-        l_strCBoard = Clipboard.GetText
-        Clipboard.Clear
-        Clipboard.SetText l_strCBoard + vbCrLf + "> " + l_strText
-    End If
-    #If DebugFeatures = 1 Then
-    If m_booShutdown Then Exit Sub
-    If Not (LogItems Is Nothing) Then
-        If InStr(l_strText, vbCrLf) Then
-            Dim l_varLines As Variant
-            Dim l_lngLines As Long
-            l_varLines = Split(l_strText, vbCrLf)
-            For l_lngLines = LBound(l_varLines) To UBound(l_varLines)
-                LogItems.Add CStr(l_varLines(l_lngLines))
-            Next l_lngLines
-        Else
-            LogItems.Add l_strText
-        End If
-        Do While LogItems.Count > 100
-            LogItems.Remove 1
-        Loop
-    End If
-    Debug.Print l_strText
-    If (m_Notify Is Nothing) Or (m_booNotifyNoLogging) Then
-    Else
-        Err.Clear
-        m_Notify.LogOutput l_strText
-        If Err <> 0 Then m_booNotifyNoLogging = True
-    End If
-    #End If
-End Sub
-
-Sub Init(Optional Parameters As String = "")
-On Error Resume Next
-Dim Obj As Object
-    Randomize Timer
-    m_booMouseVisible = True
-    
-    If m_Engine.LoadGame(Parameters) Then
-        MainLoop
-    Else
-        If m_booEditor Then
-        Else
-            MsgBox "Unable to load game!"
-            Shutdown
-        End If
-    End If
-End Sub
-
-Sub MainLoop()
-On Error Resume Next
-    m_GFX.Window.SetFocus
-    If m_Engine.ErrorOccurred Then m_Engine.ShowConsole
-    m_Engine.Cameras.Dirty
-    m_Notify.Begin
-    Do
-        m_Engine.Game
-        If m_Engine.TerminateEngine Then
-            Exit Do
-        ElseIf m_Engine.Terminating Then
-            m_Engine.Terminating = False
-            m_Engine.TextOut "Reloading Game"
-            m_Engine.LoadGame m_Engine.CurrentGame
-            m_Engine.Game
-        Else
-            Exit Do
-        End If
-    Loop
-    Shutdown
-End Sub
-
-Sub Shutdown()
-On Error Resume Next
-Dim m_frmForm As Form
-Dim m_lngForms As Long
-Dim m_lngWait As Long
-Dim Obj As Object
-'    If m_booMultiplayerServer Then mdlMultiplayer.StopServer
-    m_Engine.ScriptContext = "Shutdown"
-    m_Engine.StopBGM
-    m_Engine.SoundEngine.FreeAll
-    If m_booIDE Then LogEntry "Ending Game"
-    m_Engine.UnloadAllMaps
-    m_Engine.ScriptEngine.Exec "Engine_Shutdown"
-    For m_lngWait = 1 To 50
-        SleepEx 1, True
-        DoEvents
-    Next m_lngWait
-    m_booShutdown = True
-    m_Engine.ReleaseScriptEngine
-    m_GFX.HookEvents Nothing
-    m_GFX.Shutdown
-'    ShutdownSE
-    Set m_GFX = Nothing
-    Set m_Backbuffer = Nothing
-    For Each Obj In m_Engine.EventHooks
-        Obj.Shutdown
-        Set Obj = Nothing
-    Next Obj
-    ShowCursor True
-    Set m_Engine = Nothing
-    For m_lngForms = Forms.Count To 0 Step -1
-        Unload Forms(m_lngForms)
-    Next m_lngForms
-    F2Shutdown
-    m_Notify.Quit
-End Sub
-
 Function InIDE() As Boolean
 On Error Resume Next
     Err.Clear
@@ -263,43 +131,6 @@ On Error Resume Next
     End If
 End Function
 
-Sub Main(Params As String)
-On Error Resume Next
-    F2Init
-    Set m_Engine = New Fury2Engine
-    m_booIDE = InIDE
-    If Not (Trim(Params) = "") Then
-        If Left(Params, 1) = """" Then Params = Mid(Params, 2)
-        If Right(Params, 1) = """" Then Params = Left(Params, Len(Params) - 1)
-    End If
-    Randomize Timer
-    Err.Clear
-    Init Params
-End Sub
-
-Sub LoadGFXPlugin(Name)
-On Error Resume Next
-Dim m_TempObj As Object
-    If m_GFX Is Nothing Then
-    Else
-        m_GFX.Shutdown
-        Set m_GFX = Nothing
-    End If
-    Err.Clear
-    Set m_TempObj = CreateObject("video_" + CStr(Trim(Name)) + "." + CStr(Trim(Name)) + "Engine")
-    If Err.Number <> 0 Then
-        Err.Clear
-        Call RegisterServer(RootPath + "video_" + Name + ".dll", False)
-        Call RegisterServer(RootPath + "video_" + Name + ".dll", True)
-        Set m_TempObj = CreateObject("video_" + CStr(Trim(Name)) + "." + CStr(Trim(Name)) + "Engine")
-        If Err.Number <> 0 Then MsgBox "Error while creating output plugin:" + vbCrLf + Err.Description + "(" + CStr(Err.Number) + ")"
-    End If
-    If m_TempObj Is Nothing Then Exit Sub
-    Set m_GFX = m_TempObj
-    m_GFX.HookEvents m_Engine
-    Set m_TempObj = Nothing
-End Sub
-
 Public Function vbMax(ParamArray Values() As Variant)
 On Error Resume Next
 Dim biggestValue, biggestIndex As Long, checkAll As Long
@@ -309,18 +140,6 @@ Dim biggestValue, biggestIndex As Long, checkAll As Long
     Next checkAll
     vbMax = biggestValue
 End Function
-
-Public Sub SetMousePos(ByRef Frm As Form, X, Y)
-On Error Resume Next
-Dim BW As Long, TH As Long, OldMode As Long
-Dim FrmWidth As Long, FrmHeight As Long
-    OldMode = Frm.ScaleMode
-    Frm.ScaleMode = 1
-    BW = (Frm.Width - Frm.ScaleWidth) \ 2
-    TH = (Frm.Height - Frm.ScaleHeight) - (BW * 2)
-    Frm.ScaleMode = OldMode
-    SetCursorPos (X * (Frm.ScaleWidth / m_Engine.ScreenWidth)) + (BW / Screen.TwipsPerPixelX) + (Frm.Left / Screen.TwipsPerPixelX), (Y * (Frm.ScaleHeight / m_Engine.ScreenHeight)) + ((BW + TH) / Screen.TwipsPerPixelY) + (Frm.Top / Screen.TwipsPerPixelY)
-End Sub
 
 Public Sub SetFormSize(ByRef Frm As Form, X As Long, Y As Long, Optional Center As Boolean = False)
 On Error Resume Next
@@ -416,65 +235,11 @@ On Error Resume Next
 Dim lResult As Long
     If Topmost Then
         Window.ZOrder
-        lResult = SetWindowPos(Window.HWnd, Topmost, 0, 0, 0, 0, NoMove Or NoSize)
+        lResult = SetWindowPos(Window.hwnd, Topmost, 0, 0, 0, 0, NoMove Or NoSize)
         Window.ZOrder
     Else
-        lResult = SetWindowPos(Window.HWnd, NotTopMost, 0, 0, 0, 0, NoMove Or NoSize)
+        lResult = SetWindowPos(Window.hwnd, NotTopMost, 0, 0, 0, 0, NoMove Or NoSize)
     End If
-End Sub
-
-Public Sub CriticalError(Source As String, Location As String, Optional Description As String = "Unknown Error")
-On Error Resume Next
-Dim m_lngHandle As Long
-Dim m_strError As String
-    If m_booEditor Then
-        If Err.Number <> 0 Then
-            m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
-            Err.Description + "(" + CStr(Err.Number) + ")" + vbCrLf + _
-            "From: """ + Err.Source + """" + vbCrLf + _
-            "In english: """ + Description + """" + vbCrLf + _
-            "Context: " + m_Engine.ScriptContext + vbCrLf + _
-            "Frames rendered: " + CStr(m_Engine.FrameCount)
-        Else
-            m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
-            "In english: """ + Description + """" + vbCrLf + _
-            "Context: " + m_Engine.ScriptContext + vbCrLf + _
-            "Frames rendered: " + CStr(m_Engine.FrameCount)
-        End If
-'        MsgBox m_strError, vbInformation, "Error"
-        Exit Sub
-    End If
-    If m_booIDE Then Stop
-    m_booCritical = True
-    If m_GFX.Fullscreen Then m_GFX.GoWindowed
-    If Err.Number <> 0 Then
-        m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
-        Err.Description + "(" + CStr(Err.Number) + ")" + vbCrLf + _
-        "From: """ + Err.Source + """" + vbCrLf + _
-        "In english: """ + Description + """" + vbCrLf + _
-        "Context: " + m_Engine.ScriptContext + vbCrLf + _
-        "Frames rendered: " + CStr(m_Engine.FrameCount)
-    Else
-        m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
-        "In english: """ + Description + """" + vbCrLf + _
-        "Context: " + m_Engine.ScriptContext + vbCrLf + _
-        "Frames rendered: " + CStr(m_Engine.FrameCount)
-    End If
-    m_lngHandle = FreeFile
-    Open App.Path + IIf(Right(App.Path, 1) = "\", "", "\") + "error.wtf" For Append As #m_lngHandle
-    Print #m_lngHandle, m_strError
-    Close #m_lngHandle
-    m_Engine.Mouse.Visible = True
-    Load frmCriticalError
-    frmCriticalError.Show
-    SetTopmost frmCriticalError, True
-    frmCriticalError.lblInfo.Caption = m_strError
-    frmCriticalError.SetFocus
-    DoEvents
-    Do While m_booCritical
-        DoEvents
-        Sleep (1)
-    Loop
 End Sub
 
 Public Sub SystemLogEvent(Text As String)

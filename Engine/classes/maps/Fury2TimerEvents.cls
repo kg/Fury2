@@ -40,6 +40,15 @@ Implements IVirtualFileCollection
 
 Private mCol As Collection
 Private mvarParent As Fury2Map
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Sub Free()
 On Error Resume Next
@@ -78,9 +87,10 @@ Friend Sub SetParent(Parent As Fury2Map)
     Set mvarParent = Parent
 End Sub
 
-Public Sub Add(Obj As Fury2TimerEvent, Optional sKey As String)
+Public Sub Add(ByVal Obj As Fury2TimerEvent, Optional sKey As String)
 On Error Resume Next
     If mCol.Count >= c_lngMaxAreas Then Exit Sub
+    Obj.SetEngine Engine
     If Len(sKey) = 0 Then
         mCol.Add Obj
     Else
@@ -134,7 +144,10 @@ End Property
 
 Private Function IVirtualFileCollection_CreateNew() As Object
 On Error Resume Next
-    Set IVirtualFileCollection_CreateNew = New Fury2TimerEvent
+Dim l_teNew As Fury2TimerEvent
+    Set l_teNew = New Fury2TimerEvent
+    l_teNew.SetEngine Engine
+    Set IVirtualFileCollection_CreateNew = l_teNew
 End Function
 
 Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object

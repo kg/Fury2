@@ -38,7 +38,7 @@ Public X As Single
 Public Y As Single
 Public FalloffOffset As Single
 Public FalloffDistance As Single
-Public Volume As Long
+Public Volume As Single
 Public Sound As String
 Public Repeat As Boolean
 Public Enabled As Boolean
@@ -79,7 +79,7 @@ Dim l_sngVolume As Single
         If (l_sngVolume < 0) Then l_sngVolume = 0
         If (l_sngVolume > 1) Then l_sngVolume = 1
     End If
-    CalculateVolume = ClipValue(l_sngVolume * Volume, 0, 255)
+    CalculateVolume = l_sngVolume * Volume
 End Function
 
 Public Sub Trigger()
@@ -89,7 +89,7 @@ On Error Resume Next
 End Sub
 
 Private Sub Class_Initialize()
-    Volume = 255
+    Volume = 1#
     Enabled = True
     Name = "Sound"
 End Sub

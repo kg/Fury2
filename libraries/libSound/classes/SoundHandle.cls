@@ -55,9 +55,9 @@ On Error Resume Next
     HandleType = m_HandleType
 End Property
 
-Sub Fade(Amount)
+Sub Fade(ByVal Amount As Single)
 On Error Resume Next
-    Volume = ClipValue((Volume - CLng(Amount)), 0, 255)
+    Volume = Volume - Amount
 End Sub
 
 Public Property Get Paused() As Boolean
@@ -84,63 +84,60 @@ On Error Resume Next
     End If
 End Property
 
-Public Property Let Volume(Optional Channel As Long = -1, ByVal NewVolume As Long)
+Public Property Let Volume(Optional ByVal Channel As Long = -1, ByVal NewVolume As Single)
 On Error Resume Next
     If m_Loaded = False Then Exit Property
     If Channel = -1 Then Channel = m_Channel
     If Channel = -1 Then Exit Property
     If NewVolume < 0 Then NewVolume = 0
-    If NewVolume > 255 Then NewVolume = 255
+    If NewVolume > 1 Then NewVolume = 1
     If m_HandleType = SoundType_Sample Then
-        FSound_Channel.SetVolume m_Channel, NewVolume
+        FSound_Channel.SetVolume m_Channel, NewVolume * 255
     ElseIf m_HandleType = SoundType_Stream Then
-        FSound_Channel.SetVolume m_Channel, NewVolume
+        FSound_Channel.SetVolume m_Channel, NewVolume * 255
     ElseIf m_HandleType = SoundType_Music Then
-        FMusic.SetMasterVolume m_Handle, NewVolume
+        FMusic.SetMasterVolume m_Handle, NewVolume * 255
     End If
 End Property
 
-Public Property Get Volume(Optional Channel As Long = -1) As Long
-On Error Resume Next
-    If m_Loaded = False Then Exit Function
-    If Channel = -1 Then Channel = m_Channel
-    If Channel = -1 Then Exit Property
-    If m_HandleType = SoundType_Sample Then
-        Volume = FSound_Channel.GetVolume(m_Channel)
-    ElseIf m_HandleType = SoundType_Stream Then
-        Volume = FSound_Channel.GetVolume(m_Channel)
-    ElseIf m_HandleType = SoundType_Music Then
-        Volume = FMusic.GetMasterVolume(m_Handle)
-    End If
-End Property
-
-Public Property Let Pan(Optional Channel As Long = -1, ByVal NewPan As Long)
-On Error Resume Next
-    If m_Loaded = False Then Exit Property
-    If Channel = -1 Then Channel = m_Channel
-    If Channel = -1 Then Exit Property
-    If NewPan = -1 Then
-    Else
-        If NewPan < 0 Then NewPan = 0
-        If NewPan > 255 Then NewPan = 255
-    End If
-    If m_HandleType = SoundType_Sample Then
-        FSound_Channel.SetPan m_Channel, NewPan
-    ElseIf m_HandleType = SoundType_Stream Then
-        FSound_Channel.SetPan m_Channel, NewPan
-    ElseIf m_HandleType = SoundType_Music Then
-    End If
-End Property
-
-Public Property Get Pan(Optional Channel As Long = -1) As Long
+Public Property Get Volume(Optional ByVal Channel As Long = -1) As Single
 On Error Resume Next
     If m_Loaded = False Then Exit Property
     If Channel = -1 Then Channel = m_Channel
     If Channel = -1 Then Exit Property
     If m_HandleType = SoundType_Sample Then
-        Pan = FSound_Channel.GetPan(m_Channel)
+        Volume = FSound_Channel.GetVolume(m_Channel) / 255
     ElseIf m_HandleType = SoundType_Stream Then
-        Pan = FSound_Channel.GetPan(m_Channel)
+        Volume = FSound_Channel.GetVolume(m_Channel) / 255
+    ElseIf m_HandleType = SoundType_Music Then
+        Volume = FMusic.GetMasterVolume(m_Handle) / 255
+    End If
+End Property
+
+Public Property Let Pan(Optional ByVal Channel As Long = -1, ByVal NewPan As Single)
+On Error Resume Next
+    If m_Loaded = False Then Exit Property
+    If Channel = -1 Then Channel = m_Channel
+    If Channel = -1 Then Exit Property
+    If NewPan < -1 Then NewPan = -1
+    If NewPan > 1 Then NewPan = 1
+    If m_HandleType = SoundType_Sample Then
+        FSound_Channel.SetPan m_Channel, (NewPan * 127) + 128
+    ElseIf m_HandleType = SoundType_Stream Then
+        FSound_Channel.SetPan m_Channel, (NewPan * 127) + 128
+    ElseIf m_HandleType = SoundType_Music Then
+    End If
+End Property
+
+Public Property Get Pan(Optional ByVal Channel As Long = -1) As Single
+On Error Resume Next
+    If m_Loaded = False Then Exit Property
+    If Channel = -1 Then Channel = m_Channel
+    If Channel = -1 Then Exit Property
+    If m_HandleType = SoundType_Sample Then
+        Pan = (FSound_Channel.GetPan(m_Channel) - 128) / 127
+    ElseIf m_HandleType = SoundType_Stream Then
+        Pan = (FSound_Channel.GetPan(m_Channel) - 128) / 127
     ElseIf m_HandleType = SoundType_Music Then
     End If
 End Property
@@ -208,16 +205,16 @@ On Error Resume Next
     Call FSound_Channel.SetFrequency(m_Channel, NewFrequency)
 End Property
 
-Public Function PlayPanned(Optional ByVal Pan As Long = -1, Optional ByVal Volume As Long = 255, Optional Channel As Long = -1) As Long
+Public Function PlayPanned(Optional ByVal Pan As Long = -1, Optional ByVal Volume As Single = 1, Optional Channel As Long = -1) As Long
 Dim m_lngHandle As Long
     m_lngHandle = Play(Channel)
     FSound_Channel.SetPan m_lngHandle, Pan
     If m_HandleType = SoundType_Sample Then
-        FSound_Channel.SetVolume m_lngHandle, (Volume * m_Engine.SampleVolume) \ 255
+        FSound_Channel.SetVolume m_lngHandle, (Volume * m_Engine.SampleVolume) * 255
     ElseIf m_HandleType = SoundType_Stream Then
-        FSound_Channel.SetVolume m_lngHandle, (Volume * m_Engine.StreamVolume) \ 255
+        FSound_Channel.SetVolume m_lngHandle, (Volume * m_Engine.StreamVolume) * 255
     ElseIf m_HandleType = SoundType_Music Then
-        FSound_Channel.SetVolume m_lngHandle, (Volume * m_Engine.MusicVolume) \ 255
+        FSound_Channel.SetVolume m_lngHandle, (Volume * m_Engine.MusicVolume) * 255
     End If
     PlayPanned = m_lngHandle
 End Function
@@ -225,30 +222,30 @@ End Function
 Public Function PlayAt(x, y, Optional Channel As Long = -1) As Long
 Dim m_lngHandle As Long, m_sngPan As Single
 Dim m_sngVolume As Single
-    m_sngVolume = 255
-    m_sngVolume = m_sngVolume - Abs((y - (m_Engine.m_Engine.ScreenHeight / 2)) / (CSng(m_Engine.m_Engine.ScreenHeight / 2) / 255!))
+    m_sngVolume = 1
+    m_sngVolume = m_sngVolume - Abs((y - (m_Engine.m_Engine.ScreenHeight / 2)) / (CSng(m_Engine.m_Engine.ScreenHeight / 2)))
     m_sngPan = x
-    m_sngPan = m_sngPan / (CSng(m_Engine.m_Engine.ScreenWidth) / 255!)
+    m_sngPan = m_sngPan / (CSng(m_Engine.m_Engine.ScreenWidth))
     m_lngHandle = Play(Channel)
-    FSound_Channel.SetPan m_lngHandle, ClipValue(CLng(m_sngPan), 0, 255)
-    FSound_Channel.SetVolume m_lngHandle, ClipValue(CLng(m_sngVolume), 0, 255)
+    FSound_Channel.SetPan m_lngHandle, ClipValue(CLng(m_sngPan * 255), 0, 255)
+    FSound_Channel.SetVolume m_lngHandle, ClipValue(CLng(m_sngVolume * 255), 0, 255)
     PlayAt = m_lngHandle
 End Function
 
-Public Function PlayEx(Volume, Optional Channel As Long = -1) As Long
+Public Function PlayEx(ByVal Volume As Single, Optional Channel As Long = -1) As Long
 On Error Resume Next
     If m_Loaded = False Then Exit Function
     If m_HandleType = SoundType_Sample Then
         PlayEx = FSound_Channel.PlaySound(Channel, m_Handle)
-        FSound_Channel.SetVolume PlayEx, CLng(Volume * m_Engine.SampleVolume \ 255)
+        FSound_Channel.SetVolume PlayEx, CLng(Volume * m_Engine.SampleVolume * 255)
         m_Channel = PlayEx
     ElseIf m_HandleType = SoundType_Stream Then
         PlayEx = FSound_Stream.Play(Channel, m_Handle)
-        FSound_Channel.SetVolume PlayEx, CLng(Volume * m_Engine.StreamVolume \ 255)
+        FSound_Channel.SetVolume PlayEx, CLng(Volume * m_Engine.StreamVolume * 255)
         m_Channel = PlayEx
     ElseIf m_HandleType = SoundType_Music Then
         PlayEx = FMusic.PlaySong(m_Handle)
-        FMusic.SetMasterVolume m_Handle, CLng(Volume * m_Engine.MusicVolume \ 255)
+        FMusic.SetMasterVolume m_Handle, CLng(Volume * m_Engine.MusicVolume * 255)
         m_Channel = PlayEx
     End If
 End Function

@@ -39,6 +39,7 @@ Implements Fury2Object
 Implements IVirtualFileCollection
 
 Private mCol As Collection
+Public Engine As Fury2Engine
 
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)
 On Error Resume Next
@@ -152,7 +153,10 @@ End Property
 
 Private Function IVirtualFileCollection_CreateNew() As Object
 On Error Resume Next
-    Set IVirtualFileCollection_CreateNew = New Fury2Map
+Dim l_mapNew As Fury2Map
+    Set l_mapNew = New Fury2Map
+    l_mapNew.SetEngine Engine
+    Set IVirtualFileCollection_CreateNew = l_mapNew
 End Function
 
 Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object

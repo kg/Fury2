@@ -78,8 +78,9 @@ Dim m_lyrLayer As Fury2MapLayer
     Err.Clear
 End Sub
 
-Public Sub Add(Obj As Fury2MapLayer, Optional sKey, Optional AtIndex)
+Public Sub Add(ByVal Obj As Fury2MapLayer, Optional sKey, Optional AtIndex)
 On Error Resume Next
+    Obj.SetParent Parent
     If IsMissing(sKey) Then
         If IsMissing(AtIndex) Then
             mCol.Add Obj
@@ -155,9 +156,11 @@ End Property
 
 Private Function IVirtualFileCollection_CreateNew() As Object
 On Error Resume Next
-    Set IVirtualFileCollection_CreateNew = New Fury2MapLayer
-    Set IVirtualFileCollection_CreateNew.Parent = Parent
-    Set IVirtualFileCollection_CreateNew.Sprites.Parent = Parent
+Dim l_lyrNew As Fury2MapLayer
+    Set l_lyrNew = New Fury2MapLayer
+    l_lyrNew.SetParent Parent
+    l_lyrNew.Sprites.SetParent Parent
+    Set IVirtualFileCollection_CreateNew = l_lyrNew
 End Function
 
 Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object

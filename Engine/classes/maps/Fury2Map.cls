@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "Fury2Map"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Description = "Fury² Map Object"
@@ -40,6 +40,7 @@ Implements Fury2Object
 Implements Fury2TrackedObject
 Implements IVirtualFileSaveable
 
+Private mvarEngine As Fury2Engine
 Public EditMode As Boolean
 Attribute EditMode.VB_VarDescription = "Indicates whether or not the map is in editing mode. In editing mode, certain automatic behaviors are disabled (for example, AI)"
 Private m_mobObjects As Fury2MapObjects
@@ -67,6 +68,38 @@ Private m_booScript_Load As Boolean
 Private m_booScript_Unload As Boolean
 Private m_booScript_Update As Boolean
 Private m_booScript_Redraw As Boolean
+
+Public Function CreateLayer() As Fury2MapLayer
+On Error Resume Next
+Dim l_lyrNew As Fury2MapLayer
+    Set l_lyrNew = New Fury2MapLayer
+    Set l_lyrNew.Parent = Me
+    Set CreateLayer = l_lyrNew
+End Function
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = mvarEngine
+End Property
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+On Error Resume Next
+Dim l_lyrLayer As Fury2MapLayer
+    Set mvarEngine = Engine
+    If m_sprSprites Is Nothing Then
+    Else
+        m_sprSprites.SetEngine Engine
+    End If
+    If Layers Is Nothing Then
+    Else
+        For Each l_lyrLayer In Layers
+            l_lyrLayer.Sprites.SetEngine Engine
+        Next l_lyrLayer
+    End If
+    If TimerEvents Is Nothing Then
+    Else
+        TimerEvents.SetEngine Engine
+    End If
+End Sub
 
 Sub AddSprite(ByVal Sprite As Fury2Sprite, ByVal Layer As Long, Optional ByVal X As Single = -32767, Optional ByVal Y As Single = -32767)
 On Error Resume Next
@@ -132,6 +165,7 @@ End Function
 
 Private Sub Class_Initialize()
 On Error Resume Next
+    SetEngine DefaultEngine
     Set m_sprSprites = New Fury2Sprites
     Set m_araAreas = New Fury2Areas
     m_araAreas.SetParent Me
@@ -145,7 +179,6 @@ End Sub
 
 Private Sub Class_Terminate()
 On Error Resume Next
-    m_Engine.TextOut "Map_Terminate()"
 End Sub
 
 Public Sub Clear()
@@ -186,9 +219,11 @@ Dim m_CreateLayers As Long, m_NewLayer As Fury2MapLayer, cX As Long, cY As Long
         For m_CreateLayers = 1 To ClipValue(LayerCount, c_lngMinimumMapLayers, c_lngMaximumMapLayers)
             Err.Clear
             Set m_NewLayer = New Fury2MapLayer
+            Set m_NewLayer.Parent = Me
             If m_CreateLayers > 1 Then
                 If Tileset Is Nothing Then
                     Set m_NewLayer.Tileset = New Fury2Tileset
+                    m_NewLayer.Tileset.SetEngine Engine
                 Else
                     Set m_NewLayer.Tileset = Tileset.Duplicate
                 End If
@@ -290,15 +325,15 @@ Dim l_lngAreas As Long
 Dim l_objScript As Object
 Dim l_sprSprite As Fury2Sprite
 Dim l_sngProgMul As Single
-    m_Engine.ContextLevelAdd "Map.Init"
-    m_Engine.LoadProgress "Map", 0
+    Engine.ContextLevelAdd "Map.Init"
+    Engine.LoadProgress "Map", 0
     m_sprSprites.Clear
     Set l_objScript = Script
     l_objScript.Initialize
     l_objScript.Init
     Set l_objScript = Nothing
     l_sngProgMul = 60 / m_lyrLayers.Count
-    m_Engine.LoadProgress "Map", 10
+    Engine.LoadProgress "Map", 10
     If m_lyrLayers.Count > 0 Then
         For l_lngLayers = 1 To m_lyrLayers.Count
             With m_lyrLayers(l_lngLayers)
@@ -327,7 +362,7 @@ Dim l_sngProgMul As Single
                 .TileAnimations.RedimMapTable .Tileset.TileCount
                 .Lighting.Init Me.MaxX, Me.MaxY
             End With
-            m_Engine.LoadProgress "Map", 10 + ((80 / m_lyrLayers.Count) * l_lngLayers)
+            Engine.LoadProgress "Map", 10 + ((80 / m_lyrLayers.Count) * l_lngLayers)
         Next l_lngLayers
     End If
     If m_araAreas.Count > 0 Then
@@ -340,11 +375,11 @@ Dim l_sngProgMul As Single
                     l_objScript.Initialize
                 Set l_objScript = Nothing
             End With
-            m_Engine.LoadProgress "Map", 90 + ((10 / m_araAreas.Count) * l_lngAreas)
+            Engine.LoadProgress "Map", 90 + ((10 / m_araAreas.Count) * l_lngAreas)
         Next l_lngAreas
     End If
-    m_Engine.LoadProgress "Map", 100
-    m_Engine.ContextLevelRemove
+    Engine.LoadProgress "Map", 100
+    Engine.ContextLevelRemove
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
@@ -368,8 +403,11 @@ On Error Resume Next
             .ReadSegment_Begin
                 .Load m_strScriptSource
             .ReadSegment_End
-            .Load m_araAreas
+            Set m_araAreas = New Fury2Areas
             m_araAreas.SetParent Me
+            .Load m_araAreas
+            Set m_lyrLayers = New Fury2MapLayers
+            Set m_lyrLayers.Parent = Me
             .Load m_lyrLayers
             .ReadSegment_Begin
                 .Load m_strSettings()
@@ -433,9 +471,15 @@ Dim l_sprSprite As Fury2Sprite
 Dim l_lyrLayer As Fury2MapLayer
 Dim l_araArea As Fury2Area
 Dim l_mobObject As Fury2MapObject
-    m_Engine.ContextLevelAdd "Map.Load"
+Dim l_lngIndex As Long
+    Engine.ContextLevelAdd "Map.Load"
     Set m_sprSprites = New Fury2Sprites
+    m_sprSprites.SetEngine Me.Engine
     For Each l_lyrLayer In m_lyrLayers
+        l_lngIndex = l_lngIndex + 1
+        l_lyrLayer.Index = l_lngIndex
+        l_lyrLayer.Sprites.SetParent Me
+        l_lyrLayer.Sprites.SetEngine Me.Engine
         For Each l_sprSprite In l_lyrLayer.Sprites
             If Not l_sprSprite.Destroyed Then
                 m_sprSprites.AcceptNew l_sprSprite
@@ -444,36 +488,42 @@ Dim l_mobObject As Fury2MapObject
     Next l_lyrLayer
     Select Case LCase(Trim(GetSetting("bgm")))
     Case "[silence]"
-        m_Engine.StopBGM
+        Engine.StopBGM
     Case "[no change]", ""
     Case Else
-        m_Engine.SwitchBGM m_Engine.ParseString(GetSetting("bgm"))
+        Engine.SwitchBGM Engine.ParseString(GetSetting("bgm"))
     End Select
-    If m_booEditor Then
+    If Engine.EditMode Then
     Else
         Err.Clear
-        m_Engine.ContextLevelAdd "Script"
+        Engine.ContextLevelAdd "Script"
         m_objScript.Load
-        m_Engine.ContextLevelRemove
+        Engine.ContextLevelRemove
     End If
-    m_Engine.ContextLevelAdd "Sprites"
+    Engine.ContextLevelAdd "Sprites"
     For Each l_lyrLayer In m_lyrLayers
         l_lyrLayer.Sprites.Loaded = True
+        l_lngIndex = 0
         For Each l_sprSprite In l_lyrLayer.Sprites
+            l_lngIndex = l_lngIndex + 1
+            l_sprSprite.SetParent Me
+            l_sprSprite.Layer = l_lyrLayer.Index
+            l_sprSprite.Index = l_lngIndex
             l_sprSprite.Load
         Next l_sprSprite
     Next l_lyrLayer
-    m_Engine.ContextLevelRemove
-    If m_booEditor Then
+    Engine.ContextLevelRemove
+    If Engine.EditMode Then
     Else
-        m_Engine.ContextLevelAdd "Areas"
+        Engine.ContextLevelAdd "Areas"
         For Each l_araArea In m_araAreas
             l_araArea.Script.Load
         Next l_araArea
         Err.Clear
-        m_Engine.ContextLevelRemove
+        Engine.ContextLevelRemove
     End If
     Set m_sprSprites = New Fury2Sprites
+    m_sprSprites.SetEngine Me.Engine
     For Each l_lyrLayer In m_lyrLayers
         For Each l_sprSprite In l_lyrLayer.Sprites
             If Not l_sprSprite.Destroyed Then
@@ -482,12 +532,12 @@ Dim l_mobObject As Fury2MapObject
         Next l_sprSprite
         l_lyrLayer.Sprites.Sort
     Next l_lyrLayer
-    m_Engine.ContextLevelAdd "Objects"
+    Engine.ContextLevelAdd "Objects"
     For Each l_mobObject In m_mobObjects
-        l_mobObject.Load m_Engine, Me
+        l_mobObject.Load Engine, Me
     Next l_mobObject
-    m_Engine.ContextLevelRemove
-    m_Engine.ContextLevelRemove
+    Engine.ContextLevelRemove
+    Engine.ContextLevelRemove
 End Sub
 
 Friend Property Get lWidth() As Long
@@ -530,6 +580,7 @@ Dim l_camCamera As Fury2Camera
     Set l_imgSurface = Surface
     If l_imgSurface Is Nothing Then Exit Sub
     Set l_camCamera = New Fury2Camera
+    l_camCamera.SetEngine Engine
     Set l_camCamera.ViewingMap = Me
     l_camCamera.EnableLighting = False
     l_camCamera.EnableParallax = False
@@ -604,9 +655,9 @@ Dim l_strScript As String
     If m_objScript Is Nothing Then
         If (m_booScriptFailed = False) Then
             Err.Clear
-            m_Engine.MapObjectCount = m_Engine.MapObjectCount + 1
-            MapName = m_Engine.VariableName("m" & Filename + "script")
-            With m_Engine.ScriptEngine.Language
+            Engine.MapObjectCount = Engine.MapObjectCount + 1
+            MapName = Engine.VariableName("m" & Filename + "script")
+            With Engine.ScriptEngine.Language
                 l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                 .GenerateClassVariable("Map") & .LineTerminator & _
                 .GenerateClassMethod("F2OInit", Array("T", "M"), _
@@ -618,18 +669,16 @@ Dim l_strScript As String
                 m_booScript_Load = .ImplementsMethod(l_strScript, "Load")
                 m_booScript_Unload = .ImplementsMethod(l_strScript, "Unload")
                 m_booScript_Start = .ImplementsMethod(l_strScript, "Start")
-                m_Engine.CacheScript Filename + "_M", .GenerateClass(MapName, l_strScript)
+                Engine.CacheScript Filename + "_M", .GenerateClass(MapName, l_strScript)
                 Err.Clear
-'                m_Engine.ScriptEngine.Error.Clear
-                m_Engine.ScriptEngine.AddCode .GenerateAssignment("New" & MapName, .GenerateInstantiation(MapName), True)
-                Set m_objScript = m_Engine.ScriptEngine.Eval("New" & MapName)
+                Set m_objScript = Engine.ScriptEngine.Eval(.GenerateInstantiation(MapName))
             End With
-            Set m_Engine.IObjThis = Me
+            Set Engine.IObjThis = Me
             Err.Clear
             m_objScript.F2OInit Me, Me
             m_objScript.Initialize
             If (m_objScript Is Nothing) Then
-                m_Engine.TextOut "Error in Map script"
+                Engine.DebugOut "Unable to load script for map """ & Name & """"
                 m_booScriptFailed = True
             End If
         End If
@@ -705,7 +754,7 @@ Dim l_lyrLayer As Fury2MapLayer
 Dim l_lngObject As Long
 Dim l_mobObject As Fury2MapObject
     If Width < 0 Or Height < 0 Then
-        CriticalError "Fury2Map.Update", "Sanity Check", "Map has no width and/or height. Possibly corrupted. If you want an empty map, use the UnloadAllMaps command.": Exit Sub
+        Engine.CriticalError "Fury2Map.Update", "Sanity Check", "Map has no width and/or height. Possibly corrupted. If you want an empty map, use the UnloadAllMaps command.": Exit Sub
     End If
     If Paused Then Exit Sub
     If Started = False Then
@@ -714,21 +763,21 @@ Dim l_mobObject As Fury2MapObject
     End If
     Err.Clear
     If m_booScript_Update = True Then
-        m_Engine.ContextLevelAdd "Map_Update"
+        Engine.ContextLevelAdd "Map_Update"
         ProfileStart "Map_Update"
         If m_objScript Is Nothing Then Else m_objScript.Update
         ProfileStop "Map_Update"
-        m_Engine.ContextLevelRemove
+        Engine.ContextLevelRemove
     End If
     If m_lyrLayers.Count > 0 Then
         l_lngLayers = 1
         For Each l_lyrLayer In m_lyrLayers
-            m_Engine.ContextLevelAdd "Layers(" + CStr(l_lngLayers) + ")"
+            Engine.ContextLevelAdd "Layers(" + CStr(l_lngLayers) + ")"
             l_lyrLayer.Sprites.Update Me, CLng(l_lngLayers), True
             ProfileStart "Map.Lights.Update"
             l_lyrLayer.Lighting.Update
             ProfileStop "Map.Lights.Update"
-            m_Engine.ContextLevelRemove
+            Engine.ContextLevelRemove
             If l_lyrLayer.TileAnimations Is Nothing Then
             Else
                 ProfileStart "Map.TileAnimations.Update"
@@ -739,7 +788,7 @@ Dim l_mobObject As Fury2MapObject
         Next l_lyrLayer
     End If
     For Each l_mobObject In m_mobObjects
-            l_mobObject.Update
+        l_mobObject.Update
     Next l_mobObject
     Err.Clear
 End Sub

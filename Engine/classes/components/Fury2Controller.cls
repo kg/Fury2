@@ -44,7 +44,6 @@ Public MoveCamera As Boolean
 Public CameraXOffset As Long, CameraYOffset As Long
 Public Enabled As Boolean
 Public Style As Long
-Public JumpVelocity As Single
 Public TurnSpeed As Single
 
 Private InputState(0 To 3) As Boolean
@@ -114,13 +113,6 @@ On Error Resume Next
                             ElseIf InputState(1) Then
                                 Obj.Angle = Obj.Angle + TurnSpeed
                             End If
-                            If .EnableGravity Then
-                                If JumpControl.State Then
-                                    If (Obj.ZVelocity = 0 And (Obj.Poses(Obj.TruePose).YVelocity * Obj.Velocity) = 0) And (Int(Obj.Z) = 0) Then
-                                        Obj.ZVelocity = JumpVelocity
-                                    End If
-                                End If
-                            End If
                             If InputState(0) Then
                                 Obj.State = Obj.WalkState
                                 Obj.Velocity = Obj.Velocity + .VelocityDecay
@@ -167,13 +159,6 @@ On Error Resume Next
                                 Obj.Angle = 90 ' Right
                             ElseIf InputState(3) = True And InputState(1) = False Then
                                 Obj.Angle = 270 ' Left
-                            End If
-                            If .EnableGravity Then
-                                If InputState(0) Then
-                                    If (Obj.ZVelocity = 0 And (Obj.Poses(Obj.TruePose).YVelocity * Obj.Velocity) = 0) And (Int(Obj.Z) = 0) Then
-                                        Obj.ZVelocity = JumpVelocity
-                                    End If
-                                End If
                             End If
                             If InputState(3) Or InputState(1) Then
                                 Obj.State = Obj.WalkState
@@ -332,6 +317,9 @@ End Sub
 
 Private Sub Fury2Plugin_Update()
     Update
+End Sub
+
+Private Sub Fury2Plugin_OutputPluginChanged()
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)

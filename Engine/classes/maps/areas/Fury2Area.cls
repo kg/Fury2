@@ -84,7 +84,7 @@ End Sub
     
 Function SupportsAction(ByVal Name As String) As Boolean
 On Error Resume Next
-    With m_Engine.ScriptEngine.Language
+    With mvarMap.Engine.ScriptEngine.Language
         Select Case LCase(Trim(Name))
         Case "enter"
             SupportsAction = mvarScript_Enter
@@ -103,31 +103,31 @@ End Function
     
 Function Action(Optional ByRef Activator As Object, Optional ByVal ActionName As String = "Activate") As Boolean
 On Error Resume Next
-    m_Engine.ContextLevelAdd "Area_" + ActionName
+    mvarMap.Engine.ContextLevelAdd "Area_" + ActionName
     ActionName = LCase(Trim(ActionName))
     Select Case ActionName
     Case "enter"
         If Not mvarScript_Enter Then
             Action = False
-            m_Engine.ContextLevelRemove
+            mvarMap.Engine.ContextLevelRemove
             Exit Function
         End If
     Case "leave"
         If Not mvarScript_Leave Then
             Action = False
-            m_Engine.ContextLevelRemove
+            mvarMap.Engine.ContextLevelRemove
             Exit Function
         End If
     Case "activate"
         If Not mvarScript_Activate Then
             Action = False
-            m_Engine.ContextLevelRemove
+            mvarMap.Engine.ContextLevelRemove
             Exit Function
         End If
     Case "move"
         If Not mvarScript_Move Then
             Action = False
-            m_Engine.ContextLevelRemove
+            mvarMap.Engine.ContextLevelRemove
             Exit Function
         End If
     Case Else
@@ -139,7 +139,7 @@ On Error Resume Next
         If Script Is Nothing Then Else CallByName Script, ActionName, VbMethod
         If Err.Number <> 0 Then Action = False
     End If
-    m_Engine.ContextLevelRemove
+    mvarMap.Engine.ContextLevelRemove
 End Function
 
 Public Property Get Script() As Object
@@ -151,9 +151,9 @@ Dim l_strScript As String
     If mvarScript Is Nothing Then
         If (mvarScriptFailed = False) Then
             Err.Clear
-            m_Engine.AreaObjectCount = m_Engine.AreaObjectCount + 1
-            AreaName = m_Engine.VariableName("m" & mvarMap.Filename + "a" & Index)
-            With m_Engine.ScriptEngine.Language
+            mvarMap.Engine.AreaObjectCount = mvarMap.Engine.AreaObjectCount + 1
+            AreaName = mvarMap.Engine.VariableName("m" & mvarMap.Filename + "a" & Index)
+            With mvarMap.Engine.ScriptEngine.Language
                 l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                 .GenerateClassVariable("Map") & .LineTerminator & _
                 .GenerateClassMethod("F2OInit", Array("T", "M"), _
@@ -165,14 +165,16 @@ Dim l_strScript As String
                 mvarScript_Enter = .ImplementsMethod(l_strScript, "Enter")
                 mvarScript_Move = .ImplementsMethod(l_strScript, "Move")
                 mvarScript_Leave = .ImplementsMethod(l_strScript, "Leave")
-                m_Engine.CacheScript mvarMap.Filename + "_A" & Index, .GenerateClass(AreaName, l_strScript)
-                m_Engine.ScriptEngine.AddCode .GenerateAssignment("New" & AreaName, .GenerateInstantiation(AreaName), True)
-                Set mvarScript = m_Engine.ScriptEngine.Eval("New" & AreaName)
+                mvarMap.Engine.CacheScript mvarMap.Filename + "_A" & Index, .GenerateClass(AreaName, l_strScript)
+                Set mvarScript = mvarMap.Engine.ScriptEngine.Eval(.GenerateInstantiation(AreaName))
             End With
-            Set m_Engine.IObjThis = Me
+            Set mvarMap.Engine.IObjThis = Me
             mvarScript.F2OInit Me, mvarMap
             mvarScript.Initialize
-            If (Err.Number <> 0) Or (mvarScript Is Nothing) Then mvarScriptFailed = True
+            If (mvarScript Is Nothing) Then
+                mvarMap.Engine.DebugOut "Unable to load script for area """ & Name & """"
+                mvarScriptFailed = True
+            End If
         End If
     End If
     Set Script = mvarScript

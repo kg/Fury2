@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "Fury2Camera"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Description = "Fury² Camera (Viewport) Object"
@@ -71,6 +71,15 @@ Private mvarTransparent As Boolean
 Private mvarMap As Long
 Private mvarConstrainToMap As Boolean
 Private mvarUnGhostLayer As Long
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Property Get UnGhostLayer() As Long
 On Error Resume Next
@@ -131,7 +140,7 @@ Dim m_lngRects As Long
 Dim m_rctObj As Fury2Rect
     If mvarViewingMap Is Nothing Then Exit Sub
     If mvarViewingMap.Layers.Count < 1 Then Exit Sub
-    If (m_Engine.Cameras.Count = 1) And (m_Engine.DisableCameraBuffers) Then Exit Sub
+    If (Engine.Cameras.Count = 1) And (Engine.DisableCameraBuffers) Then Exit Sub
     For m_lngLayers = 1 To mvarViewingMap.Layers.Count
         m_booAnimated = m_booAnimated Or (mvarViewingMap.Layers(m_lngLayers).TileAnimations.Count > 0)
     Next m_lngLayers
@@ -149,13 +158,13 @@ End Sub
 Sub Init()
 On Error Resume Next
     Err.Clear
-    If mvarMap <> 0 Then Set mvarViewingMap = m_Engine.Maps(mvarMap)
+    If mvarMap <> 0 Then Set mvarViewingMap = Engine.Maps(mvarMap)
     If mvarViewingMap Is Nothing Then Exit Sub
     If mvarViewingMap.Layers.Count <= 0 Then Exit Sub
-    If ((m_Engine.DisableCameraBuffers = True) And (m_Engine.Cameras.Count = 1)) Or (DisableBuffer) Then
+    If ((Engine.DisableCameraBuffers = True) And (Engine.Cameras.Count = 1)) Or (DisableBuffer) Then
     Else
         Set mvarBuffer = F2Image(mvarWidth, mvarHeight)
-        If Err.Number <> 0 Then CriticalError "Fury2Camera.Init", "Set mvarBuffer = F2Image(mvarWidth, mvarHeight)"
+        If Err.Number <> 0 Then Engine.CriticalError "Fury2Camera.Init", "Set mvarBuffer = F2Image(mvarWidth, mvarHeight)"
     End If
     mvarDirty = True
     Err.Clear
@@ -172,7 +181,7 @@ On Error Resume Next
 End Property
 
 Public Property Let Y(ByVal vData As Long)
-    mvarY = ClipValue(vData, 0, m_Engine.ScreenHeight - mvarHeight)
+    mvarY = ClipValue(vData, 0, Engine.ScreenHeight - mvarHeight)
 End Property
 
 Public Property Get Y() As Long
@@ -180,7 +189,7 @@ Public Property Get Y() As Long
 End Property
 
 Public Property Let X(ByVal vData As Long)
-    mvarX = ClipValue(vData, 0, m_Engine.ScreenWidth - mvarWidth)
+    mvarX = ClipValue(vData, 0, Engine.ScreenWidth - mvarWidth)
 End Property
 
 Public Property Get X() As Long
@@ -193,7 +202,7 @@ On Error Resume Next
     If mvarMap = 0 Then
         Set mvarViewingMap = Nothing
     Else
-        Set mvarViewingMap = m_Engine.Maps(NewMap)
+        Set mvarViewingMap = Engine.Maps(NewMap)
     End If
 End Property
 
@@ -230,12 +239,12 @@ Dim m_sngOldX As Single, m_sngOldY As Single
         If mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth <= mvarWidth Then
             mvarViewportX = -(mvarWidth - (mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth)) \ 2
         Else
-            mvarViewportX = m_Engine.ClipNumber(mvarViewportX, 0, Abs((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) - mvarWidth))
+            mvarViewportX = Engine.ClipNumber(mvarViewportX, 0, Abs((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) - mvarWidth))
         End If
         If mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight <= mvarHeight Then
             mvarViewportY = -(mvarHeight - (mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight)) \ 2
         Else
-            mvarViewportY = m_Engine.ClipNumber(mvarViewportY, 0, Abs((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) - mvarHeight))
+            mvarViewportY = Engine.ClipNumber(mvarViewportY, 0, Abs((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) - mvarHeight))
         End If
     End If
 End Sub
@@ -255,18 +264,18 @@ On Error Resume Next
     mvarViewportXTarget = X
     mvarViewportYTarget = Y
     mvarSubthreaded = True
-    m_Engine.Subthread
+    Engine.Subthread
 End Sub
 
 Public Sub Refresh()
 On Error Resume Next
 Dim m_lngEffects As Long
-    If mvarMap <> 0 Then Set mvarViewingMap = m_Engine.Maps(mvarMap)
+    If mvarMap <> 0 Then Set mvarViewingMap = Engine.Maps(mvarMap)
     If mvarViewingMap Is Nothing Then Exit Sub
     If mvarViewingMap.Layers.Count < 1 Then Exit Sub
-    If (m_Engine.Cameras.Count = 1) And (m_Engine.DisableCameraBuffers) Then
+    If (Engine.Cameras.Count = 1) And (Engine.DisableCameraBuffers) Then
         If mvarAlpha <= 0 Then Exit Sub
-        Render , m_Engine.Backbuffer
+        Render , Engine.Backbuffer
         Exit Sub
     End If
     If mvarBuffer Is Nothing Then Exit Sub
@@ -278,23 +287,23 @@ Dim m_lngEffects As Long
     Err.Clear
     If mvarX < 0 Then mvarX = 0
     If mvarY < 0 Then mvarY = 0
-    If mvarWidth > m_Backbuffer.Width - mvarX Then mvarWidth = m_Backbuffer.Width - mvarX
-    If mvarHeight > m_Backbuffer.Height - mvarY Then mvarHeight = m_Backbuffer.Height - mvarY
-    Set m_Backbuffer.ClipRectangle = F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False)
+    If mvarWidth > Engine.Backbuffer.Width - mvarX Then mvarWidth = Engine.Backbuffer.Width - mvarX
+    If mvarHeight > Engine.Backbuffer.Height - mvarY Then mvarHeight = Engine.Backbuffer.Height - mvarY
+    Set Engine.Backbuffer.ClipRectangle = F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False)
     If mvarAlpha = 0 Then
     ElseIf mvarAlpha = 1 Then
-        'If (mvarGamma = 0) Or (m_Engine.SpecialFX = False) Then
-            m_Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), mvarBuffer.Rectangle, mvarBuffer, 1, BlitMode_Normal
-            If Err.Number <> 0 Then m_Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2Black
+        'If (mvarGamma = 0) Or (Engine.SpecialFX = False) Then
+            Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), mvarBuffer.Rectangle, mvarBuffer, 1, BlitMode_Normal
+            If Err.Number <> 0 Then Engine.Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2Black
         'Else
-        '    m_Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), mvarBuffer.Rectangle, mvarBuffer, ((mvarGamma) / 255), BlitMode_Matte_Tint, F2White
-        '    If Err.Number <> 0 Then m_Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2Black
+        '    Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), mvarBuffer.Rectangle, mvarBuffer, ((mvarGamma) / 255), BlitMode_Matte_Tint, F2White
+        '    If Err.Number <> 0 Then Engine.Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2Black
         'End If
     Else
-        m_Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), mvarBuffer.Rectangle, mvarBuffer, mvarAlpha, BlitMode_Normal
-        If Err.Number <> 0 Then m_Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2RGB(0, 0, 0, mvarAlpha * 255)
+        Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), mvarBuffer.Rectangle, mvarBuffer, mvarAlpha, BlitMode_Normal
+        If Err.Number <> 0 Then Engine.Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2RGB(0, 0, 0, mvarAlpha * 255)
     End If
-    Set m_Backbuffer.ClipRectangle = m_Backbuffer.Rectangle
+    Set Engine.Backbuffer.ClipRectangle = Engine.Backbuffer.Rectangle
 End Sub
 
 Public Sub CopyToDC(ByVal hdc As Long)
@@ -343,7 +352,7 @@ Dim l_lcaCamera As LightingCamera
 Dim l_sprSprite As Fury2Sprite
 Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
     Err.Clear
-    If mvarMap <> 0 Then Set mvarViewingMap = m_Engine.Maps(mvarMap)
+    If mvarMap <> 0 Then Set mvarViewingMap = Engine.Maps(mvarMap)
     If mvarViewingMap Is Nothing Then Exit Sub
     If mvarViewingMap.Layers.Count < 1 Then Exit Sub
     Set l_imgBuffer = Output
@@ -353,24 +362,24 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
         End If
     End If
     If l_imgBuffer Is Nothing Then
-        If (m_Engine.Cameras.Count = 1) And (m_Engine.DisableCameraBuffers) Then
-            Set l_imgBuffer = m_Engine.Backbuffer
+        If (Engine.Cameras.Count = 1) And (Engine.DisableCameraBuffers) Then
+            Set l_imgBuffer = Engine.Backbuffer
         Else
             Set l_imgBuffer = mvarBuffer
         End If
     End If
     If EnableLighting Then
         If mvarLightmap Is Nothing Then
-            Set mvarLightmap = m_Engine.CreateHardwareImage(Ceil(l_imgBuffer.Width * LightingScaleRatio), Ceil(l_imgBuffer.Height * LightingScaleRatio))
+            Set mvarLightmap = Engine.CreateHardwareImage(Ceil(l_imgBuffer.Width * LightingScaleRatio), Ceil(l_imgBuffer.Height * LightingScaleRatio))
         End If
         If mvarLightmapScratch Is Nothing Then
-            Set mvarLightmapScratch = m_Engine.CreateHardwareImage(mvarLightmap.Width, mvarLightmap.Height)
+            Set mvarLightmapScratch = Engine.CreateHardwareImage(mvarLightmap.Width, mvarLightmap.Height)
         End If
         If (mvarLightmap.Width <> Ceil(l_imgBuffer.Width * LightingScaleRatio)) Or (mvarLightmap.Height <> Ceil(l_imgBuffer.Height * LightingScaleRatio)) Then
-            Set mvarLightmap = m_Engine.CreateHardwareImage(Ceil(l_imgBuffer.Width * LightingScaleRatio), Ceil(l_imgBuffer.Height * LightingScaleRatio))
+            Set mvarLightmap = Engine.CreateHardwareImage(Ceil(l_imgBuffer.Width * LightingScaleRatio), Ceil(l_imgBuffer.Height * LightingScaleRatio))
         End If
         If (mvarLightmapScratch.Width <> mvarLightmap.Width) Or (mvarLightmapScratch.Height <> mvarLightmap.Height) Then
-            Set mvarLightmapScratch = m_Engine.CreateHardwareImage(mvarLightmap.Width, mvarLightmap.Height)
+            Set mvarLightmapScratch = Engine.CreateHardwareImage(mvarLightmap.Width, mvarLightmap.Height)
         End If
     End If
     With mvarViewingMap.Layers(1)
@@ -389,21 +398,21 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
             If mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth <= mvarWidth Then
                 mvarViewportX = -(mvarWidth - (mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth)) \ 2
             Else
-                mvarViewportX = m_Engine.ClipNumber(mvarViewportX, 0, Abs((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) - mvarWidth))
+                mvarViewportX = Engine.ClipNumber(mvarViewportX, 0, Abs((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) - mvarWidth))
             End If
             If mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight <= mvarHeight Then
                 mvarViewportY = -(mvarHeight - (mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight)) \ 2
             Else
-                mvarViewportY = m_Engine.ClipNumber(mvarViewportY, 0, Abs((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) - mvarHeight))
+                mvarViewportY = Engine.ClipNumber(mvarViewportY, 0, Abs((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) - mvarHeight))
             End If
         End If
         FullRedraw = True
         Set Area = F2Rect(0, 0, l_imgBuffer.Width, l_imgBuffer.Height, False)
-        If (m_Engine.ClearMapBG) Or ((l_imgBuffer Is m_Engine.Backbuffer) And (((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) < l_imgBuffer.Width) Or ((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) < l_imgBuffer.Height))) Then
+        If (Engine.ClearMapBG) Or ((l_imgBuffer Is Engine.Backbuffer) And (((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) < l_imgBuffer.Width) Or ((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) < l_imgBuffer.Height))) Then
             If Output Is Nothing Then l_imgBuffer.Clear 0
         End If
     Else
-        If (m_Engine.ClearMapBG) Or ((l_imgBuffer Is m_Engine.Backbuffer) And (((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) < l_imgBuffer.Width) Or ((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) < l_imgBuffer.Height))) Then
+        If (Engine.ClearMapBG) Or ((l_imgBuffer Is Engine.Backbuffer) And (((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) < l_imgBuffer.Width) Or ((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) < l_imgBuffer.Height))) Then
             If Output Is Nothing Then l_imgBuffer.Fill Area, 0
         End If
     End If
@@ -527,21 +536,10 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                 Err.Clear
                 If ShowTiles Then RenderTilemapLayer Tilemap, CameraParam
             End If
-            If m_Engine.ShowCollision Then
-                Err.Clear
-                m_lnLines() = .Layers(Layers).CollisionLines
-                If UBound(m_lnLines) > 0 Then
-                    For m_lngLines = LBound(m_lnLines) To UBound(m_lnLines)
-                        With m_lnLines(m_lngLines)
-                            l_imgBuffer.AntiAliasLine Array(.Start.X - (mvarViewportX), .Start.Y - (mvarViewportY), .end.X - (mvarViewportX), .end.Y - (mvarViewportY)), F2RGB(0, 255, 0, 127)
-                        End With
-                    Next m_lngLines
-                End If
-            End If
             If ShowSprites Then
                 .Layers(Layers).Sprites.Cull CameraParam
                 .Layers(Layers).Sprites.Sort
-                If Err.Number <> 0 Then CriticalError "Fury2Camera.Redraw", "Layers(" + CStr(Layers) + ").Sprites.Sort Me": Exit Sub
+                If Err.Number <> 0 Then Engine.CriticalError "Fury2Camera.Redraw", "Layers(" + CStr(Layers) + ").Sprites.Sort Me": Exit Sub
             End If
             If EnableLighting And .Layers(Layers).Lighting.ResetLight Then
                 mvarLightmap.Clear .Layers(Layers).Lighting.AmbientLight
@@ -570,7 +568,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
             End If
             If ShowSprites Then
                 .Layers(Layers).Sprites.Redraw Me, l_imgBuffer
-                If Err.Number <> 0 Then CriticalError "Fury2Camera.Redraw", "Layers(" + CStr(Layers) + ").Sprites.Redraw l_imgBuffer, Area": Exit Sub
+                If Err.Number <> 0 Then Engine.CriticalError "Fury2Camera.Redraw", "Layers(" + CStr(Layers) + ").Sprites.Redraw l_imgBuffer, Area": Exit Sub
                 Err.Clear
             End If
         End If
@@ -593,7 +591,7 @@ End Sub
 Public Sub Redraw(Optional ByVal Area As Fury2Rect = Nothing)
 On Error Resume Next
 Dim m_lngLayers As Long
-    If (m_Engine.Cameras.Count = 1) And (m_Engine.DisableCameraBuffers) Then
+    If (Engine.Cameras.Count = 1) And (Engine.DisableCameraBuffers) Then
         Exit Sub
     End If
     If Area Is Nothing Then
@@ -608,7 +606,7 @@ Public Property Let ViewportY(ByVal vData As Single)
         If mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight <= mvarHeight Then
             mvarViewportY = -(mvarHeight - (mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight)) \ 2
         Else
-            mvarViewportY = m_Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) - mvarHeight))
+            mvarViewportY = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) - mvarHeight))
         End If
     Else
         mvarViewportY = vData
@@ -624,7 +622,7 @@ Public Property Let ViewportX(ByVal vData As Single)
         If mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth <= mvarWidth Then
             mvarViewportX = -(mvarWidth - (mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth)) \ 2
         Else
-            mvarViewportX = m_Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) - mvarWidth))
+            mvarViewportX = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) - mvarWidth))
         End If
     Else
         mvarViewportX = vData
@@ -653,16 +651,16 @@ End Property
 
 Sub Reposition(ByVal L As Long, ByVal T As Long, ByVal W As Long, ByVal H As Long, Optional ByVal Absolute = True)
 On Error Resume Next
-    If mvarMap <> 0 Then Set mvarViewingMap = m_Engine.Maps(mvarMap)
+    If mvarMap <> 0 Then Set mvarViewingMap = Engine.Maps(mvarMap)
     If CBool(Absolute) = True Then
-        mvarWidth = ClipValue(W - L, 1, m_Engine.ScreenWidth)
-        mvarHeight = ClipValue(H - T, 1, m_Engine.ScreenHeight)
+        mvarWidth = ClipValue(W - L, 1, Engine.ScreenWidth)
+        mvarHeight = ClipValue(H - T, 1, Engine.ScreenHeight)
     Else
-        mvarWidth = ClipValue(W, 1, m_Engine.ScreenWidth)
-        mvarHeight = ClipValue(H, 1, m_Engine.ScreenHeight)
+        mvarWidth = ClipValue(W, 1, Engine.ScreenWidth)
+        mvarHeight = ClipValue(H, 1, Engine.ScreenHeight)
     End If
-    mvarX = ClipValue(L, 0, m_Engine.ScreenWidth - mvarWidth)
-    mvarY = ClipValue(T, 0, m_Engine.ScreenHeight - mvarHeight)
+    mvarX = ClipValue(L, 0, Engine.ScreenWidth - mvarWidth)
+    mvarY = ClipValue(T, 0, Engine.ScreenHeight - mvarHeight)
     mvarDirty = True
 End Sub
 
@@ -718,16 +716,16 @@ On Error Resume Next
 Dim l_sngXV As Single, l_sngYV As Single
     If mvarViewportXVelocity Then
         If mvarViewportX < mvarViewportXTarget Then
-            l_sngXV = m_Engine.ClipNumber(mvarViewportXVelocity, 0, mvarViewportXTarget - mvarViewportX)
+            l_sngXV = Engine.ClipNumber(mvarViewportXVelocity, 0, mvarViewportXTarget - mvarViewportX)
         ElseIf mvarViewportX > mvarViewportXTarget Then
-            l_sngXV = m_Engine.ClipNumber(mvarViewportXVelocity, 0, mvarViewportX - mvarViewportXTarget)
+            l_sngXV = Engine.ClipNumber(mvarViewportXVelocity, 0, mvarViewportX - mvarViewportXTarget)
         End If
     End If
     If mvarViewportYVelocity Then
         If mvarViewportY < mvarViewportYTarget Then
-            l_sngYV = m_Engine.ClipNumber(mvarViewportYVelocity, 0, mvarViewportYTarget - mvarViewportY)
+            l_sngYV = Engine.ClipNumber(mvarViewportYVelocity, 0, mvarViewportYTarget - mvarViewportY)
         ElseIf mvarViewportY > mvarViewportYTarget Then
-            l_sngYV = m_Engine.ClipNumber(mvarViewportYVelocity, 0, mvarViewportY - mvarViewportYTarget)
+            l_sngYV = Engine.ClipNumber(mvarViewportYVelocity, 0, mvarViewportY - mvarViewportYTarget)
         End If
     End If
     Move l_sngXV, l_sngYV
@@ -740,7 +738,7 @@ Dim l_sngXV As Single, l_sngYV As Single
         mvarViewportYTarget = 0
         If mvarSubthreaded Then
             mvarSubthreaded = False
-            m_Engine.Break
+            Engine.Break
         End If
     End If
 End Sub

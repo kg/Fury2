@@ -39,7 +39,7 @@ End Function
 
 Private Function IScriptLanguage_GenerateClassVariable(Name As String, Optional IsPublic As Boolean = True) As String
 On Error Resume Next
-    IScriptLanguage_GenerateClassVariable = "var " & Name & ";"
+    IScriptLanguage_GenerateClassVariable = "this." & Name & " = undefined;"
 End Function
 
 Private Function IScriptLanguage_GenerateComment(Text As String) As String
@@ -71,7 +71,7 @@ End Function
 
 Private Function IScriptLanguage_GenerateInstantiation(Class As String) As String
 On Error Resume Next
-    IScriptLanguage_GenerateInstantiation = "new " & Class
+    IScriptLanguage_GenerateInstantiation = "new " & Class & "()"
 End Function
 
 Private Function IScriptLanguage_GenerateStringLiteral(Text As String) As String

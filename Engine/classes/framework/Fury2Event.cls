@@ -14,6 +14,15 @@ Attribute VB_Exposed = True
 Public Object As Variant
 Public Method As String
 Public BoundParameters As Variant
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Sub Bind(ByRef Meth As String, Optional ByRef Obj = Nothing, Optional BindParameters As Variant = Nothing)
 On Error Resume Next
@@ -38,11 +47,12 @@ Dim l_lngParameterOffset As Long
 Dim l_lngParameters As Long
 Dim l_lngParameterCount As Long
     If VarType(Object) = vbString Then
-        Set l_objObject = m_Engine.Evaluate(Object)
+        Set l_objObject = Engine.Evaluate(Object)
     Else
+        If Object Is Nothing Then Exit Function
         Set l_objObject = Object
     End If
-    m_Engine.ContextLevelAdd "Bound(" & TypeName(l_objObject) & "." & Method & ")"
+    Engine.ContextLevelAdd "Bound(" & TypeName(l_objObject) & "." & Method & ")"
     If VarType(BoundParameters) = vbObject Then
         If (UBound(Parameters) >= 0) Then
             ReDim l_varParameters(0 To UBound(Parameters))
@@ -100,7 +110,14 @@ Dim l_lngParameterCount As Long
         Invoke = CallByName(l_objObject, Method, VbMethod)
     End Select
     If Err = 438 Then
-        m_Engine.TextOut "Warning: Bound event failed to invoke: " & TypeName(l_objObject) & "." & Method
+        Engine.DebugOut "Bound event failed to invoke: " & TypeName(l_objObject) & "." & Method
     End If
-    m_Engine.ContextLevelRemove
+    Engine.ContextLevelRemove
 End Function
+
+Private Sub Class_Initialize()
+On Error Resume Next
+    Method = ""
+    Set Object = Nothing
+    BoundParameters = Array()
+End Sub

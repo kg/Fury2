@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "Button"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
@@ -31,6 +31,15 @@ Public ToggleButton As Boolean, ToggleGroup As Long
 Public Value As Boolean
 Private m_staState As SkinState
 Private m_wdgMe As iWidget
+Private m_engEngine As Fury2Engine
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
+
+Friend Sub SetEngine(NewEngine As Fury2Engine)
+    Set m_engEngine = NewEngine
+End Sub
 
 Friend Sub GroupSync()
 On Error Resume Next

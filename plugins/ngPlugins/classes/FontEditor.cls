@@ -89,8 +89,8 @@ Dim l_fntFont As Fury2Font
             With frmImportTTF.Options
                 l_frmNew.SetFilename ""
                 l_frmNew.RefreshAll
-                Set l_fntFont = New Fury2Font
-                l_fntFont.ImportTTF Engine.Engine.TTFont(.Name, .Size, .Bold, .Italic)
+                Set l_fntFont = DefaultEngine.F2Font()
+                l_fntFont.ImportTTF DefaultEngine.TTFont(.Name, .Size, .Bold, .Italic)
                 l_frmNew.SetFont l_fntFont
                 Set iFileTypePlugin_CreateNew = l_frmNew
                 Set iFileTypePlugin_CreateNew.Plugin = Me
@@ -118,7 +118,7 @@ Private Function iFileTypePlugin_LoadFromFilename(Filename As String) As iDocume
 On Error Resume Next
 Dim l_frmNew As New frmFont
 Dim l_fntFont As Fury2Font
-    Set l_fntFont = New Fury2Font
+    Set l_fntFont = DefaultEngine.F2Font()
     If LoadFromFile(l_fntFont, F2File(Filename)) Then
         l_frmNew.SetFilename Filename
         l_frmNew.SetFont l_fntFont

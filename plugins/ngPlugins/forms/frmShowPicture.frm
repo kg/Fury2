@@ -186,8 +186,8 @@ Dim l_picNew As New Picture
     If l_strFilename = "" Then
         l_strFilename = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
         If Trim(l_strFilename) <> "" Then
-            If InStr(l_strFilename, Engine.Engine.FileSystem.Root) Then
-                l_strFilename = Replace(l_strFilename, Engine.Engine.FileSystem.Root, "/")
+            If InStr(l_strFilename, DefaultEngine.FileSystem.Root) Then
+                l_strFilename = Replace(l_strFilename, DefaultEngine.FileSystem.Root, "/")
                 l_strFilename = Replace(l_strFilename, "\", "/")
             Else
                 Select Case MsgBox("The file you have selected is not inside your game folder. The engine will not be able to load it. Continue?", vbInformation Or vbYesNo, "Warning")

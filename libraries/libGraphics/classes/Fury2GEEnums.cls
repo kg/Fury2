@@ -69,6 +69,7 @@ Public Enum SFXBlitModes
     BlitMode_Normal_Tint = 24
     BlitMode_Additive_SourceAlpha = 25
     BlitMode_Subtractive_SourceAlpha = 26
+    BlitMode_SourceAlpha_ColorMask = 27
 End Enum
 
 Public Enum F2PixelFormats

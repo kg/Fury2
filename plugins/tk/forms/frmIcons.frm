@@ -21,7 +21,7 @@ Begin VB.Form frmIcons
       Top             =   0
       _ExtentX        =   953
       _ExtentY        =   953
-      ColourDepth     =   32
+      ColourDepth     =   8
       Size            =   10332
       Images          =   "frmIcons.frx":0000
       Version         =   131072
@@ -33,7 +33,7 @@ Begin VB.Form frmIcons
       Top             =   0
       _ExtentX        =   953
       _ExtentY        =   953
-      ColourDepth     =   24
+      ColourDepth     =   8
       Size            =   22960
       Images          =   "frmIcons.frx":287C
       Version         =   131072
@@ -47,7 +47,7 @@ Begin VB.Form frmIcons
       _ExtentY        =   953
       IconSizeX       =   20
       IconSizeY       =   20
-      ColourDepth     =   32
+      ColourDepth     =   8
       Size            =   10440
       Images          =   "frmIcons.frx":824C
       Version         =   131072

@@ -29,7 +29,7 @@ Dim l_lngX As Long, l_lngY As Long
 Dim l_rctSource As Fury2Rect, l_rctDest As Fury2Rect
     With Options
         Set l_plgPlugin = m_objEditor.FindFileTypePlugin("Image")
-        Set l_imgImage = Engine.Engine.LoadImage(Options.Image, True)
+        Set l_imgImage = DefaultEngine.LoadImage(Options.Image, True)
         If l_imgImage Is Nothing Then
             MsgBox "Unable to load image.", vbExclamation, "Error"
             Exit Sub
@@ -56,13 +56,13 @@ Dim l_rctSource As Fury2Rect, l_rctDest As Fury2Rect
                 Next l_lngX
             Next l_lngY
         Else
-            Set l_imgNew = F2Image(l_lngWidth, l_lngHeight)
+            Set l_imgNew = F2Image(Ceil(l_lngWidth / .CellWidth) * .CellWidth, Ceil(l_lngHeight / .CellHeight) * .CellHeight)
             l_imgNew.AlphaChannel = l_imgImage.AlphaChannel
             For l_lngY = 0 To l_lngCellsY - 1
                 For l_lngX = 0 To l_lngCellsX - 1
                     Set l_rctDest = F2Rect(l_lngX * .CellWidth, l_lngY * .CellHeight, .CellWidth, .CellHeight, False)
                     Set l_rctSource = F2Rect((l_lngX * (.CellWidth + .GridWidth)) + .MarginLeft, (l_lngY * (.CellHeight + .GridHeight)) + .MarginTop, .CellWidth, .CellHeight, False)
-                    l_imgNew.Blit l_rctDest, l_rctSource, l_imgImage, , BlitMode_Normal
+                    l_imgNew.Blit l_rctDest, l_rctSource, l_imgImage, , BlitMode_Merge
                 Next l_lngX
             Next l_lngY
             Set l_docImage = l_plgPlugin.CreateNew

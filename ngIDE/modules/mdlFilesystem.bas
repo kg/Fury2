@@ -8,7 +8,7 @@ Public Sub EnumFilesystem(Output As vbalTreeView, FS As Fury2Filesystem, Optiona
 On Error Resume Next
 Dim l_flsFiles As Fury2Files, l_varNames As Variant, l_fdsFolders As Fury2Folders
 Dim l_lngFile As Long, l_strIconKey As String, l_lngFolder As Long
-Dim l_silList As cVBALSysImageList, l_nodParent As cTreeViewNode
+Dim l_silList As cVBALSysImageList, l_nodParent As cTreeViewNode, l_nodItem As cTreeViewNode
 Dim l_lngTotalCount As Long, l_lngCurrentCount As Long, l_lngUpdateDelay As Long
 Dim l_strSelected As String
     If FS Is Nothing Then
@@ -43,9 +43,13 @@ Dim l_strSelected As String
                     Err.Clear
                 End If
                 If l_nodParent Is Nothing Then
-                    .Nodes.Add , , l_varNames(l_lngFolder) + "/", FS.GetTitle(l_varNames(l_lngFolder)), l_silList.FolderIndex(FS.TranslateFilename(l_varNames(l_lngFolder)) + "\")
+                    Set l_nodItem = .Nodes.Add(, , l_varNames(l_lngFolder) + "/", FS.GetTitle(l_varNames(l_lngFolder)), l_silList.FolderIndex(FS.TranslateFilename(l_varNames(l_lngFolder)) + "\"))
                 Else
-                    .Nodes.Add l_nodParent, etvwChild, l_varNames(l_lngFolder) + "/", FS.GetTitle(l_varNames(l_lngFolder)), l_silList.FolderIndex(FS.TranslateFilename(l_varNames(l_lngFolder)) + "\")
+                    Set l_nodItem = .Nodes.Add(l_nodParent, etvwChild, l_varNames(l_lngFolder) + "/", FS.GetTitle(l_varNames(l_lngFolder)), l_silList.FolderIndex(FS.TranslateFilename(l_varNames(l_lngFolder)) + "\"))
+                End If
+                If Recursive Then
+                Else
+                    l_nodItem.Children.Add , , l_nodItem.key & "children", "[loading]"
                 End If
                 l_lngUpdateDelay = (l_lngUpdateDelay + 1) Mod c_lngFilesystemUpdateDelay
                 If l_lngUpdateDelay = 0 Then
@@ -167,7 +171,7 @@ Dim l_varFilters As Variant, l_lngFilters As Long
     End If
     l_dlgDialog.VBGetOpenFileName l_strFilename, , True, MultiSelect, False, True, l_strFilter, , , Title
     If InStr(l_strFilename, Chr(0)) Then
-        l_strFilename = left(l_strFilename, InStr(l_strFilename, Chr(0) & Chr(0)) - 1)
+        l_strFilename = Left(l_strFilename, InStr(l_strFilename, Chr(0) & Chr(0)) - 1)
         SelectLocalFiles = Split(l_strFilename, Chr(0))
     Else
         SelectLocalFiles = Array(l_strFilename)

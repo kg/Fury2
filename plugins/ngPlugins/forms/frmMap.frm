@@ -3,6 +3,7 @@ Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{E142732F-A852-11D4-B06C-00500427A693}#2.0#0"; "vbalTbar6.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#3.2#0"; "ngUI.ocx"
 Begin VB.Form frmMap 
    BorderStyle     =   0  'None
    ClientHeight    =   5580
@@ -28,6 +29,15 @@ Begin VB.Form frmMap
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   634
    ShowInTaskbar   =   0   'False
+   Begin ngUI.ngToolbar tbrMapTools 
+      Height          =   465
+      Left            =   3555
+      TabIndex        =   25
+      Top             =   30
+      Width           =   2430
+      _ExtentX        =   4286
+      _ExtentY        =   820
+   End
    Begin VB.Timer tmrResize 
       Interval        =   1
       Left            =   4155
@@ -50,7 +60,7 @@ Begin VB.Form frmMap
    Begin vbalTBar6.cToolbar tbrTools 
       Height          =   360
       Left            =   1125
-      Top             =   30
+      Top             =   15
       Width           =   2400
       _ExtentX        =   4233
       _ExtentY        =   635
@@ -561,522 +571,6 @@ Private m_intLayerCache() As Integer
 
 Private m_tbhHandler As iToolbarHandler
 
-Private Property Get iDocument_Object() As Object
-    Set iDocument_Object = Me
-End Property
-
-Public Function AreaFromPoint(ByVal X As Long, ByVal Y As Long) As Fury2Area
-On Error Resume Next
-Dim l_araArea As Fury2Area
-    For Each l_araArea In m_mapMap.Areas
-        If l_araArea.PointInside(X, Y) Then
-            Set AreaFromPoint = l_araArea
-            Exit For
-        End If
-    Next l_araArea
-End Function
-
-Private Function ClipboardContainsFormat(Format As MapEditorClipboardFormats) As Boolean
-On Error Resume Next
-Dim l_objPlugin As MapEditor
-    Set l_objPlugin = m_fpgPlugin
-    With l_objPlugin.CustomClipboard
-        .GetCurrentFormats Me.hwnd
-        ClipboardContainsFormat = .HasCurrentFormat(l_objPlugin.ClipboardFormat(Format))
-    End With
-End Function
-
-Private Function ClipboardFormat(Format As MapEditorClipboardFormats) As Long
-On Error Resume Next
-Dim l_objPlugin As MapEditor
-    Set l_objPlugin = m_fpgPlugin
-    ClipboardFormat = l_objPlugin.ClipboardFormat(Format)
-End Function
-
-Private Function ContextMenuIcon(key As String) As IPictureDisp
-On Error Resume Next
-    Set ContextMenuIcon = frmIcons.ilContextMenus.ItemPicture(frmIcons.ilContextMenus.ItemIndex(key))
-End Function
-
-Private Function CustomClipboard() As cCustomClipboard
-On Error Resume Next
-Dim l_objPlugin As MapEditor
-    Set l_objPlugin = m_fpgPlugin
-    Set CustomClipboard = l_objPlugin.CustomClipboard
-End Function
-
-Private Function Editor() As Object
-On Error Resume Next
-Dim l_objPlugin As MapEditor
-    Set l_objPlugin = m_fpgPlugin
-    Set Editor = l_objPlugin.Editor
-End Function
-
-Private Sub elLights_ContextMenu(ByVal X As Long, ByVal Y As Long)
-On Error Resume Next
-    elLights.SetFocus
-    Editor.ActionUpdate
-    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-        Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
-        frmIcons.ilContextMenus)
-    Case 1
-        PasteLight
-    Case Else
-    End Select
-End Sub
-
-Private Sub elLights_ItemContextMenu(ByVal Item As Long, ByVal X As Long, ByVal Y As Long)
-On Error Resume Next
-    elLights.SetFocus
-    elLights.SelectedItem = Item
-    Editor.ActionUpdate
-    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-        Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-        frmIcons.ilContextMenus)
-    Case 1
-        CutLight
-    Case 2
-        CopyLight
-    Case 3
-        PasteLight Item
-    Case 4
-        DeleteLight
-    Case Else
-    End Select
-End Sub
-
-Private Function iDocument_Save(Filename As String) As Boolean
-On Error Resume Next
-Dim l_vfFile As VirtualFile
-    Kill Filename
-    Err.Clear
-    Set l_vfFile = F2File()
-    SaveToFile m_mapMap, l_vfFile
-    l_vfFile.SaveFile Filename
-    iDocument_Save = (Err.Number = 0)
-    If iDocument_Save Then
-        SetFilename Filename
-    End If
-    Redraw
-End Function
-
-Public Function LightSourceFromPoint(ByVal X As Long, ByVal Y As Long, Optional ByVal Layer As Long = -1) As Fury2LightSource
-On Error Resume Next
-Dim l_lsLight As Fury2LightSource
-Dim l_colList As New Collection
-Dim l_sngXDistance As Single, l_sngYDistance As Single, l_sngDistance As Single
-Dim l_sngSmallestDistance As Single, l_lsSmallest As Fury2LightSource
-    For Each l_lsLight In m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights
-        l_sngDistance = Sqr((Abs(l_lsLight.X - X) ^ 2) + (Abs(l_lsLight.Y - Y) ^ 2))
-        If (l_sngDistance) <= ClipValue(l_lsLight.FalloffDistance, 10, 10000) Then
-            l_colList.Add l_lsLight
-        End If
-    Next l_lsLight
-    If l_colList.Count = 1 Then
-        Set LightSourceFromPoint = l_colList(1)
-    ElseIf l_colList.Count > 1 Then
-        l_sngSmallestDistance = 99999999
-        For Each l_lsLight In l_colList
-            l_sngDistance = Sqr((Abs(l_lsLight.X - X) ^ 2) + (Abs(l_lsLight.Y - Y) ^ 2))
-            If l_sngDistance <= l_sngSmallestDistance Then
-                l_sngSmallestDistance = l_sngDistance
-                Set l_lsSmallest = l_lsLight
-            End If
-        Next l_lsLight
-        Set LightSourceFromPoint = l_lsSmallest
-    End If
-End Function
-
-Public Function PathNodeFromPoint(ByVal X As Long, ByVal Y As Long) As Fury2Waypoint
-On Error Resume Next
-Dim l_wpWaypoint As Fury2Waypoint
-Dim l_colList As New Collection
-Dim l_sngXDistance As Single, l_sngYDistance As Single, l_sngDistance As Single
-Dim l_sngSmallestDistance As Single, l_wpSmallest As Fury2Waypoint
-    For Each l_wpWaypoint In m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).Path
-        l_sngDistance = Sqr((Abs(l_wpWaypoint.X - X) ^ 2) + (Abs(l_wpWaypoint.Y - Y) ^ 2))
-        If (l_sngDistance) <= 3 Then
-            l_colList.Add l_wpWaypoint
-        End If
-    Next l_wpWaypoint
-    If l_colList.Count = 1 Then
-        Set PathNodeFromPoint = l_colList(1)
-    ElseIf l_colList.Count > 1 Then
-        l_sngSmallestDistance = 99999999
-        For Each l_wpWaypoint In l_colList
-            l_sngDistance = Sqr((Abs(l_wpWaypoint.X - X) ^ 2) + (Abs(l_wpWaypoint.Y - Y) ^ 2))
-            If l_sngDistance <= l_sngSmallestDistance Then
-                l_sngSmallestDistance = l_sngDistance
-                Set l_wpSmallest = l_wpWaypoint
-            End If
-        Next l_wpWaypoint
-        Set PathNodeFromPoint = l_wpSmallest
-    End If
-End Function
-
-Public Function MapObjectFromPoint(ByVal X As Long, ByVal Y As Long) As Fury2MapObject
-On Error Resume Next
-Dim l_mobObject As Fury2MapObject
-Dim l_sndObject As Fury2SoundObject
-Dim l_colList As New Collection
-Dim l_sngXDistance As Single, l_sngYDistance As Single, l_sngDistance As Single
-Dim l_sngSize As Single
-Dim l_sngX As Single, l_sngY As Single
-Dim l_sngSmallestDistance As Single, l_mobSmallest As Fury2MapObject
-    For Each l_mobObject In m_mapMap.Objects
-        If TypeOf l_mobObject Is Fury2SoundObject Then
-            Set l_sndObject = l_mobObject
-            l_sngSize = l_sndObject.FalloffDistance + l_sndObject.FalloffOffset
-            l_sngX = l_sndObject.X
-            l_sngY = l_sndObject.Y
-        Else
-            l_sngSize = 0
-            l_sngX = 0
-            l_sngY = 0
-        End If
-        l_sngDistance = Sqr((Abs(l_sngX - X) ^ 2) + (Abs(l_sngY - Y) ^ 2))
-        If (l_sngDistance) <= l_sngSize Then
-            l_colList.Add l_mobObject
-        End If
-    Next l_mobObject
-    If l_colList.Count = 1 Then
-        Set MapObjectFromPoint = l_colList(1)
-    ElseIf l_colList.Count > 1 Then
-        l_sngSmallestDistance = 99999999
-        For Each l_mobObject In l_colList
-            If TypeOf l_mobObject Is Fury2SoundObject Then
-                Set l_sndObject = l_mobObject
-                l_sngX = l_sndObject.X
-                l_sngY = l_sndObject.Y
-            Else
-                l_sngX = 0
-                l_sngY = 0
-            End If
-            l_sngDistance = Sqr((Abs(l_sngX - X) ^ 2) + (Abs(l_sngY - Y) ^ 2))
-            If l_sngDistance <= l_sngSmallestDistance Then
-                l_sngSmallestDistance = l_sngDistance
-                Set l_mobSmallest = l_mobObject
-            End If
-        Next l_mobObject
-        Set MapObjectFromPoint = l_mobSmallest
-    End If
-End Function
-
-Private Function MapToolButtons(View As MapViews) As Variant
-On Error Resume Next
-    Select Case View
-    Case View_Tiles
-        MapToolButtons = Buttons( _
-            ButtonString("Pen", , "Tool(0)", "PEN"), ButtonString("Line", , "Tool(1)", "LINE"), "-", _
-            ButtonString("Rectangle", , "Tool(2)", "RECTANGLE"), ButtonString("Filled Rectangle", , "Tool(3)", "RECTANGLE FILLED"), "-", _
-            ButtonString("Circle", , "Tool(4)", "CIRCLE", False), ButtonString("Filled Circle", , "Tool(5)", "CIRCLE FILLED", False), "-", _
-            ButtonString("Flood Fill", , "Tool(6)", "FLOOD FILL"), ButtonString("Replace", , "Tool(7)", "COLOR ERASER"), "-", _
-            ButtonString("Select", , "Tool(8)", "SELECTION", False) _
-            )
-    Case View_Blocking
-        MapToolButtons = Buttons( _
-            ButtonString("Line", , "Tool(0)", "LINE"), ButtonString("Polygon", , "Tool(1)", "POLYLINE"), ButtonString("Rectangle", , "Tool(2)", "RECTANGLE"), "-", _
-            ButtonString("Select", , "Tool(3)", "SELECTION"), ButtonString("Move", , "Tool(4)", "MOVE") _
-            )
-    Case View_Lighting
-        MapToolButtons = Buttons( _
-            ButtonString("Cursor", , "Tool(0)", "CURSOR"), ButtonString("Place Light", , "Tool(1)", "BRIGHTNESS"), "-", _
-            ButtonString("Place Obstruction", , "Tool(2)", "LIGHTING OBSTRUCTION"), ButtonString("Place Obstruction Rectangle", , "Tool(3)", "LIGHTING OBSTRUCTION RECTANGLE"), ButtonString("Select Obstructions", , "Tool(4)", "SELECTION"), ButtonString("Move Obstructions", , "Tool(5)", "MOVE"), "-", _
-            ButtonString("Place Plane", , "Tool(6)", "LIGHTING PLANE"), ButtonString("Select Planes", , "Tool(7)", "SELECTION"), ButtonString("Move Planes", , "Tool(8)", "MOVE") _
-            )
-    Case View_Areas
-        MapToolButtons = Buttons( _
-            ButtonString("Cursor", , "Tool(0)", "CURSOR"), ButtonString("Draw Area", , "Tool(1)", "RECTANGLE FILLED") _
-            )
-    Case View_Sprites
-        MapToolButtons = Buttons( _
-            ButtonString("Cursor", , "Tool(0)", "CURSOR"), ButtonString("Insert Sprite", , "Tool(1)", "COPY"), "-", _
-            ButtonString("Select Path Nodes", , "Tool(2)", "SELECT PATH NODES"), ButtonString("Add Path Nodes", , "Tool(3)", "ADD PATH NODES") _
-            )
-    Case View_Objects
-        MapToolButtons = Buttons( _
-            ButtonString("Cursor", , "Tool(0)", "CURSOR"), ButtonString("Insert Sound", , "Tool(1)", "SOUND") _
-            )
-    Case Else
-    End Select
-End Function
-
-Public Sub CopyArea()
-On Error Resume Next
-Dim l_araArea As Fury2Area
-    BeginProcess "Performing Copy..."
-    Set l_araArea = m_mapMap.Areas(m_lngSelectedArea)
-    CustomClipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_Area), l_araArea
-    CustomClipboard.ClipboardClose
-    EndProcess
-End Sub
-
-Public Function PasteArea(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Area
-On Error Resume Next
-Dim l_araArea As Fury2Area
-    BeginProcess "Performing Paste..."
-    If AtIndex < 1 Then
-        AtIndex = m_mapMap.Areas.Count + 1
-    End If
-    Set l_araArea = New Fury2Area
-    CustomClipboard.ClipboardOpen Me.hwnd
-    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_Area), l_araArea) Then
-        CustomClipboard.ClipboardClose
-        ObjectUndoPush m_mapMap.Areas, l_araArea, AtIndex, OUO_Remove
-        m_mapMap.Areas.Add l_araArea, , AtIndex
-        m_lngSelectedArea = AtIndex
-        If DoRedraw Then
-            RefreshAreas
-            Redraw
-        End If
-        Editor.ToolbarUpdate
-        Set PasteArea = l_araArea
-    Else
-        CustomClipboard.ClipboardClose
-    End If
-    EndProcess
-End Function
-
-Public Sub PasteBrush()
-On Error Resume Next
-    BeginProcess "Performing Paste..."
-    CustomClipboard.ClipboardOpen Me.hwnd
-    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_Brush), m_brsBrush) Then
-        CustomClipboard.ClipboardClose
-        RefreshBrush
-    Else
-        CustomClipboard.ClipboardClose
-    End If
-    EndProcess
-End Sub
-
-Public Sub PastePathNodes()
-On Error Resume Next
-Dim l_lngNode As Long
-Dim l_lngCount As Long
-Dim l_vfNodes As VirtualFile
-Dim l_wpNode As Fury2Waypoint
-    BeginProcess "Performing Paste..."
-    Set l_vfNodes = New VirtualFile
-    CustomClipboard.ClipboardOpen Me.hwnd
-    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_PathNodes), l_vfNodes) Then
-        CustomClipboard.ClipboardClose
-        l_vfNodes.Load l_lngCount
-        With m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite)
-            For l_lngNode = 1 To l_lngCount
-                Set l_wpNode = New Fury2Waypoint
-                l_vfNodes.Load l_wpNode
-                .Path.AddObject l_wpNode
-            Next l_lngNode
-            ReDim Preserve m_bytSelectedPathNodes(0 To .Path.Count)
-            SelectPathNodes .Path.Count - l_lngCount, .Path.Count
-        End With
-        Redraw
-        Editor.ToolbarUpdate
-    Else
-        CustomClipboard.ClipboardClose
-    End If
-    EndProcess
-End Sub
-
-Public Sub PasteCollisionLines()
-On Error Resume Next
-Dim l_lngLine As Long
-Dim l_lngCount As Long
-Dim l_lnLines() As FLine
-Dim l_vfLines As VirtualFile
-    BeginProcess "Performing Paste..."
-    ReDim l_lnLines(0 To 0)
-    Set l_vfLines = New VirtualFile
-    CustomClipboard.ClipboardOpen Me.hwnd
-    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_MapObstructions), l_vfLines) Then
-        CustomClipboard.ClipboardClose
-        l_vfLines.Load l_lngCount
-        ReDim l_lnLines(0 To l_lngCount - 1)
-        l_vfLines.RawLoad ByVal VarPtr(l_lnLines(0)), l_lngCount * Len(l_lnLines(0))
-        BlockingUndoPush
-        With m_mapMap.Layers(m_lngSelectedLayer)
-            For l_lngLine = LBound(l_lnLines) To UBound(l_lnLines)
-                .AddCollisionLine l_lnLines(l_lngLine).Start.X, l_lnLines(l_lngLine).Start.Y, l_lnLines(l_lngLine).end.X, l_lnLines(l_lngLine).end.Y
-            Next l_lngLine
-            ReDim Preserve m_bytSelectedCollisionLines(0 To .CollisionLineCount)
-            SelectCollisionLines .CollisionLineCount - l_lngCount + 1, .CollisionLineCount
-        End With
-        Redraw
-        Editor.ToolbarUpdate
-    Else
-        CustomClipboard.ClipboardClose
-    End If
-    EndProcess
-End Sub
-
-Public Function PasteLayer(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2MapLayer
-On Error Resume Next
-Dim l_lyrLayer As Fury2MapLayer
-    BeginProcess "Performing Paste..."
-    If AtIndex < 1 Then
-        AtIndex = m_mapMap.Layers.Count + 1
-    End If
-    Set l_lyrLayer = New Fury2MapLayer
-    CustomClipboard.ClipboardOpen Me.hwnd
-    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_MapLayer), l_lyrLayer) Then
-        CustomClipboard.ClipboardClose
-        ObjectUndoPush m_mapMap.Layers, l_lyrLayer, AtIndex, OUO_Remove
-        m_mapMap.Layers.Add l_lyrLayer, , AtIndex
-        l_lyrLayer.Tileset.Reload
-        m_lngSelectedLayer = AtIndex
-        If DoRedraw Then
-            RefreshLayers
-            Redraw
-        End If
-        Editor.ToolbarUpdate
-        Set PasteLayer = l_lyrLayer
-    Else
-        CustomClipboard.ClipboardClose
-    End If
-    EndProcess
-End Function
-
-Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
-On Error Resume Next
-Dim l_sprSprite As Fury2Sprite
-Dim l_ptMouse As POINTAPI
-    With m_mapMap.Layers(m_lngSelectedLayer).Sprites
-        BeginProcess "Performing Paste..."
-        If AtIndex < 1 Then
-            AtIndex = .Count + 1
-        End If
-        Set l_sprSprite = New Fury2Sprite
-        CustomClipboard.ClipboardOpen Me.hwnd
-        If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_Sprite), l_sprSprite) Then
-            CustomClipboard.ClipboardClose
-            l_sprSprite.Initialize
-            l_sprSprite.Load
-            ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Sprites, l_sprSprite, AtIndex, OUO_Remove
-            GetCursorPos l_ptMouse
-            ScreenToClient picMapViewport.hwnd, l_ptMouse
-            If (l_ptMouse.X >= 0) And (l_ptMouse.Y >= 0) And (l_ptMouse.X < picMapViewport.ScaleWidth) And (l_ptMouse.Y < picMapViewport.ScaleHeight) Then
-                With l_sprSprite
-                    .X = m_lngMouseX
-                    .Y = m_lngMouseY
-                End With
-            End If
-            .Add l_sprSprite, , AtIndex
-            m_lngSelectedSprite = AtIndex
-            If DoRedraw Then
-                RefreshSprites
-                Redraw
-            End If
-            Editor.ToolbarUpdate
-            Set PasteSprite = l_sprSprite
-        Else
-            CustomClipboard.ClipboardClose
-        End If
-        EndProcess
-    End With
-End Function
-
-Public Function PasteLight(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2LightSource
-On Error Resume Next
-Dim l_litLight As Fury2LightSource
-    With m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights
-        BeginProcess "Performing Paste..."
-        If AtIndex < 1 Then
-            AtIndex = .Count + 1
-        End If
-        Set l_litLight = New Fury2LightSource
-        CustomClipboard.ClipboardOpen Me.hwnd
-        If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_LightSource), l_litLight) Then
-            CustomClipboard.ClipboardClose
-            ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights, l_litLight, AtIndex, OUO_Remove
-            .Add l_litLight, , AtIndex
-            m_lngSelectedLight = AtIndex
-            If DoRedraw Then
-                RefreshLights
-                Redraw
-            End If
-            Editor.ToolbarUpdate
-            Set PasteLight = l_litLight
-        Else
-            CustomClipboard.ClipboardClose
-        End If
-        EndProcess
-    End With
-End Function
-
-Public Function Redo() As Boolean
-On Error Resume Next
-Dim l_undRedo As iUndoEntry
-Dim l_undUndo As iUndoEntry
-    If m_colRedo.Count > 0 Then
-        BeginProcess "Preparing to Redo..."
-        Set l_undRedo = m_colRedo.Item(1)
-        Set l_undUndo = l_undRedo.CreateReverse()
-        m_colRedo.Remove 1
-        m_colUndo.Add l_undUndo
-        UpdateProcess 0, "Performing Redo..."
-        Redo = SmartApply(l_undRedo)
-        EndProcess
-        Editor.ActionUpdate
-    End If
-End Function
-
-Private Function SmartApply(Obj As iUndoEntry) As Boolean
-On Error Resume Next
-Dim l_ouUndo As cObjectUndoEntry
-Dim l_prUndo As cPropertyUndoEntry
-    SmartApply = Obj.Apply()
-    If TypeOf Obj Is cTileUndoEntry Then
-        Redraw
-    ElseIf TypeOf Obj Is cObjectUndoEntry Then
-        Redraw
-        Set l_ouUndo = Obj
-        If l_ouUndo.Container Is m_mapMap.Layers Then
-            RefreshLayers
-        ElseIf l_ouUndo.Container Is m_mapMap.Areas Then
-            RefreshAreas
-        Else
-        End If
-    ElseIf TypeOf Obj Is cPropertyUndoEntry Then
-        Redraw
-        insInspect.RefreshValues
-        Set l_prUndo = Obj
-    ElseIf TypeOf Obj Is cMultiUndoEntry Then
-        Redraw
-        insInspect.RefreshValues
-    End If
-End Function
-
-Public Function SpriteFromPoint(ByVal X As Long, ByVal Y As Long, Optional ByVal Layer As Long = -1) As Fury2Sprite
-On Error Resume Next
-Dim l_sprSprite As Fury2Sprite
-    If Layer = -1 Then Layer = m_lngSelectedLayer
-    For Each l_sprSprite In m_mapMap.Layers(m_lngSelectedLayer).Sprites
-        If l_sprSprite.PointInside(X, Y) Then
-            Set SpriteFromPoint = l_sprSprite
-            Exit For
-        End If
-    Next l_sprSprite
-End Function
-
-Public Function Undo() As Boolean
-On Error Resume Next
-Dim l_undRedo As iUndoEntry
-Dim l_undUndo As iUndoEntry
-    If m_colUndo.Count > 0 Then
-        BeginProcess "Preparing to Undo..."
-        Set l_undUndo = m_colUndo.Item(m_colUndo.Count)
-        Set l_undRedo = l_undUndo.CreateReverse()
-        m_colUndo.Remove m_colUndo.Count
-        m_colRedo.Add l_undRedo, , 1
-        UpdateProcess 0, "Performing Undo..."
-        Undo = SmartApply(l_undUndo)
-        EndProcess
-        Editor.ActionUpdate
-    End If
-End Function
-
 Public Property Get ActiveType() As String
 On Error Resume Next
     Select Case LCase(Trim(Me.ActiveControl.Name))
@@ -1126,93 +620,24 @@ On Error Resume Next
     End Select
 End Property
 
-Public Property Get BrushXCenter() As Long
+Public Sub AddEdgeBlocking()
 On Error Resume Next
-    BrushXCenter = Floor(m_brsBrush.Width / 2)
-End Property
-
-Public Property Get BrushYCenter() As Long
-On Error Resume Next
-    BrushYCenter = Floor(m_brsBrush.Height / 2)
-End Property
-
-Private Property Get iDocument_CanSave() As Boolean
-On Error Resume Next
-    iDocument_CanSave = True
-End Property
-
-Private Property Get iDocument_Filename() As String
-On Error Resume Next
-    iDocument_Filename = m_strFilename
-End Property
-
-Private Property Get iDocument_Plugin() As ngInterfaces.iPlugin
-On Error Resume Next
-    Set iDocument_Plugin = m_fpgPlugin
-End Property
-
-Private Property Get iDocument_Typename() As String
-On Error Resume Next
-    iDocument_Typename = "Map"
-End Property
-
-Private Property Get iExtendedForm_Extender() As Object
-On Error Resume Next
-    Set iExtendedForm_Extender = Me.extender
-End Property
-
-Private Property Get Tool_Areas() As AreaTools
-On Error Resume Next
-    Tool_Areas = m_lngCurrentTool(View_Areas)
-End Property
-
-Private Property Get Tool_Blocking() As BlockingTools
-On Error Resume Next
-    Tool_Blocking = m_lngCurrentTool(View_Blocking)
-End Property
-
-Private Property Get Tool_Lighting() As LightingTools
-On Error Resume Next
-    Tool_Lighting = m_lngCurrentTool(View_Lighting)
-End Property
-
-Private Property Get Tool_Objects() As ObjectTools
-On Error Resume Next
-    Tool_Objects = m_lngCurrentTool(View_Objects)
-End Property
-
-Private Property Get Tool_Sprites() As SpriteTools
-On Error Resume Next
-    Tool_Sprites = m_lngCurrentTool(View_Sprites)
-End Property
-
-Private Property Get Tool_Tiles() As TileTools
-On Error Resume Next
-    Tool_Tiles = m_lngCurrentTool(View_Tiles)
-End Property
-
-Public Property Get Zoom() As Single
-On Error Resume Next
-    Zoom = m_voViewOptions.Zoom / 100#
-End Property
-
-Public Property Let Zoom(NewZoom As Single)
-On Error Resume Next
-    If (CLng(NewZoom * 100) <> m_voViewOptions.Zoom) Then
-        m_voViewOptions.Zoom = CLng(NewZoom * 100)
-        ZoomChanged
-    End If
-End Property
-
-Public Property Get ViewOptions() As MapEditorViewOptions
-On Error Resume Next
-    Set ViewOptions = m_voViewOptions
-End Property
-
-Private Property Set iDocument_Plugin(RHS As ngInterfaces.iPlugin)
-On Error Resume Next
-    Set m_fpgPlugin = RHS
-End Property
+Dim l_lyrLayer As Fury2MapLayer
+Dim l_lngW As Long, l_lngH As Long
+    For Each l_lyrLayer In m_mapMap.Layers
+        With l_lyrLayer
+            l_lngW = (.Width * .Tileset.TileWidth) - 1
+            l_lngH = (.Height * .Tileset.TileHeight) - 1
+            .AddCollisionLine 0, 0, l_lngW, 0
+            .AddCollisionLine 0, 0, 0, l_lngH
+            .AddCollisionLine l_lngW, 0, l_lngW, l_lngH
+            .AddCollisionLine 0, l_lngH, l_lngW, l_lngH
+        End With
+    Next l_lyrLayer
+    ReDim Preserve m_bytSelectedCollisionLines(0 To m_mapMap.Layers(m_lngSelectedLayer).CollisionLineCount)
+    SelectCollisionLines m_mapMap.Layers(m_lngSelectedLayer).CollisionLineCount - 3, m_mapMap.Layers(m_lngSelectedLayer).CollisionLineCount
+    Redraw
+End Sub
 
 Public Sub AllocateBackbuffer()
 On Error Resume Next
@@ -1220,6 +645,17 @@ On Error Resume Next
     Set m_imgBackbuffer = F2DIBSection(picDisplayBuffer.ScaleWidth, picDisplayBuffer.ScaleHeight, picMapViewport.hdc)
     m_lngBackbufferOldHandle = SelectObject(picDisplayBuffer.hdc, m_imgBackbuffer.DIBHandle)
 End Sub
+
+Public Function AreaFromPoint(ByVal X As Long, ByVal Y As Long) As Fury2Area
+On Error Resume Next
+Dim l_araArea As Fury2Area
+    For Each l_araArea In m_mapMap.Areas
+        If l_araArea.PointInside(X, Y) Then
+            Set AreaFromPoint = l_araArea
+            Exit For
+        End If
+    Next l_araArea
+End Function
 
 Public Sub AutoScroll(Optional ByVal X As Long = -32767, Optional ByVal Y As Long = -32767, Optional ByVal DoRedraw As Boolean = True)
 On Error Resume Next
@@ -1281,6 +717,35 @@ Public Sub Blocking_ToolChanged()
 On Error Resume Next
 End Sub
 
+Public Sub BlockingUndoPush(Optional ByVal Layer As Long = -1)
+On Error Resume Next
+Dim l_undUndo As cBlockingUndoEntry
+    If Layer = -1 Then Layer = m_lngSelectedLayer
+    BeginProcess "Storing Undo Data..."
+    Set l_undUndo = New cBlockingUndoEntry
+    With l_undUndo
+        Set .Map = m_mapMap
+        .Layer = Layer
+        .Lines = m_mapMap.Layers(Layer).CollisionLines
+    End With
+    m_colUndo.Add l_undUndo
+    m_colRedo.Clear
+    If m_colUndo.Count > c_lngUndoStackLength Then
+        m_colUndo.Remove 1
+    End If
+    EndProcess
+End Sub
+
+Public Property Get BrushXCenter() As Long
+On Error Resume Next
+    BrushXCenter = Floor(m_brsBrush.Width / 2)
+End Property
+
+Public Property Get BrushYCenter() As Long
+On Error Resume Next
+    BrushYCenter = Floor(m_brsBrush.Height / 2)
+End Property
+
 Public Sub CacheLayer()
 On Error Resume Next
     m_intLayerCache = m_mapMap.Layers(m_lngSelectedLayer).Tiles
@@ -1315,29 +780,44 @@ Dim l_lngXO As Long, l_lngYO As Long
     m_imgOverlay.Blit m_imgOverlay.Rectangle.Translate(l_lngXO, l_lngYO), F2Rect(ClipValue(m_lngOverlayX - hsMap.Value, 0, m_imgBackbuffer.Width), ClipValue(m_lngOverlayY - vsMap.Value, 0, m_imgBackbuffer.Width), m_lngOverlayWidth, m_lngOverlayHeight, False), m_imgBackbuffer
 End Sub
 
-Public Sub CopyPathNodes()
+Private Function ClipboardContainsFormat(Format As MapEditorClipboardFormats) As Boolean
 On Error Resume Next
-Dim l_lngNode As Long
-Dim l_wpNode As Fury2Waypoint
-Dim l_vfNodes As VirtualFile
-Dim l_colNodes As New Fury2Collection
-    BeginProcess "Performing Copy..."
-    Set l_vfNodes = New VirtualFile
-    With m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite)
-        l_lngNode = 1
-        For Each l_wpNode In .Path
-            If m_bytSelectedPathNodes(l_lngNode) Then
-                l_colNodes.Add l_wpNode
-            End If
-            l_lngNode = l_lngNode + 1
-        Next l_wpNode
+Dim l_objPlugin As MapEditor
+    Set l_objPlugin = m_fpgPlugin
+    With l_objPlugin.CustomClipboard
+        .GetCurrentFormats Me.hwnd
+        ClipboardContainsFormat = .HasCurrentFormat(l_objPlugin.ClipboardFormat(Format))
     End With
-    l_vfNodes.Save l_colNodes.Count
-    For Each l_wpNode In l_colNodes
-        l_vfNodes.Save l_wpNode
-    Next l_wpNode
+End Function
+
+Private Function ClipboardFormat(Format As MapEditorClipboardFormats) As Long
+On Error Resume Next
+Dim l_objPlugin As MapEditor
+    Set l_objPlugin = m_fpgPlugin
+    ClipboardFormat = l_objPlugin.ClipboardFormat(Format)
+End Function
+
+Private Function ContextMenuIcon(key As String) As IPictureDisp
+On Error Resume Next
+    Set ContextMenuIcon = frmIcons.ilContextMenus.ItemPicture(frmIcons.ilContextMenus.ItemIndex(key))
+End Function
+
+Public Sub CopyArea()
+On Error Resume Next
+Dim l_araArea As Fury2Area
+    BeginProcess "Performing Copy..."
+    Set l_araArea = m_mapMap.Areas(m_lngSelectedArea)
     CustomClipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_PathNodes), l_vfNodes
+    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_Area), l_araArea
+    CustomClipboard.ClipboardClose
+    EndProcess
+End Sub
+
+Public Sub CopyBrush()
+On Error Resume Next
+    BeginProcess "Performing Copy..."
+    CustomClipboard.ClipboardOpen Me.hwnd
+    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_Brush), m_brsBrush
     CustomClipboard.ClipboardClose
     EndProcess
 End Sub
@@ -1366,6 +846,28 @@ Dim l_vfLines As VirtualFile
     l_vfLines.RawSave ByVal VarPtr(l_lnLines(0)), l_lngCount * Len(l_lnLines(0))
     CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(CF_MapObstructions), l_vfLines
+    CustomClipboard.ClipboardClose
+    EndProcess
+End Sub
+
+Public Sub CopyLayer()
+On Error Resume Next
+Dim l_lyrLayer As Fury2MapLayer
+    BeginProcess "Performing Copy..."
+    Set l_lyrLayer = m_mapMap.Layers(m_lngSelectedLayer)
+    CustomClipboard.ClipboardOpen Me.hwnd
+    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_MapLayer), l_lyrLayer
+    CustomClipboard.ClipboardClose
+    EndProcess
+End Sub
+
+Public Sub CopyLight()
+On Error Resume Next
+Dim l_litLight As Fury2LightSource
+    BeginProcess "Performing Copy..."
+    Set l_litLight = m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights(m_lngSelectedLight)
+    CustomClipboard.ClipboardOpen Me.hwnd
+    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_LightSource), l_litLight
     CustomClipboard.ClipboardClose
     EndProcess
 End Sub
@@ -1426,22 +928,29 @@ Dim l_vfPlanes As VirtualFile
     EndProcess
 End Sub
 
-Public Sub CopyBrush()
+Public Sub CopyPathNodes()
 On Error Resume Next
+Dim l_lngNode As Long
+Dim l_wpNode As Fury2Waypoint
+Dim l_vfNodes As VirtualFile
+Dim l_colNodes As New Fury2Collection
     BeginProcess "Performing Copy..."
+    Set l_vfNodes = New VirtualFile
+    With m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite)
+        l_lngNode = 1
+        For Each l_wpNode In .Path
+            If m_bytSelectedPathNodes(l_lngNode) Then
+                l_colNodes.Add l_wpNode
+            End If
+            l_lngNode = l_lngNode + 1
+        Next l_wpNode
+    End With
+    l_vfNodes.Save l_colNodes.Count
+    For Each l_wpNode In l_colNodes
+        l_vfNodes.Save l_wpNode
+    Next l_wpNode
     CustomClipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_Brush), m_brsBrush
-    CustomClipboard.ClipboardClose
-    EndProcess
-End Sub
-
-Public Sub CopyLayer()
-On Error Resume Next
-Dim l_lyrLayer As Fury2MapLayer
-    BeginProcess "Performing Copy..."
-    Set l_lyrLayer = m_mapMap.Layers(m_lngSelectedLayer)
-    CustomClipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_MapLayer), l_lyrLayer
+    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_PathNodes), l_vfNodes
     CustomClipboard.ClipboardClose
     EndProcess
 End Sub
@@ -1457,15 +966,17 @@ Dim l_sprSprite As Fury2Sprite
     EndProcess
 End Sub
 
-Public Sub CopyLight()
+Private Function CustomClipboard() As cCustomClipboard
 On Error Resume Next
-Dim l_litLight As Fury2LightSource
-    BeginProcess "Performing Copy..."
-    Set l_litLight = m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights(m_lngSelectedLight)
-    CustomClipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_LightSource), l_litLight
-    CustomClipboard.ClipboardClose
-    EndProcess
+Dim l_objPlugin As MapEditor
+    Set l_objPlugin = m_fpgPlugin
+    Set CustomClipboard = l_objPlugin.CustomClipboard
+End Function
+
+Public Sub CutArea()
+On Error Resume Next
+    CopyArea
+    DeleteArea
 End Sub
 
 Public Sub CutBrush()
@@ -1474,34 +985,10 @@ On Error Resume Next
     DeleteBrush
 End Sub
 
-Public Sub CutArea()
-On Error Resume Next
-    CopyArea
-    DeleteArea
-End Sub
-
-Public Sub CutPathNodes()
-On Error Resume Next
-    CopyPathNodes
-    DeletePathNodes
-End Sub
-
 Public Sub CutCollisionLines()
 On Error Resume Next
     CopyCollisionLines
     DeleteCollisionLines
-End Sub
-
-Public Sub CutLightingPlanes()
-On Error Resume Next
-    CopyLightingPlanes
-    DeleteLightingPlanes
-End Sub
-
-Public Sub CutLightingObstructions()
-On Error Resume Next
-    CopyLightingObstructions
-    DeleteLightingObstructions
 End Sub
 
 Public Sub CutLayer()
@@ -1510,16 +997,34 @@ On Error Resume Next
     DeleteLayer
 End Sub
 
-Public Sub CutSprite()
-On Error Resume Next
-    CopySprite
-    DeleteSprite
-End Sub
-
 Public Sub CutLight()
 On Error Resume Next
     CopyLight
     DeleteLight
+End Sub
+
+Public Sub CutLightingObstructions()
+On Error Resume Next
+    CopyLightingObstructions
+    DeleteLightingObstructions
+End Sub
+
+Public Sub CutLightingPlanes()
+On Error Resume Next
+    CopyLightingPlanes
+    DeleteLightingPlanes
+End Sub
+
+Public Sub CutPathNodes()
+On Error Resume Next
+    CopyPathNodes
+    DeletePathNodes
+End Sub
+
+Public Sub CutSprite()
+On Error Resume Next
+    CopySprite
+    DeleteSprite
 End Sub
 
 Public Sub DeallocateBackbuffer()
@@ -1539,6 +1044,7 @@ On Error Resume Next
     ObjectUndoPush m_mapMap.Areas, m_mapMap.Areas(m_lngSelectedArea), m_lngSelectedArea, OUO_Add
     m_mapMap.Areas.Remove m_lngSelectedArea
     RefreshAreas
+    Redraw
     EndProcess
 End Sub
 
@@ -1548,55 +1054,6 @@ On Error Resume Next
     m_brsBrush.Resize 1, 1
     m_brsBrush.Tile(0, 0) = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TransparentTile
     RefreshBrush
-    EndProcess
-End Sub
-
-Public Sub DeletePathNodes()
-On Error Resume Next
-Dim l_lngNode As Long
-    BeginProcess "Performing Delete..."
-    With m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).Path
-        For l_lngNode = UBound(m_bytSelectedPathNodes) To 1 Step -1
-            If m_bytSelectedPathNodes(l_lngNode) Then
-                .Remove l_lngNode
-            End If
-        Next l_lngNode
-        ReDim m_bytSelectedPathNodes(0 To .Count)
-    End With
-    Redraw
-    EndProcess
-End Sub
-
-Public Sub DeleteLightingPlanes()
-On Error Resume Next
-Dim l_lngPlane As Long
-    BeginProcess "Performing Delete..."
-    With m_mapMap.Layers(m_lngSelectedLayer).Lighting
-        For l_lngPlane = UBound(m_bytSelectedLightingPlanes) To 1 Step -1
-            If m_bytSelectedLightingPlanes(l_lngPlane) Then
-                .RemovePlane l_lngPlane
-            End If
-        Next l_lngPlane
-        ReDim m_bytSelectedLightingPlanes(0 To .PlaneCount)
-        .Refresh
-    End With
-    Redraw
-    EndProcess
-End Sub
-
-Public Sub DeleteLightingObstructions()
-On Error Resume Next
-Dim l_lngLine As Long
-    BeginProcess "Performing Delete..."
-    With m_mapMap.Layers(m_lngSelectedLayer).Lighting
-        For l_lngLine = UBound(m_bytSelectedLightingObstructions) To 1 Step -1
-            If m_bytSelectedLightingObstructions(l_lngLine) Then
-                .RemoveObstruction l_lngLine
-            End If
-        Next l_lngLine
-        ReDim m_bytSelectedLightingObstructions(0 To .ObstructionCount)
-        .Refresh
-    End With
     Redraw
     EndProcess
 End Sub
@@ -1627,22 +1084,72 @@ On Error Resume Next
     EndProcess
 End Sub
 
-Public Sub DeleteSprite()
-On Error Resume Next
-    BeginProcess "Performing Delete..."
-    ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Sprites, m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite), m_lngSelectedSprite, OUO_Add
-    m_mapMap.Layers(m_lngSelectedLayer).Sprites.Remove m_lngSelectedSprite
-    RefreshSprites
-    Redraw
-    EndProcess
-End Sub
-
 Public Sub DeleteLight()
 On Error Resume Next
     BeginProcess "Performing Delete..."
     ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights, m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights(m_lngSelectedLight), m_lngSelectedLight, OUO_Add
     m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights.Remove m_lngSelectedLight
     RefreshLights
+    Redraw
+    EndProcess
+End Sub
+
+Public Sub DeleteLightingObstructions()
+On Error Resume Next
+Dim l_lngLine As Long
+    BeginProcess "Performing Delete..."
+    With m_mapMap.Layers(m_lngSelectedLayer).Lighting
+        For l_lngLine = UBound(m_bytSelectedLightingObstructions) To 1 Step -1
+            If m_bytSelectedLightingObstructions(l_lngLine) Then
+                .RemoveObstruction l_lngLine
+            End If
+        Next l_lngLine
+        ReDim m_bytSelectedLightingObstructions(0 To .ObstructionCount)
+        .Refresh
+    End With
+    Redraw
+    EndProcess
+End Sub
+
+Public Sub DeleteLightingPlanes()
+On Error Resume Next
+Dim l_lngPlane As Long
+    BeginProcess "Performing Delete..."
+    With m_mapMap.Layers(m_lngSelectedLayer).Lighting
+        For l_lngPlane = UBound(m_bytSelectedLightingPlanes) To 1 Step -1
+            If m_bytSelectedLightingPlanes(l_lngPlane) Then
+                .RemovePlane l_lngPlane
+            End If
+        Next l_lngPlane
+        ReDim m_bytSelectedLightingPlanes(0 To .PlaneCount)
+        .Refresh
+    End With
+    Redraw
+    EndProcess
+End Sub
+
+Public Sub DeletePathNodes()
+On Error Resume Next
+Dim l_lngNode As Long
+    BeginProcess "Performing Delete..."
+    With m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).Path
+        For l_lngNode = UBound(m_bytSelectedPathNodes) To 1 Step -1
+            If m_bytSelectedPathNodes(l_lngNode) Then
+                .Remove l_lngNode
+            End If
+        Next l_lngNode
+        ReDim m_bytSelectedPathNodes(0 To .Count)
+    End With
+    Redraw
+    EndProcess
+End Sub
+
+Public Sub DeleteSprite()
+On Error Resume Next
+    BeginProcess "Performing Delete..."
+    ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Sprites, m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite), m_lngSelectedSprite, OUO_Add
+    m_mapMap.Layers(m_lngSelectedLayer).Sprites.Remove m_lngSelectedSprite
+    RefreshSprites
     Redraw
     EndProcess
 End Sub
@@ -1825,6 +1332,13 @@ Dim l_lyrLayer As Fury2MapLayer
     EndProcess
 End Sub
 
+Private Function Editor() As Object
+On Error Resume Next
+Dim l_objPlugin As MapEditor
+    Set l_objPlugin = m_fpgPlugin
+    Set Editor = l_objPlugin.Editor
+End Function
+
 Private Sub elAreas_ContextMenu(ByVal X As Long, ByVal Y As Long)
 On Error Resume Next
     elAreas.SetFocus
@@ -1947,24 +1461,37 @@ On Error Resume Next
     End Select
 End Sub
 
-Private Sub elObjects_ItemDragComplete(ByVal Item As Long)
+Private Sub elLights_ContextMenu(ByVal X As Long, ByVal Y As Long)
 On Error Resume Next
-    InspectorChanged
-    Redraw
+    elLights.SetFocus
+    Editor.ActionUpdate
+    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+        Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
+        frmIcons.ilContextMenus)
+    Case 1
+        PasteLight
+    Case Else
+    End Select
 End Sub
 
-Private Sub elObjects_ItemSelected(ByVal Item As Long)
+Private Sub elLights_ItemContextMenu(ByVal Item As Long, ByVal X As Long, ByVal Y As Long)
 On Error Resume Next
-    m_lngSelectedObject = ClipValue(Item, 0, m_mapMap.Objects.Count)
-    InspectorChanged
-    Redraw
-End Sub
-
-Private Sub elObjects_ItemVisibilityChanged(ByVal Item As Long)
-On Error Resume Next
-'    PropertyUndoPush elObjects.BoundObject.Item(Item), "Visible", Not elLights.BoundObject(Item).Visible
-    InspectorChanged
-    Redraw
+    elLights.SetFocus
+    elLights.SelectedItem = Item
+    Editor.ActionUpdate
+    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+        Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
+        frmIcons.ilContextMenus)
+    Case 1
+        CutLight
+    Case 2
+        CopyLight
+    Case 3
+        PasteLight Item
+    Case 4
+        DeleteLight
+    Case Else
+    End Select
 End Sub
 
 Private Sub elLights_ItemDragComplete(ByVal Item As Long)
@@ -1984,6 +1511,26 @@ End Sub
 Private Sub elLights_ItemVisibilityChanged(ByVal Item As Long)
 On Error Resume Next
     PropertyUndoPush elLights.BoundObject.Item(Item), "Visible", Not elLights.BoundObject(Item).Visible
+    InspectorChanged
+    Redraw
+End Sub
+
+Private Sub elObjects_ItemDragComplete(ByVal Item As Long)
+On Error Resume Next
+    InspectorChanged
+    Redraw
+End Sub
+
+Private Sub elObjects_ItemSelected(ByVal Item As Long)
+On Error Resume Next
+    m_lngSelectedObject = ClipValue(Item, 0, m_mapMap.Objects.Count)
+    InspectorChanged
+    Redraw
+End Sub
+
+Private Sub elObjects_ItemVisibilityChanged(ByVal Item As Long)
+On Error Resume Next
+'    PropertyUndoPush elObjects.BoundObject.Item(Item), "Visible", Not elLights.BoundObject(Item).Visible
     InspectorChanged
     Redraw
 End Sub
@@ -2119,14 +1666,6 @@ On Error Resume Next
     ResizeAll
 End Sub
 
-Public Sub ResizeAll()
-On Error Resume Next
-    picMapView_Resize
-    dtLists_Resize
-    dtInspector_Resize
-    dtTool_Resize
-End Sub
-
 Public Sub HideOverlay()
 On Error Resume Next
     picOverlay.Visible = False
@@ -2207,6 +1746,55 @@ Dim CommandName As String
     End If
     Err.Clear
 End Sub
+
+Private Property Get iDocument_CanSave() As Boolean
+On Error Resume Next
+    iDocument_CanSave = True
+End Property
+
+Private Property Get iDocument_Filename() As String
+On Error Resume Next
+    iDocument_Filename = m_strFilename
+End Property
+
+Private Property Get iDocument_Modified() As Boolean
+On Error Resume Next
+    iDocument_Modified = True
+End Property
+
+Private Property Get iDocument_Object() As Object
+    Set iDocument_Object = Me
+End Property
+
+Private Property Get iDocument_Plugin() As ngInterfaces.iPlugin
+On Error Resume Next
+    Set iDocument_Plugin = m_fpgPlugin
+End Property
+
+Private Property Set iDocument_Plugin(RHS As ngInterfaces.iPlugin)
+On Error Resume Next
+    Set m_fpgPlugin = RHS
+End Property
+
+Private Function iDocument_Save(Filename As String) As Boolean
+On Error Resume Next
+Dim l_vfFile As VirtualFile
+    Kill Filename
+    Err.Clear
+    Set l_vfFile = F2File()
+    SaveToFile m_mapMap, l_vfFile
+    l_vfFile.SaveFile Filename
+    iDocument_Save = (Err.Number = 0)
+    If iDocument_Save Then
+        SetFilename Filename
+    End If
+    Redraw
+End Function
+
+Private Property Get iDocument_Typename() As String
+On Error Resume Next
+    iDocument_Typename = "Map"
+End Property
 
 Private Sub iEditingCommands_CanCopy(NewValue As Boolean)
 On Error Resume Next
@@ -2504,6 +2092,11 @@ On Error Resume Next
     Redraw
 End Sub
 
+Private Property Get iExtendedForm_Extender() As Object
+On Error Resume Next
+    Set iExtendedForm_Extender = Me.extender
+End Property
+
 Public Sub InitSplitters()
 On Error Resume Next
     With m_splSidebar
@@ -2688,6 +2281,7 @@ End Sub
 
 Private Sub iToolbars_HideToolbars(Handler As ngInterfaces.iToolbarHandler)
 On Error Resume Next
+'    Exit Sub
     Set m_tbhHandler = Nothing
     With Handler
         .RemoveToolbar "Map Tools"
@@ -2698,6 +2292,7 @@ End Sub
 Private Sub iToolbars_ShowToolbars(Handler As ngInterfaces.iToolbarHandler)
 On Error Resume Next
 Dim l_optOptions As ToolbarOptions
+'    Exit Sub
     Set m_tbhHandler = Handler
     RefreshMapTools
     With Handler
@@ -2709,14 +2304,15 @@ Dim l_optOptions As ToolbarOptions
             .Undockable = True
             .XDockable = True
             .YDockable = True
-            .XWidth = tbrTools.ToolbarWidth
-            .XHeight = tbrTools.ToolbarHeight
-            .YWidth = mdlToolbars.vbal_getVerticalWidth(tbrTools)
-            .YHeight = mdlToolbars.vbal_getVerticalHeight(tbrTools)
+            .XWidth = tbrMapTools.IdealWidth
+            .XHeight = tbrMapTools.IdealHeight
+            .YWidth = tbrMapTools.Buttons(1).Width
+            .YHeight = tbrMapTools.IdealHeight(.YWidth)
             .DefaultPosition = TBP_Left
         End With
-        .AddToolbar "Map Tools", tbrTools.hwnd, l_optOptions
+        .AddToolbar "Map Tools", tbrMapTools.hwnd, l_optOptions
         ResizeAll
+        tbrMapTools.Reflow
     End With
 End Sub
 
@@ -2724,6 +2320,33 @@ Public Sub Lighting_ToolChanged()
 On Error Resume Next
     m_booDraggingLight = False
 End Sub
+
+Public Function LightSourceFromPoint(ByVal X As Long, ByVal Y As Long, Optional ByVal Layer As Long = -1) As Fury2LightSource
+On Error Resume Next
+Dim l_lsLight As Fury2LightSource
+Dim l_colList As New Collection
+Dim l_sngXDistance As Single, l_sngYDistance As Single, l_sngDistance As Single
+Dim l_sngSmallestDistance As Single, l_lsSmallest As Fury2LightSource
+    For Each l_lsLight In m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights
+        l_sngDistance = Sqr((Abs(l_lsLight.X - X) ^ 2) + (Abs(l_lsLight.Y - Y) ^ 2))
+        If (l_sngDistance) <= ClipValue(l_lsLight.FalloffDistance, 10, 10000) Then
+            l_colList.Add l_lsLight
+        End If
+    Next l_lsLight
+    If l_colList.Count = 1 Then
+        Set LightSourceFromPoint = l_colList(1)
+    ElseIf l_colList.Count > 1 Then
+        l_sngSmallestDistance = 99999999
+        For Each l_lsLight In l_colList
+            l_sngDistance = Sqr((Abs(l_lsLight.X - X) ^ 2) + (Abs(l_lsLight.Y - Y) ^ 2))
+            If l_sngDistance <= l_sngSmallestDistance Then
+                l_sngSmallestDistance = l_sngDistance
+                Set l_lsSmallest = l_lsLight
+            End If
+        Next l_lsLight
+        Set LightSourceFromPoint = l_lsSmallest
+    End If
+End Function
 
 Public Sub ListChanged()
 On Error Resume Next
@@ -2773,6 +2396,93 @@ Dim l_strSelectedTab As String
     m_ctlCurrentList.Visible = True
     dtLists_Resize
 End Sub
+
+Public Function MapObjectFromPoint(ByVal X As Long, ByVal Y As Long) As Fury2MapObject
+On Error Resume Next
+Dim l_mobObject As Fury2MapObject
+Dim l_sndObject As Fury2SoundObject
+Dim l_colList As New Collection
+Dim l_sngXDistance As Single, l_sngYDistance As Single, l_sngDistance As Single
+Dim l_sngSize As Single
+Dim l_sngX As Single, l_sngY As Single
+Dim l_sngSmallestDistance As Single, l_mobSmallest As Fury2MapObject
+    For Each l_mobObject In m_mapMap.Objects
+        If TypeOf l_mobObject Is Fury2SoundObject Then
+            Set l_sndObject = l_mobObject
+            l_sngSize = l_sndObject.FalloffDistance + l_sndObject.FalloffOffset
+            l_sngX = l_sndObject.X
+            l_sngY = l_sndObject.Y
+        Else
+            l_sngSize = 0
+            l_sngX = 0
+            l_sngY = 0
+        End If
+        l_sngDistance = Sqr((Abs(l_sngX - X) ^ 2) + (Abs(l_sngY - Y) ^ 2))
+        If (l_sngDistance) <= l_sngSize Then
+            l_colList.Add l_mobObject
+        End If
+    Next l_mobObject
+    If l_colList.Count = 1 Then
+        Set MapObjectFromPoint = l_colList(1)
+    ElseIf l_colList.Count > 1 Then
+        l_sngSmallestDistance = 99999999
+        For Each l_mobObject In l_colList
+            If TypeOf l_mobObject Is Fury2SoundObject Then
+                Set l_sndObject = l_mobObject
+                l_sngX = l_sndObject.X
+                l_sngY = l_sndObject.Y
+            Else
+                l_sngX = 0
+                l_sngY = 0
+            End If
+            l_sngDistance = Sqr((Abs(l_sngX - X) ^ 2) + (Abs(l_sngY - Y) ^ 2))
+            If l_sngDistance <= l_sngSmallestDistance Then
+                l_sngSmallestDistance = l_sngDistance
+                Set l_mobSmallest = l_mobObject
+            End If
+        Next l_mobObject
+        Set MapObjectFromPoint = l_mobSmallest
+    End If
+End Function
+
+Private Function MapToolButtons(View As MapViews) As Variant
+On Error Resume Next
+    Select Case View
+    Case View_Tiles
+        MapToolButtons = Buttons( _
+            ButtonString2("Pen", , "Tool(0)", "PEN"), ButtonString2("Line", , "Tool(1)", "LINE"), "-", _
+            ButtonString2("Rectangle", , "Tool(2)", "RECTANGLE"), ButtonString2("Filled Rectangle", , "Tool(3)", "RECTANGLE FILLED"), "-", _
+            ButtonString2("Circle", , "Tool(4)", "CIRCLE", False), ButtonString2("Filled Circle", , "Tool(5)", "CIRCLE FILLED", False), "-", _
+            ButtonString2("Flood Fill", , "Tool(6)", "FLOOD FILL"), ButtonString2("Replace", , "Tool(7)", "COLOR ERASER"), "-", _
+            ButtonString2("Select", , "Tool(8)", "SELECTION", False) _
+            )
+    Case View_Blocking
+        MapToolButtons = Buttons( _
+            ButtonString2("Line", , "Tool(0)", "LINE"), ButtonString2("Polygon", , "Tool(1)", "POLYLINE"), ButtonString2("Rectangle", , "Tool(2)", "RECTANGLE"), "-", _
+            ButtonString2("Select", , "Tool(3)", "SELECTION"), ButtonString2("Move", , "Tool(4)", "MOVE") _
+            )
+    Case View_Lighting
+        MapToolButtons = Buttons( _
+            ButtonString2("Cursor", , "Tool(0)", "CURSOR"), ButtonString2("Place Light", , "Tool(1)", "BRIGHTNESS"), "-", _
+            ButtonString2("Place Obstruction", , "Tool(2)", "LIGHTING OBSTRUCTION"), ButtonString2("Place Obstruction Rectangle", , "Tool(3)", "LIGHTING OBSTRUCTION RECTANGLE"), ButtonString2("Select Obstructions", , "Tool(4)", "SELECTION"), ButtonString2("Move Obstructions", , "Tool(5)", "MOVE"), "-", _
+            ButtonString2("Place Plane", , "Tool(6)", "LIGHTING PLANE"), ButtonString2("Select Planes", , "Tool(7)", "SELECTION"), ButtonString2("Move Planes", , "Tool(8)", "MOVE") _
+            )
+    Case View_Areas
+        MapToolButtons = Buttons( _
+            ButtonString2("Cursor", , "Tool(0)", "CURSOR"), ButtonString2("Draw Area", , "Tool(1)", "RECTANGLE FILLED") _
+            )
+    Case View_Sprites
+        MapToolButtons = Buttons( _
+            ButtonString2("Cursor", , "Tool(0)", "CURSOR"), ButtonString2("Insert Sprite", , "Tool(1)", "COPY"), "-", _
+            ButtonString2("Select Path Nodes", , "Tool(2)", "SELECT PATH NODES"), ButtonString2("Add Path Nodes", , "Tool(3)", "ADD PATH NODES") _
+            )
+    Case View_Objects
+        MapToolButtons = Buttons( _
+            ButtonString2("Cursor", , "Tool(0)", "CURSOR"), ButtonString2("Insert Sound", , "Tool(1)", "SOUND") _
+            )
+    Case Else
+    End Select
+End Function
 
 Public Sub MoveOverlay(ByVal X As Long, ByVal Y As Long, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1)
 On Error Resume Next
@@ -2866,24 +2576,225 @@ Dim l_undUndo As cObjectUndoEntry
     EndProcess
 End Sub
 
-Public Sub BlockingUndoPush(Optional ByVal Layer As Long = -1)
+Public Function PasteArea(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Area
 On Error Resume Next
-Dim l_undUndo As cBlockingUndoEntry
-    If Layer = -1 Then Layer = m_lngSelectedLayer
-    BeginProcess "Storing Undo Data..."
-    Set l_undUndo = New cBlockingUndoEntry
-    With l_undUndo
-        Set .Map = m_mapMap
-        .Layer = Layer
-        .Lines = m_mapMap.Layers(Layer).CollisionLines
-    End With
-    m_colUndo.Add l_undUndo
-    m_colRedo.Clear
-    If m_colUndo.Count > c_lngUndoStackLength Then
-        m_colUndo.Remove 1
+Dim l_araArea As Fury2Area
+    BeginProcess "Performing Paste..."
+    If AtIndex < 1 Then
+        AtIndex = m_mapMap.Areas.Count + 1
+    End If
+    Set l_araArea = New Fury2Area
+    CustomClipboard.ClipboardOpen Me.hwnd
+    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_Area), l_araArea) Then
+        CustomClipboard.ClipboardClose
+        ObjectUndoPush m_mapMap.Areas, l_araArea, AtIndex, OUO_Remove
+        m_mapMap.Areas.Add l_araArea, , AtIndex
+        m_lngSelectedArea = AtIndex
+        If DoRedraw Then
+            RefreshAreas
+            Redraw
+        End If
+        Editor.ToolbarUpdate
+        Set PasteArea = l_araArea
+    Else
+        CustomClipboard.ClipboardClose
+    End If
+    EndProcess
+End Function
+
+Public Sub PasteBrush()
+On Error Resume Next
+    BeginProcess "Performing Paste..."
+    CustomClipboard.ClipboardOpen Me.hwnd
+    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_Brush), m_brsBrush) Then
+        CustomClipboard.ClipboardClose
+        RefreshBrush
+    Else
+        CustomClipboard.ClipboardClose
     End If
     EndProcess
 End Sub
+
+Public Sub PasteCollisionLines()
+On Error Resume Next
+Dim l_lngLine As Long
+Dim l_lngCount As Long
+Dim l_lnLines() As FLine
+Dim l_vfLines As VirtualFile
+    BeginProcess "Performing Paste..."
+    ReDim l_lnLines(0 To 0)
+    Set l_vfLines = New VirtualFile
+    CustomClipboard.ClipboardOpen Me.hwnd
+    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_MapObstructions), l_vfLines) Then
+        CustomClipboard.ClipboardClose
+        l_vfLines.Load l_lngCount
+        ReDim l_lnLines(0 To l_lngCount - 1)
+        l_vfLines.RawLoad ByVal VarPtr(l_lnLines(0)), l_lngCount * Len(l_lnLines(0))
+        BlockingUndoPush
+        With m_mapMap.Layers(m_lngSelectedLayer)
+            For l_lngLine = LBound(l_lnLines) To UBound(l_lnLines)
+                .AddCollisionLine l_lnLines(l_lngLine).Start.X, l_lnLines(l_lngLine).Start.Y, l_lnLines(l_lngLine).end.X, l_lnLines(l_lngLine).end.Y
+            Next l_lngLine
+            ReDim Preserve m_bytSelectedCollisionLines(0 To .CollisionLineCount)
+            SelectCollisionLines .CollisionLineCount - l_lngCount + 1, .CollisionLineCount
+        End With
+        Redraw
+        Editor.ToolbarUpdate
+    Else
+        CustomClipboard.ClipboardClose
+    End If
+    EndProcess
+End Sub
+
+Public Function PasteLayer(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2MapLayer
+On Error Resume Next
+Dim l_lyrLayer As Fury2MapLayer
+    BeginProcess "Performing Paste..."
+    If AtIndex < 1 Then
+        AtIndex = m_mapMap.Layers.Count + 1
+    End If
+    Set l_lyrLayer = m_mapMap.CreateLayer()
+    CustomClipboard.ClipboardOpen Me.hwnd
+    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_MapLayer), l_lyrLayer) Then
+        CustomClipboard.ClipboardClose
+        ObjectUndoPush m_mapMap.Layers, l_lyrLayer, AtIndex, OUO_Remove
+        m_mapMap.Layers.Add l_lyrLayer, , AtIndex
+        l_lyrLayer.Tileset.Reload
+        m_lngSelectedLayer = AtIndex
+        If DoRedraw Then
+            RefreshLayers
+            Redraw
+        End If
+        Editor.ToolbarUpdate
+        Set PasteLayer = l_lyrLayer
+    Else
+        CustomClipboard.ClipboardClose
+    End If
+    EndProcess
+End Function
+
+Public Function PasteLight(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2LightSource
+On Error Resume Next
+Dim l_litLight As Fury2LightSource
+    With m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights
+        BeginProcess "Performing Paste..."
+        If AtIndex < 1 Then
+            AtIndex = .Count + 1
+        End If
+        Set l_litLight = New Fury2LightSource
+        CustomClipboard.ClipboardOpen Me.hwnd
+        If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_LightSource), l_litLight) Then
+            CustomClipboard.ClipboardClose
+            ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights, l_litLight, AtIndex, OUO_Remove
+            .Add l_litLight, , AtIndex
+            m_lngSelectedLight = AtIndex
+            If DoRedraw Then
+                RefreshLights
+                Redraw
+            End If
+            Editor.ToolbarUpdate
+            Set PasteLight = l_litLight
+        Else
+            CustomClipboard.ClipboardClose
+        End If
+        EndProcess
+    End With
+End Function
+
+Public Sub PastePathNodes()
+On Error Resume Next
+Dim l_lngNode As Long
+Dim l_lngCount As Long
+Dim l_vfNodes As VirtualFile
+Dim l_wpNode As Fury2Waypoint
+    BeginProcess "Performing Paste..."
+    Set l_vfNodes = New VirtualFile
+    CustomClipboard.ClipboardOpen Me.hwnd
+    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_PathNodes), l_vfNodes) Then
+        CustomClipboard.ClipboardClose
+        l_vfNodes.Load l_lngCount
+        With m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite)
+            For l_lngNode = 1 To l_lngCount
+                Set l_wpNode = New Fury2Waypoint
+                l_vfNodes.Load l_wpNode
+                .Path.AddObject l_wpNode
+            Next l_lngNode
+            ReDim Preserve m_bytSelectedPathNodes(0 To .Path.Count)
+            SelectPathNodes .Path.Count - l_lngCount, .Path.Count
+        End With
+        Redraw
+        Editor.ToolbarUpdate
+    Else
+        CustomClipboard.ClipboardClose
+    End If
+    EndProcess
+End Sub
+
+Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
+On Error Resume Next
+Dim l_sprSprite As Fury2Sprite
+Dim l_ptMouse As POINTAPI
+    With m_mapMap.Layers(m_lngSelectedLayer).Sprites
+        BeginProcess "Performing Paste..."
+        If AtIndex < 1 Then
+            AtIndex = .Count + 1
+        End If
+        Set l_sprSprite = m_mapMap.Layers(m_lngSelectedLayer).Sprites.CreateSprite()
+        CustomClipboard.ClipboardOpen Me.hwnd
+        If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_Sprite), l_sprSprite) Then
+            CustomClipboard.ClipboardClose
+            l_sprSprite.Initialize
+            l_sprSprite.Load
+            ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Sprites, l_sprSprite, AtIndex, OUO_Remove
+            GetCursorPos l_ptMouse
+            ScreenToClient picMapViewport.hwnd, l_ptMouse
+            If (l_ptMouse.X >= 0) And (l_ptMouse.Y >= 0) And (l_ptMouse.X < picMapViewport.ScaleWidth) And (l_ptMouse.Y < picMapViewport.ScaleHeight) Then
+                With l_sprSprite
+                    .X = m_lngMouseX
+                    .Y = m_lngMouseY
+                End With
+            End If
+            .Add l_sprSprite, , AtIndex
+            m_lngSelectedSprite = AtIndex
+            If DoRedraw Then
+                RefreshSprites
+                Redraw
+            End If
+            Editor.ToolbarUpdate
+            Set PasteSprite = l_sprSprite
+        Else
+            CustomClipboard.ClipboardClose
+        End If
+        EndProcess
+    End With
+End Function
+
+Public Function PathNodeFromPoint(ByVal X As Long, ByVal Y As Long) As Fury2Waypoint
+On Error Resume Next
+Dim l_wpWaypoint As Fury2Waypoint
+Dim l_colList As New Collection
+Dim l_sngXDistance As Single, l_sngYDistance As Single, l_sngDistance As Single
+Dim l_sngSmallestDistance As Single, l_wpSmallest As Fury2Waypoint
+    For Each l_wpWaypoint In m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).Path
+        l_sngDistance = Sqr((Abs(l_wpWaypoint.X - X) ^ 2) + (Abs(l_wpWaypoint.Y - Y) ^ 2))
+        If (l_sngDistance) <= 3 Then
+            l_colList.Add l_wpWaypoint
+        End If
+    Next l_wpWaypoint
+    If l_colList.Count = 1 Then
+        Set PathNodeFromPoint = l_colList(1)
+    ElseIf l_colList.Count > 1 Then
+        l_sngSmallestDistance = 99999999
+        For Each l_wpWaypoint In l_colList
+            l_sngDistance = Sqr((Abs(l_wpWaypoint.X - X) ^ 2) + (Abs(l_wpWaypoint.Y - Y) ^ 2))
+            If l_sngDistance <= l_sngSmallestDistance Then
+                l_sngSmallestDistance = l_sngDistance
+                Set l_wpSmallest = l_wpWaypoint
+            End If
+        Next l_wpWaypoint
+        Set PathNodeFromPoint = l_wpSmallest
+    End If
+End Function
 
 Private Sub picBrush_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
@@ -3118,6 +3029,23 @@ Dim l_undUndo As cPropertyUndoEntry
     EndProcess
 End Sub
 
+Public Function Redo() As Boolean
+On Error Resume Next
+Dim l_undRedo As iUndoEntry
+Dim l_undUndo As iUndoEntry
+    If m_colRedo.Count > 0 Then
+        BeginProcess "Preparing to Redo..."
+        Set l_undRedo = m_colRedo.Item(1)
+        Set l_undUndo = l_undRedo.CreateReverse()
+        m_colRedo.Remove 1
+        m_colUndo.Add l_undUndo
+        UpdateProcess 0, "Performing Redo..."
+        Redo = SmartApply(l_undRedo)
+        EndProcess
+        Editor.ActionUpdate
+    End If
+End Function
+
 Public Sub Redraw()
 On Error Resume Next
     ' Very bad for very arcane reasons
@@ -3146,9 +3074,6 @@ On Error Resume Next
         Redraw_Objects
     Case Else
     End Select
-    If m_voViewOptions.AlwaysShowLighting And m_lngCurrentView <> View_Lighting Then
-        Redraw_Lighting
-    End If
     If m_mapMap Is Nothing Then
     Else
         m_lngTileWidth = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileWidth
@@ -3314,6 +3239,37 @@ Dim l_rctSelection As Fury2Rect
     End With
 End Sub
 
+Public Sub Redraw_Objects()
+On Error Resume Next
+Dim l_mobObject As Fury2MapObject
+Dim l_sndObject As Fury2SoundObject
+Dim l_lngIndex As Long
+Dim l_lngRadius As Long
+Dim l_sngAlpha As Single
+Dim l_lngX As Long, l_lngY As Long
+    With m_imgBackbuffer
+        For Each l_mobObject In m_mapMap.Objects
+            l_lngIndex = l_lngIndex + 1
+            l_sngAlpha = IIf(l_lngIndex = m_lngSelectedObject, 1, 0.66)
+            l_mobObject.Render m_imgBackbuffer, hsMap.Value, vsMap.Value
+            If TypeOf l_mobObject Is Fury2SoundObject Then
+                Set l_sndObject = l_mobObject
+                l_lngX = l_sndObject.X - hsMap.Value
+                l_lngY = l_sndObject.Y - vsMap.Value
+                If (l_lngIndex = m_lngSelectedObject) Then
+                    .FilledEllipse Array(l_lngX, l_lngY), SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), l_sndObject.FalloffDistance + l_sndObject.FalloffOffset, l_sndObject.FalloffDistance + l_sndObject.FalloffOffset, RenderMode_SourceAlpha
+                End If
+                l_lngRadius = l_sndObject.FalloffOffset
+                .Ellipse Array(l_lngX, l_lngY), SetAlpha(F2White, l_sngAlpha * 255), l_lngRadius, l_lngRadius, RenderMode_SourceAlpha
+                l_lngRadius = l_sndObject.FalloffDistance + l_sndObject.FalloffOffset
+                .Ellipse Array(l_lngX, l_lngY), SetAlpha(F2Black, l_sngAlpha * 255), l_lngRadius - 1, l_lngRadius - 1, RenderMode_SourceAlpha
+                .Ellipse Array(l_lngX, l_lngY), SetAlpha(F2White, l_sngAlpha * 255), l_lngRadius, l_lngRadius, RenderMode_SourceAlpha
+                .Ellipse Array(l_lngX, l_lngY), SetAlpha(F2Black, l_sngAlpha * 255), l_lngRadius + 1, l_lngRadius + 1, RenderMode_SourceAlpha
+            End If
+        Next l_mobObject
+    End With
+End Sub
+
 Public Sub Redraw_Sprites()
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
@@ -3373,37 +3329,6 @@ Dim l_rctSelection As Fury2Rect
             End If
         Case Else
         End Select
-    End With
-End Sub
-
-Public Sub Redraw_Objects()
-On Error Resume Next
-Dim l_mobObject As Fury2MapObject
-Dim l_sndObject As Fury2SoundObject
-Dim l_lngIndex As Long
-Dim l_lngRadius As Long
-Dim l_sngAlpha As Single
-Dim l_lngX As Long, l_lngY As Long
-    With m_imgBackbuffer
-        For Each l_mobObject In m_mapMap.Objects
-            l_lngIndex = l_lngIndex + 1
-            l_sngAlpha = IIf(l_lngIndex = m_lngSelectedObject, 1, 0.66)
-            l_mobObject.Render m_imgBackbuffer, hsMap.Value, vsMap.Value
-            If TypeOf l_mobObject Is Fury2SoundObject Then
-                Set l_sndObject = l_mobObject
-                l_lngX = l_sndObject.X - hsMap.Value
-                l_lngY = l_sndObject.Y - vsMap.Value
-                If (l_lngIndex = m_lngSelectedObject) Then
-                    .FilledEllipse Array(l_lngX, l_lngY), SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), l_sndObject.FalloffDistance + l_sndObject.FalloffOffset, l_sndObject.FalloffDistance + l_sndObject.FalloffOffset, RenderMode_SourceAlpha
-                End If
-                l_lngRadius = l_sndObject.FalloffOffset
-                .Ellipse Array(l_lngX, l_lngY), SetAlpha(F2White, l_sngAlpha * 255), l_lngRadius, l_lngRadius, RenderMode_SourceAlpha
-                l_lngRadius = l_sndObject.FalloffDistance + l_sndObject.FalloffOffset
-                .Ellipse Array(l_lngX, l_lngY), SetAlpha(F2Black, l_sngAlpha * 255), l_lngRadius - 1, l_lngRadius - 1, RenderMode_SourceAlpha
-                .Ellipse Array(l_lngX, l_lngY), SetAlpha(F2White, l_sngAlpha * 255), l_lngRadius, l_lngRadius, RenderMode_SourceAlpha
-                .Ellipse Array(l_lngX, l_lngY), SetAlpha(F2Black, l_sngAlpha * 255), l_lngRadius + 1, l_lngRadius + 1, RenderMode_SourceAlpha
-            End If
-        Next l_mobObject
     End With
 End Sub
 
@@ -3529,6 +3454,61 @@ On Error Resume Next
     End If
 End Sub
 
+Public Sub RefreshList()
+On Error Resume Next
+Dim l_objObject As Object
+    Set l_objObject = insInspect.CurrentObject
+    If TypeOf l_objObject Is Fury2Sprite Then
+        RefreshSprites
+    ElseIf TypeOf l_objObject Is Fury2Area Then
+        RefreshAreas
+    ElseIf TypeOf l_objObject Is Fury2MapLayer Then
+        RefreshLayers
+    ElseIf TypeOf l_objObject Is Fury2LayerLighting Then
+        RefreshLights
+    ElseIf TypeOf l_objObject Is Fury2LightSource Then
+        RefreshLights
+    ElseIf TypeOf l_objObject Is Fury2MapObject Then
+        RefreshObjects
+    End If
+End Sub
+
+Public Sub RefreshMapTools()
+On Error Resume Next
+Dim l_lngButtons As Long
+    If m_lngCurrentView < View_Script Then
+        tbrMapTools.Buttons.Clear
+        DefineToolbar2 tbrMapTools, frmIcons.ilMapBig, MapToolButtons(m_lngCurrentView)
+        For l_lngButtons = 1 To tbrMapTools.Buttons.Count
+            If tbrMapTools.Buttons(l_lngButtons).Style = bsyNormal Then
+                tbrMapTools.Buttons(l_lngButtons).Style = bsyGroup
+            End If
+        Next l_lngButtons
+        DefineToolbar2 tbrMapTools, frmIcons.ilMapBig, Buttons("-", ButtonString2("Zoom In", , "Zoom In", "ZOOM IN"), ButtonString2("Zoom Out", , "Zoom Out", "ZOOM OUT"))
+        DefineToolbar2 tbrMapTools, frmIcons.ilMapBig, Buttons("-", ButtonString2("Show Grid", , "Show Grid", "SHOW GRID", , bsyCheck), ButtonString2("Snap To Grid", , "Snap To Grid", "SNAP TO GRID", , bsyCheck))
+        tbrMapTools.Buttons(m_lngCurrentTool(m_lngCurrentView)).Checked = True
+        tbrMapTools.Buttons("Show Grid").Checked = m_voViewOptions.ShowGrid
+        tbrMapTools.Buttons("Snap To Grid").Checked = m_voViewOptions.SnapToGrid
+        tbrMapTools.Width = tbrMapTools.Buttons(1).Width
+        tbrMapTools.Reflow
+    End If
+End Sub
+
+Public Sub RefreshMouse()
+On Error Resume Next
+    m_lngRealMouseX = m_lngMouseX
+    m_lngRealMouseY = m_lngMouseY
+    m_lngMouseTileX = (m_lngMouseX) \ m_lngTileWidth
+    m_lngMouseTileY = (m_lngMouseY) \ m_lngTileHeight
+    If m_voViewOptions.SnapToGrid Then
+        m_lngMouseX = Round(m_lngMouseX / m_lngTileWidth) * m_lngTileWidth
+        m_lngMouseY = Round(m_lngMouseY / m_lngTileHeight) * m_lngTileHeight
+    End If
+    m_booMouseMoved = (m_lngMouseX <> m_lngLastMouseX) Or (m_lngMouseY <> m_lngLastMouseY)
+    m_booMouseMovedTile = (m_lngMouseTileX <> m_lngLastMouseTileX) Or (m_lngMouseTileY <> m_lngLastMouseTileY)
+    Editor.SetLocation CStr(m_lngMouseX) & ", " & CStr(m_lngMouseY) & " (Tile " & CStr(m_lngMouseTileX) & ", " & CStr(m_lngMouseTileY) & ")"
+End Sub
+
 Public Sub RefreshObjects()
 On Error Resume Next
 Dim l_mobObject As Fury2MapObject
@@ -3557,61 +3537,6 @@ Dim l_mobObject As Fury2MapObject
         End If
     End With
     InspectorChanged
-End Sub
-
-Public Sub RefreshList()
-On Error Resume Next
-Dim l_objObject As Object
-    Set l_objObject = insInspect.CurrentObject
-    If TypeOf l_objObject Is Fury2Sprite Then
-        RefreshSprites
-    ElseIf TypeOf l_objObject Is Fury2Area Then
-        RefreshAreas
-    ElseIf TypeOf l_objObject Is Fury2MapLayer Then
-        RefreshLayers
-    ElseIf TypeOf l_objObject Is Fury2LayerLighting Then
-        RefreshLights
-    ElseIf TypeOf l_objObject Is Fury2LightSource Then
-        RefreshLights
-    ElseIf TypeOf l_objObject Is Fury2MapObject Then
-        RefreshObjects
-    End If
-End Sub
-
-Public Sub RefreshMapTools()
-On Error Resume Next
-Dim l_lngButtons As Long
-    tbrTools.DestroyToolbar
-    If m_lngCurrentView < View_Script Then
-        tbrTools.CreateToolbar 20, False, False, True, 20
-        tbrTools.Wrappable = True
-        DefineToolbar tbrTools, frmIcons.ilMapBig, MapToolButtons(m_lngCurrentView)
-        For l_lngButtons = 0 To tbrTools.ButtonCount - 1
-            If tbrTools.ButtonStyle(l_lngButtons) = CTBNormal Then
-                tbrTools.ButtonStyle(l_lngButtons) = CTBCheck
-            End If
-        Next l_lngButtons
-        DefineToolbar tbrTools, frmIcons.ilMapBig, Buttons("-", ButtonString("Zoom In", , "Zoom In", "ZOOM IN"), ButtonString("Zoom Out", , "Zoom Out", "ZOOM OUT"))
-        DefineToolbar tbrTools, frmIcons.ilMapBig, Buttons("-", ButtonString("Show Grid", , "Show Grid", "SHOW GRID", , CTBCheck), ButtonString("Snap To Grid", , "Snap To Grid", "SNAP TO GRID", , CTBCheck))
-        tbrTools.ButtonChecked(m_lngCurrentTool(m_lngCurrentView)) = True
-        tbrTools.ButtonChecked("Show Grid") = m_voViewOptions.ShowGrid
-        tbrTools.ButtonChecked("Snap To Grid") = m_voViewOptions.SnapToGrid
-    End If
-End Sub
-
-Public Sub RefreshMouse()
-On Error Resume Next
-    m_lngRealMouseX = m_lngMouseX
-    m_lngRealMouseY = m_lngMouseY
-    m_lngMouseTileX = (m_lngMouseX) \ m_lngTileWidth
-    m_lngMouseTileY = (m_lngMouseY) \ m_lngTileHeight
-    If m_voViewOptions.SnapToGrid Then
-        m_lngMouseX = Round(m_lngMouseX / m_lngTileWidth) * m_lngTileWidth
-        m_lngMouseY = Round(m_lngMouseY / m_lngTileHeight) * m_lngTileHeight
-    End If
-    m_booMouseMoved = (m_lngMouseX <> m_lngLastMouseX) Or (m_lngMouseY <> m_lngLastMouseY)
-    m_booMouseMovedTile = (m_lngMouseTileX <> m_lngLastMouseTileX) Or (m_lngMouseTileY <> m_lngLastMouseTileY)
-    Editor.SetLocation CStr(m_lngMouseX) & ", " & CStr(m_lngMouseY) & " (Tile " & CStr(m_lngMouseTileX) & ", " & CStr(m_lngMouseTileY) & ")"
 End Sub
 
 Public Sub RefreshOverlay()
@@ -3691,11 +3616,20 @@ On Error Resume Next
     picOverlay.Move 0, 0, 1, 1
 End Sub
 
+Public Sub ResizeAll()
+On Error Resume Next
+    picMapView_Resize
+    dtLists_Resize
+    dtInspector_Resize
+    dtTool_Resize
+End Sub
+
 Public Sub ResizeMapTools()
 On Error Resume Next
 Dim l_optOptions As ToolbarOptions
     With m_tbhHandler
         If m_lngCurrentView < View_Script Then
+            tbrMapTools.Reflow
             With l_optOptions
                 .Title = "Map Tools"
                 .Closable = False
@@ -3704,13 +3638,14 @@ Dim l_optOptions As ToolbarOptions
                 .Undockable = True
                 .XDockable = True
                 .YDockable = True
-                .XWidth = tbrTools.ToolbarWidth
-                .XHeight = tbrTools.ToolbarHeight
-                .YWidth = mdlToolbars.vbal_getVerticalWidth(tbrTools)
-                .YHeight = mdlToolbars.vbal_getVerticalHeight(tbrTools)
+                .XWidth = tbrMapTools.IdealWidth
+                .XHeight = tbrMapTools.IdealHeight
+                .YWidth = tbrMapTools.Buttons(1).Width
+                .YHeight = tbrMapTools.IdealHeight(.YWidth)
                 .DefaultPosition = TBP_Left
             End With
-            .ResizeToolbar "Map Tools", tbrTools.hwnd, l_optOptions
+            .ResizeToolbar "Map Tools", tbrMapTools.hwnd, l_optOptions
+            tbrMapTools.Reflow
         Else
             With l_optOptions
                 .Title = "Map Tools"
@@ -3727,6 +3662,7 @@ Dim l_optOptions As ToolbarOptions
                 .DefaultPosition = TBP_Left
             End With
             .ResizeToolbar "Map Tools", 0, l_optOptions
+            tbrMapTools.Reflow
         End If
     End With
 End Sub
@@ -3777,6 +3713,15 @@ On Error Resume Next
     m_mapMap.ScriptSource = scMap.Text
 End Sub
 
+Private Sub scObject_Change()
+On Error Resume Next
+    If m_lngCurrentView = View_Sprites Then
+        m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).ScriptSource = scObject.Text
+    ElseIf m_lngCurrentView = View_Areas Then
+        m_mapMap.Areas(m_lngSelectedArea).ScriptSource = scObject.Text
+    End If
+End Sub
+
 Public Sub SelectCollisionLines(Optional ByVal First As Long = 0, Optional ByVal Last As Long = -32767)
 On Error Resume Next
 Dim l_lngLines As Long
@@ -3784,15 +3729,6 @@ Dim l_lngLines As Long
     For l_lngLines = LBound(m_bytSelectedCollisionLines) To UBound(m_bytSelectedCollisionLines)
         m_bytSelectedCollisionLines(l_lngLines) = IIf((l_lngLines >= First) And (l_lngLines <= Last), 255, 0)
     Next l_lngLines
-End Sub
-
-Public Sub SelectPathNodes(Optional ByVal First As Long = 0, Optional ByVal Last As Long = -32767)
-On Error Resume Next
-Dim l_lngNodes As Long
-    If Last = -32767 Then Last = First
-    For l_lngNodes = LBound(m_bytSelectedPathNodes) To UBound(m_bytSelectedPathNodes)
-        m_bytSelectedPathNodes(l_lngNodes) = IIf((l_lngNodes >= First) And (l_lngNodes <= Last), 255, 0)
-    Next l_lngNodes
 End Sub
 
 Public Sub SelectLayer(ByVal Layer As Long)
@@ -3822,6 +3758,15 @@ Dim l_lngPlanes As Long
     Next l_lngPlanes
 End Sub
 
+Public Sub SelectPathNodes(Optional ByVal First As Long = 0, Optional ByVal Last As Long = -32767)
+On Error Resume Next
+Dim l_lngNodes As Long
+    If Last = -32767 Then Last = First
+    For l_lngNodes = LBound(m_bytSelectedPathNodes) To UBound(m_bytSelectedPathNodes)
+        m_bytSelectedPathNodes(l_lngNodes) = IIf((l_lngNodes >= First) And (l_lngNodes <= Last), 255, 0)
+    Next l_lngNodes
+End Sub
+
 Public Sub SetFilename(Name As String)
 On Error Resume Next
     m_strFilename = Name
@@ -3842,25 +3787,6 @@ On Error Resume Next
     ZoomChanged
 End Sub
 
-Public Sub AddEdgeBlocking()
-On Error Resume Next
-Dim l_lyrLayer As Fury2MapLayer
-Dim l_lngW As Long, l_lngH As Long
-    For Each l_lyrLayer In m_mapMap.Layers
-        With l_lyrLayer
-            l_lngW = (.Width * .Tileset.TileWidth) - 1
-            l_lngH = (.Height * .Tileset.TileHeight) - 1
-            .AddCollisionLine 0, 0, l_lngW, 0
-            .AddCollisionLine 0, 0, 0, l_lngH
-            .AddCollisionLine l_lngW, 0, l_lngW, l_lngH
-            .AddCollisionLine 0, l_lngH, l_lngW, l_lngH
-        End With
-    Next l_lyrLayer
-    ReDim Preserve m_bytSelectedCollisionLines(0 To m_mapMap.Layers(m_lngSelectedLayer).CollisionLineCount)
-    SelectCollisionLines m_mapMap.Layers(m_lngSelectedLayer).CollisionLineCount - 3, m_mapMap.Layers(m_lngSelectedLayer).CollisionLineCount
-    Redraw
-End Sub
-
 Public Sub ShowOverlay()
 On Error Resume Next
     picOverlay.Visible = True
@@ -3869,30 +3795,59 @@ On Error Resume Next
     picOverlay.Refresh
 End Sub
 
-Private Sub scObject_Change()
+Private Function SmartApply(Obj As iUndoEntry) As Boolean
 On Error Resume Next
-    If m_lngCurrentView = View_Sprites Then
-        m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).ScriptSource = scObject.Text
-    ElseIf m_lngCurrentView = View_Areas Then
-        m_mapMap.Areas(m_lngSelectedArea).ScriptSource = scObject.Text
+Dim l_ouUndo As cObjectUndoEntry
+Dim l_prUndo As cPropertyUndoEntry
+    SmartApply = Obj.Apply()
+    If TypeOf Obj Is cTileUndoEntry Then
+        Redraw
+    ElseIf TypeOf Obj Is cObjectUndoEntry Then
+        Redraw
+        Set l_ouUndo = Obj
+        If l_ouUndo.Container Is m_mapMap.Layers Then
+            RefreshLayers
+        ElseIf l_ouUndo.Container Is m_mapMap.Areas Then
+            RefreshAreas
+        Else
+        End If
+    ElseIf TypeOf Obj Is cPropertyUndoEntry Then
+        Redraw
+        insInspect.RefreshValues
+        Set l_prUndo = Obj
+    ElseIf TypeOf Obj Is cMultiUndoEntry Then
+        Redraw
+        insInspect.RefreshValues
     End If
-End Sub
+End Function
 
-Private Sub tbrTools_ButtonClick(ByVal lButton As Long)
+Public Function SpriteFromPoint(ByVal X As Long, ByVal Y As Long, Optional ByVal Layer As Long = -1) As Fury2Sprite
+On Error Resume Next
+Dim l_sprSprite As Fury2Sprite
+    If Layer = -1 Then Layer = m_lngSelectedLayer
+    For Each l_sprSprite In m_mapMap.Layers(m_lngSelectedLayer).Sprites
+        If l_sprSprite.PointInside(X, Y) Then
+            Set SpriteFromPoint = l_sprSprite
+            Exit For
+        End If
+    Next l_sprSprite
+End Function
+
+Private Sub tbrMapTools_ButtonClick(Button As ngUI.ngToolButton)
 On Error Resume Next
 Dim l_strKey As String
-    l_strKey = LCase(Trim(tbrTools.ButtonKey(lButton)))
+    l_strKey = LCase(Trim(Button.key))
     If Left(l_strKey, 4) = "tool" Then
         m_lngCurrentTool(m_lngCurrentView) = CLng(Mid(l_strKey, 6, Len(l_strKey) - 6))
         ToolChanged
     Else
         Select Case l_strKey
         Case "show grid"
-            m_voViewOptions.ShowGrid = tbrTools.ButtonChecked(lButton)
+            m_voViewOptions.ShowGrid = Button.Checked
             RefreshToolInspector
             Redraw
         Case "snap to grid"
-            m_voViewOptions.SnapToGrid = tbrTools.ButtonChecked(lButton)
+            m_voViewOptions.SnapToGrid = Button.Checked
             RefreshToolInspector
         Case "zoom in"
             Zoom = Zoom * 2
@@ -3941,6 +3896,11 @@ On Error Resume Next
     RefreshLayers
     Redraw
 End Sub
+
+Private Property Get Tool_Areas() As AreaTools
+On Error Resume Next
+    Tool_Areas = m_lngCurrentTool(View_Areas)
+End Property
 
 Public Sub Tool_Areas_Down(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
@@ -4053,6 +4013,11 @@ Dim l_araNew As Fury2Area
     End Select
     m_booDraggingArea = False
 End Sub
+
+Private Property Get Tool_Blocking() As BlockingTools
+On Error Resume Next
+    Tool_Blocking = m_lngCurrentTool(View_Blocking)
+End Property
 
 Public Sub Tool_Blocking_Down(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
@@ -4221,6 +4186,11 @@ On Error Resume Next
     Case Else
     End Select
 End Sub
+
+Private Property Get Tool_Lighting() As LightingTools
+On Error Resume Next
+    Tool_Lighting = m_lngCurrentTool(View_Lighting)
+End Property
 
 Public Sub Tool_Lighting_Down(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
@@ -4531,6 +4501,74 @@ On Error Resume Next
     End Select
 End Sub
 
+Private Property Get Tool_Objects() As ObjectTools
+On Error Resume Next
+    Tool_Objects = m_lngCurrentTool(View_Objects)
+End Property
+
+Public Sub Tool_Objects_Down(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+Dim l_sndSound As Fury2SoundObject
+Dim l_mobOld As Fury2MapObject
+Dim l_mobNew As Fury2MapObject
+    If Button = 2 Then
+        Select Case QuickShowMenu(picMapViewport, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+            Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
+            frmIcons.ilContextMenus)
+        Case 1
+        Case 2
+        Case 3
+        Case 4
+        Case Else
+        End Select
+    Else
+        Select Case Tool_Objects
+        Case ObjectTool_Cursor
+            Set l_mobNew = MapObjectFromPoint(m_lngRealMouseX, m_lngRealMouseY)
+            If l_mobOld Is l_mobNew Then
+                'm_booDraggingObject = True
+'                m_sngDragStartX = l_litOld.X
+'                m_sngDragStartY = l_litOld.Y
+'                MultiPropertyUndoPush l_litNew, Array("X", "Y"), Array(m_sngDragStartX, m_sngDragStartY)
+            Else
+                m_lngSelectedObject = m_mapMap.Objects.Find(l_mobNew)
+            End If
+            RefreshObjects
+            Redraw
+        Case ObjectTool_Create_Sound
+            Set l_sndSound = New Fury2SoundObject
+            l_sndSound.X = m_lngMouseX
+            l_sndSound.Y = m_lngMouseY
+            l_sndSound.FalloffOffset = 10
+            l_sndSound.FalloffDistance = 50
+            m_mapMap.Objects.Add l_sndSound
+            m_lngSelectedObject = m_mapMap.Objects.Count
+            RefreshObjects
+            Redraw
+        Case Else
+        End Select
+    End If
+End Sub
+
+Public Sub Tool_Objects_Move(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+    Select Case Tool_Objects
+    Case Else
+    End Select
+End Sub
+
+Public Sub Tool_Objects_Up(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+    Select Case Tool_Objects
+    Case Else
+    End Select
+End Sub
+
+Private Property Get Tool_Sprites() As SpriteTools
+On Error Resume Next
+    Tool_Sprites = m_lngCurrentTool(View_Sprites)
+End Property
+
 Public Sub Tool_Sprites_Down(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_sprOld As Fury2Sprite
@@ -4696,6 +4734,11 @@ Dim l_rctArea As Fury2Rect
     End Select
     m_booDraggingSprite = False
 End Sub
+
+Private Property Get Tool_Tiles() As TileTools
+On Error Resume Next
+    Tool_Tiles = m_lngCurrentTool(View_Tiles)
+End Property
 
 Public Sub Tool_Tiles_Down(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
@@ -4905,72 +4948,14 @@ On Error Resume Next
     End Select
 End Sub
 
-Public Sub Tool_Objects_Down(Button As Integer, Shift As Integer, X As Single, Y As Single)
-On Error Resume Next
-Dim l_sndSound As Fury2SoundObject
-Dim l_mobOld As Fury2MapObject
-Dim l_mobNew As Fury2MapObject
-    If Button = 2 Then
-        Select Case QuickShowMenu(picMapViewport, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-            Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-            frmIcons.ilContextMenus)
-        Case 1
-        Case 2
-        Case 3
-        Case 4
-        Case Else
-        End Select
-    Else
-        Select Case Tool_Objects
-        Case ObjectTool_Cursor
-            Set l_mobNew = MapObjectFromPoint(m_lngRealMouseX, m_lngRealMouseY)
-            If l_mobOld Is l_mobNew Then
-                'm_booDraggingObject = True
-'                m_sngDragStartX = l_litOld.X
-'                m_sngDragStartY = l_litOld.Y
-'                MultiPropertyUndoPush l_litNew, Array("X", "Y"), Array(m_sngDragStartX, m_sngDragStartY)
-            Else
-                m_lngSelectedObject = m_mapMap.Objects.Find(l_mobNew)
-            End If
-            RefreshObjects
-            Redraw
-        Case ObjectTool_Create_Sound
-            Set l_sndSound = New Fury2SoundObject
-            l_sndSound.X = m_lngMouseX
-            l_sndSound.Y = m_lngMouseY
-            l_sndSound.FalloffOffset = 10
-            l_sndSound.FalloffDistance = 50
-            m_mapMap.Objects.Add l_sndSound
-            m_lngSelectedObject = m_mapMap.Objects.Count
-            RefreshObjects
-            Redraw
-        Case Else
-        End Select
-    End If
-End Sub
-
-Public Sub Tool_Objects_Move(Button As Integer, Shift As Integer, X As Single, Y As Single)
-On Error Resume Next
-    Select Case Tool_Objects
-    Case Else
-    End Select
-End Sub
-
-Public Sub Tool_Objects_Up(Button As Integer, Shift As Integer, X As Single, Y As Single)
-On Error Resume Next
-    Select Case Tool_Objects
-    Case Else
-    End Select
-End Sub
-
 Public Sub ToolChanged()
 On Error Resume Next
 Dim l_lngButtons As Long
 Dim l_strTool As String
-    For l_lngButtons = 0 To tbrTools.ButtonCount - 1
-        l_strTool = LCase(Trim(tbrTools.ButtonKey(l_lngButtons)))
+    For l_lngButtons = 1 To tbrMapTools.Buttons.Count
+        l_strTool = LCase(Trim(tbrMapTools.Buttons(l_lngButtons).key))
         If Left(l_strTool, 4) = "tool" Then
-            tbrTools.ButtonChecked(l_lngButtons) = (CLng(Mid(l_strTool, 6, Len(l_strTool) - 6)) = m_lngCurrentTool(m_lngCurrentView))
+            tbrMapTools.Buttons(l_lngButtons).Checked = (CLng(Mid(l_strTool, 6, Len(l_strTool) - 6)) = m_lngCurrentTool(m_lngCurrentView))
         End If
     Next l_lngButtons
     Screen.MousePointer = 11
@@ -5023,6 +5008,28 @@ On Error Resume Next
     RefreshBrush
 End Sub
 
+Private Sub tpkTiles_TileHover(Tile As Integer)
+On Error Resume Next
+    Editor.SetLocation "Tile " & Tile
+End Sub
+
+Public Function Undo() As Boolean
+On Error Resume Next
+Dim l_undRedo As iUndoEntry
+Dim l_undUndo As iUndoEntry
+    If m_colUndo.Count > 0 Then
+        BeginProcess "Preparing to Undo..."
+        Set l_undUndo = m_colUndo.Item(m_colUndo.Count)
+        Set l_undRedo = l_undUndo.CreateReverse()
+        m_colUndo.Remove m_colUndo.Count
+        m_colRedo.Add l_undRedo, , 1
+        UpdateProcess 0, "Performing Undo..."
+        Undo = SmartApply(l_undUndo)
+        EndProcess
+        Editor.ActionUpdate
+    End If
+End Function
+
 Public Sub UndoPush(Optional ByRef Area As Fury2Rect = Nothing, Optional ByVal Layer As Long = -1)
 On Error Resume Next
 Dim l_undUndo As cTileUndoEntry, l_brsBrush As Fury2Brush
@@ -5064,10 +5071,10 @@ End Sub
 
 Public Sub UpdateCamera()
 On Error Resume Next
-    If m_camCamera Is Nothing Then Set m_camCamera = New Fury2Camera
+    If m_camCamera Is Nothing Then Set m_camCamera = DefaultEngine.F2Camera()
     With m_camCamera
         .DisableBuffer = True
-        .ShowSprites = m_lngCurrentView = View_Sprites
+        .ShowSprites = (m_lngCurrentView = View_Sprites) Or (m_voViewOptions.AlwaysShowSprites)
         .EnableLighting = (m_lngCurrentView = View_Lighting) Or (m_voViewOptions.AlwaysShowLighting)
         .EnableParallax = m_voViewOptions.EnableParallax
         .EnableWrapping = m_voViewOptions.EnableWrapping
@@ -5123,19 +5130,33 @@ Dim l_objObject As Object
     Redraw
     RefreshMapTools
     ResizeMapTools
+    dtViews_Resize
     ToolChanged
     Screen.MousePointer = 0
 End Sub
 
-Private Sub tpkTiles_TileHover(Tile As Integer)
+Public Property Get ViewOptions() As MapEditorViewOptions
 On Error Resume Next
-    Editor.SetLocation "Tile " & Tile
-End Sub
+    Set ViewOptions = m_voViewOptions
+End Property
 
 Private Sub vsMap_Change()
 On Error Resume Next
     If vsMap.Tag = "" Then Redraw
 End Sub
+
+Public Property Get Zoom() As Single
+On Error Resume Next
+    Zoom = m_voViewOptions.Zoom / 100#
+End Property
+
+Public Property Let Zoom(NewZoom As Single)
+On Error Resume Next
+    If (CLng(NewZoom * 100) <> m_voViewOptions.Zoom) Then
+        m_voViewOptions.Zoom = CLng(NewZoom * 100)
+        ZoomChanged
+    End If
+End Property
 
 Public Sub ZoomChanged()
 On Error Resume Next
@@ -5143,9 +5164,4 @@ On Error Resume Next
     ResizeViewport
     Redraw
 End Sub
-
-Private Property Get iDocument_Modified() As Boolean
-On Error Resume Next
-    iDocument_Modified = True
-End Property
 

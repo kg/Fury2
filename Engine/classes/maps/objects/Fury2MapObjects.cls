@@ -61,9 +61,13 @@ Friend Sub SetParent(Parent As Fury2Map)
     Set mvarParent = Parent
 End Sub
 
+Public Property Get Parent() As Fury2Map
+    Set Parent = mvarParent
+End Property
+
 Public Sub Add(ByVal Obj As Fury2MapObject, Optional ByVal sKey, Optional ByVal AtIndex)
 On Error Resume Next
-    Obj.Load m_Engine, mvarParent
+    Obj.Load mvarParent.Engine, mvarParent
     If IsMissing(sKey) Then
         If IsMissing(AtIndex) Then
             mCol.Add Obj

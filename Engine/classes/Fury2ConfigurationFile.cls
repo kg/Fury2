@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "Fury2ConfigurationFile"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
@@ -43,6 +43,15 @@ Private Type Setting
 End Type
 
 Private m_setSettings() As Setting
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Function ToBoolean(ByVal SettingName As String) As Boolean
 On Error Resume Next
@@ -61,8 +70,8 @@ Dim l_strSettings As String
 Dim l_lngSettings As Long
 Dim l_strSetting As String
 Dim l_varSetting As Variant
-    If m_Engine.Filesystem.FileExists(Filename) Then
-        l_strSettings = m_Engine.Filesystem.File(Filename).Text
+    If Engine.Filesystem.FileExists(Filename) Then
+        l_strSettings = Engine.Filesystem.File(Filename).Text
         l_varSettings = Split(l_strSettings, vbCrLf)
         For l_lngSettings = LBound(l_varSettings) To UBound(l_varSettings)
             l_strSetting = l_varSettings(l_lngSettings)
@@ -83,7 +92,7 @@ Dim l_lngSettings As Long
             l_strSettings = l_strSettings & .Name & ":" & .Value & vbCrLf
         End With
     Next l_lngSettings
-    m_Engine.Filesystem.File(Filename).Text = l_strSettings
+    Engine.Filesystem.File(Filename).Text = l_strSettings
 End Sub
 
 Public Sub DefineSettings(Settings As Variant)

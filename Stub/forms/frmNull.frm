@@ -44,7 +44,6 @@ Option Explicit
 
 Public Sub Quit()
 On Error Resume Next
-    Fury2Shutdown
     DoEvents
     Unload Me
     If InIDE Then

@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "Fury2Tileset"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Description = "Fury² Tileset Object"
@@ -41,7 +41,7 @@ Implements IVirtualFileSaveable
 
 Public Handle As Long
 Attribute Handle.VB_VarDescription = "*Internal value"
-Private m_mapMap As Fury2Map
+Private m_lyrParent As Fury2MapLayer
 Private m_booOwnsTileset As Boolean
 Private mvarTilesPerRow As Long
 Private mvarTilesPerColumn As Long
@@ -53,6 +53,20 @@ Private mvarTileHeight As Long
 Private mvarMatteColor As Long
 Private mvarHasAlpha As Boolean
 Private mvarTransparentTile As Long
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
+
+Friend Sub SetParent(Parent As Fury2MapLayer)
+On Error Resume Next
+    Set m_lyrParent = Parent
+End Sub
 
 Friend Sub SetData(Width As Long, Height As Long, Filename As String, Buffer As Fury2Image)
 On Error Resume Next
@@ -68,11 +82,9 @@ Attribute DeallocateTileset.VB_MemberFlags = "40"
 On Error Resume Next
     If (Handle <> 0) Then
         If CLng(mvarBuffer.Tag(1)) <= 1 Then
-            'm_Engine.TextOut "Deallocated " & mvarBuffer.Name & " (" & m_Engine.ToString(mvarBuffer.Tag) & ")"
             SoftFX.DeallocateTileset Handle
             mvarBuffer.Tag = Array(0, 0)
         Else
-            'm_Engine.TextOut "Released " & mvarBuffer.Name & " (" & m_Engine.ToString(mvarBuffer.Tag) & ")"
             mvarBuffer.Tag = Array(mvarBuffer.Tag(0), mvarBuffer.Tag(1) - 1)
         End If
         Handle = 0
@@ -84,7 +96,7 @@ Attribute AllocateTileset.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_lngLayers As Long
     If Handle <> 0 Then DeallocateTileset
-    If m_booEditor Then ForceNew = True
+    If Engine.EditMode Then ForceNew = True
     If mvarBuffer Is Nothing Then
         Load
     End If
@@ -101,11 +113,9 @@ Dim l_lngLayers As Long
             Else
                 mvarBuffer.Tag = Array(Handle, 1)
             End If
-            'm_Engine.TextOut "Allocated " & mvarBuffer.Name & " (" & m_Engine.ToString(mvarBuffer.Tag) & ")"
         Else
             mvarBuffer.Tag = Array(mvarBuffer.Tag(0), mvarBuffer.Tag(1) + 1)
             Handle = CLng(mvarBuffer.Tag(0))
-            'm_Engine.TextOut "Referenced " & mvarBuffer.Name & " (" & m_Engine.ToString(mvarBuffer.Tag) & ")"
         End If
     End If
 End Sub
@@ -122,6 +132,7 @@ On Error Resume Next
 Dim m_tstNew As Fury2Tileset
     Set m_tstNew = New Fury2Tileset
     With m_tstNew
+        .SetEngine Engine
         .HasAlpha = mvarHasAlpha
         Err.Clear
         .MatteColor = Buffer.MatteColor
@@ -247,8 +258,8 @@ Sub Reload()
 Attribute Reload.VB_Description = "Reloads the tileset."
 On Error Resume Next
     mvarMatteColor = mvarBuffer.MatteColor
-    m_Engine.ReLoadPicture mvarFilename
-    Set mvarBuffer = m_Engine.LoadImage(mvarFilename)
+    Engine.ReLoadPicture mvarFilename
+    Set mvarBuffer = Engine.LoadImage(mvarFilename)
     mvarBuffer.MatteColor = mvarMatteColor
     AllocateTileset
     With mvarBuffer
@@ -297,19 +308,28 @@ Static m_lngRecurse As Long
     If Trim(mvarFilename) = "" Then
         Exit Sub
     End If
-    m_Engine.ContextLevelAdd "Tileset.Load(""" + CStr(mvarFilename) + """)"
+    Engine.ContextLevelAdd "Tileset.Load(""" + CStr(mvarFilename) + """)"
     m_lngRecurse = m_lngRecurse + 1
-    If m_booEditor Then
-        Set mvarBuffer = m_Engine.LoadImage(mvarFilename)
+    Set mvarBuffer = Nothing
+    If Engine.EditMode Then
+        Set mvarBuffer = Engine.LoadImage(mvarFilename)
     Else
-        l_lngIndex = m_Engine.iLoadImage(mvarFilename)
-        If l_lngIndex = m_Engine.Images.Count Then
+        l_lngIndex = Engine.iLoadImage(mvarFilename)
+        If l_lngIndex = Engine.Images.Count Then
             l_booNew = True
         End If
-        Set mvarBuffer = m_Engine.Images(l_lngIndex)
+        Set mvarBuffer = Engine.Images(l_lngIndex)
     End If
-    If mvarBuffer Is Nothing Then CriticalError "Fury2Tileset.Load", "Sanity Check", "Tileset """ + mvarFilename + """ could not be loaded.": m_lngRecurse = m_lngRecurse - 1: Exit Sub
-    If mvarBuffer.Width <= 0 Or mvarBuffer.Height <= 0 Then CriticalError "Fury2Tileset.Load", "Sanity Check", "Tileset """ + mvarFilename + """ could not be loaded.": m_lngRecurse = m_lngRecurse - 1: Exit Sub
+    If mvarBuffer Is Nothing Then
+        If Not Engine.EditMode Then Engine.CriticalError "Fury2Tileset.Load", "Sanity Check", "Tileset """ + mvarFilename + """ could not be loaded."
+        m_lngRecurse = m_lngRecurse - 1
+        Exit Sub
+    End If
+    If mvarBuffer.Width <= 0 Or mvarBuffer.Height <= 0 Then
+        If Not Engine.EditMode Then Engine.CriticalError "Fury2Tileset.Load", "Sanity Check", "Tileset """ + mvarFilename + """ could not be loaded."
+        m_lngRecurse = m_lngRecurse - 1
+        Exit Sub
+    End If
     mvarBuffer.MatteColor = mvarMatteColor
     With mvarBuffer
         RecalculateSizes
@@ -321,7 +341,7 @@ Static m_lngRecurse As Long
     End With
     AllocateTileset
     m_lngRecurse = m_lngRecurse - 1
-    m_Engine.ContextLevelRemove
+    Engine.ContextLevelRemove
 End Sub
 
 Public Property Let Filename(ByVal vData As String)

@@ -19,7 +19,7 @@ Begin VB.Form frmGDI
    KeyPreview      =   -1  'True
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
-   MouseIcon       =   "frmGDI.frx":000C
+   MouseIcon       =   "frmGDI.frx":492A
    ScaleHeight     =   240
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   320
@@ -31,3 +31,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+Private Sub Form_Load()
+    SetAppIcon Me
+End Sub

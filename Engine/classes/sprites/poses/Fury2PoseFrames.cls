@@ -36,7 +36,17 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 Implements Fury2Object
 Implements IVirtualFileCollection
+Private m_posParent As Fury2Pose
 Private mCol As Collection
+
+Public Property Get Parent() As Fury2Pose
+    Set Parent = m_posParent
+End Property
+
+Friend Sub SetParent(Pose As Fury2Pose)
+On Error Resume Next
+    Set m_posParent = Pose
+End Sub
 
 Public Sub ModifyGraphics(ByVal FunctionName As String, Optional ByRef Parameters As Variant)
 On Error Resume Next
@@ -185,12 +195,14 @@ Dim m_fraFrame As Fury2PoseFrame
         .YCenter = CSng(YCenter)
         .Delay = CLng(Delay)
         .MaskColor = CLng(MaskColor)
+        Set .Parent = m_posParent
     End With
     mCol.Add m_fraFrame
 End Sub
 
 Public Sub Add(Obj As Fury2PoseFrame, Optional ByVal sKey, Optional ByVal AtIndex)
 On Error Resume Next
+    Obj.SetParent m_posParent
     If IsMissing(sKey) Then
         If IsMissing(AtIndex) Then
             mCol.Add Obj
@@ -242,6 +254,7 @@ On Error Resume Next
 End Sub
 
 Public Property Get NewEnum() As IUnknown
+Attribute NewEnum.VB_UserMemId = -4
     Set NewEnum = mCol.[_NewEnum]
 End Property
 
@@ -265,7 +278,10 @@ End Property
 
 Private Function IVirtualFileCollection_CreateNew() As Object
 On Error Resume Next
-    Set IVirtualFileCollection_CreateNew = New Fury2PoseFrame
+Dim l_fraNew As Fury2PoseFrame
+    Set l_fraNew = New Fury2PoseFrame
+    l_fraNew.SetParent m_posParent
+    Set IVirtualFileCollection_CreateNew = l_fraNew
 End Function
 
 Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object

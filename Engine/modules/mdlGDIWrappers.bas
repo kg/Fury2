@@ -21,7 +21,7 @@ Attribute VB_Name = "mdlGDIWrappers"
 Private m_colIcons As New Collection
 
 Private Declare Function GetWindow Lib "user32" ( _
-   ByVal HWnd As Long, ByVal wCmd As Long) As Long
+   ByVal hwnd As Long, ByVal wCmd As Long) As Long
 Private Const GW_OWNER = 4
 
 Private Declare Function GetSystemMetrics Lib "user32" (ByVal nIndex As Long) As Long
@@ -101,6 +101,62 @@ On Error Resume Next
    DeleteDC hdc
 End Sub
 
+Function GetIconWidth(ByRef Icon As IPictureDisp) As Long
+On Error Resume Next
+Dim l_infInfo As IconInfo
+Dim bmiDest As BitmapInfo
+Dim DC As Long
+    GetIconInfo Icon, l_infInfo
+    
+    DC = CreateMemoryDC
+    
+    With bmiDest.Header
+        .Size = Len(bmiDest.Header)
+        .Planes = 1
+    End With
+    
+    ' Get header information (interested mainly in size)
+    If 0 = GetDIBits(DC, l_infInfo.ColorBitmap, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
+        DeleteObject l_infInfo.MaskBitmap
+        DeleteObject l_infInfo.ColorBitmap
+        DeleteMemoryDC DC
+        Exit Function
+    End If
+    
+    GetIconWidth = CLng(bmiDest.Header.Width)
+    
+    DeleteMemoryDC DC
+    DeleteObject l_infInfo.MaskBitmap
+    DeleteObject l_infInfo.ColorBitmap
+End Function
+
+Function GetIconMask(ByRef Icon As IPictureDisp) As IPictureDisp
+On Error Resume Next
+Dim l_infInfo As IconInfo
+Dim bmiDest As BitmapInfo
+Dim DC As Long
+    GetIconInfo Icon, l_infInfo
+    
+    DC = CreateMemoryDC
+    
+    With bmiDest.Header
+        .Size = Len(bmiDest.Header)
+        .Planes = 1
+    End With
+    
+    ' Get header information (interested mainly in size)
+    If 0 = GetDIBits(DC, l_infInfo.ColorBitmap, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
+        DeleteObject l_infInfo.MaskBitmap
+        DeleteObject l_infInfo.ColorBitmap
+        DeleteMemoryDC DC
+        Exit Function
+    End If
+        
+    DeleteMemoryDC DC
+    DeleteObject l_infInfo.ColorBitmap
+    Set GetIconMask = CreatePictureFromHandle(l_infInfo.MaskBitmap, PicType_Bitmap)
+End Function
+
 Function GetPictureWidth(ByRef Pic As IPictureDisp) As Long
 On Error Resume Next
 Dim bmiDest As BitmapInfo
@@ -123,6 +179,35 @@ Dim DC As Long
     
     DeleteMemoryDC DC
     
+End Function
+
+Function GetIconHeight(ByRef Icon As IPictureDisp) As Long
+On Error Resume Next
+Dim bmiDest As BitmapInfo
+Dim DC As Long
+Dim l_infInfo As IconInfo
+    GetIconInfo Icon, l_infInfo
+    
+    DC = CreateMemoryDC
+    
+    With bmiDest.Header
+        .Size = Len(bmiDest.Header)
+        .Planes = 1
+    End With
+    
+    ' Get header information (interested mainly in size)
+    If 0 = GetDIBits(DC, l_infInfo.ColorBitmap, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
+        DeleteObject l_infInfo.MaskBitmap
+        DeleteObject l_infInfo.ColorBitmap
+        DeleteMemoryDC DC
+        Exit Function
+    End If
+    
+    GetIconHeight = CLng(bmiDest.Header.Height)
+    
+    DeleteMemoryDC DC
+    DeleteObject l_infInfo.MaskBitmap
+    DeleteObject l_infInfo.ColorBitmap
 End Function
 
 Function GetPictureHeight(ByRef Pic As IPictureDisp) As Long
@@ -165,6 +250,48 @@ Public Function IID_IPictureDisp() As IId
     IID_IPictureDisp = picGuid
 End Function
 
+Sub PixelsFromIcon(ByRef Icon As IPictureDisp, ByVal Pointer As Long)
+On Error Resume Next
+    Dim bmiDest As BitmapInfo
+    Dim hdcMem As Long
+    Dim deskWnd As Long, deskDC As Long
+    Dim l_infInfo As IconInfo
+    
+    GetIconInfo Icon, l_infInfo
+    deskWnd = GetDesktopWindow
+    deskDC = GetDC(deskWnd)
+    hdcMem = CreateCompatibleDC(deskDC)
+    
+    With bmiDest.Header
+        .Size = Len(bmiDest.Header)
+        .Planes = 1
+    End With
+   
+    ' Get header information (interested mainly in size)
+    If GetDIBits(hdcMem, l_infInfo.ColorBitmap, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) = 0 Then
+        DeleteObject l_infInfo.MaskBitmap
+        DeleteObject l_infInfo.ColorBitmap
+        DeleteDC hdcMem
+        ReleaseDC deskWnd, deskDC
+        Exit Sub
+    End If
+
+    With bmiDest.Header
+        .BitCount = 32
+        .Compression = DIBCompression_RGB
+        .Height = -(bmiDest.Header.Height)
+    End With
+     
+    If GetDIBits(hdcMem, l_infInfo.ColorBitmap, 0, Abs(bmiDest.Header.Height), ByVal Pointer, bmiDest, DIBMode_RGB) = 0 Then
+    End If
+   
+    DeleteDC hdcMem
+    ReleaseDC deskWnd, deskDC
+    DeleteObject l_infInfo.MaskBitmap
+    DeleteObject l_infInfo.ColorBitmap
+   
+End Sub
+
 Sub PixelsFromPicture(ByRef Pic As IPictureDisp, ByVal Pointer As Long)
 On Error Resume Next
     Dim bmiDest As BitmapInfo
@@ -201,7 +328,7 @@ On Error Resume Next
    
 End Sub
 
-Sub PixelsTopicture(ByRef Pic As IPictureDisp, ByVal Pointer As Long)
+Sub PixelsToPicture(ByRef Pic As IPictureDisp, ByVal Pointer As Long)
 On Error Resume Next
     Dim bmiDest As BitmapInfo
     Dim hdcMem As Long
@@ -236,6 +363,21 @@ On Error Resume Next
    
 End Sub
 
+Public Function CreatePictureFromHandle(ByVal Handle As Long, ByVal PicType As PicTypes) As IPictureDisp
+On Error Resume Next
+    Dim picGuid As IId
+    Dim picDesc As PictureDescriptor
+    Dim Pic As IPictureDisp
+    picGuid = IID_IPictureDisp()
+    picDesc.Size = Len(picDesc)
+    picDesc.Bitmap = Handle
+    picDesc.Type = PicType
+    If CreatePictureIndirect(picDesc, picGuid, True, Pic) <> 0 Then
+        Exit Function
+    End If
+    Set CreatePictureFromHandle = Pic
+    Set Pic = Nothing
+End Function
 
 Public Function CreatePicture(ByVal Width As Long, ByVal Height As Long) As IPictureDisp
     Dim picGuid As IId
@@ -279,16 +421,6 @@ Public Function CreatePicture(ByVal Width As Long, ByVal Height As Long) As IPic
 End Function
 
 #If fury2 = 1 Then
-Public Function LoadLargeIcon(Filename As String) As IPictureDisp
-On Error Resume Next
-    Set LoadLargeIcon = LoadIconObject(m_Engine.FileSystem.File(Filename).GetRealFilename, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON))
-End Function
-
-Public Function LoadSmallIcon(Filename As String) As IPictureDisp
-On Error Resume Next
-    Set LoadSmallIcon = LoadIconObject(m_Engine.FileSystem.File(Filename).GetRealFilename, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON))
-End Function
-
 Public Function LoadIconObject(Filename As String, Optional SizeX As Long = 16, Optional SizeY As Long = 16) As IPictureDisp
     Dim picGuid As IId
     Dim picDesc As PictureDescriptor
@@ -332,9 +464,9 @@ Dim l_lngHWnd As Long
     If Icon Is Nothing Then Exit Sub
     If Form Is Nothing Then Exit Sub
     If IconType = ICON_SMALL Then Set Form.Icon = Icon
-    SendMessage Form.HWnd, WM_SetIcon, ByVal IconType, ByVal Icon.Handle
+    SendMessage Form.hwnd, WM_SetIcon, ByVal IconType, ByVal Icon.Handle
     If (TypeOf Form Is MDIForm) Or (SetGlobalIcon) Then
-        l_lngHWnd = Form.HWnd
+        l_lngHWnd = Form.hwnd
         Do While l_lngHWnd <> 0
             l_lngHWnd = GetWindow(l_lngHWnd, GW_OWNER)
             If l_lngHWnd <> 0 Then
@@ -342,14 +474,6 @@ Dim l_lngHWnd As Long
             End If
         Loop
     End If
-End Sub
-
-Sub LoadFormIcon(Form As Form, Icon As String, Optional SetGlobalIcon As Boolean = False)
-On Error Resume Next
-    m_colIcons.Add LoadLargeIcon(Icon)
-    SetFormIcon Form, m_colIcons.Item(m_colIcons.Count), ICON_LARGE, SetGlobalIcon
-    m_colIcons.Add LoadSmallIcon(Icon)
-    SetFormIcon Form, m_colIcons.Item(m_colIcons.Count), ICON_SMALL, SetGlobalIcon
 End Sub
 #End If
 

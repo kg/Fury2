@@ -9,37 +9,37 @@ library Win32 {
     // TLib : OLE Automation : {00020430-0000-0000-C000-000000000046}
     importlib("stdole2.tlb");
 
-    typedef enum {
+    enum Win32APIConstants {
         Maximum_Path_Length = 260
-    } Win32APIConstants;
+    };
 
-    typedef enum {
+    enum WindowFlags {
         TopMost = -1,
         NotTopMost = -2
-    } WindowFlags;
+    };
 
-    typedef enum {
+    enum WindowStateFlags {
         NoMove = 2,
         NoSize = 1
-    } WindowStateFlags;
+    };
 
-    typedef enum {
+    enum PicTypes {
         PicType_Uninitialized = -1,
         PicType_None = 0,
         PicType_Bitmap = 1,
         PicType_Metafile = 2,
         PicType_Icon = 3,
         PicType_EnhancedMetafile = 4
-    } PicTypes;
+    };
 
-    typedef enum {
+    enum LoadImageTypes {
         Image_Bitmap = 0,
         Image_Icon = 1,
         Image_Cursor = 2,
         Image_EnhancedMetafile = 3
-    } LoadImageTypes;
+    };
 
-    typedef enum {
+    enum LoadImageFlags {
         LoadImage_DefaultColor = 0x0,
         LoadImage_Monochrome = 0x1,
         LoadImage_Color = 0x2,
@@ -52,9 +52,9 @@ library Win32 {
         LoadImage_CreateDIBHeader = 0x2000,
         LoadImage_CopyFromResource = 0x4000,
         LoadImage_Shared = 0x8000
-    } LoadImageFlags;
+    };
 
-    typedef enum {
+    enum GetGlyphOutlineFlags {
         GGO_Metrics = 0,
         GGO_Bitmap = 1,
         GGO_Native = 2,
@@ -62,14 +62,14 @@ library Win32 {
         GGO_Gray4_Bitmap = 5,
         GGO_Gray8_Bitmap = 6,
         GGO_Glyph_Index = 0x80
-    } GetGlyphOutlineFlags;
+    };
 
-    typedef enum {
+    enum LogicalFontQuality {
         Quality_NonAntialiased = 3,
         Quality_Antialiased = 4
-    } LogicalFontQuality;
+    };
 
-    typedef enum {
+    enum WindowMessages {
         WM_GetIcon = 0x7F,
         WM_SetIcon = 0x80,
         WM_SetRedraw = 0x000B,
@@ -114,9 +114,9 @@ library Win32 {
         LB_InitStorage = 0x01A8,
         LB_ItemFromPoint = 0x01A9,
         LB_MultipleAddString = 0x01B1
-    } WindowMessages;
+    };
 
-    typedef enum {
+    enum SystemColors {
         SystemColor_Scrollbar = 0,
         SystemColor_Background = 1,
         SystemColor_Caption_Active = 2,
@@ -138,18 +138,18 @@ library Win32 {
         SystemColor_Button_Text = 18,
         SystemColor_Caption_Inactive_Text = 19,
         SystemColor_Button_Highlight = 20
-    } SystemColors;
+    };
 
-    typedef enum {
+    enum DIBModes {
         DIBMode_RGB = 0,
         DIBMode_Palette = 1
-    } DIBModes;
+    };
 
-    typedef enum {
+    enum DIBCompressionModes {
         DIBCompression_RGB = 0
-    } DIBCompressionModes;
+    };
 
-    typedef enum {
+    enum MouseEvents {
         MouseEvent_Move = 0x1,
         MouseEvent_Press_Left = 0x2,
         MouseEvent_Release_Left = 0x4,
@@ -158,20 +158,29 @@ library Win32 {
         MouseEvent_Press_Middle = 0x20,
         MouseEvent_Release_Middle = 0x40,
         MouseEvent_Absolute = 0x8000
-    } MouseEvents;
+    };
 
-    typedef enum {
+    enum ObjectTypes {
+        Object_Pen = 1,
         Object_Brush = 2,
         Object_DC = 3,
+        Object_MetafileDC = 4,
         Object_Palette = 5,
-        Object_Bitmap = 7
-    } ObjectTypes;
+        Object_Font = 6,
+        Object_Bitmap = 7,
+        Object_Region = 8,
+        Object_Metafile = 9,
+        Object_MemoryDC = 10,
+        Object_ExtendedPen = 11,
+        Object_EnhancedMetafileDC = 12,
+        Object_EnhancedMetafile = 13
+    };
 
-    typedef enum {
+    enum StockObjectTypes {
         StockObject_Brush_Black = 4
-    } StockObjectTypes;
+    };
 
-    typedef enum {
+    enum DrawTextFlags {
         DrawText_Align_Top = 0x0,
         DrawText_Align_Left = 0x0,
         DrawText_Align_Center_Horizontal = 0x1,
@@ -187,13 +196,18 @@ library Win32 {
         DrawText_CalculateRect = 0x400,
         DrawText_NoPrefix = 0x800,
         DrawText_Internal = 0x1000
-    } DrawTextFlags;
+    };
 
-    typedef enum {
+    enum TextBackgroundModes {
+        BackgroundMode_Transparent = 1,
+        BackgroundMode_Opaque = 2
+    };
+
+    enum StretchBltModes {
         StretchBlt_ColorOnColor = 3
-    } StretchBltModes;
+    };
 
-    typedef enum {
+    enum GlobalAllocFlags {
         GlobalAlloc_Fixed = 0x0,
         GlobalAlloc_Invalid_Handle = 0x8000,
         GlobalAlloc_LockCount = 0xFF,
@@ -207,9 +221,9 @@ library Win32 {
         GlobalAlloc_Share = 0x2000,
         GlobalAlloc_Valid_Flags = 0x7F72,
         GlobalAlloc_ZeroInitialize = 0x40
-    } GlobalAllocFlags;
+    };
 
-    typedef enum {
+    enum GDIROPs {
         ROP_Black = 1,
         ROP_NOT = 6,
         ROP_XOR = 7,
@@ -218,121 +232,122 @@ library Win32 {
         ROP_Copy = 13,
         ROP_OR = 15,
         ROP_White = 16
-    } GDIROPs;
+    };
 
-    typedef enum {
+    enum GradientFillFlags {
         GradientFill_Rect_Horizontal = 0,
         GradientFill_Rect_Vertical = 1,
         GradientFill_Triangle = 2
-    } GradientFillFlags;
+    };
 
-    typedef enum {
+    enum AlphaBlendModes {
         AlphaBlend_Source_Over = 0
-    } AlphaBlendModes;
+    };
 
-    typedef enum {
+    enum AlphaBlendFlags {
         AlphaBlend_Source_No_Premultiplied_Alpha = 0x01,
         AlphaBlend_Source_No_Alpha = 0x02,
         AlphaBlend_Dest_No_Premultiplied_Alpha = 0x10,
         AlphaBlend_Dest_No_Alpha = 0x20
-    } AlphaBlendFlags;
+    };
 
+    struct LargeInt {
+	    int Low, High;
+    };
 
-    typedef struct {
-	int Low, High;
-    } LargeInt;
-
-    typedef struct {
+    struct PointAPI {
         int X, Y;
-    } PointAPI;
+    };
 
-    typedef struct {
+    struct Size {
         int Width, Height;
-    } Size;
+    };
 
-    typedef struct {
+    struct Rect {
         int Left, Top, Right, Bottom;
-    } Rect;
+    };
 
-    typedef struct {
+    struct Mat2 {
         short L11, H11, L12, H12, L21, H21, L22, H22;
-    } Mat2;
+    };
 
-    typedef struct {
+    struct GlyphMetrics {
         int BlackBoxX, BlackBoxY;
-        PointAPI GlyphOrigin;
+        struct PointAPI GlyphOrigin;
         short CellIncX, CellIncY;
-    } GlyphMetrics;
+    };
 
-    typedef struct {
+    struct RGBQuad {
         byte B, G, R, A;
-    } RGBQuad;
+    };
 
-    typedef struct {
+    struct RGBTriplet {
         byte B, G, R;
-    } RGBTriplet;
+    };
 
-    typedef struct {
+    struct BitmapInfoHeader {
         int Size, Width, Height;
         short Planes, BitCount;
         int Compression, SizeImage, XPixelsPerMeter, YPixelsPerMeter, ColorUsed, ColorImportant;
-    } BitmapInfoHeader;
+    };
 
-    typedef struct {
-        BitmapInfoHeader Header;
+    struct BitmapInfo {
+        struct BitmapInfoHeader Header;
         int Reserved;
-    } BitmapInfo;
+    };
 
-    typedef struct {
+    struct PictureDescriptor {
         int Size;
-        PicTypes Type;
+        enum PicTypes Type;
         int Bitmap;
         int Palette;
-    } PictureDescriptor;
+    };
 
-    typedef struct {
-        int Icon, XHotspot, YHotspot, MaskBitmap, ColorBitmap;
-    } IconInfo;
+    struct IconInfo {
+        int Icon;
+        int XHotspot, YHotspot;
+        int MaskBitmap, ColorBitmap;
+    };
 
-    typedef struct {
+    struct IId {
         int X;
         short S1, S2;
         byte C[8];
-    } IId;
+    };
 
-    typedef struct {
+    struct FileTime {
         int LowDateTime;
         int HighDateTime;
-    } FileTime;
+    };
 
-    typedef struct {
+    struct Gradient_Vertex {
         int X, Y;
         short R, G, B, A;
-    } Gradient_Vertex;
+    };
 
-    typedef struct {
+    struct Gradient_Rect {
         int UpperLeft;
         int LowerRight;
-    } Gradient_Rect;
+    };
 
-    typedef struct {
+    struct BlendFunction {
         byte BlendOperation;
         byte BlendFlags;
         byte SourceConstantAlpha;
         byte AlphaFormat;
-    } BlendFunction;
+    };
 
-    typedef struct {
+    struct Gradient_Triangle {
         int Vertex1, Vertex2, Vertex3;
-    } Gradient_Triangle;
+    };
 
     [dllname("user32")]
     module User32 {
 
         [entry("SendMessageA")]
-        int SendMessage(int Window, WindowMessages Message, int wParam, int lParam);
+        int SendMessage(int Window, enum WindowMessages Message, int wParam, int lParam);
         [entry("SendMessageW")]
-        int SendMessage_Unicode(int Window, WindowMessages Message, int wParam, int lParam);
+        int SendMessage_Unicode(int Window, enum WindowMessages Message, int wParam, int lParam);
 
         [entry("LoadIconA")]
         int LoadIcon(int Instance, [in, string] char* Filename);
@@ -341,16 +356,16 @@ library Win32 {
         [entry("DestroyIcon")]
         int DestroyIcon(int Icon);
         [entry("GetIconInfo")]
-        int GetIconInfo(int Icon, [out] IconInfo* IconInfo);
+        int GetIconInfo(int Icon, [out] struct IconInfo* IconInfo);
         [entry("DrawIcon")]
         int DrawIcon(int DC, int X, int Y, int Icon);
         [entry("DrawIconEx")]
         int DrawIconEx(int DC, int X, int Y, int Icon, int Width, int Height, int Frame, int FlickerFreeBrush, int Flags);
 
         [entry("LoadImageA")]
-        int LoadImage(int Instance, [in, string] char* Filename, int Type, int Width, int Height, LoadImageFlags Flags);
+        int LoadImage(int Instance, [in, string] char* Filename, int Type, int Width, int Height, enum LoadImageFlags Flags);
         [entry("LoadImageW")]
-        int LoadImage_Unicode(int Instance, [in, string] wchar_t* Filename, int Type, int Width, int Height, LoadImageFlags Flags);
+        int LoadImage_Unicode(int Instance, [in, string] wchar_t* Filename, int Type, int Width, int Height, enum LoadImageFlags Flags);
 
         [entry("SetWindowTextA")]
         int SetWindowText(int Window, [in, string] char* Text);
@@ -367,7 +382,7 @@ library Win32 {
         int GetWindowTextLength_Unicode(int Window);
         
         [entry("GetSysColor")]
-        int GetSystemColor(SystemColors Color);
+        int GetSystemColor(enum SystemColors Color);
 
         [entry("LockWindowUpdate")]
         int LockWindowUpdate(int Window);
@@ -384,10 +399,10 @@ library Win32 {
         [entry("SetCursorPos")]
         int SetCursorPos(int X, int Y);
         [entry("GetCursorPos")]
-        int GetCursorPos(PointAPI *Point);
+        int GetCursorPos([out] struct PointAPI *Point);
 
         [entry("mouse_event")]
-        int MouseEvent(MouseEvents Event, int X, int Y, int Buttons, int ExtraInfo);
+        int MouseEvent(enum MouseEvents Event, int X, int Y, int Buttons, int ExtraInfo);
 
         [entry("GetActiveWindow")]
         int GetActiveWindow();
@@ -402,6 +417,11 @@ library Win32 {
         [entry("SetForegroundWindow")]
         int SetForegroundWindow(int Window);
 
+        [entry("ScreenToClient")]
+        int ScreenToClient(int Window, struct PointAPI *Point);
+        [entry("ClientToScreen")]
+        int ClientToScreen(int Window, struct PointAPI *Point);
+
         [entry("GetClientRect")]
         int GetClientRect(int Window, [out] Rect* Rect);
 
@@ -413,11 +433,11 @@ library Win32 {
         int IntersectRect([out] Rect* Dest, [in] Rect* Source1, [in] Rect* Source2);
 
         [entry("DrawEdge")]
-        int DrawEdge(int DC, Rect* Rect, int EdgeStyle, int Flags);
+        int DrawEdge(int DC, struct Rect* Rect, int EdgeStyle, int Flags);
         [entry("DrawFocusRect")]
-        int DrawFocusRect(int DC, Rect* Rect);
+        int DrawFocusRect(int DC, struct Rect* Rect);
         [entry("FillRect")]
-        int FillRect(int DC, Rect* Rectangle, int Brush);
+        int FillRect(int DC, struct Rect* Rectangle, int Brush);
 
         [entry("GetDC")]
         int GetDC(int Window);
@@ -425,9 +445,9 @@ library Win32 {
         int ReleaseDC(int Window, int DC);
 
         [entry("DrawTextA")]
-        int DrawText(int DC, [string] char* String, int Length, Rect *Rectangle, DrawTextFlags Flags);
+        int DrawText(int DC, [string] char* String, int Length, struct Rect *Rectangle, enum DrawTextFlags Flags);
         [entry("DrawTextW")]
-        int DrawText_Unicode(int DC, [string] wchar_t* String, int Length, Rect *Rectangle, DrawTextFlags Flags);
+        int DrawText_Unicode(int DC, [string] wchar_t* String, int Length, struct Rect *Rectangle, enum DrawTextFlags Flags);
         
         [entry("PostQuitMessage")]
         void PostQuitMessage(int ExitCode);
@@ -455,10 +475,14 @@ library Win32 {
         int GetTextColor(int DC);
         [entry("GetBkColor")]
         int GetBackgroundColor(int DC);
+        [entry("GetBkMode")]
+        enum TextBackgroundModes GetBackgroundMode(int DC);
         [entry("SetTextColor")]
         int SetTextColor(int DC, int Color);
         [entry("SetBkColor")]
         int SetBackgroundColor(int DC, int Color);
+        [entry("SetBkMode")]
+        enum TextBackgroundModes SetBackgroundMode(int DC, enum TextBackgroundModes Mode);
 
         [entry("MoveToEx")]
         int MoveToEx(int DC, int X, int Y, void* OldPosition);
@@ -471,14 +495,14 @@ library Win32 {
         int SetROP2(int DC, int ROP);
         
         [entry("StretchDIBits")]
-        int StretchDIBits(int DC, int X, int Y, int Width, int Height, int SourceX, int SourceY, int SourceWidth, int SourceHeight, int Pointer, BitmapInfo *Info, DIBModes Flags, int RasterOperation);
+        int StretchDIBits(int DC, int X, int Y, int Width, int Height, int SourceX, int SourceY, int SourceWidth, int SourceHeight, int Pointer, struct BitmapInfo *Info, enum DIBModes Flags, int RasterOperation);
         [entry("SetDIBits")]
-        int SetDIBits(int DC, int Bitmap, int StartScan, int ScanCount, [out] void* Pointer, BitmapInfo *BitmapInfo, DIBModes Flags);
+        int SetDIBits(int DC, int Bitmap, int StartScan, int ScanCount, [out] void* Pointer, struct BitmapInfo *BitmapInfo, enum DIBModes Flags);
         [entry("GetDIBits")]
-        int GetDIBits(int DC, int Bitmap, int StartScan, int ScanCount, [in] void* Pointer, [in, out] BitmapInfo *BitmapInfo, DIBModes Flags);
+        int GetDIBits(int DC, int Bitmap, int StartScan, int ScanCount, [in] void* Pointer, [in, out] struct BitmapInfo *BitmapInfo, enum DIBModes Flags);
 
-	[entry("CreateDIBSection")]
-	int CreateDIBSection(int DC, BitmapInfo *BitmapInfo, int Flags, [in, out] int* Pointer, int FileMappingObject, int Offset);
+	      [entry("CreateDIBSection")]
+	      int CreateDIBSection(int DC, struct BitmapInfo *BitmapInfo, int Flags, [in, out] int* Pointer, int FileMappingObject, int Offset);
 
         [entry("FloodFill")]
         int FloodFill(int DC, int X, int Y, int Color);
@@ -490,14 +514,14 @@ library Win32 {
         [entry("StretchBlt")]
         int StretchBlt(int DC, int X, int Y, int Width, int Height, int SourceDC, int SourceX, int SourceY, int SourceWidth, int SourceHeight, int RasterOperation);
         [entry("SetStretchBltMode")]
-        int SetStretchBltMode(int DC, StretchBltModes Mode);
+        int SetStretchBltMode(int DC, enum StretchBltModes Mode);
         
         [entry("GetStockObject")]
-        int GetStockObject(StockObjectTypes StockObject);
+        int GetStockObject(enum StockObjectTypes StockObject);
         [entry("CreateSolidBrush")]
         int CreateSolidBrush(int Color);
         [entry("GetCurrentObject")]
-        int GetCurrentObject(int DC, ObjectTypes Type);
+        int GetCurrentObject(int DC, enum ObjectTypes Type);
         [entry("SelectObject")]
         int SelectObject(int DC, int Object);
         [entry("DeleteObject")]
@@ -524,7 +548,7 @@ library Win32 {
         int GetTextExtentPtr(int DC, int String, int Length, [out] Size *Size);
 
         [entry("GetGlyphOutline")]
-        int GetGlyphOutline(int DC, int Character, int Format, GlyphMetrics *Metrics, int BufferLength, int Buffer, int Transform);
+        int GetGlyphOutline(int DC, int Character, int Format, struct GlyphMetrics *Metrics, int BufferLength, int Buffer, int Transform);
 
     }
 
@@ -544,15 +568,15 @@ library Win32 {
         int TerminateProcess(int Process, int ExitCode);
 
         [entry("GlobalAlloc")]
-        int GlobalAlloc(GlobalAllocFlags Flags, int Size);
+        int GlobalAlloc(enum GlobalAllocFlags Flags, int Size);
         [entry("GlobalFree")]
         int GlobalFree(int Pointer);
         [entry("GlobalReAlloc")]
-        int GlobalReAlloc(int Pointer, int Size, GlobalAllocFlags Flags);
+        int GlobalReAlloc(int Pointer, int Size, enum GlobalAllocFlags Flags);
         [entry("GlobalSize")]
         int GlobalGetSize(int Pointer);
         [entry("GlobalFlags")]
-        GlobalAllocFlags GlobalGetFlags(int Pointer);
+        enum GlobalAllocFlags GlobalGetFlags(int Pointer);
         [entry("GlobalLock")]
         int GlobalLock(int Pointer);
         [entry("GlobalUnlock")]
@@ -591,7 +615,7 @@ library Win32 {
     [dllname("olepro32")]
     module OLEPro32 {
         [entry("OleCreatePictureIndirect")]
-        int CreatePictureIndirect([in] PictureDescriptor *PictureDescriptor, [in] IId *IId, [in] int TakeOwnership, [out] Picture** Pointer); 
+        int CreatePictureIndirect([in] struct PictureDescriptor *PictureDescriptor, [in] struct IId *IId, [in] int TakeOwnership, [out] Picture** Pointer); 
     }
 
     [dllname("msimg32")]

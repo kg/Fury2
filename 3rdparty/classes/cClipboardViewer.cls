@@ -8,18 +8,18 @@ BEGIN
 END
 Attribute VB_Name = "cClipboardViewer"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
 Implements ISubclass
 
-Private Declare Function SetClipboardViewer Lib "user32" (ByVal hWnd As Long) As Long
-Private Declare Function ChangeClipboardChain Lib "user32" (ByVal hWnd As Long, ByVal hWndNext As Long) As Long
-Private Declare Function SendMessageByString Lib "user32" Alias "SendMessageA" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As String) As Long
-Private Declare Function SendMessageByLong Lib "user32" Alias "SendMessageA" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As Long) As Long
-Private Declare Function SendMessage Lib "user32" Alias "SendMessageA" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
+Private Declare Function SetClipboardViewer Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function ChangeClipboardChain Lib "user32" (ByVal hwnd As Long, ByVal hWndNext As Long) As Long
+Private Declare Function SendMessageByString Lib "user32" Alias "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As String) As Long
+Private Declare Function SendMessageByLong Lib "user32" Alias "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As Long) As Long
+Private Declare Function SendMessage Lib "user32" Alias "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
 
 Private Const WM_DESTROY = &H2
 Private Const WM_CHANGECBCHAIN = &H30D
@@ -80,7 +80,7 @@ Dim lCount As Long
       FORMAT_MESSAGE_FROM_SYSTEM Or FORMAT_MESSAGE_IGNORE_INSERTS, _
       0, lLastDLLError, 0&, sBuff, Len(sBuff), ByVal 0)
    If lCount Then
-      WinAPIError = Left$(sBuff, lCount)
+      WinAPIError = left$(sBuff, lCount)
    End If
    
 End Function
@@ -90,7 +90,7 @@ Private Sub Class_Terminate()
    StopClipboardChangeNotification
 End Sub
 
-Private Function ISubclass_WindowProc(ByVal hWnd As Long, _
+Private Function ISubclass_WindowProc(ByVal hwnd As Long, _
                                       ByVal iMsg As Long, _
                                       ByVal wParam As Long, _
                                       ByVal lParam As Long) As Long

@@ -101,6 +101,7 @@ On Error Resume Next
 Dim m_jbBinding As Fury2JoystickBinding
     Set m_jbBinding = New Fury2JoystickBinding
     With m_jbBinding
+        .SetEngine Engine
         .Name = CStr(Name)
         Set .BindControl = BoundControl
         .Enabled = True
@@ -448,10 +449,10 @@ Dim DIJoyPropSaturation As DIPROPLONG
     Set m_DI8 = m_DX8.DirectInputCreate
     Set m_DIE = m_DI8.GetDIDevices(DI8DEVTYPE_JOYSTICK, DIEDFL_ATTACHEDONLY)
     If m_DIE.GetCount = 0 Then
-        Engine.TextOut "No joysticks installed. Joystick plugin inactive."
+        Engine.DebugOut "No joysticks installed. Joystick plugin inactive."
         Exit Sub
     Else
-        Engine.TextOut "Using joystick 1: " + m_DIE.GetItem(1).GetProductName
+        Engine.DebugOut "Using joystick 1: " + m_DIE.GetItem(1).GetProductName
     End If
     Set m_DID = m_DI8.CreateDevice(m_DIE.GetItem(1).GetGuidInstance)
     m_DID.SetCommonDataFormat DIFORMAT_JOYSTICK2
@@ -511,3 +512,7 @@ Dim m_lngBindings As Long, m_bndBinding As Fury2JoystickBinding
         .Add "Close Configuration Menu", , "ChangeJoystickConfig", -32767
     End With
 End Sub
+
+Private Sub Fury2Plugin_OutputPluginChanged()
+End Sub
+

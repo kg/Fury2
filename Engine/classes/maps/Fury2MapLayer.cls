@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "Fury2MapLayer"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Description = "Fury² Map Layer Object"
@@ -67,6 +67,15 @@ Private mvarWrapX As Boolean
 Private mvarWrapY As Boolean
 Private mvarParent As Fury2Map
 Private mvarColor As Long
+Private mvarIndex As Long
+
+Public Property Get Index() As Long
+    Index = mvarIndex
+End Property
+
+Friend Property Let Index(ByVal NewIndex As Long)
+    mvarIndex = NewIndex
+End Property
 
 Public Sub AddCollisionLine(ByVal x1 As Single, ByVal y1 As Single, ByVal x2 As Single, ByVal y2 As Single)
 On Error Resume Next
@@ -84,7 +93,7 @@ Attribute Alpha.VB_Description = "The opacity of the layer."
     mvarAlpha = vData
     If mvarAlpha < -1 Then mvarAlpha = -1
     If mvarAlpha > 1 Then mvarAlpha = 1
-    m_Engine.Cameras.Dirty
+    If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
 
 Public Property Get Alpha() As Single
@@ -159,7 +168,13 @@ On Error Resume Next
     ReDim mvarBlockingLines(0)
     Set mvarLighting = New Fury2LayerLighting
     Set mvarSprites = New Fury2Sprites
+    mvarSprites.SetParent Me
     Set mvarTileset = New Fury2Tileset
+    mvarTileset.SetParent Me
+    If Me.Parent Is Nothing Then
+    Else
+        mvarTileset.SetEngine Me.Parent.Engine
+    End If
     Set mvarAnimations = New Fury2TileAnimations
 End Sub
 
@@ -270,7 +285,7 @@ End Property
 
 Public Property Let DepthmapXRatio(ByVal NewDepthmapXRatio As Single)
     mvarDepthmapXRatio = NewDepthmapXRatio
-    m_Engine.Cameras.Dirty
+    If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
 
 Public Property Get DepthmapYRatio() As Single
@@ -279,7 +294,7 @@ End Property
 
 Public Property Let DepthmapYRatio(ByVal NewDepthmapYRatio As Single)
     mvarDepthmapYRatio = NewDepthmapYRatio
-    m_Engine.Cameras.Dirty
+    If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
 
 Public Property Get DisableBlocking() As Boolean
@@ -320,7 +335,7 @@ End Function
 
 Public Property Let Effect(ByVal vData As SFXBlitModes)
     mvarEffect = vData + 1
-    m_Engine.Cameras.Dirty
+    If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
 
 Public Property Get Effect() As SFXBlitModes
@@ -385,6 +400,8 @@ On Error Resume Next
     Set mvarSprites = New Fury2Sprites
     mvarTileset.Free
     Set mvarTileset = New Fury2Tileset
+    mvarTileset.SetParent Me
+    mvarTileset.SetEngine Me
     mvarLighting.Free
     Set mvarLighting = New Fury2LayerLighting
     Set mvarParent = Nothing
@@ -431,7 +448,7 @@ Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
 Dim m_lngValue As Long
 Dim m_lngLineCount As Long
-    m_Engine.ContextLevelAdd "Load Layer"
+    mvarParent.Engine.ContextLevelAdd "Load Layer"
     With File
         .ReadSegment_Begin
             .ReadSegment_Begin
@@ -476,6 +493,9 @@ Dim m_lngLineCount As Long
                     .ReadSegment_End
                 End If
             .ReadSegment_End
+            Set mvarTileset = New Fury2Tileset
+            mvarTileset.SetParent Me
+            mvarTileset.SetEngine Me.Parent.Engine
             .Load mvarTileset
             If mvarBlockGridWidth <= 0 Then
                 mvarBlockGridWidth = mvarTileset.TileWidth
@@ -491,6 +511,9 @@ Dim m_lngLineCount As Long
             End If
             mdlFileUtils.Load2DByteArray mvarBlocking, File
             .Load mvarAnimations
+            Set mvarSprites = New Fury2Sprites
+            mvarSprites.SetEngine Me.Parent.Engine
+            mvarSprites.SetParent Me.Parent
             .Load mvarSprites
             .Load mvarDisableBlocking
             .ReadSegment_Begin
@@ -507,7 +530,7 @@ Dim m_lngLineCount As Long
         .ReadSegment_End
     End With
     If mvarDisableBlocking Then ReDim mvarBlocking(0 To 0, 0 To 0)
-    m_Engine.ContextLevelRemove
+    mvarParent.Engine.ContextLevelRemove
 End Sub
 
 Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
@@ -571,11 +594,15 @@ End Property
 Public Property Let Lit(ByVal vData As Boolean)
 Attribute Lit.VB_MemberFlags = "40"
     mvarLit = vData
-    m_Engine.Cameras.Dirty
+    If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
 
 Public Property Get Lit() As Boolean
     Lit = mvarLit
+End Property
+
+Public Property Get Map() As Fury2Map
+    Set Map = mvarParent
 End Property
 
 Public Property Get Name() As String
@@ -594,7 +621,7 @@ End Property
 
 Public Property Let ParallaxX(ByVal NewParallaxX As Single)
     mvarParallaxX = NewParallaxX
-    m_Engine.Cameras.Dirty
+    If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
 
 Public Property Get ParallaxY() As Single
@@ -604,13 +631,14 @@ End Property
 
 Public Property Let ParallaxY(ByVal NewParallaxY As Single)
     mvarParallaxY = NewParallaxY
-    m_Engine.Cameras.Dirty
+    If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
 
-Friend Property Set Parent(ByVal NewParent As Fury2Map)
+Friend Sub SetParent(ByVal NewParent As Fury2Map)
 On Error Resume Next
     Set mvarParent = NewParent
-End Property
+    mvarSprites.SetEngine Me.Parent.Engine
+End Sub
 
 Public Property Get Parent() As Fury2Map
     Set Parent = mvarParent
@@ -867,7 +895,7 @@ Public Property Let Tile(ByVal X As Long, ByVal Y As Long, ByVal Value As Intege
 On Error Resume Next
     If (X < 0) Or (Y < 0) Or (X > UBound(mvarTiles, 1)) Or (Y > UBound(mvarTiles, 2)) Then Exit Property
     mvarTiles(X, Y) = Value ' durf ClipValue(Value, -1, mvarTileset.TileCount - 1)
-    m_Engine.Cameras.Dirty
+    If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
 
 Public Property Get TileAnimations() As Fury2TileAnimations
@@ -968,7 +996,9 @@ End Property
 
 Public Property Set Tileset(vData As Fury2Tileset)
 Attribute Tileset.VB_Description = "~The layer's tileset."
+On Error Resume Next
     Set mvarTileset = vData
+    mvarTileset.SetParent Me
 End Property
 
 Public Property Get Tileset() As Fury2Tileset
@@ -977,11 +1007,11 @@ End Property
 
 Sub UpdateDepthmap()
 On Error Resume Next
-    If Not m_booEditor Then
+    If Not Parent.Engine.EditMode Then
         If Trim(mvarDepthmap) = "" Then
             Set mvarDepthmapImage = Nothing
         Else
-            Set mvarDepthmapImage = m_Engine.LoadImage(mvarDepthmap)
+            Set mvarDepthmapImage = mvarParent.Engine.LoadImage(mvarDepthmap)
         End If
     End If
 End Sub
@@ -989,7 +1019,7 @@ End Sub
 Public Property Let Visible(ByVal vData As Boolean)
 Attribute Visible.VB_Description = "This flag controls whether the layer is shown."
     mvarVisible = vData
-    m_Engine.Cameras.Dirty
+    If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
 
 Public Property Get Visible() As Boolean

@@ -1723,7 +1723,7 @@ Export int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, Text
                     fYI = (EndCoords[i].V.F() - StartCoords[i].V.F()) / L;
                     Scaler(Texture, StartCoords[i].U.H, StartCoords[i].V.H,
                     StartCoords[i].U.L, StartCoords[i].V.L,
-                    (fXI), (fYI), (int)(fXI * 65536.0) % 65536, (int)(fYI * 65536.0) % 65536,
+                    (fXI), (fYI), (int)(fXI * 65535.0) % 65535, (int)(fYI * 65535.0) % 65535,
                     L+1, ScanlineTable);
                     CurrentPixel = ScanlineTable;
                     if (Spans[i].S < Dest->ClipRectangle.Left) {

@@ -26,6 +26,15 @@ Private WithEvents m_reqRequest As HTTPConnect
 Attribute m_reqRequest.VB_VarHelpID = -1
 Public ProgressEvent As Fury2Event
 Public CompleteEvent As Fury2Event
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Property Get Length() As Long
 On Error Resume Next
@@ -35,14 +44,14 @@ End Property
 Public Function LoadImage() As Fury2Image
 On Error Resume Next
     SaveFile m_strFilename
-    Set LoadImage = m_Engine.LoadImage(m_strFilename)
+    Set LoadImage = Engine.LoadImage(m_strFilename)
 End Function
 
 Public Sub SaveFile(Filename As String)
 On Error Resume Next
 Dim l_vfFile As New VirtualFile
     l_vfFile.Save Me
-    m_Engine.Filesystem.File(Filename).Save l_vfFile
+    Engine.Filesystem.File(Filename).Save l_vfFile
     Set l_vfFile = Nothing
 End Sub
 
@@ -70,8 +79,8 @@ Public Sub Go(ByRef URL As String, Optional ByVal Port As Long = 80)
 On Error Resume Next
     m_strURL = URL
     m_strFilename = Mid(m_strURL, InStrRev(m_strURL, "/") + 1)
-    m_Engine.HTTPRequestCount = m_Engine.HTTPRequestCount + 1
-    m_reqRequest.FetchURL URL, Port, , , , , , m_Engine.HTTPRequestCount
+    Engine.HTTPRequestCount = Engine.HTTPRequestCount + 1
+    m_reqRequest.FetchURL URL, Port, , , , , , Engine.HTTPRequestCount
 End Sub
 
 Public Property Get Error() As Long

@@ -5,9 +5,9 @@ Public Function ReadRegSetting(SettingName As String, Optional ByRef DefaultValu
 On Error Resume Next
 Dim l_regRegistry As New cRegistry
     With l_regRegistry
-        .ClassKey = HKEY_LOCAL_MACHINE
+        .ClassKey = HKEY_CURRENT_USER
         If InStr(SettingName, "\") Then
-            .SectionKey = "Software\Squared Interactive\ngIDE\" & left(SettingName, InStrRev(SettingName, "\") - 1) & "\"
+            .SectionKey = "Software\Squared Interactive\ngIDE\" & Left(SettingName, InStrRev(SettingName, "\") - 1) & "\"
             .ValueKey = Mid(SettingName, InStrRev(SettingName, "\") + 1)
         Else
             .SectionKey = "Software\Squared Interactive\ngIDE\"
@@ -31,9 +31,9 @@ Public Sub WriteRegSetting(SettingName As String, Value As Variant)
 On Error Resume Next
 Dim l_regRegistry As New cRegistry
     With l_regRegistry
-        .ClassKey = HKEY_LOCAL_MACHINE
+        .ClassKey = HKEY_CURRENT_USER
         If InStr(SettingName, "\") Then
-            .SectionKey = "Software\Squared Interactive\ngIDE\" & left(SettingName, InStrRev(SettingName, "\") - 1)
+            .SectionKey = "Software\Squared Interactive\ngIDE\" & Left(SettingName, InStrRev(SettingName, "\") - 1)
             .ValueKey = Mid(SettingName, InStrRev(SettingName, "\") + 1)
         Else
             .SectionKey = "Software\Squared Interactive\ngIDE"
@@ -54,9 +54,9 @@ On Error Resume Next
 Dim l_regRegistry As New cRegistry
 Dim l_bytData() As Byte
     With l_regRegistry
-        .ClassKey = HKEY_LOCAL_MACHINE
+        .ClassKey = HKEY_CURRENT_USER
         If InStr(SettingName, "\") Then
-            .SectionKey = "Software\Squared Interactive\ngIDE\" & left(SettingName, InStrRev(SettingName, "\") - 1) & "\"
+            .SectionKey = "Software\Squared Interactive\ngIDE\" & Left(SettingName, InStrRev(SettingName, "\") - 1) & "\"
             .ValueKey = Mid(SettingName, InStrRev(SettingName, "\") + 1)
         Else
             .SectionKey = "Software\Squared Interactive\ngIDE\"
@@ -72,9 +72,9 @@ Public Sub WriteRegData(SettingName As String, Data() As Byte)
 On Error Resume Next
 Dim l_regRegistry As New cRegistry
     With l_regRegistry
-        .ClassKey = HKEY_LOCAL_MACHINE
+        .ClassKey = HKEY_CURRENT_USER
         If InStr(SettingName, "\") Then
-            .SectionKey = "Software\Squared Interactive\ngIDE\" & left(SettingName, InStrRev(SettingName, "\") - 1)
+            .SectionKey = "Software\Squared Interactive\ngIDE\" & Left(SettingName, InStrRev(SettingName, "\") - 1)
             .ValueKey = Mid(SettingName, InStrRev(SettingName, "\") + 1)
         Else
             .SectionKey = "Software\Squared Interactive\ngIDE"
@@ -103,8 +103,8 @@ Dim l_strKey As String
         If CLng(.WindowState = 2) Then
             .WindowState = 0
         End If
-        WriteRegSetting l_strKey & "Left", CLng(.left)
-        WriteRegSetting l_strKey & "Top", CLng(.tOp)
+        WriteRegSetting l_strKey & "Left", CLng(.Left)
+        WriteRegSetting l_strKey & "Top", CLng(.Top)
         WriteRegSetting l_strKey & "Width", CLng(.Width)
         WriteRegSetting l_strKey & "Height", CLng(.Height)
     End With

@@ -49,6 +49,24 @@ Private mvarIndex As Long
 Private mvarFirst As Long, mvarSortedFirst As Long
 Private mvarFilename As String
 Private mvarParent As Fury2Map
+Private mvarEngine As Fury2Engine
+
+Public Function CreateSprite() As Fury2Sprite
+On Error Resume Next
+Dim l_sprNew As Fury2Sprite
+    Set l_sprNew = New Fury2Sprite
+    Set l_sprNew.Map = mvarParent
+    Set l_sprNew.Engine = mvarEngine
+    Set CreateSprite = l_sprNew
+End Function
+
+Friend Sub SetEngine(NewEngine As Fury2Engine)
+    Set mvarEngine = NewEngine
+End Sub
+
+Friend Property Get Engine() As Fury2Engine
+    Set Engine = mvarEngine
+End Property
 
 Public Property Get Pointer() As Long
 On Error Resume Next
@@ -79,10 +97,10 @@ Public Property Get Revision() As Fury2RevisionData
     Set Revision = mvarRevision
 End Property
 
-Public Property Set Parent(NewParent As Fury2Map)
+Friend Sub SetParent(NewParent As Fury2Map)
 On Error Resume Next
     Set mvarParent = NewParent
-End Property
+End Sub
 
 Public Property Get Parent() As Fury2Map
     Set Parent = mvarParent
@@ -222,7 +240,7 @@ Dim l_sngDistance As Single
     For Each l_sprSprite In mCol
         If l_sprSprite Is Exclude Then
         Else
-            l_sngDistance = m_Engine.DistanceBetween(l_sprSprite.X, l_sprSprite.Y, l_sprCheck.X, l_sprCheck.Y)
+            l_sngDistance = mvarParent.Engine.DistanceBetween(l_sprSprite.X, l_sprSprite.Y, l_sprCheck.X, l_sprCheck.Y)
             If l_sngDistance <= MaxDistance Then
                 If l_lngCount > (UBound(l_varResult)) Then
                     l_lngSize = l_lngSize + 8
@@ -430,8 +448,8 @@ Dim m_camCamera As CameraParam
         Err.Clear
         With m_camCamera
             If OutputBuffer Is Nothing Then
-                If (m_Engine.Cameras.Count = 1) And (m_Engine.DisableCameraBuffers) Then
-                    .pImage = m_Engine.Backbuffer.Handle
+                If (mvarParent.Engine.Cameras.Count = 1) And (mvarParent.Engine.DisableCameraBuffers) Then
+                    .pImage = mvarParent.Engine.Backbuffer.Handle
                 Else
                     .pImage = Camera.Buffer.Handle
                 End If
@@ -447,7 +465,7 @@ Dim m_camCamera As CameraParam
             .Rectangle.Height = Camera.Height
         End With
         RenderSprites mvarSortedFirst, m_camCamera
-        If Err.Number <> 0 Then CriticalError "Fury2Sprites.Redraw", "Call RedrawSprites2 mvarFirst, m_camCamera": Exit Sub
+        If Err.Number <> 0 Then Engine.CriticalError "Fury2Sprites.Redraw", "Call RedrawSprites2 mvarFirst, m_camCamera": Exit Sub
     End If
 End Sub
 
@@ -491,7 +509,7 @@ On Error Resume Next
     mvarDirty = True
 End Sub
 
-Public Sub Add(Obj, Optional LoadScript As Boolean = True, Optional Position As Long = -1)
+Public Sub Add(ByVal Obj As Fury2Sprite, Optional LoadScript As Boolean = True, Optional Position As Long = -1)
 On Error Resume Next
 Dim m_lngSprites As Long
 Dim m_objScript As Object
@@ -499,7 +517,9 @@ Dim m_objScript As Object
     If mCol.Count >= c_lngMaxSprites Then Exit Sub
     If TypeOf Obj Is Fury2Sprite Then Else Exit Sub
     If Find(Obj) Then Exit Sub
-    Obj.SetParent Me
+    Obj.SetParent Parent
+    If Engine Is Nothing Then Stop
+    Obj.SetEngine Engine
     If mvarParent Is Nothing Then
     Else
         mvarParent.Sprites.Add Obj, False
@@ -513,9 +533,7 @@ Dim m_objScript As Object
         Obj.Initialize
         Obj.Load
     End If
-    Obj.Dirty
     Obj.Index = mCol.Count + 1
-    If m_booEditor Then Else Obj.AIUpdate
     If (Position > mCol.Count) Then
         mCol.Add Obj
     ElseIf (Position <= 1) Then
@@ -638,6 +656,7 @@ End Property
 
 Private Sub Class_Initialize()
     'creates the collection when this class is created
+    SetEngine DefaultEngine
     Set mCol = New Collection
     Set mColUpdate = New Collection
     Set mvarRevision = New Fury2RevisionData
@@ -654,10 +673,10 @@ End Sub
 
 Private Sub IVirtualFileCollection_AddItem(Item As Object)
 On Error Resume Next
-Dim m_objScript As Object
-    m_Engine.ContextLevelAdd "Add Sprite(""" + CStr(Item.Name) + """)"
-    m_Engine.ContextLevelRemove
+'    mvarParent.Engine.ContextLevelAdd "Add Sprite(""" + CStr(Item.Name) + """)"
     Add Item, False
+'    mvarParent.Engine.ContextLevelRemove
+    Err.Clear
 End Sub
 
 Private Property Get IVirtualFileCollection_Count() As Long
@@ -667,8 +686,11 @@ End Property
 
 Private Function IVirtualFileCollection_CreateNew() As Object
 On Error Resume Next
-    Set IVirtualFileCollection_CreateNew = New Fury2Sprite
-    IVirtualFileCollection_CreateNew.SetParent Parent
+Dim l_sprNew As Fury2Sprite
+    Set l_sprNew = New Fury2Sprite
+    l_sprNew.SetParent Parent
+    l_sprNew.SetEngine Engine
+    Set IVirtualFileCollection_CreateNew = l_sprNew
 End Function
 
 Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object
@@ -691,5 +713,6 @@ End Sub
 
 Private Sub IVirtualFileCollection_LoadHeader(File As libGraphics.VirtualFile)
 On Error Resume Next
+    DoEvents
 End Sub
 

@@ -18,7 +18,7 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 '   ::fury² sound engine::
 '
 
-Private m_lngMusicVolume As Long, m_lngSampleVolume As Long, m_lngStreamVolume As Long
+Private m_sngMusicVolume As Single, m_sngSampleVolume As Single, m_sngStreamVolume As Single
 Private m_EnableMusic As Boolean
 Private m_Handles As Collection
 Private m_FMod As Long
@@ -52,15 +52,15 @@ Dim m_sndObj As SoundHandle, m_lngObj As Long
     Loop
 End Sub
 
-Public Property Get MusicVolume() As Long
+Public Property Get MusicVolume() As Single
 On Error Resume Next
-    MusicVolume = m_lngMusicVolume
+    MusicVolume = m_sngMusicVolume
 End Property
 
-Public Property Let MusicVolume(NewVolume As Long)
+Public Property Let MusicVolume(NewVolume As Single)
 On Error Resume Next
 Dim l_hndHandle As SoundHandle
-    m_lngMusicVolume = NewVolume
+    m_sngMusicVolume = NewVolume
     If m_Handles.Count = 0 Then Exit Property
     For Each l_hndHandle In m_Handles
         If l_hndHandle.HandleType = SoundType_Music Then
@@ -69,26 +69,26 @@ Dim l_hndHandle As SoundHandle
     Next l_hndHandle
 End Property
 
-Public Property Get SampleVolume() As Long
+Public Property Get SampleVolume() As Single
 On Error Resume Next
-    SampleVolume = m_lngSampleVolume
+    SampleVolume = m_sngSampleVolume
 End Property
 
-Public Property Let SampleVolume(NewVolume As Long)
+Public Property Let SampleVolume(NewVolume As Single)
 On Error Resume Next
 Dim l_hndHandle As SoundHandle
-    m_lngSampleVolume = NewVolume
+    m_sngSampleVolume = NewVolume
 End Property
 
-Public Property Get StreamVolume() As Long
+Public Property Get StreamVolume() As Single
 On Error Resume Next
-    StreamVolume = m_lngStreamVolume
+    StreamVolume = m_sngStreamVolume
 End Property
 
-Public Property Let StreamVolume(NewVolume As Long)
+Public Property Let StreamVolume(NewVolume As Single)
 On Error Resume Next
 Dim l_hndHandle As SoundHandle
-    m_lngStreamVolume = NewVolume
+    m_sngStreamVolume = NewVolume
     If m_Handles.Count = 0 Then Exit Property
     For Each l_hndHandle In m_Handles
         If l_hndHandle.HandleType = SoundType_Stream Then
@@ -194,18 +194,18 @@ On Error Resume Next
     If m_FMod = 0 Then m_Initialized = False Else m_Initialized = True
 End Function
 
-Public Property Let Volume(NewVolume As Long)
+Public Property Let Volume(ByVal NewVolume As Single)
 On Error Resume Next
     If Not m_Initialized Then Exit Property
     If m_Engine.DisableSound Then Exit Property
-    FSound.SetSFXMasterVolume CLng(NewVolume)
+    FSound.SetSFXMasterVolume NewVolume * 255
 End Property
 
-Public Property Get Volume() As Long
+Public Property Get Volume() As Single
 On Error Resume Next
     If Not m_Initialized Then Exit Property
     If m_Engine.DisableSound Then Exit Property
-    Volume = FSound.GetSFXMasterVolume
+    Volume = FSound.GetSFXMasterVolume / 255
 End Property
 
 Public Sub FreeSound(Handle)
@@ -346,9 +346,9 @@ End Property
 Private Sub Class_Initialize()
 On Error Resume Next
     Set m_Handles = New Collection
-    Me.SampleVolume = 255
-    Me.StreamVolume = 255
-    Me.MusicVolume = 255
+    Me.SampleVolume = 1#
+    Me.StreamVolume = 1#
+    Me.MusicVolume = 1#
     m_EnableMusic = True
 End Sub
 

@@ -119,15 +119,9 @@ Dim l_lyrLayer As Fury2MapLayer
             With frmNewMap.Options
                 l_frmNew.SetFilename ""
                 l_frmNew.RefreshAll
-                Set l_mapMap = New Fury2Map
+                Set l_tstTileset = DefaultEngine.F2Tileset(.Tileset, .TileWidth, .TileHeight, .TileMatteColor)
+                Set l_mapMap = DefaultEngine.F2Map(.Width, .Height, .Layers, l_tstTileset)
                 l_mapMap.EditMode = True
-                Set l_tstTileset = New Fury2Tileset
-                l_tstTileset.TileWidth = .TileWidth
-                l_tstTileset.TileHeight = .TileHeight
-                l_tstTileset.MatteColor = .TileMatteColor
-                l_tstTileset.Filename = .Tileset
-                l_tstTileset.Load
-                l_mapMap.CreateNew .Name, .Width, .Height, .Layers, l_tstTileset
                 l_mapMap.CollisionType = .CollisionType
                 l_mapMap.Resize .Width, .Height
                 For Each l_lyrLayer In l_mapMap.Layers
@@ -162,7 +156,7 @@ Private Function iFileTypePlugin_LoadFromFilename(Filename As String) As iDocume
 On Error Resume Next
 Dim l_frmNew As New frmMap
 Dim l_mapMap As Fury2Map
-    Set l_mapMap = New Fury2Map
+    Set l_mapMap = DefaultEngine.F2Map()
     l_mapMap.EditMode = True
     If Engine.LoadFromFile(l_mapMap, F2File(Filename)) Then
         l_frmNew.SetFilename Filename

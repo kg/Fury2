@@ -40,6 +40,17 @@ Private mvarDelays() As Integer
 Private mvarDelayCounter As Long
 Private mvarCurrentFrame As Long
 Private mvarTile As Integer
+Private mvarParent As Fury2MapLayer
+
+Friend Sub SetParent(ByRef Layer As Fury2MapLayer)
+On Error Resume Next
+    Set mvarParent = Layer
+End Sub
+
+Public Property Get Layer() As Fury2MapLayer
+On Error Resume Next
+    Set Layer = mvarParent
+End Property
 
 Public Function Length() As Long
 On Error Resume Next
@@ -135,7 +146,7 @@ On Error Resume Next
         mvarDelayCounter = 0
         mvarCurrentFrame = mvarCurrentFrame + 1
         If mvarCurrentFrame > UBound(mvarSequence) Then mvarCurrentFrame = LBound(mvarSequence)
-        m_Engine.Cameras.Dirty
+        mvarParent.Map.Engine.Cameras.Dirty
     End If
 End Sub
 

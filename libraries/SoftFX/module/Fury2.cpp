@@ -528,13 +528,14 @@ float fRadian = 3.14159265358979 / 180.0;
             vSpeed.X *= pCurrent->Velocity.VM;
             vSpeed.Y *= pCurrent->Velocity.VM;
 
+            pCurrent->Events.Moved = ((abs(vSpeed.X) > 0) || (abs(vSpeed.Y) > 0));
+
             if (pCurrent->Stats.Solid) {
               bCollided = ResolveCollisions(List, pCurrent, vSpeed, Matrix);
             } else {
               bCollided = false;
             }
 
-            pCurrent->Events.Moved = ((abs(vSpeed.X) > 0) || (abs(vSpeed.Y) > 0));
             pCurrent->Events.Changed = ((abs(pCurrent->Velocity.A) > 0) || (abs(pCurrent->Velocity.BR) > 0));
             pCurrent->Position.X += vSpeed.X;
             pCurrent->Position.Y += vSpeed.Y;

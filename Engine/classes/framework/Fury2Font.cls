@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "Fury2Font"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
@@ -51,6 +51,15 @@ Private m_strCodeset As String
 Private m_strFilename As String
 Private m_booUpperCaseOnly As Boolean
 Private m_lngTabStops() As Long
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Property Get TabStops() As Variant
 On Error Resume Next
@@ -94,6 +103,7 @@ Public Function DuplicateHandle() As Fury2Font
 On Error Resume Next
     Set DuplicateHandle = New Fury2Font
     With DuplicateHandle
+        .SetEngine Engine
         .SetData m_lngCharCount, m_colCharImages, m_cpmCharParams, m_lngCharMappings, m_fpmFontParam, m_strTitle, m_strAuthor, m_strCodeset, m_strFilename
     End With
 End Function
@@ -103,6 +113,7 @@ On Error Resume Next
 Dim l_colNewImages As Collection, l_lngImages As Long, l_lngParams As Long, l_cpmNewParams() As CharacterParam
     Set Duplicate = New Fury2Font
     With Duplicate
+        .SetEngine Engine
         Set l_colNewImages = New Collection
         l_cpmNewParams = m_cpmCharParams
         If m_colCharImages.Count > 0 Then
@@ -389,7 +400,7 @@ Dim l_lngXO As Long, l_lngYO As Long
     With l_rctRectangle
         l_lngXO = (.Width - l_optOptions.Width) \ 2
         l_lngYO = (.Height - (l_optOptions.Height - m_fpmFontParam.BaseHeight + m_lngFullHeight)) \ 2
-        Set l_rctRectangle = F2Rect(.Left + l_lngXO, .Top + l_lngYO, .Right, .bottom)
+        Set l_rctRectangle = F2Rect(.Left + l_lngXO, .Top + l_lngYO, .Right, .Bottom)
     End With
     l_lngColor = m_fpmFontParam.FillColor
     ProfileStart "Draw Text"
@@ -642,7 +653,7 @@ Dim l_lngDC As Long, l_lngDeskWindow As Long, l_lngDeskDC As Long
 Dim l_varAttr As Variant, l_lngBaseline As Long
     m_lngFullHeight = 0
     m_lngCharCount = 250
-    m_Engine.TextOut "Importing font. (This will take a while)"
+    Engine.DebugOut "Importing TrueType font"
     ReDim m_lngCharMappings(0 To c_lngMaxCharMappings - 1)
     ReDim m_cpmCharParams(1 To m_lngCharCount)
     Set m_colCharImages = New Collection
@@ -711,7 +722,7 @@ Function ImportImage(ByVal Filename, ByVal Width As Long, ByVal Height As Long, 
 On Error Resume Next
 Dim l_imgFile As Fury2Image
 Dim l_lngX As Long, l_lngY As Long, l_imgChar As Fury2Image
-    Set l_imgFile = m_Engine.LoadImage(Filename)
+    Set l_imgFile = Engine.LoadImage(Filename)
     If l_imgFile Is Nothing Then ImportImage = False: Exit Function
     If (Width < 1) Or (Height < 1) Then ImportImage = False: Exit Function
     m_lngFullHeight = Height
@@ -812,7 +823,7 @@ Dim l_bytValues() As Byte
     If VarType(Filename) = vbString Then
         m_strFilename = Filename
         m_strTitle = Filename
-        Set l_vfFont = m_Engine.Filesystem.File(Filename).Load
+        Set l_vfFont = Engine.Filesystem.File(Filename).Load
     ElseIf VarType(Filename) = vbObject Then
         Set l_vfFont = Filename
         m_strFilename = "Object"
@@ -823,11 +834,11 @@ Dim l_bytValues() As Byte
         .Load l_intVersion
         .Load l_intCount
         If l_intVersion <> 2 Then
-            m_Engine.TextOut "Unsupported version of RFN format: " + Filename
+            Engine.DebugOut "Unsupported version of RFN format: " + Filename
             Exit Function
         End If
         If (l_intCount < 1) Or (l_intCount > 256) Then
-            m_Engine.TextOut "Corrupted RFN file: " + Filename
+            Engine.DebugOut "Corrupted RFN file: " + Filename
             Exit Function
         End If
         .Skip 248
@@ -838,7 +849,7 @@ Dim l_bytValues() As Byte
             .Load l_intWidth
             .Load l_intHeight
             If (l_intWidth < 1) Or (l_intHeight < 1) Or (l_intWidth > 255) Or (l_intHeight > 255) Then
-                m_Engine.TextOut "Corrupted RFN file: " + Filename
+                Engine.DebugOut "Corrupted RFN file: " + Filename
                 Exit Function
             End If
             .Skip 28
@@ -865,7 +876,7 @@ Dim l_bytValues() As Byte
                 l_imgCharacter.AlphaChannel = True
             Case Else
                 ' Unknown format
-                m_Engine.TextOut "Unknown version of RFN format: " + Filename
+                Engine.DebugOut "Unknown version of RFN format: " + Filename
                 Exit Function
             End Select
             l_imgCharacter.Optimize
@@ -897,13 +908,13 @@ Dim l_strExtension As String
         l_strExtension = LCase(Trim(Left(Filename, InStr(Filename, ";") - 1)))
         Select Case l_strExtension
         Case "ttf", "ttfont", "truetype", "font"
-            Load = ImportTTF(m_Engine.TTFont(Mid(Filename, InStr(Filename, ";") + 1)))
+            Load = ImportTTF(Engine.TTFont(Mid(Filename, InStr(Filename, ";") + 1)))
         Case Else
             Load = False
         End Select
     Else
-        Filename = m_Engine.Filesystem.AutoSelectExtension(Filename, "f2fnt;f2font;rfn")
-        If m_Engine.Filesystem.FileExists(Filename) Then
+        Filename = Engine.Filesystem.AutoSelectExtension(Filename, "f2fnt;f2font;rfn")
+        If Engine.Filesystem.FileExists(Filename) Then
         Else
             Exit Function
         End If
@@ -916,7 +927,7 @@ Dim l_strExtension As String
         Case "rfn"
             Load = ImportRFN(Filename)
         Case "f2fnt", "f2font"
-            Load = m_Engine.LoadFromFile(Me, m_Engine.Filesystem.File(Filename))
+            Load = Engine.LoadFromFile(Me, Engine.Filesystem.File(Filename))
         Case Else
                 Load = False
         End Select
@@ -926,7 +937,7 @@ End Function
 Function Save(ByVal Filename) As Boolean
 On Error Resume Next
     m_strFilename = Filename
-    Save = m_Engine.SaveToFile(Me, m_Engine.Filesystem.File(Filename))
+    Save = Engine.SaveToFile(Me, Engine.Filesystem.File(Filename))
 End Function
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
@@ -968,7 +979,7 @@ Dim l_lngVersion As Long
                 End If
                 Set l_imgChar = New Fury2Image
                 .Load l_imgChar
-                If l_imgChar.Width > 255 Or l_imgChar.Height > 255 Then CriticalError "Fury2Font", "Load Character Images", "Corrupted Font Data"
+                If l_imgChar.Width > 255 Or l_imgChar.Height > 255 Then Engine.CriticalError "Fury2Font", "Load Character Images", "Corrupted Font Data"
                 .Load l_lngValue
                 m_cpmCharParams(l_lngChars).MapValue = l_lngValue
                 .Load l_intValue

@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "Fury2InputControl"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
@@ -44,6 +44,15 @@ Private m_sngLastActivate As Single
 Private m_booReset As Boolean
 Private m_lngState As Long
 Private m_strName As String
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Sub Consume()
     Consumed = True
@@ -79,12 +88,12 @@ On Error Resume Next
 Dim l_sngNow As Single
     If (Repeat) Then
         If (m_lngState > 0) Then
-            l_sngNow = m_Engine.HiTimer
-            If ((l_sngNow - m_sngLastActivate) * 1000) > m_Engine.RepeatDelay Then
-                m_sngLastActivate = m_Engine.HiTimer
+            l_sngNow = Engine.HiTimer
+            If ((l_sngNow - m_sngLastActivate) * 1000) > Engine.RepeatDelay Then
+                m_sngLastActivate = Engine.HiTimer
                 m_booReset = False
                 Handled = False
-                m_Engine.ControlActivate Me
+                Engine.ControlActivate Me
             End If
         End If
     End If
@@ -98,8 +107,8 @@ Dim l_booEvent As Boolean
     m_lngState = m_lngState + 1
     m_booReset = False
     If l_booEvent = True Then
-        m_sngLastActivate = m_Engine.HiTimer
-        m_Engine.ControlActivate Me
+        m_sngLastActivate = Engine.HiTimer
+        Engine.ControlActivate Me
     End If
 End Sub
 
@@ -110,7 +119,7 @@ Dim l_booEvent As Boolean
     If m_lngState > 0 Then l_booEvent = True
     m_lngState = m_lngState - 1
     If m_lngState < 0 Then m_lngState = 0
-    If l_booEvent Then m_Engine.ControlDeactivate Me
+    If l_booEvent Then Engine.ControlDeactivate Me
 End Sub
 
 Private Sub Class_Initialize()

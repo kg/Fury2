@@ -72,7 +72,7 @@ On Error Resume Next
     CloseEvent.Invoke
     Err.Clear
     If DisableClose Then Exit Sub
-    If ((Queued = False) Or (Queued And Last)) And m_Engine.EnableObjectEvents Then m_Engine.ScriptEngine.Exec "MessageWindow_Destroy", Me
+    If ((Queued = False) Or (Queued And Last)) And Engine.EnableObjectEvents Then Engine.ScriptEngine.Exec "MessageWindow_Destroy", Me
     If Err.Number <> 0 Or ((Queued = True)) Then
         If Me.Active Then Engine.UnHookEvents Me
         If (Queued = True) And (Engine.MessageQueue.Count > 0) Then
@@ -90,7 +90,7 @@ Public Sub Startup()
 On Error Resume Next
     Me.Active = True
     Engine.DisableMovement = True
-    If ((Queued And First) Or (Not Queued)) And m_Engine.EnableObjectEvents Then m_Engine.ScriptEngine.Exec "MessageWindow_Create", Me
+    If ((Queued And First) Or (Not Queued)) And Engine.EnableObjectEvents Then Engine.ScriptEngine.Exec "MessageWindow_Create", Me
     Err.Clear
 End Sub
 
@@ -98,10 +98,10 @@ Public Sub Unload()
 Dim m_lngMWins As Long
     Engine.DisableMovement = False
     Me.Active = False
-    If m_Engine.MessageWindows.Count >= 1 Then
-        For m_lngMWins = m_Engine.MessageWindows.Count To 1 Step -1
-            If m_Engine.MessageWindows(m_lngMWins).Active = False Then
-                m_Engine.MessageWindows.Remove m_lngMWins
+    If Engine.MessageWindows.Count >= 1 Then
+        For m_lngMWins = Engine.MessageWindows.Count To 1 Step -1
+            If Engine.MessageWindows(m_lngMWins).Active = False Then
+                Engine.MessageWindows.Remove m_lngMWins
             End If
         Next m_lngMWins
     End If
@@ -114,7 +114,6 @@ On Error Resume Next
     Set Behaviors = New Fury2Behaviors
     Behaviors.SetParent Me
 #End If
-    Set Me.Font = m_Engine.Font
     Alpha = 1
     WrapMode = 2
     Enabled = True
@@ -153,7 +152,7 @@ End Sub
 Private Sub Fury2Plugin_MouseDown(ByVal Button As Long, ByVal Shift As Long, ByRef X As Long, ByRef Y As Long)
 On Error Resume Next
     If Me.Active Then Else Exit Sub
-    If (m_Engine.Mouse.Visible = False) And (m_Engine.MouseCursor Is Nothing) Then Exit Sub
+    If (Engine.Mouse.Visible = False) And (Engine.MouseCursor Is Nothing) Then Exit Sub
     If (X >= Rectangle.Left) And (Y >= Rectangle.Top) And (X < Rectangle.Right) And (Y < Rectangle.Bottom) Then
         X = -32767
         Y = -32767
@@ -163,7 +162,7 @@ End Sub
 Private Sub Fury2Plugin_MouseMove(ByVal Button As Long, ByVal Shift As Long, ByRef X As Long, ByRef Y As Long)
 On Error Resume Next
     If Me.Active Then Else Exit Sub
-    If (m_Engine.Mouse.Visible = False) And (m_Engine.MouseCursor Is Nothing) Then Exit Sub
+    If (Engine.Mouse.Visible = False) And (Engine.MouseCursor Is Nothing) Then Exit Sub
     If (X >= Rectangle.Left) And (Y >= Rectangle.Top) And (X < Rectangle.Right) And (Y < Rectangle.Bottom) Then
         X = -32767
         Y = -32767
@@ -178,7 +177,7 @@ On Error Resume Next
         Y = -32767
         Exit Sub
     End If
-    If (m_Engine.Mouse.Visible = False) And (m_Engine.MouseCursor Is Nothing) Then Exit Sub
+    If (Engine.Mouse.Visible = False) And (Engine.MouseCursor Is Nothing) Then Exit Sub
     If (X >= Rectangle.Left) And (Y >= Rectangle.Top) And (X < Rectangle.Right) And (Y < Rectangle.Bottom) Then
         X = -32767
         Y = -32767
@@ -208,21 +207,21 @@ Dim m_lngAlpha As Long, m_lngSpace As Long, m_lngSpace2 As Long
 Dim m_strText As String
 Dim oImage As Object
     Set m_rctNewRectangle = Me.Rectangle.Copy
-    m_strText = m_Engine.ContentFilter(Text)
+    m_strText = Text
     If InStr(m_strText, vbCrLf) Then
     Else
         m_strText = m_strText + vbCrLf
     End If
     If InStr(m_strText, "<%=") Then
-        m_strText = m_Engine.ParseString(m_strText)
+        m_strText = Engine.ParseString(m_strText)
     End If
     With Engine.Backbuffer
         .UpdateClipRect
         m_lngSpace = 2
         If WindowSkin.EdgeOverlap Then
-            WindowSkin.Draw m_Engine.Backbuffer, Rectangle, Alpha, SF_Middle
+            WindowSkin.Draw Engine.Backbuffer, Rectangle, Alpha, SF_Middle
         Else
-            WindowSkin.Draw m_Engine.Backbuffer, Rectangle, Alpha
+            WindowSkin.Draw Engine.Backbuffer, Rectangle, Alpha
         End If
         If Image Is Nothing Then
             Set oImage = Nothing
@@ -256,7 +255,7 @@ Dim oImage As Object
             End If
         End If
         If WindowSkin.EdgeOverlap Then
-            WindowSkin.Draw m_Engine.Backbuffer, Rectangle, Alpha, SF_All Xor SF_Middle
+            WindowSkin.Draw Engine.Backbuffer, Rectangle, Alpha, SF_All Xor SF_Middle
         End If
     End With
 End Sub
@@ -304,7 +303,7 @@ End Sub
 Private Sub Fury2Plugin_Update()
 On Error Resume Next
 #If EnableBehaviors = 1 Then
-    If m_Engine.EnableObjectEvents Then
+    If Engine.EnableObjectEvents Then
     Else
         Behaviors.Reset
     End If
@@ -333,5 +332,8 @@ On Error Resume Next
         .WriteSegment_Begin
         .WriteSegment_End
     End With
+End Sub
+
+Private Sub Fury2Plugin_OutputPluginChanged()
 End Sub
 

@@ -54,6 +54,7 @@ Public WindowSkin As Object
 Public Font As Fury2Font
 Public MoveEvent As Fury2Event
 Public CloseEvent As Fury2Event
+Public SelectEvent As Fury2Event
 #If EnableBehaviors = 1 Then
 Public Behaviors As Fury2Behaviors
 #End If
@@ -89,8 +90,12 @@ End Sub
 Private Sub ItemSelect(Index)
 On Error Resume Next
     If mCol.Item(Index).Enabled = False Then Exit Sub
-    mCol.Item(Index).SelectEvent.Invoke mCol.Item(Index).Index
-    mCol.Item(Index).SelectEvent.Invoke
+    If mCol.Item(Index).SelectEvent Is Nothing Then
+        mCol.Item(Index).SelectEvent.Invoke mCol.Item(Index).Index
+        mCol.Item(Index).SelectEvent.Invoke
+    End If
+    SelectEvent.Invoke mCol.Item(Index).Index
+    SelectEvent.Invoke
     Err.Clear
 End Sub
 
@@ -110,7 +115,7 @@ Dim m_lngSpace As Long
     Else
         m_lngSpace = 2
     End If
-    If (m_Engine.Mouse.Visible = False) And (m_Engine.MouseCursor Is Nothing) Then Exit Sub
+    If (Engine.Mouse.Visible = False) And (Engine.MouseCursor Is Nothing) Then Exit Sub
     If X >= Rectangle.Left And X < Rectangle.Right And Y >= Rectangle.Top And Y < Rectangle.Bottom Then
         m_lngSelectedItem = ((Y - (Rectangle.Top + m_lngSpace)) \ Font.Height) + 1 + ScrollOffset
         If m_lngSelectedItem < 1 Then m_lngSelectedItem = 1
@@ -136,7 +141,7 @@ Dim m_lngSpace As Long
     Else
         m_lngSpace = 2
     End If
-    If (m_Engine.Mouse.Visible = False) And (m_Engine.MouseCursor Is Nothing) Then Exit Sub
+    If (Engine.Mouse.Visible = False) And (Engine.MouseCursor Is Nothing) Then Exit Sub
     If X >= Rectangle.Left And X < Rectangle.Right And Y >= Rectangle.Top And Y < Rectangle.Bottom Then
         m_lngOldItem = m_lngSelectedItem
         Err.Clear
@@ -196,9 +201,9 @@ Dim m_strCaption As String
     With Engine.Backbuffer
         m_lngSpace = 2
         If WindowSkin.EdgeOverlap Then
-            WindowSkin.Draw m_Engine.Backbuffer, Rectangle, Alpha, SF_Middle
+            WindowSkin.Draw Engine.Backbuffer, Rectangle, Alpha, SF_Middle
         Else
-            WindowSkin.Draw m_Engine.Backbuffer, Rectangle, Alpha
+            WindowSkin.Draw Engine.Backbuffer, Rectangle, Alpha
         End If
         Set .ClipRectangle = Me.Rectangle
         m_lngCurrentY = Rectangle.Top + m_lngSpace
@@ -208,9 +213,9 @@ Dim m_strCaption As String
             For m_lngDrawItems = 1 + Me.ScrollOffset To mCol.Count
                 Set m_fmiItem = mCol.Item(m_lngDrawItems)
                 With m_fmiItem
-                    m_strCaption = m_Engine.ContentFilter(.Caption)
+                    m_strCaption = .Caption
                     If InStr(m_strCaption, "<%=") Then
-                        m_strCaption = m_Engine.ParseString(m_strCaption)
+                        m_strCaption = Engine.ParseString(m_strCaption)
                     End If
                     If m_lngCurrentY >= Rectangle.Bottom - m_lngSpace Then Exit For
 '                    m_lngItemHeight = Font.Height
@@ -238,7 +243,7 @@ Dim m_strCaption As String
         End If
         .UpdateClipRect
         If WindowSkin.EdgeOverlap Then
-            WindowSkin.Draw m_Engine.Backbuffer, Rectangle, Alpha, SF_All Xor SF_Middle
+            WindowSkin.Draw Engine.Backbuffer, Rectangle, Alpha, SF_All Xor SF_Middle
         End If
         If m_lngArrowCoord = c_lngNullValue Then
         Else
@@ -256,7 +261,7 @@ End Sub
 
 Sub Startup()
 On Error Resume Next
-    If m_Engine.EnableObjectEvents Then m_Engine.ScriptEngine.Exec "Menu_Create", Me
+    If Engine.EnableObjectEvents Then Engine.ScriptEngine.Exec "Menu_Create", Me
     Err.Clear
     Me.Active = True
 End Sub
@@ -264,7 +269,7 @@ End Sub
 Public Sub Update()
 On Error Resume Next
 #If EnableBehaviors = 1 Then
-    If m_Engine.EnableObjectEvents Then
+    If Engine.EnableObjectEvents Then
     Else
         Behaviors.Reset
     End If
@@ -286,10 +291,10 @@ On Error Resume Next
     Set objNewMember.Icon = Icon
     If Err <> 0 Then
         Err.Clear
-        Set objNewMember.Icon = m_Engine.F2Graphic(Icon, Icon.Width / 4, Icon.Height / 4)
+        Set objNewMember.Icon = Engine.F2Graphic(Icon, Icon.Width / 4, Icon.Height / 4)
     End If
     objNewMember.Color = CLng(Color)
-    Set objNewMember.SelectEvent = m_Engine.BindEvent(SelectEvent)
+    Set objNewMember.SelectEvent = Engine.BindEvent(SelectEvent)
     objNewMember.Alpha = 1
     objNewMember.Enabled = True
     If Index = -1 Then Index = mCol.Count + 1
@@ -327,7 +332,6 @@ Private Sub Class_Initialize()
 On Error Resume Next
     Set mCol = New Collection
     Set Rectangle = New Fury2Rect
-    Set Me.Font = m_Engine.Font
 #If EnableBehaviors = 1 Then
     Set Behaviors = New Fury2Behaviors
     Behaviors.SetParent Me
@@ -463,5 +467,8 @@ On Error Resume Next
         .WriteSegment_Begin
         .WriteSegment_End
     End With
+End Sub
+
+Private Sub Fury2Plugin_OutputPluginChanged()
 End Sub
 

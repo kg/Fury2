@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "Window"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
@@ -30,6 +30,15 @@ Public Background As Fury2Image
 Private m_booFocusing As Boolean
 Private m_cntMe As iContainer
 Private m_wdgMe As iWidget
+Private m_engEngine As Fury2Engine
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
+
+Friend Sub SetEngine(NewEngine As Fury2Engine)
+    Set m_engEngine = NewEngine
+End Sub
 
 Public Sub ChildRemoved(Obj As Object)
 Dim l_lngIndex As Long, l_lngCount As Long
@@ -514,7 +523,7 @@ Dim l_staState As SkinState, l_strState As String
         l_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
         .ClippedSetClipRectangle l_rctNew
         Surface.Blit l_rctNew, , Background, , IIf(Background.AlphaChannel, BlitMode_SourceAlpha, BlitMode_Normal)
-        l_staState.Font.DrawCentered Surface, Engine.Engine.ParseString(Text), Fury2GEGlobal.F2Rect(l_rctNew.Left, l_rctNew.Top, l_rctNew.Width, l_staState.Font.FullHeight, False), SetAlpha(l_staState.TextColor, GetAlpha(l_staState.TextColor) * Opacity)
+        l_staState.Font.DrawCentered Surface, Engine.ParseString(Text), Fury2GEGlobal.F2Rect(l_rctNew.Left, l_rctNew.Top, l_rctNew.Width, l_staState.Font.FullHeight, False), SetAlpha(l_staState.TextColor, GetAlpha(l_staState.TextColor) * Opacity)
         With Rectangle
             For l_lngWidget = Children.Count To 1 Step -1
                 Set l_wdgWidget = Children(l_lngWidget)

@@ -231,6 +231,8 @@ Dim l_lngScaler As Long
             SoftFX.Blit_Font_SourceAlpha_RGB_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngColor, l_lngAlpha
         Case SFXBlitModes.BlitMode_Font_Merge
             SoftFX.Blit_Font_Merge_RGB_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngColor, l_lngAlpha
+        Case SFXBlitModes.BlitMode_SourceAlpha_ColorMask
+            SoftFX.Blit_SourceAlpha_ColorMask m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, SetAlpha(l_lngColor, GetAlpha(l_lngColor) * l_sngAlpha)
         Case Else
         End Select
     End If
@@ -959,15 +961,26 @@ End Sub
 Public Property Get Picture() As StdPicture
 On Error Resume Next
     Set Picture = CreatePicture(Width, Height)
-    PixelsTopicture Picture, Pointer(0, 0)
+    PixelsToPicture Picture, Pointer(0, 0)
 End Property
 
 Public Property Set Picture(ByVal NewPicture As StdPicture)
 On Error Resume Next
+Dim l_imgAlpha As Fury2Image
     If NewPicture Is Nothing Then Exit Property
-    Resize GetPictureWidth(NewPicture), GetPictureHeight(NewPicture), False
-    PixelsFromPicture NewPicture, Pointer(0, 0)
-    AlphaChannel = False
+    If NewPicture.Type = PicType_Icon Then
+        Resize GetIconWidth(NewPicture), GetIconHeight(NewPicture), False
+        PixelsFromIcon NewPicture, Pointer(0, 0)
+        Set l_imgAlpha = New Fury2Image
+        Set l_imgAlpha.Picture = GetIconMask(NewPicture)
+        l_imgAlpha.Invert
+        CopyChannel l_imgAlpha, Alpha, Red
+    ElseIf NewPicture.Type = PicType_Bitmap Then
+        Resize GetPictureWidth(NewPicture), GetPictureHeight(NewPicture), False
+        PixelsFromPicture NewPicture, Pointer(0, 0)
+        FillChannel Me.Rectangle, Alpha, 255
+    End If
+    AlphaChannel = True
 End Property
 
 Public Property Get Pitch() As Long

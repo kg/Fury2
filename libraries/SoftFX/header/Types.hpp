@@ -218,7 +218,7 @@ struct FixedPoint {
   }
   inline void setF(float value) {
     H = floor(value);
-    L = floor((value - float(H)) * 65536.0);
+    L = floor((value - float(H)) * 65535.0);
   }
   inline FixedPoint& operator += (FixedPoint &rhs) {
     V += rhs.V;

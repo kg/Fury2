@@ -120,8 +120,8 @@ Attribute VB_Exposed = False
 '    License along with this library; if not, write to the Free Software
 '    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 '
-
 Option Explicit
+Public Engine As Fury2Engine
 
 Private Sub chkTraceContext_Click()
     m_booTrace = CBool(chkTraceContext.Value)
@@ -133,14 +133,14 @@ End Sub
 
 Private Sub cmdGo_Click()
 On Error Resume Next
-    m_Engine.Paused = False
+    Engine.Halted = False
     cmdGo.Enabled = False
     cmdStop.Enabled = True
 End Sub
 
 Private Sub cmdStop_Click()
 On Error Resume Next
-    m_Engine.Paused = True
+    Engine.Halted = True
     cmdGo.Enabled = True
     cmdStop.Enabled = False
 End Sub

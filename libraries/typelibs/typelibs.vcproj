@@ -233,7 +233,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\SoftFX.odl"
+				RelativePath=".\SoftFX.idl"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -251,6 +251,7 @@
 						TypeLibraryName=".\../../../libraries/tlb/SoftFX.tlb"
 						HeaderFileName=""
 						DLLDataFileName=""
+						ValidateParameters="TRUE"
 					/>
 				</FileConfiguration>
 			</File>

@@ -228,10 +228,15 @@ struct TextParam {
     int CharFromPoint_X;
     int CharFromPoint_Y;
     int CharFromPoint;
-	int MaxChars;
-	int CharsDrawn;
-	int TabStopCount;
-	int* TabStops;
+	  int MaxChars;
+	  int CharsDrawn;
+	  int TabStopCount;
+	  int* TabStops;
+};
+
+struct KerningPair {
+    wchar_t Characters[2];
+    int XOffset;
 };
 
 struct FontParam {
@@ -245,6 +250,54 @@ struct FontParam {
     int BaseMode;
     int MapCount;
     CharacterParam **MapPointer;
+//    int KerningPairCount;
+//    KerningPair *KerningPairs;
+};
+
+enum CharacterTraits2 {
+    
+};
+
+struct CharacterParam2 {
+    Image *pImage;
+    wchar_t MapValue;
+    float XIncrement, YIncrement;
+    float XOffset, YOffset;
+    Byte Loaded;
+};
+
+struct TextParam2 {
+    int BlitMode, AlignmentMode, WrappingMode, KerningMode, CoordinateMode;
+    int DrawCharacters;
+    int SelectionStart, SelectionEnd;
+    int CaretPosition;
+	  int TabStopCount;
+	  float* TabStops;
+    float ScrollX, ScrollY;
+    float FindCharacterX, FindCharacterY;
+    Pixel TextColor;
+    Pixel ShadowColor;
+    Pixel SelectionColor;
+    Pixel CaretColor;
+    float outWidth, outHeight;
+    int outLines;
+    int outFoundCharacter;
+    int outDrawnCharacters;
+};
+
+struct KerningPair2 {
+    wchar_t Characters[2];
+    float XOffset;
+};
+
+struct FontParam2 {
+    float Height;
+    float LineHeight;
+    int CharacterMapSize;
+    CharacterParam2 **CharacterMap;
+    int KerningPairCount;
+    KerningPair2 *KerningPairs;
+    void* LoadCharacterCallback;
 };
     
 struct WindowSkinParam {

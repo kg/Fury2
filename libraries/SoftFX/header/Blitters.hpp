@@ -31,7 +31,9 @@ SIGNATURE(Matte) END_SIGNATURE
 SIGNATURE(Matte_Tint_Opacity) , Pixel Tint, int Opacity END_SIGNATURE
 SIGNATURE(Matte_Opacity) , int Opacity END_SIGNATURE
 SIGNATURE(SourceAlpha) END_SIGNATURE
+SIGNATURE(SourceAlpha_Tint) , Pixel Tint END_SIGNATURE
 SIGNATURE(SourceAlpha_Tint_Opacity) , Pixel Tint, int Opacity END_SIGNATURE
+SIGNATURE(SourceAlpha_ColorMask) , Pixel Mask END_SIGNATURE
 SIGNATURE(SourceAlpha_Opacity) , int Opacity END_SIGNATURE
 SIGNATURE(Merge) END_SIGNATURE
 SIGNATURE(Merge_Opacity) , int Opacity END_SIGNATURE
@@ -91,7 +93,8 @@ enum SFX_BlitModes {
     BlitMode_Burn = 23,
     BlitMode_Normal_Tint = 24,
 	BlitMode_Additive_SourceAlpha = 25,
-	BlitMode_Subtractive_SourceAlpha = 26
+	BlitMode_Subtractive_SourceAlpha = 26,
+  BlitMode_SourceAlpha_ColorMask = 27
 };
 
 TSIGNATURE(Normal) END_TSIGNATURE

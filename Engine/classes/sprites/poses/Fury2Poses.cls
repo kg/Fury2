@@ -39,6 +39,16 @@ Implements Fury2Object
 Implements IVirtualFileCollection
 
 Private mCol As Collection
+Private m_sprParent As Fury2Sprite
+
+Public Property Get Parent() As Fury2Sprite
+    Set Parent = m_sprParent
+End Property
+
+Friend Sub SetParent(Parent As Fury2Sprite)
+On Error Resume Next
+    Set m_sprParent = Parent
+End Sub
 
 Public Sub ModifyGraphics(ByVal FunctionName As String, Optional ByRef Parameters As Variant)
 On Error Resume Next
@@ -181,6 +191,7 @@ End Sub
 
 Public Sub Add(Obj As Fury2Pose, Optional ByVal sKey, Optional ByVal AtIndex)
 On Error Resume Next
+    Obj.SetParent m_sprParent
     If IsMissing(sKey) Then
         If IsMissing(AtIndex) Then
             mCol.Add Obj
@@ -261,7 +272,10 @@ End Property
 
 Private Function IVirtualFileCollection_CreateNew() As Object
 On Error Resume Next
-    Set IVirtualFileCollection_CreateNew = New Fury2Pose
+Dim l_posNew As Fury2Pose
+    Set l_posNew = New Fury2Pose
+    l_posNew.SetParent m_sprParent
+    Set IVirtualFileCollection_CreateNew = l_posNew
 End Function
 
 Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object

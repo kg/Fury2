@@ -36,6 +36,15 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Implements Fury2Object
 Private m_lngXDelta As Long, m_lngYDelta As Long
 Private m_lngLastX As Long, m_lngLastY As Long
+Private m_engEngine As Fury2Engine
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Public Sub Update()
 On Error Resume Next
@@ -54,15 +63,15 @@ Public Property Get YDelta() As Long
 End Property
 
 Public Property Get Cursor() As Fury2Image
-    Set Cursor = m_Engine.MouseCursor
+    Set Cursor = Engine.MouseCursor
 End Property
 
 Public Property Set Cursor(RHS As Fury2Image)
-    Set m_Engine.MouseCursor = RHS
+    Set Engine.MouseCursor = RHS
 End Property
 
 Public Property Let Visible(ByVal vData As Boolean)
-    If (m_booIDE) Then
+    If (m_booIDE) Or (Engine.EditMode) Or (Not (Engine.Debugger Is Nothing)) Then
         If m_booMouseVisible <> True Then
             ShowCursor True
             m_booMouseVisible = True
@@ -70,14 +79,14 @@ Public Property Let Visible(ByVal vData As Boolean)
     Else
         If vData <> m_booMouseVisible Then
             ShowCursor vData
-'            m_GFX.Form.MousePointer = IIf(vData, 0, 99)
+'            m_objOutputPlugin.Form.MousePointer = IIf(vData, 0, 99)
             m_booMouseVisible = vData
         End If
     End If
 End Property
 
 Public Property Get Visible() As Boolean
-    If m_booIDE Then
+    If (m_booIDE) Or (Engine.EditMode) Or (Not (Engine.Debugger Is Nothing)) Then
         Visible = True
     Else
         Visible = m_booMouseVisible
@@ -86,10 +95,10 @@ End Property
 
 Public Property Let Y(ByVal vData As Single)
 On Error Resume Next
-    m_Engine.DisableMoveQueue = True
-    SetMousePos m_GFX.Window, g_lngMouseX, vData
+    Engine.DisableMoveQueue = True
+    Engine.SetMouseLocation g_lngMouseX, vData
     g_lngMouseY = vData
-    m_Engine.DisableMoveQueue = False
+    Engine.DisableMoveQueue = False
 End Property
 
 Public Property Get Y() As Single
@@ -102,22 +111,22 @@ End Property
 
 Public Property Let X(ByVal vData As Single)
 On Error Resume Next
-    m_Engine.DisableMoveQueue = True
-    SetMousePos m_GFX.Window, vData, g_lngMouseY
+    Engine.DisableMoveQueue = True
+    Engine.SetMouseLocation vData, g_lngMouseY
     g_lngMouseX = vData
-    m_Engine.DisableMoveQueue = False
+    Engine.DisableMoveQueue = False
 End Property
 
 Public Property Get X() As Single
     X = g_lngMouseX
 End Property
 
-Sub Move(X, Y)
+Sub Move(ByVal X As Single, ByVal Y As Single)
 On Error Resume Next
     If ((X = g_lngMouseX) And (Y = g_lngMouseY)) Then Exit Sub
-    m_Engine.DisableMoveQueue = True
-    SetMousePos m_GFX.Window, CLng(X), CLng(Y)
-    m_Engine.DisableMoveQueue = False
+    Engine.DisableMoveQueue = True
+    Engine.SetMouseLocation CLng(X), CLng(Y)
+    Engine.DisableMoveQueue = False
     g_lngMouseX = X
     g_lngMouseY = Y
     m_lngLastX = g_lngMouseX

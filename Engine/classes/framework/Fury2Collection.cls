@@ -35,6 +35,7 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 '    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 '
 
+Option Explicit
 #If ExternalModule = 0 Then
 Implements Fury2Object
 #End If
@@ -58,7 +59,7 @@ Dim l_booResult As Boolean
         l_booResult = False
         Select Case UBound(Parameters)
         Case 0
-            l_booResult = VBA.CallByName(l_l_objObjectl_objObjectect, MethodName, VbMethod, Parameters(0))
+            l_booResult = VBA.CallByName(l_objObject, MethodName, VbMethod, Parameters(0))
         Case 1
             l_booResult = VBA.CallByName(l_objObject, MethodName, VbMethod, Parameters(0), Parameters(1))
         Case 2

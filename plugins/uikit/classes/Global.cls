@@ -296,10 +296,12 @@ Dim l_lbxListBox As UIKit.ListBox
 Dim l_mnuMenu As UIKit.Menu
 Dim l_lblLabel As UIKit.Label
 Dim l_sbrScrollBar As UIKit.Scrollbar
+Dim l_wdgNull As UIKit.NullWidget
     Select Case LCase(Trim(WidgetType))
     Case "container"
         Set l_ctrContainer = New Container
         With l_ctrContainer
+            .SetEngine Engine
             If Len(Trim(Name)) > 0 Then
                 .Name = Name
             End If
@@ -308,6 +310,7 @@ Dim l_sbrScrollBar As UIKit.Scrollbar
     Case "button"
         Set l_btnButton = New Button
         With l_btnButton
+            .SetEngine Engine
             Set .Skin = Skins("button")
             If Len(Trim(Name)) > 0 Then
                 .Name = Name
@@ -317,6 +320,7 @@ Dim l_sbrScrollBar As UIKit.Scrollbar
     Case "window"
         Set l_wndWindow = New Window
         With l_wndWindow
+            .SetEngine Engine
             Set .Skin = Skins("window")
             If Len(Trim(Name)) > 0 Then
                 .Name = Name
@@ -326,6 +330,7 @@ Dim l_sbrScrollBar As UIKit.Scrollbar
     Case "textfield"
         Set l_txfTextField = New TextField
         With l_txfTextField
+            .SetEngine Engine
             Set .Skin = Skins("textfield")
             If Len(Trim(Name)) > 0 Then
                 .Name = Name
@@ -335,6 +340,7 @@ Dim l_sbrScrollBar As UIKit.Scrollbar
     Case "label"
         Set l_lblLabel = New Label
         With l_lblLabel
+            .SetEngine Engine
             Set .Skin = Skins("label")
             If Len(Trim(Name)) > 0 Then
                 .Name = Name
@@ -344,6 +350,7 @@ Dim l_sbrScrollBar As UIKit.Scrollbar
     Case "graphic"
         Set l_gphGraphic = New Graphic
         With l_gphGraphic
+            .SetEngine Engine
             If Len(Trim(Name)) > 0 Then
                 .Name = Name
             End If
@@ -352,6 +359,7 @@ Dim l_sbrScrollBar As UIKit.Scrollbar
     Case "listbox"
         Set l_lbxListBox = New ListBox
         With l_lbxListBox
+            .SetEngine Engine
             Set .Skin = Skins("listbox")
             If Len(Trim(Name)) > 0 Then
                 .Name = Name
@@ -361,6 +369,7 @@ Dim l_sbrScrollBar As UIKit.Scrollbar
     Case "menu"
         Set l_mnuMenu = New Menu
         With l_mnuMenu
+            .SetEngine Engine
             Set .Skin = Skins("menu")
             If Len(Trim(Name)) > 0 Then
                 .Name = Name
@@ -370,6 +379,7 @@ Dim l_sbrScrollBar As UIKit.Scrollbar
     Case "scrollbar"
         Set l_sbrScrollBar = New Scrollbar
         With l_sbrScrollBar
+            .SetEngine Engine
             Set .Skin = Skins("scrollbar")
             If Len(Trim(Name)) > 0 Then
                 .Name = Name
@@ -378,6 +388,11 @@ Dim l_sbrScrollBar As UIKit.Scrollbar
         End With
         Set CreateWidget = l_sbrScrollBar
     Case Else
+        Set l_wdgNull = New NullWidget
+        With l_wdgNull
+            .SetEngine Engine
+        End With
+        Set CreateWidget = l_wdgNull
     End Select
 End Function
 
@@ -398,6 +413,11 @@ On Error Resume Next
     GraphicCount = 0
     ListBoxCount = 0
     MenuCount = 0
+End Sub
+
+Public Sub Plugin_Load()
+On Error Resume Next
+    Engine.HookEvents Me
 End Sub
 
 Private Sub Fury2Plugin_ControlActivate(Control As Engine.Fury2InputControl)
@@ -487,6 +507,10 @@ On Error Resume Next
             Y = -32767
         End If
     End If
+End Sub
+
+Private Sub Fury2Plugin_OutputPluginChanged()
+
 End Sub
 
 Private Sub Fury2Plugin_Redraw()

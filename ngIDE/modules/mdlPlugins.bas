@@ -36,7 +36,7 @@ Public Function XCreateObject(ByRef Name As String, Optional ByRef Filename As S
 On Error Resume Next
 Dim l_strLibrary As String, l_strClass As String
     If InStr(Name, ".") Then
-        l_strLibrary = left(Name, InStr(Name, ".") - 1)
+        l_strLibrary = Left(Name, InStr(Name, ".") - 1)
         l_strClass = Mid(Name, InStr(Name, ".") + 1)
     Else
         l_strLibrary = "internal"
@@ -131,7 +131,7 @@ Dim l_plgPlugin As iPlugin
         InstallPlugin "ngPlugins.CommandBrowser", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.ShowPictureDesigner", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "tk.TKTilesetImporter", GetPath(App.Path) & "\tk.dll"
-        InstallPlugin "tk.TKBoardImporter", GetPath(App.Path) & "\tk.dll"
+'        InstallPlugin "tk.TKBoardImporter", GetPath(App.Path) & "\tk.dll"
         l_lngCount = ReadRegSetting("Plugins\Count", 0)
     End If
     If l_lngCount > 0 Then

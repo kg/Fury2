@@ -1,5 +1,7 @@
 Attribute VB_Name = "mdlGame"
 Option Explicit
+Public g_dbgDebugger As GameDebugger
+Public GameIsRunning As Boolean, GameIsPaused As Boolean
 
 Public Property Get GameIsLoaded() As Boolean
 On Error Resume Next
@@ -18,7 +20,7 @@ Dim l_cfgConfig As Fury2ConfigurationFile
     l_strFolder = l_bffFolder.BrowseForFolder()
     If Trim(l_strFolder) <> "" Then
         OpenGame l_strFolder
-        Set l_cfgConfig = New Fury2ConfigurationFile
+        Set l_cfgConfig = DefaultEngine.Configuration
         l_cfgConfig.InitDefaultSettings
         l_cfgConfig.Save "game.f2config"
     End If
@@ -42,4 +44,13 @@ On Error Resume Next
     frmMain.RefreshGameState
     AddRecentGame Path
     SetBusyState False
+End Sub
+
+Public Sub PlayGame()
+On Error Resume Next
+    Set g_dbgDebugger = New GameDebugger
+    Set g_dbgDebugger.Hook = g_edEditor
+    g_edEditor.ShowDebugger
+    g_dbgDebugger.LoadGame g_edEditor.GamePath
+    g_edEditor.HideDebugger
 End Sub

@@ -93,11 +93,12 @@ Attribute VB_Exposed = False
 '    License along with this library; if not, write to the Free Software
 '    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 '
+Public Engine As Fury2Engine
 
 Private Sub cmdExitNow_Click()
 On Error Resume Next
-    m_booCritical = False
-    Shutdown
+    Engine.Halted = False
+    Engine.Shutdown
 End Sub
 
 Private Sub Form_Load()

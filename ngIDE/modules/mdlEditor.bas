@@ -12,13 +12,21 @@ On Error Resume Next
     Set g_edEditor = New cEditor
     Err.Clear
     g_strVersion = Engine.Fury2Globals.GetEngineVersion()
-    If (Err <> 0) Or Len(Trim(g_strVersion)) = "" Then InstallEngine
-    Err.Clear
-    g_strVersion = Engine.Fury2Globals.GetEngineVersion()
     If (Err <> 0) Or Len(Trim(g_strVersion)) = "" Then
-        MsgBox "Unable to load engine.", vbCritical, "Error"
-        F2Shutdown
-        End
+        Select Case MsgBox("Unable to load engine. Click Retry to attempt to repair installation.", vbExclamation Or vbRetryCancel, "Error")
+        Case vbRetry
+            InstallEngine
+            Err.Clear
+            g_strVersion = Engine.Fury2Globals.GetEngineVersion()
+            If (Err <> 0) Or Len(Trim(g_strVersion)) = "" Then
+                MsgBox "Installation failed.", vbCritical, "Error"
+                F2Shutdown
+                End
+            End If
+        Case Else
+            F2Shutdown
+            End
+        End Select
     End If
     Err.Clear
     Load frmIcons
@@ -78,8 +86,20 @@ End Sub
 
 Public Sub ExitProgram()
 On Error Resume Next
+Dim l_docDocument As cChildManager
+Dim l_lngCount As Long
+    If GameIsRunning Then
+        If GameIsPaused Then
+            g_dbgDebugger.GameEngine.Halted = False
+        End If
+        g_dbgDebugger.GameEngine.Quit
+        DoEvents
+    End If
     If frmMain.WindowState = 1 Then frmMain.WindowState = 0
-    If frmMain.Documents.Count > 0 Then
+    For Each l_docDocument In frmMain.Documents
+        If l_docDocument.Document.CanSave Then l_lngCount = l_lngCount + 1
+    Next l_docDocument
+    If l_lngCount > 0 Then
         Load frmSaveOpenDocuments
         frmSaveOpenDocuments.Show vbModal, frmMain
         If frmSaveOpenDocuments.Cancelled Then
@@ -111,7 +131,7 @@ End Function
 
 Public Function StripEndCharacters(ByRef Text As String, ByVal NumberOfCharacters As Long) As String
 On Error Resume Next
-    StripEndCharacters = left(Text, Len(Text) - NumberOfCharacters)
+    StripEndCharacters = Left(Text, Len(Text) - NumberOfCharacters)
 End Function
 
 Public Function DoCommand(ByVal CommandName As String, ParamArray p() As Variant) As Boolean
@@ -119,13 +139,13 @@ On Error Resume Next
 Dim l_strParameter As String
     If InStr(CommandName, "(") Then
         l_strParameter = Trim(Mid(CommandName, InStr(CommandName, "(") + 1))
-        If Right(l_strParameter, 1) = ")" Then l_strParameter = Trim(left(l_strParameter, Len(l_strParameter) - 1))
-        If left(l_strParameter, 1) = """" Then
+        If Right(l_strParameter, 1) = ")" Then l_strParameter = Trim(Left(l_strParameter, Len(l_strParameter) - 1))
+        If Left(l_strParameter, 1) = """" Then
             ' String
-            DoCommand = DoCommand(left(CommandName, InStr(CommandName, "(") - 1), CStr(Mid(l_strParameter, 2, Len(l_strParameter) - 2)))
+            DoCommand = DoCommand(Left(CommandName, InStr(CommandName, "(") - 1), CStr(Mid(l_strParameter, 2, Len(l_strParameter) - 2)))
         Else
             ' Integer
-            DoCommand = DoCommand(left(CommandName, InStr(CommandName, "(") - 1), CLng(l_strParameter))
+            DoCommand = DoCommand(Left(CommandName, InStr(CommandName, "(") - 1), CLng(l_strParameter))
         End If
         Exit Function
     End If

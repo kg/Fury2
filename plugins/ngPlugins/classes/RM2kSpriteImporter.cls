@@ -31,11 +31,11 @@ Dim l_docSprite As frmSprites
 Dim l_sprSprite As Fury2Sprite
     l_strFilename = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Character Set", False)
     If Trim(l_strFilename) = "" Then Exit Sub
-    l_strFilename = Replace(l_strFilename, Engine.Engine.FileSystem.Root, "/")
+    l_strFilename = Replace(l_strFilename, DefaultEngine.FileSystem.Root, "/")
     l_strFilename = Replace(l_strFilename, "\", "/")
     Set l_plgPlugin = m_objEditor.FindFileTypePlugin("Sprite Collection")
     Set l_docSprite = l_plgPlugin.CreateNew
-    Set l_sprSprite = Engine.Engine.RM2kSprite(l_strFilename, CLng(InputBox("Character number:", "Select Character", 0)))
+    Set l_sprSprite = DefaultEngine.RM2kSprite(l_strFilename, CLng(InputBox("Character number:", "Select Character", 0)))
     l_sprSprite.Initialize
     l_sprSprite.Load
     l_sprSprite.Poses.LoadGraphics

@@ -14,6 +14,7 @@ Attribute VB_Exposed = True
 Option Explicit
 Implements iContainer
 Implements iWidget
+Implements Fury2UserdataUI
 Public Visible As Boolean
 Public Parent As Object
 Public EventHandler As Object
@@ -22,7 +23,6 @@ Public Children As WidgetCollection
 Private LastMouseWidget As iWidget
 Public Text As String
 Public Skin As Skin
-Public Rectangle As Fury2Rect
 Public CapturedWidget As iWidget
 Public FocusedWidget As iWidget
 Public HaveFocus As Boolean
@@ -31,6 +31,57 @@ Private m_booFocusing As Boolean
 Private m_cntMe As iContainer
 Private m_wdgMe As iWidget
 Private m_engEngine As Fury2Engine
+Private m_rctRectangle As Fury2Rect
+
+Public Property Get Rectangle() As Fury2Rect
+    Set Rectangle = m_rctRectangle
+End Property
+
+Public Property Set Rectangle(ByVal NewRect As Fury2Rect)
+On Error Resume Next
+    Set m_rctRectangle = NewRect
+    DispatchEvent "Resize"
+End Property
+
+Private Sub Fury2UserdataUI_KeyDown(ByVal Key As Long, ByVal Shift As Long)
+On Error Resume Next
+    iWidget_KeyDown Nothing, Key, Shift
+End Sub
+
+Private Sub Fury2UserdataUI_KeyPress(ByVal Character As Long)
+On Error Resume Next
+    iWidget_KeyPress Nothing, Character
+End Sub
+
+Private Sub Fury2UserdataUI_KeyUp(ByVal Key As Long, ByVal Shift As Long)
+On Error Resume Next
+    iWidget_KeyUp Nothing, Key, Shift
+End Sub
+
+Private Sub Fury2UserdataUI_MouseDown(ByVal Button As Long, ByVal Shift As Long, ByVal X As Long, ByVal Y As Long)
+On Error Resume Next
+    iWidget_MouseDown Nothing, Button, Shift, X, Y
+End Sub
+
+Private Sub Fury2UserdataUI_MouseMove(ByVal Button As Long, ByVal Shift As Long, ByVal X As Long, ByVal Y As Long)
+On Error Resume Next
+    iWidget_MouseMove Nothing, Button, Shift, X, Y
+End Sub
+
+Private Sub Fury2UserdataUI_MouseUp(ByVal Button As Long, ByVal Shift As Long, ByVal X As Long, ByVal Y As Long)
+On Error Resume Next
+    iWidget_MouseUp Nothing, Button, Shift, X, Y
+End Sub
+
+Private Sub Fury2UserdataUI_Redraw(ByVal Surface As libGraphics.Fury2Image)
+On Error Resume Next
+    iWidget_Redraw Nothing, Surface, 0, 0, 1
+End Sub
+
+Private Property Get Fury2UserdataUI_This() As Object
+On Error Resume Next
+    Set Fury2UserdataUI_This = Me
+End Property
 
 Public Property Get Engine() As Fury2Engine
     Set Engine = m_engEngine

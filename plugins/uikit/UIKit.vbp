@@ -57,8 +57,7 @@ Retained=0
 ThreadPerObject=0
 MaxNumberOfThreads=1
 ThreadingModel=1
-DebugStartupOption=2
-DebugStartupComponent=J:\development\binary\sys\fury².exe "C:\Documents and Settings\Kevin\My Documents\Projects\72h_bugs
+DebugStartupOption=0
 
 [MS Transaction Server]
 AutoRefresh=1

@@ -29,6 +29,7 @@ Private m_staState As SkinState
 Public PasswordChar As String
 Public Locked As Boolean
 Public Tip As String
+Public Label As String
 Public Skin As Skin
 Public Rectangle As Fury2Rect
 Public HaveFocus As Boolean
@@ -302,6 +303,7 @@ Dim sText As String, eText As String
             eText = Mid(m_strText, Me.SelectionStart)
             m_strText = sText + eText
             Me.MoveCaret Me.SelectionStart - 1
+            DispatchEvent "Change"
         Else
             Me.SelectionText = ""
         End If
@@ -313,6 +315,7 @@ Dim sText As String, eText As String
             eText = ""
             eText = Mid(m_strText, Me.SelectionStart + 1)
             m_strText = sText + eText
+            DispatchEvent "Change"
         Else
             Me.SelectionText = ""
         End If
@@ -422,6 +425,7 @@ Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraph
 On Error Resume Next
 Dim l_rctNew As Fury2Rect
 Dim l_rctOld As Fury2Rect
+Dim l_rctLabel As Fury2Rect
 Dim l_staState As SkinState, l_strState As String
 Dim l_lngHeight As Long
     If m_staState Is Nothing Then RefreshState
@@ -430,6 +434,10 @@ Dim l_lngHeight As Long
         Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
         m_staState.WindowSkin.Draw Surface, l_rctNew, 1
+        Set l_staState = Skin.States("label")
+        Set l_rctLabel = l_staState.Font.GetTextRectangle(Label)
+        l_rctLabel.Translate l_rctNew.Left - (l_rctLabel.Width) - l_staState.EdgeOffset, l_rctNew.Top + ((l_rctNew.Height - l_rctLabel.Height) \ 2)
+        l_staState.Font.Draw Surface, Label, l_rctLabel, l_staState.TextColor, Opacity
         .ClippedSetClipRectangle l_rctNew
         Set l_staState = Skin.States("tip")
         l_staState.Font.Draw Surface, Tip, l_rctNew, l_staState.TextColor, Opacity

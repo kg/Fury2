@@ -117,17 +117,13 @@ Dim l_objObject As Object
     Err.Clear
 End Sub
 
-Public Sub Add(Obj, Optional ByVal sKey, Optional ByVal AtIndex)
+Public Sub Add(Obj, Optional ByVal sKey, Optional ByVal AtIndex As Long = -1)
 On Error Resume Next
 Dim l_wdgObj As iWidget
     If Find(Obj) > 0 Then Exit Sub
     If IsMissing(sKey) Then
-        If IsMissing(AtIndex) Then
-            If mCol.Count = 0 Then
-                mCol.Add Obj
-            Else
-                mCol.Add Obj, , 1
-            End If
+        If AtIndex = -1 Then
+            mCol.Add Obj
         Else
             If mCol.Count = 0 Then
                 mCol.Add Obj
@@ -141,12 +137,8 @@ Dim l_wdgObj As iWidget
         End If
     Else
         sKey = LCase(Trim(CStr(sKey)))
-        If IsMissing(AtIndex) Then
-            If mCol.Count = 0 Then
-                mCol.Add Obj, sKey
-            Else
-                mCol.Add Obj, sKey, 1
-            End If
+        If AtIndex = -1 Then
+            mCol.Add Obj, sKey
         Else
             If mCol.Count = 0 Then
                 mCol.Add Obj, sKey

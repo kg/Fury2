@@ -101,7 +101,7 @@ End Sub
 
 Sub ShowForm(Name, Optional ByVal X As Long = -32767, Optional ByVal Y As Long = -32767)
 On Error Resume Next
-    Desktop.Children.Add Forms(Name).This, Name
+    Desktop.Children.Add Forms(Name).This, Name, 1
     Desktop.Container.Sync
     With Forms(Name)
         .This.Visible = True
@@ -117,7 +117,7 @@ On Error Resume Next
     Desktop.Container.SetFocus Forms(Name).This
 End Sub
 
-Function LoadForm(Path) As Object
+Function LoadForm(ByVal Path As String) As Object
 On Error Resume Next
 Dim l_strName As String
 Dim l_strScript As String
@@ -136,6 +136,11 @@ Dim l_strChosenName As String
     Set Engine.IObjThis = LoadForm
     Engine.RunCode Engine.ScriptEngine.Language.GenerateAssignment(l_strChosenName, "IObjThis", True)
     Set Engine.IObjThis = Nothing
+End Function
+
+Function DuplicateForm(ByVal Form As Object) As Object
+On Error Resume Next
+    Set DuplicateForm = Engine.ScriptEngine.Eval(Engine.ScriptEngine.Language.GenerateInstantiation(TypeName(Form)))
 End Function
 
 Sub LoadSkinDef(ByRef Skin As SkinState, ByRef Path As String)
@@ -169,7 +174,7 @@ Dim l_strChannels() As String
     End If
 End Sub
 
-Sub LoadSkins(ByVal Path)
+Sub LoadSkins(ByVal Path As String)
 On Error Resume Next
 Dim l_fldFolders As Fury2Folders
 Dim l_filFiles As Fury2Files
@@ -208,7 +213,7 @@ Dim l_strFile As String, l_strFolder As String
     Next
 End Sub
 
-Sub LoadFonts(ByVal Path)
+Sub LoadFonts(ByVal Path As String)
 On Error Resume Next
 Dim l_filFiles As Fury2Files
 Dim l_lngFiles As Long

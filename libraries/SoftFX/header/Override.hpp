@@ -40,6 +40,7 @@ extern std::string OverrideIToSTable[_count];
 extern SToITable OverrideSToITable;
 extern OverrideList Overrides[_count];
 extern bool EnableOverrides;
+extern int BypassOverrides;
 
 struct OverrideParameters {
   int count;
@@ -92,3 +93,4 @@ Export int AddOverride(const char* key, Override::Override value);
 Export int AddOverrideAtBack(const char* key, Override::Override value);
 Export int RemoveOverride(const char* key, Override::Override value);
 Export int GetOverrideCount(const char* key);
+Export int BypassOverrides(int Adjust);

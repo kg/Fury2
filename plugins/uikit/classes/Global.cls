@@ -39,16 +39,26 @@ Dim l_sksState As SkinState
     If Color = F2White Then
         For Each l_sknSkin In Skins
             For Each l_sksState In l_sknSkin.States
-                l_sksState.WindowSkin.BlitMode = BlitMode_Merge
-                l_sksState.WindowSkin.Tint = Color
+                If l_sksState.WindowSkin Is Nothing Then
+                Else
+                    With l_sksState.WindowSkin
+                        .BlitMode = BlitMode_Merge
+                        .Tint = Color
+                    End With
+                End If
                 l_sksState.TintColor = Color
             Next l_sksState
         Next l_sknSkin
     Else
         For Each l_sknSkin In Skins
             For Each l_sksState In l_sknSkin.States
-                l_sksState.WindowSkin.BlitMode = BlitMode_Font_Merge
-                l_sksState.WindowSkin.Tint = Color
+                If l_sksState.WindowSkin Is Nothing Then
+                Else
+                    With l_sksState.WindowSkin
+                        .BlitMode = BlitMode_Font_Merge
+                        .Tint = Color
+                    End With
+                End If
                 l_sksState.TintColor = Color
             Next l_sksState
         Next l_sknSkin

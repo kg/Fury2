@@ -30,16 +30,23 @@ std::string OverrideIToSTable[_count];
 SToITable OverrideSToITable;
 OverrideList Overrides[_count];
 bool EnableOverrides;
+int BypassOverrides;
 };
 
 void Override::InitOverrides() {
   Override::EnableOverrides = false;
+  Override::BypassOverrides = 0;
   SS_Start
     for (int i = _none; i < _count; i++) {
       Override::Overrides[i] = OverrideList();
     }
     InitOverrideTranslationTable<Override::SToITable, std::string>(Override::OverrideSToITable, Override::OverrideIToSTable);
   SS_End
+}
+
+Export int BypassOverrides(int Adjust) {
+  Override::BypassOverrides += Adjust;
+  return true;
 }
 
 Export int AddOverride(const char* key, Override::Override value) {
@@ -113,6 +120,7 @@ typedef int (eofp)(Override::OverrideParameters* p);
 // here be demons
 int Override::EnumOverrides(Override::OverrideIndex index, int parameter_count, ...) {
   if (!Override::EnableOverrides) return 0;
+  if (Override::BypassOverrides > 0) return 0;
   ProfileStart("EnumOverrides");
   SS_Start
   Override::OverrideList* KeyOverrides;

@@ -266,7 +266,7 @@ Dim l_booChild As Boolean
     If (Widget Is Nothing) Or (Not l_booChild) Then
         Set l_wdgOldFocus = FocusedWidget
         Set FocusedWidget = Nothing
-        l_wdgOldFocus.LostFocus Me, Widget
+        If l_wdgOldFocus Is Nothing Then Else l_wdgOldFocus.LostFocus Me, Widget
     Else
         If Children.Find(Widget) > 0 Then
             If FocusedWidget Is Widget Then
@@ -509,7 +509,7 @@ Dim l_cntContainer As iContainer
         CallByName l_objWidget.EventHandler, l_objWidget.Name, VbSet, l_objWidget
         Set l_cntContainer = Nothing
         Set l_cntContainer = l_objWidget
-        l_cntContainer.Sync
+        If l_cntContainer Is Nothing Then Else l_cntContainer.Sync
     Next l_objWidget
     Err.Clear
 End Sub

@@ -2,6 +2,7 @@ Attribute VB_Name = "mdlUtility"
 '
 '   ::fury2 utility functions::
 '
+'Public Declare Function DX8Init Lib "DX8FX" Alias "_DX8Init@4" (ByVal Window As Long) As Long
 
 Public Function StripParens(ByRef Text As String) As Boolean
 On Error Resume Next

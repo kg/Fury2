@@ -53,6 +53,14 @@ Public Enum Fury2WindowSkinSections
     WS_Middle = 8
 End Enum
 
+Public Enum Fury2WindowSkinBackgroundModes
+    WBM_TiledImage = 0
+    WBM_ScaledImage = 1
+    WBM_Gradient = 2
+    WBM_TiledImagePlusGradient = 3
+    WBM_ScaledImagePlusGradient = 4
+End Enum
+
 Public Enum Fury2CollisionTypes
     CT_None = 0
     CT_Tile = 1

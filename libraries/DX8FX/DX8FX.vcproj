@@ -314,6 +314,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\SoftFX\header\Rectangle.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\header\Vertex.hpp"
 				>
 			</File>

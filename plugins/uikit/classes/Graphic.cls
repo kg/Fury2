@@ -19,6 +19,7 @@ Public EventHandler As Object
 Public Name As String
 Public Rectangle As Fury2Rect
 Public Image As Object
+Public BlitMode As SFXBlitModes
 
 Public Property Get iWidget_CanGetFocus() As Boolean
     iWidget_CanGetFocus = False
@@ -68,6 +69,7 @@ On Error Resume Next
     Name = "Graphic" & GraphicCount
     Set Rectangle = New Fury2Rect
     Visible = True
+    BlitMode = BlitMode_Default
 End Sub
 
 Private Sub iWidget_LostCapture(ByVal Parent As iContainer)
@@ -144,10 +146,14 @@ Dim l_gphImage As Fury2Graphic
         If TypeOf Image Is Fury2Image Then
             Set l_imgImage = Image
             l_rctNew.Translate (Rectangle.Width - l_imgImage.Width) / 2, (Rectangle.Height - l_imgImage.Height) / 2
-            If Image.AlphaChannel Then
-                .Blit l_rctNew, , l_imgImage, Opacity, BlitMode_SourceAlpha
+            If BlitMode = BlitMode_Default Then
+                If Image.AlphaChannel Then
+                    .Blit l_rctNew, , l_imgImage, Opacity, BlitMode_SourceAlpha
+                Else
+                    .Blit l_rctNew, , l_imgImage, Opacity, BlitMode_Matte
+                End If
             Else
-                .Blit l_rctNew, , l_imgImage, Opacity, BlitMode_Matte
+                .Blit l_rctNew, , l_imgImage, Opacity, BlitMode
             End If
         ElseIf TypeOf Image Is Fury2Graphic Then
             Set l_gphImage = Image

@@ -19,6 +19,16 @@ defOverride(Allocate_RenderTarget) {
 	return Success;
 }
 
+defOverride(FilterSimple_Fill) {
+  readParam(int, Image, 0);
+  readParam(FX::Rectangle*, Area, 1);
+  readParam(Pixel, Color, 2);
+  SoftFX::BypassOverrides(1);
+  SoftFX::FilterSimple_Fill(Image, Area, Pixel(255, 0, 0, 255));
+  SoftFX::BypassOverrides(-1);
+  return Success;
+}
+
 defOverride(Deallocate) {
 	readParam(int, Image, 0);
 	if (checkNamedTag(Image, Device)) {
@@ -31,8 +41,10 @@ defOverride(Deallocate) {
 
 void InstallOverrides() {
 	addOverride(Deallocate);
+  addOverride(FilterSimple_Fill);
 }
 
 void UninstallOverrides() {
 	removeOverride(Deallocate);
+  removeOverride(FilterSimple_Fill);
 }

@@ -149,7 +149,7 @@ Dim l_itmItem As Item
     Err.Clear
 End Sub
 
-Public Sub Add(Obj As Item, Optional ByVal sKey, Optional ByVal AtIndex)
+Public Sub Add(Obj, Optional ByVal sKey, Optional ByVal AtIndex)
 On Error Resume Next
     If IsMissing(sKey) Then
         If IsMissing(AtIndex) Then
@@ -184,7 +184,7 @@ On Error Resume Next
     Err.Clear
 End Sub
 
-Public Property Get Item(ByVal vntIndexKey) As Item
+Public Property Get Item(ByVal vntIndexKey)
 Attribute Item.VB_UserMemId = 0
 Attribute Item.VB_MemberFlags = "200"
 On Error Resume Next

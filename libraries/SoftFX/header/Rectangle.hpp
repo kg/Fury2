@@ -19,8 +19,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 class Rectangle {
 public:
-    Coordinate Left, Top;
-    Size Width, Height;
+    int Left, Top;
+    int Width, Height;
 
     Rectangle() {
         Left = Top = 0;
@@ -47,11 +47,11 @@ public:
         return !((Width > 0) && (Height > 0));
     }
 
-    inline Coordinate right() {
+    inline int right() {
         return Width + Left;
     }
 
-    inline Coordinate right_exclusive() {
+    inline int right_exclusive() {
         if (Width > 0) {
             return Left + (Width - 1);
         } else if (Width < 0) {
@@ -61,15 +61,15 @@ public:
         }
     }
 
-    inline void setRight(Coordinate value) {
+    inline void setRight(int value) {
         Width = value - Left;
     }
 
-    inline Coordinate bottom() {
+    inline int bottom() {
         return Height + Top;
     }
 
-    inline Coordinate bottom_exclusive() {
+    inline int bottom_exclusive() {
         if (Height > 0) {
             return Top + (Height - 1);
         } else if (Height < 0) {
@@ -79,18 +79,18 @@ public:
         }
     }
 
-    inline void setBottom(Coordinate value) {
+    inline void setBottom(int value) {
         Height = value - Top;
     }
 
-    inline void setValues(Coordinate x, Coordinate y, Size w, Size h) {
+    inline void setValues(int x, int y, int w, int h) {
         Left = x;
         Top = y;
         Width = w;
         Height = h;
     }
 
-    inline void setValuesAbsolute(Coordinate x, Coordinate y, Coordinate x2, Coordinate y2) {
+    inline void setValuesAbsolute(int x, int y, int x2, int y2) {
         Left = x;
         Top = y;
         Width = x2 - x;

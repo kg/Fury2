@@ -171,12 +171,12 @@ Dim m_lngLength As Long
     End If
 End Function
 
-Public Function Floor(Value As Single) As Long
+Public Function Floor(ByVal Value As Single) As Long
 On Error Resume Next
     Floor = SoftFX.Floor(Value)
 End Function
 
-Public Function Ceil(Value As Single) As Long
+Public Function Ceil(ByVal Value As Single) As Long
 On Error Resume Next
     Ceil = SoftFX.Ceil(Value)
 End Function

@@ -187,7 +187,7 @@ On Error Resume Next
 Dim l_rctNew As Fury2Rect, l_rctItem As Fury2Rect
 Dim l_rctOld As Fury2Rect
 Dim l_staState As SkinState
-Dim l_lngHeight As Long, l_itmItem As Item, l_lngItem As Long, l_lngY As Long, l_lngItemHeight As Long
+Dim l_lngHeight As Long, l_itmItem As Object, l_lngItem As Long, l_lngY As Long, l_lngItemHeight As Long
 Dim l_lngWidth As Long
 Dim l_lngMouseY As Long
     If Visible = False Then Exit Sub
@@ -281,7 +281,7 @@ On Error Resume Next
 Dim l_rctNew As Fury2Rect, l_rctItem As Fury2Rect
 Dim l_rctOld As Fury2Rect
 Dim l_staState As SkinState
-Dim l_lngHeight As Long, l_itmItem As Item, l_lngItem As Long, l_lngY As Long, l_lngItemHeight As Long
+Dim l_lngHeight As Long, l_itmItem As Object, l_lngItem As Long, l_lngY As Long, l_lngItemHeight As Long
 Dim l_lngWidth As Long
     If m_staState Is Nothing Then RefreshState
     If Visible = False Then Exit Sub

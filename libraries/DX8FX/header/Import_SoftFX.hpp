@@ -27,6 +27,7 @@ namespace SoftFX {
 	defImport(int, RemoveOverride, (const char * key, Override::Override value) , 8) \
 	defImport(int, GetOverrideCount, (const char * key) , 4) \
 	defImport(int, GetOverrideIndex, (const char * key) , 4) \
+	defImport(int, BypassOverrides, (int Adjust) , 4) \
 	defImport(const char *, GetOverrideKey, (int index) , 4) \
 	defImport(int, AllocateEmptyImage, () , 0) \
 	defImport(int, AllocateImage, (int Width, int Height) , 8) \
@@ -47,6 +48,7 @@ namespace SoftFX {
 	defImport(int, LockImage, (int Image) , 4) \
 	defImport(int, UnlockImage, (int Image) , 4) \
 	defImport(int, GetDefaultSampleFunction, () , 0) \
+  defImport(int, FilterSimple_Fill, (int Image, FX::Rectangle *Area, Pixel Color), 12) \
 /* IMPORTS GO HERE */ \
 	defEnd
 

@@ -61,6 +61,7 @@ extern DX8FXGlobal* Global;
 
 #include "BlendModes.hpp"
 #include "Pixel.hpp"
+#include "Rectangle.hpp"
 #include "Vertex.hpp"
 #include "Device.hpp"
 #include "DX8FXGlobal.hpp"

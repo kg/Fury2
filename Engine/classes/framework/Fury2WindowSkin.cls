@@ -105,6 +105,16 @@ On Error Resume Next
     End If
 End Property
 
+Public Property Get BackgroundColor(Corner As Long) As Long
+On Error Resume Next
+    BackgroundColor = m_wspParam.CornerColors(Corner)
+End Property
+
+Public Property Let BackgroundColor(Corner As Long, Value As Long)
+On Error Resume Next
+    m_wspParam.CornerColors(Corner) = Value
+End Property
+
 Public Property Get Overlap() As Long
     Overlap = m_lngEdgeOverlap
 End Property
@@ -113,11 +123,11 @@ Public Property Let Overlap(NewValue As Long)
     m_lngEdgeOverlap = NewValue
 End Property
 
-Public Property Let BackgroundMode(NewValue As Long)
+Public Property Let BackgroundMode(ByVal NewValue As Fury2WindowSkinBackgroundModes)
     m_wspParam.BackgroundMode = NewValue
 End Property
 
-Public Property Get BackgroundMode() As Long
+Public Property Get BackgroundMode() As Fury2WindowSkinBackgroundModes
     BackgroundMode = m_wspParam.BackgroundMode
 End Property
 

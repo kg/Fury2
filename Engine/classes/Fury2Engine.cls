@@ -2665,7 +2665,7 @@ Dim l_plgObj As Fury2Plugin
     Else
         UnHookEvents Obj
         Obj.Startup
-        l_plgObj.Init
+        If l_plgObj Is Nothing Then Else l_plgObj.Init
         If m_EventHooks.Count > 0 Then
             If Priority Then
                 m_EventHooks.Add Obj
@@ -2675,7 +2675,6 @@ Dim l_plgObj As Fury2Plugin
         Else
             m_EventHooks.Add Obj
         End If
-        Obj.Show
         HookEvents = True
     End If
     Err.Clear

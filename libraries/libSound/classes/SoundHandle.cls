@@ -226,9 +226,9 @@ Public Function PlayAt(x, y, Optional Channel As Long = -1) As Long
 Dim m_lngHandle As Long, m_sngPan As Single
 Dim m_sngVolume As Single
     m_sngVolume = 255
-    m_sngVolume = m_sngVolume - Abs((y - (m_Engine.m_Engine.BufferHeight / 2)) / (CSng(m_Engine.m_Engine.BufferHeight / 2) / 255!))
+    m_sngVolume = m_sngVolume - Abs((y - (m_Engine.m_Engine.ScreenHeight / 2)) / (CSng(m_Engine.m_Engine.ScreenHeight / 2) / 255!))
     m_sngPan = x
-    m_sngPan = m_sngPan / (CSng(m_Engine.m_Engine.BufferWidth) / 255!)
+    m_sngPan = m_sngPan / (CSng(m_Engine.m_Engine.ScreenWidth) / 255!)
     m_lngHandle = Play(Channel)
     FSound_Channel.SetPan m_lngHandle, ClipValue(CLng(m_sngPan), 0, 255)
     FSound_Channel.SetVolume m_lngHandle, ClipValue(CLng(m_sngVolume), 0, 255)

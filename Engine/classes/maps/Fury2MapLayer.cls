@@ -68,6 +68,147 @@ Private mvarWrapY As Boolean
 Private mvarParent As Fury2Map
 Private mvarColor As Long
 
+Public Sub AddCollisionLine(ByVal x1 As Single, ByVal y1 As Single, ByVal x2 As Single, ByVal y2 As Single)
+On Error Resume Next
+    ReDim Preserve mvarBlockingLines(LBound(mvarBlockingLines) To UBound(mvarBlockingLines) + 1)
+    With mvarBlockingLines(UBound(mvarBlockingLines))
+        .Start.X = CSng(x1)
+        .Start.Y = CSng(y1)
+        .end.X = CSng(x2)
+        .end.Y = CSng(y2)
+    End With
+End Sub
+
+Public Property Let Alpha(ByVal vData As Single)
+Attribute Alpha.VB_Description = "The opacity of the layer."
+    mvarAlpha = vData
+    If mvarAlpha < -1 Then mvarAlpha = -1
+    If mvarAlpha > 1 Then mvarAlpha = 1
+    m_Engine.Cameras.Dirty
+End Property
+
+Public Property Get Alpha() As Single
+    Alpha = mvarAlpha
+End Property
+
+Public Property Get Blocking(ByVal X As Long, ByVal Y As Long) As Long
+Attribute Blocking.VB_Description = "Gets or sets a blocking value from the layer."
+On Error Resume Next
+    If (X < 0) Or (Y < 0) Or (X > UBound(mvarBlocking, 1)) Or (Y > UBound(mvarBlocking, 2)) Then Exit Property
+    Blocking = mvarBlocking(X, Y)
+End Property
+
+Public Property Let Blocking(ByVal X As Long, ByVal Y As Long, ByVal Value As Long)
+On Error Resume Next
+    If (X < 0) Or (Y < 0) Or (X > UBound(mvarBlocking, 1)) Or (Y > UBound(mvarBlocking, 2)) Then Exit Property
+    mvarBlocking(X, Y) = CByte(Abs(Value))
+End Property
+
+Public Property Get BlockingArray() As Byte()
+Attribute BlockingArray.VB_Description = "*Returns all the layer's blocking data as an array."
+On Error Resume Next
+    BlockingArray = mvarBlocking()
+End Property
+
+Public Property Let BlockingArray(NewBlocking() As Byte)
+On Error Resume Next
+    mvarBlocking() = NewBlocking()
+End Property
+
+Public Property Get BlockingGridHeight() As Long
+Attribute BlockingGridHeight.VB_Description = "The height (in pixels) of each cell in the layer's blocking grid."
+    BlockingGridHeight = mvarBlockGridHeight
+End Property
+
+Public Property Let BlockingGridHeight(ByVal NewHeight As Long)
+    If NewHeight < 1 Then
+        mvarBlockGridHeight = mvarTileset.TileHeight
+    Else
+        mvarBlockGridHeight = NewHeight
+    End If
+End Property
+
+Public Property Get BlockingGridWidth() As Long
+Attribute BlockingGridWidth.VB_Description = "The width (in pixels) of each cell in the layer's blocking grid."
+    BlockingGridWidth = mvarBlockGridWidth
+End Property
+
+Public Property Let BlockingGridWidth(ByVal NewWidth As Long)
+    If NewWidth < 1 Then
+        mvarBlockGridWidth = mvarTileset.TileWidth
+    Else
+        mvarBlockGridWidth = NewWidth
+    End If
+End Property
+
+Public Property Get BlockingPointer() As Long
+Attribute BlockingPointer.VB_Description = "*"
+Attribute BlockingPointer.VB_MemberFlags = "40"
+On Error Resume Next
+    BlockingPointer = VarPtr(mvarBlocking(0, 0))
+End Property
+
+Private Sub Class_Initialize()
+On Error Resume Next
+    mvarVisible = True
+    ParallaxX = 1
+    ParallaxY = 1
+    mvarBlockGridWidth = 16
+    mvarBlockGridHeight = 16
+    mvarName = "Untitled"
+    ReDim mvarBlockingLines(0)
+    Set mvarLighting = New Fury2LayerLighting
+    Set mvarSprites = New Fury2Sprites
+    Set mvarTileset = New Fury2Tileset
+    Set mvarAnimations = New Fury2TileAnimations
+End Sub
+
+Private Sub Class_Terminate()
+On Error Resume Next
+    DeallocateCollisionMatrix
+End Sub
+
+Public Sub Clear(ByVal Tile As Integer)
+Attribute Clear.VB_Description = "Erases a layer."
+On Error Resume Next
+Dim m_lngX As Long, m_lngY As Long
+    SoftFX.FillMemoryShort VarPtr(mvarTiles(0, 0)), Tile, ((UBound(mvarTiles, 2) + 1) * (UBound(mvarTiles, 1) + 1))
+End Sub
+
+Sub ClearCollisionLines()
+On Error Resume Next
+    ReDim mvarBlockingLines(0 To 0)
+End Sub
+
+Public Function CollisionLineCount() As Long
+Attribute CollisionLineCount.VB_Description = "*"
+On Error Resume Next
+    CollisionLineCount = (UBound(mvarBlockingLines) - LBound(mvarBlockingLines)) + 1
+End Function
+
+Public Function CollisionLinePointer(ByVal Index As Long) As Long
+Attribute CollisionLinePointer.VB_Description = "*"
+On Error Resume Next
+    CollisionLinePointer = VarPtr(mvarBlockingLines(Index))
+End Function
+
+Public Property Get CollisionLines() As FLine()
+Attribute CollisionLines.VB_Description = "*"
+On Error Resume Next
+    CollisionLines = mvarBlockingLines
+End Property
+
+Public Property Let CollisionLines(NewLines() As FLine)
+On Error Resume Next
+    mvarBlockingLines() = NewLines()
+End Property
+
+Public Property Get CollisionMatrix() As Long
+Attribute CollisionMatrix.VB_Description = "*"
+On Error Resume Next
+    CollisionMatrix = mvarMatrix
+End Property
+
 Public Property Get Color() As Long
 Attribute Color.VB_Description = "The layer's tint color.{Color}"
     Color = mvarColor
@@ -77,41 +218,7 @@ Public Property Let Color(ByVal NewColor As Long)
     mvarColor = NewColor
 End Property
 
-Public Property Set Parent(NewParent As Fury2Map)
-On Error Resume Next
-    Set mvarParent = NewParent
-End Property
-
-Public Property Get Parent() As Fury2Map
-    Set Parent = mvarParent
-End Property
-
-Public Property Let Height(NewHeight As Long)
-    If NewHeight <> mvarHeight Then
-        ResizePreserve mvarWidth, NewHeight
-    End If
-End Property
-
-Public Property Get Height() As Long
-    Height = mvarHeight
-End Property
-
-Public Property Let Width(NewWidth As Long)
-    If NewWidth <> mvarWidth Then
-        ResizePreserve NewWidth, mvarHeight
-    End If
-End Property
-
-Public Property Get Width() As Long
-    Width = mvarWidth
-End Property
-
-Public Property Get Lighting() As Fury2LayerLighting
-Attribute Lighting.VB_Description = "~The layer's lighting data."
-    Set Lighting = mvarLighting
-End Property
-
-Public Sub CreateCollisionMatrix(Width As Long, Height As Long)
+Public Sub CreateCollisionMatrix(ByVal Width As Long, ByVal Height As Long)
 On Error Resume Next
     DeallocateCollisionMatrix
     mvarMatrix = SoftFX.CreateCollisionMatrix(Width, Height)
@@ -128,12 +235,16 @@ On Error Resume Next
     End If
 End Sub
 
-Public Sub RenderBlocking(Surface, Optional ByVal XOffset As Single = 0, Optional ByVal YOffset As Single = 0)
-On Error Resume Next
-    SoftFX.RenderCollisionLines Surface.Handle, VarPtr(mvarBlockingLines(LBound(mvarBlockingLines))), UBound(mvarBlockingLines) - LBound(mvarBlockingLines) + 1, XOffset, YOffset
-End Sub
+Public Property Get Depthmap() As String
+    Depthmap = mvarDepthmap
+End Property
 
-Function DepthmapRead(X As Single, Y As Single) As Single
+Public Property Let Depthmap(NewFilename As String)
+    mvarDepthmap = NewFilename
+    UpdateDepthmap
+End Property
+
+Function DepthmapRead(ByVal X As Single, ByVal Y As Single) As Single
 On Error Resume Next
 Dim m_sngX As Single, m_sngY As Single
 Dim m_lngColor As Long
@@ -153,126 +264,30 @@ Dim m_lngColor As Long
     End If
 End Function
 
-Sub UpdateDepthmap()
-On Error Resume Next
-    If Not m_booEditor Then
-        If Trim(mvarDepthmap) = "" Then
-            Set mvarDepthmapImage = Nothing
-        Else
-            Set mvarDepthmapImage = m_Engine.LoadImage(mvarDepthmap)
-        End If
-    End If
-End Sub
-
-Public Property Get HasDepthmap() As Boolean
-    HasDepthmap = Trim(mvarDepthmap) <> ""
+Public Property Get DepthmapXRatio() As Single
+    DepthmapXRatio = mvarDepthmapXRatio
 End Property
 
-Public Property Get Depthmap() As String
-    Depthmap = mvarDepthmap
+Public Property Let DepthmapXRatio(ByVal NewDepthmapXRatio As Single)
+    mvarDepthmapXRatio = NewDepthmapXRatio
+    m_Engine.Cameras.Dirty
 End Property
 
-Public Property Let Depthmap(NewFilename As String)
-    mvarDepthmap = NewFilename
-    UpdateDepthmap
+Public Property Get DepthmapYRatio() As Single
+    DepthmapYRatio = mvarDepthmapYRatio
 End Property
 
-Public Function CollisionLinePointer(Index As Long) As Long
-Attribute CollisionLinePointer.VB_Description = "*"
-On Error Resume Next
-    CollisionLinePointer = VarPtr(mvarBlockingLines(Index))
-End Function
-
-Public Function CollisionLineCount() As Long
-Attribute CollisionLineCount.VB_Description = "*"
-On Error Resume Next
-    CollisionLineCount = (UBound(mvarBlockingLines) - LBound(mvarBlockingLines)) + 1
-End Function
-
-Public Sub RemoveCollisionLine(Index As Long)
-On Error Resume Next
-Dim m_lngLines As Long
-    If Index < 0 Then Exit Sub
-    If Index > UBound(mvarBlockingLines) Then Exit Sub
-    mvarBlockingLines(Index).Start.X = -1
-    mvarBlockingLines(Index).Start.Y = -1
-    mvarBlockingLines(Index).end.X = -1
-    mvarBlockingLines(Index).end.Y = -1
-    If Index = UBound(mvarBlockingLines) Then
-    Else
-        For m_lngLines = Index + 1 To UBound(mvarBlockingLines)
-            mvarBlockingLines(m_lngLines - 1) = mvarBlockingLines(m_lngLines)
-        Next m_lngLines
-    End If
-    ReDim Preserve mvarBlockingLines(LBound(mvarBlockingLines) To UBound(mvarBlockingLines) - 1)
-End Sub
-
-Public Sub AddCollisionLine(x1, y1, x2, y2)
-On Error Resume Next
-    ReDim Preserve mvarBlockingLines(LBound(mvarBlockingLines) To UBound(mvarBlockingLines) + 1)
-    With mvarBlockingLines(UBound(mvarBlockingLines))
-        .Start.X = CSng(x1)
-        .Start.Y = CSng(y1)
-        .end.X = CSng(x2)
-        .end.Y = CSng(y2)
-    End With
-End Sub
-
-Sub ClearCollisionLines()
-On Error Resume Next
-    ReDim mvarBlockingLines(0 To 0)
-End Sub
-
-Public Property Get CollisionLines() As FLine()
-Attribute CollisionLines.VB_Description = "*"
-On Error Resume Next
-    CollisionLines = mvarBlockingLines
+Public Property Let DepthmapYRatio(ByVal NewDepthmapYRatio As Single)
+    mvarDepthmapYRatio = NewDepthmapYRatio
+    m_Engine.Cameras.Dirty
 End Property
-
-Public Property Let CollisionLines(NewLines() As FLine)
-On Error Resume Next
-    mvarBlockingLines() = NewLines()
-End Property
-
-Public Function GetCollisionLine(Index) As Fury2Rect
-On Error Resume Next
-    With mvarBlockingLines(Index)
-        Set GetCollisionLine = F2Rect(.Start.X, .Start.Y, .end.X, .end.Y)
-    End With
-End Function
-
-Public Function SetCollisionLine(Index, NewLine)
-On Error Resume Next
-    With mvarBlockingLines(Index)
-        .Start.X = NewLine.Left
-        .Start.Y = NewLine.Top
-        .end.X = NewLine.Right
-        .end.Y = NewLine.Bottom
-    End With
-End Function
-
-Sub Free()
-Attribute Free.VB_MemberFlags = "40"
-On Error Resume Next
-    Erase mvarBlocking
-    Erase mvarTiles
-    Set mvarAnimations = New Fury2TileAnimations
-    Set mvarDepthmapImage = Nothing
-    mvarSprites.Free
-    Set mvarSprites = New Fury2Sprites
-    mvarTileset.Free
-    Set mvarTileset = New Fury2Tileset
-    mvarLighting.Free
-    Set mvarLighting = New Fury2LayerLighting
-    Set mvarParent = Nothing
-End Sub
 
 Public Property Get DisableBlocking() As Boolean
 Attribute DisableBlocking.VB_Description = "This flag disables loading, saving, and manipulation of this layer's blocking data."
     DisableBlocking = mvarDisableBlocking
 End Property
 
-Public Property Let DisableBlocking(NewDisable As Boolean)
+Public Property Let DisableBlocking(ByVal NewDisable As Boolean)
     mvarDisableBlocking = NewDisable
     If NewDisable = True Then
         ReDim mvarBlocking(0 To 0, 0 To 0)
@@ -281,99 +296,42 @@ Public Property Let DisableBlocking(NewDisable As Boolean)
     End If
 End Property
 
-Public Property Get Name() As String
-Attribute Name.VB_Description = "The layer's name."
-    Name = mvarName
-End Property
-
-Public Property Let Name(NewName As String)
-    mvarName = NewName
-End Property
-
-Sub ResizeBlocking()
-Attribute ResizeBlocking.VB_MemberFlags = "40"
-On Error Resume Next
-Dim mvarCopyRows As Long, m_lngRowCount As Long, mvarOldBlocking() As Byte
-Dim m_lngWidth As Long, m_lngHeight As Long
-    m_lngWidth = UBound(mvarTiles, 1) + 1
-    m_lngHeight = UBound(mvarTiles, 2) + 1
-    Err.Clear
-    mvarOldBlocking() = mvarBlocking()
-    ReDim mvarBlocking(0 To ((m_lngWidth * mvarTileset.TileWidth) \ mvarBlockGridWidth) - 1, 0 To ((m_lngHeight * mvarTileset.TileHeight) \ mvarBlockGridHeight) - 1)
-    m_lngRowCount = UBound(mvarOldBlocking, 2)
-    If m_lngRowCount > UBound(mvarBlocking, 2) Then m_lngRowCount = UBound(mvarBlocking, 2)
-    For mvarCopyRows = 0 To m_lngRowCount
-        CopyMemory mvarBlocking(0, mvarCopyRows), mvarOldBlocking(0, mvarCopyRows), ClipValue((UBound(mvarOldBlocking, 1) + 1), 0, UBound(mvarBlocking, 1))
-    Next mvarCopyRows
-    Err.Clear
-End Sub
-
-Public Property Get BlockingGridWidth() As Long
-Attribute BlockingGridWidth.VB_Description = "The width (in pixels) of each cell in the layer's blocking grid."
-    BlockingGridWidth = mvarBlockGridWidth
-End Property
-
-Public Property Let BlockingGridWidth(NewWidth As Long)
-    If NewWidth < 1 Then
-        mvarBlockGridWidth = mvarTileset.TileWidth
-    Else
-        mvarBlockGridWidth = NewWidth
-    End If
-End Property
-
-Public Property Get BlockingGridHeight() As Long
-Attribute BlockingGridHeight.VB_Description = "The height (in pixels) of each cell in the layer's blocking grid."
-    BlockingGridHeight = mvarBlockGridHeight
-End Property
-
-Public Property Let BlockingGridHeight(NewHeight As Long)
-    If NewHeight < 1 Then
-        mvarBlockGridHeight = mvarTileset.TileHeight
-    Else
-        mvarBlockGridHeight = NewHeight
-    End If
-End Property
-
-Public Function TileGravity(Optional Column = -1, Optional EmptyTile = -1) As Boolean
-Attribute TileGravity.VB_MemberFlags = "40"
-On Error Resume Next
-Dim m_lngX As Long, m_lngY As Long
-Dim m_lngEmpty As Long, m_lngLoops As Long
-Dim m_booFell As Boolean
-    Err.Clear
-    m_lngX = CLng(Column)
-    If m_lngX < 0 Then Exit Function
-    If m_lngX > UBound(mvarTiles, 1) Then Exit Function
-    m_lngEmpty = CLng(EmptyTile)
-    If m_lngX = -1 Then
-        For m_lngX = 0 To UBound(mvarTiles, 1)
-            For m_lngY = 0 To UBound(mvarTiles, 2) - 1
-                If (mvarTiles(m_lngX, m_lngY + 1) = EmptyTile) And (mvarTiles(m_lngX, m_lngY) <> EmptyTile) Then
-                    mvarTiles(m_lngX, m_lngY + 1) = mvarTiles(m_lngX, m_lngY)
-                    mvarTiles(m_lngX, m_lngY) = EmptyTile
-                    m_booFell = m_booFell Or True
-                    m_lngY = 0
-                End If
-            Next m_lngY
-        Next m_lngX
-    Else
-        For m_lngY = 0 To UBound(mvarTiles, 2) - 1
-            If (mvarTiles(m_lngX, m_lngY + 1) = EmptyTile) And (mvarTiles(m_lngX, m_lngY) <> EmptyTile) Then
-                mvarTiles(m_lngX, m_lngY + 1) = mvarTiles(m_lngX, m_lngY)
-                mvarTiles(m_lngX, m_lngY) = EmptyTile
-                m_booFell = m_booFell Or True
-                m_lngY = 0
-            End If
-        Next m_lngY
-    End If
-    TileGravity = m_booFell
+Public Function Duplicate() As Fury2MapLayer
+Attribute Duplicate.VB_Description = "Creates a copy of the layer."
+Dim m_lyrNew As Fury2MapLayer
+    Set m_lyrNew = New Fury2MapLayer
+    With m_lyrNew
+        .WrapX = mvarWrapX
+        .WrapY = mvarWrapY
+        .Visible = mvarVisible
+        .Alpha = mvarAlpha
+        .Effect = mvarEffect - 1
+        .Name = mvarName
+        .Lit = mvarLit
+        .Tiles = mvarTiles
+        .BlockingArray = mvarBlocking
+        .BlockingGridWidth = mvarBlockGridWidth
+        .BlockingGridHeight = mvarBlockGridHeight
+        Set .Tileset = mvarTileset.Duplicate
+    End With
+    Set Duplicate = m_lyrNew
+    Set m_lyrNew = Nothing
 End Function
 
-Public Sub FloodFill(X, Y, Tile)
+Public Property Let Effect(ByVal vData As SFXBlitModes)
+    mvarEffect = vData + 1
+    m_Engine.Cameras.Dirty
+End Property
+
+Public Property Get Effect() As SFXBlitModes
+    Effect = mvarEffect - 1 ' Hack to make a value of 0 (the default) actually be -1
+End Property
+
+Public Sub FloodFill(ByVal X As Long, ByVal Y As Long, ByVal Tile As Integer)
 Attribute FloodFill.VB_Description = "Flood-fills the layer's tile data."
 On Error Resume Next
 Dim isSeen() As Byte, isDrawn() As Byte
-Dim xPosition As New Collection, yPosition As New Collection
+Dim xPosition As Collection, yPosition As Collection
 Dim sTile As Integer, nTile As Integer
 Dim NextX As Long, NextY As Long, deltaX As Long, deltaY As Long, CurrentX As Long, CurrentY As Long
     If (X < 0) Or (Y < 0) Or (X > UBound(mvarTiles, 1)) Or (Y > UBound(mvarTiles, 2)) Then Err.Raise 10241, "FloodFill", "Out of bounds": Exit Sub
@@ -381,6 +339,8 @@ Dim NextX As Long, NextY As Long, deltaX As Long, deltaY As Long, CurrentX As Lo
     isDrawn = isSeen
     sTile = mvarTiles(X, Y)
     nTile = Int(Tile)
+    Set xPosition = New Collection
+    Set yPosition = New Collection
     xPosition.Add X
     yPosition.Add Y
     isSeen(X, Y) = 1
@@ -414,186 +374,21 @@ Dim NextX As Long, NextY As Long, deltaX As Long, deltaY As Long, CurrentX As Lo
     ProgressHide
 End Sub
 
-Public Sub PatternFloodFill(X, Y, Pattern() As Integer)
+Sub Free()
+Attribute Free.VB_MemberFlags = "40"
 On Error Resume Next
-Dim isSeen() As Byte, isDrawn() As Byte
-Dim xPosition As New Collection, yPosition As New Collection
-Dim sTile As Integer, nTile As Integer
-Dim NextX As Long, NextY As Long, deltaX As Long, deltaY As Long, CurrentX As Long, CurrentY As Long
-Dim m_lngXMod As Long, m_lngYMod As Long
-    If (UBound(Pattern, 1) = LBound(Pattern, 1)) And (UBound(Pattern, 2) = LBound(Pattern, 2)) Then FloodFill X, Y, Pattern(0, 0): Exit Sub
-    m_lngXMod = UBound(Pattern, 1) + 1
-    m_lngYMod = UBound(Pattern, 2) + 1
-    If (X < 0) Or (Y < 0) Or (X > UBound(mvarTiles, 1)) Or (Y > UBound(mvarTiles, 2)) Then Err.Raise 10241, "FloodFill", "Out of bounds": Exit Sub
-    ReDim isSeen(0 To UBound(mvarTiles, 1), 0 To UBound(mvarTiles, 2))
-    isDrawn = isSeen
-    sTile = mvarTiles(X, Y)
-    xPosition.Add X
-    yPosition.Add Y
-    isSeen(X, Y) = 1
-    Do Until xPosition.Count <= 0
-        CurrentX = CLng(xPosition.Item(xPosition.Count))
-        CurrentY = CLng(yPosition.Item(yPosition.Count))
-        ProgressUpdate (Height / CurrentY) * 100
-        xPosition.Remove xPosition.Count
-        yPosition.Remove yPosition.Count
-        If isDrawn(CurrentX, CurrentY) = 1 Then Else mvarTiles(CurrentX, CurrentY) = Pattern(Abs(CurrentX - X) Mod m_lngXMod, Abs(CurrentY - Y) Mod m_lngYMod)
-        isDrawn(CurrentX, CurrentY) = 1
-        For deltaX = -1 To 1
-            NextX = CurrentX + deltaX
-            If (NextX >= 0) And (NextX <= UBound(mvarTiles, 1)) Then
-                For deltaY = -1 To 1
-                    NextY = CurrentY + deltaY
-                    If (NextY >= 0) And (NextY <= UBound(mvarTiles, 2)) Then
-                        If mvarTiles(NextX, NextY) <> sTile Then
-                        Else
-                            If isSeen(NextX, NextY) = 0 Then
-                                xPosition.Add NextX
-                                yPosition.Add NextY
-                                isSeen(NextX, NextY) = 1
-                            End If
-                        End If
-                    End If
-                Next deltaY
-            End If
-        Next deltaX
-    Loop
-    ProgressHide
+    Erase mvarBlocking
+    Erase mvarTiles
+    Set mvarAnimations = New Fury2TileAnimations
+    Set mvarDepthmapImage = Nothing
+    mvarSprites.Free
+    Set mvarSprites = New Fury2Sprites
+    mvarTileset.Free
+    Set mvarTileset = New Fury2Tileset
+    mvarLighting.Free
+    Set mvarLighting = New Fury2LayerLighting
+    Set mvarParent = Nothing
 End Sub
-
-Public Sub PatternReplace(Tile, Pattern() As Integer)
-On Error Resume Next
-Dim m_lngX As Long, m_lngY As Long
-Dim m_lngXMod As Long, m_lngYMod As Long
-Dim m_intTile As Integer
-    m_intTile = CInt(Tile)
-    m_lngXMod = UBound(Pattern, 1) + 1
-    m_lngYMod = UBound(Pattern, 2) + 1
-    If (UBound(Pattern, 1) = LBound(Pattern, 1)) And (UBound(Pattern, 2) = LBound(Pattern, 2)) Then
-        For m_lngY = 0 To UBound(mvarTiles, 2)
-            ProgressUpdate (Height / m_lngY) * 100
-            For m_lngX = 0 To UBound(mvarTiles, 1)
-                If mvarTiles(m_lngX, m_lngY) = m_intTile Then
-                    mvarTiles(m_lngX, m_lngY) = Pattern(0, 0)
-                End If
-            Next m_lngX
-        Next m_lngY
-    ElseIf (UBound(Pattern, 1) = LBound(Pattern, 1)) Then
-        For m_lngY = 0 To UBound(mvarTiles, 2)
-            ProgressUpdate (Height / m_lngY) * 100
-            For m_lngX = 0 To UBound(mvarTiles, 1)
-                If mvarTiles(m_lngX, m_lngY) = m_intTile Then
-                    mvarTiles(m_lngX, m_lngY) = Pattern(0, m_lngY Mod m_lngYMod)
-                End If
-            Next m_lngX
-        Next m_lngY
-    ElseIf (UBound(Pattern, 2) = LBound(Pattern, 2)) Then
-        For m_lngY = 0 To UBound(mvarTiles, 2)
-            ProgressUpdate (Height / m_lngY) * 100
-            For m_lngX = 0 To UBound(mvarTiles, 1)
-                If mvarTiles(m_lngX, m_lngY) = m_intTile Then
-                    mvarTiles(m_lngX, m_lngY) = Pattern(m_lngX Mod m_lngXMod, 0)
-                End If
-            Next m_lngX
-        Next m_lngY
-    Else
-        For m_lngY = 0 To UBound(mvarTiles, 2)
-            ProgressUpdate (Height / m_lngY) * 100
-            For m_lngX = 0 To UBound(mvarTiles, 1)
-                If mvarTiles(m_lngX, m_lngY) = m_intTile Then
-                    mvarTiles(m_lngX, m_lngY) = Pattern(m_lngX Mod m_lngXMod, m_lngY Mod m_lngYMod)
-                End If
-            Next m_lngX
-        Next m_lngY
-    End If
-    ProgressHide
-End Sub
-
-Public Sub Replace(Tile, NewTile)
-Attribute Replace.VB_Description = "Replaces one tile value with another."
-On Error Resume Next
-Dim m_lngX As Long, m_lngY As Long
-Dim m_intTile As Integer, m_intNewTile As Integer
-    m_intTile = CInt(Tile)
-    m_intNewTile = CInt(NewTile)
-    For m_lngY = 0 To UBound(mvarTiles, 2)
-        For m_lngX = 0 To UBound(mvarTiles, 1)
-            ProgressUpdate (Height / m_lngY) * 100
-            If mvarTiles(m_lngX, m_lngY) = m_intTile Then mvarTiles(m_lngX, m_lngY) = m_intNewTile
-        Next m_lngX
-    Next m_lngY
-    ProgressHide
-    Err.Clear
-End Sub
-
-Public Sub RandomReplace(Tile, ParamArray Replacements())
-On Error Resume Next
-Dim m_lngX As Long, m_lngY As Long
-Dim m_lngCount As Long
-Dim m_intTile As Integer
-    m_intTile = CInt(Tile)
-    m_lngCount = (UBound(Replacements) - LBound(Replacements)) + 1
-    For m_lngY = 0 To UBound(mvarTiles, 2)
-        For m_lngX = 0 To UBound(mvarTiles, 1)
-            If mvarTiles(m_lngX, m_lngY) = m_intTile Then
-                mvarTiles(m_lngX, m_lngY) = Replacements(Int(Rnd * m_lngCount))
-            End If
-        Next m_lngX
-    Next m_lngY
-    Err.Clear
-End Sub
-
-Public Function TileCount(Tile)
-Attribute TileCount.VB_Description = "*Counts the number of tiles in the layer."
-On Error Resume Next
-Dim m_intTile As Integer
-Dim m_lngX As Long, m_lngY As Long
-Dim m_lngCount As Long
-    m_intTile = CInt(Tile)
-    For m_lngY = 0 To UBound(mvarTiles, 2)
-        For m_lngX = 0 To UBound(mvarTiles, 1)
-            If mvarTiles(m_lngX, m_lngY) = m_intTile Then
-                m_lngCount = m_lngCount + 1
-            End If
-        Next m_lngX
-    Next m_lngY
-    TileCount = m_lngCount
-End Function
-
-Public Function TileArray(StartX, StartY, EndX, EndY) As Integer()
-Attribute TileArray.VB_Description = "*Returns the layer's tile values as an array."
-Dim m_lngStartX As Long, m_lngStartY As Long
-Dim m_lngEndX As Long, m_lngEndY As Long
-Dim m_intTiles() As Integer
-Dim m_lngRows As Long
-    m_lngStartX = ClipValue(CLng(StartX), 0, UBound(mvarTiles, 1) - 1)
-    m_lngStartY = ClipValue(CLng(StartY), 0, UBound(mvarTiles, 2) - 1)
-    m_lngEndX = ClipValue(CLng(EndX), 0, UBound(mvarTiles, 1) - 1)
-    m_lngEndY = ClipValue(CLng(EndY), 0, UBound(mvarTiles, 2) - 1)
-    ReDim m_intTiles(0 To m_lngEndX - m_lngStartX, 0 To m_lngEndY - m_lngStartY)
-    For m_lngRows = m_lngStartY To m_lngEndY
-        CopyMemory m_intTiles(0, m_lngRows - m_lngStartY), mvarTiles(m_lngStartX, m_lngRows), (m_lngEndX - m_lngStartX) * 2
-    Next m_lngRows
-    TileArray = m_intTiles
-End Function
-
-Public Property Get WrapX() As Boolean
-Attribute WrapX.VB_MemberFlags = "40"
-    WrapX = mvarWrapX
-End Property
-
-Public Property Let WrapX(NewWrapX As Boolean)
-    mvarWrapX = NewWrapX
-End Property
-
-Public Property Get WrapY() As Boolean
-Attribute WrapY.VB_MemberFlags = "40"
-    WrapY = mvarWrapY
-End Property
-
-Public Property Let WrapY(NewWrapY As Boolean)
-    mvarWrapY = NewWrapY
-End Property
 
 Public Sub GeneratePrerenderedTiles()
 Attribute GeneratePrerenderedTiles.VB_Description = "Fills the layer with sequential tile indexes, used to display pre-rendered image backgrounds."
@@ -611,299 +406,26 @@ Dim m_lngTile As Long
     ProgressHide
 End Sub
 
-Public Property Get Prerendered() As Boolean
-Attribute Prerendered.VB_Description = "This flag controls whether the layer is drawn as a single bitmap or as tiles."
+Public Function GetCollisionLine(ByVal Index As Long) As Fury2Rect
 On Error Resume Next
-    Prerendered = mvarPreRendered
-End Property
-
-Public Property Let Prerendered(NewPrerendered As Boolean)
-On Error Resume Next
-    mvarPreRendered = NewPrerendered
-End Property
-
-Public Property Get TileAnimations() As Fury2TileAnimations
-Attribute TileAnimations.VB_Description = "~The layer's tile animations."
-    Set TileAnimations = mvarAnimations
-End Property
-
-Public Property Get ParallaxX() As Single
-Attribute ParallaxX.VB_Description = "The X multiplier for the layer's coordinates."
-    ParallaxX = mvarParallaxX
-End Property
-
-Public Property Let ParallaxX(NewParallaxX As Single)
-    mvarParallaxX = NewParallaxX
-    m_Engine.Cameras.Dirty
-End Property
-
-Public Property Get ParallaxY() As Single
-Attribute ParallaxY.VB_Description = "The Y multiplier for the layer's coordinates."
-    ParallaxY = mvarParallaxY
-End Property
-
-Public Property Let ParallaxY(NewParallaxY As Single)
-    mvarParallaxY = NewParallaxY
-    m_Engine.Cameras.Dirty
-End Property
-
-Public Property Get DepthmapXRatio() As Single
-    DepthmapXRatio = mvarDepthmapXRatio
-End Property
-
-Public Property Let DepthmapXRatio(NewDepthmapXRatio As Single)
-    mvarDepthmapXRatio = NewDepthmapXRatio
-    m_Engine.Cameras.Dirty
-End Property
-
-Public Property Get DepthmapYRatio() As Single
-    DepthmapYRatio = mvarDepthmapYRatio
-End Property
-
-Public Property Let DepthmapYRatio(NewDepthmapYRatio As Single)
-    mvarDepthmapYRatio = NewDepthmapYRatio
-    m_Engine.Cameras.Dirty
-End Property
-
-Public Function Duplicate() As Fury2MapLayer
-Attribute Duplicate.VB_Description = "Creates a copy of the layer."
-Dim m_lyrNew As Fury2MapLayer
-    Set m_lyrNew = New Fury2MapLayer
-    With m_lyrNew
-        .WrapX = mvarWrapX
-        .WrapY = mvarWrapY
-        .Visible = mvarVisible
-        .Alpha = mvarAlpha
-        .Effect = mvarEffect - 1
-        .Name = mvarName
-        .Lit = mvarLit
-        .Tiles = mvarTiles
-        .BlockingArray = mvarBlocking
-        .BlockingGridWidth = mvarBlockGridWidth
-        .BlockingGridHeight = mvarBlockGridHeight
-        Set .Tileset = mvarTileset.Duplicate
+    With mvarBlockingLines(Index)
+        Set GetCollisionLine = F2Rect(.Start.X, .Start.Y, .end.X, .end.Y)
     End With
-    Set Duplicate = m_lyrNew
-    Set m_lyrNew = Nothing
 End Function
 
-Public Property Get Tiles() As Integer()
-Attribute Tiles.VB_Description = "*"
-Attribute Tiles.VB_MemberFlags = "40"
-On Error Resume Next
-    Tiles = mvarTiles()
+Public Property Get HasDepthmap() As Boolean
+    HasDepthmap = Trim(mvarDepthmap) <> ""
 End Property
 
-Public Property Let Tiles(NewTiles() As Integer)
-On Error Resume Next
-    mvarTiles() = NewTiles()
+Public Property Let Height(ByVal NewHeight As Long)
+    If NewHeight <> mvarHeight Then
+        ResizePreserve mvarWidth, NewHeight
+    End If
 End Property
 
-Public Property Get BlockingArray() As Byte()
-Attribute BlockingArray.VB_Description = "*Returns all the layer's blocking data as an array."
-On Error Resume Next
-    BlockingArray = mvarBlocking()
+Public Property Get Height() As Long
+    Height = mvarHeight
 End Property
-
-Public Property Let BlockingArray(NewBlocking() As Byte)
-On Error Resume Next
-    mvarBlocking() = NewBlocking()
-End Property
-
-Public Sub Clear(Tile As Integer)
-Attribute Clear.VB_Description = "Erases a layer."
-On Error Resume Next
-Dim m_lngX As Long, m_lngY As Long
-    SoftFX.FillMemoryShort VarPtr(mvarTiles(0, 0)), Tile, ((UBound(mvarTiles, 2) + 1) * (UBound(mvarTiles, 1) + 1))
-'    For m_lngY = 0 To UBound(mvarTiles, 2)
-'        For m_lngX = 0 To UBound(mvarTiles, 1)
-'            mvarTiles(m_lngX, m_lngY) = Tile
-'        Next m_lngX
-'    Next m_lngY
-End Sub
-
-Public Sub ResizePreserve(Width As Long, Height As Long)
-Attribute ResizePreserve.VB_MemberFlags = "40"
-On Error Resume Next
-Dim mvarOldTiles() As Integer, mvarCopyRows As Long, m_lngRowCount As Long, mvarOldBlocking() As Byte
-    Err.Clear
-    mvarOldTiles() = mvarTiles()
-    mvarOldBlocking() = mvarBlocking()
-    ReDim mvarTiles(0 To Width - 1, 0 To Height - 1)
-    ReDim mvarBlocking(0 To ((Width * mvarTileset.TileWidth) \ mvarBlockGridWidth) - 1, 0 To ((Height * mvarTileset.TileHeight) \ mvarBlockGridHeight) - 1)
-    Clear mvarTileset.TransparentTile
-    m_lngRowCount = UBound(mvarOldTiles, 2)
-    If m_lngRowCount > UBound(mvarTiles, 2) Then m_lngRowCount = UBound(mvarTiles, 2)
-    For mvarCopyRows = 0 To m_lngRowCount
-        ProgressUpdate (m_lngRowCount / mvarCopyRows) * 100
-        CopyMemory mvarTiles(0, mvarCopyRows), mvarOldTiles(0, mvarCopyRows), ClipValue((UBound(mvarOldTiles, 1) + 1), 0, UBound(mvarTiles, 1) + 1) * 2
-    Next mvarCopyRows
-    m_lngRowCount = UBound(mvarOldBlocking, 2)
-    If m_lngRowCount > UBound(mvarBlocking, 2) Then m_lngRowCount = UBound(mvarBlocking, 2)
-    For mvarCopyRows = 0 To m_lngRowCount
-        ProgressUpdate (m_lngRowCount / mvarCopyRows) * 100
-        CopyMemory mvarBlocking(0, mvarCopyRows), mvarOldBlocking(0, mvarCopyRows), ClipValue((UBound(mvarOldBlocking, 1) + 1), 0, UBound(mvarBlocking, 1) + 1)
-    Next mvarCopyRows
-    mvarWidth = Width
-    mvarHeight = Height
-    ProgressHide
-End Sub
-
-Public Sub Resize(Width As Long, Height As Long)
-Attribute Resize.VB_MemberFlags = "40"
-On Error Resume Next
-    If (Width <= 0) Or (Height <= 0) Then Exit Sub
-    ReDim mvarTiles(0 To Width - 1, 0 To Height - 1)
-    ReDim mvarBlocking(0 To ((Width * mvarTileset.TileWidth) \ mvarBlockGridWidth) - 1, 0 To ((Height * mvarTileset.TileHeight) \ mvarBlockGridHeight) - 1)
-    mvarWidth = Width
-    mvarHeight = Height
-    Clear mvarTileset.TransparentTile
-End Sub
-
-Public Property Get BlockingPointer() As Long
-Attribute BlockingPointer.VB_Description = "*"
-Attribute BlockingPointer.VB_MemberFlags = "40"
-On Error Resume Next
-    BlockingPointer = VarPtr(mvarBlocking(0, 0))
-End Property
-
-Public Property Get CollisionMatrix() As Long
-Attribute CollisionMatrix.VB_Description = "*"
-On Error Resume Next
-    CollisionMatrix = mvarMatrix
-End Property
-
-Public Property Get TilePointer(X As Long, Y As Long) As Long
-Attribute TilePointer.VB_Description = "*"
-Attribute TilePointer.VB_MemberFlags = "40"
-On Error Resume Next
-    If (X < 0) Or (Y < 0) Or (X > UBound(mvarTiles, 1)) Or (Y > UBound(mvarTiles, 2)) Then Exit Property
-    TilePointer = VarPtr(mvarTiles(X, Y))
-End Property
-
-Public Property Get Tile(X, Y) As Integer
-Attribute Tile.VB_Description = "*Gets or sets a tile value from the layer."
-On Error Resume Next
-    If (X < 0) Or (Y < 0) Or (X > UBound(mvarTiles, 1)) Or (Y > UBound(mvarTiles, 2)) Then Tile = -1: Exit Property
-    Tile = mvarTiles(X, Y)
-End Property
-
-Public Property Let Tile(X, Y, Value As Integer)
-On Error Resume Next
-    If (X < 0) Or (Y < 0) Or (X > UBound(mvarTiles, 1)) Or (Y > UBound(mvarTiles, 2)) Then Exit Property
-    mvarTiles(X, Y) = ClipValue(Value, -1, mvarTileset.TileCount - 1)
-    m_Engine.Cameras.Dirty
-End Property
-
-Public Property Get Blocking(X, Y)
-Attribute Blocking.VB_Description = "Gets or sets a blocking value from the layer."
-On Error Resume Next
-    If (X < 0) Or (Y < 0) Or (X > UBound(mvarBlocking, 1)) Or (Y > UBound(mvarBlocking, 2)) Then Exit Property
-    Blocking = mvarBlocking(X, Y)
-End Property
-
-Public Property Let Blocking(X, Y, Value)
-On Error Resume Next
-    If (X < 0) Or (Y < 0) Or (X > UBound(mvarBlocking, 1)) Or (Y > UBound(mvarBlocking, 2)) Then Exit Property
-    mvarBlocking(X, Y) = CByte(Abs(Value))
-End Property
-
-Public Property Set Tileset(vData As Fury2Tileset)
-Attribute Tileset.VB_Description = "~The layer's tileset."
-'used when assigning an Object to the property, on the left side of a Set statement.
-'Syntax: Set X.Tileset = Form1
-    Set mvarTileset = vData
-End Property
-
-Public Property Get Tileset() As Fury2Tileset
-'used when retrieving value of a property, on the right side of an assignment.
-'Syntax: Debug.Print X.Tileset
-    Set Tileset = mvarTileset
-End Property
-
-Public Property Set Sprites(vData As Fury2Sprites)
-Attribute Sprites.VB_Description = "~The layer's sprites."
-'used when assigning an Object to the property, on the left side of a Set statement.
-'Syntax: Set X.Sprites = Form1
-    Set mvarSprites = vData
-End Property
-
-Public Property Get Sprites() As Fury2Sprites
-'used when retrieving value of a property, on the right side of an assignment.
-'Syntax: Debug.Print X.Sprites
-    Set Sprites = mvarSprites
-End Property
-
-Public Property Let Lit(ByVal vData As Boolean)
-'used when assigning a value to the property, on the left side of an assignment.
-'Syntax: X.Lit = 5
-    mvarLit = vData
-    m_Engine.Cameras.Dirty
-End Property
-
-Public Property Get Lit() As Boolean
-Attribute Lit.VB_MemberFlags = "40"
-'used when retrieving value of a property, on the right side of an assignment.
-'Syntax: Debug.Print X.Lit
-    Lit = mvarLit
-End Property
-
-Public Property Let Effect(ByVal vData As SFXBlitModes)
-    mvarEffect = vData + 1
-    m_Engine.Cameras.Dirty
-End Property
-
-Public Property Get Effect() As SFXBlitModes
-    Effect = mvarEffect - 1 ' Hack to make a value of 0 (the default) actually be -1
-End Property
-
-Public Property Let Alpha(ByVal vData As Single)
-Attribute Alpha.VB_Description = "The opacity of the layer."
-    mvarAlpha = vData
-    If mvarAlpha < -1 Then mvarAlpha = -1
-    If mvarAlpha > 1 Then mvarAlpha = 1
-    m_Engine.Cameras.Dirty
-End Property
-
-Public Property Get Alpha() As Single
-'used when retrieving value of a property, on the right side of an assignment.
-'Syntax: Debug.Print X.Alpha
-    Alpha = mvarAlpha
-End Property
-
-Public Property Let Visible(ByVal vData As Boolean)
-Attribute Visible.VB_Description = "This flag controls whether the layer is shown."
-'used when assigning a value to the property, on the left side of an assignment.
-'Syntax: X.Visible = 5
-    mvarVisible = vData
-    m_Engine.Cameras.Dirty
-End Property
-
-Public Property Get Visible() As Boolean
-'used when retrieving value of a property, on the right side of an assignment.
-'Syntax: Debug.Print X.Visible
-    Visible = mvarVisible
-End Property
-
-Private Sub Class_Initialize()
-On Error Resume Next
-    mvarVisible = True
-    ParallaxX = 1
-    ParallaxY = 1
-    mvarBlockGridWidth = 16
-    mvarBlockGridHeight = 16
-    mvarName = "Untitled"
-    ReDim mvarBlockingLines(0)
-    Set mvarLighting = New Fury2LayerLighting
-    Set mvarSprites = New Fury2Sprites
-    Set mvarTileset = New Fury2Tileset
-    Set mvarAnimations = New Fury2TileAnimations
-End Sub
-
-Private Sub Class_Terminate()
-On Error Resume Next
-    DeallocateCollisionMatrix
-End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
@@ -1041,4 +563,464 @@ On Error Resume Next
     End With
 End Sub
 
+Public Property Get Lighting() As Fury2LayerLighting
+Attribute Lighting.VB_Description = "~The layer's lighting data."
+    Set Lighting = mvarLighting
+End Property
+
+Public Property Let Lit(ByVal vData As Boolean)
+Attribute Lit.VB_MemberFlags = "40"
+    mvarLit = vData
+    m_Engine.Cameras.Dirty
+End Property
+
+Public Property Get Lit() As Boolean
+    Lit = mvarLit
+End Property
+
+Public Property Get Name() As String
+Attribute Name.VB_Description = "The layer's name."
+    Name = mvarName
+End Property
+
+Public Property Let Name(NewName As String)
+    mvarName = NewName
+End Property
+
+Public Property Get ParallaxX() As Single
+Attribute ParallaxX.VB_Description = "The X multiplier for the layer's coordinates."
+    ParallaxX = mvarParallaxX
+End Property
+
+Public Property Let ParallaxX(ByVal NewParallaxX As Single)
+    mvarParallaxX = NewParallaxX
+    m_Engine.Cameras.Dirty
+End Property
+
+Public Property Get ParallaxY() As Single
+Attribute ParallaxY.VB_Description = "The Y multiplier for the layer's coordinates."
+    ParallaxY = mvarParallaxY
+End Property
+
+Public Property Let ParallaxY(ByVal NewParallaxY As Single)
+    mvarParallaxY = NewParallaxY
+    m_Engine.Cameras.Dirty
+End Property
+
+Friend Property Set Parent(ByVal NewParent As Fury2Map)
+On Error Resume Next
+    Set mvarParent = NewParent
+End Property
+
+Public Property Get Parent() As Fury2Map
+    Set Parent = mvarParent
+End Property
+
+Public Sub PatternFloodFill(ByVal X As Integer, ByVal Y As Integer, Pattern() As Integer)
+On Error Resume Next
+Dim isSeen() As Byte, isDrawn() As Byte
+Dim xPosition As Collection, yPosition As Collection
+Dim sTile As Integer, nTile As Integer
+Dim NextX As Long, NextY As Long, deltaX As Long, deltaY As Long, CurrentX As Long, CurrentY As Long
+Dim m_lngXMod As Long, m_lngYMod As Long
+    If (UBound(Pattern, 1) = LBound(Pattern, 1)) And (UBound(Pattern, 2) = LBound(Pattern, 2)) Then FloodFill X, Y, Pattern(0, 0): Exit Sub
+    m_lngXMod = UBound(Pattern, 1) + 1
+    m_lngYMod = UBound(Pattern, 2) + 1
+    If (X < 0) Or (Y < 0) Or (X > UBound(mvarTiles, 1)) Or (Y > UBound(mvarTiles, 2)) Then Err.Raise 10241, "FloodFill", "Out of bounds": Exit Sub
+    ReDim isSeen(0 To UBound(mvarTiles, 1), 0 To UBound(mvarTiles, 2))
+    isDrawn = isSeen
+    sTile = mvarTiles(X, Y)
+    Set xPosition = New Collection
+    Set yPosition = New Collection
+    xPosition.Add X
+    yPosition.Add Y
+    isSeen(X, Y) = 1
+    Do Until xPosition.Count <= 0
+        CurrentX = CLng(xPosition.Item(xPosition.Count))
+        CurrentY = CLng(yPosition.Item(yPosition.Count))
+        ProgressUpdate (Height / CurrentY) * 100
+        xPosition.Remove xPosition.Count
+        yPosition.Remove yPosition.Count
+        If isDrawn(CurrentX, CurrentY) = 1 Then Else mvarTiles(CurrentX, CurrentY) = Pattern(Abs(CurrentX - X) Mod m_lngXMod, Abs(CurrentY - Y) Mod m_lngYMod)
+        isDrawn(CurrentX, CurrentY) = 1
+        For deltaX = -1 To 1
+            NextX = CurrentX + deltaX
+            If (NextX >= 0) And (NextX <= UBound(mvarTiles, 1)) Then
+                For deltaY = -1 To 1
+                    NextY = CurrentY + deltaY
+                    If (NextY >= 0) And (NextY <= UBound(mvarTiles, 2)) Then
+                        If mvarTiles(NextX, NextY) <> sTile Then
+                        Else
+                            If isSeen(NextX, NextY) = 0 Then
+                                xPosition.Add NextX
+                                yPosition.Add NextY
+                                isSeen(NextX, NextY) = 1
+                            End If
+                        End If
+                    End If
+                Next deltaY
+            End If
+        Next deltaX
+    Loop
+    ProgressHide
+End Sub
+
+Public Sub PatternReplace(ByVal Tile As Integer, Pattern() As Integer)
+On Error Resume Next
+Dim m_lngX As Long, m_lngY As Long
+Dim m_lngXMod As Long, m_lngYMod As Long
+Dim m_intTile As Integer
+    m_intTile = CInt(Tile)
+    m_lngXMod = UBound(Pattern, 1) + 1
+    m_lngYMod = UBound(Pattern, 2) + 1
+    If (UBound(Pattern, 1) = LBound(Pattern, 1)) And (UBound(Pattern, 2) = LBound(Pattern, 2)) Then
+        For m_lngY = 0 To UBound(mvarTiles, 2)
+            ProgressUpdate (Height / m_lngY) * 100
+            For m_lngX = 0 To UBound(mvarTiles, 1)
+                If mvarTiles(m_lngX, m_lngY) = m_intTile Then
+                    mvarTiles(m_lngX, m_lngY) = Pattern(0, 0)
+                End If
+            Next m_lngX
+        Next m_lngY
+    ElseIf (UBound(Pattern, 1) = LBound(Pattern, 1)) Then
+        For m_lngY = 0 To UBound(mvarTiles, 2)
+            ProgressUpdate (Height / m_lngY) * 100
+            For m_lngX = 0 To UBound(mvarTiles, 1)
+                If mvarTiles(m_lngX, m_lngY) = m_intTile Then
+                    mvarTiles(m_lngX, m_lngY) = Pattern(0, m_lngY Mod m_lngYMod)
+                End If
+            Next m_lngX
+        Next m_lngY
+    ElseIf (UBound(Pattern, 2) = LBound(Pattern, 2)) Then
+        For m_lngY = 0 To UBound(mvarTiles, 2)
+            ProgressUpdate (Height / m_lngY) * 100
+            For m_lngX = 0 To UBound(mvarTiles, 1)
+                If mvarTiles(m_lngX, m_lngY) = m_intTile Then
+                    mvarTiles(m_lngX, m_lngY) = Pattern(m_lngX Mod m_lngXMod, 0)
+                End If
+            Next m_lngX
+        Next m_lngY
+    Else
+        For m_lngY = 0 To UBound(mvarTiles, 2)
+            ProgressUpdate (Height / m_lngY) * 100
+            For m_lngX = 0 To UBound(mvarTiles, 1)
+                If mvarTiles(m_lngX, m_lngY) = m_intTile Then
+                    mvarTiles(m_lngX, m_lngY) = Pattern(m_lngX Mod m_lngXMod, m_lngY Mod m_lngYMod)
+                End If
+            Next m_lngX
+        Next m_lngY
+    End If
+    ProgressHide
+End Sub
+
+Public Property Get Prerendered() As Boolean
+Attribute Prerendered.VB_Description = "This flag controls whether the layer is drawn as a single bitmap or as tiles."
+On Error Resume Next
+    Prerendered = mvarPreRendered
+End Property
+
+Public Property Let Prerendered(ByVal NewPrerendered As Boolean)
+On Error Resume Next
+    mvarPreRendered = NewPrerendered
+End Property
+
+Public Sub RandomReplace(ByVal Tile As Integer, ParamArray Replacements())
+On Error Resume Next
+Dim m_lngX As Long, m_lngY As Long
+Dim m_lngCount As Long
+Dim m_intTile As Integer
+    m_intTile = CInt(Tile)
+    m_lngCount = (UBound(Replacements) - LBound(Replacements)) + 1
+    For m_lngY = 0 To UBound(mvarTiles, 2)
+        For m_lngX = 0 To UBound(mvarTiles, 1)
+            If mvarTiles(m_lngX, m_lngY) = m_intTile Then
+                mvarTiles(m_lngX, m_lngY) = Replacements(Int(Rnd * m_lngCount))
+            End If
+        Next m_lngX
+    Next m_lngY
+    Err.Clear
+End Sub
+
+Public Sub RemoveCollisionLine(ByVal Index As Long)
+On Error Resume Next
+Dim m_lngLines As Long
+    If Index < 0 Then Exit Sub
+    If Index > UBound(mvarBlockingLines) Then Exit Sub
+    mvarBlockingLines(Index).Start.X = -1
+    mvarBlockingLines(Index).Start.Y = -1
+    mvarBlockingLines(Index).end.X = -1
+    mvarBlockingLines(Index).end.Y = -1
+    If Index = UBound(mvarBlockingLines) Then
+    Else
+        For m_lngLines = Index + 1 To UBound(mvarBlockingLines)
+            mvarBlockingLines(m_lngLines - 1) = mvarBlockingLines(m_lngLines)
+        Next m_lngLines
+    End If
+    ReDim Preserve mvarBlockingLines(LBound(mvarBlockingLines) To UBound(mvarBlockingLines) - 1)
+End Sub
+
+Public Sub RenderBlocking(ByVal Surface As Fury2Image, Optional ByVal XOffset As Single = 0, Optional ByVal YOffset As Single = 0)
+On Error Resume Next
+    SoftFX.RenderCollisionLines Surface.Handle, VarPtr(mvarBlockingLines(LBound(mvarBlockingLines))), UBound(mvarBlockingLines) - LBound(mvarBlockingLines) + 1, XOffset, YOffset
+End Sub
+
+Public Sub Replace(ByVal Tile As Integer, ByVal NewTile As Integer)
+Attribute Replace.VB_Description = "Replaces one tile value with another."
+On Error Resume Next
+Dim m_lngX As Long, m_lngY As Long
+Dim m_intTile As Integer, m_intNewTile As Integer
+    m_intTile = CInt(Tile)
+    m_intNewTile = CInt(NewTile)
+    For m_lngY = 0 To UBound(mvarTiles, 2)
+        For m_lngX = 0 To UBound(mvarTiles, 1)
+            ProgressUpdate (Height / m_lngY) * 100
+            If mvarTiles(m_lngX, m_lngY) = m_intTile Then mvarTiles(m_lngX, m_lngY) = m_intNewTile
+        Next m_lngX
+    Next m_lngY
+    ProgressHide
+    Err.Clear
+End Sub
+
+Public Sub Resize(ByVal Width As Long, ByVal Height As Long)
+Attribute Resize.VB_MemberFlags = "40"
+On Error Resume Next
+    If (Width <= 0) Or (Height <= 0) Then Exit Sub
+    ReDim mvarTiles(0 To Width - 1, 0 To Height - 1)
+    ReDim mvarBlocking(0 To ((Width * mvarTileset.TileWidth) \ mvarBlockGridWidth) - 1, 0 To ((Height * mvarTileset.TileHeight) \ mvarBlockGridHeight) - 1)
+    mvarWidth = Width
+    mvarHeight = Height
+    Clear mvarTileset.TransparentTile
+End Sub
+
+Sub ResizeBlocking()
+Attribute ResizeBlocking.VB_MemberFlags = "40"
+On Error Resume Next
+Dim mvarCopyRows As Long, m_lngRowCount As Long, mvarOldBlocking() As Byte
+Dim m_lngWidth As Long, m_lngHeight As Long
+    m_lngWidth = UBound(mvarTiles, 1) + 1
+    m_lngHeight = UBound(mvarTiles, 2) + 1
+    Err.Clear
+    mvarOldBlocking() = mvarBlocking()
+    ReDim mvarBlocking(0 To ((m_lngWidth * mvarTileset.TileWidth) \ mvarBlockGridWidth) - 1, 0 To ((m_lngHeight * mvarTileset.TileHeight) \ mvarBlockGridHeight) - 1)
+    m_lngRowCount = UBound(mvarOldBlocking, 2)
+    If m_lngRowCount > UBound(mvarBlocking, 2) Then m_lngRowCount = UBound(mvarBlocking, 2)
+    For mvarCopyRows = 0 To m_lngRowCount
+        CopyMemory mvarBlocking(0, mvarCopyRows), mvarOldBlocking(0, mvarCopyRows), ClipValue((UBound(mvarOldBlocking, 1) + 1), 0, UBound(mvarBlocking, 1))
+    Next mvarCopyRows
+    Err.Clear
+End Sub
+
+Public Sub ResizePreserve(ByVal Width As Long, ByVal Height As Long)
+Attribute ResizePreserve.VB_MemberFlags = "40"
+On Error Resume Next
+Dim mvarOldTiles() As Integer, mvarCopyRows As Long, m_lngRowCount As Long, mvarOldBlocking() As Byte
+    Err.Clear
+    mvarOldTiles() = mvarTiles()
+    mvarOldBlocking() = mvarBlocking()
+    ReDim mvarTiles(0 To Width - 1, 0 To Height - 1)
+    ReDim mvarBlocking(0 To ((Width * mvarTileset.TileWidth) \ mvarBlockGridWidth) - 1, 0 To ((Height * mvarTileset.TileHeight) \ mvarBlockGridHeight) - 1)
+    Clear mvarTileset.TransparentTile
+    m_lngRowCount = UBound(mvarOldTiles, 2)
+    If m_lngRowCount > UBound(mvarTiles, 2) Then m_lngRowCount = UBound(mvarTiles, 2)
+    For mvarCopyRows = 0 To m_lngRowCount
+        ProgressUpdate (m_lngRowCount / mvarCopyRows) * 100
+        CopyMemory mvarTiles(0, mvarCopyRows), mvarOldTiles(0, mvarCopyRows), ClipValue((UBound(mvarOldTiles, 1) + 1), 0, UBound(mvarTiles, 1) + 1) * 2
+    Next mvarCopyRows
+    m_lngRowCount = UBound(mvarOldBlocking, 2)
+    If m_lngRowCount > UBound(mvarBlocking, 2) Then m_lngRowCount = UBound(mvarBlocking, 2)
+    For mvarCopyRows = 0 To m_lngRowCount
+        ProgressUpdate (m_lngRowCount / mvarCopyRows) * 100
+        CopyMemory mvarBlocking(0, mvarCopyRows), mvarOldBlocking(0, mvarCopyRows), ClipValue((UBound(mvarOldBlocking, 1) + 1), 0, UBound(mvarBlocking, 1) + 1)
+    Next mvarCopyRows
+    mvarWidth = Width
+    mvarHeight = Height
+    ProgressHide
+End Sub
+
+Public Function SetCollisionLine(ByVal Index As Long, NewLine)
+On Error Resume Next
+    With mvarBlockingLines(Index)
+        .Start.X = NewLine.Left
+        .Start.Y = NewLine.Top
+        .end.X = NewLine.Right
+        .end.Y = NewLine.Bottom
+    End With
+End Function
+
+Public Property Set Sprites(vData As Fury2Sprites)
+Attribute Sprites.VB_Description = "~The layer's sprites."
+    Set mvarSprites = vData
+End Property
+
+Public Property Get Sprites() As Fury2Sprites
+    Set Sprites = mvarSprites
+End Property
+
+Public Property Get Tile(ByVal X As Long, ByVal Y As Long) As Integer
+Attribute Tile.VB_Description = "*Gets or sets a tile value from the layer."
+On Error Resume Next
+    If (X < 0) Or (Y < 0) Or (X > UBound(mvarTiles, 1)) Or (Y > UBound(mvarTiles, 2)) Then Tile = -1: Exit Property
+    Tile = mvarTiles(X, Y)
+End Property
+
+Public Property Let Tile(ByVal X As Long, ByVal Y As Long, ByVal Value As Integer)
+On Error Resume Next
+    If (X < 0) Or (Y < 0) Or (X > UBound(mvarTiles, 1)) Or (Y > UBound(mvarTiles, 2)) Then Exit Property
+    mvarTiles(X, Y) = ClipValue(Value, -1, mvarTileset.TileCount - 1)
+    m_Engine.Cameras.Dirty
+End Property
+
+Public Property Get TileAnimations() As Fury2TileAnimations
+Attribute TileAnimations.VB_Description = "~The layer's tile animations."
+    Set TileAnimations = mvarAnimations
+End Property
+
+Public Function TileArray(ByVal StartX As Long, ByVal StartY As Long, ByVal EndX As Long, ByVal EndY As Long) As Integer()
+Attribute TileArray.VB_Description = "*Returns the layer's tile values as an array."
+Dim m_lngStartX As Long, m_lngStartY As Long
+Dim m_lngEndX As Long, m_lngEndY As Long
+Dim m_intTiles() As Integer
+Dim m_lngRows As Long
+    m_lngStartX = ClipValue(StartX, 0, UBound(mvarTiles, 1) - 1)
+    m_lngStartY = ClipValue(StartY, 0, UBound(mvarTiles, 2) - 1)
+    m_lngEndX = ClipValue(EndX, 0, UBound(mvarTiles, 1) - 1)
+    m_lngEndY = ClipValue(EndY, 0, UBound(mvarTiles, 2) - 1)
+    ReDim m_intTiles(0 To m_lngEndX - m_lngStartX, 0 To m_lngEndY - m_lngStartY)
+    For m_lngRows = m_lngStartY To m_lngEndY
+        CopyMemory m_intTiles(0, m_lngRows - m_lngStartY), mvarTiles(m_lngStartX, m_lngRows), (m_lngEndX - m_lngStartX) * 2
+    Next m_lngRows
+    TileArray = m_intTiles
+End Function
+
+Public Function TileCount(ByVal Tile As Integer)
+Attribute TileCount.VB_Description = "*Counts the number of tiles in the layer."
+On Error Resume Next
+Dim m_intTile As Integer
+Dim m_lngX As Long, m_lngY As Long
+Dim m_lngCount As Long
+    m_intTile = CInt(Tile)
+    For m_lngY = 0 To UBound(mvarTiles, 2)
+        For m_lngX = 0 To UBound(mvarTiles, 1)
+            If mvarTiles(m_lngX, m_lngY) = m_intTile Then
+                m_lngCount = m_lngCount + 1
+            End If
+        Next m_lngX
+    Next m_lngY
+    TileCount = m_lngCount
+End Function
+
+Public Function TileGravity(Optional ByVal Column As Long = -1, Optional ByVal EmptyTile As Integer = -1) As Boolean
+Attribute TileGravity.VB_MemberFlags = "40"
+On Error Resume Next
+Dim m_lngX As Long, m_lngY As Long
+Dim m_lngEmpty As Long, m_lngLoops As Long
+Dim m_booFell As Boolean
+    Err.Clear
+    m_lngX = CLng(Column)
+    If m_lngX < 0 Then Exit Function
+    If m_lngX > UBound(mvarTiles, 1) Then Exit Function
+    m_lngEmpty = CLng(EmptyTile)
+    If m_lngX = -1 Then
+        For m_lngX = 0 To UBound(mvarTiles, 1)
+            For m_lngY = 0 To UBound(mvarTiles, 2) - 1
+                If (mvarTiles(m_lngX, m_lngY + 1) = EmptyTile) And (mvarTiles(m_lngX, m_lngY) <> EmptyTile) Then
+                    mvarTiles(m_lngX, m_lngY + 1) = mvarTiles(m_lngX, m_lngY)
+                    mvarTiles(m_lngX, m_lngY) = EmptyTile
+                    m_booFell = m_booFell Or True
+                    m_lngY = 0
+                End If
+            Next m_lngY
+        Next m_lngX
+    Else
+        For m_lngY = 0 To UBound(mvarTiles, 2) - 1
+            If (mvarTiles(m_lngX, m_lngY + 1) = EmptyTile) And (mvarTiles(m_lngX, m_lngY) <> EmptyTile) Then
+                mvarTiles(m_lngX, m_lngY + 1) = mvarTiles(m_lngX, m_lngY)
+                mvarTiles(m_lngX, m_lngY) = EmptyTile
+                m_booFell = m_booFell Or True
+                m_lngY = 0
+            End If
+        Next m_lngY
+    End If
+    TileGravity = m_booFell
+End Function
+
+Public Property Get TilePointer(ByVal X As Long, ByVal Y As Long) As Long
+Attribute TilePointer.VB_Description = "*"
+Attribute TilePointer.VB_MemberFlags = "40"
+On Error Resume Next
+    If (X < 0) Or (Y < 0) Or (X > UBound(mvarTiles, 1)) Or (Y > UBound(mvarTiles, 2)) Then Exit Property
+    TilePointer = VarPtr(mvarTiles(X, Y))
+End Property
+
+Public Property Get Tiles() As Integer()
+Attribute Tiles.VB_Description = "*"
+Attribute Tiles.VB_MemberFlags = "40"
+On Error Resume Next
+    Tiles = mvarTiles()
+End Property
+
+Public Property Let Tiles(NewTiles() As Integer)
+On Error Resume Next
+    mvarTiles() = NewTiles()
+    mvarWidth = UBound(mvarTiles, 1) + 1
+    mvarHeight = UBound(mvarTiles, 2) + 1
+End Property
+
+Public Property Set Tileset(vData As Fury2Tileset)
+Attribute Tileset.VB_Description = "~The layer's tileset."
+    Set mvarTileset = vData
+End Property
+
+Public Property Get Tileset() As Fury2Tileset
+    Set Tileset = mvarTileset
+End Property
+
+Sub UpdateDepthmap()
+On Error Resume Next
+    If Not m_booEditor Then
+        If Trim(mvarDepthmap) = "" Then
+            Set mvarDepthmapImage = Nothing
+        Else
+            Set mvarDepthmapImage = m_Engine.LoadImage(mvarDepthmap)
+        End If
+    End If
+End Sub
+
+Public Property Let Visible(ByVal vData As Boolean)
+Attribute Visible.VB_Description = "This flag controls whether the layer is shown."
+    mvarVisible = vData
+    m_Engine.Cameras.Dirty
+End Property
+
+Public Property Get Visible() As Boolean
+    Visible = mvarVisible
+End Property
+
+Public Property Let Width(ByVal NewWidth As Long)
+    If NewWidth <> mvarWidth Then
+        ResizePreserve NewWidth, mvarHeight
+    End If
+End Property
+
+Public Property Get Width() As Long
+    Width = mvarWidth
+End Property
+
+Public Property Get WrapX() As Boolean
+Attribute WrapX.VB_MemberFlags = "40"
+    WrapX = mvarWrapX
+End Property
+
+Public Property Let WrapX(ByVal NewWrapX As Boolean)
+    mvarWrapX = NewWrapX
+End Property
+
+Public Property Get WrapY() As Boolean
+Attribute WrapY.VB_MemberFlags = "40"
+    WrapY = mvarWrapY
+End Property
+
+Public Property Let WrapY(ByVal NewWrapY As Boolean)
+    mvarWrapY = NewWrapY
+End Property
 

@@ -35,6 +35,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 Public Event Change()
+Public Event SelectionChange()
 
 Public Property Get Text() As String
     Text = csScript.Text
@@ -53,6 +54,10 @@ End Property
 
 Private Sub csScript_Change(ByVal Control As CodeSenseCtl.ICodeSense)
     RaiseEvent Change
+End Sub
+
+Private Sub csScript_SelChange(ByVal Control As CodeSenseCtl.ICodeSense)
+    RaiseEvent SelectionChange
 End Sub
 
 Private Sub UserControl_Resize()

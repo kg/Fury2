@@ -258,6 +258,8 @@ library SoftFX {
         int CharFromPoint;
 		int MaxChars;
 		int CharsDrawn;
+		int TabStopCount;
+		int TabStopPointer;
     } TextParam;
 
     typedef struct {
@@ -396,6 +398,8 @@ library SoftFX {
         int AllocateEmptyImage();
         [entry("_SaveImageToPNG@8")]
         int SaveImageToPNG(int Image, [string] char *Filename);
+        [entry("_SaveImageToTGA@8")]
+        int SaveImageToTGA(int Image, [string] char *Filename);
 
         [entry("_ReallocateImage@12")]
         void ReAllocateImage(int Image, int Width, int Height);
@@ -556,12 +560,12 @@ library SoftFX {
         [entry("_RenderPlaneOutlines_Masked@28")]
         int MultiPrimitive_Plane_AA_Masked_Ptr(int Image, int Planes, int Mask, int Color, int Count, float XOffset, float YOffset);
 
-        [entry("_FilterSimple_ConvexPolygon@16")]
-        int Primitive_ConvexPolygon(int Image, GenericPolygon *Poly, int Color, int Renderer);
-        [entry("_FilterSimple_ConvexPolygon_Textured@20")]
-        int Primitive_ConvexPolygon_Textured(int Image, int Texture, GenericPolygon *Poly, int Scaler, int Renderer);
-        [entry("_FilterSimple_ConvexPolygon_Gradient@12")]
-        int Primitive_ConvexPolygon_Gradient(int Image, GenericPolygon *Poly, int Renderer);
+        [entry("_FilterSimple_ConvexPolygon@20")]
+        int Primitive_ConvexPolygon(int Image, GenericPolygon *Poly, int Color, int Renderer, int RenderArgument);
+        [entry("_FilterSimple_ConvexPolygon_Textured@24")]
+        int Primitive_ConvexPolygon_Textured(int Image, int Texture, GenericPolygon *Poly, int Scaler, int Renderer, int RenderArgument);
+        [entry("_FilterSimple_ConvexPolygon_Gradient@16")]
+        int Primitive_ConvexPolygon_Gradient(int Image, GenericPolygon *Poly, int Renderer, int RenderArgument);
 
         [entry("_FilterSimple_Gradient_Horizontal@16")]
         int Filter_Gradient_Horizontal(int Image, Rectangle *Area, int Color1, int Color2);
@@ -716,6 +720,16 @@ library SoftFX {
         int Blit_Subtractive(int Dest, int Source, Rectangle *Rect, int SourceX, int SourceY);
         [entry("_BlitSimple_Subtractive_Opacity@24")]
         int Blit_Subtractive_Opacity(int Dest, int Source, Rectangle *Rect, int SourceX, int SourceY, int Opacity);
+
+        [entry("_BlitSimple_Additive_SourceAlpha@20")]
+        int Blit_Additive_SourceAlpha(int Dest, int Source, Rectangle *Rect, int SourceX, int SourceY);
+        [entry("_BlitSimple_Additive_SourceAlpha_Opacity@24")]
+        int Blit_Additive_SourceAlpha_Opacity(int Dest, int Source, Rectangle *Rect, int SourceX, int SourceY, int Opacity);
+
+        [entry("_BlitSimple_Subtractive_SourceAlpha@20")]
+        int Blit_Subtractive_SourceAlpha(int Dest, int Source, Rectangle *Rect, int SourceX, int SourceY);
+        [entry("_BlitSimple_Subtractive_SourceAlpha_Opacity@24")]
+        int Blit_Subtractive_SourceAlpha_Opacity(int Dest, int Source, Rectangle *Rect, int SourceX, int SourceY, int Opacity);
 
         [entry("_BlitSimple_Unerase@20")]
         int Blit_Unerase(int Dest, int Source, Rectangle *Rect, int SourceX, int SourceY);
@@ -1323,17 +1337,5 @@ library SoftFX {
 //        int GetOverrideCount(int Key);
 //        [entry("_KeyMatches@8")]
 //        int KeyMatches(int KeyPointer, [string, in] const char* Match);
-    }
-    
-    [dllname("SoftFX.dll"), helpstring("Fury2 MNG Support")]
-    module MNGs {
-        [entry("_LoadMNG@4")]
-        int LoadMNG([string] char* Filename);
-        [entry("_DestroyMNG@4")]
-        void DestroyMNG(int MNG);
-        [entry("_GetMNGBuffer@4")]
-        int GetMNGBuffer(int MNG);
-        [entry("_SyncMNG@4")]
-        void SyncMNG(int MNG);
     }
 }

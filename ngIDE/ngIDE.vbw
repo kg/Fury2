@@ -1,10 +1,10 @@
-frmMain = -458, 4, 578, 611, C, 44, 46, 975, 650, C
+frmMain = 5, 70, 1041, 677, C, 44, 46, 975, 650, C
 mdlToolbars = 66, 69, 1068, 676, C
 cEditor = 88, 92, 1019, 696, C
 mdlEditor = -410, 76, 521, 680, C
 frmIcons = 176, 184, 1178, 791, C, 176, 184, 1107, 788, C
 frmTerminate = 92, 92, 990, 699, C, 198, 207, 1129, 811, C
-cChildManager = 176, 184, 1107, 788, C
+cChildManager = 176, 184, 1107, 788, Z
 mdlEngine = 110, 115, 1041, 719, C
 mdlPlugins = 66, 69, 997, 673, C
 cRegistry = 22, 23, 953, 627, C

@@ -62,6 +62,15 @@ Begin VB.Form frmConfigure
    End
    Begin VB.Frame fraSound 
       Caption         =   "Sound"
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   700
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
       Height          =   270
       Left            =   30
       TabIndex        =   3
@@ -80,6 +89,15 @@ Begin VB.Form frmConfigure
    End
    Begin VB.Frame fraGraphics 
       Caption         =   "Graphics"
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   700
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
       Height          =   1485
       Left            =   30
       TabIndex        =   0
@@ -104,12 +122,12 @@ Begin VB.Form frmConfigure
          Top             =   735
          Width           =   1260
       End
-      Begin VB.ComboBox cmbScreenSize 
+      Begin VB.ComboBox cmbDisplayMode 
          Enabled         =   0   'False
          Height          =   315
-         ItemData        =   "frmConfigure.frx":70C3
+         ItemData        =   "frmConfigure.frx":70BF
          Left            =   1470
-         List            =   "frmConfigure.frx":70EB
+         List            =   "frmConfigure.frx":70DE
          Style           =   2  'Dropdown List
          TabIndex        =   6
          Top             =   735
@@ -133,9 +151,9 @@ Begin VB.Form frmConfigure
       End
       Begin VB.ComboBox cmbGraphicsPlugin 
          Height          =   315
-         ItemData        =   "frmConfigure.frx":7164
+         ItemData        =   "frmConfigure.frx":712F
          Left            =   1470
-         List            =   "frmConfigure.frx":716B
+         List            =   "frmConfigure.frx":7136
          Style           =   2  'Dropdown List
          TabIndex        =   2
          Top             =   255
@@ -152,16 +170,16 @@ Begin VB.Form frmConfigure
          Top             =   1170
          Width           =   975
       End
-      Begin VB.Label lblScreenMode 
+      Begin VB.Label lblDisplayMode 
          Alignment       =   1  'Right Justify
          AutoSize        =   -1  'True
-         Caption         =   "Screen Mode:"
+         Caption         =   "Display Mode:"
          Enabled         =   0   'False
          Height          =   195
-         Left            =   450
+         Left            =   435
          TabIndex        =   7
          Top             =   795
-         Width           =   990
+         Width           =   1005
       End
       Begin VB.Label lblOutputPlugin 
          Alignment       =   1  'Right Justify
@@ -203,60 +221,42 @@ Public Cancelled As Boolean
 
 Sub LoadSettings()
 On Error Resume Next
+Dim l_strPlugin As String
     With m_Engine
+        cmbGraphicsPlugin.Clear
         If m_booIDE Then
-            cmbGraphicsPlugin.ListIndex = 0
+            l_strPlugin = Dir(App.Path & "\..\..\binary\sys\video_*.dll")
         Else
-            Select Case LCase(Trim(m_Engine.OutputPlugin))
-            Case "ddraw", "directdraw"
-                cmbGraphicsPlugin.ListIndex = 1
-            Case Else
-                cmbGraphicsPlugin.ListIndex = 0
-            End Select
+            l_strPlugin = Dir(App.Path & "\video_*.dll")
         End If
-        cmbScreenSize.Text = CStr(.ScreenWidth) + "x" + CStr(.ScreenHeight)
-        If Err.Number <> 0 Then
-            cmbScreenSize.AddItem CStr(.ScreenWidth) + "x" + CStr(.ScreenHeight)
-            cmbScreenSize.Text = CStr(.ScreenWidth) + "x" + CStr(.ScreenHeight)
-            Err.Clear
-        End If
-        If .Fullscreen = False Then
-            cmbScreenSize.Text = "Windowed"
+        Do While l_strPlugin <> ""
+            cmbGraphicsPlugin.AddItem Replace(Replace(l_strPlugin, "Video_", "", , , vbTextCompare), ".dll", "", , , vbTextCompare)
+            l_strPlugin = Dir
+        Loop
+        If m_booIDE Then
+            cmbGraphicsPlugin.Text = "GDI"
+        Else
+            cmbGraphicsPlugin.Text = .OutputPlugin
         End If
         Err.Clear
-        Select Case .BitDepth
-        Case 16
-            cmbBitDepth.ListIndex = 1
-        Case 24
-            cmbBitDepth.ListIndex = 2
-        Case 32
-            cmbBitDepth.ListIndex = 3
-        Case Else
-            cmbBitDepth.ListIndex = 0
-        End Select
         chkVSync.Value = Abs(CInt(.VSync))
-        chkDirectRender.Value = Abs(CInt(.DirectRender))
         chkEnableSound.Value = Abs(CInt(Not CBool(.DisableSound)))
+        cmbDisplayMode.Text = "Default"
+        cmbBitDepth.Text = "Default"
     End With
 End Sub
 
 Sub SaveSettings()
 On Error Resume Next
     With m_Engine
-        If cmbGraphicsPlugin.ListIndex = 1 Then
-            .OutputPlugin = "DirectDraw"
-        Else
-            .OutputPlugin = "GDI"
-        End If
-        If cmbScreenSize.ListIndex = 0 Then
+        .OutputPlugin = cmbGraphicsPlugin.Text
+        If InStr(cmbDisplayMode.Text, "Windowed") Then
             .Fullscreen = False
-            .ScreenWidth = .ScreenWidth
-            .ScreenHeight = .ScreenHeight
-        ElseIf cmbScreenSize.ListIndex = 1 Then
+            .ScreenScaleRatio = CSng(Replace(Replace(cmbDisplayMode.Text, "x", ""), "Windowed", ""))
+        ElseIf cmbDisplayMode.Text = "Default" Then
         Else
             .Fullscreen = True
-            .ScreenWidth = CLng(Left(cmbScreenSize.Text, InStr(cmbScreenSize.Text, "x") - 1))
-            .ScreenHeight = CLng(Mid(cmbScreenSize.Text, InStr(cmbScreenSize.Text, "x") + 1))
+            .ScreenScaleRatio = CSng(Replace(cmbDisplayMode.Text, "x", ""))
         End If
         Select Case cmbBitDepth.ListIndex
         Case 1
@@ -266,27 +266,25 @@ On Error Resume Next
         Case 3
             .BitDepth = 32
         Case Else
-            .BitDepth = -1
         End Select
         .DisableSound = Not CBool(chkEnableSound.Value)
         .VSync = CBool(chkVSync.Value)
-        .DirectRender = CBool(chkDirectRender.Value)
     End With
 End Sub
 
 Private Sub cmbGraphicsPlugin_Change()
-    If cmbGraphicsPlugin.ListIndex = 0 Then
-        cmbScreenSize.Enabled = False
+    If cmbGraphicsPlugin.Text = "GDI" Then
+        cmbDisplayMode.Enabled = False
         cmbBitDepth.Enabled = False
         chkVSync.Enabled = False
         lblVSync.Enabled = False
-        lblScreenMode.Enabled = False
+        lblDisplayMode.Enabled = False
     Else
-        cmbScreenSize.Enabled = True
+        cmbDisplayMode.Enabled = True
         cmbBitDepth.Enabled = True
         chkVSync.Enabled = True
         lblVSync.Enabled = True
-        lblScreenMode.Enabled = True
+        lblDisplayMode.Enabled = True
     End If
 End Sub
 
@@ -308,4 +306,3 @@ End Sub
 Private Sub Form_Load()
     LoadSettings
 End Sub
-

@@ -69,7 +69,7 @@ On Error Resume Next
         MenuString("&Game", , "GameMenu"), Menus(MenuString("&Open...", , "Game:Open", "OPEN GAME"), MenuString("Open &Recent", , "RecentGames"), Menus(MenuString("-", , "RecentGamesEndSeparator")), "-", MenuString("&Play", "F9", "Game:Play", "PLAY"), "-"), _
         MenuString("&Tools", , "ToolMenu"), Menus(, MenuString("-", , "PluginsEndSeparator"), MenuString("Manage Plugins...", , "Plugins:Manage", "PLUGIN"), MenuString("Options...", , "Show:Options", "PROPERTIES", , , False), MenuString("-", , "PluginsEndSeparator2")), _
         MenuString("&Window", , "WindowMenu"), Menus(MenuString("-", , "WindowsEndSeparator"), MenuString("Close All", , "Action:CloseAllWindows", "CLOSE ALL WINDOWS", , , False), MenuString("-", , "WindowsEndSeparator2")), _
-        MenuString("&Help", , "HelpMenu"), Menus(MenuString("&About...", , "Help:About", "HELP"), "-")), _
+        MenuString("&Help", , "HelpMenu"), Menus(MenuString("Online &Documentation", , "Help:OnlineDocs", "HELP"), MenuString("Online &Tutorials", , "Help:OnlineTutorials", "HELP"), "-", MenuString("&About...", , "Help:About", "HELP"), "-")), _
         frmIcons.ilIcons
 End Sub
 

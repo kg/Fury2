@@ -17,7 +17,6 @@ Begin VB.Form frmNewMap
    StartUpPosition =   2  'CenterScreen
    Begin VB.CommandButton cmdOK 
       Caption         =   "&OK"
-      Default         =   -1  'True
       BeginProperty Font 
          Name            =   "Tahoma"
          Size            =   9

@@ -149,6 +149,11 @@ Public Enum Fury2TimerEventTypes
     F2TE_Exact
 End Enum
 
+Public Enum Fury2WrapModes
+    F2WM_Word = 0
+    F2WM_None = 1
+End Enum
+
 Public Function Engine() As Fury2Engine
 Attribute Engine.VB_Description = "Returns the current Fury² Engine object."
     Set Engine = m_Engine

@@ -30,6 +30,7 @@ Public ImageOnly As Boolean
 Public ToggleButton As Boolean, ToggleGroup As Long
 Public Value As Boolean
 Private m_staState As SkinState
+Private m_wdgMe As iWidget
 
 Friend Sub GroupSync()
 On Error Resume Next
@@ -118,7 +119,7 @@ End Sub
 
 Public Property Get Widget() As iWidget
 On Error Resume Next
-    Set Widget = Me
+    Set Widget = m_wdgMe
 End Property
 
 Public Property Get Caption() As String
@@ -141,6 +142,7 @@ On Error Resume Next
     HoverAlpha = 1
     PressedAlpha = 1
     BlitMode = BlitMode_Default
+    Set m_wdgMe = Me
 End Sub
 
 Private Sub iWidget_GotFocus(ByVal Parent As iContainer, ByVal FromWidget As iWidget)

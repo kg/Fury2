@@ -37,9 +37,20 @@ Implements Fury2Object
 Implements IVirtualFileSaveable
 Private mvarX As Single
 Private mvarY As Single
-Public WaitOverride As Long
+Private mvarWait As Long
 Public ReachedEvent As String
 Public FailEvent As String
+Public WaitRemainder As Long
+
+Public Property Let Wait(ByVal vData As Long)
+On Error Resume Next
+    mvarWait = vData
+    WaitRemainder = vData
+End Property
+
+Public Property Get Wait() As Long
+    Wait = mvarWait
+End Property
 
 Public Property Let Y(ByVal vData As Single)
 On Error Resume Next
@@ -61,16 +72,14 @@ On Error Resume Next
     X = mvarX
 End Property
 
-Private Sub Class_Initialize()
-    WaitOverride = -1
-End Sub
-
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
     With File
         .ReadSegment_Begin
             .Load mvarX
             .Load mvarY
+            .Load mvarWait
+            WaitRemainder = mvarWait
         .ReadSegment_End
     End With
 End Sub
@@ -81,6 +90,7 @@ On Error Resume Next
         .WriteSegment_Begin
             .Save mvarX
             .Save mvarY
+            .Save mvarWait
         .WriteSegment_End
     End With
 End Sub

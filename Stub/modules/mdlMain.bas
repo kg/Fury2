@@ -41,7 +41,11 @@ On Error Resume Next
     DoEvents
     Load frmNull
     Err.Clear
-    Fury2Load Command$, EM_Normal, frmNull
+    If Trim(Command$) = "" Then
+        Fury2Load App.Path, EM_Normal, frmNull
+    Else
+        Fury2Load Command$, EM_Normal, frmNull
+    End If
     If Err <> 0 Then
         MsgBox "Unable to load Fury².", vbCritical, "Error"
         Unload frmNull

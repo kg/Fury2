@@ -28,6 +28,7 @@ Public Skin As Skin
 Public Rectangle As Fury2Rect
 Public HaveFocus As Boolean
 Public Popup As Boolean
+Private m_wdgMe As iWidget
 
 Public Function GetItemY(ByVal Item As Long) As Long
 Dim l_itmItem As Item
@@ -129,7 +130,7 @@ End Sub
 
 Public Property Get Widget() As iWidget
 On Error Resume Next
-    Set Widget = Me
+    Set Widget = m_wdgMe
 End Property
 
 Private Sub Class_Initialize()
@@ -140,6 +141,7 @@ On Error Resume Next
     Set m_colItems = New ItemCollection
     Set m_colItems.Parent = Me
     Visible = False
+    Set m_wdgMe = Me
 End Sub
 
 Private Sub iWidget_LostCapture(ByVal Parent As iContainer)

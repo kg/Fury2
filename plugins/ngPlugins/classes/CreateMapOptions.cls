@@ -22,9 +22,18 @@ Private mvarHeight As Long
 Private mvarTileset As String
 Private mvarTileWidth As Long
 Private mvarTileHeight As Long
+Private mvarTileMatteColor As Long
 Private mvarLayerEffect As SFXBlitModes
 Private mvarCollisionType As Fury2CollisionTypes
 Private mvarName As String
+
+Public Property Get TileMatteColor() As Long
+    TileMatteColor = mvarTileMatteColor
+End Property
+
+Public Property Let TileMatteColor(ByVal vData As Long)
+    mvarTileMatteColor = vData
+End Property
 
 Public Property Let Name(ByVal vData As String)
 Attribute Name.VB_Description = "The name of the new map."
@@ -130,6 +139,7 @@ Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
         .Load mvarLayerEffect
         .Load mvarCollisionType
         .Load mvarName
+        .Load mvarTileMatteColor
     End With
 End Sub
 
@@ -144,5 +154,6 @@ Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
         .Save mvarLayerEffect
         .Save mvarCollisionType
         .Save mvarName
+        .Save mvarTileMatteColor
     End With
 End Sub

@@ -45,8 +45,10 @@ Public Sub Hide()
 On Error Resume Next
     If g_edEditor.Event_DocumentClose(Me) Then Exit Sub
     SetBusyState True
-    Form.Hide
-    Unload Form
+    If Not (Form Is Nothing) Then
+        Form.Hide
+        Unload Form
+    End If
     Detach
     SetBusyState False
 End Sub

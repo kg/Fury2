@@ -223,6 +223,12 @@ End Property
 Public Property Get BlitMode_Normal_Tint() As Long
     BlitMode_Normal_Tint = 24
 End Property
+Public Property Get BlitMode_Additive_SourceAlpha() As Long
+    BlitMode_Additive_SourceAlpha = 25
+End Property
+Public Property Get BlitMode_Subtractive_SourceAlpha() As Long
+    BlitMode_Subtractive_SourceAlpha = 26
+End Property
 
 Public Property Get RenderMode_Default() As Long
     RenderMode_Default = -1

@@ -511,6 +511,7 @@ Dim l_lngStack As Long, l_booFound As Boolean
 Dim l_strInfo As String
 Dim l_lngOldIndex As Long, l_lngIndex As Long, l_objFind As Object
 Dim l_strSelectedItem As String
+    txtEdit_LostFocus
     txtEdit.Locked = True
     l_strSelectedItem = m_oiItems(m_lngSelectedItem).Name
     If Obj Is Nothing Then
@@ -616,6 +617,7 @@ Dim l_strSelectedItem As String
                                     ReDim m_oiItems(l_lngItemCount - 1).DropdownValues(0 To .ReturnType.TypeInfo.Members.Count - 1)
                                     ReDim m_oiItems(l_lngItemCount - 1).DropdownText(0 To .ReturnType.TypeInfo.Members.Count - 1)
                                     Dim l_memMember As MemberInfo, l_lngValue As Long
+                                    l_lngValue = 0
                                     For Each l_memMember In .ReturnType.TypeInfo.Members
                                         m_oiItems(l_lngItemCount - 1).DropdownText(l_lngValue) = l_memMember.Name
                                         m_oiItems(l_lngItemCount - 1).DropdownValues(l_lngValue) = l_memMember.Value
@@ -686,13 +688,31 @@ Dim l_strValue As String
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                txtEdit.Text = Replace(Replace(l_strValue, Engine.Engine.FileSystem.Root, "/"), "\", "/")
+                If InStr(l_strValue, Engine.Engine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, Engine.Engine.FileSystem.Root, "/")
+                    l_strValue = Replace(l_strValue, "\", "/")
+                    txtEdit.Text = l_strValue
+                Else
+                    Select Case MsgBox("The file you have selected is not inside your game folder. The engine will not be able to load it. Continue?", vbInformation Or vbYesNo, "Warning")
+                    Case vbYes
+                        txtEdit.Text = l_strValue
+                    End Select
+                End If
                 txtEdit_LostFocus
             End If
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                txtEdit.Text = Replace(Replace(l_strValue, Engine.Engine.FileSystem.Root, "/"), "\", "/")
+                If InStr(l_strValue, Engine.Engine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, Engine.Engine.FileSystem.Root, "/")
+                    l_strValue = Replace(l_strValue, "\", "/")
+                    txtEdit.Text = l_strValue
+                Else
+                    Select Case MsgBox("The file you have selected is not inside your game folder. The engine will not be able to load it. Continue?", vbInformation Or vbYesNo, "Warning")
+                    Case vbYes
+                        txtEdit.Text = l_strValue
+                    End Select
+                End If
                 txtEdit_LostFocus
             End If
         Else
@@ -936,6 +956,10 @@ Dim l_lngNameWidth As Long
     If Not m_booVisible Then Exit Sub
     If m_imgColorBuffer Is Nothing Then
         Set m_imgColorBuffer = F2Image(m_lngItemHeight - 3, m_lngItemHeight - 3)
+    Else
+        If m_imgColorBuffer.Width <> (m_lngItemHeight - 3) Or m_imgColorBuffer.Height <> (m_lngItemHeight - 3) Then
+            m_imgColorBuffer.Resize m_lngItemHeight - 3, m_lngItemHeight - 3
+        End If
     End If
     If m_imgColorBufferBG Is Nothing Then
         Set m_imgColorBufferBG = F2Image(2, 2)
@@ -1062,6 +1086,7 @@ Dim l_lngValues As Long
         l_itValue.FromString l_strText
         RefreshValues
         RefreshEditBox
+        RaiseEvent AfterItemChange(l_varOldValue, l_itValue)
         Exit Sub
     End If
     l_varOldValue = m_oiItems(m_lngSelectedItem).Value
@@ -1131,10 +1156,15 @@ Private Sub UserControl_KeyDown(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
 Dim l_lngIndex As Long
     Select Case KeyCode
+    Case vbKeyReturn
+        KeyCode = 0
+        txtEdit_LostFocus
     Case vbKeyDown
+        txtEdit_LostFocus
         l_lngIndex = m_lngSelectedItem + 1
         KeyCode = 0
     Case vbKeyUp
+        txtEdit_LostFocus
         l_lngIndex = m_lngSelectedItem - 1
         KeyCode = 0
     Case Else
@@ -1168,6 +1198,7 @@ End Sub
 Private Sub UserControl_Show()
 On Error Resume Next
     m_booVisible = True
+    Set m_imgColorBuffer = F2Image(1, 1)
     vsScroll.Width = GetScrollbarSize(vsScroll) + 1
     With m_splSplitter
         .Orientation = cSPLTOrientationHorizontal

@@ -50,6 +50,7 @@ Dim l_objWaypoint As Fury2Waypoint
     mCol.Remove 1
     If mvarLooping Then
         mCol.Add l_objWaypoint
+        l_objWaypoint.WaitRemainder = l_objWaypoint.Wait
     End If
     If l_objWaypoint.ReachedEvent <> "" Then
         m_Engine.ScriptEngine.AddCode l_objWaypoint.ReachedEvent
@@ -93,7 +94,7 @@ On Error Resume Next
     mvarLooping = NewLooping
 End Property
 
-Public Function Add(X As Single, Y As Single, Optional ReachedEvent As String = "", Optional FailEvent As String = "", Optional WaitOverride As Long = -1, Optional ByVal AtIndex) As Fury2Waypoint
+Public Function Add(ByVal X As Single, ByVal Y As Single, Optional ReachedEvent As String = "", Optional FailEvent As String = "", Optional Wait As Long = 0, Optional ByVal AtIndex) As Fury2Waypoint
 On Error Resume Next
     If mCol.Count >= c_lngMaxWaypoints Then Exit Function
     Dim objNewMember As Fury2Waypoint
@@ -101,7 +102,6 @@ On Error Resume Next
     
     objNewMember.X = X
     objNewMember.Y = Y
-    objNewMember.WaitOverride = CLng(WaitOverride)
     objNewMember.ReachedEvent = ReachedEvent
     objNewMember.FailEvent = FailEvent
     If IsMissing(AtIndex) Then

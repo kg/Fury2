@@ -84,13 +84,15 @@ Private m_booScriptLoadFailed As Boolean
 Private m_booScript_Update As Boolean, m_booScript_Hit As Boolean
 Private m_booScript_HitMap As Boolean, m_booScript_Decay As Boolean
 Private m_booScript_AIUpdate As Boolean, m_booScript_Activate As Boolean
-Private m_booScript_Touched As Boolean, m_booScript_Load As Boolean
+Private m_booScript_Load As Boolean
 Private m_booScript_Died As Boolean, m_booScript_Step As Boolean
 Private m_booScript_FadeOut As Boolean, m_booScript_Collided As Boolean
     
 Private m_booAreasUpdated As Boolean
 
 Private m_lngWalkState As Long, m_lngIdleState As Long
+
+Public LinkState As Boolean, LinkPose As Boolean, LinkFrame As Boolean
 
 Public SavedPaths As Fury2Collection
 Attribute SavedPaths.VB_VarDescription = "*"
@@ -256,8 +258,6 @@ On Error Resume Next
             SupportsAction = m_booScript_AIUpdate
         Case "activate"
             SupportsAction = m_booScript_Activate
-        Case "touched"
-            SupportsAction = m_booScript_Touched
         Case "died"
             SupportsAction = m_booScript_Died
         Case "step"
@@ -287,14 +287,14 @@ On Error Resume Next
     m_Engine.ContextLevelRemove
 End Function
 
-Function ActionAhead(Optional ByVal Distance As Single = -1, Optional ByVal ActionName As String = "Activate") As Boolean
+Function ActionAhead(Optional ByVal Distance As Single = -1, Optional ByVal ActionName As String = "Activate", Optional ByVal Class As Long = -1) As Boolean
 On Error Resume Next
 Dim l_objTarget As Object
 Dim l_sprTarget As Fury2Sprite, l_araTarget As Fury2Area
     If Distance = -1 Then
         Distance = m_Engine.ActivationDistance
     End If
-    Set l_objTarget = Me.ObjectCollisionCheck(Sin(m_spParam.Velocity.B * c_dblRadian) * Distance, -Cos(m_spParam.Velocity.B * c_dblRadian) * Distance)
+    Set l_objTarget = Me.ObjectCollisionCheck(Sin(m_spParam.Velocity.B * c_dblRadian) * Distance, -Cos(m_spParam.Velocity.B * c_dblRadian) * Distance, Class)
     If l_objTarget Is Nothing Then
     Else
         If TypeOf l_objTarget Is Fury2Sprite Then
@@ -403,6 +403,9 @@ On Error Resume Next
     Alpha = 1
     ScaleLevel = 1
     Visible = True
+    LinkState = True
+    LinkPose = True
+    LinkFrame = True
     Name = "Sprite"
     SpriteType = F2ST_Entity
     VelocityMultiplier = 1
@@ -458,6 +461,7 @@ Dim l_spOld As SpriteParam
         Else
         End If
         
+        .DisplayRotation = Me.DisplayRotation
         .RotationAngle = Me.RotationAngle
         .ScaleLevel = Me.ScaleLevel
         .Solid = Me.Solid
@@ -682,6 +686,15 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 .Load m_booRelativeAnimation
                 .Load m_lngIdleState
                 .Load m_lngWalkState
+                l_booValue = True
+                If Not .EOS Then .Load l_booValue
+                LinkState = l_booValue
+                l_booValue = True
+                If Not .EOS Then .Load l_booValue
+                LinkPose = l_booValue
+                l_booValue = True
+                If Not .EOS Then .Load l_booValue
+                LinkFrame = l_booValue
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load l_booValue
@@ -713,6 +726,7 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 l_booValue = True
                 If Not .EOS Then .Load l_booValue
                 DiffuseLight = l_booValue
+                .Load m_booDisplayRotation
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load m_strScript
@@ -805,6 +819,9 @@ On Error Resume Next
                 .Save m_booRelativeAnimation
                 .Save m_lngIdleState
                 .Save m_lngWalkState
+                .Save LinkState
+                .Save LinkPose
+                .Save LinkFrame
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save CBool(m_spParam.Stats.Solid)
@@ -824,6 +841,7 @@ On Error Resume Next
                 .Save CastShadow
                 .Save m_spParam.Params.Color
                 .Save DiffuseLight
+                .Save m_booDisplayRotation
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save m_strScript
@@ -912,7 +930,7 @@ Public Property Get Name() As String
     Name = m_strName
 End Property
 
-Public Function ObjectCollisionCheck(Optional ByVal XOffset As Single = 0, Optional ByVal YOffset As Single = 0) As Object
+Public Function ObjectCollisionCheck(Optional ByVal XOffset As Single = 0, Optional ByVal YOffset As Single = 0, Optional ByVal Class As Long = -1) As Object
 On Error Resume Next
 Dim l_rctThis As Fury2Rect, l_rctThat As Fury2Rect
 Dim l_sprSprite As Fury2Sprite, l_araArea As Fury2Area
@@ -922,11 +940,13 @@ Dim l_sprSprite As Fury2Sprite, l_araArea As Fury2Area
     For Each l_sprSprite In m_sprSprites
         If l_sprSprite Is Me Then
         Else
-            Set l_rctThat = l_sprSprite.Rectangle(False)
-            If l_rctThat.Intersect(l_rctThis) Then
-                Set ObjectCollisionCheck = l_sprSprite
-                Err.Clear
-                Exit Function
+            If Class = -1 Or (l_sprSprite.Class = Class) Then
+                Set l_rctThat = l_sprSprite.Rectangle(False)
+                If l_rctThat.Intersect(l_rctThis) Then
+                    Set ObjectCollisionCheck = l_sprSprite
+                    Err.Clear
+                    Exit Function
+                End If
             End If
         End If
     Next l_sprSprite
@@ -1109,6 +1129,11 @@ Dim l_lngOldPose As Long
     UpdatePose
 End Sub
 
+Friend Sub ResetPositionHistory()
+On Error Resume Next
+    m_spOldParam = m_spParam
+End Sub
+
 Public Property Get RotationAngle() As Single
 Attribute RotationAngle.VB_Description = "The angle to rotate the sprite's onscreen display by."
     RotationAngle = m_spParam.Params.RotationAngle
@@ -1148,13 +1173,12 @@ Dim l_strName As String
                 m_booScript_Decay = m_objScript.ImplementsMethod("Decay")
                 m_booScript_AIUpdate = m_objScript.ImplementsMethod("AIUpdate")
                 m_booScript_Activate = m_objScript.ImplementsMethod("Activate")
-                m_booScript_Touched = m_objScript.ImplementsMethod("Touched")
                 m_booScript_Load = m_objScript.ImplementsMethod("Load")
                 m_booScript_Died = m_objScript.ImplementsMethod("Died")
                 m_booScript_Step = m_objScript.ImplementsMethod("Step")
                 m_booScript_FadeOut = m_objScript.ImplementsMethod("FadeOut")
             Else
-                l_strName = m_Engine.VariableName("SS" & m_Engine.SpriteObjectCount)
+                l_strName = m_Engine.VariableName("ss" & m_Engine.SpriteObjectCount)
                 With m_Engine.ScriptEngine.Language
                     l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                     .GenerateClassVariable("Map") & .LineTerminator & _
@@ -1168,7 +1192,6 @@ Dim l_strName As String
                     m_booScript_Decay = .ImplementsMethod(l_strScript, "Decay")
                     m_booScript_AIUpdate = .ImplementsMethod(l_strScript, "AIUpdate")
                     m_booScript_Activate = .ImplementsMethod(l_strScript, "Activate")
-                    m_booScript_Touched = .ImplementsMethod(l_strScript, "Touched")
                     m_booScript_Load = .ImplementsMethod(l_strScript, "Load")
                     m_booScript_Died = .ImplementsMethod(l_strScript, "Died")
                     m_booScript_Step = .ImplementsMethod(l_strScript, "Step")
@@ -1316,6 +1339,7 @@ On Error Resume Next
     End If
     m_spParam.Position.X = CSng(X)
     m_spParam.Position.Y = CSng(Y)
+    ResetPositionHistory
 End Sub
 
 Public Property Let Template(NewTemplate As String)
@@ -1348,7 +1372,7 @@ Dim l_sprCollided As Fury2Sprite
     
     'm_spParam.Params.SpecialFX = fxSoftShadow
     If m_booDisplayRotation Then
-        m_spParam.Params.RotationAngle = m_spParam.Velocity.B
+        RotationAngle = Angle
     End If
     
     If m_spParam.Events.Changed Or m_spParam.Events.Moved Then
@@ -1422,10 +1446,12 @@ Dim l_sprCollided As Fury2Sprite
             m_spParam.Position.X = .X + m_sngAttachX
             m_spParam.Position.Y = .Y + m_sngAttachY
             Me.Angle = .Angle
-            Me.State = .State
+            Me.RotationAngle = .RotationAngle
+            Me.ScaleLevel = .ScaleLevel
+            If LinkState Then Me.State = .State
             Me.Velocity = .Velocity
-            Me.Pose = .Pose
-            Me.Frame = .Frame
+            If LinkPose Then Me.Pose = .Pose
+            If LinkFrame Then Me.Frame = .Frame
             Me.Alpha = .Alpha
         End With
     End If
@@ -1439,40 +1465,50 @@ On Error Resume Next
 Dim l_sngPathDistance As Single
 Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
     If m_pthPath.Count > 0 Then
-        If State = IdleState Then State = WalkState
         ProfileStart "Sprite.UpdatePath"
-        With m_pthPath(1)
-            l_sngPathDistance = m_Engine.DistanceBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
-            l_lngRCX = CLng(m_spParam.Position.X)
-            l_lngRCY = CLng(m_spParam.Position.Y)
-            l_lngRPX = CLng(m_spOldParam.Position.X)
-            l_lngRPY = CLng(m_spOldParam.Position.X)
-            If (l_lngRPX = l_lngRCX) And (l_lngRPY = l_lngRCY) And (CLng(.X) = l_lngRCX) And (CLng(.Y) = l_lngRCY) Then
-                m_spParam.Position.X = .X
-                m_spParam.Position.Y = .Y
-                m_pthPath.Completed
-                If m_pthPath.Count = 0 Then
-                    If State = WalkState Then State = IdleState
-                    Velocity = 0
-                End If
-            Else
-                If (Abs(l_sngPathDistance) >= (Velocity)) Then
-                    Angle = m_Engine.AngleBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
-                    Velocity = Velocity + m_Engine.VelocityDecay
-                    If Velocity < 0 Then Velocity = 0
-                    If Velocity > WalkSpeed Then Velocity = WalkSpeed
-                    If Velocity > l_sngPathDistance Then Velocity = l_sngPathDistance
-                Else
+        If m_pthPath(1).WaitRemainder > 0 Then
+            m_pthPath(1).WaitRemainder = m_pthPath(1).WaitRemainder - 1
+        Else
+            If State = IdleState Then State = WalkState
+            With m_pthPath(1)
+                l_sngPathDistance = m_Engine.DistanceBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
+                l_lngRCX = CLng(m_spParam.Position.X)
+                l_lngRCY = CLng(m_spParam.Position.Y)
+                l_lngRPX = CLng(m_spOldParam.Position.X)
+                l_lngRPY = CLng(m_spOldParam.Position.X)
+                If (l_lngRPX = l_lngRCX) And (l_lngRPY = l_lngRCY) And (CLng(.X) = l_lngRCX) And (CLng(.Y) = l_lngRCY) Then
                     m_spParam.Position.X = .X
                     m_spParam.Position.Y = .Y
                     m_pthPath.Completed
                     If m_pthPath.Count = 0 Then
                         If State = WalkState Then State = IdleState
                         Velocity = 0
+                    ElseIf m_pthPath(1).Wait > 0 Then
+                        If State = WalkState Then State = IdleState
+                        Velocity = 0
+                    End If
+                Else
+                    If (Abs(l_sngPathDistance) >= (Velocity)) Then
+                        Angle = m_Engine.AngleBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
+                        Velocity = Velocity + m_Engine.VelocityDecay
+                        If Velocity < 0 Then Velocity = 0
+                        If Velocity > WalkSpeed Then Velocity = WalkSpeed
+                        If Velocity > l_sngPathDistance Then Velocity = l_sngPathDistance
+                    Else
+                        m_spParam.Position.X = .X
+                        m_spParam.Position.Y = .Y
+                        m_pthPath.Completed
+                        If m_pthPath.Count = 0 Then
+                            If State = WalkState Then State = IdleState
+                            Velocity = 0
+                        ElseIf m_pthPath(1).Wait > 0 Then
+                            If State = WalkState Then State = IdleState
+                            Velocity = 0
+                        End If
                     End If
                 End If
-            End If
-        End With
+            End With
+        End If
         ProfileStop "Sprite.UpdatePath"
     Else
     End If
@@ -1595,6 +1631,8 @@ On Error Resume Next
 Dim l_rctCurrent As Rectangle
 Dim l_araArea As Fury2Area
 Dim l_booInside As Boolean
+    If m_mapMap Is Nothing Then Exit Sub
+    If m_mapMap.Areas.Count = 0 Then Exit Sub
     With l_rctCurrent
         .Left = CLng(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2))
         .Top = CLng(m_spParam.Position.Y - (m_spParam.Obstruction.Height))

@@ -28,6 +28,7 @@ Public Skin As Skin
 Public Rectangle As Fury2Rect
 Public HaveFocus As Boolean
 Public ScrollOffset As Long
+Private m_wdgMe As iWidget
 
 Public Property Get Scrollbar() As Scrollbar
     Set Scrollbar = m_sbrScrollbar
@@ -109,7 +110,7 @@ End Sub
 
 Public Property Get Widget() As iWidget
 On Error Resume Next
-    Set Widget = Me
+    Set Widget = m_wdgMe
 End Property
 
 Private Sub Class_Initialize()
@@ -123,6 +124,7 @@ On Error Resume Next
     Set m_sbrScrollbar = Globals.CreateWidget("Scrollbar")
     m_sbrScrollbar.Name = "Scrollbar"
     Set m_sbrScrollbar.EventHandler = Me
+    Set m_wdgMe = Me
 End Sub
 
 Private Property Get iItemParent_Font() As Engine.Fury2Font

@@ -120,5 +120,5 @@ End Sub
 
 Private Property Get iFileTypePlugin_FilterString() As String
 On Error Resume Next
-    iFileTypePlugin_FilterString = "Text Files|*.txt;*.ini;README"
+    iFileTypePlugin_FilterString = "Text Files|*.txt;*.ini;README;*.f2config"
 End Property

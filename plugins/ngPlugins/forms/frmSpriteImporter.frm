@@ -53,7 +53,6 @@ Begin VB.Form frmSpriteImporter
    End
    Begin VB.CommandButton cmdOK 
       Caption         =   "&OK"
-      Default         =   -1  'True
       BeginProperty Font 
          Name            =   "Tahoma"
          Size            =   9

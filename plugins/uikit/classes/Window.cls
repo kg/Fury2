@@ -26,7 +26,10 @@ Public Rectangle As Fury2Rect
 Public CapturedWidget As iWidget
 Public FocusedWidget As iWidget
 Public HaveFocus As Boolean
+Public Background As Fury2Image
 Private m_booFocusing As Boolean
+Private m_cntMe As iContainer
+Private m_wdgMe As iWidget
 
 Public Sub ChildRemoved(Obj As Object)
 Dim l_lngIndex As Long, l_lngCount As Long
@@ -186,12 +189,12 @@ End Sub
 
 Public Property Get Container() As iContainer
 On Error Resume Next
-    Set Container = Me
+    Set Container = m_cntMe
 End Property
 
 Public Property Get Widget() As iWidget
 On Error Resume Next
-    Set Widget = Me
+    Set Widget = m_wdgMe
 End Property
 
 Private Sub Class_Initialize()
@@ -203,6 +206,8 @@ On Error Resume Next
     Set Children.Parent = Me
     Set Rectangle = New Fury2Rect
     Visible = True
+    Set m_cntMe = Me
+    Set m_wdgMe = Me
 End Sub
 
 Private Property Get iContainer_Captured(ByRef Widget As iWidget) As Boolean
@@ -508,7 +513,8 @@ Dim l_staState As SkinState, l_strState As String
         Set l_staState = Skin.States(l_strState)
         l_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
         .ClippedSetClipRectangle l_rctNew
-        l_staState.Font.DrawCentered Surface, Text, Fury2GEGlobal.F2Rect(l_rctNew.Left, l_rctNew.Top, l_rctNew.Width, l_staState.Font.FullHeight, False), SetAlpha(l_staState.TextColor, GetAlpha(l_staState.TextColor) * Opacity)
+        Surface.Blit l_rctNew, , Background, , IIf(Background.AlphaChannel, BlitMode_SourceAlpha, BlitMode_Normal)
+        l_staState.Font.DrawCentered Surface, Engine.Engine.ParseString(Text), Fury2GEGlobal.F2Rect(l_rctNew.Left, l_rctNew.Top, l_rctNew.Width, l_staState.Font.FullHeight, False), SetAlpha(l_staState.TextColor, GetAlpha(l_staState.TextColor) * Opacity)
         With Rectangle
             For l_lngWidget = Children.Count To 1 Step -1
                 Set l_wdgWidget = Children(l_lngWidget)

@@ -87,6 +87,7 @@ On Error Resume Next
 End Sub
 
 Public Sub Startup()
+On Error Resume Next
     Me.Active = True
     Engine.DisableMovement = True
     If ((Queued And First) Or (Not Queued)) And m_Engine.EnableObjectEvents Then m_Engine.ScriptEngine.Exec "MessageWindow_Create", Me

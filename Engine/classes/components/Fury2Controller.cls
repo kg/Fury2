@@ -56,7 +56,7 @@ On Error Resume Next
     If Obj Is Nothing Then Exit Sub
     If TypeOf Obj Is Fury2Sprite Then
         If (MoveCamera = True) And (Not (Camera Is Nothing)) Then
-            Camera.CenterOn CLng(Obj.X), CLng(Obj.YCenter - Obj.Z)
+            Camera.CenterOn Obj.X, Obj.YCenter - Obj.Z
         End If
         Obj.AnimateWhileMoving = True
         If Enabled Then

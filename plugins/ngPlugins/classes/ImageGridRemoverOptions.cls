@@ -25,6 +25,15 @@ Private mvarMarginTop As Long
 Private mvarMarginRight As Long
 Private mvarMarginBottom As Long
 Private mvarImage As String
+Private mvarSliceImages As Boolean
+
+Public Property Get SliceImages() As Boolean
+    SliceImages = mvarSliceImages
+End Property
+
+Public Property Let SliceImages(ByVal vData As Boolean)
+    mvarSliceImages = vData
+End Property
 
 Public Property Let Image(ByVal vData As String)
 Attribute Image.VB_Description = "The filename of the image.{ImagePath}"
@@ -129,6 +138,7 @@ On Error Resume Next
         .Load mvarMarginTop
         .Load mvarMarginRight
         .Load mvarMarginBottom
+        .Load mvarSliceImages
     End With
 End Sub
 
@@ -143,6 +153,7 @@ On Error Resume Next
         .Save mvarMarginTop
         .Save mvarMarginRight
         .Save mvarMarginBottom
+        .Save mvarSliceImages
     End With
 End Sub
 

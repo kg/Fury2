@@ -241,7 +241,7 @@ End Sub
 Function ImportImage(ByVal Filename, Optional ByVal CornerWidth As Long = 8, Optional ByVal CornerHeight As Long = 8, Optional ByVal MiddleWidth As Long = 48, Optional ByVal MiddleHeight As Long = 48, Optional ByVal MaskColor As Long = 0) As Boolean
 On Error Resume Next
 Dim l_imgFile As Fury2Image
-    Set l_imgFile = m_Engine.LoadImage(Filename)
+    Set l_imgFile = m_Engine.LoadImage(Filename, True)
     If l_imgFile Is Nothing Then ImportImage = False: Exit Function
     If (CornerWidth < 1) Or (CornerHeight < 1) Or (MiddleWidth < 1) Or (MiddleHeight < 1) Then ImportImage = False: Exit Function
     Set m_imgImages(WS_TopLeft) = l_imgFile.Subimage(F2Rect(0, 0, CornerWidth, CornerHeight, False))
@@ -343,7 +343,7 @@ Dim l_rwsHeader As RWS_Header
     ImportRWS = True
 End Function
 
-Function Load(ByVal Filename) As Boolean
+Function Load(ByRef Filename As String) As Boolean
 On Error Resume Next
 Dim l_strExtension As String
     If InStr(Filename, ".") Then

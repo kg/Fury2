@@ -20,6 +20,7 @@ Public Name As String
 Public Rectangle As Fury2Rect
 Public Image As Object
 Public BlitMode As SFXBlitModes
+Private m_wdgMe As iWidget
 
 Public Property Get iWidget_CanGetFocus() As Boolean
     iWidget_CanGetFocus = False
@@ -60,7 +61,7 @@ End Sub
 
 Public Property Get Widget() As iWidget
 On Error Resume Next
-    Set Widget = Me
+    Set Widget = m_wdgMe
 End Property
 
 Private Sub Class_Initialize()
@@ -70,6 +71,7 @@ On Error Resume Next
     Set Rectangle = New Fury2Rect
     Visible = True
     BlitMode = BlitMode_Default
+    Set m_wdgMe = Me
 End Sub
 
 Private Sub iWidget_LostCapture(ByVal Parent As iContainer)

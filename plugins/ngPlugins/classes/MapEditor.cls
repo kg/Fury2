@@ -112,6 +112,7 @@ Dim l_lyrLayer As Fury2MapLayer
             Set l_tstTileset = New Fury2Tileset
             l_tstTileset.TileWidth = .TileWidth
             l_tstTileset.TileHeight = .TileHeight
+            l_tstTileset.MatteColor = .TileMatteColor
             l_tstTileset.Filename = .Tileset
             l_tstTileset.Load
             l_mapMap.CreateNew .Name, .Width, .Height, .Layers, l_tstTileset

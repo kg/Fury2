@@ -34,9 +34,11 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 
 Option Explicit
 Implements Fury2Object
+Implements IInspectable
 Implements IVirtualFileSaveable
 
 Public Merge As Boolean
+Attribute Merge.VB_VarDescription = "Enables/disables Merge rendering mode."
 Private m_lngFullHeight As Long
 Private m_lngCharCount As Long
 Private m_colCharImages As Collection
@@ -48,6 +50,27 @@ Private m_strAuthor As String
 Private m_strCodeset As String
 Private m_strFilename As String
 Private m_booUpperCaseOnly As Boolean
+Private m_lngTabStops() As Long
+
+Public Property Get TabStops() As Variant
+On Error Resume Next
+Dim l_varTabStops As Variant
+Dim l_lngStops As Long
+    ReDim l_varTabStops(0 To UBound(m_lngTabStops))
+    For l_lngStops = LBound(m_lngTabStops) To UBound(m_lngTabStops)
+        l_varTabStops(l_lngStops) = m_lngTabStops(l_lngStops)
+    Next l_lngStops
+    TabStops = l_varTabStops
+End Property
+
+Public Property Let TabStops(Value As Variant)
+On Error Resume Next
+Dim l_lngStops As Long
+    ReDim m_lngTabStops(0 To UBound(Value))
+    For l_lngStops = LBound(Value) To UBound(Value)
+        m_lngTabStops(l_lngStops) = CLng(Value(l_lngStops))
+    Next l_lngStops
+End Property
 
 Public Function Class_ToString() As String
 On Error Resume Next
@@ -67,15 +90,15 @@ On Error Resume Next
     m_strFilename = Filename
 End Sub
 
-Public Property Get DuplicateHandle() As Fury2Font
+Public Function DuplicateHandle() As Fury2Font
 On Error Resume Next
     Set DuplicateHandle = New Fury2Font
     With DuplicateHandle
         .SetData m_lngCharCount, m_colCharImages, m_cpmCharParams, m_lngCharMappings, m_fpmFontParam, m_strTitle, m_strAuthor, m_strCodeset, m_strFilename
     End With
-End Property
+End Function
 
-Public Property Get Duplicate() As Fury2Font
+Public Function Duplicate() As Fury2Font
 On Error Resume Next
 Dim l_colNewImages As Collection, l_lngImages As Long, l_lngParams As Long, l_cpmNewParams() As CharacterParam
     Set Duplicate = New Fury2Font
@@ -92,7 +115,7 @@ Dim l_colNewImages As Collection, l_lngImages As Long, l_lngParams As Long, l_cp
         Next l_lngParams
         .SetData m_lngCharCount, l_colNewImages, l_cpmNewParams, m_lngCharMappings, m_fpmFontParam, m_strTitle, m_strAuthor, m_strCodeset, m_strFilename
     End With
-End Property
+End Function
 
 Public Property Get Title() As String
 Attribute Title.VB_MemberFlags = "200"
@@ -129,6 +152,8 @@ Dim l_optOptions As TextParam
     If l_lngMaxWidth < 1 Then l_lngMaxWidth = 32767
     l_rctArea.Width = l_lngMaxWidth
     l_rctArea.Height = 32767
+    l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
+    l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
     If m_booUpperCaseOnly Then
         Call SoftFX.RenderText(UCase(m_Globals.ToString(Text)), 0, l_rctArea, m_fpmFontParam, l_optOptions)
     Else
@@ -153,6 +178,8 @@ Dim l_optOptions As TextParam
     l_lngMaxHeight = 32767
     l_rctArea.Width = l_lngMaxWidth
     l_rctArea.Height = l_lngMaxHeight
+    l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
+    l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
     If m_booUpperCaseOnly Then
         Call SoftFX.RenderText(UCase(m_Globals.ToString(Text)), 0, l_rctArea, m_fpmFontParam, l_optOptions)
     Else
@@ -177,6 +204,8 @@ Dim l_optOptions As TextParam
     l_lngMaxHeight = 32767
     l_rctArea.Width = l_lngMaxWidth
     l_rctArea.Height = l_lngMaxHeight
+    l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
+    l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
     If m_booUpperCaseOnly Then
         Call SoftFX.RenderText(UCase(m_Globals.ToString(Text)), 0, l_rctArea, m_fpmFontParam, l_optOptions)
     Else
@@ -201,6 +230,7 @@ On Error Resume Next
 End Property
 
 Public Property Get CharacterValue(Index) As Integer
+Attribute CharacterValue.VB_Description = "*"
 On Error Resume Next
     CharacterValue = m_cpmCharParams(Index).MapValue
 End Property
@@ -211,6 +241,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Character(Index) As Fury2Image
+Attribute Character.VB_Description = "*"
 On Error Resume Next
     Set Character = m_colCharImages(CLng(Index))
 End Property
@@ -316,6 +347,8 @@ Dim l_optOptions As TextParam
     Else
         ParseOptions Options, l_optOptions
     End If
+    l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
+    l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
     Call SoftFX.RenderText(l_strText, l_imgSurface.Handle, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions)
     Draw = l_optOptions.Lines
     If l_optOptions.Height > 0 Then
@@ -350,11 +383,13 @@ Dim l_lngXO As Long, l_lngYO As Long
     Set l_rctRectangle = Rectangle
     If Err <> 0 Then Exit Function
     ParseOptions Options, l_optOptions
+    l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
+    l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
     Call SoftFX.RenderText(l_strText, 0, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions)
     With l_rctRectangle
         l_lngXO = (.Width - l_optOptions.Width) \ 2
         l_lngYO = (.Height - (l_optOptions.Height - m_fpmFontParam.BaseHeight + m_lngFullHeight)) \ 2
-        Set l_rctRectangle = F2Rect(.Left + l_lngXO, .Top + l_lngYO, .Right, .Bottom)
+        Set l_rctRectangle = F2Rect(.Left + l_lngXO, .Top + l_lngYO, .Right, .bottom)
     End With
     l_lngColor = m_fpmFontParam.FillColor
     ProfileStart "Draw Text"
@@ -372,6 +407,8 @@ Dim l_lngXO As Long, l_lngYO As Long
     Else
         ParseOptions Options, l_optOptions
     End If
+    l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
+    l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
     Call SoftFX.RenderText(l_strText, l_imgSurface.Handle, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions)
     If l_optOptions.Height > 0 Then
         HeightOut = (l_optOptions.Height - m_fpmFontParam.BaseHeight) + m_lngFullHeight
@@ -385,6 +422,7 @@ Dim l_lngXO As Long, l_lngYO As Long
 End Function
 
 Public Property Get Alpha() As Single
+Attribute Alpha.VB_Description = "*"
 On Error Resume Next
     Alpha = CLng((m_fpmFontParam.Alpha / 255) * 250) / 250
 End Property
@@ -395,6 +433,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Color() As Long
+Attribute Color.VB_Description = "*"
     Color = m_fpmFontParam.FillColor
 End Property
 
@@ -403,6 +442,7 @@ Public Property Let Color(NewValue As Long)
 End Property
 
 Public Property Get ShadowColor() As Long
+Attribute ShadowColor.VB_Description = "{Color}"
     ShadowColor = m_fpmFontParam.ShadowColor
 End Property
 
@@ -410,11 +450,11 @@ Public Property Let ShadowColor(NewValue As Long)
     m_fpmFontParam.ShadowColor = NewValue
 End Property
 
-Public Property Get WrapMode() As Long
+Public Property Get WrapMode() As Fury2WrapModes
     WrapMode = m_fpmFontParam.WrapMode
 End Property
 
-Public Property Let WrapMode(NewValue As Long)
+Public Property Let WrapMode(ByVal NewValue As Fury2WrapModes)
     m_fpmFontParam.WrapMode = NewValue
 End Property
 
@@ -488,6 +528,7 @@ Function CreateFixed(ByVal Width, ByVal Height, Optional ByVal Count = 256) As B
 On Error Resume Next
 Dim l_lngChars As Long
 Dim l_imgCharacter As Fury2Image
+    ReDim m_lngTabStops(0 To 0)
     m_strFilename = ""
     m_strTitle = "Font"
     m_lngCharCount = CLng(Count)
@@ -505,10 +546,92 @@ Dim l_imgCharacter As Fury2Image
     Next l_lngChars
     m_fpmFontParam.EffectMode = 5
     m_fpmFontParam.BaseMode = 0
+    m_lngFullHeight = Height
     Refresh
     CreateFixed = True
     Err.Clear
 End Function
+
+Sub AddDropShadow(ByVal Color As Long, Optional ByVal XOffset As Long = 0, Optional ByVal YOffset As Long = 0, Optional ByVal BlurLevel As Single = 1)
+On Error Resume Next
+Dim l_imgCharacter As Fury2Image
+Dim l_imgClone As Fury2Image
+Dim l_imgShadow As Fury2Image
+Dim l_fltFilter As Fury2ConvolutionFilter
+Dim l_lngCharacter As Long
+    If BlurLevel > 0 Then Set l_fltFilter = F2GaussianBlurFilter(BlurLevel)
+    For Each l_imgCharacter In m_colCharImages
+        Set l_imgClone = l_imgCharacter.Duplicate
+        Set l_imgShadow = l_imgCharacter.Duplicate
+        l_imgCharacter.Resize l_imgCharacter.Width + 1, l_imgCharacter.Height + 1
+        l_imgCharacter.Clear 0
+        l_imgShadow.Clear 0
+        l_fltFilter.Filter l_imgShadow, l_imgClone, , , RenderMode_Normal
+        l_imgShadow.FillChannel l_imgShadow.Rectangle, 0, GetBlue(Color)
+        l_imgShadow.FillChannel l_imgShadow.Rectangle, 1, GetGreen(Color)
+        l_imgShadow.FillChannel l_imgShadow.Rectangle, 2, GetRed(Color)
+        l_imgCharacter.Blit F2Rect(XOffset, YOffset, l_imgCharacter.Width, l_imgCharacter.Height, False), , l_imgShadow, , BlitMode_Merge
+        l_imgCharacter.Blit , , l_imgClone, , BlitMode_Merge
+        l_lngCharacter = l_lngCharacter + 1
+    Next l_imgCharacter
+    Err.Clear
+End Sub
+
+Sub AddOutline(ByVal Color As Long, Optional ByVal Thickness As Long = 1)
+On Error Resume Next
+Dim l_imgCharacter As Fury2Image
+Dim l_imgClone As Fury2Image
+Dim l_lngCharacter As Long
+Dim l_lngThick As Long, l_lngX As Long, l_lngY As Long
+    For Each l_imgCharacter In m_colCharImages
+        Set l_imgClone = l_imgCharacter.Duplicate
+        l_imgCharacter.Resize l_imgCharacter.Width + (Thickness * 2), l_imgCharacter.Height + (Thickness * 2)
+        l_imgCharacter.Clear 0
+        For l_lngThick = 1 To Thickness
+            For l_lngX = -1 To 1
+                For l_lngY = -1 To 1
+                    l_imgCharacter.Blit F2Rect(Thickness + (l_lngThick * l_lngX), Thickness + (l_lngThick * l_lngY), l_imgClone.Width, l_imgClone.Height, False), , l_imgClone, , BlitMode_Font_Merge, Color
+                Next l_lngY
+            Next l_lngX
+        Next l_lngThick
+        l_imgCharacter.Blit F2Rect(Thickness, Thickness, l_imgClone.Width, l_imgClone.Height, False), , l_imgClone, , BlitMode_Merge
+        l_lngCharacter = l_lngCharacter + 1
+    Next l_imgCharacter
+    Err.Clear
+End Sub
+
+Public Sub AdjustGamma(ByVal Gamma As Long)
+On Error Resume Next
+Dim l_imgCharacter As Fury2Image
+Dim l_lngCharacter As Long
+    For Each l_imgCharacter In m_colCharImages
+        l_imgCharacter.AdjustGamma Gamma
+        l_lngCharacter = l_lngCharacter + 1
+    Next l_imgCharacter
+    Err.Clear
+End Sub
+
+Public Sub Recolor(ByVal Color As Long)
+On Error Resume Next
+Dim l_imgCharacter As Fury2Image
+Dim l_lngCharacter As Long
+    For Each l_imgCharacter In m_colCharImages
+        l_imgCharacter.AdjustChannelGamma 3, GetAlpha(Color)
+        l_imgCharacter.AdjustRGBGamma GetRed(Color), GetGreen(Color), GetBlue(Color)
+        l_lngCharacter = l_lngCharacter + 1
+    Next l_imgCharacter
+    Err.Clear
+End Sub
+
+Public Property Get CharacterWidth(ByVal Character As Long) As Long
+On Error Resume Next
+    CharacterWidth = m_cpmCharParams(Character).XIncrement
+End Property
+
+Public Property Let CharacterWidth(ByVal Character As Long, ByVal Value As Long)
+On Error Resume Next
+    m_cpmCharParams(Character).XIncrement = Value
+End Property
 
 Function ImportTTF(ByVal Font As StdFont) As Boolean
 On Error Resume Next
@@ -550,7 +673,7 @@ Dim l_varAttr As Variant, l_lngBaseline As Long
             With m_imgChar
                 .AlphaChannel = True
                 If l_lngChars = 9 Then
-                    m_cpmCharParams(l_lngChars).XIncrement = CLng(l_varAttr(4) * 4)
+                    m_cpmCharParams(l_lngChars).XIncrement = CLng(l_varAttr(4) * 8)
                 Else
                     m_cpmCharParams(l_lngChars).XIncrement = CLng(l_varAttr(4))
                 End If
@@ -579,6 +702,7 @@ Dim l_varAttr As Variant, l_lngBaseline As Long
         .MapCount = UBound(m_lngCharMappings)
         .MapPointer = VarPtr(m_lngCharMappings(0))
     End With
+    Title = Font.Name & " " & CStr(Font.Size) & "pt"
     ImportTTF = True
     Err.Clear
 End Function
@@ -684,6 +808,7 @@ Dim l_lngChars As Long
 Dim l_intWidth As Integer, l_intHeight As Integer
 Dim l_imgCharacter As Fury2Image
 Dim l_bytValues() As Byte
+    ReDim m_lngTabStops(0 To 0)
     If VarType(Filename) = vbString Then
         m_strFilename = Filename
         m_strTitle = Filename
@@ -813,6 +938,7 @@ Dim l_imgChar As Fury2Image
 Dim l_lngVersion As Long
     m_lngCharCount = 0
     l_lngVersion = 1
+    ReDim m_lngTabStops(0 To 0)
     With File
         .Load m_lngCharCount
         If m_lngCharCount < 1 Then Exit Sub
@@ -896,4 +1022,8 @@ Dim l_lngChars As Long
         .WriteSegment_End
         Err.Clear
     End With
+End Sub
+
+Private Sub Class_Initialize()
+    ReDim m_lngTabStops(0 To 0)
 End Sub

@@ -32,6 +32,7 @@ Public Tip As String
 Public Skin As Skin
 Public Rectangle As Fury2Rect
 Public HaveFocus As Boolean
+Private m_wdgMe As iWidget
 
 Public Property Get iWidget_CanGetFocus() As Boolean
     iWidget_CanGetFocus = True
@@ -198,7 +199,7 @@ End Sub
 
 Public Property Get Widget() As iWidget
 On Error Resume Next
-    Set Widget = Me
+    Set Widget = m_wdgMe
 End Property
 
 Public Property Get Caption() As String
@@ -223,6 +224,7 @@ On Error Resume Next
     m_lngSelectionLength = 0
     m_lngSelectionDir = 1
     MultiLine = False
+    Set m_wdgMe = Me
 End Sub
 
 Private Sub iWidget_LostCapture(ByVal Parent As iContainer)

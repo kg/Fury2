@@ -18,12 +18,22 @@ Implements iUndoEntry
 
 Public Map As Fury2Map
 Public Layer As Long
+Private m_lnLines() As FLine
+
+Public Property Let Lines(NewLines() As FLine)
+    m_lnLines = NewLines()
+End Property
+
+Public Property Get Lines() As FLine()
+    Lines = m_lnLines
+End Property
 
 Private Function iUndoEntry_Apply() As Boolean
 On Error Resume Next
     If Map Is Nothing Then Exit Function
     If Layer < 1 Then Exit Function
     If Layer > Map.Layers.Count Then Exit Function
+    Map.Layers(Layer).CollisionLines = m_lnLines
     Screen.MousePointer = 11
     Screen.MousePointer = 0
     iUndoEntry_Apply = True
@@ -35,6 +45,7 @@ Dim l_undReverser As New cBlockingUndoEntry
     With l_undReverser
         .Layer = Layer
         Set .Map = Me.Map
+        .Lines = .Map.Layers(.Layer).CollisionLines
     End With
     Set iUndoEntry_CreateReverse = l_undReverser
 End Function

@@ -127,7 +127,9 @@ Dim l_plgPlugin As iPlugin
         InstallPlugin "ngPlugins.MapEditor", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.ScriptFile", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.SpriteEditor", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.FontEditor", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.CommandBrowser", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.ShowPictureDesigner", GetPath(App.Path) & "\ng.dll"
         l_lngCount = ReadRegSetting("Plugins\Count", 0)
     End If
     If l_lngCount > 0 Then

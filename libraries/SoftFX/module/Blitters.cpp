@@ -314,6 +314,41 @@ BLITTERSIMPLE_LOOPBEGIN
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
 
+BLITTERSIMPLE_SIGNATURE(Additive_SourceAlpha)
+    ) {
+BLITTERSIMPLE_INIT
+    _BOS(BlitSimple_Additive_SourceAlpha, 0) _BOE
+BLITTERSIMPLE_BEGIN
+    AlphaLevel *aSource;
+BLITTERSIMPLE_LOOPBEGIN
+    if (pSource->V != 0) {
+		aSource = AlphaLevelLookup((*pSource)[::Alpha]);
+		(*pDest)[::Blue] = ClipByteHigh((*pDest)[::Blue] + AlphaFromLevel(aSource, (*pSource)[::Blue]));
+		(*pDest)[::Green] = ClipByteHigh((*pDest)[::Green] + AlphaFromLevel(aSource, (*pSource)[::Green]));
+		(*pDest)[::Red] = ClipByteHigh((*pDest)[::Red] + AlphaFromLevel(aSource, (*pSource)[::Red]));
+    }
+BLITTERSIMPLE_LOOPEND
+BLITTERSIMPLE_END
+
+BLITTERSIMPLE_SIGNATURE(Additive_SourceAlpha_Opacity)
+    , int Opacity) {
+BLITTERSIMPLE_INIT
+    if (Opacity <= 0) return Trivial_Success;
+    if (Opacity >= 255) return BlitSimple_Additive_SourceAlpha(Dest, Source, Rect, SX, SY);
+    _BOS(BlitSimple_Additive_SourceAlpha_Opacity, 1) , Opacity _BOE
+BLITTERSIMPLE_BEGIN
+    AlphaLevel *aSource, *aScale;
+	aScale = AlphaLevelLookup(Opacity);
+BLITTERSIMPLE_LOOPBEGIN
+    if (pSource->V != 0) {
+		aSource = AlphaLevelLookup(AlphaFromLevel(aScale, (*pSource)[::Alpha]));
+		(*pDest)[::Blue] = ClipByteHigh((*pDest)[::Blue] + AlphaFromLevel(aSource, (*pSource)[::Blue]));
+		(*pDest)[::Green] = ClipByteHigh((*pDest)[::Green] + AlphaFromLevel(aSource, (*pSource)[::Green]));
+		(*pDest)[::Red] = ClipByteHigh((*pDest)[::Red] + AlphaFromLevel(aSource, (*pSource)[::Red]));
+    }
+BLITTERSIMPLE_LOOPEND
+BLITTERSIMPLE_END
+
 BLITTERSIMPLE_SIGNATURE(Screen)
     ) {
 BLITTERSIMPLE_INIT
@@ -571,6 +606,41 @@ BLITTERSIMPLE_BEGIN
 BLITTERSIMPLE_LOOPBEGIN
     if (pSource->V != 0) {
         BLENDPIXEL_SUBTRACTIVE_OPACITY(pDest, pDest, pSource, aSource)
+    }
+BLITTERSIMPLE_LOOPEND
+BLITTERSIMPLE_END
+
+BLITTERSIMPLE_SIGNATURE(Subtractive_SourceAlpha)
+    ) {
+BLITTERSIMPLE_INIT
+    _BOS(BlitSimple_Subtractive_SourceAlpha, 0) _BOE
+BLITTERSIMPLE_BEGIN
+    AlphaLevel *aSource;
+BLITTERSIMPLE_LOOPBEGIN
+    if (pSource->V != 0) {
+		aSource = AlphaLevelLookup((*pSource)[::Alpha]);
+		(*pDest)[::Blue] = ClipByteLow((*pDest)[::Blue] - AlphaFromLevel(aSource, (*pSource)[::Blue]));
+		(*pDest)[::Green] = ClipByteLow((*pDest)[::Green] - AlphaFromLevel(aSource, (*pSource)[::Green]));
+		(*pDest)[::Red] = ClipByteLow((*pDest)[::Red] - AlphaFromLevel(aSource, (*pSource)[::Red]));
+    }
+BLITTERSIMPLE_LOOPEND
+BLITTERSIMPLE_END
+
+BLITTERSIMPLE_SIGNATURE(Subtractive_SourceAlpha_Opacity)
+    , int Opacity) {
+BLITTERSIMPLE_INIT
+    if (Opacity <= 0) return Trivial_Success;
+    if (Opacity >= 255) return BlitSimple_Subtractive_SourceAlpha(Dest, Source, Rect, SX, SY);
+    _BOS(BlitSimple_Subtractive_SourceAlpha_Opacity, 1) , Opacity _BOE
+BLITTERSIMPLE_BEGIN
+    AlphaLevel *aSource, *aScale;
+	aScale = AlphaLevelLookup(Opacity);
+BLITTERSIMPLE_LOOPBEGIN
+    if (pSource->V != 0) {
+		aSource = AlphaLevelLookup(AlphaFromLevel(aScale, (*pSource)[::Alpha]));
+		(*pDest)[::Blue] = ClipByteLow((*pDest)[::Blue] - AlphaFromLevel(aSource, (*pSource)[::Blue]));
+		(*pDest)[::Green] = ClipByteLow((*pDest)[::Green] - AlphaFromLevel(aSource, (*pSource)[::Green]));
+		(*pDest)[::Red] = ClipByteLow((*pDest)[::Red] - AlphaFromLevel(aSource, (*pSource)[::Red]));
     }
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
@@ -2026,6 +2096,7 @@ signed char *cxo, *cyo;
             b += cellTables[i][pSource[::Blue]];
             g += cellTables[i][pSource[::Green]];
             r += cellTables[i][pSource[::Red]];
+            a += cellTables[i][pSource[::Alpha]];
         }
         (*pDest)[::Blue] = ClipByte(b);
         (*pDest)[::Green] = ClipByte(g);

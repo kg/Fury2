@@ -289,11 +289,7 @@ On Error Resume Next
         Set objNewMember.Icon = m_Engine.F2Graphic(Icon, Icon.Width / 4, Icon.Height / 4)
     End If
     objNewMember.Color = CLng(Color)
-    If VarType(SelectEvent) = vbString Then
-        Set objNewMember.SelectEvent = m_Engine.BindEvent(SelectEvent)
-    Else
-        Set objNewMember.SelectEvent = SelectEvent
-    End If
+    Set objNewMember.SelectEvent = m_Engine.BindEvent(SelectEvent)
     objNewMember.Alpha = 1
     objNewMember.Enabled = True
     If Index = -1 Then Index = mCol.Count + 1

@@ -565,10 +565,10 @@ Dim l_imgLayer As Fury2Image
     End If
     Extension = Mid(CStr(m_strFilename), InStrRev(CStr(m_strFilename), ".") + 1)
     Select Case LCase(Trim(Extension))
-    Case "pcx", "dib", "rle", "bmp", "jpg", "gif", "jpeg"
+    Case "pcx", "dib", "rle", "bmp", "jpg", "jpeg"
         Set F2LoadImage = F2LoadPicture(m_strFilename)
         F2LoadImage.AlphaChannel = False
-    Case "png", "tga"
+    Case "png", "tga", "gif"
         Set F2LoadImage = F2LoadPicture(m_strFilename)
     End Select
     For m_lngParameter = LBound(m_varParameters) To UBound(m_varParameters)
@@ -819,6 +819,10 @@ Dim bitDesc As BitmapInfo
     End With
     StretchDIBits hdc, DestRect.Left, DestRect.Top, DestRect.Width, DestRect.Height, SourceRect.Left, SourceRect.Bottom + 1, SourceRect.Width, -SourceRect.Height, SourceImage.Pointer(0, 0), bitDesc, 0, RasterOp
 End Sub
+
+Public Function F2Transparent() As Long
+    F2Transparent = 0
+End Function
 
 Public Function F2White() As Long
     F2White = White

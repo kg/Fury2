@@ -52,7 +52,7 @@ Private mvarFilename As String
 Private mvarBuffer As Fury2Image
 Private mvarTileWidth As Long
 Private mvarTileHeight As Long
-Private mvarMaskColor As Long
+Private mvarMatteColor As Long
 Private mvarHasAlpha As Boolean
 Private mvarTransparentTile As Long
 
@@ -133,8 +133,8 @@ Dim m_tstNew As Fury2Tileset
         .SetTSFilename mvarTSFilename
         .HasAlpha = mvarHasAlpha
         Err.Clear
-        .MaskColor = Buffer.MaskColor
-        If Err.Number <> 0 Then .MaskColor = mvarMaskColor
+        .MatteColor = Buffer.MatteColor
+        If Err.Number <> 0 Then .MatteColor = mvarMatteColor
         .TransparentTile = mvarTransparentTile
         .SetData mvarTileWidth, mvarTileHeight
         .Load
@@ -196,15 +196,28 @@ Public Property Get HasAlpha() As Boolean
 End Property
 
 Public Property Get MaskColor() As Long
-Attribute MaskColor.VB_Description = "The color in the tileset which will be transparent.{Color}"
+Attribute MaskColor.VB_Description = "*"
+Attribute MaskColor.VB_MemberFlags = "40"
 On Error Resume Next
-    MaskColor = mvarBuffer.MaskColor
+    MaskColor = mvarMatteColor
 End Property
 
 Public Property Let MaskColor(ByVal vData As Long)
 On Error Resume Next
-    mvarBuffer.MaskColor = vData
-    mvarMaskColor = vData
+    mvarBuffer.MatteColor = vData
+    mvarMatteColor = vData
+End Property
+
+Public Property Get MatteColor() As Long
+Attribute MatteColor.VB_Description = "The color in the tileset which will be transparent.{Color}"
+On Error Resume Next
+    MatteColor = mvarMatteColor
+End Property
+
+Public Property Let MatteColor(ByVal vData As Long)
+On Error Resume Next
+    mvarBuffer.MatteColor = vData
+    mvarMatteColor = vData
 End Property
 
 Public Property Let TileHeight(ByVal vData As Long)
@@ -244,10 +257,11 @@ End Property
 
 Sub Reload()
 On Error Resume Next
+    mvarMatteColor = mvarBuffer.MatteColor
     m_Engine.ReLoadPicture mvarFilename
     Set mvarBuffer = m_Engine.LoadImage(mvarFilename)
+    mvarBuffer.MatteColor = mvarMatteColor
     AllocateTileset
-    mvarBuffer.MaskColor = mvarMaskColor
     With mvarBuffer
         RecalculateSizes
     End With
@@ -315,12 +329,12 @@ Static m_lngRecurse As Long
         End If
         If mvarBuffer Is Nothing Then CriticalError "Fury2Tileset.Load", "Sanity Check", "Tileset """ + mvarFilename + """ could not be loaded.": m_lngRecurse = m_lngRecurse - 1: Exit Sub
         If mvarBuffer.Width <= 0 Or mvarBuffer.Height <= 0 Then CriticalError "Fury2Tileset.Load", "Sanity Check", "Tileset """ + mvarFilename + """ could not be loaded.": m_lngRecurse = m_lngRecurse - 1: Exit Sub
-        mvarBuffer.MaskColor = mvarMaskColor
+        mvarBuffer.MatteColor = mvarMatteColor
         With mvarBuffer
             RecalculateSizes
             If DetectMask Then
-                .MaskColor = .GetPixel(.Width - 1, .Height - 1)
-                mvarMaskColor = .MaskColor
+                .MatteColor = .GetPixel(.Width - 1, .Height - 1)
+                mvarMatteColor = .MatteColor
             Else
             End If
         End With
@@ -405,8 +419,8 @@ On Error Resume Next
     mvarTileWidth = 16
     mvarTileHeight = 16
     mvarTransparentTile = -1
-    mvarMaskColor = c_lngNullColor
-    mvarBuffer.MaskColor = c_lngNullColor
+    mvarMatteColor = c_lngNullColor
+    mvarBuffer.MatteColor = c_lngNullColor
 End Sub
 
 Private Sub Class_Terminate()
@@ -421,7 +435,7 @@ On Error Resume Next
             .Save mvarFilename
             .Save mvarTileWidth
             .Save mvarTileHeight
-            .Save mvarMaskColor
+            .Save mvarMatteColor
             .Save mvarHasAlpha
             .Save mvarTileCount
             .Save mvarTilesPerRow
@@ -439,7 +453,7 @@ On Error Resume Next
             .Load mvarFilename
             .Load mvarTileWidth
             .Load mvarTileHeight
-            .Load mvarMaskColor
+            .Load mvarMatteColor
             .Load mvarHasAlpha
             .Load mvarTileCount
             .Load mvarTilesPerRow
@@ -449,9 +463,9 @@ On Error Resume Next
     End With
     If mvarBuffer Is Nothing Then
         Set mvarBuffer = New Fury2Image
-        mvarBuffer.MaskColor = mvarMaskColor
+        mvarBuffer.MatteColor = mvarMatteColor
     Else
-        mvarBuffer.MaskColor = mvarMaskColor
+        mvarBuffer.MatteColor = mvarMatteColor
     End If
     Load
     Err.Clear

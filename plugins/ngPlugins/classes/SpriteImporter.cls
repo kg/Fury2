@@ -48,14 +48,18 @@ Dim Doc As frmSprites
                 l_fraFrame.YCenter = .AlignmentY
                 l_fraFrame.Delay = .FrameDelay
                 l_fraFrame.Filename = Options.Image
+                l_fraFrame.MatteColor = .MatteColor
                 l_posPose.Frames.Add l_fraFrame
+                If (l_lngX = 0) And (.DuplicateFirstFrame) Then
+                    l_posPose.Frames.Add l_fraFrame.Duplicate
+                End If
             Next l_lngX
             l_posPose.Name = "Imported Pose #" & l_lngCellsY
             Doc.SelectedSprite.Poses.Add l_posPose, , l_lngInsertionPoint + l_lngY + 1
         Next l_lngY
         Doc.SelectedSprite.Initialize
         Doc.SelectedSprite.Load
-        Doc.SelectedSprite.Poses.LoadGraphics
+        Doc.ReloadGraphics
         Doc.PosesViewChanged
         Doc.FramesViewChanged
         Doc.Redraw
@@ -80,11 +84,11 @@ Dim l_docSprites As frmSprites
         Exit Sub
     End If
     Load frmSpriteImporter
-    m_objEditor.LoadSettings "SpriteImporter\Settings", frmGridRemover.Options
+    m_objEditor.LoadSettings "SpriteImporter\Settings", frmSpriteImporter.Options
     frmSpriteImporter.RefreshSettings
     frmSpriteImporter.Show vbModal
     If Not (frmSpriteImporter.Options Is Nothing) Then
-        m_objEditor.SaveSettings "SpriteImporter\Settings", frmGridRemover.Options
+        m_objEditor.SaveSettings "SpriteImporter\Settings", frmSpriteImporter.Options
         If l_docSprites.SelectedSprite Is Nothing Then
             MsgBox "You must have a sprite selected", vbExclamation, "Error"
             Exit Sub

@@ -38,6 +38,11 @@ Public m_Notify As Object, m_booNotifyNoLogging As Boolean
 Public m_imgMouseBuffer As Fury2Image
 Public LogItems As Fury2Collection
 
+Public Function FRound(ByVal Value As Single) As Long
+On Error Resume Next
+    FRound = Floor(Value + 0.5)
+End Function
+
 Function ValidizeFileName(Fn) As String
 On Error Resume Next
 Dim m_strText As String, m_strStrip As String
@@ -182,6 +187,7 @@ Dim Obj As Object
         If m_booEditor Then
         Else
             MsgBox "Unable to load game!"
+            Shutdown
         End If
     End If
 End Sub
@@ -278,13 +284,6 @@ Dim m_TempObj As Object
     Else
         m_GFX.Shutdown
         Set m_GFX = Nothing
-    End If
-    If LCase(CStr(Trim(Name))) = "directdraw" Then
-        Name = "DDraw"
-    ElseIf LCase(CStr(Trim(Name))) = "direct3d" Then
-        Name = "DX8"
-    ElseIf LCase(CStr(Trim(Name))) = "d3d" Then
-        Name = "DX8"
     End If
     Err.Clear
     Set m_TempObj = CreateObject("video_" + CStr(Trim(Name)) + "." + CStr(Trim(Name)) + "Engine")

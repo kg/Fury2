@@ -1,4 +1,4 @@
-ScriptEngine = 207, 207, 1112, 811, Z
-IScriptLanguage = 0, 0, 0, 0, C
-VBScriptLanguage = 0, 0, 0, 0, C
+ScriptEngine = 207, 207, 1112, 811, C
+IScriptLanguage = 0, 0, 821, 509, C
+VBScriptLanguage = 22, 24, 843, 533, Z
 JScriptLanguage = 23, 23, 928, 627, C

@@ -77,7 +77,7 @@ On Error Resume Next
     UnGhostLayer = mvarUnGhostLayer
 End Property
 
-Public Property Let UnGhostLayer(NewLayer As Long)
+Public Property Let UnGhostLayer(ByVal NewLayer As Long)
 On Error Resume Next
     mvarUnGhostLayer = ClipValue(NewLayer, 0, mvarViewingMap.Layers.Count)
 End Property
@@ -111,7 +111,7 @@ Public Property Get ConstrainToMap() As Boolean
     ConstrainToMap = mvarConstrainToMap
 End Property
 
-Public Property Let ConstrainToMap(NewValue As Boolean)
+Public Property Let ConstrainToMap(ByVal NewValue As Boolean)
     mvarConstrainToMap = NewValue
 End Property
 
@@ -119,37 +119,9 @@ Public Property Get Dirty() As Boolean
     Dirty = mvarDirty
 End Property
 
-Public Property Let Dirty(NewDirty As Boolean)
+Public Property Let Dirty(ByVal NewDirty As Boolean)
     mvarDirty = NewDirty
 End Property
-
-'Public Function PixelsToTilesX(x)
-'On Error Resume Next
-'    If (x < 0) Or (x >= (mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth)) Then
-'        PixelsToTilesX = -1
-'    Else
-'        PixelsToTilesX = (x) \ (mvarViewingMap.Layers(1).Tileset.TileWidth)
-'    End If
-'End Function
-'
-'Public Function PixelsToTilesY(y)
-'On Error Resume Next
-'    If (y < 0) Or (y >= (mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight)) Then
-'        PixelsToTilesY = -1
-'    Else
-'        PixelsToTilesY = (y) \ (mvarViewingMap.Layers(1).Tileset.TileHeight)
-'    End If
-'End Function
-'
-'Public Function TilesToPixelsX(x)
-'On Error Resume Next
-'    TilesToPixelsX = ((x) * (mvarViewingMap.Layers(1).Tileset.TileWidth))
-'End Function
-'
-'Public Function TilesToPixelsY(y)
-'On Error Resume Next
-'    TilesToPixelsY = ((y) * (mvarViewingMap.Layers(1).Tileset.TileHeight))
-'End Function
 
 Sub FlushBuffer()
 On Error Resume Next
@@ -215,7 +187,7 @@ Public Property Get X() As Long
     X = mvarX
 End Property
 
-Public Property Let Map(NewMap As Long)
+Public Property Let Map(ByVal NewMap As Long)
 On Error Resume Next
     mvarMap = NewMap
     If mvarMap = 0 Then
@@ -233,7 +205,7 @@ Public Property Get ViewingMap() As Fury2Map
     Set ViewingMap = mvarViewingMap
 End Property
 
-Friend Property Set ViewingMap(NewMap As Fury2Map)
+Friend Property Set ViewingMap(ByVal NewMap As Fury2Map)
     Set mvarViewingMap = NewMap
 End Property
 
@@ -271,8 +243,8 @@ End Sub
 Public Sub CenterOn(ByVal X As Single, ByVal Y As Single)
 On Error Resume Next
 Dim m_sngNewX As Single, m_sngNewY As Single
-    m_sngNewX = X - (mvarWidth \ 2)
-    m_sngNewY = Y - (mvarHeight \ 2)
+    m_sngNewX = Ceil(X - (mvarWidth / 2))
+    m_sngNewY = Ceil(Y - (mvarHeight / 2))
     Move m_sngNewX - mvarViewportX, m_sngNewY - mvarViewportY
 End Sub
 
@@ -325,7 +297,8 @@ Dim m_lngEffects As Long
     Set m_Backbuffer.ClipRectangle = m_Backbuffer.Rectangle
 End Sub
 
-Public Sub CopyToDC(hdc As Long)
+Public Sub CopyToDC(ByVal hdc As Long)
+On Error Resume Next
     CopyImageToDC hdc, F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), mvarBuffer
 End Sub
 
@@ -347,7 +320,7 @@ On Error Resume Next
     End Select
 End Function
 
-Public Sub Render(Optional Area As Fury2Rect, Optional ByVal Output As Fury2Image = Nothing)
+Public Sub Render(Optional ByVal Area As Fury2Rect = Nothing, Optional ByVal Output As Fury2Image = Nothing)
 On Error Resume Next
 Dim cX As Long, cY As Long, cTile As Long
 Dim StartX As Long, StartY As Long, EndX As Long, EndY As Long
@@ -518,16 +491,6 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                     End With
                     mvarViewportTrueX = ((m_lngVPX) \ .Tileset.TileWidth) * .Tileset.TileWidth
                     mvarViewportTrueY = ((m_lngVPY) \ .Tileset.TileHeight) * .Tileset.TileHeight
-'                StartX = ((((m_lngVPX))) \ .Tileset.TileWidth)
-'                StartY = ((((m_lngVPY))) \ .Tileset.TileHeight)
-'                EndX = StartX + Ceil(CSng(Area.Width) / CSng(.Tileset.TileWidth)) + 1
-'                EndY = StartY + Ceil(CSng(Area.Height) / CSng(.Tileset.TileHeight)) + 1
-'                If StartX < 0 Then XOffset = Abs(StartX): StartX = 0
-'                If StartY < 0 Then YOffset = Abs(StartY): StartY = 0
-'                If EndX <= StartX Then EndX = StartX
-'                If EndY <= StartY Then EndY = StartY
-'                If EndX > (.Width) Then EndX = (.Width)
-'                If EndY > (.Height) Then EndY = (.Height)
                 End With
                 With Tilemap
                     If mvarViewingMap.Layers(Layers).Effect <> BlitMode_Default Then
@@ -600,7 +563,6 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                 .Layers(Layers).Lighting.Render l_lcaCamera
             End If
             If EnableLighting And .Layers(Layers).Lighting.RenderLight Then
-'                l_imgBuffer.Blit Area, , mvarLightmap, 1, BlitMode_Normal
                 If Gamma <> 255 Then
                     mvarLightmap.AdjustGamma mvarGamma
                 End If
@@ -628,7 +590,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
     mvarDirty = False
 End Sub
 
-Public Sub Redraw(Optional Area As Fury2Rect)
+Public Sub Redraw(Optional ByVal Area As Fury2Rect = Nothing)
 On Error Resume Next
 Dim m_lngLayers As Long
     If (m_Engine.Cameras.Count = 1) And (m_Engine.DisableCameraBuffers) Then
@@ -689,18 +651,18 @@ On Error Resume Next
     mvarDirty = True
 End Property
 
-Sub Reposition(L, T, W, H, Optional Absolute = True)
+Sub Reposition(ByVal L As Long, ByVal T As Long, ByVal W As Long, ByVal H As Long, Optional ByVal Absolute = True)
 On Error Resume Next
     If mvarMap <> 0 Then Set mvarViewingMap = m_Engine.Maps(mvarMap)
     If CBool(Absolute) = True Then
-        mvarWidth = ClipValue(CLng(W - L), 1, m_Engine.ScreenWidth)
-        mvarHeight = ClipValue(CLng(H - T), 1, m_Engine.ScreenHeight)
+        mvarWidth = ClipValue(W - L, 1, m_Engine.ScreenWidth)
+        mvarHeight = ClipValue(H - T, 1, m_Engine.ScreenHeight)
     Else
-        mvarWidth = ClipValue(CLng(W), 1, m_Engine.ScreenWidth)
-        mvarHeight = ClipValue(CLng(H), 1, m_Engine.ScreenHeight)
+        mvarWidth = ClipValue(W, 1, m_Engine.ScreenWidth)
+        mvarHeight = ClipValue(H, 1, m_Engine.ScreenHeight)
     End If
-    mvarX = ClipValue(CLng(L), 0, m_Engine.ScreenWidth - mvarWidth)
-    mvarY = ClipValue(CLng(T), 0, m_Engine.ScreenHeight - mvarHeight)
+    mvarX = ClipValue(L, 0, m_Engine.ScreenWidth - mvarWidth)
+    mvarY = ClipValue(T, 0, m_Engine.ScreenHeight - mvarHeight)
     mvarDirty = True
 End Sub
 
@@ -708,7 +670,7 @@ Public Property Get Width() As Long
     Width = mvarWidth
 End Property
 
-Public Property Set Buffer(vData As Fury2Image)
+Public Property Set Buffer(ByVal vData As Fury2Image)
     Set mvarBuffer = vData
 End Property
 

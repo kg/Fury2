@@ -145,41 +145,41 @@ On Error Resume Next
     mvarSortedFirst = SoftFX.SortSprites(mvarFirst)
 End Sub
 
-Public Function SpriteFromPoint(X, Y, Optional ByRef Exclude = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1)
+Public Function SpriteFromPoint(ByVal X As Single, ByVal Y As Single, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Fury2Sprite
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
     Set SpriteFromPoint = Nothing
     If mCol.Count < 1 Then Exit Function
     With l_rctArea
-        .x1 = CSng(X)
-        .y1 = CSng(Y)
-        .x2 = CSng(X) + 1
-        .y2 = CSng(Y) + 1
+        .x1 = X
+        .y1 = Y
+        .x2 = X + 1
+        .y2 = Y + 1
     End With
     l_lngExclude = Exclude.Pointer
     l_lngResult = SoftFX.FindSprite(mCol.Item(1).Pointer, l_rctArea, l_lngExclude, CLng(MustBeSolid), Class, ExcludedClass)
     If l_lngResult > 0 Then Set SpriteFromPoint = mCol.Item(l_lngResult)
 End Function
 
-Public Function SpriteFromScreenPoint(X, Y, Optional ByRef Exclude = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1)
+Public Function SpriteFromScreenPoint(ByVal X As Single, ByVal Y As Single, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Fury2Sprite
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
     Set SpriteFromScreenPoint = Nothing
     If mCol.Count < 1 Then Exit Function
     With l_rctArea
-        .x1 = CSng(X)
-        .y1 = CSng(Y)
-        .x2 = CSng(X) + 1
-        .y2 = CSng(Y) + 1
+        .x1 = X
+        .y1 = Y
+        .x2 = X + 1
+        .y2 = Y + 1
     End With
     l_lngExclude = Exclude.Pointer
     l_lngResult = SoftFX.FindSpriteOnscreen(mCol.Item(1).Pointer, l_rctArea, l_lngExclude, CLng(MustBeSolid), Class, ExcludedClass)
     If l_lngResult > 0 Then Set SpriteFromScreenPoint = mCol.Item(l_lngResult)
 End Function
 
-Public Function SpriteFromArea(Area, Optional ByRef Exclude = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1)
+Public Function SpriteFromArea(ByVal Area As Fury2Rect, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Fury2Sprite
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
@@ -194,7 +194,7 @@ Dim l_rctArea As FRect
     If l_lngResult > 0 Then Set SpriteFromArea = mCol.Item(l_lngResult)
 End Function
 
-Public Function SpriteFromScreenArea(Area, Optional ByRef Exclude = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1)
+Public Function SpriteFromScreenArea(ByVal Area As Fury2Rect, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Fury2Sprite
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
@@ -209,7 +209,7 @@ Dim l_rctArea As FRect
     If l_lngResult > 0 Then Set SpriteFromScreenArea = mCol.Item(l_lngResult)
 End Function
 
-Public Function SpritesFromDistance(ByVal Sprite As Long, ByVal MaxDistance As Single, Optional ByRef Exclude = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
+Public Function SpritesFromDistance(ByVal Sprite As Long, ByVal MaxDistance As Single, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
 On Error Resume Next
 Dim l_varResult As Variant
 Dim l_lngResult As Long, l_lngStart As Long
@@ -220,14 +220,17 @@ Dim l_sngDistance As Single
     l_lngSize = 8
     Set l_sprCheck = mCol(Sprite)
     For Each l_sprSprite In mCol
-        l_sngDistance = m_Engine.DistanceBetween(l_sprSprite.X, l_sprSprite.Y, l_sprCheck.X, l_sprCheck.Y)
-        If l_sngDistance <= MaxDistance Then
-            If l_lngCount > (UBound(l_varResult)) Then
-                l_lngSize = l_lngSize + 8
-                ReDim Preserve l_varResult(0 To l_lngCount - 1)
+        If l_sprSprite Is Exclude Then
+        Else
+            l_sngDistance = m_Engine.DistanceBetween(l_sprSprite.X, l_sprSprite.Y, l_sprCheck.X, l_sprCheck.Y)
+            If l_sngDistance <= MaxDistance Then
+                If l_lngCount > (UBound(l_varResult)) Then
+                    l_lngSize = l_lngSize + 8
+                    ReDim Preserve l_varResult(0 To l_lngCount - 1)
+                End If
+                Set l_varResult(l_lngCount) = l_sprSprite
+                l_lngCount = l_lngCount + 1
             End If
-            Set l_varResult(l_lngCount) = l_sprSprite
-            l_lngCount = l_lngCount + 1
         End If
     Next l_sprSprite
     If l_lngCount < 1 Then
@@ -238,12 +241,14 @@ Dim l_sngDistance As Single
     SpritesFromDistance = l_varResult
 End Function
 
-Public Function SpritesFromArea(Area, Optional ByRef Exclude = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
+Public Function SpritesFromArea(Area, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
 On Error Resume Next
 Dim l_varResult As Variant
 Dim l_lngResult As Long, l_lngStart As Long
 Dim l_lngCount As Long, l_lngSize As Long
 Dim l_rctArea As FRect
+Dim l_lngExclude As Long
+    l_lngExclude = Exclude.Pointer
     l_rctArea.x1 = Area.Left
     l_rctArea.y1 = Area.Top
     l_rctArea.x2 = Area.Right
@@ -252,7 +257,7 @@ Dim l_rctArea As FRect
     l_lngSize = 8
     l_lngStart = Item(1).Pointer
     Do
-        l_lngResult = SoftFX.FindSprite(l_lngStart, l_rctArea, Exclude, CLng(MustBeSolid), Class, ExcludedClass)
+        l_lngResult = SoftFX.FindSprite(l_lngStart, l_rctArea, l_lngExclude, CLng(MustBeSolid), Class, ExcludedClass)
         If l_lngResult = 0 Then Exit Do
         If l_lngCount > (UBound(l_varResult)) Then
             l_lngSize = l_lngSize + 8
@@ -274,12 +279,14 @@ Dim l_rctArea As FRect
     SpritesFromArea = l_varResult
 End Function
 
-Public Function SpritesFromScreenArea(Area, Optional ByRef Exclude = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
+Public Function SpritesFromScreenArea(Area, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
 On Error Resume Next
 Dim l_varResult As Variant
 Dim l_lngResult As Long, l_lngStart As Long
 Dim l_lngCount As Long, l_lngSize As Long
 Dim l_rctArea As FRect
+Dim l_lngExclude As Long
+    l_lngExclude = Exclude.Pointer
     l_rctArea.x1 = Area.Left
     l_rctArea.y1 = Area.Top
     l_rctArea.x2 = Area.Right
@@ -288,7 +295,7 @@ Dim l_rctArea As FRect
     l_lngSize = 8
     l_lngStart = Item(1).Pointer
     Do
-        l_lngResult = SoftFX.FindSpriteOnscreen(l_lngStart, l_rctArea, Exclude, CLng(MustBeSolid), Class, ExcludedClass)
+        l_lngResult = SoftFX.FindSpriteOnscreen(l_lngStart, l_rctArea, l_lngExclude, CLng(MustBeSolid), Class, ExcludedClass)
         If l_lngResult = 0 Then Exit Do
         If l_lngCount > (UBound(l_varResult)) Then
             l_lngSize = l_lngSize + 8
@@ -311,7 +318,7 @@ Dim l_rctArea As FRect
 End Function
 
 ' todo
-Public Function SpritesFromPolygon(Poly, Optional ByRef Exclude = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
+Public Function SpritesFromPolygon(Poly, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
 On Error Resume Next
 Dim l_varResult As Variant
 Dim l_sprSprite As Fury2Sprite
@@ -337,7 +344,7 @@ Dim l_lngCount As Long, l_lngSize As Long
 End Function
 
 ' todo
-Public Function SpritesFromOnscreenPolygon(Poly, Optional ByRef Exclude = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
+Public Function SpritesFromOnscreenPolygon(Poly, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
 On Error Resume Next
 Dim l_varResult As Variant
 Dim l_lngResult As Long, l_lngStart As Long
@@ -368,7 +375,7 @@ Dim l_lngCount As Long, l_lngSize As Long
     SpritesFromOnscreenPolygon = l_varResult
 End Function
 
-Public Function GetClosest(ByRef Check, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1, Optional ByRef OutputDistance) As Fury2Sprite
+Public Function GetClosest(ByVal Check As Fury2Sprite, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1, Optional ByRef OutputDistance) As Fury2Sprite
 On Error Resume Next
 Dim m_sngDistance As Single
 Dim l_lngResult As Long
@@ -380,7 +387,7 @@ Dim l_lngResult As Long
     Err.Clear
 End Function
 
-Public Function GetFarthest(ByRef Check, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1, Optional ByRef OutputDistance) As Fury2Sprite
+Public Function GetFarthest(ByVal Check As Fury2Sprite, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1, Optional ByRef OutputDistance) As Fury2Sprite
 On Error Resume Next
 Dim m_sngDistance As Single
 Dim l_lngResult As Long
@@ -537,8 +544,9 @@ End Sub
 
 Public Function FindByNames(ByVal Match As String) As Fury2Collection
 On Error Resume Next
-Dim l_colItems As New Fury2Collection
+Dim l_colItems As Fury2Collection
 Dim l_sprSprite As Fury2Sprite
+    Set l_colItems = New Fury2Collection
     For Each l_sprSprite In mCol
         If l_sprSprite.Name Like Match Then
             l_colItems.Add l_sprSprite

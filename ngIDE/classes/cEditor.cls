@@ -15,6 +15,8 @@ Option Explicit
 Private Const EM_CANUNDO = &HC6
 Private Const EM_UNDO = &HC7
 
+Private Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+
 Public CanCut As Boolean, CanCopy As Boolean, CanPaste As Boolean, CanDelete As Boolean, CanSelectAll As Boolean, CanSelectNone As Boolean, CanUndo As Boolean, CanRedo As Boolean
 Private m_strGamePath As String
 Private m_docChild As cChildManager
@@ -174,18 +176,23 @@ On Error Resume Next
     ActionUpdate
 End Sub
 
+Public Sub Event_FilesystemChanged()
+On Error Resume Next
+    frmMain.RefreshFileSidebar
+End Sub
+
 Public Function Event_DocumentActivate(ByRef Document As cChildManager) As Boolean
 On Error Resume Next
     If Not (m_docChild Is Nothing) Then
-        m_docChild.Toolbars.HideToolbars frmMain
-        m_docChild.Accelerators.UndefineAccelerators m_amgAccelerators
+        If m_docChild.Toolbars Is Nothing Then Else m_docChild.Toolbars.HideToolbars frmMain
+        If m_docChild.Accelerators Is Nothing Then Else m_docChild.Accelerators.UndefineAccelerators m_amgAccelerators
     End If
     frmMain.HideInactiveWindows
     frmMain.RefreshActiveDocument
     Set m_docChild = Document
     If Not (m_docChild Is Nothing) Then
-        m_docChild.Toolbars.ShowToolbars frmMain
-        m_docChild.Accelerators.DefineAccelerators m_amgAccelerators
+        If m_docChild.Toolbars Is Nothing Then Else m_docChild.Toolbars.ShowToolbars frmMain
+        If m_docChild.Accelerators Is Nothing Then Else m_docChild.Accelerators.DefineAccelerators m_amgAccelerators
     End If
     Event_FocusChanged
 End Function
@@ -314,6 +321,16 @@ On Error Resume Next
     frmPluginManager.Show vbModal, frmMain
     frmMain.RefreshPluginToolbar
     Err.Clear
+End Sub
+
+Public Sub Help_OnlineDocs()
+On Error Resume Next
+    Call ShellExecute(frmMain.hwnd, "Open", "http://fury2.luminance.org/wiki/default.aspx/Documentation.Index", "", "", vbNormalFocus)
+End Sub
+
+Public Sub Help_OnlineTutorials()
+On Error Resume Next
+    Call ShellExecute(frmMain.hwnd, "Open", "http://fury2.luminance.org/wiki/default.aspx/Documentation.Tutorials", "", "", vbNormalFocus)
 End Sub
 
 Public Sub Help_About()
@@ -632,13 +649,19 @@ On Error Resume Next
     If Doc Is Nothing Then Exit Sub
     SetBusyState True
     frmMain.ShowChild Doc
+    frmMain.HideInactiveWindows
+    DoEvents
     SetBusyState False
     Err.Clear
 End Sub
 
 Public Sub Game_Play()
 On Error Resume Next
-    Shell App.Path & "\fury².exe " & GamePath
+    If InIDE Then
+        Shell App.Path & "\..\..\binary\sys\fury².exe " & GamePath
+    Else
+        Shell App.Path & "\fury².exe " & GamePath
+    End If
     Err.Clear
 End Sub
 
@@ -688,6 +711,7 @@ Dim l_docDocument As iDocument
         If l_docDocument.Save(l_docDocument.Filename) Then
             Dim l_rdRecentDocuments As New cRecentDocuments
             l_rdRecentDocuments.AddToRecentDocs l_docDocument.Filename
+            Event_FilesystemChanged
         Else
             MsgBox "Error saving file.", vbExclamation, "Error"
         End If
@@ -705,6 +729,7 @@ Dim l_strFilename As String
             Dim l_rdRecentDocuments As New cRecentDocuments
             l_rdRecentDocuments.AddToRecentDocs l_docDocument.Filename
             AddRecentFile l_docDocument.Filename
+            Event_FilesystemChanged
         Else
             MsgBox "Error saving file.", vbExclamation, "Error"
         End If

@@ -77,6 +77,7 @@ Dim m_lngVolume As Long
     m_Engine.FlipScreen
     m_Engine.Yield
     m_Engine.ContextLevelRemove
+    m_Engine.ResetTiming
     m_booTransitioning = False
     Err.Clear
     ProfileStop "Transitions.FadeOut"
@@ -121,6 +122,7 @@ Dim m_lngBackColor As Long
     Call F2SetAlpha(m_lngBackColor, 255)
     If WithMusic Then m_Engine.BGMVolume = m_Engine.DefaultBGMVolume
     m_Engine.ContextLevelRemove
+    m_Engine.ResetTiming
     m_booTransitioning = False
     Err.Clear
     ProfileStop "Transitions.FadeIn"
@@ -159,6 +161,7 @@ Dim m_imgOld As Fury2Image
         m_Engine.Yield
     Loop
     m_Engine.ContextLevelRemove
+    m_Engine.ResetTiming
     m_booTransitioning = False
     ProfileStop "Transitions.Crossfade"
     Err.Clear

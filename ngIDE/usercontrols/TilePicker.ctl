@@ -62,10 +62,12 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
-Public Event SelectionChanged(Tile As Integer)
+Public Event SelectionChanged(Tiles() As Integer)
+Public Event TileHover(Tile As Integer)
 
 Private m_lngBuffer As Long
 Private m_lngWidth As Long, m_lngHeight As Long
+Private m_lngStartX As Long, m_lngStartY As Long
 Private m_tstTileset As Fury2Tileset
 Private m_booPreserveRows As Boolean
 Private m_intSelectedTiles() As Integer
@@ -155,7 +157,7 @@ End Property
 Public Sub SetSelectedTiles(ByRef Tiles() As Integer)
 On Error Resume Next
 Dim l_lngUBX As Long, l_lngUBY As Long
-Dim l_lngY As Long
+Dim l_lngY As Long, l_lngX As Long, l_lngI As Long
     l_lngUBX = -1
     l_lngUBY = -1
     l_lngUBX = UBound(Tiles, 1)
@@ -167,7 +169,10 @@ Dim l_lngY As Long
     ElseIf l_lngUBY > -1 Then
         ReDim m_intSelectedTiles(0 To ((l_lngUBX + 1) * (l_lngUBY + 1)) - 1)
         For l_lngY = LBound(Tiles, 2) To UBound(Tiles, 2)
-            CopyMemory m_intSelectedTiles((l_lngY * (l_lngUBX + 1)) - 1), Tiles(0, l_lngY), (l_lngUBX + 1) * 2
+            For l_lngX = LBound(Tiles, 1) To UBound(Tiles, 1)
+                m_intSelectedTiles(l_lngI) = Tiles(l_lngX, l_lngY)
+                l_lngI = l_lngI + 1
+            Next l_lngX
         Next l_lngY
     Else
         m_intSelectedTiles = Tiles
@@ -200,11 +205,15 @@ Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
     l_lngX = -hsScrollbar.Value
     
     If Not (m_tstTileset Is Nothing) Then
+        l_lngMaxX = m_tstTileset.TileWidth
+        l_lngMaxY = m_tstTileset.TileHeight
         If m_lngBuffer <> m_tstTileset.Buffer.Handle Then RebuildCache
         If (m_tstTileset.TileWidth > 0) And (m_tstTileset.TileHeight > 0) Then
             Set l_imgTile = F2Image(m_tstTileset.TileWidth, m_tstTileset.TileHeight)
             l_lngBackgroundColor = SwapChannels(GetSystemColor(SystemColor_Button_Face), Blue, Red)
             Do Until ((l_lngSY + m_tstTileset.TileHeight) > picTilesetCache.Height)
+                If l_lngMaxX < (l_lngX + m_tstTileset.TileWidth) Then l_lngMaxX = (l_lngX + m_tstTileset.TileWidth)
+                If l_lngMaxY < (l_lngY + m_tstTileset.TileHeight) Then l_lngMaxY = (l_lngY + m_tstTileset.TileHeight)
                 If (l_lngSY + m_tstTileset.TileHeight) > 0 Then
                     l_booSelected = False
                     For l_lngSelectedTiles = 0 To UBound(m_intSelectedTiles)
@@ -226,11 +235,10 @@ Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
                 End If
                       
                 l_lngSX = l_lngSX + m_tstTileset.TileWidth
-                If (l_lngSX + m_tstTileset.TileWidth) > picTilesetCache.ScaleWidth Then
+                If (l_lngSX + m_tstTileset.TileWidth) > (picTilesetCache.ScaleWidth) Then
                     l_lngSX = 0
                     l_lngSY = l_lngSY + m_tstTileset.TileHeight
                     If m_booPreserveRows Then
-                        l_lngMaxX = l_lngX + m_tstTileset.TileWidth
                         l_lngX = -hsScrollbar.Value - m_tstTileset.TileWidth
                         l_lngY = l_lngY + m_tstTileset.TileHeight
                         l_lngHeight = l_lngHeight + m_tstTileset.TileHeight
@@ -239,15 +247,17 @@ Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
                 
                 l_lngX = l_lngX + m_tstTileset.TileWidth
                 If m_booPreserveRows Then
-                    If (l_lngX + m_tstTileset.TileWidth) > l_lngWidth Then
-                        l_lngWidth = (l_lngX + m_tstTileset.TileWidth)
+                    If (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth) > l_lngWidth Then
+                        l_lngWidth = (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth)
                     End If
                 Else
-                    If (l_lngX + m_tstTileset.TileWidth + (hsScrollbar.Value)) > (m_lngWidth) Then
-                        l_lngMaxX = l_lngX
+                    If (l_lngX + m_tstTileset.TileWidth) > (m_lngWidth) Then
                         l_lngX = -hsScrollbar.Value
                         l_lngY = l_lngY + m_tstTileset.TileHeight
                         l_lngHeight = l_lngHeight + m_tstTileset.TileHeight
+                    End If
+                    If (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth) > l_lngWidth Then
+                        l_lngWidth = (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth)
                     End If
                 End If
                 l_lngTile = l_lngTile + 1
@@ -256,9 +266,8 @@ Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
         End If
     End If
     
-    l_lngMaxY = l_lngY
     If l_lngHeight > m_lngHeight Then
-        l_lngMax = (l_lngHeight - m_lngHeight - (IIf(hsScrollbar.Visible, hsScrollbar.Height, 0)))
+        l_lngMax = l_lngHeight - m_lngHeight - 1
         If l_lngMax > 0 Then
             If (vsScrollbar.Enabled) Then Else vsScrollbar.Enabled = True
             If vsScrollbar.LargeChange <> m_tstTileset.TileHeight * 4 Then vsScrollbar.LargeChange = m_tstTileset.TileHeight * 4
@@ -270,7 +279,7 @@ Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
         vsScrollbar.Enabled = False
     End If
     If l_lngWidth > m_lngWidth Then
-        l_lngMax = (l_lngWidth - m_lngWidth - (IIf(vsScrollbar.Visible, vsScrollbar.Width, 0)))
+        l_lngMax = l_lngWidth - m_lngWidth - 1
         If l_lngMax > 0 Then
             If (hsScrollbar.Enabled) Then Else hsScrollbar.Enabled = True
             If hsScrollbar.LargeChange <> m_tstTileset.TileWidth * 4 Then hsScrollbar.LargeChange = m_tstTileset.TileWidth * 4
@@ -320,17 +329,61 @@ End Sub
 
 Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
+Dim l_intSelectedTiles() As Integer
     If Button = 1 Then
-        ReDim m_intSelectedTiles(0 To 0)
-        m_intSelectedTiles(0) = HitTest(X, Y)
-        RaiseEvent SelectionChanged(m_intSelectedTiles(0))
+        m_lngStartX = (((X - hsScrollbar.Value) \ m_tstTileset.TileWidth) * m_tstTileset.TileWidth) + hsScrollbar.Value
+        m_lngStartY = (((Y - vsScrollbar.Value) \ m_tstTileset.TileHeight) * m_tstTileset.TileHeight) + vsScrollbar.Value
     ElseIf Button = 2 Then
         Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, Menus(MenuString("Preserve Rows", , , , , m_booPreserveRows)))
         Case 1
             m_booPreserveRows = Not m_booPreserveRows
+            Cls
             Redraw
         Case Else
         End Select
+    End If
+End Sub
+
+Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+Dim l_intSelectedTiles() As Integer
+Dim l_lngWidth As Long, l_lngHeight As Long
+Dim l_lngX As Long, l_lngY As Long
+    If Button = 1 Then
+        l_lngWidth = Ceil((X - m_lngStartX) / m_tstTileset.TileWidth)
+        l_lngHeight = Ceil((Y - m_lngStartY) / m_tstTileset.TileHeight)
+        If l_lngWidth < 1 Then l_lngWidth = 1
+        If l_lngHeight < 1 Then l_lngHeight = 1
+        ReDim l_intSelectedTiles(0 To l_lngWidth - 1, 0 To l_lngHeight - 1)
+        For l_lngY = 0 To l_lngHeight - 1
+            For l_lngX = 0 To l_lngWidth - 1
+                l_intSelectedTiles(l_lngX, l_lngY) = HitTest(m_lngStartX + (l_lngX * m_tstTileset.TileWidth), m_lngStartY + (l_lngY * m_tstTileset.TileHeight))
+            Next l_lngX
+        Next l_lngY
+        SetSelectedTiles l_intSelectedTiles
+    Else
+        RaiseEvent TileHover(HitTest(X, Y))
+    End If
+End Sub
+
+Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+Dim l_intSelectedTiles() As Integer
+Dim l_lngWidth As Long, l_lngHeight As Long
+Dim l_lngX As Long, l_lngY As Long
+    If Button = 1 Then
+        l_lngWidth = Ceil((X - m_lngStartX) / m_tstTileset.TileWidth)
+        l_lngHeight = Ceil((Y - m_lngStartY) / m_tstTileset.TileHeight)
+        If l_lngWidth < 1 Then l_lngWidth = 1
+        If l_lngHeight < 1 Then l_lngHeight = 1
+        ReDim l_intSelectedTiles(0 To l_lngWidth - 1, 0 To l_lngHeight - 1)
+        For l_lngY = 0 To l_lngHeight - 1
+            For l_lngX = 0 To l_lngWidth - 1
+                l_intSelectedTiles(l_lngX, l_lngY) = HitTest(m_lngStartX + (l_lngX * m_tstTileset.TileWidth), m_lngStartY + (l_lngY * m_tstTileset.TileHeight))
+            Next l_lngX
+        Next l_lngY
+        SetSelectedTiles l_intSelectedTiles
+        RaiseEvent SelectionChanged(l_intSelectedTiles)
     End If
 End Sub
 

@@ -26,6 +26,9 @@ Public Property Get MethodOperator() As String
 End Property
 
 
+Public Function GenerateSubCall(Name As String, Args As Variant) As String
+End Function
+
 Public Function GenerateFunctionCall(Name As String, Args As Variant) As String
 End Function
 

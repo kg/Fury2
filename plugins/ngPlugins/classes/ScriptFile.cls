@@ -46,7 +46,7 @@ End Sub
 Private Function iFileTypePlugin_CanOpenFile(Filename As String) As Boolean
 On Error Resume Next
     Select Case LCase(Trim(GetExtension(Filename)))
-    Case "f2script", "vbs", "js", "py", "f2sc"
+    Case "f2script", "vbs", "js", "f2sc"
         iFileTypePlugin_CanOpenFile = True
     Case Else
     End Select
@@ -122,5 +122,5 @@ End Sub
 
 Private Property Get iFileTypePlugin_FilterString() As String
 On Error Resume Next
-    iFileTypePlugin_FilterString = "Scripts|*.f2script;*.vbs;*.js;*.py"
+    iFileTypePlugin_FilterString = "Scripts|*.f2script;*.vbs;*.js"
 End Property

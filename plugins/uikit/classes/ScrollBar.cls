@@ -37,6 +37,8 @@ Private m_btnMinus As Button
 Private m_btnPlus As Button
 Private m_btnThumb As Button
 Private m_booFocusing As Boolean
+Private m_wdgMe As iWidget
+Private m_cntMe As iContainer
 
 Public Property Get Horizontal() As Boolean
     Horizontal = m_booHorizontal
@@ -235,12 +237,12 @@ End Sub
 
 Public Property Get Container() As iContainer
 On Error Resume Next
-    Set Container = Me
+    Set Container = m_cntMe
 End Property
 
 Public Property Get Widget() As iWidget
 On Error Resume Next
-    Set Widget = Me
+    Set Widget = m_wdgMe
 End Property
 
 Private Sub Class_Initialize()
@@ -262,6 +264,8 @@ On Error Resume Next
     Increment = 1
     Value = 0
     ThumbSize = 0.2
+    Set m_wdgMe = Me
+    Set m_cntMe = Me
 End Sub
 
 Public Sub Refresh()

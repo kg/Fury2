@@ -37,7 +37,7 @@ On Error Resume Next
     ShutdownEngine
     InitEngine Path
     g_edEditor.GamePath = Path
-    frmMain.RefreshFileSidebar
+    g_edEditor.Event_FilesystemChanged
     frmMain.Caption = "Editor² - " & g_edEditor.Engine.GameName
     frmMain.RefreshGameState
     AddRecentGame Path

@@ -397,6 +397,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
+Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
 Implements iExtendedForm
 Implements iEditingCommands
 Implements iCustomMenus
@@ -865,12 +866,13 @@ Dim l_vfLines As VirtualFile
         l_vfLines.Load l_lngCount
         ReDim l_lnLines(0 To l_lngCount - 1)
         l_vfLines.RawLoad ByVal VarPtr(l_lnLines(0)), l_lngCount * Len(l_lnLines(0))
+        BlockingUndoPush
         With m_mapMap.Layers(m_lngSelectedLayer)
             For l_lngLine = LBound(l_lnLines) To UBound(l_lnLines)
                 .AddCollisionLine l_lnLines(l_lngLine).Start.X, l_lnLines(l_lngLine).Start.Y, l_lnLines(l_lngLine).end.X, l_lnLines(l_lngLine).end.Y
             Next l_lngLine
             ReDim Preserve m_bytSelectedCollisionLines(0 To .CollisionLineCount)
-            SelectCollisionLines .CollisionLineCount - l_lngCount, .CollisionLineCount
+            SelectCollisionLines .CollisionLineCount - l_lngCount + 1, .CollisionLineCount
         End With
         Redraw
         Editor.ToolbarUpdate
@@ -910,6 +912,7 @@ End Function
 Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
+Dim l_ptMouse As POINTAPI
     With m_mapMap.Layers(m_lngSelectedLayer).Sprites
         BeginProcess "Performing Paste..."
         If AtIndex < 1 Then
@@ -922,6 +925,14 @@ Dim l_sprSprite As Fury2Sprite
             l_sprSprite.Initialize
             l_sprSprite.Load
             ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Sprites, l_sprSprite, AtIndex, OUO_Remove
+            GetCursorPos l_ptMouse
+            ScreenToClient picMapViewport.hwnd, l_ptMouse
+            If (l_ptMouse.X >= 0) And (l_ptMouse.Y >= 0) And (l_ptMouse.X < picMapViewport.ScaleWidth) And (l_ptMouse.Y < picMapViewport.ScaleHeight) Then
+                With l_sprSprite
+                    .X = m_lngMouseX
+                    .Y = m_lngMouseY
+                End With
+            End If
             .Add l_sprSprite, , AtIndex
             m_lngSelectedSprite = AtIndex
             If DoRedraw Then
@@ -1539,6 +1550,7 @@ Public Sub DeleteCollisionLines()
 On Error Resume Next
 Dim l_lngLine As Long
     BeginProcess "Performing Delete..."
+    BlockingUndoPush
     With m_mapMap.Layers(m_lngSelectedLayer)
         For l_lngLine = UBound(m_bytSelectedCollisionLines) To 1 Step -1
             If m_bytSelectedCollisionLines(l_lngLine) Then
@@ -2082,6 +2094,11 @@ On Error Resume Next
         .DestroyMenu "SetZoom(800)"
         .DestroyMenu "SetZoom(1600)"
         .DestroyMenu "ZoomEndSeparator"
+        .DestroyMenu "Tools"
+        .DestroyMenu "BlockingTools"
+        .DestroyMenu "ToolsEndSeparator"
+        .DestroyMenu "AddEdgeBlocking"
+        .DestroyMenu "BlockingToolsEndSeparator"
     End With
 End Sub
 
@@ -2098,6 +2115,14 @@ On Error Resume Next
         .DefineMenu "800%", "SetZoom(800)", "Zoom", , , , Zoom = 8
         .DefineMenu "1600%", "SetZoom(1600)", "Zoom", , , , Zoom >= 16
         .DefineMenu "-", "ZoomEndSeparator", "Zoom"
+        .DefineMenu "&Tools", "Tools"
+        .DefineMenu "&Tiles", "TileTools", "Tools"
+        .DefineMenu "&Blocking", "BlockingTools", "Tools"
+        .DefineMenu "-", "ToolsEndSeparator", "Tools"
+        .DefineMenu "Reload all tilesets", "ReloadTilesets", "TileTools"
+        .DefineMenu "-", "TileToolsEndSeparator", "TileTools"
+        .DefineMenu "Place blocking around edges", "AddEdgeBlocking", "BlockingTools"
+        .DefineMenu "-", "BlockingToolsEndSeparator", "BlockingTools"
     End With
 End Sub
 
@@ -2747,6 +2772,25 @@ Dim l_undUndo As cObjectUndoEntry
     EndProcess
 End Sub
 
+Public Sub BlockingUndoPush(Optional ByVal Layer As Long = -1)
+On Error Resume Next
+Dim l_undUndo As cBlockingUndoEntry
+    If Layer = -1 Then Layer = m_lngSelectedLayer
+    BeginProcess "Storing Undo Data..."
+    Set l_undUndo = New cBlockingUndoEntry
+    With l_undUndo
+        Set .Map = m_mapMap
+        .Layer = Layer
+        .Lines = m_mapMap.Layers(Layer).CollisionLines
+    End With
+    m_colUndo.Add l_undUndo
+    m_colRedo.Clear
+    If m_colUndo.Count > c_lngUndoStackLength Then
+        m_colUndo.Remove 1
+    End If
+    EndProcess
+End Sub
+
 Private Sub picContainer_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
     m_splSidebar.MouseDown Button, Shift, X, Y
@@ -2963,8 +3007,11 @@ On Error Resume Next
     If m_voViewOptions.AlwaysShowLighting And m_lngCurrentView <> View_Lighting Then
         Redraw_Lighting
     End If
-    m_lngTileWidth = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileWidth
-    m_lngTileHeight = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileHeight
+    If m_mapMap Is Nothing Then
+    Else
+        m_lngTileWidth = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileWidth
+        m_lngTileHeight = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileHeight
+    End If
     RefreshViewport
     RefreshOverlay
     ' Very bad for very arcane reasons
@@ -3311,17 +3358,20 @@ Public Sub RefreshLayers()
 On Error Resume Next
     elLayers.VisibleIcon = "LAYER VISIBLE"
     elLayers.InvisibleIcon = "LAYER HIDDEN"
-    Set elLayers.BoundObject = m_mapMap.Layers
-    With elLayers.Toolbar
-        .ButtonEnabled("DeleteLayer") = (m_mapMap.Layers.Count > 1)
-    End With
-    If elLayers.SelectedItem <> m_lngSelectedLayer Then
-        elLayers.SelectedItem = m_lngSelectedLayer
+    If m_mapMap Is Nothing Then
     Else
-        elLayers.Refresh
+        Set elLayers.BoundObject = m_mapMap.Layers
+        With elLayers.Toolbar
+            .ButtonEnabled("DeleteLayer") = (m_mapMap.Layers.Count > 1)
+        End With
+        If elLayers.SelectedItem <> m_lngSelectedLayer Then
+            elLayers.SelectedItem = m_lngSelectedLayer
+        Else
+            elLayers.Refresh
+        End If
+        m_lngTileWidth = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileWidth
+        m_lngTileHeight = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileHeight
     End If
-    m_lngTileWidth = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileWidth
-    m_lngTileHeight = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileHeight
 End Sub
 
 Public Sub RefreshLights()
@@ -3423,6 +3473,7 @@ End Sub
 
 Public Sub RefreshOverlay()
 On Error Resume Next
+    If m_imgOverlay Is Nothing Then Exit Sub
     picOverlay.Move (m_lngOverlayX - hsMap.Value) * Zoom, (m_lngOverlayY - vsMap.Value) * Zoom, m_lngOverlayWidth * Zoom, m_lngOverlayHeight * Zoom
     StretchBlt picOverlay.hdc, 0, 0, picOverlay.ScaleWidth, picOverlay.ScaleHeight, m_lngOverlayDC, 0, 0, m_imgOverlay.Width, m_imgOverlay.Height, vbSrcCopy
     If picOverlay.Visible Then
@@ -3444,11 +3495,10 @@ End Sub
 
 Public Sub RefreshTiles()
 On Error Resume Next
-    'If tpkTiles.Visible Then
-        Set tpkTiles.Tileset = m_mapMap.Layers(m_lngSelectedLayer).Tileset
-        m_lngTileWidth = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileWidth
-        m_lngTileHeight = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileHeight
-    'End If
+    If m_mapMap Is Nothing Then Exit Sub
+    Set tpkTiles.Tileset = m_mapMap.Layers(m_lngSelectedLayer).Tileset
+    m_lngTileWidth = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileWidth
+    m_lngTileHeight = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileHeight
 End Sub
 
 Public Sub RefreshTool()
@@ -3480,6 +3530,16 @@ Dim l_lngWidth As Long, l_lngHeight As Long
     picMapViewport.Line (l_lngWidth, 0)-(picMapViewport.ScaleWidth, picMapViewport.ScaleHeight), picMapViewport.BackColor, BF
     picMapViewport.Line (0, l_lngHeight)-(picMapViewport.ScaleWidth, picMapViewport.ScaleHeight), picMapViewport.BackColor, BF
     If (picMapViewport.AutoRedraw) And (Flip) Then picMapViewport.Refresh
+End Sub
+
+Public Sub ReloadTilesets()
+On Error Resume Next
+Dim l_lyrLayer As Fury2MapLayer
+    For Each l_lyrLayer In m_mapMap.Layers
+        l_lyrLayer.Tileset.Reload
+    Next l_lyrLayer
+    RefreshAll
+    Redraw
 End Sub
 
 Public Sub ResetOverlay()
@@ -3533,10 +3593,10 @@ On Error Resume Next
 Dim l_lngWidth As Long, l_lngHeight As Long
     hsMap.Tag = "lock"
     vsMap.Tag = "lock"
-    l_lngWidth = ClipValue(picMapViewport.ScaleWidth, 1, m_mapMap.MaxX)
-    l_lngHeight = ClipValue(picMapViewport.ScaleHeight, 1, m_mapMap.MaxY)
-    m_lngViewWidth = ClipValue(Ceil(picMapViewport.ScaleWidth / Zoom), 1, m_mapMap.MaxX)
-    m_lngViewHeight = ClipValue(Ceil(picMapViewport.ScaleHeight / Zoom), 1, m_mapMap.MaxY)
+    l_lngWidth = ClipValue(picMapViewport.ScaleWidth, 1, m_mapMap.MaxX + 1)
+    l_lngHeight = ClipValue(picMapViewport.ScaleHeight, 1, m_mapMap.MaxY + 1)
+    m_lngViewWidth = ClipValue(Ceil(picMapViewport.ScaleWidth / Zoom), 1, m_mapMap.MaxX + 1)
+    m_lngViewHeight = ClipValue(Ceil(picMapViewport.ScaleHeight / Zoom), 1, m_mapMap.MaxY + 1)
     m_lngDisplayWidth = l_lngWidth
     m_lngDisplayHeight = l_lngHeight
     picDisplayBuffer.Move 0, 0, m_lngViewWidth, m_lngViewHeight
@@ -3634,6 +3694,25 @@ Public Sub SetZoom(ByVal Percentage As Long)
 On Error Resume Next
     Zoom = ClipValue(Percentage, 10, 1600) / 100#
     ZoomChanged
+End Sub
+
+Public Sub AddEdgeBlocking()
+On Error Resume Next
+Dim l_lyrLayer As Fury2MapLayer
+Dim l_lngW As Long, l_lngH As Long
+    For Each l_lyrLayer In m_mapMap.Layers
+        With l_lyrLayer
+            l_lngW = (.Width * .Tileset.TileWidth) - 1
+            l_lngH = (.Height * .Tileset.TileHeight) - 1
+            .AddCollisionLine 0, 0, l_lngW, 0
+            .AddCollisionLine 0, 0, 0, l_lngH
+            .AddCollisionLine l_lngW, 0, l_lngW, l_lngH
+            .AddCollisionLine 0, l_lngH, l_lngW, l_lngH
+        End With
+    Next l_lyrLayer
+    ReDim Preserve m_bytSelectedCollisionLines(0 To m_mapMap.Layers(m_lngSelectedLayer).CollisionLineCount)
+    SelectCollisionLines m_mapMap.Layers(m_lngSelectedLayer).CollisionLineCount - 3, m_mapMap.Layers(m_lngSelectedLayer).CollisionLineCount
+    Redraw
 End Sub
 
 Public Sub ShowOverlay()
@@ -3861,6 +3940,7 @@ On Error Resume Next
             End If
         Case BlockingTool_Move
             If Button = 1 Then
+                BlockingUndoPush
                 m_lnCollisionLineCache = m_mapMap.Layers(m_lngSelectedLayer).CollisionLines
                 m_booDraggingCollisionLines = True
             End If
@@ -3931,6 +4011,7 @@ Dim l_rctSelection As Fury2Rect
     Case BlockingTool_Line
         If Button = 1 Then
             If m_lngPoint > 1 Then
+                BlockingUndoPush
                 With m_mapMap.Layers(m_lngSelectedLayer)
                     m_lngPoint = 0
                     .AddCollisionLine m_fptPoints(0).X, m_fptPoints(0).Y, m_fptPoints(1).X, m_fptPoints(1).Y
@@ -3943,6 +4024,7 @@ Dim l_rctSelection As Fury2Rect
     Case BlockingTool_PolyLine
         If Button = 1 Then
             If m_lngPoint > 1 Then
+                BlockingUndoPush
                 With m_mapMap.Layers(m_lngSelectedLayer)
                     m_lngPoint = 1
                     .AddCollisionLine m_fptPoints(0).X, m_fptPoints(0).Y, m_fptPoints(1).X, m_fptPoints(1).Y
@@ -3956,6 +4038,7 @@ Dim l_rctSelection As Fury2Rect
     Case BlockingTool_Rectangle
         If Button = 1 Then
             If m_lngPoint > 1 Then
+                BlockingUndoPush
                 With m_mapMap.Layers(m_lngSelectedLayer)
                     m_lngPoint = 0
                     .AddCollisionLine m_fptPoints(0).X, m_fptPoints(0).Y, m_fptPoints(1).X, m_fptPoints(0).Y
@@ -4345,10 +4428,7 @@ Dim l_sprNew As Fury2Sprite
                 Case 4
                     CopySprite
                 Case 5
-                    With PasteSprite(m_lngSelectedSprite, False)
-                        .X = m_lngMouseX
-                        .Y = m_lngMouseY
-                    End With
+                    PasteSprite m_lngSelectedSprite, False
                 Case 6
                     DeleteSprite
                 Case Else
@@ -4787,10 +4867,11 @@ On Error Resume Next
     dtTool_Resize
 End Sub
 
-Private Sub tpkTiles_SelectionChanged(Tile As Integer)
+Private Sub tpkTiles_SelectionChanged(ByRef Tiles() As Integer)
 On Error Resume Next
-    m_brsBrush.Resize 1, 1
-    m_brsBrush.Fill Tile
+    Set m_brsBrush = New Fury2Brush
+    m_brsBrush.Resize UBound(Tiles, 1) + 1, UBound(Tiles, 2) + 1
+    m_brsBrush.GrabFromArray Tiles
     RefreshBrush
 End Sub
 
@@ -4896,6 +4977,11 @@ Dim l_objObject As Object
     ResizeMapTools
     ToolChanged
     Screen.MousePointer = 0
+End Sub
+
+Private Sub tpkTiles_TileHover(Tile As Integer)
+On Error Resume Next
+    Editor.SetLocation "Tile " & Tile
 End Sub
 
 Private Sub vsMap_Change()

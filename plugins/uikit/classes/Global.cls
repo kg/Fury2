@@ -114,7 +114,7 @@ On Error Resume Next
         .This.Rectangle.RelLeft = X
         .This.Rectangle.RelTop = Y
     End With
-    Desktop.Container.SetFocus Forms(Name)
+    Desktop.Container.SetFocus Forms(Name).This
 End Sub
 
 Function LoadForm(Path) As Object
@@ -151,6 +151,8 @@ Dim l_strChannels() As String
                 l_strKey = Replace(l_strParts(0), vbCrLf, "")
                 l_strValue = l_strParts(1)
                 Select Case LCase(Trim(l_strKey))
+                Case "file", "skinfile", "skin"
+                    Skin.SkinFile = CStr(l_strValue)
                 Case "textcolor", "highlightcolor", "tintcolor"
                     l_strChannels = Split(l_strValue, ",")
                     CallByName Skin, LCase(Trim(l_strKey)), VbLet, F2RGB(CLng(l_strChannels(0)), CLng(l_strChannels(1)), CLng(l_strChannels(2)), CLng(l_strChannels(3)))
@@ -172,7 +174,7 @@ On Error Resume Next
 Dim l_fldFolders As Fury2Folders
 Dim l_filFiles As Fury2Files
 Dim l_lngFiles As Long, l_lngFolders As Long
-Dim l_sknSkin As Skin
+Dim l_sknSkin As Skin, l_strSkin As String
 Dim l_sksState As SkinState
 Dim l_wskWindow As Fury2WindowSkin
 Dim l_imgImage As Fury2Image
@@ -187,15 +189,14 @@ Dim l_strFile As String, l_strFolder As String
         For l_lngFiles = 1 To l_filFiles.Count
             l_strFile = l_filFiles.File(l_lngFiles)
             Set l_sksState = New SkinState
-            Set l_wskWindow = Nothing
-            If (Engine.FileSystem.FileExists(Replace(l_strFile, ".txt", ".png"))) Then
-                Set l_wskWindow = Engine.LoadWindowSkin(Replace(l_strFile, ".txt", ".png"))
-            End If
-            Set l_sksState.WindowSkin = l_wskWindow
             Set l_sksState.Font = Fonts("Normal")
             l_sksState.TextColor = F2White
             l_sksState.HighlightColor = F2RGB(32, 96, 220, 127)
+            l_sksState.SkinFile = Replace(l_strFile, ".txt", ".png")
             LoadSkinDef l_sksState, l_strFile
+            Set l_wskWindow = Nothing
+            Set l_wskWindow = Engine.LoadWindowSkin(l_sksState.SkinFile)
+            Set l_sksState.WindowSkin = l_wskWindow
             l_sknSkin.States.Add l_sksState, LCase(Trim(Replace(Replace(l_strFile, l_strFolder & "/", ""), ".txt", "")))
         Next l_lngFiles
         Set l_filFiles = Engine.FileSystem.EnumFiles(l_strFolder + "/glyphs/", "*.png")
@@ -272,6 +273,9 @@ End Function
 
 Public Sub Sync()
 On Error Resume Next
+    Set Buffer = Engine.Backbuffer
+    Set Me.Rectangle = Buffer.Rectangle
+    Set Desktop.Rectangle = Me.Rectangle.Copy
     Desktop.Container.Sync
     Desktop.Container.SetFocus Desktop.GetFocusableChild(1)
 End Sub
@@ -413,7 +417,7 @@ On Error Resume Next
     Set Engine = RHS
     Set Buffer = RHS.Backbuffer
     Set Me.Rectangle = Buffer.Rectangle
-    Set Desktop.Rectangle = Me.Rectangle
+    Set Desktop.Rectangle = Me.Rectangle.Copy
     Set mdlGlobal.Engine = RHS
     Engine.AddObject "UIKit", Me
 End Property

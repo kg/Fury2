@@ -13,6 +13,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
 Public WindowSkin As Fury2WindowSkin
+Public SkinFile As String
 Public Font As Fury2Font
 Public TextColor As Long
 Public HighlightColor As Long

@@ -55,6 +55,15 @@ Private Function IScriptLanguage_GenerateFunction(Name As String, Args As Varian
 
 End Function
 
+Private Function IScriptLanguage_GenerateSubCall(Name As String, Args As Variant) As String
+On Error Resume Next
+    If (VarType(Args) And vbArray) = vbArray Then
+        IScriptLanguage_GenerateSubCall = Name & " " & Join(Args, ", ")
+    Else
+        IScriptLanguage_GenerateSubCall = Name & " " & Args
+    End If
+End Function
+
 Private Function IScriptLanguage_GenerateFunctionCall(Name As String, Args As Variant) As String
 On Error Resume Next
     If (VarType(Args) And vbArray) = vbArray Then

@@ -1425,12 +1425,14 @@ End Sub
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
     With Handler
+        .DefineMenu "Reload Images", "ReloadGraphics"
     End With
 End Sub
 
 Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
     With Handler
+        .DestroyMenu "ReloadGraphics"
     End With
 End Sub
 
@@ -1961,6 +1963,15 @@ Friend Sub SetSprites(Sprites As Fury2Sprites)
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
     Set m_scSprites = Sprites
+    For Each l_sprSprite In m_scSprites
+        l_sprSprite.Load
+        l_sprSprite.Poses.LoadGraphics
+    Next l_sprSprite
+End Sub
+
+Public Sub ReloadGraphics()
+On Error Resume Next
+Dim l_sprSprite As Fury2Sprite
     For Each l_sprSprite In m_scSprites
         l_sprSprite.Load
         l_sprSprite.Poses.LoadGraphics

@@ -152,7 +152,7 @@ Dim l_strScript As String
         If (mvarScriptFailed = False) Then
             Err.Clear
             m_Engine.AreaObjectCount = m_Engine.AreaObjectCount + 1
-            AreaName = m_Engine.VariableName(mvarMap.Filename + "_A" & Index)
+            AreaName = m_Engine.VariableName("m" & mvarMap.Filename + "a" & Index)
             With m_Engine.ScriptEngine.Language
                 l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                 .GenerateClassVariable("Map") & .LineTerminator & _

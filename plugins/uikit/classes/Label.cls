@@ -23,6 +23,7 @@ Public Text As String
 Public Skin As Skin
 Public Rectangle As Fury2Rect
 Private m_staState As SkinState
+Private m_wdgMe As iWidget
 
 Public Property Get iWidget_CanGetFocus() As Boolean
     iWidget_CanGetFocus = False
@@ -70,7 +71,7 @@ End Sub
 
 Public Property Get Widget() As iWidget
 On Error Resume Next
-    Set Widget = Me
+    Set Widget = m_wdgMe
 End Property
 
 Public Property Get Caption() As String
@@ -89,6 +90,7 @@ On Error Resume Next
     Text = Name
     Set Rectangle = New Fury2Rect
     Visible = True
+    Set m_wdgMe = Me
 End Sub
 
 Private Sub iWidget_LostCapture(ByVal Parent As iContainer)

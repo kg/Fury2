@@ -37,6 +37,8 @@ SIGNATURE(Merge) END_SIGNATURE
 SIGNATURE(Merge_Opacity) , int Opacity END_SIGNATURE
 SIGNATURE(Additive) END_SIGNATURE
 SIGNATURE(Additive_Opacity) , int Opacity END_SIGNATURE
+SIGNATURE(Additive_SourceAlpha) END_SIGNATURE
+SIGNATURE(Additive_SourceAlpha_Opacity) , int Opacity END_SIGNATURE
 SIGNATURE(Screen) END_SIGNATURE
 SIGNATURE(Screen_Opacity) , int Opacity END_SIGNATURE
 SIGNATURE(Multiply) END_SIGNATURE
@@ -47,6 +49,8 @@ SIGNATURE(Lightmap_RGB) END_SIGNATURE
 SIGNATURE(Lightmap_RGB_Opacity) , int Opacity END_SIGNATURE
 SIGNATURE(Subtractive) END_SIGNATURE
 SIGNATURE(Subtractive_Opacity) , int Opacity END_SIGNATURE
+SIGNATURE(Subtractive_SourceAlpha) END_SIGNATURE
+SIGNATURE(Subtractive_SourceAlpha_Opacity) , int Opacity END_SIGNATURE
 SIGNATURE(Font_SourceAlpha_RGB) , Pixel Color END_SIGNATURE
 SIGNATURE(Font_SourceAlpha_RGB_Opacity) , Pixel Color, int Opacity END_SIGNATURE
 SIGNATURE(Font_Merge_RGB) , Pixel Color END_SIGNATURE
@@ -85,7 +89,9 @@ enum SFX_BlitModes {
     BlitMode_Behind = 21,
     BlitMode_Dodge = 22,
     BlitMode_Burn = 23,
-    BlitMode_Normal_Tint = 24
+    BlitMode_Normal_Tint = 24,
+	BlitMode_Additive_SourceAlpha = 25,
+	BlitMode_Subtractive_SourceAlpha = 26
 };
 
 TSIGNATURE(Normal) END_TSIGNATURE
@@ -125,6 +131,12 @@ inline int ModedBlit(SFX_BlitModes Mode, Image *Dest, Image *Source, Rectangle *
     case BlitMode_Subtractive:
         return BlitSimple_Subtractive_Opacity(Dest, Source, Area, SX, SY, Opacity);
         break;
+    case BlitMode_Additive_SourceAlpha:
+        return BlitSimple_Additive_SourceAlpha_Opacity(Dest, Source, Area, SX, SY, Opacity);
+        break;
+    case BlitMode_Subtractive_SourceAlpha:
+        return BlitSimple_Subtractive_SourceAlpha_Opacity(Dest, Source, Area, SX, SY, Opacity);
+        break;
     case BlitMode_SourceAlpha:
         return BlitSimple_Automatic_SourceAlpha_Opacity(Dest, Source, Area, SX, SY, Opacity);
         break;
@@ -163,6 +175,12 @@ inline int ModedBlit(SFX_BlitModes Mode, Image *Dest, Image *Source, Rectangle *
         break;
     case BlitMode_Subtractive:
         return BlitSimple_Subtractive_Opacity(Dest, Source, Area, SX, SY, Opacity);
+        break;
+    case BlitMode_Additive_SourceAlpha:
+        return BlitSimple_Additive_SourceAlpha_Opacity(Dest, Source, Area, SX, SY, Opacity);
+        break;
+    case BlitMode_Subtractive_SourceAlpha:
+        return BlitSimple_Subtractive_SourceAlpha_Opacity(Dest, Source, Area, SX, SY, Opacity);
         break;
     case BlitMode_SourceAlpha:
         return BlitSimple_SourceAlpha_Tint_Opacity(Dest, Source, Area, SX, SY, Color, Opacity);

@@ -3,9 +3,8 @@ Begin VB.Form frmDirectDraw
    BackColor       =   &H00000000&
    ClientHeight    =   3600
    ClientLeft      =   60
-   ClientTop       =   60
+   ClientTop       =   450
    ClientWidth     =   4800
-   ControlBox      =   0   'False
    BeginProperty Font 
       Name            =   "Tahoma"
       Size            =   8.25
@@ -18,22 +17,23 @@ Begin VB.Form frmDirectDraw
    Icon            =   "frmDirectDraw.frx":0000
    KeyPreview      =   -1  'True
    LinkTopic       =   "Form1"
+   MouseIcon       =   "frmDirectDraw.frx":708A
    ScaleHeight     =   240
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   320
    StartUpPosition =   2  'CenterScreen
    Visible         =   0   'False
-   Begin VB.PictureBox picBackbuffer 
+   Begin VB.PictureBox picBuffer 
       BackColor       =   &H00000000&
       BorderStyle     =   0  'None
-      Height          =   3600
-      Left            =   0
-      ScaleHeight     =   240
+      Height          =   495
+      Left            =   1800
+      ScaleHeight     =   33
       ScaleMode       =   3  'Pixel
-      ScaleWidth      =   320
+      ScaleWidth      =   81
       TabIndex        =   0
-      Top             =   0
-      Width           =   4800
+      Top             =   1560
+      Width           =   1215
    End
 End
 Attribute VB_Name = "frmDirectDraw"
@@ -41,3 +41,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+Private Sub Form_Resize()
+On Error Resume Next
+    picBuffer.Move 0, 0, Me.ScaleWidth, Me.ScaleHeight
+End Sub

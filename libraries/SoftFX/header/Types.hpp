@@ -278,4 +278,4 @@ typedef void SpriteIterator(int Sprite);
 
 typedef void ScalerFunction(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest);
 
-typedef void RenderFunction(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor);
+typedef void RenderFunction(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);

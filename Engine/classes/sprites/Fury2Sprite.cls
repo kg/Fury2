@@ -600,7 +600,7 @@ End Property
 Public Sub Dirty()
 Attribute Dirty.VB_MemberFlags = "40"
 On Error Resume Next
-Dim m_rctOnscreen As Win32.RECT
+Dim m_rctOnscreen As Win32.Rect
     m_Engine.Cameras.Dirty
 '    m_rctOnscreen = GetRectOnscreen
 '    m_Engine.Cameras.AddDirtyRect CLng(mvarX + m_rctOnscreen.left), CLng(mvarY + m_rctOnscreen.top), CLng(mvarX + m_rctOnscreen.right), CLng(mvarY + m_rctOnscreen.bottom), True
@@ -822,7 +822,7 @@ Public Property Let ScriptSource(NewScript As String)
     mvarScript = NewScript
 End Property
 
-Friend Property Get GetRect() As Win32.RECT
+Friend Property Get GetRect() As Win32.Rect
 On Error Resume Next
     With GetRect
         .Left = -(Width / 2)
@@ -844,7 +844,7 @@ Dim l_sngW As Single
     End With
 End Property
 
-Friend Property Get GetRectOnscreen() As Win32.RECT
+Friend Property Get GetRectOnscreen() As Win32.Rect
 On Error Resume Next
     With mvarPoses(mvarPose).Frames(mvarFrame)
         GetRectOnscreen.Left = (-(((.Rectangle.Width / 2)) * mvarScale)) - (1!)
@@ -857,7 +857,7 @@ End Property
 Public Property Get IsBlockedByTiles() As Boolean
 Attribute IsBlockedByTiles.VB_Description = "Returns the tile blocking state of the sprite."
 On Error Resume Next
-Dim m_rctRect As Win32.RECT
+Dim m_rctRect As Win32.Rect
     If mvarLayer < 1 Then Exit Property
     If Not mvarSolid Then IsBlockedByTiles = False
     Select Case mvarMap.CollisionType
@@ -941,9 +941,9 @@ End Function
 Sub ActivateAhead(Optional Distance = -32767)
 Attribute ActivateAhead.VB_Description = "Activates the sprite ahead of this one (if any)."
 On Error Resume Next
-Dim m_rctSource As Win32.RECT
-Dim m_rctDest As Win32.RECT
-Dim m_rctIntersect As Win32.RECT
+Dim m_rctSource As Win32.Rect
+Dim m_rctDest As Win32.Rect
+Dim m_rctIntersect As Win32.Rect
 Dim m_sngX As Single, m_sngY As Single
 Dim m_sprSprite As Fury2Sprite
 Dim m_araArea As Fury2Area
@@ -998,9 +998,9 @@ End Sub
 Sub ActionAhead(Distance, Action)
 Attribute ActionAhead.VB_Description = "Tells the sprite ahead of this one (if any) to perform an action."
 On Error Resume Next
-Dim m_rctSource As Win32.RECT
-Dim m_rctDest As Win32.RECT
-Dim m_rctIntersect As Win32.RECT
+Dim m_rctSource As Win32.Rect
+Dim m_rctDest As Win32.Rect
+Dim m_rctIntersect As Win32.Rect
 Dim m_sngX As Single, m_sngY As Single
 Dim m_sprSprite As Fury2Sprite
 Dim m_araArea As Fury2Area
@@ -1801,7 +1801,7 @@ Dim m_sngPathDistance As Single, m_sngPathAngle As Single, m_booPathComplete As 
             With mvarPath(1)
                 m_sngPathDistance = m_Engine.DistanceBetween(mvarX, mvarY, .X, .Y)
                 If ((m_sngLastDistance <= m_sngPathDistance) And (Abs(Velocity) > 0.1)) Then
-                    If (Round(mvarPreviousX(1)) = Round(mvarX)) And (Round(mvarPreviousY(1)) = Round(mvarY)) And (Round(mvarPreviousX(0)) <> Round(mvarX)) And (Round(mvarPreviousY(0)) <> Round(mvarY)) Then
+                    If (FRound(mvarPreviousX(1)) = FRound(mvarX)) And (FRound(mvarPreviousY(1)) = FRound(mvarY)) And (FRound(mvarPreviousX(0)) <> FRound(mvarX)) And (FRound(mvarPreviousY(0)) <> FRound(mvarY)) Then
                         mvarX = .X
                         mvarY = .Y
                         RefreshPosition

@@ -22,6 +22,25 @@ Private mvarAlignmentX As Single
 Private mvarAlignmentY As Single
 Private mvarFrameDelay As Long
 Private mvarImage As String
+Private mvarMatteColor As Long
+Private mvarDuplicateFirstFrame As Boolean
+
+Public Property Let DuplicateFirstFrame(ByVal vData As Boolean)
+    mvarDuplicateFirstFrame = vData
+End Property
+
+Public Property Get DuplicateFirstFrame() As Boolean
+    DuplicateFirstFrame = mvarDuplicateFirstFrame
+End Property
+
+Public Property Let MatteColor(ByVal vData As Long)
+Attribute MatteColor.VB_Description = "The color that is shown as transparent in non-alpha-channel blit modes.{Color}"
+    mvarMatteColor = vData
+End Property
+
+Public Property Get MatteColor() As Long
+    MatteColor = mvarMatteColor
+End Property
 
 Public Property Let Image(ByVal vData As String)
 Attribute Image.VB_Description = "The filename of the image.{ImagePath}"
@@ -78,8 +97,9 @@ Private Sub Class_Initialize()
     CellWidth = 16
     CellHeight = 32
     FrameDelay = 5
-    AlignmentX = 7.5
-    AlignmentY = 31
+    AlignmentX = 8
+    AlignmentY = 32
+    MatteColor = 0
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
@@ -90,6 +110,9 @@ On Error Resume Next
         .Load mvarFrameDelay
         .Load mvarAlignmentX
         .Load mvarAlignmentY
+        .Load mvarMatteColor
+        .Load mvarImage
+        .Load mvarDuplicateFirstFrame
     End With
 End Sub
 
@@ -101,6 +124,9 @@ On Error Resume Next
         .Save mvarFrameDelay
         .Save mvarAlignmentX
         .Save mvarAlignmentY
+        .Save mvarMatteColor
+        .Save mvarImage
+        .Save mvarDuplicateFirstFrame
     End With
 End Sub
 

@@ -49,7 +49,7 @@ Public Property Get Revision() As Fury2RevisionData
     Set Revision = mvarRevision
 End Property
 
-Public Sub InitMap(Index, StartX, StartY, Layer)
+Public Sub InitMap(ByVal Index As Long, ByVal StartX As Single, ByVal StartY As Single, ByVal Layer As Long)
 On Error Resume Next
 Dim m_lngItems As Long
     If mvarMembers.Count > 0 Then
@@ -65,11 +65,10 @@ Dim m_lngItems As Long
             Set Controller = Nothing
         End If
         Set Controller = m_Engine.F2Controller(mvarMembers(Leader).Sprite, m_Engine.Cameras(1))
-        If Controller Is Nothing Then Set Controller = New Fury2Controller
-        Set Controller.Camera = m_Engine.Cameras(1)
-        Controller.MoveCamera = True
-        Controller.Camera.ConstrainToMap = True
-        Controller.Style = m_Engine.ControlStyle
+        If Controller Is Nothing Then
+            Set Controller = New Fury2Controller
+            Set Controller.Camera = m_Engine.Cameras(1)
+        End If
         m_Engine.HookEvents Controller
     End If
 End Sub
@@ -84,7 +83,7 @@ On Error Resume Next
     Err.Clear
 End Function
 
-Public Sub Add(Obj As Object, Optional sKey As String)
+Public Sub Add(ByVal Obj As Object, Optional ByVal sKey As String = "")
 On Error Resume Next
     If Len(sKey) = 0 Then
         mvarMembers.Add Obj
@@ -122,6 +121,8 @@ On Error Resume Next
 End Sub
 
 Public Property Get NewEnum() As IUnknown
+Attribute NewEnum.VB_UserMemId = -4
+Attribute NewEnum.VB_MemberFlags = "40"
     Set NewEnum = mvarMembers.[_NewEnum]
 End Property
 

@@ -311,6 +311,20 @@ Export Image* AllocateImageFromPointer(Pixel *Data, int Width, int Height, int P
 
 }
 
+Export int SaveImageToTGA(Image *Source, const Byte* Filename) {
+    if (!Source) return Failure;
+    if (!Source->initialized()) return Failure;
+    if (!Source->Unlocked) return Failure;
+    if (!Filename) return Failure;
+    corona::Image *pImg = corona::CreateImage(Source->Width, Source->Height, corona::PF_B8G8R8A8);
+    if (!pImg) return Failure;
+    _Copy<Byte>(pImg->getPixels(), Source->pointer(0,0), Source->Width * Source->Height * 4);
+    corona::SaveImage(reinterpret_cast<const char*>(Filename), corona::FF_TGA, pImg);
+    delete pImg;
+    pImg = Null;
+    return Success;
+}
+
 Export int SaveImageToPNG(Image *Source, const Byte* Filename) {
     if (!Source) return Failure;
     if (!Source->initialized()) return Failure;
@@ -742,35 +756,4 @@ Export int GetLockingMode() {
 Export void SetLockingMode(int newMode) {
   lockingMode = (LockingModes)newMode;
   return;
-}
-
-Export DoubleWord LoadMNG(const char* filename) {
-/*  MNG* temp;
-  temp = new MNG(filename);
-  if (temp) {
-    return temp;
-  }
-  return Null;
-*/
-  return Null;
-}
-
-Export Image* GetMNGBuffer(DoubleWord  handle) {
-/*  if (!handle) return Null;
-  return handle->Buffer;
-*/
-  return Null;
-}
-
-Export void SyncMNG(DoubleWord  handle) {
-/*  if (handle) handle->sync();
-  return;
-*/
-}
-
-Export void DestroyMNG(DoubleWord  handle) {
-/*  if (!handle) return;
-  delete handle;
-  return;
-*/
 }

@@ -55,8 +55,9 @@ End Sub
 
 Public Function FindByNames(ByVal Match As String) As Fury2Collection
 On Error Resume Next
-Dim l_colItems As New Fury2Collection
+Dim l_colItems As Fury2Collection
 Dim l_litLight As Fury2LightSource
+    Set l_colItems = New Fury2Collection
     For Each l_litLight In mCol
         If l_litLight.Name Like Match Then
             l_colItems.Add l_litLight

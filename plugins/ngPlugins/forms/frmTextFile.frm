@@ -126,3 +126,6 @@ On Error Resume Next
     iDocument_Modified = True
 End Property
 
+Private Sub txtText_Change()
+
+End Sub

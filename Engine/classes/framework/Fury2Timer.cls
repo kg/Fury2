@@ -111,19 +111,20 @@ Dim m_lngUpdates As Long
         If m_lngUpdatesDue > c_lngMaxTimerUpdates Then m_lngUpdatesDue = c_lngMaxTimerUpdates
         For m_lngUpdates = 1 To m_lngUpdatesDue
             If (m_Engine.Paused = False) Or (mvarGameOnly = False) Then
+                If mvarOneShot Then mvarEnabled = False
                 m_Engine.ContextLevelAdd "Timer_Fire"
                 Err.Clear
                 m_Engine.ScriptEngine.AddCode mvarFireCode
                 If Err <> 0 Then mvarEnabled = False
                 Err.Clear
                 m_Engine.ContextLevelRemove
-                If mvarOneShot Then mvarEnabled = False
             End If
         Next m_lngUpdates
         Err.Clear
     Else
         If (m_lngTime) >= (mvarLastFiring + mvarDelay) Then
             If (m_Engine.Paused = False) Or (mvarGameOnly = False) Then
+                If mvarOneShot Then mvarEnabled = False
                 mvarLastFiring = m_lngTime
                 m_Engine.ContextLevelAdd "Timer_Fire"
                 Err.Clear
@@ -131,7 +132,6 @@ Dim m_lngUpdates As Long
                 If Err <> 0 Then mvarEnabled = False
                 Err.Clear
                 m_Engine.ContextLevelRemove
-                If mvarOneShot Then mvarEnabled = False
             End If
         End If
     End If

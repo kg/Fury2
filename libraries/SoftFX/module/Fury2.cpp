@@ -749,7 +749,7 @@ Pixel white = Pixel(255,255,255,255);
                 RotatePoint(px, py, r);
                 px += x; py += y;
                 poly.Append(TexturedVertex(px, py, pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.bottom_exclusive()));
-                FilterSimple_ConvexPolygon_Textured(Camera->pImage, pCurrent->Graphic.pImage, &poly, DefaultSampleFunction, renderer);
+                FilterSimple_ConvexPolygon_Textured(Camera->pImage, pCurrent->Graphic.pImage, &poly, DefaultSampleFunction, renderer, pCurrent->Params.Color.V);
               } else {
                 w *= pCurrent->Params.Scale / 2;
                 if ((y) < Camera->Rectangle.Top) goto nextsprite;
@@ -818,9 +818,10 @@ int xs = 0, ys = 0;
 int xm[2] = {0,0}, ym[2] = {0,0};
 Rectangle dest, source, clipper, *clip;
 Rectangle old_clip;
-    if (!wp) return false;
-    if (!wp->pImages) return false;
-    if (!Area) return false;
+    if (!Dest) return Failure;
+    if (!wp) return Failure;
+    if (!wp->pImages) return Failure;
+    if (!Area) return Failure;
     if (SectionFlags <= 0) {
       SectionFlags = sfAll;
     }
@@ -1043,9 +1044,26 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
         case '_': case '`':
           broke = false;
           buffer += (*current);
-          if (_current) {
-            buffer_width += _current->XIncrement;
-          }
+		  if (*current == 9) {
+			// tab
+			bool stopFound = false;
+			if ((Options->TabStops != Null) && (Options->TabStopCount > 0)) {
+			  for (int t = 0; t < Options->TabStopCount; t++) {
+			    if (Options->TabStops[t] > (buffer_width + buffer_X - Rect->Left + Options->Scroll_X)) {
+			      buffer_width = Options->TabStops[t] - (buffer_X - Rect->Left + Options->Scroll_X);
+			      stopFound = true;
+			      break;
+			    }
+			  }
+			}
+			if (!stopFound) {
+		      buffer_width += _current->XIncrement;
+			}
+		  } else {
+	        if (_current) {
+		      buffer_width += _current->XIncrement;
+			}
+		  }
           if (buffer.size() > 1) {
             if (((buffer_width + current_X + Options->Scroll_X) > Rect->Width)) {
               if (Font->WrapMode == 1) { 
@@ -1186,7 +1204,7 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
           return Success;
         }
       }
-      buffer_X = X;
+      buffer_X = buffer_X + buffer_width;
       buffer.clear();
       buffer_width = 0;
       buffer_index = index + 1;
@@ -1931,7 +1949,7 @@ float FuzzyOffset = 0, FlickerAmount = 0;
           ShadowPoly.Finalize();
 
           Camera->ScratchBuffer->setClipRectangle(LightRect);
-          FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, LightColor, Null);
+          FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, LightColor, Null, 0);
         } else {
           // falloff (gradient filled convex polygon extended to FalloffDistance pixels away)
           LightIterations = Light->Fuzziness;
@@ -1985,7 +2003,7 @@ fuzzyrender:
               //BlitSimple_Normal(RenderTarget, Light->Cache, &LightRect, 0, 0);
               FilterSimple_Fill(RenderTarget, &LightRect, Pixel(0, 0, 0, 255));
             } else {
-              FilterSimple_ConvexPolygon_Gradient(RenderTarget, &GradientShadowPoly, RenderFunction_Additive);
+              FilterSimple_ConvexPolygon_Gradient(RenderTarget, &GradientShadowPoly, RenderFunction_Additive, 0);
               if (LightIterations > 0) {
                 FuzzyOffset += 1;
                 LightIterations--;
@@ -2051,7 +2069,7 @@ fuzzyrender:
 						Vector.Y = afloor(Vector.Y / vs);
 						ShadowPoly.SetVertex(3, FPoint(LinePoint[1].X + Vector.X, LinePoint[1].Y + Vector.Y));
 
-						FilterSimple_ConvexPolygon(RenderTarget, &ShadowPoly, Pixel(0,0,0,255), Null);
+						FilterSimple_ConvexPolygon(RenderTarget, &ShadowPoly, Pixel(0,0,0,255), Null, 0);
 												
 					}
 				}
@@ -2133,7 +2151,7 @@ fuzzyrender:
 
               ShadowPoly.SetVertex(3, LinePoint[1]);
 
-              FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, Pixel(0,0,0,255), Null);
+              FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, Pixel(0,0,0,255), Null, 0);
             }
           }
 

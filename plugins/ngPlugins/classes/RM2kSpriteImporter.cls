@@ -25,8 +25,22 @@ End Property
 
 Private Sub iPlugin_Activate()
 On Error Resume Next
-    MsgBox "Uh... this feature doesn't work yet. But in the meanwhile, here's a pretty color selector dialog!", , "8-)"
-    SelectColor
+Dim l_strFilename As String
+Dim l_plgPlugin As iFileTypePlugin
+Dim l_docSprite As frmSprites
+Dim l_sprSprite As Fury2Sprite
+    l_strFilename = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Character Set", False)
+    If Trim(l_strFilename) = "" Then Exit Sub
+    l_strFilename = Replace(l_strFilename, Engine.Engine.FileSystem.Root, "/")
+    l_strFilename = Replace(l_strFilename, "\", "/")
+    Set l_plgPlugin = m_objEditor.FindFileTypePlugin("Sprite Collection")
+    Set l_docSprite = l_plgPlugin.CreateNew
+    Set l_sprSprite = Engine.Engine.RM2kSprite(l_strFilename, CLng(InputBox("Character number:", "Select Character", 0)))
+    l_sprSprite.Initialize
+    l_sprSprite.Load
+    l_sprSprite.Poses.LoadGraphics
+    l_docSprite.Sprites.Add l_sprSprite
+    m_objEditor.NewDocument l_docSprite
     Err.Clear
 End Sub
 

@@ -230,6 +230,8 @@ struct TextParam {
     int CharFromPoint;
 	int MaxChars;
 	int CharsDrawn;
+	int TabStopCount;
+	int* TabStops;
 };
 
 struct FontParam {

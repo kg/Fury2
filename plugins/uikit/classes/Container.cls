@@ -25,6 +25,8 @@ Public CapturedWidget As iWidget
 Public FocusedWidget As iWidget
 Public HaveFocus As Boolean
 Private m_booFocusing As Boolean
+Private m_cntMe As iContainer
+Private m_wdgMe As iWidget
 
 Public Sub ChildRemoved(Obj As Object)
 Dim l_lngIndex As Long, l_lngCount As Long
@@ -175,12 +177,12 @@ End Sub
 
 Public Property Get Container() As iContainer
 On Error Resume Next
-    Set Container = Me
+    Set Container = m_cntMe
 End Property
 
 Public Property Get Widget() As iWidget
 On Error Resume Next
-    Set Widget = Me
+    Set Widget = m_wdgMe
 End Property
 
 Private Sub Class_Initialize()
@@ -191,6 +193,8 @@ On Error Resume Next
     Set Children.Parent = Me
     Set Rectangle = New Fury2Rect
     Visible = True
+    Set m_cntMe = Me
+    Set m_wdgMe = Me
 End Sub
 
 Private Property Get iContainer_Captured(ByRef Widget As iWidget) As Boolean

@@ -66,7 +66,6 @@ Begin VB.Form frmImage
    End
    Begin VB.PictureBox picImage 
       AutoRedraw      =   -1  'True
-      BackColor       =   &H00806040&
       BorderStyle     =   0  'None
       Height          =   2880
       Left            =   0
@@ -90,6 +89,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
+Implements iCustomMenus
 Implements iExtendedForm
 Implements iDocument
 
@@ -116,6 +116,46 @@ Private Sub Form_Load()
     m_sngZoom = 1
 End Sub
 
+Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
+On Error Resume Next
+    With Handler
+        .DestroyMenu "Filters"
+    End With
+End Sub
+
+Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
+On Error Resume Next
+    With Handler
+        .DefineMenu "Filters", "Filters"
+    End With
+End Sub
+
+Private Sub iCustomMenus_MenuClick(Key As String)
+On Error Resume Next
+Dim l_strParameter As String, l_lngParameter As Long
+Dim CommandName As String
+    CommandName = Key
+    If InStr(CommandName, "(") Then
+        l_strParameter = Trim(Mid(CommandName, InStr(CommandName, "(") + 1))
+        If Right(l_strParameter, 1) = ")" Then l_strParameter = Trim(Left(l_strParameter, Len(l_strParameter) - 1))
+        CommandName = Left(CommandName, InStr(CommandName, "(") - 1)
+        CommandName = Replace(CommandName, ":", "_")
+        If Left(l_strParameter, 1) = """" Then
+            ' String
+            l_strParameter = CStr(Mid(l_strParameter, 2, Len(l_strParameter) - 2))
+            CallByName Me, CommandName, VbMethod, l_strParameter
+        Else
+            ' Integer
+            l_lngParameter = CLng(l_strParameter)
+            CallByName Me, CommandName, VbMethod, l_lngParameter
+        End If
+    Else
+        CommandName = Replace(CommandName, ":", "_")
+        CallByName Me, CommandName, VbMethod
+    End If
+    Err.Clear
+End Sub
+
 Private Property Get iDocument_Plugin() As ngInterfaces.iPlugin
 On Error Resume Next
     Set iDocument_Plugin = m_fpgPlugin
@@ -132,12 +172,12 @@ Dim l_sngXRatio As Single, l_sngYRatio As Single
     Set m_imgImage = Image
     If m_imgImage.AlphaChannel Then
         Set m_imgImageCache = Image.Duplicate
-        m_imgImageCache.Composite F2RGB(64, 96, 128)
+        m_imgImageCache.Composite SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
     Else
         Set m_imgImageCache = Image
     End If
-    l_sngXRatio = picImage.ScaleWidth / m_imgImage.Width
-    l_sngYRatio = picImage.ScaleHeight / m_imgImage.Height
+    l_sngXRatio = (Screen.Width * 0.75 / Screen.TwipsPerPixelX) / m_imgImage.Width
+    l_sngYRatio = (Screen.Height * 0.75 / Screen.TwipsPerPixelY) / m_imgImage.Height
     If l_sngXRatio > 1.5 Or l_sngYRatio > 1.5 Then
         If (l_sngXRatio < l_sngYRatio) And (l_sngXRatio > 1) Then
             m_sngZoom = l_sngXRatio
@@ -270,12 +310,12 @@ Dim l_lngXMax As Long, l_lngYMax As Long
             l_rctDest.Top = 0
         End If
         If l_rctDest.Width > picImage.ScaleWidth Then
-            l_rctDest.Width = picImage.ScaleWidth
             l_rctSource.Width = (picImage.ScaleWidth / m_sngZoom)
+            l_rctDest.Width = l_rctSource.Width * m_sngZoom
         End If
         If l_rctDest.Height > picImage.ScaleHeight Then
-            l_rctDest.Height = picImage.ScaleHeight
             l_rctSource.Height = (picImage.ScaleHeight / m_sngZoom)
+            l_rctDest.Height = l_rctSource.Height * m_sngZoom
         End If
         SetStretchBltMode picImage.hdc, COLORONCOLOR
         DrawImageToDC picImage.hdc, l_rctDest, l_rctSource, m_imgImageCache

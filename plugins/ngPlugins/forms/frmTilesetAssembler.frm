@@ -117,7 +117,6 @@ Begin VB.Form frmTilesetAssembler
    End
    Begin VB.CommandButton cmdOK 
       Caption         =   "Assemble"
-      Default         =   -1  'True
       Enabled         =   0   'False
       BeginProperty Font 
          Name            =   "Tahoma"

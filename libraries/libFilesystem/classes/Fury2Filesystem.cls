@@ -44,6 +44,7 @@ Private m_lngPatchPackages As Long, m_lngLastPackages As Long, m_lngPackages As 
 
 Private m_colModules As Fury2Collection
 
+Public FileHook As Object
 Public EnablePackages As Boolean
 Public EnableDisk As Boolean
 Public OutputHook As Object
@@ -204,6 +205,8 @@ Dim l_pkgPackage As Fury2Package
         Filename = GetTitle(Filename)
     Else
     End If
+        
+    If Not (FileHook Is Nothing) Then FileHook.Invoke CStr(Filename)
     
 #If SawZIP = 1 Then
 If EnablePackages Then
@@ -655,6 +658,7 @@ Dim l_feFile As FileEnumerationEntry
 Dim l_lngIndex As Long
     Set l_filFile = New Fury2File
     If VarType(Index) = vbString Then
+        If Not (FileHook Is Nothing) Then FileHook.Invoke CStr(Index)
         Index = Replace(Index, "\", "/")
         Set File = EnumFiles(GetFullPath(CStr(Index)), GetTitle(CStr(Index)), False).File(1)
         If File Is Nothing Then

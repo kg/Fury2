@@ -13,6 +13,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
 Implements iWidget
+Private m_wdgMe As iWidget
 
 Public Property Get Name() As String
     Name = "Null"
@@ -28,11 +29,12 @@ End Function
 
 Public Property Get Widget() As iWidget
 On Error Resume Next
-    Set Widget = Me
+    Set Widget = m_wdgMe
 End Property
 
 Private Sub Class_Initialize()
 On Error Resume Next
+    Set m_wdgMe = Me
 End Sub
 
 Private Sub iWidget_LostCapture(ByVal Parent As iContainer)

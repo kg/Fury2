@@ -163,11 +163,23 @@ Begin VB.Form frmMap
             TabIndex        =   15
             Top             =   1845
             Width           =   2085
+            Begin VB.PictureBox picBrush 
+               BorderStyle     =   0  'None
+               Height          =   615
+               Left            =   900
+               ScaleHeight     =   41
+               ScaleMode       =   3  'Pixel
+               ScaleWidth      =   42
+               TabIndex        =   24
+               Top             =   1830
+               Visible         =   0   'False
+               Width           =   630
+            End
             Begin ngPlugins.ObjectInspector insTool 
                Height          =   660
-               Left            =   195
+               Left            =   90
                TabIndex        =   20
-               Top             =   1905
+               Top             =   1890
                Visible         =   0   'False
                Width           =   660
                _ExtentX        =   1164
@@ -184,9 +196,9 @@ Begin VB.Form frmMap
             End
             Begin vbalDTab6.vbalDTabControl dtTool 
                Height          =   1545
-               Left            =   225
+               Left            =   270
                TabIndex        =   19
-               Top             =   1815
+               Top             =   1770
                Width           =   1515
                _ExtentX        =   2672
                _ExtentY        =   2725
@@ -822,6 +834,19 @@ Dim l_araArea As Fury2Area
     EndProcess
 End Function
 
+Public Sub PasteBrush()
+On Error Resume Next
+    BeginProcess "Performing Paste..."
+    CustomClipboard.ClipboardOpen Me.hwnd
+    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_Brush), m_brsBrush) Then
+        CustomClipboard.ClipboardClose
+        RefreshBrush
+    Else
+        CustomClipboard.ClipboardClose
+    End If
+    EndProcess
+End Sub
+
 Public Sub PastePathNodes()
 On Error Resume Next
 Dim l_lngNode As Long
@@ -1063,6 +1088,8 @@ On Error Resume Next
         ActiveType = "Lights"
     Case "ellayers"
         ActiveType = "Layers"
+    Case "picBrush"
+        ActiveType = "Brush"
     Case "picoverlay", "picmapview", "picmapviewport", "hsmap", "vsmap", "dtviews"
         Select Case m_lngCurrentView
         Case View_Tiles
@@ -1395,6 +1422,15 @@ Dim l_vfPlanes As VirtualFile
     EndProcess
 End Sub
 
+Public Sub CopyBrush()
+On Error Resume Next
+    BeginProcess "Performing Copy..."
+    CustomClipboard.ClipboardOpen Me.hwnd
+    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_Brush), m_brsBrush
+    CustomClipboard.ClipboardClose
+    EndProcess
+End Sub
+
 Public Sub CopyLayer()
 On Error Resume Next
 Dim l_lyrLayer As Fury2MapLayer
@@ -1426,6 +1462,12 @@ Dim l_litLight As Fury2LightSource
     ClipboardSerialize CustomClipboard, ClipboardFormat(CF_LightSource), l_litLight
     CustomClipboard.ClipboardClose
     EndProcess
+End Sub
+
+Public Sub CutBrush()
+On Error Resume Next
+    CopyBrush
+    DeleteBrush
 End Sub
 
 Public Sub CutArea()
@@ -1493,6 +1535,15 @@ On Error Resume Next
     ObjectUndoPush m_mapMap.Areas, m_mapMap.Areas(m_lngSelectedArea), m_lngSelectedArea, OUO_Add
     m_mapMap.Areas.Remove m_lngSelectedArea
     RefreshAreas
+    EndProcess
+End Sub
+
+Public Sub DeleteBrush()
+On Error Resume Next
+    BeginProcess "Performing Delete..."
+    m_brsBrush.Resize 1, 1
+    m_brsBrush.Tile(0, 0) = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TransparentTile
+    RefreshBrush
     EndProcess
 End Sub
 
@@ -2167,6 +2218,8 @@ On Error Resume Next
         NewValue = (elSprites.SelectedItem > 0)
     Case "Lights"
         NewValue = (elLights.SelectedItem > 0)
+    Case "Brush"
+        NewValue = True
     Case "Path Nodes"
         NewValue = True
     Case "Blocking"
@@ -2190,6 +2243,8 @@ On Error Resume Next
         NewValue = (elSprites.SelectedItem > 0)
     Case "Lights"
         NewValue = (elLights.SelectedItem > 0)
+    Case "Brush"
+        NewValue = True
     Case "Path Nodes"
         NewValue = True
     Case "Blocking"
@@ -2211,6 +2266,8 @@ On Error Resume Next
         NewValue = (elAreas.SelectedItem > 0)
     Case "Sprites"
         NewValue = (elSprites.SelectedItem > 0)
+    Case "Brush"
+        NewValue = True
     Case "Path Nodes"
         NewValue = True
     Case "Blocking"
@@ -2244,6 +2301,8 @@ On Error Resume Next
         NewValue = ClipboardContainsFormat(CF_MapObstructions)
     Case "Lights"
         NewValue = ClipboardContainsFormat(CF_LightSource)
+    Case "Lights"
+        NewValue = ClipboardContainsFormat(CF_Brush)
     Case Else
     End Select
 End Sub
@@ -2305,6 +2364,8 @@ On Error Resume Next
         CopyCollisionLines
     Case "Path Nodes"
         CopyPathNodes
+    Case "Brush"
+        CopyBrush
     Case Else
     End Select
 End Sub
@@ -2328,6 +2389,8 @@ On Error Resume Next
         CutCollisionLines
     Case "Path Nodes"
         CutPathNodes
+    Case "Brush"
+        CutBrush
     Case Else
     End Select
 End Sub
@@ -2351,6 +2414,8 @@ On Error Resume Next
         DeleteLightingPlanes
     Case "Lights"
         DeleteLight
+    Case "Brush"
+        DeleteBrush
     Case Else
     End Select
 End Sub
@@ -2374,6 +2439,8 @@ On Error Resume Next
         PasteCollisionLines
     Case "Path Nodes"
         PastePathNodes
+    Case "Brush"
+        PasteBrush
     Case Else
     End Select
 End Sub
@@ -2789,6 +2856,52 @@ Dim l_undUndo As cBlockingUndoEntry
         m_colUndo.Remove 1
     End If
     EndProcess
+End Sub
+
+Private Sub picBrush_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+    Select Case QuickShowMenu(picBrush, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+        Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
+        frmIcons.ilContextMenus)
+    Case 1
+        CutBrush
+    Case 2
+        CopyBrush
+    Case 3
+        PasteBrush
+    Case 4
+        DeleteBrush
+    Case Else
+    End Select
+End Sub
+
+Private Sub picBrush_Paint()
+On Error Resume Next
+Dim l_sngXScale As Single, l_sngYScale As Single
+Dim l_lngW As Long, l_lngH As Long
+    If picBrush.Visible = False Then Exit Sub
+    If (picBrush.ScaleWidth < m_imgBrush.Width) Then
+        l_sngXScale = m_imgBrush.Width / picBrush.ScaleWidth
+    Else
+        l_sngXScale = 1
+    End If
+    If (picBrush.ScaleHeight < m_imgBrush.Height) Then
+        l_sngYScale = m_imgBrush.Height / picBrush.ScaleHeight
+    Else
+        l_sngYScale = 1
+    End If
+    If (l_sngYScale < l_sngXScale) Then l_sngXScale = l_sngYScale
+    l_lngW = m_imgBrush.Width * l_sngXScale
+    l_lngH = m_imgBrush.Height * l_sngYScale
+    SetStretchBltMode picBrush.hdc, StretchBlt_ColorOnColor
+    DrawImageToDC picBrush.hdc, F2Rect(0, 0, l_lngW, l_lngH, False), m_imgBrush.Rectangle, m_imgBrush
+    picBrush.Line (l_lngW, 0)-(picBrush.ScaleWidth, picBrush.ScaleHeight), picBrush.BackColor, BF
+    picBrush.Line (0, l_lngH)-(l_lngW, picBrush.ScaleHeight), picBrush.BackColor, BF
+End Sub
+
+Private Sub picBrush_Resize()
+On Error Resume Next
+    picBrush_Paint
 End Sub
 
 Private Sub picContainer_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -3293,6 +3406,7 @@ Dim l_lngWidth As Long, l_lngHeight As Long
     End If
     m_imgBrush.Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
     m_brsBrush.Render m_imgBrush, m_mapMap.Layers(m_lngSelectedLayer), 1
+    picBrush_Paint
 End Sub
 
 Public Sub RefreshBrushOverlay()
@@ -4860,6 +4974,8 @@ On Error Resume Next
         With insTool
             .Inspect m_voViewOptions, "View"
         End With
+    Case "brush"
+        Set m_ctlCurrentTool = picBrush
     Case Else
         Set m_ctlCurrentTool = Nothing
     End Select

@@ -28,6 +28,7 @@ Private mvarImage As String
 Private mvarSliceImages As Boolean
 
 Public Property Get SliceImages() As Boolean
+Attribute SliceImages.VB_Description = "Generates a new output image for each cell."
     SliceImages = mvarSliceImages
 End Property
 

@@ -91,10 +91,7 @@ Public Function HitTest(ByVal X As Long, ByVal Y As Long) As Integer
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long
 Dim l_lngSX As Long, l_lngSY As Long
-Dim l_lngHeight As Long, l_lngMax As Long
-Dim l_lngWidth As Long
 Dim l_lngTile As Long
-Dim l_lngMaxX As Long, l_lngMaxY As Long
 Dim l_lngSelectedTiles As Long
 Dim l_booSelected As Boolean
     l_lngY = -vsScrollbar.Value
@@ -115,24 +112,17 @@ Dim l_booSelected As Boolean
                 l_lngSX = 0
                 l_lngSY = l_lngSY + m_tstTileset.TileHeight
                 If m_booPreserveRows Then
-                    l_lngMaxX = l_lngX + m_tstTileset.TileWidth
                     l_lngX = -hsScrollbar.Value - m_tstTileset.TileWidth
                     l_lngY = l_lngY + m_tstTileset.TileHeight
-                    l_lngHeight = l_lngHeight + m_tstTileset.TileHeight
                 End If
             End If
             
             l_lngX = l_lngX + m_tstTileset.TileWidth
             If m_booPreserveRows Then
-                If l_lngX > l_lngWidth Then
-                    l_lngWidth = l_lngX
-                End If
             Else
-                If (l_lngX + m_tstTileset.TileWidth + (hsScrollbar.Value)) > (m_lngWidth) Then
-                    l_lngMaxX = l_lngX
+                If (l_lngX + m_tstTileset.TileWidth) > (m_lngWidth) Then
                     l_lngX = -hsScrollbar.Value
                     l_lngY = l_lngY + m_tstTileset.TileHeight
-                    l_lngHeight = l_lngHeight + m_tstTileset.TileHeight
                 End If
             End If
             l_lngTile = l_lngTile + 1
@@ -331,8 +321,8 @@ Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Sing
 On Error Resume Next
 Dim l_intSelectedTiles() As Integer
     If Button = 1 Then
-        m_lngStartX = (((X - hsScrollbar.Value) \ m_tstTileset.TileWidth) * m_tstTileset.TileWidth) + hsScrollbar.Value
-        m_lngStartY = (((Y - vsScrollbar.Value) \ m_tstTileset.TileHeight) * m_tstTileset.TileHeight) + vsScrollbar.Value
+        m_lngStartX = X
+        m_lngStartY = Y
     ElseIf Button = 2 Then
         Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, Menus(MenuString("Preserve Rows", , , , , m_booPreserveRows)))
         Case 1

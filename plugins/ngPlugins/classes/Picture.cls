@@ -22,10 +22,13 @@ Attribute Rectangle.VB_VarDescription = "~"
 Public SourceRectangle As Fury2Rect
 Attribute SourceRectangle.VB_VarDescription = "~"
 Public BlitMode As SFXBlitModes
+Attribute BlitMode.VB_VarDescription = "The image's rendering effect."
 Public ResampleMode As SFXResampleModes
+Attribute ResampleMode.VB_VarDescription = "The image's resampling mode."
 Public Color As Long
-Attribute Color.VB_VarDescription = "{Color}"
+Attribute Color.VB_VarDescription = "The image's tint color.{Color}"
 Public Opacity As Single
+Attribute Opacity.VB_VarDescription = "The image's opacity."
 
 Private Sub Class_Initialize()
 On Error Resume Next
@@ -57,6 +60,7 @@ On Error Resume Next
 End Sub
 
 Public Property Get Filename() As String
+Attribute Filename.VB_Description = "The path to the image.{ImagePath}"
 On Error Resume Next
     Filename = m_strFilename
 End Property

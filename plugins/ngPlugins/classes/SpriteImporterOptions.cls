@@ -26,6 +26,7 @@ Private mvarMatteColor As Long
 Private mvarDuplicateFirstFrame As Boolean
 
 Public Property Let DuplicateFirstFrame(ByVal vData As Boolean)
+Attribute DuplicateFirstFrame.VB_Description = "Imports the first frame of each imported pose as both the stopped frame and the first animation frame."
     mvarDuplicateFirstFrame = vData
 End Property
 

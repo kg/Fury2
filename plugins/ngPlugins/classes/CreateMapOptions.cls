@@ -28,6 +28,7 @@ Private mvarCollisionType As Fury2CollisionTypes
 Private mvarName As String
 
 Public Property Get TileMatteColor() As Long
+Attribute TileMatteColor.VB_Description = "The color to use as the new map's transparent color.{Color}"
     TileMatteColor = mvarTileMatteColor
 End Property
 

@@ -28,6 +28,7 @@ Public Enum MapEditorClipboardFormats
     CF_LightObstructions
     CF_LightPlanes
     CF_PathNodes
+    CF_Brush
     CF_MAX_
 End Enum
 Private m_lngClipboardFormats(CF_MIN_ To CF_MAX_)
@@ -60,6 +61,7 @@ On Error Resume Next
     m_lngClipboardFormats(CF_LightObstructions) = m_clpClipboard.AddFormat("Fury2LightObstructions")
     m_lngClipboardFormats(CF_LightPlanes) = m_clpClipboard.AddFormat("Fury2LightPlanes")
     m_lngClipboardFormats(CF_PathNodes) = m_clpClipboard.AddFormat("Fury2PathNodes")
+    m_lngClipboardFormats(CF_Brush) = m_clpClipboard.AddFormat("Fury2Brush")
 End Sub
 
 Private Sub Class_Terminate()

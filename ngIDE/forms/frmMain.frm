@@ -1088,6 +1088,7 @@ On Error Resume Next
     InitStatus
     InitDocking
     InitMenus
+    LoadFormPosition Me
     StatusBarReposition
 End Sub
 
@@ -1100,6 +1101,7 @@ Dim l_lngForms As Long
         Cancel = True
         ExitProgram
     Case Else
+        SaveFormPosition Me
         For l_lngForms = Forms.Count To 0 Step -1
             If Forms(l_lngForms).MDIChild Then
                 Forms(l_lngForms).Hide

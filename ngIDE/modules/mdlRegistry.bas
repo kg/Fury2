@@ -97,7 +97,7 @@ Dim l_strKey As String
     If Form.WindowState = 1 Then Form.WindowState = 0
     If TypeOf Form Is iDocument Then Exit Sub
     With Form
-        l_strKey = "Window Positions\" & .Name & ":" & .Caption & "\"
+        l_strKey = "Window Positions\" & .Name & IIf(TypeOf Form Is MDIForm, "", ":" & .Caption) & "\"
         WriteRegSetting l_strKey & "Saved", CLng(1)
         WriteRegSetting l_strKey & "Maximized", Abs(CLng(.WindowState = 2))
         If CLng(.WindowState = 2) Then
@@ -121,7 +121,7 @@ Dim l_strKey As String
     End If
     If TypeOf Form Is iDocument Then Exit Sub
     With Form
-        l_strKey = "Window Positions\" & .Name & ":" & .Caption & "\"
+        l_strKey = "Window Positions\" & .Name & IIf(TypeOf Form Is MDIForm, "", ":" & .Caption) & "\"
         If ReadRegSetting(l_strKey & "Saved") <> Empty Then
             .Move ReadRegSetting(l_strKey & "Left", 0), _
                 ReadRegSetting(l_strKey & "Top", 0), _

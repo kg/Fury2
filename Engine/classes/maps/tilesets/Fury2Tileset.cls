@@ -402,6 +402,9 @@ On Error Resume Next
         Set mvarBuffer = New Fury2Image
         mvarBuffer.Resize 1, 1
     End If
+    mvarTileWidth = 16
+    mvarTileHeight = 16
+    mvarTransparentTile = -1
     mvarMaskColor = c_lngNullColor
     mvarBuffer.MaskColor = c_lngNullColor
 End Sub

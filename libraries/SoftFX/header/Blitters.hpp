@@ -77,7 +77,14 @@ enum SFX_BlitModes {
     BlitMode_Dither = 14,
     BlitMode_Screen = 15,
     BlitMode_Multiply = 16,
-    BlitMode_Merge = 17
+    BlitMode_Merge = 17,
+    BlitMode_Unerase = 18,
+    BlitMode_Erase = 19,
+    BlitMode_Font_Merge = 20,
+    BlitMode_Behind = 21,
+    BlitMode_Dodge = 22,
+    BlitMode_Burn = 23,
+    BlitMode_Normal_Tint = 24
 };
 
 TSIGNATURE(Normal) END_TSIGNATURE
@@ -88,6 +95,8 @@ TSIGNATURE(SourceAlpha_Opacity) , int Opacity END_TSIGNATURE
 TSIGNATURE(SourceAlpha_Tint_Opacity) , Pixel Tint, int Opacity END_TSIGNATURE
 TSIGNATURE(Additive_Opacity) , int Opacity END_TSIGNATURE
 TSIGNATURE(Subtractive_Opacity) , int Opacity END_TSIGNATURE
+TSIGNATURE(Font_SourceAlpha_Opacity) , Pixel Tint, int Opacity END_TSIGNATURE
+TSIGNATURE(Font_Merge_Opacity) , Pixel Tint, int Opacity END_TSIGNATURE
 TSIGNATURE(Merge_Opacity) , int Opacity END_TSIGNATURE
 
 #define RSIGNATURE(name) \
@@ -178,6 +187,12 @@ inline int ModedBlit(SFX_BlitModes Mode, Image *Dest, Image *Source, Rectangle *
     case BlitMode_Merge:
         return BlitSimple_Merge_Opacity(Dest, Source, Area, SX, SY, Opacity);
         break;
+    case BlitMode_Font_SourceAlpha:
+        return BlitSimple_Font_SourceAlpha_RGB_Opacity(Dest, Source, Area, SX, SY, Color, Opacity);
+        break;
+    case BlitMode_Font_Merge:
+        return BlitSimple_Font_Merge_RGB_Opacity(Dest, Source, Area, SX, SY, Color, Opacity);
+        break;
     default:
     case BlitMode_Default:
         return Failure;
@@ -265,6 +280,12 @@ inline int ModedTiledBlit(SFX_BlitModes Mode, Image *Dest, Image *Source, Rectan
         break;
     case BlitMode_SourceAlpha:
         return BlitTile_SourceAlpha_Tint_Opacity(Dest, Source, Area, Tint, Opacity);
+        break;
+    case BlitMode_Font_SourceAlpha:
+        return BlitTile_Font_SourceAlpha_Opacity(Dest, Source, Area, Tint, Opacity);
+        break;
+    case BlitMode_Font_Merge:
+        return BlitTile_Font_Merge_Opacity(Dest, Source, Area, Tint, Opacity);
         break;
     case BlitMode_Merge:
         return BlitTile_Merge_Opacity(Dest, Source, Area, Opacity);

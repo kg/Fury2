@@ -262,6 +262,7 @@ void Image::allocate(Size Width, Size Height) {
     }
 
     this->setClipRectangle(this->getRectangle());
+    this->clear();
 
     return;
 }
@@ -326,6 +327,7 @@ BitmapInfo bmi;
   this->setClipRectangle(this->getRectangle());
   
   this->unlock();
+  this->clear();
 
   return;
 }

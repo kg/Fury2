@@ -52,6 +52,14 @@ On Error Resume Next
     Class_ToString = "Window Skin: " & m_strTitle
 End Function
 
+Public Property Let Tint(ByVal Color As Long)
+On Error Resume Next
+Dim l_lngSection As Long
+    For l_lngSection = LBound(m_wspParam.TintColors) To UBound(m_wspParam.TintColors)
+        m_wspParam.TintColors(l_lngSection) = Color
+    Next l_lngSection
+End Property
+
 Public Property Get SectionTint(Section) As Long
     SectionTint = m_wspParam.TintColors(CLng(Section))
 End Property
@@ -64,7 +72,7 @@ Public Property Get BlitMode() As SFXBlitModes
     BlitMode = m_wspParam.RenderMode
 End Property
 
-Public Property Let BlitMode(Value As SFXBlitModes)
+Public Property Let BlitMode(ByVal Value As SFXBlitModes)
     m_wspParam.RenderMode = Value
 End Property
 

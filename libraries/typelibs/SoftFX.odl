@@ -272,11 +272,11 @@ library SoftFX {
         int Alpha;
         int MaskColor;
         int CornerColors[4];
+        int TintColors[9];
+        byte EdgeOffsets[4];
         byte BackgroundMode;
         byte EdgeMode;
         byte RenderMode;
-        byte EdgeOffsets[4];
-        int TintColors[9];
     } WindowSkinParam;
 
     typedef struct {
@@ -317,6 +317,8 @@ library SoftFX {
       float Angle, Spread, SpinRate, FlickerLevel;
       byte NoiseOpacity, Visible, Culled;
       int AttachedSprite;
+      int Cache;
+      byte CacheValid;
     } LightSource;
 
     typedef struct {

@@ -237,11 +237,11 @@ struct WindowSkinParam {
     int Alpha;
     Pixel MaskColor;
     Pixel CornerColors[4];
+    Pixel TintColors[9];
+    Byte EdgeOffsets[4];
     Byte BackgroundMode;
     Byte EdgeMode;
     Byte RenderMode;
-    Byte EdgeOffsets[4];
-    Pixel TintColors[9];
 };
 
 class Tileset {

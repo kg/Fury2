@@ -196,6 +196,19 @@ Dim l_rctRect As Fury2Rect
     End With
 End Function
 
+Public Function Interpolate(NewRect, ByVal Progress As Single) As Fury2Rect
+On Error Resume Next
+Dim l_rctRect As Fury2Rect
+    Set l_rctRect = NewRect
+    If l_rctRect Is Nothing Then Exit Function
+    With l_rctRect
+        Left = Left + ((.Left - Left) * Progress)
+        Top = Top + ((.Top - Top) * Progress)
+        Right = Right + ((.Right - Right) * Progress)
+        Bottom = Bottom + ((.Bottom - Bottom) * Progress)
+    End With
+End Function
+
 Public Function AdjustScale(ByVal X As Single, ByVal Y As Single) As Fury2Rect
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long, l_lngW As Long, l_lngH As Long

@@ -443,9 +443,11 @@ End Function
 Public Sub InsertSprite(Optional ByVal Index As Long = -1)
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
-    If Index = -1 Then Index = m_lngSelectedSprite
+    If Index = -1 Then Index = m_scSprites.Count + 1
     Set l_sprSprite = New Fury2Sprite
-    m_scSprites.Add l_sprSprite ', , Index
+    l_sprSprite.Name = "New Sprite"
+    m_scSprites.Add l_sprSprite, , Index
+    m_lngSelectedSprite = Index
     ViewChanged
     RedrawSprites
     Editor.ToolbarUpdate

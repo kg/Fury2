@@ -1,4 +1,23 @@
 Attribute VB_Name = "mdlRegistry"
+'
+'    ngIDE (Fury² Game Creation System Next-Generation Editor)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 
 Public Function ReadRegSetting(SettingName As String, Optional ByRef DefaultValue As Variant = Empty) As Variant
@@ -88,7 +107,7 @@ End Sub
 Public Sub SaveFormPosition(Form As Object)
 On Error Resume Next
 Dim l_strKey As String
-    If ReadRegSetting("Options\Remember Window Positions", 1) = 0 Then Exit Sub
+    If Not g_edEditor.Options.SaveWindowPositions Then Exit Sub
     If Form Is Nothing Then Exit Sub
     If TypeOf Form Is MDIForm Then
     Else
@@ -113,7 +132,7 @@ End Sub
 Public Sub LoadFormPosition(Form As Object)
 On Error Resume Next
 Dim l_strKey As String
-    If ReadRegSetting("Options\Remember Window Positions", 1) = 0 Then Exit Sub
+    If Not g_edEditor.Options.SaveWindowPositions Then Exit Sub
     If Form Is Nothing Then Exit Sub
     If TypeOf Form Is MDIForm Then
     Else

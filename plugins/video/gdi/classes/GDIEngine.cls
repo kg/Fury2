@@ -176,7 +176,8 @@ End Sub
 Private Sub m_OutForm_KeyDown(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
     If KeyCode = vbKeyF4 And Shift = vbAltMask Then
-        m_OutForm.Hide
+        Shutdown
+        m_Hooked.GFXEngine_Closed
         m_Closed = True
     Else
         m_Hooked.GFXEngine_KeyDown KeyCode, Shift

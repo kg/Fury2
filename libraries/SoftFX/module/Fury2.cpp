@@ -328,7 +328,7 @@ if (!Layer) return Failure;
     return Success;
 }
 
-Export int CollisionCheck(SpriteParam *first, SpriteParam *check, bool mustbesolid, int requiredtype, int excludedtype) {
+int CollisionCheckEx(SpriteParam *first, SpriteParam *check, bool mustbesolid, int requiredtype, int excludedtype, SpriteParam **out) {
 float cw = 0;
 float sw = 0;
 SpriteParam * sCurrent = first;
@@ -356,6 +356,7 @@ FRect rSource = {0, 0, 0, 0}, rDest = {0, 0, 0, 0};
                     if (rSource.X2 < rDest.X1) goto nevar;
                     if (rSource.Y2 < rDest.Y1) goto nevar;
                     ProfileStop("CollisionCheck()");
+                    if (out) *out = sCurrent;
                     return sCurrent->Index;
                 }
             }
@@ -365,6 +366,10 @@ nevar:
     }
     ProfileStop("CollisionCheck()");
     return 0;
+}
+
+Export int CollisionCheck(SpriteParam *first, SpriteParam *check, bool mustbesolid, int requiredtype, int excludedtype) {
+  return CollisionCheckEx(first, check, mustbesolid, requiredtype, excludedtype, Null);
 }
 
 #define _check iCollide = -Sprite->touches(Matrix); \
@@ -512,18 +517,62 @@ float fRadian = 3.14159265358979 / 180.0;
     if (!List) return Failure;
     if (!Matrix) return Failure;
     ProfileStart("UpdateSprites()");
+    // reset
+    while (pCurrent) {
+        pCurrent->Events.CollidedWith = 0;
+        pCurrent->Events.CollidedWithMap = false;
+        pCurrent->Events.FadedOut = false;
+        pCurrent->Events.Changed = false;
+        pCurrent->Events.Moved = false;
+        pCurrent->Velocity.XF = pCurrent->Velocity.YF = pCurrent->Velocity.FW = 0;
+        pCurrent = pCurrent->pNext;
+    }
+    // calculate forces
+    pCurrent = List;
+    while (pCurrent) {
+        SpritePosition oldposition;
+        SpriteParam *collided;
+        float forcemultiplier;
+        if (!(pCurrent->Stats.Cull && pCurrent->Culled)) {
+          if (pCurrent->Stats.CanPush) {
+            vSpeed.X = pCurrent->Velocity.X + (sin(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V); // + pCurrent->Velocity.XF;
+            vSpeed.Y = pCurrent->Velocity.Y + (-cos(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V); // + pCurrent->Velocity.YF;
+            vSpeed.X *= pCurrent->Velocity.VM;
+            vSpeed.Y *= pCurrent->Velocity.VM;
+
+            oldposition = pCurrent->Position;
+            pCurrent->Position.X += vSpeed.X;
+            pCurrent->Position.Y += vSpeed.Y;
+
+            collided = Null;
+            CollisionCheckEx(List, pCurrent, true, -1, -1, &collided);
+            if (collided) {
+              if (collided->Stats.Pushable) {
+                forcemultiplier = 1;
+                if (collided->Stats.Weight > 0) {
+                  forcemultiplier = pCurrent->Stats.Weight / collided->Stats.Weight;
+                  if (forcemultiplier > 1) forcemultiplier = 1;
+                  if (forcemultiplier < 0) forcemultiplier = 0;
+                }
+                collided->Velocity.XF += (vSpeed.X * forcemultiplier);
+                collided->Velocity.YF += (vSpeed.Y * forcemultiplier);
+                collided->Velocity.FW += (pCurrent->Stats.Weight * forcemultiplier);
+              }
+            }
+            pCurrent->Position = oldposition;
+          }
+          pCurrent->Events.Moved = false;
+          pCurrent = pCurrent->pNext;
+        }
+    }
+    pCurrent = List;
     while (pCurrent) {
         iCount++;
         
-        pCurrent->Events.CollidedWith = 0;
-        pCurrent->Events.CollidedWithMap = false;
-        pCurrent->Events.Moved = false;
-        pCurrent->Events.FadedOut = false;
-
         if (!(pCurrent->Stats.Cull && pCurrent->Culled)) {
 
-            vSpeed.X = pCurrent->Velocity.X + (sin(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V);
-            vSpeed.Y = pCurrent->Velocity.Y + (-cos(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V);
+            vSpeed.X = pCurrent->Velocity.X + (sin(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V) + pCurrent->Velocity.XF;
+            vSpeed.Y = pCurrent->Velocity.Y + (-cos(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V) + pCurrent->Velocity.YF;
 
             vSpeed.X *= pCurrent->Velocity.VM;
             vSpeed.Y *= pCurrent->Velocity.VM;
@@ -1622,7 +1671,6 @@ Export int SightCheck(Lighting::Environment *Env, float FromX, float FromY, floa
   FPoint IntersectionPoint;
   SpriteParam *Sprite;
   FLine SpriteLine;
-  bool Obscured = false;
   int mx1 = 0, my1 = 0, mx2 = 0, my2 = 0, mx = 0, my = 0;
   Lighting::Sector *Sector = Null;
   std::vector<Lighting::Obstruction>::iterator Obstruction;
@@ -1850,7 +1898,7 @@ Polygon<GradientVertex> GradientShadowPoly;
 GradientVertex ShadowVertex;
 FPoint Point, LightPoint, LinePoint[4], LineCenter;
 FVector Vector;
-Rectangle FillRect, LightRect, CameraRect, CacheRect;
+Rectangle FillRect, LightRect, CameraRect, CacheRect, ScratchRect;
 FRect LightFRect;
 float LightDistance, Falloff;
 SpriteParam *Sprite;
@@ -1936,6 +1984,7 @@ float FuzzyOffset = 0, FlickerAmount = 0;
         if (Light->FalloffDistance <= 0) {
           // no falloff (fill)
           LightRect = CameraRect;
+          ScratchRect = LightRect;
           LightFRect.X1 = LightRect.Left + OffsetX;
           LightFRect.Y1 = LightRect.Top + OffsetY;
           LightFRect.X2 = LightRect.right() + OffsetX;
@@ -1946,6 +1995,7 @@ float FuzzyOffset = 0, FlickerAmount = 0;
           // falloff (radial gradient)
 
           LightRect.setValuesAbsolute(LightPoint.X - Falloff, LightPoint.Y - Falloff, LightPoint.X + Falloff, LightPoint.Y + Falloff);
+          ScratchRect = LightRect;
           LightFRect.X1 = LightRect.Left + OffsetX;
           LightFRect.Y1 = LightRect.Top + OffsetY;
           LightFRect.X2 = LightRect.right() + OffsetX;
@@ -1969,6 +2019,7 @@ float FuzzyOffset = 0, FlickerAmount = 0;
         if (Light->FalloffDistance <= 0) {
           // no falloff (solid filled convex polygon extended to infinity)
           LightRect = CameraRect;
+          ScratchRect = LightRect;
           LightFRect.X1 = LightRect.Left + OffsetX;
           LightFRect.Y1 = LightRect.Top + OffsetY;
           LightFRect.X2 = LightRect.right() + OffsetX;
@@ -2030,6 +2081,7 @@ fuzzyrender:
 
           if (FuzzyOffset == 0) {
             LightRect.setValuesAbsolute(GradientShadowPoly.MinimumX(), GradientShadowPoly.MinimumY(), GradientShadowPoly.MaximumX(), GradientShadowPoly.MaximumY());
+            ScratchRect = LightRect;
             LightFRect.X1 = LightRect.Left + OffsetX;
             LightFRect.Y1 = LightRect.Top + OffsetY;
             LightFRect.X2 = LightRect.right() + OffsetX;
@@ -2206,10 +2258,12 @@ fuzzyrender:
         if ((Light->Cache != Null)) {
           Light->CacheValid = 1;
         }
-        if (Camera->SaturationMode == 1) {
-          BlitSimple_Screen_Opacity(Camera->OutputBuffer, Camera->ScratchBuffer, &LightRect, (LightRect.Left - Camera->OutputRectangle.Left), (LightRect.Top - Camera->OutputRectangle.Top), Light->Color[::Alpha]);
-        } else {
-          BlitSimple_Additive_Opacity(Camera->OutputBuffer, Camera->ScratchBuffer, &LightRect, (LightRect.Left - Camera->OutputRectangle.Left), (LightRect.Top - Camera->OutputRectangle.Top), Light->Color[::Alpha]);
+        if (!Light_Clipped) {
+          if (Camera->SaturationMode == 1) {
+            BlitSimple_Screen_Opacity(Camera->OutputBuffer, Camera->ScratchBuffer, &ScratchRect, (ScratchRect.Left - Camera->OutputRectangle.Left), (ScratchRect.Top - Camera->OutputRectangle.Top), Light->Color[::Alpha]);
+          } else {
+            BlitSimple_Additive_Opacity(Camera->OutputBuffer, Camera->ScratchBuffer, &ScratchRect, (ScratchRect.Left - Camera->OutputRectangle.Left), (ScratchRect.Top - Camera->OutputRectangle.Top), Light->Color[::Alpha]);
+          }
         }
       }
     }
@@ -2235,7 +2289,7 @@ fuzzyrender:
   int SortEntryCount = 0, SortBufferCount = 0;
   ProfileStart("Sort Planes & Sprites");
   {
-    int y1 = 0, y2 = 0;
+    int y2 = 0;
     SortBufferCount = Environment->PlaneCount + SpriteCount + 1;
     SortEntries = StaticAllocate<Lighting::sort_entry>(ListBuffer, SortBufferCount + 4) + 2;
 	  _Fill<Byte>(SortEntries, 0, sizeof(Lighting::sort_entry) * SortBufferCount);
@@ -2295,7 +2349,6 @@ fuzzyrender:
     DoubleWord iTemp = 0;
 
     TexturedPolygon PlanePoly;
-    Image *PlaneTexture;
     FPoint TexPoint[2];
     PlanePoly.Allocate(4);
     PlanePoly.SetCount(4);

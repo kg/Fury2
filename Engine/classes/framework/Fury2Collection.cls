@@ -43,6 +43,30 @@ Implements IVirtualFileSaveable
 
 Private mCol As Collection
 Private mHook As Object
+#If ExternalModule = 0 Then
+Private m_engEngine As Fury2Engine
+
+Public Function Duplicate() As Fury2Collection
+On Error Resume Next
+Dim l_colNew As Fury2Collection
+Dim l_lngIndex As Long
+    Set l_colNew = m_engEngine.F2Collection()
+    If mCol.Count > 0 Then
+        For l_lngIndex = 1 To mCol.Count
+            l_colNew.Add mCol(l_lngIndex)
+        Next l_lngIndex
+    End If
+    Set Duplicate = l_colNew
+End Function
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
+#End If
 
 Public Sub Hook(Obj As Object)
 On Error Resume Next
@@ -271,16 +295,77 @@ End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
+Dim l_lngCount As Long
+Dim l_lngIndex As Long
+Dim l_strType As String
+Dim l_objItem As Object, l_strItem As String
+    Set mCol = New Collection
     With File
         .ReadSegment_Begin
+            .Load l_lngCount
+            If l_lngCount > 0 Then
+                For l_lngIndex = 1 To l_lngCount
+                    .ReadSegment_Begin
+                    Set l_objItem = Nothing
+                    l_strItem = vbNullString
+                    .Load l_strType
+                    If l_strType = "String" Then
+                        .Load l_strItem
+                        mCol.Add l_strItem
+                    ElseIf l_strType = "Nothing" Then
+                        mCol.Add Nothing
+                    Else
+                        #If ExternalModule = 0 Then
+                        Err.Clear
+                        Set l_objItem = Engine.ScriptEngine.Eval(Engine.ScriptEngine.Language.GenerateInstantiation(l_strType))
+                        If l_objItem Is Nothing Then
+                            Err.Clear
+                            Set l_objItem = CreateObject("Engine." & l_strType)
+                            If l_objItem Is Nothing Then
+                                Err.Clear
+                                Set l_objItem = CreateObject("libGraphics." & l_strType)
+                            End If
+                        End If
+                        .Load l_objItem
+                        mCol.Add l_objItem
+                        #End If
+                    End If
+                    .ReadSegment_End
+                Next l_lngIndex
+            End If
         .ReadSegment_End
     End With
 End Sub
 
 Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
 On Error Resume Next
+Dim l_objItem As Object
+Dim l_strItem As String
+Dim l_strType As String
+Dim l_lngIndex As Long
     With File
         .WriteSegment_Begin
+            .Save CLng(mCol.Count)
+            If mCol.Count > 0 Then
+                For l_lngIndex = 1 To mCol.Count
+                    .WriteSegment_Begin
+                        Set l_objItem = Nothing
+                        l_strItem = vbNullString
+                        Set l_objItem = mCol(l_lngIndex)
+                        If l_objItem Is Nothing Then
+                            l_strItem = mCol(l_lngIndex)
+                        End If
+                        If l_strItem <> vbNullString Then
+                            .Save "String"
+                            .Save l_strItem
+                        Else
+                            l_strType = Typename(l_objItem)
+                            .Save l_strType
+                            If Not (l_objItem Is Nothing) Then .Save l_objItem
+                        End If
+                    .WriteSegment_End
+                Next l_lngIndex
+            End If
         .WriteSegment_End
     End With
 End Sub

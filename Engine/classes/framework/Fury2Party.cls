@@ -37,17 +37,29 @@ Option Explicit
 
 Implements Fury2Object
 Implements Fury2TrackedObject
-Implements IVirtualFileCollection
+Implements IVirtualFileSaveable
 
 Private mvarRevision As Fury2RevisionData
-Private mvarMembers As Collection
+Private mvarMembers As Fury2Collection
 Public Money As Long
 Public Leader As Long
 Public Controller As Fury2Controller
 Private m_engEngine As Fury2Engine
 
+Public Sub Changed()
+On Error Resume Next
+Dim l_lngItem As Long
+    If mvarMembers.Count > 0 Then
+        For l_lngItem = 1 To mvarMembers.Count
+            mvarMembers(l_lngItem).Index = l_lngItem
+        Next l_lngItem
+    End If
+End Sub
+
 Friend Sub SetEngine(Engine As Fury2Engine)
+On Error Resume Next
     Set m_engEngine = Engine
+    Set mvarMembers.Engine = Engine
 End Sub
 
 Public Property Get Engine() As Fury2Engine
@@ -93,17 +105,29 @@ On Error Resume Next
 End Function
 
 Public Sub Add(ByVal Obj As Object, Optional ByVal sKey As String = "")
+Attribute Add.VB_MemberFlags = "40"
 On Error Resume Next
     If Len(sKey) = 0 Then
-        mvarMembers.Add Obj
+        Err.Clear
+        mvarMembers.Add Obj, Obj.Name
+        If Err <> 0 Then
+            mvarMembers.Add Obj
+        End If
     Else
         mvarMembers.Add Obj, sKey
     End If
+    Err.Clear
 End Sub
 
+Public Property Get Members() As Fury2Collection
+Attribute Members.VB_UserMemId = 0
+Attribute Members.VB_MemberFlags = "200"
+On Error Resume Next
+    Set Members = mvarMembers
+End Property
+
 Public Property Get Item(vntIndexKey As Variant) As Object
-Attribute Item.VB_UserMemId = 0
-Attribute Item.VB_MemberFlags = "200"
+Attribute Item.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_lngMembers As Long, m_strName As String
   Set Item = mvarMembers(vntIndexKey)
@@ -121,23 +145,29 @@ Dim m_lngMembers As Long, m_strName As String
 End Property
 
 Public Property Get Count() As Long
+Attribute Count.VB_MemberFlags = "40"
     Count = mvarMembers.Count
 End Property
 
 Public Sub Remove(vntIndexKey As Variant)
+Attribute Remove.VB_MemberFlags = "40"
 On Error Resume Next
     mvarMembers.Remove vntIndexKey
+    Err.Clear
 End Sub
 
 Public Property Get NewEnum() As IUnknown
 Attribute NewEnum.VB_UserMemId = -4
 Attribute NewEnum.VB_MemberFlags = "40"
-    Set NewEnum = mvarMembers.[_NewEnum]
+On Error Resume Next
+    Set NewEnum = mvarMembers.[NewEnum]
 End Property
 
 Private Sub Class_Initialize()
+On Error Resume Next
     Set mvarRevision = New Fury2RevisionData
-    Set mvarMembers = New Collection
+    Set mvarMembers = New Fury2Collection
+    mvarMembers.Hook Me
     Leader = 1
 End Sub
 
@@ -145,42 +175,21 @@ Private Property Get Fury2TrackedObject_Revision() As Fury2RevisionData
     Set Fury2TrackedObject_Revision = mvarRevision
 End Property
 
-Private Sub IVirtualFileCollection_AddItem(Item As Object)
-On Error Resume Next
-    mvarMembers.Add Item
-End Sub
-
-Private Property Get IVirtualFileCollection_Count() As Long
-On Error Resume Next
-    IVirtualFileCollection_Count = mvarMembers.Count
-End Property
-
-Private Function IVirtualFileCollection_CreateNew() As Object
-On Error Resume Next
-    Set IVirtualFileCollection_CreateNew = CreateMember
-End Function
-
-Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object
-On Error Resume Next
-    Set IVirtualFileCollection_GetItem = mvarMembers.Item(Index)
-End Function
-
-Private Sub IVirtualFileCollection_Reset()
-On Error Resume Next
-    Set mvarMembers = New Collection
-End Sub
-
-Private Sub IVirtualFileCollection_SaveHeader(File As libGraphics.VirtualFile)
-On Error Resume Next
-    File.WriteSegment_Begin
-        File.Save Money
-    File.WriteSegment_End
-End Sub
-
-Private Sub IVirtualFileCollection_LoadHeader(File As libGraphics.VirtualFile)
+Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
     File.ReadSegment_Begin
         File.Load Money
+        Set mvarMembers = m_engEngine.F2Collection()
+        mvarMembers.Hook Me
+        File.Load mvarMembers
     File.ReadSegment_End
+    Changed
 End Sub
 
+Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
+On Error Resume Next
+    File.WriteSegment_Begin
+        File.Save Money
+        File.Save Members
+    File.WriteSegment_End
+End Sub

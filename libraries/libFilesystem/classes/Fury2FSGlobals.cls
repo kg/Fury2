@@ -15,12 +15,14 @@ Option Explicit
 
 Public Type FileEnumerationEntry
     Filename As String
-    Location As Integer
-    LocationIndex As Integer
+    Parent As Fury2FSModule
+    Size As Long
+    CreatedDate As Date
+    ModifiedDate As Date
 End Type
 
-Public Enum FileEnumerationLocations
-    Location_Disk = 0
-    Location_Package = 1
-    Location_Module = 2
-End Enum
+Public Type FolderEnumerationEntry
+    Path As String
+    Parent As Fury2FSModule
+End Type
+

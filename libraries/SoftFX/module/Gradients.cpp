@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "../header/Blend.hpp"
 
 Pixel* GenerateGradientTable(Pixel StartColor, Pixel EndColor, int Size, int Offset) {
-AlphaLevel *aColor[2], *aSource;
 
     if (Size < 1) Size = 1;
 
@@ -45,20 +44,14 @@ AlphaLevel *aColor[2], *aSource;
         w += winc;
         if (((ci) >= 0) && (ci < Size)) {
             weight = ClipByte(w);
-            // initialize the two lookup pointers
-            aColor[0] = AlphaLevelLookup(weight ^ 0xFF);
-            aColor[1] = AlphaLevelLookup(weight);
-        
+
             // set the alpha for this column (inverted)
-            pTable[ci][::Alpha] = AlphaFromLevel2(aColor[0], StartColor[::Alpha], aColor[1], EndColor[::Alpha]) ^ 0xFF;
-        
-            // initialize the other two lookup pointers using the alpha of this column
-            aSource = AlphaLevelLookup( pTable[ci][::Alpha] ^ 0xFF );
-    
+            pTable[ci][::Alpha] = (((StartColor[::Alpha] * (weight ^ 0xFF)) + (EndColor[::Alpha] * weight)) / 255) ^ 0xFF;
+            
             // set the color for this column (premultiplied for more speed)
-            pTable[ci][::Blue] = AlphaFromLevel(aSource, AlphaFromLevel2(aColor[0], StartColor[::Blue], aColor[1], EndColor[::Blue]));
-            pTable[ci][::Green] = AlphaFromLevel(aSource, AlphaFromLevel2(aColor[0], StartColor[::Green], aColor[1], EndColor[::Green]));
-            pTable[ci][::Red] = AlphaFromLevel(aSource, AlphaFromLevel2(aColor[0], StartColor[::Red], aColor[1], EndColor[::Red]));
+            pTable[ci][::Blue] = (((StartColor[::Blue] * (weight ^ 0xFF)) + (EndColor[::Blue] * weight)) / 255) * (pTable[ci][::Alpha] ^ 0xFF) / 255;
+            pTable[ci][::Green] = (((StartColor[::Green] * (weight ^ 0xFF)) + (EndColor[::Green] * weight)) / 255) * (pTable[ci][::Alpha] ^ 0xFF) / 255;
+            pTable[ci][::Red] = (((StartColor[::Red] * (weight ^ 0xFF)) + (EndColor[::Red] * weight)) / 255) * (pTable[ci][::Alpha] ^ 0xFF) / 255;
         }
 
     }
@@ -77,7 +70,6 @@ Pixel* GenerateGradientTable(Pixel StartColor, Pixel EndColor, int Size) {
 }
 
 Pixel* GenerateGradientTable(Pixel* Table, Pixel StartColor, Pixel EndColor, int Size, int Offset) {
-AlphaLevel *aColor[2], *aSource;
 
     if (Size < 1) Size = 1;
 
@@ -100,20 +92,14 @@ AlphaLevel *aColor[2], *aSource;
         w += winc;
         if (((ci) >= 0) && (ci < Size)) {
             weight = ClipByte(w);
-            // initialize the two lookup pointers
-            aColor[0] = AlphaLevelLookup(weight ^ 0xFF);
-            aColor[1] = AlphaLevelLookup(weight);
-        
+
             // set the alpha for this column (inverted)
-            pTable[ci][::Alpha] = AlphaFromLevel2(aColor[0], StartColor[::Alpha], aColor[1], EndColor[::Alpha]) ^ 0xFF;
-        
-            // initialize the other two lookup pointers using the alpha of this column
-            aSource = AlphaLevelLookup( pTable[ci][::Alpha] ^ 0xFF );
-    
+            pTable[ci][::Alpha] = (((StartColor[::Alpha] * (weight ^ 0xFF)) + (EndColor[::Alpha] * weight)) / 255) ^ 0xFF;
+            
             // set the color for this column (premultiplied for more speed)
-            pTable[ci][::Blue] = AlphaFromLevel(aSource, AlphaFromLevel2(aColor[0], StartColor[::Blue], aColor[1], EndColor[::Blue]));
-            pTable[ci][::Green] = AlphaFromLevel(aSource, AlphaFromLevel2(aColor[0], StartColor[::Green], aColor[1], EndColor[::Green]));
-            pTable[ci][::Red] = AlphaFromLevel(aSource, AlphaFromLevel2(aColor[0], StartColor[::Red], aColor[1], EndColor[::Red]));
+            pTable[ci][::Blue] = (((StartColor[::Blue] * (weight ^ 0xFF)) + (EndColor[::Blue] * weight)) / 255) * (pTable[ci][::Alpha] ^ 0xFF) / 255;
+            pTable[ci][::Green] = (((StartColor[::Green] * (weight ^ 0xFF)) + (EndColor[::Green] * weight)) / 255) * (pTable[ci][::Alpha] ^ 0xFF) / 255;
+            pTable[ci][::Red] = (((StartColor[::Red] * (weight ^ 0xFF)) + (EndColor[::Red] * weight)) / 255) * (pTable[ci][::Alpha] ^ 0xFF) / 255;
         }
 
     }
@@ -130,7 +116,6 @@ Pixel* GenerateGradientTable(Pixel* Table, Pixel StartColor, Pixel EndColor, int
 }
 
 Pixel* GenerateGradientTableFast(Pixel* Table, Pixel StartColor, Pixel EndColor, int Size, int Offset) {
-AlphaLevel *aColor[2];
 
     if (Size < 1) Size = 1;
 
@@ -153,15 +138,12 @@ AlphaLevel *aColor[2];
         w += winc;
         if (((ci) >= 0) && (ci < Size)) {
             weight = ClipByte(w);
-            // initialize the two lookup pointers
-            aColor[0] = AlphaLevelLookup(weight ^ 0xFF);
-            aColor[1] = AlphaLevelLookup(weight);       
-        
+            
             // set the color for this column
-            pTable[ci][::Blue] = AlphaFromLevel2(aColor[0], StartColor[::Blue], aColor[1], EndColor[::Blue]);
-            pTable[ci][::Green] = AlphaFromLevel2(aColor[0], StartColor[::Green], aColor[1], EndColor[::Green]);
-            pTable[ci][::Red] = AlphaFromLevel2(aColor[0], StartColor[::Red], aColor[1], EndColor[::Red]);
-            pTable[ci][::Alpha] = AlphaFromLevel2(aColor[0], StartColor[::Alpha], aColor[1], EndColor[::Alpha]);
+            pTable[ci][::Alpha] = (((StartColor[::Alpha] * (weight ^ 0xFF)) + (EndColor[::Alpha] * weight)) / 255);
+            pTable[ci][::Blue] = (((StartColor[::Blue] * (weight ^ 0xFF)) + (EndColor[::Blue] * weight)) / 255);
+            pTable[ci][::Green] = (((StartColor[::Green] * (weight ^ 0xFF)) + (EndColor[::Green] * weight)) / 255);
+            pTable[ci][::Red] = (((StartColor[::Red] * (weight ^ 0xFF)) + (EndColor[::Red] * weight)) / 255);
         }
 
     }
@@ -178,7 +160,6 @@ Pixel* GenerateGradientTableFast(Pixel* Table, Pixel StartColor, Pixel EndColor,
 }
 
 Pixel* GenerateGradientTableFast(Pixel StartColor, Pixel EndColor, int Size, int Offset) {
-AlphaLevel *aColor[2];
 
     if (Size < 1) Size = 1;
 
@@ -202,15 +183,12 @@ AlphaLevel *aColor[2];
         w += winc;
         if (((ci) >= 0) && (ci < Size)) {
             weight = ClipByte(w);
-            // initialize the two lookup pointers
-            aColor[0] = AlphaLevelLookup(weight ^ 0xFF);
-            aColor[1] = AlphaLevelLookup(weight);       
-        
+
             // set the color for this column
-            pTable[ci][::Blue] = AlphaFromLevel2(aColor[0], StartColor[::Blue], aColor[1], EndColor[::Blue]);
-            pTable[ci][::Green] = AlphaFromLevel2(aColor[0], StartColor[::Green], aColor[1], EndColor[::Green]);
-            pTable[ci][::Red] = AlphaFromLevel2(aColor[0], StartColor[::Red], aColor[1], EndColor[::Red]);
-            pTable[ci][::Alpha] = AlphaFromLevel2(aColor[0], StartColor[::Alpha], aColor[1], EndColor[::Alpha]);
+            pTable[ci][::Alpha] = (((StartColor[::Alpha] * (weight ^ 0xFF)) + (EndColor[::Alpha] * weight)) / 255);
+            pTable[ci][::Blue] = (((StartColor[::Blue] * (weight ^ 0xFF)) + (EndColor[::Blue] * weight)) / 255);
+            pTable[ci][::Green] = (((StartColor[::Green] * (weight ^ 0xFF)) + (EndColor[::Green] * weight)) / 255);
+            pTable[ci][::Red] = (((StartColor[::Red] * (weight ^ 0xFF)) + (EndColor[::Red] * weight)) / 255);
         }
 
     }

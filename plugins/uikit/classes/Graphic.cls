@@ -118,6 +118,7 @@ End Sub
 Private Sub iWidget_MouseDown(ByVal Parent As iContainer, ByVal Button As Long, ByVal Shift As Long, X As Long, Y As Long)
 On Error Resume Next
     If Visible = False Then Exit Sub
+    Parent.SetCapture Me
     DispatchEvent "MouseDown", Button, Shift, X, Y
 End Sub
 
@@ -140,6 +141,7 @@ End Sub
 Private Sub iWidget_MouseUp(ByVal Parent As iContainer, ByVal Button As Long, ByVal Shift As Long, X As Long, Y As Long)
 On Error Resume Next
     If Visible = False Then Exit Sub
+    Parent.ReleaseCapture Me
     DispatchEvent "MouseUp", Button, Shift, X, Y
 End Sub
 

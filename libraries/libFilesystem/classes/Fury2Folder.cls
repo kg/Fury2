@@ -33,21 +33,21 @@ Attribute VB_Description = "A class that represents a folder in the virtual file
 
 Option Explicit
 Option Compare Text
-Private m_lngLocation As Long
-Private m_strName As String
-Private m_fsFilesystem As Fury2Filesystem
+Private m_feFolder As FolderEnumerationEntry
 
-Public Property Get Location() As Long
-    Location = m_lngLocation
-End Property
-
-Public Sub SetData(Filename As String, FileSystem As Fury2Filesystem, Optional Location As Long = 0)
-    m_strName = Filename
-    m_lngLocation = Location
-    Set m_fsFilesystem = FileSystem
+Public Sub SetData(Folder As FolderEnumerationEntry)
+On Error Resume Next
+    m_feFolder = Folder
+    m_feFolder.Path = Replace(m_feFolder.Path, "//", "/")
 End Sub
 
+Public Property Get Parent() As Fury2FSModule
+    Set Parent = m_feFolder.Parent
+End Property
+
 Public Property Get Name() As String
-    Name = m_strName
+Attribute Name.VB_UserMemId = 0
+Attribute Name.VB_MemberFlags = "200"
+    Name = m_feFolder.Path
 End Property
 

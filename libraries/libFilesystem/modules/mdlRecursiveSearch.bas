@@ -38,6 +38,17 @@ Public Type WIN32_FIND_DATA
     AlternateFilename As String * 14
 End Type
 
+Private Type SYSTEMTIME
+    wYear As Integer
+    wMonth As Integer
+    wDayOfWeek As Integer
+    wDay As Integer
+    wHour As Integer
+    wMinute As Integer
+    wSecond As Integer
+    wMilliseconds As Integer
+End Type
+
 Private Declare Function FindClose Lib "kernel32" _
   (ByVal hFindFile As Long) As Long
    
@@ -50,8 +61,52 @@ Private Declare Function FindNextFile Lib "kernel32" _
    Alias "FindNextFileA" _
   (ByVal hFindFile As Long, _
    lpFindFileData As WIN32_FIND_DATA) As Long
+Private Declare Function FileTimeToLocalFileTime Lib "kernel32" _
+                                                 (lpFileTime As FileTime, _
+                                                  lpLocalFileTime As FileTime) As Long
+                                                  
+' Convert the FILETIME structure into a Date.
+Private Function FileTimeToDate(ft As FileTime) As Date
+' FILETIME units are 100s of nanoseconds.
+Const TICKS_PER_SECOND = 10000000
 
-Public Function SearchForFiles(ByVal Path As String, ByVal PathAppend As String, ByRef Count As Long, ByVal Filter As String, ByVal Recursive As Boolean, ByRef Target() As FileEnumerationEntry) As Long
+Dim lo_time As Double
+Dim hi_time As Double
+Dim seconds As Double
+Dim hours As Double
+Dim the_date As Date
+Dim localTime As FileTime
+    FileTimeToLocalFileTime ft, localTime
+
+    ' Get the low order data.
+    If localTime.LowDateTime < 0 Then
+        lo_time = 2 ^ 31 + (localTime.LowDateTime And &H7FFFFFFF)
+    Else
+        lo_time = localTime.LowDateTime
+    End If
+
+    ' Get the high order data.
+    If localTime.HighDateTime < 0 Then
+        hi_time = 2 ^ 31 + (localTime.HighDateTime And _
+            &H7FFFFFFF)
+    Else
+        hi_time = localTime.HighDateTime
+    End If
+
+    ' Combine them and turn the result into hours.
+    seconds = (lo_time + 2 ^ 32 * hi_time) / _
+        TICKS_PER_SECOND
+    hours = CLng(seconds / 3600)
+    seconds = seconds - hours * 3600
+
+    ' Make the date.
+    the_date = DateAdd("h", hours, "1/1/1601 0:00 AM")
+    the_date = DateAdd("s", seconds - 1, the_date)
+    FileTimeToDate = the_date
+End Function
+
+Public Function SearchForFiles(ByVal Path As String, ByVal PathAppend As String, ByRef Count As Long, ByVal Filter As String, ByVal Recursive As Boolean, ByRef Target() As FileEnumerationEntry, Optional ByRef Parent As Fury2FSModule = Nothing) As Long
+On Error Resume Next
 Dim WFD As WIN32_FIND_DATA
 Dim hFile As Long
 Dim lCount As Long
@@ -82,12 +137,14 @@ Dim sName As String
                 If PathMatchSpec(sName, Filter) Then
                     lCount = lCount + 1
                     If (lCount - 1) > UBound(Target) Then
-                        ReDim Preserve Target(LBound(Target) To ((UBound(Target) + 1) * 2) - 1)
+                        ReDim Preserve Target(LBound(Target) To UBound(Target) + 16)
                     End If
                     With Target(lCount - 1)
                         .Filename = Replace(PathAppend + sName, "\", "/")
-                        .Location = Location_Disk
-                        .LocationIndex = 0
+                        .Size = WFD.FileSize.High
+                        .CreatedDate = FileTimeToDate(WFD.CreationTime)
+                        .ModifiedDate = FileTimeToDate(WFD.LastWriteTime)
+                        Set .Parent = Parent
                     End With
                 End If
             End If
@@ -120,7 +177,8 @@ Dim sName As String
 
 End Function
 
-Public Function SearchForFolders(ByVal Path As String, ByVal PathAppend As String, ByRef Count As Long, ByVal Recursive As Boolean, ByRef Target() As String) As Long
+Public Function SearchForFolders(ByVal Path As String, ByVal PathAppend As String, ByRef Count As Long, ByVal Recursive As Boolean, ByRef Target() As FolderEnumerationEntry, Optional ByRef Parent As Fury2FSModule = Nothing) As Long
+On Error Resume Next
 Dim WFD As WIN32_FIND_DATA
 Dim hFile As Long
 Dim lCount As Long
@@ -141,7 +199,7 @@ Dim l_lngFolders As Long
                     sFixedName = Replace(PathAppend + sName, "\", "/")
                     bDuplicate = False
                     For l_lngFolders = 0 To lCount - 1
-                        If (LCase(Target(l_lngFolders)) = LCase(sFixedName)) Or (LCase(Mid(Target(l_lngFolders), 2)) = LCase(sFixedName)) Then
+                        If (LCase(Target(l_lngFolders).Path) = LCase(sFixedName)) Or (LCase(Mid(Target(l_lngFolders).Path, 2)) = LCase(sFixedName)) Then
                             bDuplicate = True
                             Exit For
                         End If
@@ -149,9 +207,10 @@ Dim l_lngFolders As Long
                     If Not bDuplicate Then
                         lCount = lCount + 1
                         If (lCount - 1) > UBound(Target) Then
-                            ReDim Preserve Target(LBound(Target) To ((UBound(Target) + 1) * 2) - 1)
+                            ReDim Preserve Target(LBound(Target) To UBound(Target) + 16)
                         End If
-                        Target(lCount - 1) = sFixedName
+                        Target(lCount - 1).Path = sFixedName
+                        Set Target(lCount - 1).Parent = Parent
                     End If
                     If Recursive Then SearchForFolders Left(Path, InStrRev(Path, "\")) & sName & "\" & Mid(Path, InStrRev(Path, "\") + 1), PathAppend & sName & "/", lCount, Recursive, Target
                 End If
@@ -219,11 +278,13 @@ Dim sName As String
     Call FindClose(hFile)
 End Function
 
-Public Function FileByIndex(ByVal Path As String, ByVal Index As Long, Optional ByRef lCount As Long = 0) As String
+Public Function FileByIndex(ByVal Path As String, ByVal Index As Long, Optional ByRef lCount As Long = 0) As FileEnumerationEntry
 Dim WFD As WIN32_FIND_DATA
 Dim hFile As Long
 Dim sName As String
+Dim l_feFile As FileEnumerationEntry
     hFile = FindFirstFile(Path & "*.*", WFD)
+    l_feFile.Filename = vbNullString
     
     If hFile <> INVALID_HANDLE_VALUE Then
         Do
@@ -233,11 +294,16 @@ Dim sName As String
                 If (Asc(WFD.Filename) <> DOT) Then
                     ' Recurse
                     FileByIndex = FileByIndex(Path & TrimNull(WFD.Filename) & "\", Index, lCount)
-                    If FileByIndex <> vbNullString Then Exit Function
+                    If FileByIndex.Filename <> vbNullString Then Exit Function
                 End If
             Else
                 If lCount = Index Then
-                    FileByIndex = Path & TrimNull(WFD.Filename)
+                    l_feFile.Filename = Path & TrimNull(WFD.Filename)
+                    l_feFile.CreatedDate = FileTimeToDate(WFD.CreationTime)
+                    l_feFile.ModifiedDate = FileTimeToDate(WFD.LastWriteTime)
+                    l_feFile.Size = WFD.FileSize.High
+                    FileByIndex = l_feFile
+                    Call FindClose(hFile)
                     Exit Function
                 End If
                 lCount = lCount + 1
@@ -245,20 +311,107 @@ Dim sName As String
         Loop While FindNextFile(hFile, WFD)
     End If
     
-    FileByIndex = vbNullString
+    FileByIndex = l_feFile
   
     Call FindClose(hFile)
 End Function
 
+Public Function FolderByIndex(ByVal Path As String, ByVal Index As Long, Optional ByRef lCount As Long = 0) As FolderEnumerationEntry
+Dim WFD As WIN32_FIND_DATA
+Dim hFile As Long
+Dim sName As String
+Dim l_feFolder As FolderEnumerationEntry
+    hFile = FindFirstFile(Path & "*.*", WFD)
+    l_feFolder.Path = vbNullString
+    
+    If hFile <> INVALID_HANDLE_VALUE Then
+        Do
+            If (WFD.FileAttributes And vbHidden) Then
+            ElseIf (WFD.FileAttributes And vbDirectory) Then
+                If (Asc(WFD.Filename) <> DOT) Then
+                    ' Folder
+                    If lCount = Index Then
+                        l_feFolder.Path = Path & TrimNull(WFD.Filename)
+                        FolderByIndex = l_feFolder
+                        Call FindClose(hFile)
+                        Exit Function
+                    Else
+                        lCount = lCount + 1
+                        ' Recurse
+                        FolderByIndex = FolderByIndex(Path & TrimNull(WFD.Filename) & "\", Index, lCount)
+                        If FolderByIndex.Path <> vbNullString Then Exit Function
+                    End If
+                End If
+            Else
+            End If
+        Loop While FindNextFile(hFile, WFD)
+    End If
+    
+    FolderByIndex = l_feFolder
+  
+    Call FindClose(hFile)
+End Function
+
+Public Function FileByName(ByRef Path As String) As FileEnumerationEntry
+Dim WFD As WIN32_FIND_DATA
+Dim hFile As Long
+Dim sName As String
+Dim l_feFile As FileEnumerationEntry
+    hFile = FindFirstFile(Path, WFD)
+    l_feFile.Filename = vbNullString
+    
+    If hFile <> INVALID_HANDLE_VALUE Then
+        l_feFile.Filename = Path
+        l_feFile.CreatedDate = FileTimeToDate(WFD.CreationTime)
+        l_feFile.ModifiedDate = FileTimeToDate(WFD.LastWriteTime)
+        l_feFile.Size = WFD.FileSize.High
+        FileByName = l_feFile
+    End If
+    
+    FileByName = l_feFile
+  
+    Call FindClose(hFile)
+End Function
+
+Public Function FolderByName(ByRef Path As String) As FolderEnumerationEntry
+On Error Resume Next
+Dim l_feFolder As FolderEnumerationEntry
+    l_feFolder.Path = Path
+    FolderByName = l_feFolder
+End Function
+
+Private Function MatchName(ByRef Path As String, ByRef Filename As String, ByRef Match As String) As Boolean
+On Error Resume Next
+Dim l_strTarget As String
+    l_strTarget = Path & Filename
+    If Len(Match) > Len(l_strTarget) Then
+    Else
+        MatchName = LCase(Right(l_strTarget, Len(Match))) = LCase(Match)
+    End If
+End Function
+
 Private Function QualifyPath(sPath As String) As String
-    If Right(sPath, 1) <> BACKSLASH Then
-        QualifyPath = sPath & BACKSLASH
+On Error Resume Next
+    If Right(sPath, 1) <> "\" Then
+        QualifyPath = sPath & "\"
     Else
         QualifyPath = sPath
     End If
 End Function
 
 Private Function TrimNull(ByRef startstr As String) As String
+On Error Resume Next
     If Len(startstr) <= 0 Or StrPtr(startstr) < &HFF Or VarPtr(startstr) < &HFF Then Exit Function
     TrimNull = Left(startstr, StringLength(startstr))
+End Function
+
+Public Function StartsWith(ByRef Text As String, ByRef Find As String) As Boolean
+On Error Resume Next
+    If Len(Find) > Len(Text) Then Exit Function
+    StartsWith = Left(Text, Len(Find)) = Find
+End Function
+
+Public Function ReplaceFirst(ByRef Text As String, ByRef Find As String, ByRef ToReplace As String) As String
+On Error Resume Next
+    ReplaceFirst = Replace(Text, Find, ToReplace, , 1)
 End Function

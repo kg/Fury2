@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "../header/SoftFX Main.hpp"
 #include "../header/Resample.hpp"
-#include "../header/LibMNG.hpp"
+#include "../header/MersenneTwister.h"
 
 // Variables
 AlphaLevel*       AlphaTable          = Null;
@@ -26,6 +26,8 @@ AlphaLevel**      AlphaRootTable      = Null;
 PythagorasLevel*  PythagorasTable     = Null;
 PythagorasLevel** PythagorasRootTable = Null;
 bool Initialized = false;
+
+MTRand mersenne = MTRand();
 
 int (*_CreateDIBSection) (int hDC, BitmapInfo *pInfo, DoubleWord iFlags, void **pPointer, int FileHandle, int FileOffset);
 int (*_DeleteObject) (int Object);
@@ -291,6 +293,19 @@ Export Image* AllocateImageFromFile(const Byte* Filename) {
     if (!Filename) return Failure;
 
     return new Image(corona::OpenImage(reinterpret_cast<const char*>(Filename), corona::PF_B8G8R8A8));
+}
+
+Export Image* AllocateImageFromFileBuffer(const void* Buffer, int Size) {
+
+    if (!Initialized) return Failure;
+    if (!Buffer) return Failure;
+    if (Size < 1) return Failure;
+
+    corona::File* memFile = corona::CreateMemoryFile(Buffer, Size);
+    if (!memFile) return Failure;
+    Image* newImage = new Image(corona::OpenImage(memFile, corona::PF_B8G8R8A8));
+    if (!newImage) return Failure;
+    return newImage;
 }
 
 Export Image* AllocateImageFromPointer(Pixel *Data, int Width, int Height, int Pitch) {
@@ -756,4 +771,21 @@ Export int GetLockingMode() {
 Export void SetLockingMode(int newMode) {
   lockingMode = (LockingModes)newMode;
   return;
+}
+
+Export void SeedMersenne(DoubleWord Seed) {
+  mersenne.seed(Seed);
+  return;
+}
+
+Export DoubleWord GetMersenneValue() {
+  return mersenne.randInt();
+}
+
+Export float GetMersenneValueFloat() {
+  return mersenne.rand();
+}
+
+Export double GetMersenneValueDouble() {
+  return mersenne.rand();
 }

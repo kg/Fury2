@@ -1,26 +1,168 @@
 VERSION 5.00
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
-Object = "{E142732F-A852-11D4-B06C-00500427A693}#2.0#0"; "vbalTbar6.ocx"
-Object = "{76A5D4ED-0D69-44AD-835D-B1429EF8E25C}#1.1#0"; "vbalDkTb6.ocx"
 Object = "{4F11FEBA-BBC2-4FB6-A3D3-AA5B5BA087F4}#1.0#0"; "vbalSbar6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#7.4#0"; "ngUI.ocx"
 Begin VB.MDIForm frmMain 
    AutoShowChildren=   0   'False
    BackColor       =   &H8000000C&
    Caption         =   "Editor²"
    ClientHeight    =   6600
-   ClientLeft      =   60
-   ClientTop       =   360
+   ClientLeft      =   165
+   ClientTop       =   495
    ClientWidth     =   8325
    Icon            =   "frmMain.frx":0000
    LinkTopic       =   "MDIForm1"
+   OLEDropMode     =   1  'Manual
    StartUpPosition =   3  'Windows Default
-   Begin sMDIinActiveX.MDIActiveX maxContainer 
-      Left            =   2970
-      Top             =   405
-      _ExtentX        =   847
-      _ExtentY        =   794
+   Begin ngUI.ngToolbar tbrLeft 
+      Align           =   3  'Align Left
+      Height          =   4635
+      Left            =   0
+      TabIndex        =   10
+      Top             =   1665
+      Width           =   720
+      _ExtentX        =   1270
+      _ExtentY        =   8176
+   End
+   Begin VB.PictureBox picFileSidebar 
+      Align           =   4  'Align Right
+      BorderStyle     =   0  'None
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   6.75
+         Charset         =   0
+         Weight          =   700
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      ForeColor       =   &H80000013&
+      Height          =   4635
+      Left            =   6330
+      ScaleHeight     =   309
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   133
+      TabIndex        =   7
+      Top             =   1665
+      Visible         =   0   'False
+      Width           =   2000
+      Begin vbalTreeViewLib6.vbalTreeView tvFileTree 
+         Height          =   2655
+         Left            =   15
+         TabIndex        =   8
+         Top             =   255
+         Width           =   1920
+         _ExtentX        =   3387
+         _ExtentY        =   4683
+         BorderStyle     =   0
+         NoCustomDraw    =   0   'False
+         HotTracking     =   0   'False
+         Indentation     =   16
+         LineColor       =   -2147483632
+         LineStyle       =   0
+         LabelEdit       =   -1  'True
+         ScaleMode       =   3
+         OLEDropMode     =   1
+         DragAutoExpand  =   -1
+         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+            Name            =   "Tahoma"
+            Size            =   8.25
+            Charset         =   0
+            Weight          =   400
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
+      End
+      Begin vbalDTab6.vbalDTabControl tsFileTabs 
+         Height          =   360
+         Left            =   0
+         TabIndex        =   9
+         Top             =   2910
+         Width           =   1950
+         _ExtentX        =   3440
+         _ExtentY        =   635
+         AllowScroll     =   0   'False
+         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+            Name            =   "Tahoma"
+            Size            =   8.25
+            Charset         =   0
+            Weight          =   400
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
+         BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+            Name            =   "Tahoma"
+            Size            =   8.25
+            Charset         =   0
+            Weight          =   700
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
+         ShowCloseButton =   0   'False
+      End
+   End
+   Begin VB.PictureBox picToolbarsTop 
+      Align           =   1  'Align Top
+      BackColor       =   &H80000010&
+      BorderStyle     =   0  'None
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   420
+      Left            =   0
+      ScaleHeight     =   28
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   555
+      TabIndex        =   2
+      Top             =   1245
+      Width           =   8325
+      Begin ngUI.ngToolbar tbrMain 
+         Height          =   360
+         Left            =   1890
+         TabIndex        =   3
+         Top             =   0
+         Width           =   1860
+         _ExtentX        =   3281
+         _ExtentY        =   635
+      End
+      Begin ngUI.ngToolbar tbrGame 
+         Height          =   360
+         Left            =   5670
+         TabIndex        =   4
+         Top             =   0
+         Width           =   1860
+         _ExtentX        =   3281
+         _ExtentY        =   635
+      End
+      Begin ngUI.ngToolbar tbrPlugins 
+         Height          =   360
+         Left            =   3780
+         TabIndex        =   5
+         Top             =   0
+         Width           =   1860
+         _ExtentX        =   3281
+         _ExtentY        =   635
+      End
+      Begin ngUI.ngToolbar tbrMenus 
+         Height          =   360
+         Left            =   0
+         TabIndex        =   6
+         Top             =   0
+         Width           =   1860
+         _ExtentX        =   3281
+         _ExtentY        =   635
+      End
    End
    Begin VB.PictureBox picHiddenControls 
       Align           =   1  'Align Top
@@ -35,223 +177,103 @@ Begin VB.MDIForm frmMain
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   3735
+      Height          =   1245
       Left            =   0
-      ScaleHeight     =   249
+      ScaleHeight     =   83
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   555
-      TabIndex        =   0
-      Top             =   30
+      TabIndex        =   1
+      Top             =   0
       Visible         =   0   'False
       Width           =   8325
-      Begin VB.Timer tmrPlayGame 
+      Begin VB.Timer tmrNotice 
          Enabled         =   0   'False
-         Interval        =   1
-         Left            =   2490
-         Top             =   885
+         Interval        =   50
+         Left            =   930
+         Top             =   0
       End
-      Begin VB.Timer tmrFocusTracker 
-         Enabled         =   0   'False
-         Interval        =   250
-         Left            =   2025
-         Top             =   885
-      End
-      Begin VB.Timer tmrRefreshFileSidebar 
-         Enabled         =   0   'False
-         Interval        =   1
-         Left            =   2490
-         Top             =   420
-      End
-      Begin VB.Timer tmrClock 
-         Enabled         =   0   'False
-         Interval        =   1000
-         Left            =   2025
-         Top             =   420
-      End
-      Begin VB.PictureBox picFileSidebar 
+      Begin VB.PictureBox picNotice 
+         AutoRedraw      =   -1  'True
          BorderStyle     =   0  'None
          BeginProperty Font 
             Name            =   "Tahoma"
-            Size            =   6.75
-            Charset         =   0
-            Weight          =   700
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         ForeColor       =   &H80000013&
-         Height          =   3270
-         Left            =   30
-         ScaleHeight     =   218
-         ScaleMode       =   3  'Pixel
-         ScaleWidth      =   130
-         TabIndex        =   1
-         Tag             =   "Hidden"
-         Top             =   420
-         Width           =   1950
-         Begin vbalTreeViewLib6.vbalTreeView tvFileTree 
-            Height          =   2655
-            Left            =   15
-            TabIndex        =   2
-            Top             =   255
-            Width           =   1920
-            _ExtentX        =   3387
-            _ExtentY        =   4683
-            BorderStyle     =   0
-            NoCustomDraw    =   0   'False
-            HotTracking     =   0   'False
-            Indentation     =   16
-            LineColor       =   -2147483632
-            LineStyle       =   0
-            LabelEdit       =   -1  'True
-            ScaleMode       =   3
-            OLEDropMode     =   1
-            DragAutoExpand  =   -1
-            BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-               Name            =   "Tahoma"
-               Size            =   8.25
-               Charset         =   0
-               Weight          =   400
-               Underline       =   0   'False
-               Italic          =   0   'False
-               Strikethrough   =   0   'False
-            EndProperty
-         End
-         Begin vbalDTab6.vbalDTabControl tsFileTabs 
-            Height          =   360
-            Left            =   0
-            TabIndex        =   3
-            Top             =   2910
-            Width           =   1950
-            _ExtentX        =   3440
-            _ExtentY        =   635
-            AllowScroll     =   0   'False
-            BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-               Name            =   "Tahoma"
-               Size            =   8.25
-               Charset         =   0
-               Weight          =   400
-               Underline       =   0   'False
-               Italic          =   0   'False
-               Strikethrough   =   0   'False
-            EndProperty
-            BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-               Name            =   "Tahoma"
-               Size            =   8.25
-               Charset         =   0
-               Weight          =   700
-               Underline       =   0   'False
-               Italic          =   0   'False
-               Strikethrough   =   0   'False
-            EndProperty
-            ShowCloseButton =   0   'False
-         End
-      End
-      Begin vbalTBar6.cToolbar tbrMenus 
-         Height          =   360
-         Left            =   30
-         Top             =   15
-         Width           =   1995
-         _ExtentX        =   3519
-         _ExtentY        =   635
-         DrawStyle       =   2
-      End
-      Begin vbalTBar6.cToolbar tbrMain 
-         Height          =   360
-         Left            =   2055
-         Top             =   15
-         Width           =   1875
-         _ExtentX        =   3307
-         _ExtentY        =   635
-         DrawStyle       =   2
-      End
-      Begin vbalTBar6.cToolbar tbrPlugins 
-         Height          =   360
-         Left            =   3945
-         Top             =   15
-         Width           =   2040
-         _ExtentX        =   3598
-         _ExtentY        =   635
-         DrawStyle       =   2
-      End
-      Begin vbalTBar6.cToolbar tbrGame 
-         Height          =   360
-         Left            =   6015
-         Top             =   15
-         Width           =   1935
-         _ExtentX        =   3413
-         _ExtentY        =   635
-         DrawStyle       =   2
-      End
-   End
-   Begin vbalDkTb6.vbalDockContainer dockTop 
-      Align           =   1  'Align Top
-      Height          =   30
-      Left            =   0
-      TabIndex        =   4
-      Top             =   0
-      Width           =   8325
-      _ExtentX        =   14684
-      _ExtentY        =   53
-      NonDockingArea  =   -1  'True
-      NonDockingAreaSize=   1
-   End
-   Begin vbalDkTb6.vbalDockContainer dockLeft 
-      Align           =   3  'Align Left
-      Height          =   2505
-      Left            =   0
-      TabIndex        =   5
-      Top             =   3765
-      Width           =   30
-      _ExtentX        =   53
-      _ExtentY        =   4419
-      NonDockingArea  =   -1  'True
-      NonDockingAreaSize=   1
-   End
-   Begin vbalDkTb6.vbalDockContainer dockRight 
-      Align           =   4  'Align Right
-      Height          =   2505
-      Left            =   8295
-      TabIndex        =   6
-      Top             =   3765
-      Width           =   30
-      _ExtentX        =   53
-      _ExtentY        =   4419
-      NonDockingArea  =   -1  'True
-      NonDockingAreaSize=   1
-   End
-   Begin vbalDkTb6.vbalDockContainer dockBottom 
-      Align           =   2  'Align Bottom
-      Height          =   330
-      Left            =   0
-      TabIndex        =   7
-      Top             =   6270
-      Width           =   8325
-      _ExtentX        =   14684
-      _ExtentY        =   582
-      NonDockingArea  =   -1  'True
-      NonDockingAreaSize=   22
-      Begin vbalSbar6.vbalStatusBar sbStatus 
-         Height          =   300
-         Left            =   30
-         TabIndex        =   8
-         Top             =   30
-         Width           =   8265
-         _ExtentX        =   14579
-         _ExtentY        =   529
-         SizeGrip        =   0   'False
-         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-            Name            =   "Tahoma"
-            Size            =   8.25
+            Size            =   9
             Charset         =   0
             Weight          =   400
             Underline       =   0   'False
             Italic          =   0   'False
             Strikethrough   =   0   'False
          EndProperty
-         BackColor       =   -2147483633
-         SimpleStyle     =   0
+         Height          =   1155
+         Left            =   1485
+         ScaleHeight     =   77
+         ScaleMode       =   3  'Pixel
+         ScaleWidth      =   380
+         TabIndex        =   11
+         Top             =   30
+         Width           =   5700
+         Begin ngUI.ngToolbar tbrNotice 
+            Height          =   240
+            Left            =   0
+            TabIndex        =   12
+            Top             =   915
+            Width           =   5700
+            _ExtentX        =   10054
+            _ExtentY        =   423
+         End
       End
+      Begin VB.Timer tmrClock 
+         Enabled         =   0   'False
+         Interval        =   1000
+         Left            =   0
+         Top             =   0
+      End
+      Begin VB.Timer tmrRefreshFileSidebar 
+         Enabled         =   0   'False
+         Interval        =   1
+         Left            =   465
+         Top             =   0
+      End
+      Begin VB.Timer tmrFocusTracker 
+         Enabled         =   0   'False
+         Interval        =   250
+         Left            =   0
+         Top             =   465
+      End
+      Begin VB.Timer tmrPlayGame 
+         Enabled         =   0   'False
+         Interval        =   1
+         Left            =   465
+         Top             =   465
+      End
+   End
+   Begin sMDIinActiveX.MDIActiveX maxContainer 
+      Left            =   2970
+      Top             =   405
+      _ExtentX        =   847
+      _ExtentY        =   794
+   End
+   Begin vbalSbar6.vbalStatusBar sbStatus 
+      Align           =   2  'Align Bottom
+      Height          =   300
+      Left            =   0
+      TabIndex        =   0
+      Top             =   6300
+      Width           =   8325
+      _ExtentX        =   14684
+      _ExtentY        =   529
+      SizeGrip        =   0   'False
+      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      BackColor       =   -2147483633
+      SimpleStyle     =   0
    End
 End
 Attribute VB_Name = "frmMain"
@@ -259,15 +281,37 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+'
+'    ngIDE (Fury² Game Creation System Next-Generation Editor)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Implements iCustomMenuHandler
-Implements iToolbarHandler
 Private Const WM_MDIGETACTIVE = &H229
-
-Private Declare Function ClientToScreen Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
 
 Dim WithEvents m_mdiTabs As cMDITabs
 Attribute m_mdiTabs.VB_VarHelpID = -1
+Private m_colNoticeQueue As Engine.Fury2Collection
+Private m_notNotice As cNotice
+Private m_imgNotice As Fury2Image
+Private m_booNoticeFocused As Boolean
 Private m_aclMenus As cAcceleratorManager
 Private m_booNonClientFocus As Boolean
 Private m_colChildWindows As Engine.Fury2Collection
@@ -276,27 +320,28 @@ Private m_cmnLastDocument As iCustomMenus
 
 Public Sub RefreshGameState()
 On Error Resume Next
-    tbrMain.ButtonEnabled("File:Open") = GameIsLoaded
-    tbrGame.ButtonEnabled("Game:Play") = GameIsLoaded
-    tbrGame.ButtonChecked("Game:Play") = GameIsRunning
-    tbrGame.ButtonEnabled("Game:Pause") = GameIsRunning And GameIsLoaded
-    tbrGame.ButtonChecked("Game:Pause") = GameIsPaused
+'    tbrMain.Buttons("File:Open").Enabled = GameIsLoaded
+'    tbrMain.Buttons("File:OpenMenu").Enabled = GameIsLoaded
+    tbrGame.Buttons("Game:Play").Enabled = GameIsLoaded
+    tbrGame.Buttons("Game:Play").Checked = GameIsRunning
+    tbrGame.Buttons("Game:Pause").Enabled = GameIsRunning And GameIsLoaded
+    tbrGame.Buttons("Game:Pause").Checked = GameIsPaused
 End Sub
 
-Private Function GetToolbarX(Toolbar As cToolbar, Optional Docked As Boolean = True)
+Private Function GetToolbarX(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
 Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
-    GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0)) - 10) * Screen.TwipsPerPixelX
+    GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0))) * Screen.TwipsPerPixelX
 End Function
 
-Private Function GetToolbarY(Toolbar As cToolbar, Optional Docked As Boolean = True)
+Private Function GetToolbarY(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
 Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
-    GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0)) - 23) * Screen.TwipsPerPixelY
+    GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0))) * Screen.TwipsPerPixelY
 End Function
 
 Public Sub DocumentClosed(Document As cChildManager)
@@ -304,12 +349,14 @@ On Error Resume Next
 Dim l_mgrForm As cChildManager
 Dim l_booHidden As Boolean
 Dim l_frmForm As Form
+    m_mdiTabs.ForceRefresh
     Set l_frmForm = Document.Form
     Document.Detach
     Unload l_frmForm
     m_colChildWindows.Remove m_colChildWindows.Find(Document)
     m_colChildWindows(m_colChildWindows.Count).Activate
     HideInactiveWindows
+    m_mdiTabs.ForceRefresh
 End Sub
 
 Public Sub HideInactiveWindows()
@@ -361,10 +408,27 @@ Dim l_mgrForm As cChildManager
     l_mgrForm.Activate
 End Sub
 
-Public Sub CloseAllChildren()
+Public Sub CloseAllChildren(Optional ByVal Prompt As Boolean = True)
 On Error Resume Next
 Dim l_lngForm As Long, l_mgrChild As cChildManager
 Dim l_sngScale As Single
+Dim l_docDocument As cChildManager
+Dim l_lngCount As Long
+    For Each l_docDocument In frmMain.Documents
+        If l_docDocument.Document.CanSave Then l_lngCount = l_lngCount + 1
+    Next l_docDocument
+    If Prompt Then
+        If l_lngCount > 0 Then
+            Load frmSaveOpenDocuments
+            frmSaveOpenDocuments.Show vbModal, frmMain
+            If frmSaveOpenDocuments.Cancelled Then
+                Unload frmSaveOpenDocuments
+                Exit Sub
+            Else
+                Unload frmSaveOpenDocuments
+            End If
+        End If
+    End If
     l_sngScale = 1 / m_colChildWindows.Count
     SetProgress 0
     SetStatus "Closing Windows"
@@ -376,7 +440,7 @@ Dim l_sngScale As Single
             l_mgrChild.Hide
         End If
         l_lngForm = l_lngForm + 1
-        SetProgress 1 - (l_lngForm * l_sngScale)
+        SetProgress (l_lngForm * l_sngScale)
         DoEvents
     Next l_mgrChild
     SetProgress 100
@@ -389,7 +453,8 @@ End Sub
 
 Public Sub RefreshFileSidebar()
 On Error Resume Next
-    If picFileSidebar.Tag <> "" Then Exit Sub
+    If picFileSidebar.Visible = False Then Exit Sub
+    tvFileTree.DragStyle = etvwDropHighlight
     tmrRefreshFileSidebar.Enabled = False
     tmrRefreshFileSidebar.Interval = 0
     tmrRefreshFileSidebar.Interval = 1
@@ -446,13 +511,12 @@ End Sub
 Public Sub MenuActivate(ByRef Accelerator As cAccelerator)
 On Error Resume Next
 Dim l_lngButtons As Long, l_strCaption As String, l_strAccel As String
-    For l_lngButtons = 0 To tbrMenus.ButtonCount - 1
-        l_strCaption = tbrMenus.ButtonCaption(l_lngButtons)
-        tbrMenus.ButtonStyle(l_lngButtons) = CTBDropDownArrow Or CTBAutoSize
+    For l_lngButtons = 1 To tbrMenus.Buttons.Count
+        l_strCaption = tbrMenus.Buttons(l_lngButtons).Text
         If InStr(l_strCaption, "&") Then
             l_strAccel = UCase(Mid(l_strCaption, InStr(l_strCaption, "&") + 1, 1))
             If l_strAccel = Chr(Accelerator.KeyCode) Then
-                tbrMenus.TriggerButtonClick l_lngButtons
+                tbrMenus_ButtonPress tbrMenus.Buttons(l_lngButtons), False
                 Exit For
             End If
         End If
@@ -468,21 +532,27 @@ Dim l_strAccel As String, l_strCaption As String
         m_aclMenus.Detach
         Set m_aclMenus = Nothing
     End If
-    tbrMenus.DestroyToolBar
-    tbrMenus.CreateFromMenu GetMenu("Main Menu")
-    tbrMenus.Wrappable = True
-    tbrMenus.ListStyle = True
-    With FindDocked("Menu Bar")
-        .BandSizeChange "Menu Bar", tbrMenus.ToolbarWidth, tbrMenus.ToolbarHeight, 0, 0
+    tbrMenus.DisableUpdates = True
+    With tbrMenus.Buttons
+        .Clear
+        .AddNew " &File ", "FileMenu"
+        .AddNew " &Edit ", "EditMenu"
+        .AddNew " &View ", "ViewMenu"
+        .AddNew " &Document ", "DocumentMenu"
+        .AddNew " &Game ", "GameMenu"
+        .AddNew " &Tools ", "ToolMenu"
+        .AddNew " &Window ", "WindowMenu"
+        .AddNew " &Help ", "HelpMenu"
     End With
+    tbrMenus.DisableUpdates = False
+    tbrMenus.Reflow
     Set m_aclMenus = New cAcceleratorManager
     m_aclMenus.Attach Me.hwnd
-    For l_lngButtons = 0 To tbrMenus.ButtonCount - 1
-        l_strCaption = tbrMenus.ButtonCaption(l_lngButtons)
-        tbrMenus.ButtonStyle(l_lngButtons) = CTBDropDownArrow Or CTBAutoSize
+    For l_lngButtons = 1 To tbrMenus.Buttons.Count
+        l_strCaption = tbrMenus.Buttons(l_lngButtons).Text
         If InStr(l_strCaption, "&") Then
             l_strAccel = Mid(l_strCaption, InStr(l_strCaption, "&") + 1, 1)
-            m_aclMenus.AddAccelerator Asc(UCase(l_strAccel)), Me, "MenuActivate", , , True
+            m_aclMenus.AddAccelerator Asc(UCase(l_strAccel)), BindEvent(Me, "MenuActivate"), , , True
         End If
     Next l_lngButtons
 End Sub
@@ -492,13 +562,13 @@ On Error Resume Next
 Dim l_mgrDocument As cChildManager
     Set l_mgrDocument = ActiveChild
     If l_mgrDocument Is Nothing Then
-        tbrMain.ButtonEnabled("File:Save") = False
+        tbrMain.Buttons("File:Save").Enabled = False
         With GetMenu("Main Menu")
             .Enabled(.IndexForKey("File:Save")) = False
             .Enabled(.IndexForKey("File:SaveAs")) = False
         End With
     Else
-        tbrMain.ButtonEnabled("File:Save") = l_mgrDocument.Document.CanSave
+        tbrMain.Buttons("File:Save").Enabled = l_mgrDocument.Document.CanSave
         With GetMenu("Main Menu")
             .Enabled(.IndexForKey("File:Save")) = l_mgrDocument.Document.CanSave
             .Enabled(.IndexForKey("File:SaveAs")) = l_mgrDocument.Document.CanSave
@@ -509,22 +579,14 @@ End Sub
 Public Sub RefreshPluginToolbar()
 On Error Resume Next
 Dim l_plgPlugin As iPlugin
-Dim l_icnIcon As IPictureDisp, l_icnPlugin As IPictureDisp
+Dim l_icnIcon As IPictureDisp, l_imgIcon As Fury2Image
+Dim l_imgDefault As Fury2Image
 Dim l_lngPluginIndex As Long
-    If tbrPlugins.ButtonCount < 2 Then
-        tbrPlugins.Wrappable = True
-        tbrPlugins.CreateToolbar 16, False, False, True, 16
-        tbrPlugins.Wrappable = True
-        frmIcons.ilPluginIcons.Clear
-        Set l_icnPlugin = frmIcons.ilIcons.ItemPicture(frmIcons.ilIcons.ItemIndex("PLUGIN"))
-        frmIcons.ilPluginIcons.AddFromHandle l_icnPlugin.Handle, Image_Icon, "PLUGIN"
-        Set l_icnPlugin = Nothing
-        DefineToolbar tbrPlugins, frmIcons.ilPluginIcons, _
-        Buttons(ButtonString("Manage Plugins", , "Plugins:Manage", "PLUGIN"), "-")
-    End If
-    Do While tbrPlugins.ButtonCount > 2
-        tbrPlugins.RemoveButton tbrPlugins.ButtonCount - 1
-    Loop
+    Set l_imgDefault = F2ImageFromPicture(frmIcons.ilIcons.ItemPicture(frmIcons.ilIcons.ItemIndex("PLUGIN")))
+    tbrPlugins.DisableUpdates = True
+    tbrPlugins.Buttons.Clear
+    tbrPlugins.Buttons.AddNew , "Plugins:Manage", l_imgDefault, "Manage Plugins"
+    tbrPlugins.Buttons.AddNew , , , , bsySeparator
     l_lngPluginIndex = 1
     If g_colPlugins.Count > 0 Then
         For Each l_plgPlugin In g_colPlugins
@@ -533,14 +595,18 @@ Dim l_lngPluginIndex As Long
                 With l_plgPlugin
                     If .ShowInPluginMenu Then
                         If CLng(ReadRegSetting("Plugins\Show In Toolbar\" & TypeName(l_plgPlugin), 1)) Then
-                            Set l_icnIcon = Nothing
-                            Set l_icnIcon = .Icon
-                            If l_icnIcon Is Nothing Then
-                                tbrPlugins.AddButton .PluginName, frmIcons.ilPluginIcons.ItemIndex("PLUGIN") - 1, , , , , "Plugins:Activate(" & l_lngPluginIndex & ")"
-                            Else
-                                frmIcons.ilPluginIcons.AddFromHandle l_icnIcon.Handle, Image_Icon, "ICON_" & l_icnIcon.Handle
-                                tbrPlugins.AddButton .PluginName, frmIcons.ilPluginIcons.ItemIndex("ICON_" & l_icnIcon.Handle) - 1, , , , , "Plugins:Activate(" & l_lngPluginIndex & ")"
+                            Set l_imgIcon = Nothing
+                            Set l_imgIcon = .ToolbarIcon
+                            If l_imgIcon Is Nothing Then
+                                Set l_icnIcon = Nothing
+                                Set l_icnIcon = .Icon
+                                If l_icnIcon Is Nothing Then
+                                    Set l_imgIcon = l_imgDefault
+                                Else
+                                    Set l_imgIcon = F2ImageFromPicture(l_icnIcon).Resample(16, 16, ResampleMode_Bilinear)
+                                End If
                             End If
+                            tbrPlugins.Buttons.AddNew , "Plugins:Activate(" & l_lngPluginIndex & ")", l_imgIcon, .PluginName, , , GameIsLoaded
                         End If
                     End If
                 End With
@@ -548,9 +614,9 @@ Dim l_lngPluginIndex As Long
             l_lngPluginIndex = l_lngPluginIndex + 1
         Next l_plgPlugin
     End If
-    With FindDocked("Plugin Toolbar")
-        .BandSizeChange "Plugin Toolbar", tbrPlugins.ToolbarWidth, tbrPlugins.ToolbarHeight, vbal_getVerticalHeight(tbrPlugins), vbal_getVerticalWidth(tbrPlugins)
-    End With
+    tbrPlugins.DisableUpdates = False
+    tbrPlugins.Reflow
+    RefreshToolbars
 End Sub
 
 Public Sub RefreshWindows()
@@ -558,298 +624,51 @@ On Error Resume Next
     m_mdiTabs.ForceRefresh
 End Sub
 
-Private Sub DockShowToolbar(Container As vbalDockContainer, Toolbar As cToolbar, Title As String, Optional XDockable As Boolean = True, Optional YDockable As Boolean = True, Optional CanUndock As Boolean = True, Optional CanClose As Boolean = True, Optional FullRow As Boolean = False, Optional Row As Long = -1)
-On Error Resume Next
-Dim l_lngRow As Long
-    With Container
-        Toolbar.Tag = ""
-        If .RowCount = 0 Then
-            l_lngRow = -1
-        Else
-            l_lngRow = Row
-        End If
-        Do While l_lngRow <= .RowCount
-            Err.Clear
-            .Add Title, Toolbar.ToolbarWidth, Toolbar.ToolbarHeight, vbal_getVerticalHeight(Toolbar), vbal_getVerticalWidth(Toolbar), Title, l_lngRow, , , FullRow, XDockable, YDockable, CanClose, True, CanUndock
-            If Err <> 0 Then
-                If l_lngRow = -1 Then Exit Do
-                l_lngRow = l_lngRow + 1
-                If l_lngRow > .RowCount Then
-                    l_lngRow = -1
-                End If
-            Else
-                Exit Do
-            End If
-        Loop
-        .Capture Title, Toolbar.hwnd
-    End With
-End Sub
-
-Public Sub ShowDockObject(key As String)
-On Error Resume Next
-    If FindDocked(key) Is Nothing Then
-        Select Case LCase(Trim(key))
-        Case "file sidebar"
-            picFileSidebar.Tag = ""
-            dockRight.Add "File Sidebar", 150, 350, Screen.Height, 150, "Filesystem", , , , True, False, True, True, False, True
-            dockRight.Capture "File Sidebar", picFileSidebar.hwnd
-            RefreshFileSidebar
-        Case "main toolbar"
-            DockShowToolbar dockTop, tbrMain, "Main Toolbar", True, True, True, True, False, 1
-        Case "game toolbar"
-            DockShowToolbar dockTop, tbrGame, "Game Toolbar", True, True, True, True, False, 1
-        Case "plugin toolbar"
-            DockShowToolbar dockTop, tbrPlugins, "Plugin Toolbar", True, True, True, True, False, 1
-        Case "menu bar"
-            DockShowToolbar dockTop, tbrMenus, "Menu Bar", True, False, False, False, True, 0
-        Case Else
-        End Select
-    Else
-    End If
-    StatusBarReposition
-    ResizeSidebars
-    m_mdiTabs.ForceRefresh
-End Sub
-
-Public Sub HideDockObject(key As String)
-On Error Resume Next
-    Select Case LCase(Trim(key))
-    Case "file sidebar"
-        picFileSidebar.Tag = "Hidden"
-    Case "main toolbar"
-        tbrMain.Tag = "Hidden"
-    Case "game toolbar"
-        tbrGame.Tag = "Hidden"
-    Case "plugin toolbar"
-        tbrPlugins.Tag = "Hidden"
-    Case "menu bar"
-    Case Else
-    End Select
-    With dockTop
-        .RemoveUndocked key
-        .Remove key
-    End With
-    With dockRight
-        .RemoveUndocked key
-        .Remove key
-    End With
-    With dockLeft
-        .RemoveUndocked key
-        .Remove key
-    End With
-    With dockBottom
-        .RemoveUndocked key
-        .Remove key
-    End With
-    StatusBarReposition
-    ResizeSidebars
-End Sub
-
-Public Function FindDocked(key As String) As vbalDockContainer
-On Error Resume Next
-    If dockTop.IsDocked(key) Then
-        Set FindDocked = dockTop
-    ElseIf dockBottom.IsDocked(key) Then
-        Set FindDocked = dockBottom
-    ElseIf dockLeft.IsDocked(key) Then
-        Set FindDocked = dockLeft
-    ElseIf dockRight.IsDocked(key) Then
-        Set FindDocked = dockRight
-    End If
-End Function
-
-Public Function FindOwned(key As String) As vbalDockContainer
-On Error Resume Next
-    If dockTop.OwnsKey(key) Then
-        Set FindOwned = dockTop
-    ElseIf dockBottom.OwnsKey(key) Then
-        Set FindOwned = dockBottom
-    ElseIf dockLeft.OwnsKey(key) Then
-        Set FindOwned = dockLeft
-    ElseIf dockRight.OwnsKey(key) Then
-        Set FindOwned = dockRight
-    End If
-End Function
-
 Public Sub ResizeSidebars()
 On Error Resume Next
-    dockLeft.AutoSize
-    dockRight.AutoSize
     picFileSidebar_Resize
-End Sub
-
-Private Sub StatusBarReposition()
-On Error Resume Next
-Dim l_lngLeft As Long, l_lngTop As Long, l_lngWidth As Long, l_lngHeight As Long
-    If dockBottom.NonDockingAreaSize <> (sbStatus.Height / Screen.TwipsPerPixelY) Then
-        dockBottom.NonDockingAreaSize = (sbStatus.Height / Screen.TwipsPerPixelY)
-    End If
-    sbStatus.Move 0, dockBottom.Height - sbStatus.Height, dockBottom.Width, sbStatus.Height
-    sbStatus.GetPanelRect "Progress", l_lngLeft, l_lngTop, l_lngWidth, l_lngHeight
-End Sub
-
-Private Sub docks_GotFocusHandler()
-On Error Resume Next
-    Exit Sub
-    m_booNonClientFocus = True
-    g_edEditor.ActionUpdate
-End Sub
-
-Private Sub docks_LostFocusHandler()
-On Error Resume Next
-    Exit Sub
-    m_booNonClientFocus = False
-    g_edEditor.ActionUpdate
-End Sub
-
-Private Sub docks_ChevronHandler(ByVal key As String, ByVal X As Long, ByVal Y As Long)
-On Error Resume Next
-    Select Case LCase(Trim(key))
-    Case "menu bar"
-        tbrMenus.ChevronPress X, Y
-    Case "main toolbar"
-        tbrMain.ChevronPress X, Y
-    Case "file sidebar"
-    Case Else
-    End Select
-End Sub
-
-Private Sub docks_CloseHandler(sKey As String, bCancel As Boolean)
-On Error Resume Next
-    Select Case LCase(Trim(sKey))
-    Case "menu bar"
-        bCancel = True
-    Case "main toolbar"
-        tbrMain.Tag = "Hidden"
-    Case "file sidebar"
-        picFileSidebar.Tag = "Hidden"
-    Case Else
-    End Select
-    If Not bCancel Then HideDockObject sKey
-End Sub
-
-Private Sub dockBottom_BarClose(ByVal sKey As String, bCancel As Boolean)
-On Error Resume Next
-    docks_CloseHandler sKey, bCancel
-End Sub
-
-Private Sub dockBottom_ChevronPress(ByVal key As String, ByVal X As Long, ByVal Y As Long)
-On Error Resume Next
-    docks_ChevronHandler key, X, Y
-End Sub
-
-Private Sub dockBottom_Docked(ByVal key As String)
-On Error Resume Next
-    StatusBarReposition
-    ResizeSidebars
-End Sub
-
-Private Sub dockBottom_GotFocus()
-On Error Resume Next
-    docks_GotFocusHandler
-End Sub
-
-Private Sub dockBottom_LostFocus()
-On Error Resume Next
-    docks_LostFocusHandler
-End Sub
-
-Private Sub dockBottom_Undocked(ByVal key As String)
-On Error Resume Next
-    StatusBarReposition
-    ResizeSidebars
-End Sub
-
-Private Sub dockLeft_BarClose(ByVal sKey As String, bCancel As Boolean)
-On Error Resume Next
-    docks_CloseHandler sKey, bCancel
-End Sub
-
-Private Sub dockLeft_ChevronPress(ByVal key As String, ByVal X As Long, ByVal Y As Long)
-On Error Resume Next
-    docks_ChevronHandler key, X, Y
-End Sub
-
-Private Sub dockLeft_Docked(ByVal key As String)
-On Error Resume Next
-    StatusBarReposition
-    ResizeSidebars
-End Sub
-
-Private Sub dockLeft_GotFocus()
-On Error Resume Next
-    docks_GotFocusHandler
-End Sub
-
-Private Sub dockLeft_LostFocus()
-On Error Resume Next
-    docks_LostFocusHandler
-End Sub
-
-Private Sub dockLeft_Undocked(ByVal key As String)
-On Error Resume Next
-    StatusBarReposition
-    ResizeSidebars
-End Sub
-
-Private Sub dockRight_BarClose(ByVal sKey As String, bCancel As Boolean)
-On Error Resume Next
-    docks_CloseHandler sKey, bCancel
-End Sub
-
-Private Sub dockRight_ChevronPress(ByVal key As String, ByVal X As Long, ByVal Y As Long)
-On Error Resume Next
-    docks_ChevronHandler key, X, Y
-End Sub
-
-Private Sub dockRight_Docked(ByVal key As String)
-On Error Resume Next
-    StatusBarReposition
-    ResizeSidebars
-End Sub
-
-Private Sub dockRight_GotFocus()
-On Error Resume Next
-    docks_GotFocusHandler
-End Sub
-
-Private Sub dockRight_LostFocus()
-On Error Resume Next
-    docks_LostFocusHandler
-End Sub
-
-Private Sub dockRight_Validate(cancel As Boolean)
-On Error Resume Next
-    StatusBarReposition
-    ResizeSidebars
-End Sub
-
-Private Sub dockTop_BarClose(ByVal sKey As String, bCancel As Boolean)
-On Error Resume Next
-    docks_CloseHandler sKey, bCancel
-End Sub
-
-Private Sub dockTop_ChevronPress(ByVal key As String, ByVal X As Long, ByVal Y As Long)
-On Error Resume Next
-    docks_ChevronHandler key, X, Y
 End Sub
 
 Public Sub InitToolbars()
 On Error Resume Next
+Dim l_fntMarlett As StdFont
     RefreshMenus
-    tbrMain.CreateToolbar 16, False, False, True, 16
-    tbrMain.Wrappable = True
-    DefineToolbar tbrMain, frmIcons.ilIcons, _
-    Buttons(ButtonString("New", , "File:New", "NEW", True, CTBDropDownArrow), ButtonString("Open", , "File:Open", "OPEN", False, CTBDropDown), ButtonString("Save", , "File:Save", "SAVE", False), "-", _
-    ButtonString("Undo", , "Action:Undo", "UNDO"), ButtonString("Redo", , "Action:Redo", "REDO"), "-", _
-    ButtonString("Cut", , "Action:Cut", "CUT"), ButtonString("Copy", , "Action:Copy", "COPY"), ButtonString("Paste", , "Action:Paste", "PASTE"), ButtonString("Delete", , "Action:Delete", "DELETE"), "-", _
-    ButtonString("Select All", , "Action:SelectAll", "SELECT ALL"), ButtonString("Select None", , "Action:SelectNone", "SELECT NONE"))
-    tbrGame.CreateToolbar 16, False, False, True, 16
-    tbrGame.Wrappable = True
-    DefineToolbar tbrGame, frmIcons.ilIcons, _
-    Buttons(ButtonString("Open Game", , "Game:Open", "OPEN GAME", , CTBDropDown), "-", _
-    ButtonString("Play Game", , "Game:Play", "PLAY", False, CTBCheck), ButtonString("Pause Game", , "Game:Pause", "PAUSE", False, CTBCheck))
+'    tbrMain.CreateToolbar 16, False, False, True, 16
+'    tbrMain.Wrappable = True
+    Set tbrMain.ResourceFile = g_edEditor.Resources
+    tbrMain.ResourcePattern = "toolbar\*.png"
+    Set tbrGame.ResourceFile = g_edEditor.Resources
+    tbrGame.ResourcePattern = "toolbar\*.png"
+    Set l_fntMarlett = New StdFont
+    l_fntMarlett.Name = "Marlett"
+    l_fntMarlett.Size = 8
+    With tbrMain.Buttons
+        Set .AddNew("7", "File:New", "new", "New").Font = l_fntMarlett
+        .AddNew , "File:Open", "open", "Open"
+        Set .AddNew("6", "File:OpenMenu", , "Open Recent").Font = l_fntMarlett
+        .AddNew , "File:Save", "save", "Save"
+        .AddNew , "File:SaveAll", "save all", "Save All"
+        .AddNew "-"
+        .AddNew , "Action:Undo", "undo", "Undo"
+        .AddNew , "Action:Redo", "redo", "Redo"
+        .AddNew "-"
+        .AddNew , "Action:Cut", "cut", "Cut"
+        .AddNew , "Action:Copy", "copy", "Copy"
+        .AddNew , "Action:Paste", "paste", "Paste"
+        .AddNew , "Action:Delete", "delete", "Delete"
+        .AddNew "-"
+        .AddNew , "Action:SelectAll", "select all", "Select All"
+        .AddNew , "Action:SelectNone", "select none", "Select None"
+    End With
+    With tbrGame.Buttons
+        .AddNew , "Game:Open", "open game", "Open Game"
+        Set .AddNew("6", "Game:OpenMenu", , "Open Recent Game").Font = l_fntMarlett
+        .AddNew "-"
+        .AddNew , "Game:Play", "play", "Play Game"
+        .AddNew , "Game:Pause", "pause", "Pause Game"
+    End With
     RefreshPluginToolbar
+    RefreshGameState
 End Sub
 
 Public Sub InitStatus()
@@ -862,22 +681,7 @@ End Sub
 Public Sub InitSidebars()
 On Error Resume Next
     tsFileTabs.ImageList = frmIcons.ilIcons.hIml
-    tsFileTabs.Tabs.Add "Game", , "Game", frmIcons.ilIcons.ItemIndex("GAME") - 1
-    tsFileTabs.Tabs.Add "PC", , "My PC", frmIcons.ilIcons.ItemIndex("PC") - 1
-End Sub
-
-Public Sub InitDocking()
-On Error Resume Next
-    If InIDE Then
-        dockBottom.AllowUndock = False
-        dockTop.AllowUndock = False
-        dockLeft.AllowUndock = False
-        dockRight.AllowUndock = False
-    End If
-    ShowDockObject "Menu Bar"
-    ShowDockObject "Main Toolbar"
-    ShowDockObject "Game Toolbar"
-    ShowDockObject "Plugin Toolbar"
+    tsFileTabs.Tabs.Add "Game", , "Game"
 End Sub
 
 Public Sub InitMenus()
@@ -892,34 +696,6 @@ Public Sub InitMDITabs()
 On Error Resume Next
     Set m_mdiTabs = New cMDITabs
     m_mdiTabs.Attach Me.hwnd
-End Sub
-
-Private Sub dockTop_Docked(ByVal key As String)
-On Error Resume Next
-    StatusBarReposition
-    ResizeSidebars
-End Sub
-
-Private Sub dockTop_GotFocus()
-On Error Resume Next
-    docks_GotFocusHandler
-End Sub
-
-Private Sub dockTop_LostFocus()
-On Error Resume Next
-    docks_LostFocusHandler
-End Sub
-
-Private Sub dockTop_Undocked(ByVal key As String)
-On Error Resume Next
-    StatusBarReposition
-    ResizeSidebars
-End Sub
-
-Private Sub dockTop_Validate(cancel As Boolean)
-On Error Resume Next
-    StatusBarReposition
-    ResizeSidebars
 End Sub
 
 Private Sub iCustomMenuHandler_DefineMenu(Caption As String, key As String, Optional ParentKey As String, Optional AcceleratorString As String = "", Optional Icon As stdole.Picture = Nothing, Optional HelpText As String = "", Optional ByVal Checked As Boolean = False, Optional ByVal Enabled As Boolean = True)
@@ -952,78 +728,12 @@ On Error Resume Next
     Err.Clear
 End Sub
 
-Private Sub iToolbarHandler_AddToolbar(ByVal Name As String, ByVal Window As Long, Options As ngInterfaces.ToolbarOptions)
-On Error Resume Next
-Dim l_lngRow As Long
-Dim l_dckContainer As vbalDockContainer
-    Select Case Options.DefaultPosition
-    Case TBP_Top
-        Set l_dckContainer = dockTop
-    Case TBP_Right
-        Set l_dckContainer = dockRight
-    Case TBP_Bottom
-        Set l_dckContainer = dockBottom
-    Case TBP_Left
-        Set l_dckContainer = dockLeft
-    End Select
-    With l_dckContainer
-        If .RowCount = 0 Then
-            l_lngRow = -1
-        Else
-            l_lngRow = 0
-        End If
-        Do While l_lngRow <= .RowCount
-            Err.Clear
-            With Options
-                l_dckContainer.Add Name, .XWidth, .XHeight, .YHeight, .YWidth, .Title, l_lngRow, , , .FullRow, .XDockable, .YDockable, .Closable, .ShowChevron, .Undockable
-            End With
-            If Err <> 0 Then
-                If l_lngRow = -1 Then Exit Do
-                l_lngRow = l_lngRow + 1
-                If l_lngRow > .RowCount Then
-                    l_lngRow = -1
-                End If
-            Else
-                Exit Do
-            End If
-        Loop
-        .Capture Name, Window
-    End With
-    StatusBarReposition
-    ResizeSidebars
-    m_mdiTabs.ForceRefresh
-End Sub
-
-Private Sub iToolbarHandler_RemoveToolbar(ByVal Name As String)
-On Error Resume Next
-    With FindOwned(Name)
-        .Remove Name
-    End With
-    StatusBarReposition
-    ResizeSidebars
-    m_mdiTabs.ForceRefresh
-End Sub
-
-Private Sub iToolbarHandler_ResizeToolbar(ByVal Name As String, ByVal Window As Long, Options As ngInterfaces.ToolbarOptions)
-On Error Resume Next
-Dim l_lngRow As Long
-Dim l_dckContainer As vbalDockContainer
-    Set l_dckContainer = FindDocked(Name)
-    With Options
-        l_dckContainer.BandSizeChange Name, .XWidth, .XHeight, .YHeight, .YWidth
-        If Window <> 0 Then l_dckContainer.Capture Name, Window
-    End With
-    StatusBarReposition
-    ResizeSidebars
-    m_mdiTabs.ForceRefresh
-End Sub
-
-Private Sub m_mdiTabs_BeforeWindowSwitch(ByVal hwnd As Long, cancel As Boolean)
+Private Sub m_mdiTabs_BeforeWindowSwitch(ByVal hwnd As Long, Cancel As Boolean)
 On Error Resume Next
 Dim l_booFound As Boolean
 Dim l_mgrForm As cChildManager
     If Me.Enabled = False Then
-        cancel = True
+        Cancel = True
     Else
         For Each l_mgrForm In m_colChildWindows
             Err.Clear
@@ -1040,7 +750,7 @@ Dim l_mgrForm As cChildManager
         Next l_mgrForm
         If l_booFound Then
         Else
-            cancel = True
+            Cancel = True
         End If
     End If
 End Sub
@@ -1082,36 +792,53 @@ End Sub
 
 Private Sub MDIForm_Activate()
 On Error Resume Next
+    g_edEditor.AcceleratorManager.Enabled = True
     tmrClock.Enabled = True
     tmrFocusTracker.Enabled = True
+    RefreshMenus
+    RefreshToolbars
 End Sub
 
 Private Sub MDIForm_Deactivate()
 On Error Resume Next
+    g_edEditor.AcceleratorManager.Enabled = False
 End Sub
 
 Private Sub MDIForm_Load()
 On Error Resume Next
+    Set m_colNoticeQueue = New Fury2Collection
+    Set m_imgNotice = F2Image(1, 1)
     g_booMainWindowLoaded = True
     Set m_colChildWindows = New Engine.Fury2Collection
     InitMDITabs
     InitSidebars
     InitToolbars
     InitStatus
-    InitDocking
     InitMenus
     LoadFormPosition Me
-    StatusBarReposition
     SetAppIcon Me
 End Sub
 
-Private Sub MDIForm_QueryUnload(cancel As Integer, UnloadMode As Integer)
+Private Sub MDIForm_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+Dim l_varFiles As Variant, l_lngFiles As Long
+    If Data.Files.Count > 0 Then
+        Effect = vbDropEffectCopy
+        ReDim l_varFiles(0 To Data.Files.Count - 1)
+        For l_lngFiles = 1 To Data.Files.Count
+            l_varFiles(l_lngFiles - 1) = Data.Files(l_lngFiles)
+        Next l_lngFiles
+        g_edEditor.OpenFiles l_varFiles
+    End If
+End Sub
+
+Private Sub MDIForm_QueryUnload(Cancel As Integer, UnloadMode As Integer)
 On Error Resume Next
 Dim l_lngForms As Long
     tvFileTree.ImageList = 0
     Select Case UnloadMode
     Case 0
-        cancel = True
+        Cancel = True
         ExitProgram
     Case Else
         SaveFormPosition Me
@@ -1124,11 +851,33 @@ Dim l_lngForms As Long
     End Select
 End Sub
 
-Private Sub MDIForm_Resize()
+Public Sub RefreshToolbars()
 On Error Resume Next
+Dim l_lngWidth As Long, l_lngHeight As Long, l_lngTotalHeight As Long
+    tbrMenus.Move 0, 0, picToolbarsTop.ScaleWidth, tbrMenus.IdealHeight
+    l_lngWidth = IIf(tbrMain.Visible, tbrMain.IdealWidth, 0)
+    l_lngHeight = IIf(tbrMain.Visible, tbrMain.Height, 0)
+    If l_lngHeight > l_lngTotalHeight Then l_lngTotalHeight = l_lngHeight
+    tbrMain.Move 1, tbrMenus.Height + 1, l_lngWidth, tbrGame.IdealHeight
+    l_lngWidth = IIf(tbrGame.Visible, tbrGame.IdealWidth, 0)
+    l_lngHeight = IIf(tbrGame.Visible, tbrGame.Height, 0)
+    If l_lngHeight > l_lngTotalHeight Then l_lngTotalHeight = l_lngHeight
+    tbrGame.Move tbrMain.Left + IIf(tbrMain.Visible, tbrMain.Width + 5, 0), tbrMain.Top, l_lngWidth, tbrGame.IdealHeight
+    l_lngWidth = IIf(tbrPlugins.Visible, tbrPlugins.IdealWidth, 0)
+    l_lngHeight = IIf(tbrPlugins.Visible, tbrPlugins.Height, 0)
+    If l_lngHeight > l_lngTotalHeight Then l_lngTotalHeight = l_lngHeight
+    tbrPlugins.Move tbrGame.Left + IIf(tbrGame.Visible, tbrGame.Width + 5, 0), tbrMain.Top, l_lngWidth, tbrPlugins.IdealHeight
+    picToolbarsTop.Height = (tbrMenus.Height + l_lngTotalHeight + 1) * Screen.TwipsPerPixelY
 End Sub
 
-Private Sub MDIForm_Unload(cancel As Integer)
+Private Sub MDIForm_Resize()
+On Error Resume Next
+    If picNotice.Visible Then
+        RefreshNotice
+    End If
+End Sub
+
+Private Sub MDIForm_Unload(Cancel As Integer)
     g_booMainWindowLoaded = False
 End Sub
 
@@ -1148,9 +897,33 @@ On Error Resume Next
     tvFileTree.Move 2, 16, picFileSidebar.ScaleWidth - 4, picFileSidebar.ScaleHeight - (tsFileTabs.Height + 16)
 End Sub
 
-Private Sub picHiddenControls_Resize()
+Private Sub picNotice_Click()
 On Error Resume Next
-    StatusBarReposition
+    tmrNotice.Enabled = False
+    m_notNotice.CloseTime = -1
+    m_booNoticeFocused = True
+    RefreshNotice False
+End Sub
+
+Private Sub picNotice_GotFocus()
+On Error Resume Next
+    m_booNoticeFocused = True
+    RefreshNotice False
+End Sub
+
+Private Sub picNotice_LostFocus()
+On Error Resume Next
+    m_booNoticeFocused = False
+    RefreshNotice False
+End Sub
+
+Private Sub picNotice_Resize()
+On Error Resume Next
+End Sub
+
+Private Sub picToolbarsTop_Resize()
+On Error Resume Next
+    tbrMenus.Width = picToolbarsTop.ScaleWidth
 End Sub
 
 Private Sub sbStatus_DrawItem(ByVal lhDC As Long, ByVal iPanel As Long, ByVal lLeftPixels As Long, ByVal lTopPixels As Long, ByVal lRightPixels As Long, ByVal lBottomPixels As Long)
@@ -1188,70 +961,98 @@ On Error Resume Next
     g_edEditor.ActionUpdate
 End Sub
 
-Private Sub tbrGame_ButtonClick(ByVal lButton As Long)
+Private Sub tbrGame_ButtonClick(Button As ngToolButton)
 On Error Resume Next
     ReleaseCapture
     Err.Clear
-    If DoCommand(tbrGame.ButtonKey(lButton)) Then
+    If DoCommand(Button.key) Then
     Else
-        Debug.Print "Button: " & tbrGame.ButtonKey(lButton) & " has no command handler."
+        Debug.Print "Button: " & Button.key & " has no command handler."
     End If
 End Sub
 
-Private Sub tbrGame_DropDownPress(ByVal lButton As Long)
+Private Sub tbrGame_ButtonPress(Button As ngUI.ngToolButton, Cancel As Boolean)
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long
-Dim l_ptPosition As POINTAPI
-    tbrGame.GetDropDownPosition lButton, l_lngX, l_lngY
-    l_lngX = l_lngX + GetToolbarX(tbrGame)
-    l_lngY = l_lngY + GetToolbarY(tbrGame)
-    ReleaseCapture
-    SetForegroundWindow Me.hwnd
-    Select Case LCase(Trim(tbrGame.ButtonKey(lButton)))
-    Case "game:open"
-        ShowMenu Me, l_lngX, l_lngY + (tbrGame.ButtonHeight(lButton) * Screen.TwipsPerPixelY), "Main Menu", "RecentGames"
-    Case Else
-    End Select
-End Sub
-
-Private Sub tbrMain_ButtonClick(ByVal lButton As Long)
-On Error Resume Next
-    ReleaseCapture
-    Err.Clear
-    If DoCommand(tbrMain.ButtonKey(lButton)) Then
-    Else
-        Debug.Print "Button: " & tbrMain.ButtonKey(lButton) & " has no command handler."
+    l_lngX = GetToolbarX(tbrGame) + ((Button.Left) * Screen.TwipsPerPixelX)
+    l_lngY = GetToolbarY(tbrGame) + ((Button.Top + Button.Height) * Screen.TwipsPerPixelY)
+    If Button.key = "Game:OpenMenu" Then
+        Cancel = True
+        ReleaseCapture
+        SetForegroundWindow Me.hwnd
+        ShowMenu Me, l_lngX, l_lngY, "Main Menu", "RecentGames"
     End If
 End Sub
 
-Private Sub tbrMain_CustomiseBegin()
+Private Sub tbrLeft_Reflow()
 On Error Resume Next
+    If tbrLeft.Width <> tbrLeft.IdealVerticalWidth Then
+        tbrLeft.Width = tbrLeft.IdealVerticalWidth
+    End If
 End Sub
 
-Private Sub tbrMain_DropDownPress(ByVal lButton As Long)
-On Error Resume Next
-Dim l_lngX As Long, l_lngY As Long
-    tbrMain.GetDropDownPosition lButton, l_lngX, l_lngY
-    l_lngX = l_lngX + GetToolbarX(tbrMain)
-    l_lngY = l_lngY + GetToolbarY(tbrMain)
-    ReleaseCapture
-    SetForegroundWindow Me.hwnd
-    Select Case LCase(Trim(tbrMain.ButtonKey(lButton)))
-    Case "file:new"
-        ShowMenu Me, l_lngX, l_lngY + (tbrMain.ButtonHeight(lButton) * Screen.TwipsPerPixelY), "Main Menu", "NewMenu"
-    Case "file:open"
-        ShowMenu Me, l_lngX, l_lngY + (tbrMain.ButtonHeight(lButton) * Screen.TwipsPerPixelY), "Main Menu", "RecentFiles"
-    Case Else
-    End Select
-End Sub
-
-Private Sub tbrPlugins_ButtonClick(ByVal lButton As Long)
+Private Sub tbrMain_ButtonClick(Button As ngUI.ngToolButton)
 On Error Resume Next
     ReleaseCapture
     Err.Clear
-    If DoCommand(tbrPlugins.ButtonKey(lButton)) Then
+    If DoCommand(Button.key) Then
     Else
-        Debug.Print "Button: " & tbrPlugins.ButtonKey(lButton) & " has no command handler."
+        Debug.Print "Button: " & Button.key & " has no command handler."
+    End If
+End Sub
+
+Private Sub tbrMain_ButtonPress(Button As ngUI.ngToolButton, Cancel As Boolean)
+On Error Resume Next
+Dim l_lngX As Long, l_lngY As Long
+    l_lngX = GetToolbarX(tbrMain) + ((Button.Left) * Screen.TwipsPerPixelX)
+    l_lngY = GetToolbarY(tbrMain) + ((Button.Top + Button.Height) * Screen.TwipsPerPixelY)
+    If Button.key = "File:New" Then
+        Cancel = True
+        ReleaseCapture
+        SetForegroundWindow Me.hwnd
+        ShowMenu Me, l_lngX, l_lngY, "Main Menu", "NewMenu"
+    ElseIf Button.key = "File:OpenMenu" Then
+        Cancel = True
+        ReleaseCapture
+        SetForegroundWindow Me.hwnd
+        ShowMenu Me, l_lngX, l_lngY, "Main Menu", "RecentFiles"
+    End If
+End Sub
+
+Private Sub tbrMenus_ButtonPress(Button As ngUI.ngToolButton, Cancel As Boolean)
+On Error Resume Next
+Dim l_lngX As Long, l_lngY As Long
+    l_lngX = GetToolbarX(tbrMenus) + ((Button.Left) * Screen.TwipsPerPixelX)
+    l_lngY = GetToolbarY(tbrMenus) + ((Button.Top + Button.Height) * Screen.TwipsPerPixelY)
+    Cancel = True
+    ReleaseCapture
+    SetForegroundWindow Me.hwnd
+    ShowMenu Me, l_lngX, l_lngY, "Main Menu", Button.key
+End Sub
+
+Private Sub tbrNotice_ButtonClick(Button As ngUI.ngToolButton)
+On Error Resume Next
+    DismissNotice
+End Sub
+
+Private Sub tbrNotice_GotFocus()
+On Error Resume Next
+    m_booNoticeFocused = True
+    RefreshNotice False
+End Sub
+
+Private Sub tbrNotice_LostFocus()
+On Error Resume Next
+    m_booNoticeFocused = False
+    RefreshNotice False
+End Sub
+
+Private Sub tbrPlugins_ButtonClick(Button As ngUI.ngToolButton)
+On Error Resume Next
+    Err.Clear
+    If DoCommand(Button.key) Then
+    Else
+        Debug.Print "Button: " & Button.key & " has no command handler."
     End If
 End Sub
 
@@ -1331,10 +1132,12 @@ Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l
                         Set l_icnIcon = l_plgPlugin.Icon
                         l_strName = "File:Open(""" & l_strFilename & """)"
                         If l_icnIcon Is Nothing Then
-                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , , , GameIsLoaded, l_strName
+                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , , , True, l_strName
+'                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , , , GameIsLoaded, l_strName
                         Else
                             frmIcons.ilIcons.AddFromHandle l_icnIcon.Handle, Image_Icon, l_strName
-                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , frmIcons.ilIcons.ItemIndex(l_strName) - 1, , GameIsLoaded, l_strName
+                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , frmIcons.ilIcons.ItemIndex(l_strName) - 1, , True, l_strName
+'                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , frmIcons.ilIcons.ItemIndex(l_strName) - 1, , GameIsLoaded, l_strName
                         End If
                     End If
                 Next l_lngFiles
@@ -1362,7 +1165,8 @@ Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l
     Case "file"
         g_edEditor.ActionUpdate
         With Menu
-            .Enabled(.IndexForKey("File:Open")) = GameIsLoaded
+            .Enabled(.IndexForKey("File:Open")) = True
+'            .Enabled(.IndexForKey("File:Open")) = GameIsLoaded
         End With
     Case "edit"
         g_edEditor.ActionUpdate
@@ -1383,6 +1187,7 @@ Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l
         Set m_cmnLastDocument = Nothing
         With Menu
             .Enabled(.IndexForKey("Action:CloseWindow")) = Not (Me.ActiveChild Is Nothing)
+            .Enabled(.IndexForKey("Action:NextWindow")) = (Me.Documents.Count > 1)
         End With
         Set l_cmnDocument = Me.ActiveChild.Form
         If l_cmnDocument Is Nothing Then
@@ -1417,10 +1222,10 @@ Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l
             l_lngPluginIndex = l_lngPluginIndex + 1
         Next l_plgPlugin
     Case "view"
-        Menu.Checked(Menu.IndexForKey("Show:FileSidebar")) = picFileSidebar.Tag = ""
-        Menu.Checked(Menu.IndexForKey("Show:MainToolbar")) = tbrMain.Tag = ""
-        Menu.Checked(Menu.IndexForKey("Show:GameToolbar")) = tbrGame.Tag = ""
-        Menu.Checked(Menu.IndexForKey("Show:PluginToolbar")) = tbrPlugins.Tag = ""
+        Menu.Checked(Menu.IndexForKey("Show:FileSidebar")) = picFileSidebar.Visible
+        Menu.Checked(Menu.IndexForKey("Show:MainToolbar")) = tbrMain.Visible
+        Menu.Checked(Menu.IndexForKey("Show:GameToolbar")) = tbrGame.Visible
+        Menu.Checked(Menu.IndexForKey("Show:PluginToolbar")) = tbrPlugins.Visible
     Case "window"
         l_lngIndex = Index
         Do While l_lngIndex <= Menu.Count
@@ -1453,6 +1258,10 @@ Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l
             Menu.InsertItem "No Windows Open", "WindowsEndSeparator", , , , , False, "Action:ActivateWindow(-1)"
         End If
         Menu.Enabled(Menu.IndexForKey("Action:CloseAllWindows")) = l_lngWindowsAdded > 0
+    Case "help"
+        With Menu
+            .Enabled(.IndexForKey("Help:About")) = GameIsLoaded
+        End With
     Case Else
     End Select
 End Sub
@@ -1489,6 +1298,7 @@ Dim l_lngDocument As Long, l_lngControl As Long
         With Me.ActiveChild
             l_lngDocument = ObjPtr(.Form)
             If .Form Is Nothing Then
+            ElseIf .Form.Visible = False Then
             Else
                 l_lngControl = ObjPtr(.Form.ActiveControl)
             End If
@@ -1500,6 +1310,14 @@ Dim l_lngDocument As Long, l_lngControl As Long
             s_lngLastDocument = l_lngDocument
             s_lngLastControl = l_lngControl
         End With
+    End If
+End Sub
+
+Private Sub tmrNotice_Timer()
+On Error Resume Next
+    RefreshNotice False
+    If HiResTimer > m_notNotice.CloseTime Then
+        DismissNotice
     End If
 End Sub
 
@@ -1535,7 +1353,7 @@ On Error Resume Next
     RefreshFileSidebar
 End Sub
 
-Private Sub tvFileTree_AfterLabelEdit(node As vbalTreeViewLib6.cTreeViewNode, NewString As String, cancel As Boolean)
+Private Sub tvFileTree_AfterLabelEdit(node As vbalTreeViewLib6.cTreeViewNode, NewString As String, Cancel As Boolean)
 On Error Resume Next
 Dim l_strPath As String, l_strNewPath As String
 Dim l_fsFilesystem As Fury2Filesystem
@@ -1626,6 +1444,8 @@ Dim l_fsFilesystem As Fury2Filesystem
                 Case 1
                     l_nodNode.Expanded = True
                 Case 3
+                    RmDir l_fsFilesystem.Root & Replace(l_nodNode.key, "/", "\")
+                    RefreshFileSidebar
                 Case 5
                     l_strFolderName = InputBox("Folder Name", "New Folder", "New Folder")
                     MkDir l_fsFilesystem.Root & Replace(l_nodNode.key, "/", "\") & l_strFolderName
@@ -1639,6 +1459,8 @@ Dim l_fsFilesystem As Fury2Filesystem
                 Case 1
                     g_edEditor.File_Open l_fsFilesystem.File(l_nodNode.key).GetRealFilename
                 Case 3
+                    Kill l_fsFilesystem.File(l_nodNode.key).GetRealFilename
+                    RefreshFileSidebar
                 Case Else
                 End Select
             End If
@@ -1650,5 +1472,168 @@ Private Sub tvFileTree_OLEDragOver(Data As DataObject, Effect As Long, Button As
 On Error Resume Next
     If Data.Files.Count > 0 Then
         Effect = vbDropEffectCopy
+    End If
+End Sub
+
+Private Sub RefreshNotice(Optional ByVal Reposition As Boolean = True)
+On Error Resume Next
+Dim l_lngTopColor As Long, l_lngBottomColor As Long
+Dim l_lngOption As Long
+Dim l_lngLeftSpace As Long, l_lngRightSpace As Long
+Dim l_lngTopSpace As Long, l_lngBottomSpace As Long
+Dim l_lngTextHeight As Long, l_lngTitleHeight As Long
+Dim l_lngWidth As Long, l_lngHeight As Long
+Dim l_rctWindow As Win32.RECT
+Dim l_lngWindowWidth As Long, l_lngWindowHeight As Long
+Dim l_rctTextSize As Win32.RECT, l_rctText As Win32.RECT
+Dim l_sngCloseTime As Single
+Dim l_strWaitingNotices As String
+    GetClientRect Me.hwnd, l_rctWindow
+    l_lngWindowWidth = (l_rctWindow.Right - l_rctWindow.Left)
+    l_lngWindowHeight = (l_rctWindow.Bottom - l_rctWindow.Top)
+    l_lngLeftSpace = 4
+    l_lngTopSpace = 4
+    l_lngRightSpace = 4
+    If m_notNotice.CloseTime <> -1 Then
+        l_lngRightSpace = l_lngRightSpace + 8
+    End If
+    If m_notNotice.Icon Is Nothing Then
+    Else
+        l_lngLeftSpace = l_lngLeftSpace + m_notNotice.Icon.Width + 4
+    End If
+    If Reposition Then
+        tbrNotice.DisableUpdates = True
+        tbrNotice.Buttons.Clear
+        tbrNotice.Font.Name = picNotice.Font.Name
+        tbrNotice.Font.Size = picNotice.Font.Size
+        tbrNotice.Font.Bold = True
+        For l_lngOption = LBound(m_notNotice.Options) To UBound(m_notNotice.Options)
+            With tbrNotice.Buttons.AddNew(" " & CStr(m_notNotice.Options(l_lngOption)(0)) & " ")
+                Set .ClickEvent = m_notNotice.Options(l_lngOption)(1)
+            End With
+        Next l_lngOption
+        tbrNotice.DisableUpdates = False
+        tbrNotice.Reflow
+    End If
+    l_lngBottomSpace = tbrNotice.IdealHeight + 8
+    l_lngWidth = l_lngWindowWidth - 50
+    l_rctTextSize.Right = l_lngWidth - (l_lngLeftSpace + l_lngRightSpace)
+    l_rctTextSize.Bottom = 10000
+    picNotice.Font.Bold = False
+    Win32.DrawText picNotice.hdc, m_notNotice.Text, Len(m_notNotice.Text), l_rctTextSize, DrawText_CalculateRect Or DrawText_Wrap_WordBreak
+    l_lngTextHeight = l_rctTextSize.Bottom
+    l_rctTextSize.Right = l_lngWidth - (l_lngLeftSpace + l_lngRightSpace)
+    l_rctTextSize.Bottom = 10000
+    picNotice.Font.Bold = True
+    Win32.DrawText picNotice.hdc, m_notNotice.Title, Len(m_notNotice.Title), l_rctTextSize, DrawText_CalculateRect Or DrawText_Wrap_WordBreak
+    l_lngTitleHeight = l_rctTextSize.Bottom + 4
+    l_lngHeight = (l_lngTextHeight + l_lngTitleHeight + l_lngTopSpace + l_lngBottomSpace)
+    
+    If Reposition Then
+        SetParent picNotice.hwnd, picHiddenControls.hwnd
+        picNotice.Move (l_lngWindowWidth - l_lngWidth) / 2, l_lngWindowHeight - l_lngHeight - (sbStatus.Height / Screen.TwipsPerPixelY), l_lngWidth, l_lngHeight
+        SetParent picNotice.hwnd, GetParent(picFileSidebar.hwnd)
+        m_imgNotice.Resize picNotice.ScaleWidth, picNotice.ScaleHeight
+    End If
+    l_lngBottomColor = SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+    l_lngTopColor = BlendColors(l_lngBottomColor, SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Red, Blue), 127)
+    m_imgNotice.Clear l_lngBottomColor
+    m_imgNotice.GradientFill F2Rect(0, 0, m_imgNotice.Width, m_imgNotice.Height - tbrNotice.IdealHeight, False), Array(l_lngTopColor, l_lngTopColor, l_lngBottomColor, l_lngBottomColor), RenderMode_Normal
+    If m_notNotice.Icon Is Nothing Then
+    Else
+        m_notNotice.Icon.Draw m_imgNotice, (l_lngLeftSpace - 4) / 2 + 4, m_imgNotice.Height / 2, 1, , , BlitMode_SourceAlpha
+    End If
+    m_imgNotice.Box m_imgNotice.Rectangle, F2RGB(0, 0, 0, IIf(m_booNoticeFocused, 192, 63)), RenderMode_SourceAlpha
+    If m_notNotice.CloseTime <> -1 Then
+        l_sngCloseTime = (HiResTimer - m_notNotice.OpenTime) / (m_notNotice.CloseTime - m_notNotice.OpenTime)
+        l_lngBottomColor = F2RGB(0, 0, 0, 63)
+        l_lngTopColor = F2RGB(0, 0, 0, 63 + (128 * (1 - l_sngCloseTime)))
+        m_imgNotice.GradientFill F2Rect(m_imgNotice.Width - 9, 1 + ((m_imgNotice.Height - 2) * l_sngCloseTime), m_imgNotice.Width - 1, m_imgNotice.Height - 1, True), Array(l_lngTopColor, l_lngTopColor, l_lngBottomColor, l_lngBottomColor), RenderMode_SourceAlpha
+    End If
+    CopyImageToDC picNotice.hdc, m_imgNotice.Rectangle, m_imgNotice
+    picNotice.Font.Bold = True
+    With l_rctText
+        .Left = l_lngLeftSpace
+        .Top = l_lngTopSpace
+        .Right = picNotice.ScaleWidth - l_lngRightSpace
+        .Bottom = .Top + l_lngTitleHeight
+    End With
+    DrawText picNotice.hdc, m_notNotice.Title, Len(m_notNotice.Title), l_rctText, DrawText_Wrap_WordBreak
+    picNotice.Font.Bold = False
+    With l_rctText
+        .Left = l_lngLeftSpace
+        .Top = l_lngTopSpace + l_lngTitleHeight
+        .Right = picNotice.ScaleWidth - l_lngRightSpace
+        .Bottom = .Top + l_lngTextHeight
+    End With
+    DrawText picNotice.hdc, m_notNotice.Text, Len(m_notNotice.Text), l_rctText, DrawText_Wrap_WordBreak
+    If m_colNoticeQueue.Count > 0 Then
+        picNotice.Font.Size = picNotice.Font.Size - 2
+        With l_rctText
+            .Left = l_lngLeftSpace
+            .Top = l_lngTopSpace
+            .Right = picNotice.ScaleWidth - l_lngRightSpace
+            .Bottom = .Top + l_lngTitleHeight
+        End With
+        l_strWaitingNotices = CStr(m_colNoticeQueue.Count) & " more notice(s) waiting"
+        DrawText picNotice.hdc, l_strWaitingNotices, Len(l_strWaitingNotices), l_rctText, DrawText_Align_Right
+        picNotice.Font.Size = picNotice.Font.Size + 2
+    End If
+    tbrNotice.Move (picNotice.ScaleWidth - tbrNotice.IdealWidth) / 2, picNotice.ScaleHeight - tbrNotice.IdealHeight - 4, tbrNotice.IdealWidth, tbrNotice.IdealHeight
+    picNotice.Refresh
+End Sub
+
+Friend Sub ActivateNotice()
+On Error Resume Next
+    Set m_notNotice = m_colNoticeQueue(1)
+    m_colNoticeQueue.Remove 1
+    tmrNotice.Enabled = False
+    m_booNoticeFocused = False
+    picNotice.Visible = False
+    SetParent picNotice.hwnd, picHiddenControls.hwnd
+    If m_notNotice Is Nothing Then Exit Sub
+    RefreshNotice
+    With m_notNotice
+        .OpenTime = HiResTimer()
+        If .CloseTime <> -1 Then
+            .CloseTime = HiResTimer() + .CloseTime
+        End If
+        If .CloseTime <> -1 Then tmrNotice.Enabled = True
+    End With
+    picNotice.Visible = True
+End Sub
+
+Public Sub ShowNotice(Optional Title As String = "", Optional Text As String = "", Optional Icon As Fury2Image = Nothing, Optional Options As Variant = Nothing, Optional AutoClose As Boolean = True)
+On Error Resume Next
+Dim l_notNew As cNotice
+    Set l_notNew = New cNotice
+    With l_notNew
+        If (VarType(Options) And vbArray) = vbArray Then
+            .Options = Options
+        Else
+            .Options = Array(Array("OK"))
+        End If
+        .Title = Title
+        .Text = Text
+        .CloseTime = IIf(AutoClose, g_edEditor.Options.NoticeAutoCloseTime, -1)
+        Set .Icon = Icon
+    End With
+    m_colNoticeQueue.Add l_notNew
+    If m_notNotice Is Nothing Then
+        ActivateNotice
+    Else
+        RefreshNotice
+    End If
+End Sub
+
+Public Sub DismissNotice()
+On Error Resume Next
+    tmrNotice.Enabled = False
+    m_booNoticeFocused = False
+    picNotice.Visible = False
+    SetParent picNotice.hwnd, picHiddenControls.hwnd
+    Set m_notNotice = Nothing
+    If m_colNoticeQueue.Count > 0 Then
+        ActivateNotice
     End If
 End Sub

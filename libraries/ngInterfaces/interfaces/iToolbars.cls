@@ -6,17 +6,17 @@ BEGIN
   DataSourceBehavior  = 0  'vbNone
   MTSTransactionMode  = 0  'NotAnMTSObject
 END
-Attribute VB_Name = "iToolbars"
+Attribute VB_Name = "iToolbar"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
 
-Public Sub ShowToolbars(ByRef Handler As iToolbarHandler)
+Public Sub ShowToolbar(ByRef Toolbar As Object)
 On Error Resume Next
 End Sub
 
-Public Sub HideToolbars(ByRef Handler As iToolbarHandler)
+Public Sub HideToolbar(ByRef Toolbar As Object)
 On Error Resume Next
 End Sub

@@ -9,6 +9,7 @@ Class=Globals; classes\Globals.cls
 Form=forms\frmSelectColor.frm
 Module=mdlHSL; modules\mdlHLS.bas
 Object={801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0; cFScroll.ocx
+Class=EditorOptions; ..\..\ngIDE\classes\EditorOptions.cls
 Startup="(None)"
 HelpFile=""
 ExeName32="ngCommon.dll"

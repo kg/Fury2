@@ -31,9 +31,9 @@ End Function
 Private Function IScriptLanguage_GenerateClassMethod(Name As String, Args As Variant, Code As String) As String
 On Error Resume Next
     If (VarType(Args) And vbArray) = vbArray Then
-        IScriptLanguage_GenerateClassMethod = "this." & Name & "= function(" & Join(Args, ",") & ")" & vbCrLf & "{" & vbCrLf & Code & vbCrLf & "};" & vbCrLf
+        IScriptLanguage_GenerateClassMethod = "this." & Name & "= function(" & Join(Args, ",") & ")" & vbCrLf & "{" & vbCrLf & Code & vbCrLf & "}" & vbCrLf
     Else
-        IScriptLanguage_GenerateClassMethod = "this." & Name & "= function(" & Args & ")" & vbCrLf & "{" & vbCrLf & Code & vbCrLf & "};" & vbCrLf
+        IScriptLanguage_GenerateClassMethod = "this." & Name & "= function(" & Args & ")" & vbCrLf & "{" & vbCrLf & Code & vbCrLf & "}" & vbCrLf
     End If
 End Function
 

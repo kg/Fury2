@@ -105,7 +105,9 @@ Public Ignore As Boolean
 Private mvarEngine As Fury2Engine
 
 Friend Sub SetEngine(NewEngine As Fury2Engine)
+On Error Resume Next
     Set mvarEngine = NewEngine
+    Set SavedPaths.Engine = NewEngine
 End Sub
 
 Friend Property Get Engine() As Fury2Engine
@@ -118,6 +120,22 @@ End Property
 
 Public Property Let DiffuseLight(ByVal NewValue As Boolean)
     m_spParam.Params.DiffuseLight = CByte(Abs(CLng(NewValue)))
+End Property
+
+Public Property Get Pushable() As Boolean
+    Pushable = m_spParam.Stats.Pushable <> 0
+End Property
+
+Public Property Let Pushable(ByVal NewValue As Boolean)
+    m_spParam.Stats.Pushable = CByte(Abs(CLng(NewValue)))
+End Property
+
+Public Property Get CanPush() As Boolean
+    CanPush = m_spParam.Stats.CanPush <> 0
+End Property
+
+Public Property Let CanPush(ByVal NewValue As Boolean)
+    m_spParam.Stats.CanPush = CByte(Abs(CLng(NewValue)))
 End Property
 
 Public Property Get VelocityMultiplier() As Single
@@ -483,6 +501,8 @@ Dim l_spOld As SpriteParam
         .Velocity = Me.Velocity
         .VelocityMultiplier = Me.VelocityMultiplier
         .Weight = Me.Weight
+        .Pushable = Me.Pushable
+        .CanPush = Me.CanPush
         .XVelocity = Me.XVelocity
         .YVelocity = Me.YVelocity
         .ZVelocity = Me.ZVelocity
@@ -693,6 +713,10 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 .RawLoad VarPtr(m_spParam.Velocity.A), 4
                 .RawLoad VarPtr(m_spParam.Velocity.BRT), 4
                 .RawLoad VarPtr(m_spParam.Velocity.AT), 4
+                .RawLoad VarPtr(m_spParam.Velocity.VM), 4
+                .RawLoad VarPtr(m_spParam.Velocity.XF), 4
+                .RawLoad VarPtr(m_spParam.Velocity.YF), 4
+                .RawLoad VarPtr(m_spParam.Velocity.FW), 4
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load m_lngPose
@@ -728,7 +752,7 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 .Load l_booValue
                 .Load l_booValue
                 .Load l_booValue
-                m_spParam.Stats.Platform = CByte(Abs(l_booValue))
+                m_spParam.Stats.CanPush = CByte(Abs(l_booValue))
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load l_lngValue
@@ -831,6 +855,10 @@ On Error Resume Next
                 .RawSave VarPtr(m_spParam.Velocity.A), 4
                 .RawSave VarPtr(m_spParam.Velocity.BRT), 4
                 .RawSave VarPtr(m_spParam.Velocity.AT), 4
+                .RawSave VarPtr(m_spParam.Velocity.VM), 4
+                .RawSave VarPtr(m_spParam.Velocity.XF), 4
+                .RawSave VarPtr(m_spParam.Velocity.YF), 4
+                .RawSave VarPtr(m_spParam.Velocity.FW), 4
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save m_lngPose
@@ -856,7 +884,7 @@ On Error Resume Next
                 .Save CBool(m_spParam.Stats.Pushable)
                 .Skip 2
                 .Skip 2
-                .Save CBool(m_spParam.Stats.Platform)
+                .Save CBool(m_spParam.Stats.CanPush)
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save CLng(m_spParam.Params.Effect)
@@ -1211,8 +1239,8 @@ Dim l_strName As String
             Else
                 l_strName = mvarEngine.VariableName("ss" & mvarEngine.SpriteObjectCount)
                 With mvarEngine.ScriptEngine.Language
-                    l_strScript = .GenerateClassVariable("Object") & _
-                    .GenerateClassVariable("Map") & _
+                    l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
+                    .GenerateClassVariable("Map") & .LineTerminator & _
                     .GenerateClassMethod("F2OInit", Array("T", "M"), _
                     .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
                     .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) & .LineTerminator _
@@ -1824,6 +1852,10 @@ Public Property Let XVelocity(ByVal NewValue As Single)
     m_spParam.Velocity.X = NewValue
 End Property
 
+Public Property Get XForce() As Single
+    XForce = m_spParam.Velocity.XF
+End Property
+
 Public Property Get Y() As Single
     Y = m_spParam.Position.Y
 End Property
@@ -1838,6 +1870,10 @@ End Property
 
 Public Property Get YTop() As Single
     YTop = m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height)
+End Property
+
+Public Property Get YForce() As Single
+    YForce = m_spParam.Velocity.YF
 End Property
 
 Public Property Get YVelocity() As Single
@@ -1863,3 +1899,8 @@ End Property
 Public Property Let ZVelocity(ByVal NewValue As Single)
     m_spParam.Velocity.Z = NewValue
 End Property
+
+Public Property Get Pressure() As Single
+    Pressure = m_spParam.Velocity.FW
+End Property
+

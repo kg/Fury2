@@ -55,6 +55,8 @@ Public Font As Fury2Font
 Public MoveEvent As Fury2Event
 Public CloseEvent As Fury2Event
 Public SelectEvent As Fury2Event
+Public Title As String
+Public TitleFont As Fury2Font
 #If EnableBehaviors = 1 Then
 Public Behaviors As Fury2Behaviors
 #End If
@@ -183,6 +185,7 @@ Dim m_rctItem As Fury2Rect
 Dim m_lngArrowCoord As Long
 Dim m_lngSpace As Long, m_lngAlpha As Long
 Dim m_strCaption As String
+Dim l_rctTitle As Fury2Rect
     If m_lngSelectedItem < 1 Then m_lngSelectedItem = 1
     If m_lngSelectedItem > mCol.Count Then m_lngSelectedItem = mCol.Count
     m_lngAlpha = Alpha * 255
@@ -205,9 +208,11 @@ Dim m_strCaption As String
         Else
             WindowSkin.Draw Engine.Backbuffer, Rectangle, Alpha
         End If
+        Set l_rctTitle = TitleFont.GetTextRectangle(Title)
+        TitleFont.Draw Engine.Backbuffer, Title, F2Rect(Rectangle.Left, Rectangle.Top - l_rctTitle.Height, Rectangle.Right, l_rctTitle.Height, False), , Alpha
         Set .ClipRectangle = Me.Rectangle
         m_lngCurrentY = Rectangle.Top + m_lngSpace
-        If mCol.Count > 0 Then
+        If mCol.Count >= 1 + Me.ScrollOffset Then
             Set m_rctItem = New Fury2Rect
             m_rctItem.SetValues Rectangle.Left + m_lngSpace, 0, Rectangle.Right - m_lngSpace, 0
             For m_lngDrawItems = 1 + Me.ScrollOffset To mCol.Count

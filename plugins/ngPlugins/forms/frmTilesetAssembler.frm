@@ -25,7 +25,7 @@ Begin VB.Form frmTilesetAssembler
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   391
    ShowInTaskbar   =   0   'False
-   StartUpPosition =   1  'CenterOwner
+   StartUpPosition =   2  'CenterScreen
    Visible         =   0   'False
    Begin VB.PictureBox picTab 
       BorderStyle     =   0  'None
@@ -170,7 +170,27 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+'
+'    ngPlugins (Fury² Game Creation System Next-Generation Editor Standard Plugin Set)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
+Public Editor As Object
 Private m_colTiles As New Engine.Fury2Collection
 Private m_booSelection() As Boolean
 
@@ -180,7 +200,7 @@ Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTile As Long
 Dim l_imgTile As Fury2Image
-Dim l_rctText As Win32.RECT
+Dim l_rctText As Win32.Rect
 Dim l_lngMax As Long
     If m_colTiles.Count > 0 Then
         ReDim Preserve m_booSelection(1 To m_colTiles.Count)
@@ -244,7 +264,7 @@ Dim l_strErrors As String
         m_colTiles.Add l_imgImage, l_imgImage.Name
     Next l_lngImages
     If Len(l_strErrors) > 0 Then
-        MsgBox l_strErrors, vbExclamation, "Errors occurred while loading images"
+        MsgBox "Errors occurred while loading images:" & vbCrLf & l_strErrors, vbExclamation, "Error"
     End If
     RedrawTiles
 End Sub

@@ -13,12 +13,33 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
 Implements IWindowsHook
+Private Declare Function GetKeyState Lib "user32" (ByVal nVirtKey As Long) As Integer
+Private Const VK_CONTROL = &H11
+Private Const VK_SHIFT = &H10
 Private m_booCurrentState(1 To 255) As Boolean
 Private m_booCtrlState As Boolean
 Private m_booShiftState As Boolean
 Private m_colAccelerators As Fury2Collection
 Private m_booAttached As Boolean
 Private m_lngAttachedWindow As Long
+Private m_booDeferredInvoke As Boolean
+Private m_booEnabled As Boolean
+
+Public Property Get Enabled() As Boolean
+    Enabled = m_booEnabled
+End Property
+
+Public Property Let Enabled(ByVal NewValue As Boolean)
+    m_booEnabled = NewValue
+End Property
+
+Public Property Get DeferredInvoke() As Boolean
+    DeferredInvoke = m_booDeferredInvoke
+End Property
+
+Public Property Let DeferredInvoke(ByVal NewValue As Boolean)
+    m_booDeferredInvoke = NewValue
+End Property
 
 Public Property Get KeyState(Index As Long) As Boolean
 On Error Resume Next
@@ -30,7 +51,7 @@ On Error Resume Next
     m_colAccelerators.Remove m_colAccelerators.Find(Accelerator)
 End Sub
 
-Public Function AddAccelerator(KeyCode As Long, Hook As Object, Optional HookMethod As String = "AcceleratorPress", Optional CtrlState As Boolean = False, Optional ShiftState As Boolean = False, Optional AltState As Boolean = False) As cAccelerator
+Public Function AddAccelerator(KeyCode As Long, Evt As ngEvent, Optional CtrlState As Boolean = False, Optional ShiftState As Boolean = False, Optional AltState As Boolean = False) As cAccelerator
 On Error Resume Next
 Dim l_aclNew As cAccelerator
 Dim l_aclFound As cAccelerator
@@ -40,8 +61,7 @@ Dim l_aclFound As cAccelerator
         .Alt = AltState
         .Ctrl = CtrlState
         .Shift = ShiftState
-        Set .Hook = Hook
-        .HookMethod = HookMethod
+        Set .Hook = Evt
     End With
     Err.Clear
     Set l_aclFound = m_colAccelerators.Item(l_aclNew.KeyString)
@@ -82,6 +102,7 @@ End Sub
 Private Sub Class_Initialize()
 On Error Resume Next
     Set m_colAccelerators = New Fury2Collection
+    m_booEnabled = True
 End Sub
 
 Private Sub Class_Terminate()
@@ -95,34 +116,37 @@ Dim l_parKey As vbalWinHook6.cKeyboardlParam
 Dim l_aclAccelerator As cAccelerator
 Dim l_booResult As Boolean
 Dim l_strKey As String
-    If GetActiveWindow() <> m_lngAttachedWindow Then Exit Function
+Dim l_wndActive As Long
+    l_wndActive = GetActiveWindow()
+    If GetParent(l_wndActive) = 0 Then
+        ' This doesn't work right for some reason
+        'If l_wndActive <> m_lngAttachedWindow Then Exit Function
+    End If
     If eType = WH_KEYBOARD Then
         Set l_parKey = KeyboardlParam(lParam)
         If (wParam = vbKeyControl) Or (wParam = vbKeyShift) Then
         ElseIf (l_parKey.KeyDown) Then
             If (m_booCurrentState(wParam)) Or (wParam < 1) Or (wParam > 255) Then
             Else
-                l_strKey = Format(wParam, "000") & IIf(m_booCurrentState(vbKeyShift), "1", "0") & IIf(m_booCurrentState(vbKeyControl), "1", "0") & IIf(l_parKey.Alt, "1", "0")
+                l_strKey = Format(wParam, "000") & IIf(GetKeyState(VK_SHIFT) < 0, "1", "0") & IIf(GetKeyState(VK_CONTROL) < 0, "1", "0") & IIf(l_parKey.Alt, "1", "0")
+                Debug.Print l_strKey
                 Set l_aclAccelerator = m_colAccelerators.Item(l_strKey)
                 If l_aclAccelerator Is Nothing Then
                 ElseIf l_aclAccelerator.Hook Is Nothing Then
                 Else
-                    Err.Clear
-                    l_booResult = True
-                    l_booResult = CallByName(l_aclAccelerator.Hook, l_aclAccelerator.HookMethod, VbMethod)
-                    If Err <> 0 Then
+                    If m_booEnabled Then
                         Err.Clear
-                        l_booResult = CallByName(l_aclAccelerator.Hook, l_aclAccelerator.HookMethod, VbMethod, l_aclAccelerator)
-                        If Err <> 0 Then
-                            Err.Clear
-                            CallByName l_aclAccelerator.Hook, l_aclAccelerator.HookMethod, VbMethod
-                            If Err <> 0 Then
-                                CallByName l_aclAccelerator.Hook, l_aclAccelerator.HookMethod, VbMethod, l_aclAccelerator
-                                Err.Clear
-                            End If
+                        l_booResult = True
+                        If m_booDeferredInvoke Then
+                            frmInvoke.Queue.Add l_aclAccelerator.Hook
+                            frmInvoke.tmrInvoke.Enabled = True
+                        Else
+                            l_booResult = l_aclAccelerator.Hook.Invoke()
                         End If
+                        bConsume = l_booResult
+                    Else
+                        bConsume = False
                     End If
-                    bConsume = l_booResult
                 End If
             End If
         End If

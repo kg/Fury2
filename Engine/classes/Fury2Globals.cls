@@ -33,6 +33,7 @@ Attribute VB_Ext_KEY = "Member0" ,"Fury2Engine"
 '    License along with this library; if not, write to the Free Software
 '    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 '
+Option Explicit
 
 Public Enum Fury2ScreenScaleModes
     SSM_Fast = 0
@@ -225,9 +226,6 @@ Dim l_engNew As Fury2Engine
         l_engNew.SetNotify Notify
         Set l_engNew.Debugger = Debugger
         Fury2Initialize
-        #If DebugFeatures = 1 Then
-            frmLog.Show
-        #End If
         l_engNew.Init Parameters
     End Select
     Err.Clear
@@ -504,3 +502,7 @@ Dim m_lngItems As Long
     Err.Clear
 End Function
 
+Public Property Get Fury2Version() As String
+On Error Resume Next
+    Fury2Version = "Fury² " + Choose(App.Major + 1, "Alpha", "Beta", "Release") + " " + CStr(App.Minor) + " Build " + CStr(App.Revision)
+End Property

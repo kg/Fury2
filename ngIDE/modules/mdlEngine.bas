@@ -1,4 +1,23 @@
 Attribute VB_Name = "mdlEngine"
+'
+'    ngIDE (Fury² Game Creation System Next-Generation Editor)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Private m_booEngineInitialized As Boolean
 Global g_engEngine As Fury2Engine
@@ -10,7 +29,7 @@ On Error Resume Next
     g_edEditor.GamePath = GamePath
     Set g_engEngine = Fury2Load(GamePath, EM_Library, g_edEditor)
     If g_engEngine Is Nothing Then
-        MsgBox "Unable to initialize engine.", vbCritical, "Error"
+        g_edEditor.ShowNotice "Error", "Unable to initialize engine.", g_edEditor.NoticeIcon("error")
     Else
         m_booEngineInitialized = True
     End If

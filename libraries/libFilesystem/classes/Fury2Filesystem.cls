@@ -37,18 +37,34 @@ Option Compare Text
 
 Private m_strRoot As String
 Private m_strCurrentFolder As String
-Private m_colPackages As Collection
 Private m_colDeletionQueue As Collection
 Private m_colFolderDeletionQueue As Collection
-Private m_lngPatchPackages As Long, m_lngLastPackages As Long, m_lngPackages As Long
 
 Private m_colModules As Fury2Collection
 
+Private m_modRoot As Fury2DiskFolder
+
 Public FileHook As Object
-Public EnablePackages As Boolean
-Public EnableDisk As Boolean
 Public OutputHook As Object
 Public OverwriteReadOnlyFiles As Boolean
+
+Public Function MountDiskFolder(ByRef Path As String, Optional ByRef MountPoint As String = "/") As Fury2DiskFolder
+On Error Resume Next
+Dim l_dfModule As Fury2DiskFolder
+Dim l_modModule As Fury2FSModule
+    Set l_dfModule = New Fury2DiskFolder
+    l_dfModule.SetFilesystem Me
+    l_dfModule.SetPath Path
+    Set l_modModule = l_dfModule
+    l_modModule.MountPoint = MountPoint
+    Set MountDiskFolder = l_modModule
+    LoadModule l_modModule
+End Function
+
+Public Property Get Modules() As Fury2Collection
+On Error Resume Next
+    Set Modules = m_colModules
+End Property
 
 Public Sub LoadModule(ByVal Module As Fury2FSModule)
 On Error Resume Next
@@ -177,90 +193,42 @@ Attribute RealFileExists.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_strLocalPath As String, l_lngLength As Long
     l_strLocalPath = Replace(Replace(m_strRoot + Filename, "/", "\"), "\\", "\")
-'    l_lngLength = -1
-'    Err.Clear
-'    l_lngLength = FileLen(l_strLocalPath)
-'    If l_lngLength >= 0 Then
-'        RealFileExists = True
-'    Else
-'        RealFileExists = False
-'    End If
     RealFileExists = False
     RealFileExists = Trim(Dir(l_strLocalPath)) <> ""
     Err.Clear
 End Function
 
-Public Function FileExists(ByVal Filename) As Boolean
+Public Function FileExists(ByVal Filename As String) As Boolean
 Attribute FileExists.VB_Description = "Returns True if the specified file exists."
 On Error Resume Next
 Dim l_strFilename As String
 Dim l_strPath As String
-Dim l_flsFiles As Fury2Files
-Dim l_pkgPackage As Fury2Package
+Dim l_modModule As Fury2FSModule
     
     Filename = Replace(Filename, "\", "/")
-    
-    If InStr(Filename, "/") Then
-        l_strPath = GetFullPath(Filename)
-        Filename = GetTitle(Filename)
-    Else
-    End If
+        
+    If Left(Filename, 1) <> "/" Then Filename = CurrentFolder + Filename
         
     If Not (FileHook Is Nothing) Then FileHook.Invoke CStr(Filename)
     
-#If SawZIP = 1 Then
-If EnablePackages Then
-Dim l_filFile As SAWZIPLib.File
-    ' Enumerate all loaded packages
-    For Each l_pkgPackage In m_colPackages
-        With l_pkgPackage.Archive
-            ' Enumerate all files in the package
-            For Each l_filFile In .Files
-                With l_filFile
-                
-                    If .Directory Then
-                    Else
-    
-                        ' Get the name and properly format it
-                        l_strFilename = Replace(l_pkgPackage.MountPoint + Replace(.Name, "\", "/"), "//", "/")
-                        If l_strPath <> "" Then
-                            If PathMatch(GetFullPath(l_strFilename), l_strPath, False) Then
-    '                           If (GetTitle(l_strFilename) Like Filename) Then
-                                If PathMatchSpec(GetTitle(l_strFilename), Filename) Then
-                                    FileExists = True
-                                    Exit Function
-                                End If
-                            End If
-                        Else
-    '                        If (GetTitle(l_strFilename) Like Filename) Then
-                            If PathMatchSpec(GetTitle(l_strFilename), Filename) Then
-                                FileExists = True
-                                Exit Function
-                            End If
-                        End If
-                        
-                    End If
-
-                End With
-            Next l_filFile
-        End With
-    Next l_pkgPackage
-End If
-#End If
-
-    ' Handle hard disk
-    If EnableDisk Then
-           FileExists = FileExists Or RealFileExists(l_strPath + Filename)
-    End If
-    
+    For Each l_modModule In m_colModules
+        If l_modModule.Enabled Then
+            If InStr(Filename, l_modModule.MountPoint) Then
+                If l_modModule.FileExists(ReplaceFirst(Filename, l_modModule.MountPoint, "/")) Then
+                    FileExists = True
+                    Exit For
+                End If
+            End If
+        End If
+    Next l_modModule
 End Function
 
-Public Function FolderExists(ByVal Path) As Boolean
+Public Function FolderExists(ByVal Path As String) As Boolean
 Attribute FolderExists.VB_Description = "Returns True if the specified folder exists."
 On Error Resume Next
 Dim l_strFilename As String
-Dim l_flsFiles As Fury2Files
-Dim l_pkgPackage As Fury2Package
+Dim l_strPath As String
+Dim l_modModule As Fury2FSModule
     
     Path = Replace(Path, "\", "/")
     
@@ -269,39 +237,17 @@ Dim l_pkgPackage As Fury2Package
     If Left(Path, 1) <> "/" Then Path = CurrentFolder + Path
     If Right(Path, 1) <> "/" Then Path = Path + "/"
     
-#If SawZIP = 1 Then
-If EnablePackages Then
-Dim l_filFile As SAWZIPLib.File
-    ' Enumerate all loaded packages
-    For Each l_pkgPackage In m_colPackages
-        With l_pkgPackage.Archive
-            ' Enumerate all files in the package
-            For Each l_filFile In .Files
-                With l_filFile
-
-                    ' Get the name and properly format it
-                    l_strFilename = Replace(l_pkgPackage.MountPoint + Replace(.Name, "\", "/"), "//", "/")
-                    If PathMatch(GetFullPath(l_strFilename), Path, True) Then
-                            FolderExists = True
-                            Exit Function
-                    End If
-
-                End With
-            Next l_filFile
-        End With
-    Next l_pkgPackage
-End If
-#End If
-    
-    ' Handle hard disk
-    If EnableDisk Then
-        Err.Clear
-        If GetAttr(TranslateFilename(Path)) And vbDirectory = vbDirectory Then
-            FolderExists = FolderExists Or (Err.Number = 0)
+    For Each l_modModule In m_colModules
+        If l_modModule.Enabled Then
+            If InStr(Path, l_modModule.MountPoint) Then
+                If l_modModule.FolderExists(ReplaceFirst(Path, l_modModule.MountPoint, "/")) Then
+                    FolderExists = True
+                    Exit For
+                End If
+            End If
         End If
-    End If
+    Next l_modModule
     
-    FolderExists = False
 End Function
 
 Public Function TranslateFilename(ByVal Filename As String) As String
@@ -317,129 +263,71 @@ On Error Resume Next
         TranslateFilename = TranslateFilename(CurrentFolder + Filename)
     End If
 End Function
-
-Public Function LoadPackage(ByVal Filename) As Fury2Package
-Attribute LoadPackage.VB_Description = "Loads a package into the filesystem."
-On Error Resume Next
-#If SawZIP = 1 Then
-If EnablePackages Then
-Dim l_pkgPackage As Fury2Package
-    Set l_pkgPackage = Package(Filename)
-    If l_pkgPackage Is Nothing Then
-        Err.Clear
-        Set l_pkgPackage = New Fury2Package
-        l_pkgPackage.SetFilesystem Me
-        l_pkgPackage.OpenPackage CStr(Filename)
-        If Err <> 0 Then
-            LogError "Unable to load package " + Filename + "."
-        Else
-            If Left(Filename, 1) = "_" Then
-                ' Add at the end. Used for 'last-chance' packages
-                m_colPackages.Add l_pkgPackage, LCase(Trim(Filename))
-                m_lngLastPackages = m_lngLastPackages + 1
-            ElseIf InStr(Filename, "_") Then
-                ' Replace with sorted insertion, based on version suffix
-                m_colPackages.Add l_pkgPackage, LCase(Trim(Filename))
-                m_lngPatchPackages = m_lngPatchPackages + 1
-            Else
-                m_colPackages.Add l_pkgPackage, LCase(Trim(Filename))
-                m_lngPackages = m_lngPackages + 1
-            End If
-        End If
-    End If
-    Set LoadPackage = l_pkgPackage
-End If
-#End If
-End Function
-
-Public Sub UnloadPackage(ByVal Index)
-Attribute UnloadPackage.VB_Description = "Unloads the specified package. (You can pass either a string or a number into this property.)"
-    If VarType(Index) = vbString Then
-    ElseIf VarType(Index) = vbObject Then
-    Else
-    End If
-End Sub
-
+'
+'Public Function LoadPackage(ByVal Filename) As Fury2Package2
+'On Error Resume Next
+'#If SawZIP = 1 Then
+'If EnablePackages Then
+'Dim l_pkgPackage As Fury2Package2
+'    Set l_pkgPackage = Package(Filename)
+'    If l_pkgPackage Is Nothing Then
+'        Err.Clear
+'        Set l_pkgPackage = New Fury2Package2
+'        l_pkgPackage.SetFilesystem Me
+'        l_pkgPackage.OpenPackage CStr(Filename)
+'        If Err <> 0 Then
+'            LogError "Unable to load package " + Filename + "."
+'        Else
+'            If Left(Filename, 1) = "_" Then
+'                ' Add at the end. Used for 'last-chance' packages
+'                m_colPackages.Add l_pkgPackage, LCase(Trim(Filename))
+'                m_lngLastPackages = m_lngLastPackages + 1
+'            ElseIf InStr(Filename, "_") Then
+'                ' Replace with sorted insertion, based on version suffix
+'                m_colPackages.Add l_pkgPackage, LCase(Trim(Filename))
+'                m_lngPatchPackages = m_lngPatchPackages + 1
+'            Else
+'                m_colPackages.Add l_pkgPackage, LCase(Trim(Filename))
+'                m_lngPackages = m_lngPackages + 1
+'            End If
+'        End If
+'    End If
+'    Set LoadPackage = l_pkgPackage
+'End If
+'#End If
+'End Function
 
 Public Function EnumFiles(Optional ByVal Path = "", Optional ByVal Filter = "*.*", Optional ByVal Recursive = False) As Fury2Files
 Attribute EnumFiles.VB_Description = "Returns a Fury2Files object containing all the files that match the specified requirements."
 On Error Resume Next
+Dim l_modModule As Fury2FSModule
 Dim l_feFiles() As FileEnumerationEntry
 Dim l_lngFileCount As Long
 Dim l_lngBufferSize As Long
-Dim l_strFilename As String
+Dim l_lngIndex As Long
 Dim l_flsFiles As Fury2Files
-Dim l_pkgPackage As Fury2Package, l_lngPackage As Long
 
     ' Allocate a file buffer with 16 entries (enough for most searches and fast to allocate)
     ReDim l_feFiles(0 To 15)
-    l_lngBufferSize = 16
     l_lngFileCount = 0
-    
+
     ' Fix up the path
     Path = Replace(Path, "\", "/")
     If Trim(Path) = "" Then Path = CurrentFolder
     Path = LCase(Trim(Path))
     If Left(Path, 1) <> "/" Then Path = CurrentFolder + Path
     If Right(Path, 1) <> "/" Then Path = Path + "/"
-    
+
     ' Fix up the filter
     If Trim(Filter) = "" Then Filter = "*.*"
     
-#If SawZIP = 1 Then
-If EnablePackages Then
-Dim l_filFile As SAWZIPLib.File
-    ' Enumerate all loaded packages
-    l_lngPackage = 1
-    For Each l_pkgPackage In m_colPackages
-        With l_pkgPackage.Archive
-            If Err <> 0 Then Exit For
-            ' Enumerate all files in the package
-            For Each l_filFile In .Files
-                With l_filFile
-                    If Err <> 0 Or l_filFile Is Nothing Then Exit For
-
-                    ' Files only
-                    If Not .Directory Then
-                        ' Get the name and properly format it
-                        l_strFilename = Replace(l_pkgPackage.MountPoint + Replace(.Name, "\", "/"), "//", "/")
-                        ' Match folder
-                        If PathMatch(GetFullPath(l_strFilename), Path & "*", Recursive) Then
-                            ' Match name
-                            If PathMatchSpec(GetTitle(l_strFilename), Filter) Then
-
-                                ' Increase the number of file buffer slots used
-                                l_lngFileCount = l_lngFileCount + 1
-                                If l_lngFileCount > l_lngBufferSize Then
-                                    ' If the buffer is full, double its size
-                                    l_lngBufferSize = l_lngBufferSize * 2
-                                    ReDim Preserve l_feFiles(0 To l_lngBufferSize - 1)
-                                End If
-
-                                ' Add the file to the file buffer
-                                With l_feFiles(l_lngFileCount - 1)
-                                    .Filename = Replace(l_strFilename, "//", "/")
-                                    .Location = Location_Package
-                                    .LocationIndex = l_lngPackage
-                                End With
-                            Else
-                            End If
-                        End If
-                    End If
-
-                End With
-                Err.Clear
-            Next l_filFile
-        End With
-        l_lngPackage = l_lngPackage + 1
-    Next l_pkgPackage
-End If
-#End If
-
-    ' Handle hard disk
-    If EnableDisk Then
-        SearchForFiles TranslateFilename(Path), Path, l_lngFileCount, Filter, Recursive, l_feFiles
-    End If
+    For Each l_modModule In m_colModules
+        If l_modModule.Enabled Then
+            If StartsWith(CStr(Path), l_modModule.MountPoint) Then
+                l_modModule.EnumFiles ReplaceFirst(CStr(Path), l_modModule.MountPoint, "/"), CStr(Path), l_lngFileCount, Filter, Recursive, l_feFiles
+            End If
+        End If
+    Next l_modModule
     
     Set l_flsFiles = New Fury2Files
 
@@ -452,108 +340,55 @@ End If
         ' Erase our copy
         Erase l_feFiles
     End If
-    
+
     Set EnumFiles = l_flsFiles
-    
 End Function
 
 Public Function EnumFolders(Optional ByVal Filter = "*", Optional ByVal Recursive = False) As Fury2Folders
 Attribute EnumFolders.VB_Description = "Returns a Fury2Folders object containing all the folders that match the specified requirements."
 On Error Resume Next
-Dim l_strFolders() As String
+Dim l_modModule As Fury2FSModule
+Dim l_feFolders() As FolderEnumerationEntry
 Dim l_lngFolderCount As Long
 Dim l_lngBufferSize As Long
 Dim l_strPath As String
 Dim l_lngFolders As Long
 Dim l_fdsFolders As Fury2Folders
-Dim l_pkgPackage As Fury2Package
-
-    ' Allocate a folder buffer with 8 entries (enough for most searches and fast to allocate)
-    ReDim l_strFolders(0 To 7)
-    l_lngBufferSize = 8
-    l_lngFolderCount = 0
     
+    ' Allocate a folder buffer with 16 entries (enough for most searches and fast to allocate)
+    ReDim l_feFolders(0 To 15)
+    l_lngBufferSize = 16
+    l_lngFolderCount = 0
+
     ' Fix up the filter
     Filter = Replace(Filter, "\", "/")
-    If Trim(Filter) = "" Then Filter = "*.*"
-    
-#If SawZIP = 1 Then
-If EnablePackages Then
-Dim l_filFile As SAWZIPLib.File
-    ' Enumerate all loaded packages
-    For Each l_pkgPackage In m_colPackages
-        With l_pkgPackage.Archive
-            If Err <> 0 Then Exit For
-            ' Enumerate all files in the package
-            For Each l_filFile In .Files
-                With l_filFile
-                    If Err <> 0 Or l_filFile Is Nothing Then Exit For
-
-                    ' Get the path and properly format it
-                    l_strPath = GetFullPath(Replace(l_pkgPackage.MountPoint + Replace(.Name, "\", "/"), "//", "/"))
-                    Do While (InStr(l_strPath, "/") <> InStrRev(l_strPath, "/")) And (Len(l_strPath) > 1)
-                        ' Match name
-                        If PathMatch(l_strPath, Filter, Recursive) Then
-
-                            If Right(l_strPath, 1) = "/" Then l_strPath = Left(l_strPath, Len(l_strPath) - 1)
-                            
-                            ' Catch duplicates
-                            For l_lngFolders = 0 To l_lngFolderCount - 1
-                                If (LCase(l_strFolders(l_lngFolders)) = LCase(l_strPath)) Or (LCase(Mid(l_strFolders(l_lngFolders), 2)) = LCase(l_strPath)) Then
-                                    l_strPath = ""
-                                    Exit For
-                                End If
-                            Next l_lngFolders
-
-                            ' If a duplicate was found, the path was set to an empty string
-                            If l_strPath <> "" Then
-
-                                ' Increase the number of folder buffer slots used
-                                l_lngFolderCount = l_lngFolderCount + 1
-                                If l_lngFolderCount > l_lngBufferSize Then
-                                    ' If the buffer is full, double its size
-                                    l_lngBufferSize = l_lngBufferSize * 2
-                                    ReDim Preserve l_strFolders(0 To l_lngBufferSize - 1)
-                                End If
-
-                                ' Add the folder to the folder buffer
-                                l_strFolders(l_lngFolderCount - 1) = "·" & l_strPath
-                            End If
-
-                        End If
-
-                        l_strPath = Left(l_strPath, InStrRev(l_strPath, "/") - 1)
-                        l_strPath = Left(l_strPath, InStrRev(l_strPath, "/"))
-
-                    Loop
-
-                End With
-                Err.Clear
-            Next l_filFile
-        End With
-    Next l_pkgPackage
-End If
-#End If
-    
-    ' Handle hard disk
-    If EnableDisk Then
-        SearchForFolders TranslateFilename(Filter), GetPath(Filter), l_lngFolderCount, Recursive, l_strFolders
+    If Trim(Filter) = "" Then Filter = "*"
+    If Left(Filter, 1) <> "/" Then
+        Filter = CurrentFolder & Filter
     End If
+    
+    For Each l_modModule In m_colModules
+        If l_modModule.Enabled Then
+            If StartsWith(CStr(Filter), l_modModule.MountPoint) Then
+                l_modModule.EnumFolders ReplaceFirst(CStr(Filter), l_modModule.MountPoint, "/"), GetPath(CStr(Filter)), l_lngFolderCount, Recursive, l_feFolders
+            End If
+        End If
+    Next l_modModule
     
     Set l_fdsFolders = New Fury2Folders
 
     ' If there were any folders retrieved
     If l_lngFolderCount > 0 Then
         ' Resize the folders buffer to its actual number of used entries
-        ReDim Preserve l_strFolders(0 To l_lngFolderCount - 1)
+        ReDim Preserve l_feFolders(0 To l_lngFolderCount - 1)
         ' Give a copy of the folders buffer to the class
-        l_fdsFolders.SetData l_strFolders, Me
+        l_fdsFolders.SetData l_feFolders, Me
         ' Erase our copy
-        Erase l_strFolders
+        Erase l_feFolders
     End If
-    
+
     Set EnumFolders = l_fdsFolders
-    
+
 End Function
 
 
@@ -568,9 +403,9 @@ Public Property Let Root(NewRoot As String)
 On Error Resume Next
     m_strRoot = NewRoot
     If Right(m_strRoot, 1) <> "\" Then m_strRoot = m_strRoot + "\"
+    m_modRoot.SetPath m_strRoot
     CurrentFolder = "/"
 End Property
-
 
 Public Property Get CurrentFolder() As String
 Attribute CurrentFolder.VB_Description = "The current default search folder for the filesystem."
@@ -621,103 +456,137 @@ Dim l_strPiece As String
     Loop
 End Sub
 
-
-Public Property Get PackageCount() As Long
-Attribute PackageCount.VB_Description = "Returns the number of packages currently loaded in the filesystem."
+Public Property Get FolderCount() As Long
 On Error Resume Next
-    PackageCount = m_colPackages.Count
+Dim l_modModule As Fury2FSModule
+Dim l_lngCount As Long
+    For Each l_modModule In m_colModules
+        If l_modModule.Enabled Then l_lngCount = l_lngCount + l_modModule.FolderCount
+    Next l_modModule
+    FolderCount = l_lngCount
 End Property
 
 Public Property Get FileCount() As Long
 Attribute FileCount.VB_Description = "Returns the number of files currently available in the filesystem."
 On Error Resume Next
-Dim l_pkgPackage As Fury2Package
+Dim l_modModule As Fury2FSModule
 Dim l_lngCount As Long
-    For Each l_pkgPackage In m_colPackages
-'        l_lngCount = l_lngCount + l_pkgPackage.Archive.Files.Count
-    Next l_pkgPackage
-    ' Handle hard disk
-    If EnableDisk Then
-        l_lngCount = l_lngCount + CountFiles(m_strRoot)
-    End If
+    For Each l_modModule In m_colModules
+        If l_modModule.Enabled Then l_lngCount = l_lngCount + l_modModule.FileCount
+    Next l_modModule
     FileCount = l_lngCount
 End Property
 
-
+Public Function CreateFile(ByVal Filename As String) As Fury2File
+On Error Resume Next
+Dim l_modModule As Fury2FSModule
+Dim l_filFile As Fury2File
+Dim l_feFile As FileEnumerationEntry
+    Set l_filFile = File(Filename)
+    If l_filFile Is Nothing Then
+        If Left(Filename, 1) <> "/" Then Filename = CurrentFolder + Filename
+        For Each l_modModule In m_colModules
+            If l_modModule.Enabled Then
+                If StartsWith(CStr(Filename), l_modModule.MountPoint) Then
+                    Set l_feFile.Parent = l_modModule
+                    l_feFile.Filename = ReplaceFirst(Filename, l_modModule.MountPoint, "/")
+                    Set l_filFile = New Fury2File
+                    l_filFile.SetData l_feFile, Me
+                    CreateEmptyFile l_filFile.GetRealFilename
+                    Set l_filFile = File(Filename)
+                    Exit For
+                End If
+            End If
+        Next l_modModule
+    End If
+    Set CreateFile = l_filFile
+End Function
 
 Public Property Get File(ByVal Index) As Fury2File
 Attribute File.VB_Description = "Returns a Fury2File object for the requested file. (You can pass either a string or a number into this property.)"
 Attribute File.VB_UserMemId = 0
 Attribute File.VB_MemberFlags = "200"
 On Error Resume Next
-Dim l_filFile As Fury2File
-Dim l_pkgPackage As Fury2Package, l_lngPackage As Long
-Dim l_lngCount As Long
-Dim l_strFilename As String
-Dim l_feFile As FileEnumerationEntry
+Dim l_modModule As Fury2FSModule
 Dim l_lngIndex As Long
-    Set l_filFile = New Fury2File
+Dim l_lngCount As Long, l_lngModuleCount As Long
+Dim l_filFile As Fury2File
+Dim l_feFile As FileEnumerationEntry
     If VarType(Index) = vbString Then
-        If Not (FileHook Is Nothing) Then FileHook.Invoke CStr(Index)
-        Index = Replace(Index, "\", "/")
-        Set File = EnumFiles(GetFullPath(CStr(Index)), GetTitle(CStr(Index)), False).File(1)
-        If File Is Nothing Then
-            CreateEmptyFile CStr(Index)
-            Set File = EnumFiles(GetFullPath(CStr(Index)), GetTitle(CStr(Index)), False).File(1)
-        End If
+        If Left(Index, 1) <> "/" Then Index = CurrentFolder + Index
+        For Each l_modModule In m_colModules
+            If l_modModule.Enabled Then
+                If StartsWith(CStr(Index), l_modModule.MountPoint) Then
+                    If l_modModule.FileExists(ReplaceFirst(CStr(Index), l_modModule.MountPoint, "/")) Then
+                        l_feFile = l_modModule.NamedFile(ReplaceFirst(CStr(Index), l_modModule.MountPoint, "/"))
+                        If l_feFile.Filename = vbNullString Then Exit Property
+                        Set l_filFile = New Fury2File
+                        l_filFile.SetData l_feFile, Me
+                        Set File = l_filFile
+                        Exit For
+                    End If
+                End If
+            End If
+        Next l_modModule
     Else
-        l_lngIndex = CLng(Index) - 1
-        If l_lngIndex < 0 Then Exit Property
-        l_lngPackage = 1
-#If SawZIP = 1 Then
-If EnablePackages Then
-        For Each l_pkgPackage In m_colPackages
-            With l_pkgPackage.Archive
-                If (l_lngIndex >= l_lngCount) And (l_lngIndex < l_lngCount + .Files.Count) Then
-                    l_strFilename = l_pkgPackage.MountPoint + Replace(.Files(l_lngIndex - l_lngCount).Name, "\", "/")
-                    l_feFile.Filename = l_strFilename
-                    l_feFile.Location = Location_Package
-                    l_feFile.LocationIndex = l_lngPackage
+        l_lngIndex = Index - 1
+        For Each l_modModule In m_colModules
+            If l_modModule.Enabled Then
+                l_lngModuleCount = l_modModule.FileCount
+                If (l_lngIndex >= l_lngCount) And (l_lngIndex < l_lngCount + l_lngModuleCount) Then
+                    l_feFile = l_modModule.File(l_lngIndex - l_lngCount)
+                    If l_feFile.Filename = vbNullString Then Exit Property
+                    Set l_filFile = New Fury2File
                     l_filFile.SetData l_feFile, Me
                     Set File = l_filFile
-                    Exit Property
+                    Exit For
                 End If
-                l_lngCount = l_lngCount + .Files.Count
-            End With
-            l_lngPackage = l_lngPackage + 1
-        Next l_pkgPackage
-End If
-#End If
-        
-        ' Handle hard disk
-        If EnableDisk Then
-            l_strFilename = "/" + Replace(FileByIndex(m_strRoot, l_lngIndex), "\", "/")
-            l_feFile.Filename = l_strFilename
-            l_feFile.Location = Location_Disk
-            l_feFile.LocationIndex = 0
-        End If
-       
-        l_filFile.SetData l_feFile, Me
-        Set File = l_filFile
+                l_lngCount = l_lngCount + l_lngModuleCount
+            End If
+        Next l_modModule
     End If
 End Property
 
-Public Property Get Package(ByVal Index) As Fury2Package
-Attribute Package.VB_Description = "Returns a Fury2Package object for the requested package. (You can pass either a string or a number into this property.)"
+Public Property Get Folder(ByVal Index) As Fury2Folder
 On Error Resume Next
-Dim l_pkgPackage As Fury2Package
-Dim l_strFilename As String
+Dim l_modModule As Fury2FSModule
+Dim l_lngIndex As Long
+Dim l_lngCount As Long, l_lngModuleCount As Long
+Dim l_fldFolder As Fury2Folder
+Dim l_feFolder As FolderEnumerationEntry
     If VarType(Index) = vbString Then
-        Index = Replace(Index, "\", "/")
-        l_strFilename = LCase(Trim(Index))
-        For Each l_pkgPackage In m_colPackages
-            If l_pkgPackage.Name = l_strFilename Then
-                Set Package = l_pkgPackage
-                Exit Property
+        If Left(Index, 1) <> "/" Then Index = CurrentFolder + Index
+        If Right(Index, 1) <> "/" Then Index = Index + "/"
+        For Each l_modModule In m_colModules
+            If l_modModule.Enabled Then
+                If StartsWith(CStr(Index), l_modModule.MountPoint) Then
+                    If l_modModule.FolderExists(ReplaceFirst(CStr(Index), l_modModule.MountPoint, "/")) Then
+                        l_feFolder = l_modModule.NamedFolder(ReplaceFirst(CStr(Index), l_modModule.MountPoint, "/"))
+                        If l_feFolder.Path = vbNullString Then Exit Property
+                        Set l_fldFolder = New Fury2Folder
+                        l_fldFolder.SetData l_feFolder
+                        Set Folder = l_fldFolder
+                        Exit For
+                    End If
+                End If
             End If
-        Next l_pkgPackage
+        Next l_modModule
     Else
-        Set Package = m_colPackages(CLng(Index))
+        l_lngIndex = Index - 1
+        For Each l_modModule In m_colModules
+            If l_modModule.Enabled Then
+                l_lngModuleCount = l_modModule.FolderCount
+                If (l_lngIndex >= l_lngCount) And (l_lngIndex < l_lngCount + l_lngModuleCount) Then
+                    l_feFolder = l_modModule.Folder(l_lngIndex - l_lngCount)
+                    If l_feFolder.Path = vbNullString Then Exit Property
+                    Set l_fldFolder = New Fury2Folder
+                    l_fldFolder.SetData l_feFolder
+                    Set Folder = l_fldFolder
+                    Exit For
+                End If
+                l_lngCount = l_lngCount + l_lngModuleCount
+            End If
+        Next l_modModule
     End If
 End Property
 
@@ -747,7 +616,7 @@ On Error Resume Next
 Dim l_strFilename As String
 Dim l_strPath As String
 Dim l_flsFiles As Fury2Files
-Dim l_pkgPackage As Fury2Package
+Dim l_pkgPackage As Fury2Package2
 Dim l_filFile As SAWZIPLib.File
 Dim l_strLocalPath As String, l_lngLength As Long
 
@@ -784,43 +653,23 @@ End If
 #End If
 End Function
 
-Friend Function CreateFile(Filename As String) As String
+Friend Sub CreateEmptyFile(Filename As String)
 On Error Resume Next
-Dim l_strLocalPath As String, l_lngLength As Long, l_lngHandle As Long
+Dim l_lngHandle As Long
 
-    l_strLocalPath = Replace(Replace(m_strRoot + Filename, "/", "\"), "\\", "\")
-    
-    CreateFile = l_strLocalPath
-    
-End Function
-
-Friend Function CreateEmptyFile(Filename As String) As String
-On Error Resume Next
-Dim l_strLocalPath As String, l_lngLength As Long, l_lngHandle As Long
-
-    l_strLocalPath = Replace(Replace(m_strRoot + Filename, "/", "\"), "\\", "\")
-    
     l_lngHandle = FreeFile
     
-    Open l_strLocalPath For Binary As #l_lngHandle
+    Open Filename For Binary As #l_lngHandle
     Close #l_lngHandle
-    
-    CreateEmptyFile = l_strLocalPath
-    
-End Function
+End Sub
 
 Friend Function ReadFile(Filename As String) As String
 Attribute ReadFile.VB_Description = "Returns the contents of a file as a String, or vbNullString if it does not exist."
 On Error Resume Next
-Dim l_lngHandle As Long
 
     If Len(Filename) > 0 Then
-        l_lngHandle = FreeFile
-        Open Filename For Binary Access Read As #l_lngHandle
-            ReadFile = Space(LOF(l_lngHandle))
-            Get #l_lngHandle, 1, ReadFile
-        Close #l_lngHandle
-        Exit Function
+        ReadFile = ReadTextFile(Filename)
+        If Err = 0 Then Exit Function
     End If
     
     ReadFile = vbNullString
@@ -830,7 +679,6 @@ End Function
 Friend Sub WriteFile(Filename As String, Text As String)
 On Error Resume Next
 Dim l_lngHandle As Long
-
     l_lngHandle = FreeFile
     Kill Filename
     Open Filename For Binary Access Write As #l_lngHandle
@@ -858,7 +706,7 @@ Dim l_strPath As String
     Next l_lngFolders
 End Sub
 
-Public Sub QueueFoldersForDeletion(ByVal Path As String)
+Friend Sub QueueFolderForDeletion(ByVal Path As String)
 On Error Resume Next
 Dim l_varFolders As Variant
 Dim l_lngFolders As Long
@@ -881,9 +729,8 @@ Dim l_strPath As String
     Next l_lngFolders
 End Sub
 
-Public Sub QueueForDeletion(ByVal Filename As String)
+Friend Sub QueueForDeletion(ByVal Filename As String)
 Attribute QueueForDeletion.VB_Description = "Queues a file up to be deleted when the Filesystem is destroyed. (Used when a File owns a file but cannot delete it because it is in use)."
-Attribute QueueForDeletion.VB_MemberFlags = "40"
 On Error Resume Next
     m_colDeletionQueue.Add CStr(Filename)
     Err.Clear
@@ -930,13 +777,11 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error Resume Next
-    EnableDisk = True
-    EnablePackages = True
     Root = App.Path
-    Set m_colPackages = New Collection
     Set m_colDeletionQueue = New Collection
     Set m_colFolderDeletionQueue = New Collection
     Set m_colModules = New Fury2Collection
+    Set m_modRoot = MountDiskFolder(Root)
     OverwriteReadOnlyFiles = True
 End Sub
 

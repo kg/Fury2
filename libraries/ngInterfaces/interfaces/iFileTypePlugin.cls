@@ -36,3 +36,6 @@ End Function
 
 Public Property Get FilterString() As String
 End Property
+
+Public Property Get SupportedExtensions() As Variant
+End Property

@@ -255,8 +255,7 @@ Private Sub InitChild()
         'find MDIFrame window...
         hMDI = GetMDIFrame
         If hMDI = 0 Then
-            MsgBox "Konnte keine geladene MDIForm finden!"
-            'Msgbox "Can't find MDIForm!"
+            MsgBox "Can't find MDIForm!"
             Unload UserControl.Extender.Parent          '!!!!!
             Exit Sub
         End If
@@ -266,8 +265,7 @@ Private Sub InitChild()
         m_hWndParent = CreateMDIChild(hMDI, UserControl.Extender.Parent.Caption)
         m_lngHWnd = m_hWndParent
         If m_hWndParent = 0 Then
-            MsgBox "Fehler beim Erstellen der MDIClient Form!"
-            'MsgBox "Can't create MDIChild window!"
+            MsgBox "Can't create MDIChild window!"
             Unload UserControl.Extender.Parent          '!!!!!
             Exit Sub
         End If
@@ -295,8 +293,7 @@ Private Sub Init()
     ElseIf TypeOf UserControl.Extender.Parent Is Form Then
         InitChild
     Else
-        MsgBox "Dieses Control wurde exklusiv für Visual Basic entwickelt!"
-        'msgBox "This Control is designed for Visula Basic!"
+        MsgBox "This Control is designed for Visual Basic!"
     End If
 
 

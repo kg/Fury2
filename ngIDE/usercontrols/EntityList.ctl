@@ -1,6 +1,6 @@
 VERSION 5.00
-Object = "{E142732F-A852-11D4-B06C-00500427A693}#2.0#0"; "vbalTbar6.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#7.3#0"; "ngUI.ocx"
 Begin VB.UserControl EntityList 
    AutoRedraw      =   -1  'True
    ClientHeight    =   3600
@@ -20,6 +20,15 @@ Begin VB.UserControl EntityList
    ScaleHeight     =   240
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   320
+   Begin ngUI.ngToolbar tbrOptions 
+      Height          =   390
+      Left            =   1185
+      TabIndex        =   1
+      Top             =   1560
+      Width           =   1965
+      _ExtentX        =   3466
+      _ExtentY        =   688
+   End
    Begin cFScroll.FlatScrollBar vsScrollbar 
       Height          =   1590
       Left            =   675
@@ -32,34 +41,31 @@ Begin VB.UserControl EntityList
       Max             =   100
       Style           =   -1
    End
-   Begin vbalTBar6.cToolbar tbrOptions 
-      Height          =   360
-      Left            =   180
-      Top             =   135
-      Visible         =   0   'False
-      Width           =   2400
-      _ExtentX        =   4233
-      _ExtentY        =   635
-      DrawStyle       =   2
-   End
-   Begin vbalTBar6.cToolbarHost tbhOptions 
-      Height          =   180
-      Left            =   0
-      TabIndex        =   1
-      Top             =   0
-      Visible         =   0   'False
-      Width           =   315
-      _ExtentX        =   556
-      _ExtentY        =   318
-      BorderStyle     =   0
-      MDIToolbar      =   -1  'True
-   End
 End
 Attribute VB_Name = "EntityList"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+'
+'    ngPlugins (Fury² Game Creation System Next-Generation Editor Standard Plugin Set)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Private Declare Function ClientToScreen Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
 Private m_objBoundObject As Object
@@ -71,39 +77,33 @@ Private m_booDragging As Boolean, m_objDragItem As Object, m_booDragged As Boole
 Private m_lngSelectedItem As Long
 Private m_booSelection() As Boolean
 Private m_lngItemHeight As Long, m_lngItemTextHeight As Long
-Public Event ItemDragStart(ByVal Item As Long, ByRef cancel As Boolean)
+Public Event ItemDragStart(ByVal Item As Long, ByRef Cancel As Boolean)
 Public Event ItemDrag(ByVal Item As Long, ByVal NewIndex As Long)
 Public Event ItemDragComplete(ByVal Item As Long)
 Public Event ItemSelected(ByVal Item As Long)
 Public Event ItemVisibilityChanged(ByVal Item As Long)
 Public Event ContextMenu(ByVal X As Long, ByVal Y As Long)
 Public Event ItemContextMenu(ByVal Item As Long, ByVal X As Long, ByVal Y As Long)
-Public Event ToolbarClick(ByVal ButtonIndex As Long)
-Public VisibleIcon As String
-Public InvisibleIcon As String
+Public Event ToolbarClick(ByVal Button As ngUI.ngToolButton)
+Public VisibleIcon As Fury2Image
+Public InvisibleIcon As Fury2Image
 Public ShowVisibilityToggles As Boolean
+Private m_imgIcon As Fury2Image
 
-Public Property Get Toolbar() As cToolbar
+Public Property Get Toolbar() As ngToolbar
 On Error Resume Next
     Set Toolbar = tbrOptions
 End Property
 
-Public Sub InitializeToolbar(ByRef ImageList As vbalImageList, ByRef Buttons As Variant)
+Public Sub ShowToolbar()
 On Error Resume Next
-    tbrOptions.Wrappable = True
-    tbrOptions.CreateToolbar ImageList.IconSizeX, False, False, True, ImageList.IconSizeX
-    tbrOptions.Wrappable = True
-    DefineToolbar tbrOptions, ImageList, Buttons
-    tbhOptions.Capture tbrOptions
-    tbhOptions.Visible = True
+    tbrOptions.Visible = True
     UserControl_Resize
 End Sub
 
-Public Sub DestroyToolbar()
+Public Sub HideToolbar()
 On Error Resume Next
-    tbhOptions.ReleaseCaptures
-    tbhOptions.Visible = False
-    tbrOptions.DestroyToolbar
+    tbrOptions.Visible = False
 End Sub
 
 Public Property Get BoundObject() As Object
@@ -141,6 +141,7 @@ Public Property Let SelectedItem(ByVal NewItem As Long)
 On Error Resume Next
 Dim l_lngY As Long, l_lngViewMinY As Long, l_lngViewMaxY As Long
 Dim l_lngHeight As Long, l_lngMaxHeight As Long
+    If m_booActive = False Then Exit Property
     If NewItem = m_lngSelectedItem Then Exit Property
     m_lngSelectedItem = ClipValue(NewItem, 0, BoundObject.Count)
     RaiseEvent ItemSelected(m_lngSelectedItem)
@@ -152,25 +153,24 @@ On Error Resume Next
     UserControl_Paint
 End Sub
 
-Private Sub tbhOptions_GotFocus()
+Private Sub tbrOptions_GotFocus()
 On Error Resume Next
     If Not m_booFocus Then
         m_booFocus = True
-        UserControl_Paint
+        If m_booActive Then UserControl_Paint
     End If
 End Sub
 
-Private Sub tbhOptions_LostFocus()
+Private Sub tbrOptions_LostFocus()
 On Error Resume Next
     If m_booFocus Then
         m_booFocus = False
-        UserControl_Paint
+        If m_booActive Then UserControl_Paint
     End If
 End Sub
 
-Private Sub tbrOptions_ButtonClick(ByVal lButton As Long)
-On Error Resume Next
-    RaiseEvent ToolbarClick(lButton)
+Private Sub tbrOptions_ButtonClick(Button As ngUI.ngToolButton)
+    RaiseEvent ToolbarClick(Button)
 End Sub
 
 Private Sub UserControl_GotFocus()
@@ -183,14 +183,17 @@ End Sub
 
 Private Sub UserControl_Hide()
 On Error Resume Next
+    tbrOptions.Visible = False
+    m_booFocus = False
     m_booActive = False
+    m_booDragging = False
     UserControl.AutoRedraw = False
 End Sub
 
 Private Sub UserControl_Initialize()
 On Error Resume Next
-    VisibleIcon = "VISIBLE"
-    InvisibleIcon = "HIDDEN"
+    Set VisibleIcon = Nothing
+    Set InvisibleIcon = Nothing
     m_lngSelectedItem = -1
     vsScrollbar.Width = GetScrollbarSize(vsScrollbar)
 End Sub
@@ -211,7 +214,7 @@ On Error Resume Next
     m_booDragging = False
     If m_booFocus Then
         m_booFocus = False
-        UserControl_Paint
+        If m_booActive Then UserControl_Paint
     End If
 End Sub
 
@@ -299,7 +302,7 @@ Private Sub UserControl_Paint()
 On Error Resume Next
 Static m_booHere As Boolean
 Dim l_lngY As Long, l_lngHeight As Long, l_lngItems As Long, l_lngMaxHeight As Long
-Dim l_objObject As Object, l_rctItem As RECT
+Dim l_objObject As Object, l_rctItem As Rect
     If m_booActive = False Then Exit Sub
     If m_booHere Then Exit Sub
     m_booHere = True
@@ -309,7 +312,7 @@ Dim l_objObject As Object, l_rctItem As RECT
         Exit Sub
     End If
     l_lngHeight = (BoundObject.Count + 1) * m_lngItemHeight
-    l_lngMaxHeight = UserControl.ScaleHeight - IIf(tbhOptions.Visible, tbhOptions.Height, 0)
+    l_lngMaxHeight = UserControl.ScaleHeight - IIf(tbrOptions.Visible, tbrOptions.Height, 0)
     If l_lngHeight > l_lngMaxHeight Then
         If vsScrollbar.Enabled Then Else vsScrollbar.Enabled = True
         If vsScrollbar.LargeChange <> ClipValue(l_lngMaxHeight, 0, (l_lngHeight - l_lngMaxHeight)) Then vsScrollbar.LargeChange = ClipValue(l_lngMaxHeight, 0, (l_lngHeight - l_lngMaxHeight))
@@ -345,14 +348,28 @@ Dim l_objObject As Object, l_rctItem As RECT
                         .Font.Bold = False
                     End If
                     If ShowVisibilityToggles Then
-                        .CurrentX = 28
+                        .CurrentX = 4 + (VisibleIcon.Width)
                     Else
                         .CurrentX = 4
                     End If
                     .CurrentY = l_lngY + ((m_lngItemHeight - m_lngItemTextHeight) \ 2)
                     UserControl.Print l_objObject.Name
                     If ShowVisibilityToggles Then
-                        frmIcons.ilEntityIcons.DrawImage frmIcons.ilEntityIcons.ItemIndex(IIf(l_objObject.Visible, VisibleIcon, InvisibleIcon)), UserControl.hdc, 2, l_lngY + ((m_lngItemHeight - 20) \ 2), m_lngSelectedItem = l_lngItems
+                        If m_imgIcon Is Nothing Then
+                            Set m_imgIcon = VisibleIcon.Duplicate
+                        Else
+                            m_imgIcon.Resize VisibleIcon.Width, VisibleIcon.Height
+                        End If
+                        If m_lngSelectedItem = l_lngItems Then
+                            m_imgIcon.Clear SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue)
+                        Else
+                            m_imgIcon.Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+                        End If
+                        m_imgIcon.Blit , , IIf(l_objObject.Visible, VisibleIcon, InvisibleIcon), , BlitMode_SourceAlpha
+                        If m_lngSelectedItem = l_lngItems Then
+                            m_imgIcon.Fill m_imgIcon.Rectangle, SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), RenderMode_SourceAlpha
+                        End If
+                        CopyImageToDC UserControl.hdc, F2Rect(2, l_lngY + 2, m_imgIcon.Width, m_imgIcon.Height, False), m_imgIcon
                     End If
                 End If
             End With
@@ -370,11 +387,11 @@ End Sub
 
 Private Sub UserControl_Resize()
 On Error Resume Next
-    vsScrollbar.Move UserControl.ScaleWidth - vsScrollbar.Width, 0, vsScrollbar.Width, UserControl.ScaleHeight - IIf(tbhOptions.Visible, tbhOptions.Height, 0)
-    If tbhOptions.Visible Then
-        If tbhOptions.Width <> ClipValue(UserControl.ScaleWidth, tbrOptions.ToolbarWidth, 999999) Then tbhOptions.Width = ClipValue(UserControl.ScaleWidth, tbrOptions.ToolbarWidth, 999999)
-        If tbhOptions.Height <> tbrOptions.ToolbarHeight Then tbhOptions.Height = tbrOptions.ToolbarHeight
-        tbhOptions.Move 0, UserControl.ScaleHeight - tbhOptions.Height
+    vsScrollbar.Move UserControl.ScaleWidth - vsScrollbar.Width, 0, vsScrollbar.Width, UserControl.ScaleHeight - IIf(tbrOptions.Visible, tbrOptions.Height, 0)
+    If tbrOptions.Visible Then
+        If tbrOptions.Width <> ClipValue(UserControl.ScaleWidth, tbrOptions.IdealWidth, 999999) Then tbrOptions.Width = ClipValue(UserControl.ScaleWidth, tbrOptions.IdealWidth, 999999)
+        If tbrOptions.Height <> tbrOptions.IdealHeight(tbrOptions.Width) Then tbrOptions.Height = tbrOptions.IdealHeight(tbrOptions.Width)
+        tbrOptions.Move 0, UserControl.ScaleHeight - tbrOptions.Height
     End If
     UserControl_Paint
 End Sub
@@ -390,7 +407,6 @@ End Sub
 
 Private Sub UserControl_Terminate()
 On Error Resume Next
-    DestroyToolbar
 End Sub
 
 Private Sub UserControl_WriteProperties(PropBag As PropertyBag)

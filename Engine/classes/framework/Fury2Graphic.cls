@@ -45,13 +45,17 @@ Public Alpha As Single
 Public FadeSpeed As Single
 Public AnimationDelay As Long
 Public AnimationFrame As Long
+Public AnimationDirection As Long
 Private m_parParam As AnimatedGraphicParam
 Private m_lngImages() As Long
 Private AnimationDelayBuildup As Long
 Private m_engEngine As Fury2Engine
 
 Friend Sub SetEngine(Engine As Fury2Engine)
+On Error Resume Next
     Set m_engEngine = Engine
+    Set Images = Engine.F2Collection()
+    Set ImageFilenames = Engine.F2Collection()
 End Sub
 
 Public Property Get Engine() As Fury2Engine
@@ -59,11 +63,12 @@ Public Property Get Engine() As Fury2Engine
 End Property
 
 Public Function Duplicate() As Fury2Graphic
+On Error Resume Next
     Set Duplicate = New Fury2Graphic
     With Duplicate
         Duplicate.SetEngine Engine
-        Set .Images = Images
-        Set .ImageFilenames = ImageFilenames
+        Set .Images = Images.Duplicate()
+        Set .ImageFilenames = ImageFilenames.Duplicate()
         .Name = Name
         .XCenter = XCenter
         .YCenter = YCenter
@@ -86,9 +91,11 @@ Public Sub Refresh()
 On Error Resume Next
 Dim l_lngImages As Long
     ReDim m_lngImages(0 To Images.Count - 1)
-    For l_lngImages = LBound(m_lngImages) To UBound(m_lngImages)
-        m_lngImages(l_lngImages) = CLng(Images(l_lngImages + 1).Handle)
-    Next l_lngImages
+    If Images.Count > 0 Then
+        For l_lngImages = LBound(m_lngImages) To UBound(m_lngImages)
+            m_lngImages(l_lngImages) = CLng(Images(l_lngImages + 1).Handle)
+        Next l_lngImages
+    End If
     With m_parParam
         .FrameCount = Images.Count
         .Frame = AnimationFrame
@@ -146,7 +153,21 @@ On Error Resume Next
         AnimationDelayBuildup = AnimationDelayBuildup + 1
         If AnimationDelayBuildup >= AnimationDelay Then
             AnimationDelayBuildup = AnimationDelayBuildup - AnimationDelay
-            AnimationFrame = WrapValue(AnimationFrame + 1, 1, Images.Count)
+            Select Case LoopMode
+            Case F2LM_Restart
+                AnimationFrame = WrapValue(AnimationFrame + AnimationDirection, 1, Images.Count)
+            Case F2LM_PingPong
+                AnimationFrame = AnimationFrame + AnimationDirection
+                If (AnimationFrame < 1) Then
+                    AnimationFrame = 2
+                    AnimationDirection = 1
+                ElseIf (AnimationFrame > Images.Count) Then
+                    AnimationFrame = Images.Count - 1
+                    AnimationDirection = -1
+                End If
+            Case F2LM_OneShot
+                AnimationFrame = ClipValue(AnimationFrame + AnimationDirection, 1, Images.Count)
+            End Select
         End If
     End If
     Alpha = Alpha + FadeSpeed
@@ -157,19 +178,18 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error Resume Next
-    Set Images = New Fury2Collection
-    Set ImageFilenames = New Fury2Collection
     BlitMode = BlitMode_SourceAlpha
     Alpha = 1
     AnimationDelay = 5
     AnimationFrame = 1
+    AnimationDirection = 1
     Err.Clear
 End Sub
 
 Public Sub ReloadImages()
 On Error Resume Next
 Dim l_lngImage As Long, l_imgFile As Fury2Image
-    Set Images = New Fury2Collection
+    Set Images = Engine.F2Collection()
     If ImageFilenames.Count > 0 Then
         For l_lngImage = 1 To ImageFilenames.Count
             Set l_imgFile = Nothing
@@ -187,7 +207,7 @@ Dim l_strFilename As String, l_imgFile As Fury2Image
     With File
         .WriteSegment_Begin
             .Load l_lngCount
-            Set ImageFilenames = New Fury2Collection
+            Set ImageFilenames = Engine.F2Collection()
             If l_lngCount > 0 Then
                 For l_lngFilenames = 1 To l_lngCount
                     l_strFilename = ""

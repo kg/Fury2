@@ -836,6 +836,28 @@ On Error Resume Next
     UnlockImage m_lngImage
 End Sub
 
+Public Sub LoadString(ByRef Data As String)
+On Error Resume Next
+    Deallocate
+    m_lngImage = SoftFX.AllocateImageFromFileBuffer(StrPtr(Data), LenB(Data))
+    If m_lngImage = 0 Then
+    Else
+        m_booAlphaChannel = True
+    End If
+    UnlockImage m_lngImage
+End Sub
+
+Public Sub LoadBytes(ByRef Data() As Byte)
+On Error Resume Next
+    Deallocate
+    m_lngImage = SoftFX.AllocateImageFromFileBuffer(VarPtr(Data(LBound(Data))), UBound(Data) - LBound(Data) + 1)
+    If m_lngImage = 0 Then
+    Else
+        m_booAlphaChannel = True
+    End If
+    UnlockImage m_lngImage
+End Sub
+
 Public Property Let Locked(NewState As Boolean)
 On Error Resume Next
 Dim l_lngState As Long
@@ -880,7 +902,7 @@ Dim l_lngAlpha As Long
     If Mode = BlitMode_Default Then Mode = m_bmdBlitMode
     Select Case Mode
     Case SFXBlitModes.BlitMode_SourceAlpha
-        ' SoftFX.Blit_Mask_SourceAlpha_Opacity m_lngImage, l_imgSource.Handle, l_imgMask.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_rctMask.Left, l_rctMask.Top, l_lngAlpha
+        SoftFX.Blit_Mask_SourceAlpha_Opacity m_lngImage, l_imgSource.Handle, l_imgMask.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_rctMask.Left, l_rctMask.Top, l_lngAlpha
     Case SFXBlitModes.BlitMode_Merge
         SoftFX.Blit_Mask_Merge_Opacity m_lngImage, l_imgSource.Handle, l_imgMask.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_rctMask.Left, l_rctMask.Top, l_lngAlpha
     Case Else
@@ -960,8 +982,13 @@ End Sub
 
 Public Property Get Picture() As StdPicture
 On Error Resume Next
+Dim l_imgTemp As Fury2Image
+    Set l_imgTemp = Me.Duplicate
+    l_imgTemp.Composite F2RGB(255, 255, 255, 0)
     Set Picture = CreatePicture(Width, Height)
-    PixelsToPicture Picture, Pointer(0, 0)
+    PixelsToPicture Picture, l_imgTemp.Pointer(0, 0)
+    l_imgTemp.Deallocate
+    Set l_imgTemp = Nothing
 End Property
 
 Public Property Set Picture(ByVal NewPicture As StdPicture)

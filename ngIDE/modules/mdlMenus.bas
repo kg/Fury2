@@ -1,4 +1,23 @@
 Attribute VB_Name = "mdlMenus"
+'
+'    ngIDE (Fury² Game Creation System Next-Generation Editor)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Private l_colMenus As New Collection
 
@@ -58,18 +77,18 @@ Public Sub DefineMenus()
 On Error Resume Next
     DefineMenu "Main Menu", _
         Menus(MenuString("&File", , "FileMenu"), Menus(MenuString("&New", "", "NewMenu", "NEW"), _
-        Menus(MenuString("Game", , "Game:New", "NEW GAME"), "-", MenuString("-", , "NewEndSeparator")), _
-        , MenuString("&Open...", "Ctrl+O", "File:Open", "OPEN"), MenuString("Open &Recent", , "RecentFiles"), Menus(MenuString("-", , "RecentFilesEndSeparator")), MenuString("&Save", "Ctrl+S", "File:Save", "SAVE", , , False), MenuString("Save As...", "Ctrl+Shift+S", "File:SaveAs", "SAVE AS", , , False), "-", _
-        MenuString("E&xit", "Alt+F4", "Editor:Exit", "EXIT"), "-"), _
+                Menus(MenuString("Game", , "Game:New", "NEW GAME"), "-", MenuString("-", , "NewEndSeparator")), _
+            , MenuString("&Open...", "Ctrl+O", "File:Open", "OPEN"), MenuString("Open &Recent", , "RecentFiles"), Menus(MenuString("-", , "RecentFilesEndSeparator")), MenuString("&Save", "Ctrl+S", "File:Save", "SAVE", , , False), MenuString("Save As...", "", "File:SaveAs", "SAVE AS", , , False), MenuString("Save All", "Ctrl+Shift+S", "File:SaveAll", , , , False), "-", _
+            MenuString("E&xit", "Alt+F4", "Editor:Exit", "EXIT"), "-"), _
         MenuString("&Edit", , "EditMenu"), Menus(MenuString("&Undo", "Ctrl+Z", "Action:Undo", "UNDO", , , False), MenuString("&Redo", "Shift+Ctrl+Z", "Action:Redo", "REDO", , , False), "-", _
-        MenuString("Cu&t", "Ctrl+X", "Action:Cut", "CUT", , , False), MenuString("&Copy", "Ctrl+C", "Action:Copy", "COPY", , , False), MenuString("&Paste", "Ctrl+V", "Action:Paste", "PASTE"), _
-        MenuString("&Delete", "Del", "Action:Delete", "DELETE", , , False), "-", MenuString("Select &All", "Ctrl+A", "Action:SelectAll", "SELECT ALL", , , False), MenuString("Select &None", "Ctrl+D", "Action:SelectNone", "SELECT NONE", , , False), "-"), _
+            MenuString("Cu&t", "Ctrl+X", "Action:Cut", "CUT", , , False), MenuString("&Copy", "Ctrl+C", "Action:Copy", "COPY", , , False), MenuString("&Paste", "Ctrl+V", "Action:Paste", "PASTE"), _
+            MenuString("&Delete", "Del", "Action:Delete", "DELETE", , , False), "-", MenuString("Select &All", "Ctrl+A", "Action:SelectAll", "SELECT ALL", , , False), MenuString("Select &None", "Ctrl+D", "Action:SelectNone", "SELECT NONE", , , False), "-"), _
         MenuString("&View", , "ViewMenu"), Menus("-Sidebars", MenuString("&File Sidebar", "F8", "Show:FileSidebar", , , False, True), "-Toolbars", MenuString("&Main", "", "Show:MainToolbar", , , True, True), MenuString("&Game", "", "Show:GameToolbar", , , True, True), MenuString("&Plugins", "", "Show:PluginToolbar", , , True, True), "-"), _
         MenuString("&Document", , "DocumentMenu"), Menus(MenuString("-", , "DocumentEndSeparator"), MenuString("&Close", "Ctrl+F4", "Action:CloseWindow", "CLOSE WINDOW"), MenuString("&Next", "Ctrl+F6", "Action:NextWindow", "NEXT WINDOW"), "-"), _
         MenuString("&Game", , "GameMenu"), Menus(MenuString("&Open...", , "Game:Open", "OPEN GAME"), MenuString("Open &Recent", , "RecentGames"), Menus(MenuString("-", , "RecentGamesEndSeparator")), "-", MenuString("&Play", "F9", "Game:Play", "PLAY"), "-"), _
-        MenuString("&Tools", , "ToolMenu"), Menus(, MenuString("-", , "PluginsEndSeparator"), MenuString("Manage Plugins...", , "Plugins:Manage", "PLUGIN"), MenuString("Options...", , "Show:Options", "PROPERTIES", , , False), MenuString("-", , "PluginsEndSeparator2")), _
+        MenuString("&Tools", , "ToolMenu"), Menus(, MenuString("-", , "PluginsEndSeparator"), MenuString("Manage Plugins...", , "Plugins:Manage", "PLUGIN"), MenuString("Options...", , "Show:Options", "PROPERTIES"), MenuString("-", , "PluginsEndSeparator2")), _
         MenuString("&Window", , "WindowMenu"), Menus(MenuString("-", , "WindowsEndSeparator"), MenuString("Close All", , "Action:CloseAllWindows", "CLOSE ALL WINDOWS", , , False), MenuString("-", , "WindowsEndSeparator2")), _
-        MenuString("&Help", , "HelpMenu"), Menus(MenuString("Online &Documentation", , "Help:OnlineDocs", "HELP"), MenuString("Online &Tutorials", , "Help:OnlineTutorials", "HELP"), "-", MenuString("&About...", , "Help:About", "HELP"), "-")), _
+        MenuString("&Help", , "HelpMenu"), Menus(MenuString("Online &Documentation", , "Help:OnlineDocs", "HELP"), MenuString("Online &Tutorials", , "Help:OnlineTutorials", "HELP"), "-", MenuString("&About...", , "Help:About", "HELP"), MenuString("View ChangeLog", , "Help:ChangeLog", "HELP"), "-")), _
         frmIcons.ilIcons
 End Sub
 

@@ -7,6 +7,7 @@ Option Explicit
 '-------------------------------------------------------------'
 ' Funktionen für das MDIActiveX Control                       '
 '-------------------------------------------------------------'
+Public Declare Function FindWindowEx Lib "user32" Alias "FindWindowExA" (ByVal hWnd1 As Long, ByVal hWnd2 As Long, ByVal lpsz1 As String, ByVal lpsz2 As String) As Long
 
 'Ändere Window Style auf Child...
 'change windowstyle to child
@@ -181,9 +182,9 @@ Public Function CreateMDIChild(hWndParent As Long, Caption As String) As Long
 
     lWStyle = WS_CHILD Or WS_CLIPSIBLINGS Or WS_CLIPCHILDREN Or WS_VISIBLE Or WS_MAXIMIZEBOX Or WS_MINIMIZEBOX
     'old version
-    'hMDIClient = FindWindowEx(hWndParent, 0, "MDIClient", vbNullString)
+    hMDIClient = FindWindowEx(hWndParent, 0, "MDIClient", vbNullString)
     'since 1.0.3
-    hMDIClient = GetWindow(hWndParent, GW_CHILD)
+    'hMDIClient = GetWindow(hWndParent, GW_CHILD)
     hwnd = CreateMDIWindow("MDIActiveXClass", Caption, lWStyle, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, hMDIClient, App.hInstance, 0)
     CreateMDIChild = hwnd
 

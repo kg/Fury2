@@ -257,13 +257,13 @@ End Sub
 
 Private Sub iWidget_MouseUp(ByVal Parent As iContainer, ByVal Button As Long, ByVal Shift As Long, X As Long, Y As Long)
 On Error Resume Next
+    Parent.ReleaseCapture Me
     If MousePressed Then
         DispatchEvent "Release"
         If MouseHovering Then
             DispatchEvent "Click"
         End If
     End If
-    Parent.ReleaseCapture Me
     MousePressed = False
     If ToggleButton Then
         If ToggleGroup <> 0 Then

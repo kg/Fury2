@@ -13,6 +13,25 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
 Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
+'
+'    ngPlugins (Fury² Game Creation System Next-Generation Editor Standard Plugin Set)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Implements iPlugin
 Private m_objEditor As Object
@@ -31,7 +50,7 @@ Dim l_rctSource As Fury2Rect, l_rctDest As Fury2Rect
         Set l_plgPlugin = m_objEditor.FindFileTypePlugin("Image")
         Set l_imgImage = DefaultEngine.LoadImage(Options.Image, True)
         If l_imgImage Is Nothing Then
-            MsgBox "Unable to load image.", vbExclamation, "Error"
+            m_objEditor.ShowNotice "Error", "Unable to load image """ & Options.Image & """.", m_objEditor.NoticeIcon("error")
             Exit Sub
         End If
         l_lngWidth = l_imgImage.Width
@@ -124,4 +143,8 @@ End Property
 Private Sub iPlugin_Shutdown()
 End Sub
 
+Private Property Get iPlugin_ToolbarIcon() As libGraphics.Fury2Image
+On Error Resume Next
+    Set iPlugin_ToolbarIcon = m_objEditor.LoadResources("ng").ItemData("icons\image grid remover.png")
+End Property
 

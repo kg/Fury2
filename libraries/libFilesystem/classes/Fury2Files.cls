@@ -95,7 +95,7 @@ On Error Resume Next
     Count = (UBound(m_feFiles) - LBound(m_feFiles)) + 1
 End Property
 
-Public Property Get File(Index) As Fury2File
+Public Property Get File(ByVal Index As Long) As Fury2File
 Attribute File.VB_UserMemId = 0
 Attribute File.VB_MemberFlags = "200"
 On Error Resume Next

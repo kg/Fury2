@@ -17,13 +17,28 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+const int ParticleListStartSize = 256;
+
+enum ParticleDecayModes {
+    pdmNone,
+    pdmAdd,
+    pdmMultiply,
+    pdmExponent
+};
+
+enum ParticleLBehaviors {
+    plbNone,
+    plbRemove
+};
+
 enum ParticleRenderModes {
-    Pixel,
-    AntiAliasPixel,
-    Line,
-    AntiAliasLine,
-    GradientLine,
-    Graphic
+    prmPixel,
+    prmAntiAliasPixel,
+    prmLine,
+    prmAntiAliasLine,
+    prmGradientLine,
+    prmAntiAliasGradientLine,
+    prmGraphic
 };
 
 struct ParticleGraphicParam {
@@ -31,39 +46,79 @@ struct ParticleGraphicParam {
     Image **pFrames;
     float XCenter, YCenter;
     DoubleWord MatteColor;
-    int BlitMode;
     int Alpha;
     int Frame;
 };
 
 struct ParticleType {
+    float XVDecay;
+    float YVDecay;
+    float AVDecay;
+    float LVDecay;
+    ParticleGraphicParam *Graphic;
+    FLine Line;
+    DoubleWord Color1;
+    DoubleWord Color2;
+    Byte XVDecayMode;
+    Byte YVDecayMode;
+    Byte AVDecayMode;
+    Byte LVDecayMode;
+    Byte LBehavior;
+    Byte RenderMode;
+    Byte BlitMode;
+};
+
+struct Particle {
+    float X, Y, A, L;
+    float XV, YV, AV, LV;
+    int Type;
+public:
+    void tick();
+};
+
+struct ParticleModifier {
+    float X, Y;
+    float Range;
+    float Decay;
+    float XVDecay;
+    float YVDecay;
+    float AVDecay;
+    float LVDecay;
     Byte DecayMode;
     Byte XVDecayMode;
     Byte YVDecayMode;
     Byte AVDecayMode;
-    Byte SVDecayMode;
-    float XVDecay;
-    float YVDecay;
-    float AVDecay;
-    float SVDecay;
-    Byte RenderMode;
-    ParticleGraphicParam *Graphic;
-    FLine *Line;
-    DoubleWord Color1;
-    DoubleWord Color2;
+    Byte LVDecayMode;
+public:
+    void tick(Particle& particle);
 };
 
-struct Particle {
-    float X, Y, A, S;
-    float XV, YV, AV, SV;
-    Byte Type, Active;
-    Particle *pNext;
+struct ParticleGenerator {
+    int Type;
+    int GenerateRate;
+    int GenerateDelay;
+    int CurrentDelay;
+    float NewX, NewY, NewL, NewA;
+    float NewXV, NewYV, NewLV, NewAV;
+    float RandomX, RandomY, RandomL, RandomA;
+public:
+    void tick();
 };
 
-struct ParticleEngine {
-    int Alpha;
-    ParticleType *ParticleTypes;
-    int BufferCount;
-    Particle *ParticleBuffer;
-    Particle *FirstParticle;
+typedef std::vector<Particle> ParticleList;
+typedef std::vector<ParticleType*> ParticleTypeList;
+typedef std::vector<ParticleModifier*> ParticleModifierList;
+typedef std::vector<ParticleGenerator*> ParticleGeneratorList;
+
+class ParticleEngine {
+
+public:
+    int ActiveParticles;
+    ParticleList Particles;
+    ParticleTypeList Types;
+    ParticleModifierList Modifiers;
+    ParticleGeneratorList Generators;
+
+    void tick();
+    void render(Image* surface, float xoffset, float yoffset);
 };

@@ -35,27 +35,17 @@ Option Explicit
 Option Compare Text
 Private m_feFile As FileEnumerationEntry
 Private m_fsFilesystem As Fury2Filesystem
-Private m_booExtracted As Boolean, m_strRealPath As String
-
-Public Property Get Location() As Long
-    Location = m_feFile.Location
-End Property
-
-Public Property Get Ownership() As Boolean
-Attribute Ownership.VB_Description = "If True, this class owns the file and will remove it from the hard disk when it is destroyed. If False, you can destroy this class and its file will stay on the hard disk."
-    Ownership = m_booExtracted
-End Property
-
-Public Property Let Ownership(NewOwnership As Boolean)
-    m_booExtracted = NewOwnership
-End Property
+Private m_strRealPath As String
 
 Public Sub SetData(File As FileEnumerationEntry, FileSystem As Fury2Filesystem)
+On Error Resume Next
     m_feFile = File
+    m_feFile.Filename = Replace(m_feFile.Filename, "//", "/")
     Set m_fsFilesystem = FileSystem
 End Sub
 
 Public Property Get Extension() As String
+On Error Resume Next
 Dim l_lngPos As Long
     Extension = m_fsFilesystem.GetTitle(m_feFile.Filename)
     l_lngPos = InStrRev(Extension, ".")
@@ -91,34 +81,11 @@ On Error Resume Next
 Dim l_strFilename As String
     ' If the filename is already cached, return it
     l_strFilename = m_strRealPath
-    If Trim(l_strFilename) = "" Then
-        If m_fsFilesystem.FileExists(m_feFile.Filename) Then
-            ' Otherwise check if it's already on the hard disk
-            l_strFilename = m_fsFilesystem.GetFile(m_feFile.Filename)
-            If Trim(l_strFilename) = "" Then
-                ' Otherwise extract it to the hard disk
-                l_strFilename = m_fsFilesystem.ExtractFile(m_feFile.Filename)
-                If Trim(l_strFilename) = "" Then
-                    ' Failed :(
-                Else
-                    ' Set ownership so we can clean up our mess
-                    m_booExtracted = True
-                    ' Return the filename and store it
-                    GetRealFilename = l_strFilename
-                    m_strRealPath = l_strFilename
-                End If
-            Else
-                ' Return the filename and store it
-                GetRealFilename = l_strFilename
-                m_strRealPath = l_strFilename
-            End If
-        Else
-            GetRealFilename = m_fsFilesystem.CreateFile(m_feFile.Filename)
-        End If
-    Else
-        ' Return the filename
-        GetRealFilename = l_strFilename
+    If Len(Trim(l_strFilename)) < 1 Then
+        m_strRealPath = m_feFile.Parent.LocateFile(m_feFile.Filename)
+        l_strFilename = m_strRealPath
     End If
+    GetRealFilename = l_strFilename
 End Function
 
 ' Make sure the file is on the hard disk
@@ -126,21 +93,6 @@ Public Sub Extract()
 Attribute Extract.VB_Description = "If the file is in a package, it is extracted to the hard disk. Otherwise, nothing happens."
 On Error Resume Next
     GetRealFilename
-End Sub
-
-' If we have ownership of the file, delete the hard disk copy
-Public Sub Free()
-Attribute Free.VB_Description = "Removes the file from the hard disk if this class owns it."
-On Error Resume Next
-    If m_booExtracted Then
-        m_booExtracted = False
-        Err.Clear
-        Kill m_strRealPath
-        If Err.Number <> 0 Then
-            m_fsFilesystem.QueueForDeletion m_strRealPath
-        End If
-        m_strRealPath = ""
-    End If
 End Sub
 
 Public Function LoadImage() As Fury2Image
@@ -162,7 +114,7 @@ Dim l_strFilename As String
 End Function
  
 ' Save a VirtualFile object into the file
-Public Sub Save(File)
+Public Sub Save(ByVal File As VirtualFile)
 Attribute Save.VB_Description = "Saves a VirtualFile object into the file. (Note that this only saves the data temporarily; packages will not be altered.)"
 On Error Resume Next
 Dim l_strFilename As String
@@ -172,48 +124,6 @@ Dim l_objFile As VirtualFile
     If l_objFile Is Nothing Then Exit Sub
     l_strFilename = GetRealFilename
     l_objFile.SaveFile l_strFilename
-End Sub
-
-' Repack the file into its source archive
-Public Sub Repack()
-On Error Resume Next
-#If SawZIP = 1 Then
-If m_fsFilesystem.EnablePackages Then
-Dim l_filFile As SAWZIPLib.File
-Dim l_filNew As SAWZIPLib.File
-Dim l_strFilename As String, l_strLocalFilename As String, l_strNewFilename As String
-Dim l_lngFile As Long
-Dim l_arcArchive As SAWZIPLib.Archive
-    If m_feFile.Location <> Location_Package Then Exit Sub ' Not in an archive
-    l_strLocalFilename = GetRealFilename
-    Set l_arcArchive = m_fsFilesystem.Package(m_feFile.LocationIndex).Archive
-    With l_arcArchive
-        ' Enumerate all files in the package
-        l_lngFile = 1
-        For Each l_filFile In .Files
-            With l_filFile
-                If Err <> 0 Or l_filFile Is Nothing Then Exit For
-
-                ' Files only
-                If Not .Directory Then
-                    ' Get the name and properly format it
-                    l_strFilename = "/" + Replace(.Name, "\", "/")
-                    If Trim(LCase(l_strFilename)) = Trim(LCase(m_feFile.Filename)) Then
-
-                        l_arcArchive.Files.Remove l_lngFile - 1 ' 0-based? WTF
-                        Exit For
-
-                    End If
-                End If
-
-            End With
-            Err.Clear
-            l_lngFile = l_lngFile + 1
-        Next l_filFile
-    End With
-    l_arcArchive.Files.AddFileByName l_strLocalFilename, 9, False, True
-End If
-#End If
 End Sub
 
 ' Load the file into a string
@@ -227,10 +137,21 @@ Public Property Let Text(NewText As String)
 On Error Resume Next
 Dim l_strFilename As String
     l_strFilename = GetRealFilename
-    Call m_fsFilesystem.WriteFile(GetRealFilename, NewText)
+    Call m_fsFilesystem.WriteFile(l_strFilename, NewText)
 End Property
 
-Private Sub Class_Terminate()
-    ' Destroy the file if we have ownership
-    Free
-End Sub
+Public Property Get Parent() As Fury2FSModule
+    Set Parent = m_feFile.Parent
+End Property
+
+Public Property Get Size() As Long
+    Size = m_feFile.Size
+End Property
+
+Public Property Get CreatedDate() As Date
+    CreatedDate = m_feFile.CreatedDate
+End Property
+
+Public Property Get ModifiedDate() As Date
+    ModifiedDate = m_feFile.ModifiedDate
+End Property

@@ -41,8 +41,9 @@ Option Explicit
 Event MouseDown(ByRef Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
 Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
 Event MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+Event ButtonPress(Button As ngToolButton, ByRef Cancel As Boolean)
 Event ButtonClick(Button As ngToolButton)
-Event ButtonDropDown(Button As ngToolButton)
+Event Reflow()
 Event Resize()
 Event Redraw()
 Private m_lngMetrics(0 To tbm_max) As Long
@@ -55,6 +56,18 @@ Private m_lngIdealWidth As Long, m_lngIdealHeight As Long
 Private m_lngRowHeight As Long
 Private m_booInitialized As Boolean
 Private m_booMouseOver As Boolean
+Public ResourceFile As ngResourceFile
+Public ResourcePattern As String
+Public DisableUpdates As Boolean
+
+Public Property Get Font() As StdFont
+    Set Font = UserControl.Font
+End Property
+
+Public Property Set Font(ByRef NewFont As StdFont)
+On Error Resume Next
+    Set UserControl.Font = NewFont
+End Property
 
 Private Sub MouseEntered()
 On Error Resume Next
@@ -72,12 +85,22 @@ On Error Resume Next
     hDC = UserControl.hDC
 End Property
 
-Friend Property Get TextHeight(ByRef Text As String) As Long
-    TextHeight = UserControl.TextHeight(Text)
+Friend Property Get TextHeight(ByVal TheFont As StdFont, ByRef Text As String) As Long
+On Error Resume Next
+Dim l_fntOld As StdFont
+    Set l_fntOld = UserControl.Font
+    Set UserControl.Font = TheFont
+    TextHeight = UserControl.TextHeight(Replace(Text, "&", ""))
+    Set UserControl.Font = l_fntOld
 End Property
 
-Friend Property Get TextWidth(ByRef Text As String) As Long
-    TextWidth = UserControl.TextWidth(Text)
+Friend Property Get TextWidth(ByVal TheFont As StdFont, ByRef Text As String) As Long
+On Error Resume Next
+Dim l_fntOld As StdFont
+    Set l_fntOld = UserControl.Font
+    Set UserControl.Font = TheFont
+    TextWidth = UserControl.TextWidth(Replace(Text, "&", ""))
+    Set UserControl.Font = l_fntOld
 End Property
 
 Public Property Get Buttons() As ngToolButtons
@@ -102,7 +125,7 @@ End Property
 
 Private Property Get ColorOffset(ByVal State As ngToolButtonStates) As Long
 On Error Resume Next
-    ColorOffset = (State - ngToolButtonStates.bstNormal) * (ngToolbarColors.tbcBorder - ngToolbarColors.tbcBackground + 1)
+    ColorOffset = (State - ngToolButtonStates.bstNormal) * (ngToolbarColors.tbcGlow - ngToolbarColors.tbcBackground + 1)
 End Property
 
 Private Sub InitMetrics()
@@ -120,22 +143,27 @@ On Error Resume Next
     Colors(tbcBorder) = F2Transparent
     Colors(tbcText) = ConvertSystemColor(SystemColor_Button_Text)
     Colors(tbcTint) = F2RGB(255, 255, 255, 192)
+    Colors(tbcGlow) = F2RGB(0, 0, 0, 0)
     Colors(tbcHighlight) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 140)
     Colors(tbcHighlightBorder) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 210)
     Colors(tbcHighlightText) = ConvertSystemColor(SystemColor_Highlight_Text)
     Colors(tbcHighlightTint) = F2White
+    Colors(tbcHighlightGlow) = F2RGB(255, 255, 255, 140)
     Colors(tbcPressed) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 192)
     Colors(tbcPressedBorder) = ConvertSystemColor(SystemColor_Highlight)
     Colors(tbcPressedText) = ConvertSystemColor(SystemColor_Highlight_Text)
     Colors(tbcPressedTint) = F2White
+    Colors(tbcPressedGlow) = F2RGB(255, 255, 255, 190)
     Colors(tbcDisabled) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Button_Shadow), 0)
     Colors(tbcDisabledBorder) = F2Transparent
     Colors(tbcDisabledText) = ConvertSystemColor(SystemColor_Button_Text_Disabled)
-    Colors(tbcDisabledTint) = F2RGB(127, 127, 127, 127)
+    Colors(tbcDisabledTint) = F2RGB(127, 127, 127, 63)
+    Colors(tbcDisabledGlow) = F2RGB(127, 127, 127, 0)
     Colors(tbcChecked) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 140)
     Colors(tbcCheckedBorder) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 210)
     Colors(tbcCheckedText) = ConvertSystemColor(SystemColor_Highlight_Text)
     Colors(tbcCheckedTint) = F2White
+    Colors(tbcCheckedGlow) = F2RGB(255, 255, 255, 255)
     Colors(tbcSeparator) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 140)
     ' TODO: Initialize other colors
 End Sub
@@ -154,9 +182,11 @@ End Sub
 
 Private Sub InitSurface()
 On Error Resume Next
-    m_lngDC = CreateCompatibleDC(UserControl.hDC)
-    Set m_imgSurface = F2DIBSection(UserControl.ScaleWidth, UserControl.ScaleHeight, m_lngDC)
-    m_lngNullBitmap = SelectObject(m_lngDC, m_imgSurface.DIBHandle)
+    If UserControl.Ambient.UserMode Then
+        m_lngDC = CreateCompatibleDC(UserControl.hDC)
+        Set m_imgSurface = F2DIBSection(UserControl.ScaleWidth, UserControl.ScaleHeight, m_lngDC)
+        m_lngNullBitmap = SelectObject(m_lngDC, m_imgSurface.DIBHandle)
+    End If
 End Sub
 
 Private Sub ResizeSurface()
@@ -176,6 +206,50 @@ On Error Resume Next
     DeleteDC m_lngDC
     m_lngDC = 0
 End Sub
+
+Public Property Get IdealVerticalWidth() As Long
+On Error Resume Next
+Dim l_lngWidth As Long
+Dim l_btnButton As ngToolButton
+    For Each l_btnButton In m_tbcButtons
+        With l_btnButton
+            If (.Width) > l_lngWidth Then
+                l_lngWidth = .Width
+            End If
+        End With
+    Next l_btnButton
+    IdealVerticalWidth = l_lngWidth
+End Property
+
+Public Property Get IdealVerticalHeight() As Long
+On Error Resume Next
+Dim l_lngX As Long, l_lngY As Long
+Dim l_btnButton As ngToolButton
+Dim l_booNewRow As Boolean
+Dim l_lngIndex As Long
+Dim l_lngWidth As Long
+    l_lngWidth = IdealVerticalWidth
+    For Each l_btnButton In m_tbcButtons
+        l_lngIndex = l_lngIndex + 1
+        With l_btnButton
+            If (l_lngX + .Width) > l_lngWidth Then
+                l_lngX = 0
+                l_lngY = l_lngY + m_lngRowHeight
+                l_booNewRow = True
+            End If
+            If (l_lngY + .Height) > IdealVerticalHeight Then IdealVerticalHeight = l_lngY + .Height
+            l_lngX = l_lngX + .Width
+            If (l_booNewRow) And (.Style = bsySeparator) Then
+                l_lngY = l_lngY + .Height
+                l_lngX = 0
+                l_booNewRow = True
+            Else
+                l_booNewRow = False
+            End If
+        End With
+    Next l_btnButton
+    If IdealVerticalHeight < 4 Then IdealVerticalHeight = 4
+End Property
 
 Public Property Get IdealWidth() As Long
 On Error Resume Next
@@ -257,6 +331,7 @@ Dim l_lngIndex As Long
             End If
         End With
     Next l_btnButton
+    RaiseEvent Reflow
     Redraw
 End Sub
 
@@ -270,7 +345,7 @@ Dim l_dtfFlags As DrawTextFlags
 Dim l_rctText As Rect
     With Button
         Select Case .Style
-        Case bsyNormal, bsyCheck, bsyGroup, bsyDropdown
+        Case bsyNormal, bsyCheck, bsyGroup
             Set l_rctButton = .Rectangle
             l_lngOffset = ColorOffset(.State)
             m_imgSurface.Fill l_rctButton, Colors(tbcBackground + l_lngOffset), RenderMode_Normal
@@ -307,7 +382,15 @@ Dim l_rctText As Rect
                 l_rctText.Top = l_rctButton.Top + l_lngImageHeight + Metrics(tbmTextMargin)
                 l_rctImage.RelTop = l_rctButton.Top + Metrics(tbmImageMargin)
             End Select
+            If (.Font Is Nothing) Then
+            Else
+                Set UserControl.Font = .Font
+            End If
+            SelectObject m_lngDC, GetCurrentObject(UserControl.hDC, Object_Font)
             DrawText m_lngDC, .Text, Len(.Text), l_rctText, l_dtfFlags
+            If GetAlpha(Colors(tbcGlow + l_lngOffset)) > 0 Then
+                m_imgSurface.Blit l_rctImage.Copy.Adjust(2, 2), , .GlowImage, IIf(.State = bstChecked, 1, 0.66), BlitMode_Font_SourceAlpha, Colors(tbcGlow + l_lngOffset)
+            End If
             m_imgSurface.Blit l_rctImage, , .Image, , BlitMode_SourceAlpha_ColorMask, Colors(tbcTint + l_lngOffset)
         Case bsySeparator
             If .Orientation = borHorizontal Then
@@ -325,16 +408,23 @@ End Sub
 Public Sub Redraw()
 On Error Resume Next
 Dim l_btnButton As ngToolButton
-    If m_imgSurface Is Nothing Then Exit Sub
-    If m_tbcButtons Is Nothing Then Exit Sub
-    m_imgSurface.Clear Colors(tbcBackground)
-    SelectObject m_lngDC, GetCurrentObject(UserControl.hDC, Object_Font)
-    For Each l_btnButton In m_tbcButtons
-        With l_btnButton
-            RenderButton l_btnButton
-        End With
-    Next l_btnButton
-    Refresh
+Dim l_fntOld As StdFont
+    If DisableUpdates Then Exit Sub
+    If UserControl.Ambient.UserMode Then
+        If m_imgSurface Is Nothing Then Exit Sub
+        If m_tbcButtons Is Nothing Then Exit Sub
+        Set l_fntOld = UserControl.Font
+        m_imgSurface.Clear Colors(tbcBackground)
+        For Each l_btnButton In m_tbcButtons
+            With l_btnButton
+                Set UserControl.Font = l_fntOld
+                RenderButton l_btnButton
+            End With
+        Next l_btnButton
+        Set UserControl.Font = l_fntOld
+        RaiseEvent Redraw
+        Refresh
+    End If
 End Sub
 
 Private Sub UpdateMouse()
@@ -384,8 +474,13 @@ End Sub
 
 Public Sub Refresh()
 On Error Resume Next
-    If m_imgSurface Is Nothing Then Exit Sub
-    BitBlt UserControl.hDC, 0, 0, UserControl.ScaleWidth, UserControl.ScaleHeight, m_lngDC, 0, 0, vbSrcCopy
+    If UserControl.Ambient.UserMode Then
+        If m_imgSurface Is Nothing Then Exit Sub
+        BitBlt UserControl.hDC, 0, 0, UserControl.ScaleWidth, UserControl.ScaleHeight, m_lngDC, 0, 0, vbSrcCopy
+    Else
+        UserControl.Cls
+        UserControl.Print "ngToolbar: " & UserControl.Extender.Name
+    End If
 End Sub
 
 Private Sub imgCurrentButton_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -428,16 +523,30 @@ On Error Resume Next
     InitMetrics
     InitColors
     InitButtons
+    ResourcePattern = "*"
 End Sub
 
 Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
+Dim l_booCancel As Boolean
     RaiseEvent MouseDown(Button, Shift, X, Y)
+    m_lngMouseX = X
+    m_lngMouseY = Y
+    If m_btnPressed Is Nothing Then UpdateMouse
     If Button = 1 Then
         tmrMouseTracker.Enabled = False
         Set m_btnPressed = ButtonFromPoint(X, Y)
+        If m_btnPressed Is Nothing Then Exit Sub
         If m_btnPressed.Enabled Then
-            m_btnPressed.MouseDown
+            RaiseEvent ButtonPress(m_btnPressed, l_booCancel)
+            If Not l_booCancel Then
+                m_btnPressed.MouseDown
+            Else
+                m_btnPressed.MouseLeave
+                Set m_btnPressed = Nothing
+                tmrMouseTracker.Enabled = m_booMouseOver
+                UpdateMouse
+            End If
             Redraw
         Else
             Set m_btnPressed = Nothing
@@ -456,9 +565,11 @@ End Sub
 
 Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
+Dim m_btnHover As ngToolButton
     RaiseEvent MouseUp(Button, Shift, X, Y)
     If Not (m_btnPressed Is Nothing) Then
-        RaiseEvent ButtonClick(m_btnPressed)
+        Set m_btnHover = ButtonFromPoint(X, Y)
+        If m_btnHover Is m_btnPressed Then RaiseEvent ButtonClick(m_btnPressed)
         m_btnPressed.MouseUp
         Set m_btnPressed = Nothing
     End If
@@ -474,13 +585,30 @@ End Sub
 
 Private Sub UserControl_Resize()
 On Error Resume Next
+Dim l_lngIdealWidth As Long
 Dim l_lngIdealHeight As Long
-    If UserControl.Extender.Align <> 0 Then
-        l_lngIdealHeight = IdealHeight(UserControl.ScaleWidth)
+    Select Case UserControl.Extender.Align
+    Case vbAlignTop, vbAlignBottom
+        If Ambient.UserMode Then
+            l_lngIdealHeight = IdealHeight(UserControl.ScaleWidth)
+        Else
+            l_lngIdealHeight = UserControl.TextHeight("AaBbYyZz")
+        End If
         If UserControl.ScaleHeight <> l_lngIdealHeight Then
             UserControl.Height = l_lngIdealHeight * Screen.TwipsPerPixelY
         End If
-    End If
+    Case vbAlignLeft, vbAlignRight
+        If Ambient.UserMode Then
+            l_lngIdealWidth = IdealVerticalWidth
+        Else
+            l_lngIdealWidth = UserControl.TextWidth("AaBbYyZz")
+        End If
+        If UserControl.ScaleWidth <> l_lngIdealWidth Then
+            UserControl.Width = l_lngIdealWidth * Screen.TwipsPerPixelX
+        End If
+    Case Else
+    End Select
+    RaiseEvent Resize
     ResizeSurface
     Reflow
 End Sub

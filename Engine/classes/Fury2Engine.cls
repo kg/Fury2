@@ -86,7 +86,7 @@ Private m_booBreak As Boolean, m_booResetClock As Boolean
 
 Public DisableUserInput As Boolean
 
-Public ConsoleText As String, ConsoleHeight As Long
+Public ConsoleText As String, ConsoleHeight As Long, ConsoleOffset As Single, ConsoleSliding As Boolean, ConsoleEndOffset As Single, ConsoleStartOffset As Single, ConsoleEndTime As Single, ConsoleStartTime As Single, ConsoleCaretPos As Long
 
 Public ConsoleVisible As Boolean
 
@@ -828,6 +828,10 @@ On Error Resume Next
     If VarType(Method) = vbString Then
         If Len(Trim(ToString(Method))) = 0 Then Exit Function
         Method = ToString(Method)
+        If InStr(Method, " ") Then
+            BindParameters = m_ScriptEngine.Eval("Array(" & Mid(Method, InStr(Method, " ") + 1) & ")")
+            Method = Left(Method, InStr(Method, " ") - 1)
+        End If
         If VarType(Object) = vbString Then
         Else
             If Object Is Nothing Then
@@ -875,7 +879,7 @@ Dim l_evtEvent As Fury2Event
     Err.Clear
 End Sub
 
-Public Sub Break(Optional ByRef Name As String = "")
+Public Sub Break(Optional ByVal Name As String = "")
 On Error Resume Next
 Dim l_lngSubthreads As Long
     If Trim(Name) = "" Then
@@ -1018,6 +1022,7 @@ On Error Resume Next
     ScreenScaleRatio = 1
     ShowTitlebar = True
     ShowFPS = True
+    HarassCPU = True
     ResetKeyMappings
     InitDefaultControls
     Set Filesystem = New Fury2Filesystem
@@ -1028,9 +1033,9 @@ On Error Resume Next
     Configuration.InitDefaultSettings
     Set CachedNames = New Collection
     Set EventHookStack = New Collection
-    Set Timers = New Fury2Collection
-    Set MessageQueue = New Fury2Collection
-    Set MessageWindows = New Fury2Collection
+    Set Timers = F2Collection()
+    Set MessageQueue = F2Collection()
+    Set MessageWindows = F2Collection()
     Set Mouse = New Fury2Mouse
     Mouse.SetEngine Me
     Set m_colPluginStack = New Collection
@@ -1060,7 +1065,7 @@ On Error Resume Next
     Set m_FlagNames = New Collection
     Set Party = New Fury2Party
     Party.SetEngine Me
-    Set SavedMaps = New Fury2Collection
+    Set SavedMaps = F2Collection()
     Paused = False
     If EditMode Then
         Running = False
@@ -1073,6 +1078,7 @@ End Sub
 
 Private Sub Class_Terminate()
 On Error Resume Next
+    EmptyImageCache
     m_SoundEngine.Shutdown
     Set ScriptEngine = Nothing
     Set m_SoundEngine = Nothing
@@ -1245,7 +1251,7 @@ On Error Resume Next
     End If
 End Function
 
-Public Function CreateMenu(Items, Optional ByVal Area As Fury2Rect = Nothing, Optional SelectEvent = Nothing, Optional CloseEvent = Nothing, Optional MoveEvent = Nothing, Optional ByVal Cursor As Object = Nothing, Optional ByVal WindowSkin As Fury2WindowSkin = Nothing) As Fury2Menu
+Public Function CreateMenu(Items, Optional ByVal Area As Fury2Rect = Nothing, Optional SelectEvent = Nothing, Optional CloseEvent = Nothing, Optional MoveEvent = Nothing, Optional ByVal Cursor As Fury2Graphic = Nothing, Optional ByVal WindowSkin As Fury2WindowSkin = Nothing) As Fury2Menu
 On Error Resume Next
 Dim NewMenu As Fury2Menu
 Dim m_lngItems As Long
@@ -1259,6 +1265,7 @@ Dim m_lngItems As Long
             Set .Rectangle = Area
         End If
         Set .Font = Me.Font
+        Set .TitleFont = Me.Font
         If UBound(Items) >= 0 Then
             For m_lngItems = LBound(Items) To UBound(Items)
                 .Add ToString(Items(m_lngItems)), , BindEvent(SelectEvent)
@@ -1598,14 +1605,8 @@ Dim l_lngHotspots As Long, l_booInside As Boolean
     ContextLevelAdd "MouseDown"
     m_lngX = Evt.LParam3
     m_lngY = Evt.LParam4
-    For m_lngObjects = 1 To EventHooks.Count
-        m_colObjects.Add EventHooks.Item(m_lngObjects)
-    Next m_lngObjects
-'    For m_lngObjects = EventHooks.Count To 1 Step -1
-'        m_colObjects.Add EventHooks.Item(m_lngObjects)
-'    Next m_lngObjects
     Dim PObj As Fury2Plugin
-    For Each Obj In m_colObjects
+    For Each Obj In m_colPluginStack
         Set PObj = Nothing
         Set PObj = Obj
         If PObj Is Nothing Then
@@ -1651,7 +1652,7 @@ Dim l_lngHotspots As Long, l_booInside As Boolean
     m_lngX = Evt.LParam3
     m_lngY = Evt.LParam4
     Dim PObj As Fury2Plugin
-    For Each Obj In m_colReversePluginStack
+    For Each Obj In m_colPluginStack
         Set PObj = Nothing
         Set PObj = Obj
         If PObj Is Nothing Then
@@ -1696,14 +1697,8 @@ Dim m_lngHotspots As Long
     ContextLevelAdd "MouseUp"
     m_lngX = Evt.LParam3
     m_lngY = Evt.LParam4
-    For m_lngObjects = 1 To EventHooks.Count
-        m_colObjects.Add EventHooks.Item(m_lngObjects)
-    Next m_lngObjects
-'    For m_lngObjects = EventHooks.Count To 1 Step -1
-'        m_colObjects.Add EventHooks.Item(m_lngObjects)
-'    Next m_lngObjects
     Dim PObj As Fury2Plugin
-    For Each Obj In m_colObjects
+    For Each Obj In m_colPluginStack
         Set PObj = Nothing
         Set PObj = Obj
         If PObj Is Nothing Then
@@ -1746,6 +1741,7 @@ Attribute F2Collection.VB_Description = "Creates a collection object."
 On Error Resume Next
 Dim l_lngIndex As Long
     Set F2Collection = New Fury2Collection
+    F2Collection.SetEngine Me
     If IsMissing(ValueArray) Then
     Else
         If (VarType(ValueArray) And vbArray) = vbArray Then
@@ -1796,7 +1792,7 @@ On Error Resume Next
     F2Font.SetEngine Me
 End Function
 
-Public Function F2Graphic(Images, Optional ByVal XCenter As Long = -32767, Optional ByVal YCenter As Long = -32767, Optional ByVal BlitMode As SFXBlitModes = -1) As Fury2Graphic
+Public Function F2Graphic(Images, Optional ByVal XCenter As Long = -32767, Optional ByVal YCenter As Long = -32767, Optional ByVal BlitMode As SFXBlitModes = -1, Optional ByVal LoopMode As Fury2LoopModes = F2LM_Restart, Optional ByVal AnimationDelay As Long = 5) As Fury2Graphic
 On Error Resume Next
 Dim l_gfcGraphic As Fury2Graphic
 Dim l_imgImage As Fury2Image
@@ -1836,6 +1832,8 @@ Dim l_lngImages As Long
                 BlitMode = BlitMode_Matte
             End If
         End If
+        .LoopMode = LoopMode
+        .AnimationDelay = AnimationDelay
         .BlitMode = BlitMode
     End With
     Err.Clear
@@ -2042,6 +2040,19 @@ Dim m_imgObj As Fury2Image, m_lngObj As Long
                 m_lngObj = m_lngObj + 1
             End If
         End If
+    Loop
+End Sub
+
+Public Sub EmptyImageCache()
+On Error Resume Next
+Dim l_imgImage As Fury2Image
+    If m_Images.Count < 1 Then Exit Sub
+    DebugOut "Emptying image cache"
+    Do While m_Images.Count > 0
+        Set l_imgImage = m_Images(1)
+        l_imgImage.Deallocate
+        Set l_imgImage = Nothing
+        m_Images.Remove 1
     Loop
 End Sub
 
@@ -2344,6 +2355,33 @@ On Error Resume Next
     End If
 End Sub
 
+Friend Sub ConsoleInsert(ByRef Text As String)
+On Error Resume Next
+Dim l_strLeft As String, l_strRight As String
+    l_strLeft = Mid(ConsoleText, 1, ConsoleCaretPos - 1)
+    l_strRight = Mid(ConsoleText, ConsoleCaretPos)
+    ConsoleText = l_strLeft + Text + l_strRight
+    ConsoleCaretPos = ConsoleCaretPos + Len(Text)
+    Err.Clear
+End Sub
+
+Friend Sub ConsoleBackspace()
+On Error Resume Next
+Dim l_strLeft As String, l_strRight As String
+    l_strLeft = Mid(ConsoleText, 1, ConsoleCaretPos - 2)
+    l_strRight = Mid(ConsoleText, ConsoleCaretPos)
+    ConsoleText = l_strLeft + l_strRight
+    ConsoleCaretPos = ConsoleCaretPos - 1
+End Sub
+
+Friend Sub ConsoleDelete()
+On Error Resume Next
+Dim l_strLeft As String, l_strRight As String
+    l_strLeft = Mid(ConsoleText, 1, ConsoleCaretPos - 1)
+    l_strRight = Mid(ConsoleText, ConsoleCaretPos + 1)
+    ConsoleText = l_strLeft + l_strRight
+End Sub
+
 Public Sub GFXEngine_KeyDown(ByVal KeyCode As Integer, ByVal Shift As Integer, Optional ByVal Force As Boolean = False)
 Attribute GFXEngine_KeyDown.VB_MemberFlags = "40"
 On Error Resume Next
@@ -2375,18 +2413,31 @@ Dim l_lngType As Long
     Case 86 ' V
         If Shift = 2 Then ' Ctrl
             If ConsoleVisible Then
-                ConsoleText = ConsoleText + Clipboard.GetText
+                ConsoleInsert Clipboard.GetText
             Else
                 KeysEntered = KeysEntered + Clipboard.GetText
             End If
+        End If
+    Case 46
+        If ConsoleVisible Then
+            ConsoleDelete
         End If
     Case 8
         If Shift = 2 Then ' Ctrl
             If ConsoleVisible Then
                 ConsoleText = ""
+                ConsoleCaretPos = 0
             Else
                 KeysEntered = ""
             End If
+        End If
+    Case vbKeyLeft
+        If ConsoleVisible Then
+            ConsoleCaretPos = ConsoleCaretPos - 1
+        End If
+    Case vbKeyRight
+        If ConsoleVisible Then
+            ConsoleCaretPos = ConsoleCaretPos + 1
         End If
     Case Else
     End Select
@@ -2416,20 +2467,23 @@ Dim l_strTemp As String
     If KeyAscii = 96 Or KeyAscii = 127 Then
     ElseIf KeyAscii >= 32 Then
         l_strInput = Chr(KeyAscii)
-        l_strBuffer = l_strBuffer + l_strInput
         If ConsoleVisible Then
+            ConsoleInsert l_strInput
         ElseIf TrapKeys Then
+            l_strBuffer = l_strBuffer + l_strInput
             ContextLevelAdd "Engine_KeyPress"
             ScriptEngine.Exec "Engine_KeyPress", KeyAscii
             ContextLevelRemove
         End If
     ElseIf KeyAscii = 13 Then
         If ConsoleVisible Then
+            m_booErrorOccurred = False
             ContextLevelAdd "Console"
             ConsoleCommand ConsoleText
             ContextLevelRemove
             If (Err.Number = 0) And (Not m_booErrorOccurred) Then
-                l_strBuffer = ""
+                ConsoleText = ""
+                ConsoleCaretPos = 1
             Else
                 Err.Clear
             End If
@@ -2439,9 +2493,10 @@ Dim l_strTemp As String
             ContextLevelRemove
         End If
     ElseIf KeyAscii = 8 Then
-        l_strBuffer = Left(l_strBuffer, Len(l_strBuffer) - 1)
         If ConsoleVisible Then
+            ConsoleBackspace
         ElseIf TrapKeys Then
+            l_strBuffer = Left(l_strBuffer, Len(l_strBuffer) - 1)
             ContextLevelAdd "Engine_KeyPress"
             ScriptEngine.Exec "Engine_KeyPress", KeyAscii
             ContextLevelRemove
@@ -2455,7 +2510,6 @@ Dim l_strTemp As String
         End If
     End If
     If ConsoleVisible Then
-        ConsoleText = l_strBuffer
     ElseIf TrapKeys Then
         KeysEntered = l_strBuffer
     ElseIf KeyAscii = 96 Or KeyAscii = 127 Then
@@ -2492,7 +2546,6 @@ Attribute GFXEngine_MouseDown.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_lngX As Long, m_lngY As Long
     If (DisableUserInput) And (Not Force) Then Exit Sub
-    Debug.Print "GFXEngine_MouseDown"
     m_lngX = (X) / (m_objOutputPlugin.Window.ScaleWidth / ScreenWidth)
     m_lngY = (Y) / (m_objOutputPlugin.Window.ScaleHeight / ScreenHeight)
     g_lngMouseX = m_lngX
@@ -2519,7 +2572,6 @@ Attribute GFXEngine_MouseUp.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_lngX As Long, m_lngY As Long
     If (DisableUserInput) And (Not Force) Then Exit Sub
-    Debug.Print "GFXEngine_MouseUp"
     m_lngX = (X) / (m_objOutputPlugin.Window.ScaleWidth / ScreenWidth)
     m_lngY = (Y) / (m_objOutputPlugin.Window.ScaleHeight / ScreenHeight)
     g_lngMouseX = m_lngX
@@ -2587,6 +2639,11 @@ End Sub
 Sub HideConsole()
 On Error Resume Next
     #If DebugFeatures = 1 Then
+        Me.ConsoleStartOffset = ConsoleOffset
+        Me.ConsoleEndOffset = ConsoleHeight
+        Me.ConsoleStartTime = HiTimer
+        Me.ConsoleEndTime = HiTimer + 0.33
+        Me.ConsoleSliding = True
         ConsoleVisible = False
     #End If
     ConsoleText = ""
@@ -2767,6 +2824,7 @@ Public Sub Include(ByVal Filename As String, Optional ByVal Require As Boolean =
 Attribute Include.VB_Description = "Loads a script file."
 On Error Resume Next
 Dim l_strText As String
+Dim l_strModule As String
     Err.Clear
     If Filesystem.FileExists(Filename + ".f2sf") Then
         Filename = Filename + ".f2sf"
@@ -2797,6 +2855,7 @@ Dim l_strText As String
         End If
     End If
     ContextLevelAdd Filename
+    l_strModule = VariableName(Filesystem.GetTitle(Filename))
     m_ScriptEngine.AddCode Filesystem.File(Filename).Text
     If Err <> 0 Then
         Err.Clear
@@ -2807,7 +2866,7 @@ End Sub
 
 Public Sub InitDefaultControls()
 On Error Resume Next
-    Set Controls = New Fury2Collection
+    Set Controls = F2Collection()
     Controls.Add F2Control("OK"), "OK"
     Controls.Add F2Control("Cancel"), "Cancel"
     Controls.Add F2Control("Quit"), "Quit"
@@ -3008,7 +3067,7 @@ Dim l_varPackages As Variant, l_lngPackages As Long
 Dim l_objObject As Object
     ContextLevelAdd "LoadGame(""" & Game & """)"
     DebugOut "Loading game """ & Game & """"
-    Set ConsoleItems = New Fury2Collection
+    Set ConsoleItems = F2Collection()
     Class_Terminate
     Class_Initialize
     If Trim(Game) = "" Then
@@ -3029,7 +3088,7 @@ Dim l_objObject As Object
         SystemRoot = FixPath(Game)
     End If
     Filesystem.Root = RootPath
-    Filesystem.LoadPackage "game"
+'    Filesystem.LoadPackage "game"
     Configuration.Load "game.f2config"
     Configuration.Load "global.f2config"
     ParseConfiguration
@@ -3044,6 +3103,7 @@ Dim l_objObject As Object
         ScriptEngine.AddObject "Globals", New Fury2Globals
         If Not (HideConfiguration) Then
             Load frmConfigure
+            frmConfigure.Cancelled = False
             Set frmConfigure.Engine = Me
             frmConfigure.LoadSettings
             frmConfigure.Show
@@ -3073,6 +3133,8 @@ Dim l_objObject As Object
         End If
         ScreenWidth = ClipValue(ScreenWidth, c_lngMinScreenWidth, c_lngMaxScreenWidth)
         ScreenHeight = ClipValue(ScreenHeight, c_lngMinScreenHeight, c_lngMaxScreenHeight)
+        ConsoleHeight = ScreenHeight / 2
+        ConsoleOffset = ConsoleHeight
         If Trim(WindowCaption) = "" Then WindowCaption = "Unknown Game"
         Err.Clear
         SwitchOutputPlugin OutputPlugin
@@ -3110,7 +3172,7 @@ Dim l_objObject As Object
     l_lngPackages = UBound(l_varPackages)
     If Err = 0 Then
         For l_lngPackages = LBound(l_varPackages) To UBound(l_varPackages)
-            Filesystem.LoadPackage Trim(l_varPackages(l_lngPackages))
+'            Filesystem.LoadPackage Trim(l_varPackages(l_lngPackages))
         Next l_lngPackages
     End If
     If Not EditMode Then
@@ -3350,7 +3412,6 @@ Dim l_filFile As Fury2File
         If l_filFile Is Nothing Then Exit Function
         Err.Clear
         RegisterDLL l_filFile.GetRealFilename
-        l_filFile.Ownership = False
         DoEvents
         Set LoadPlugin = CreateObject(PluginName)
         If LoadPlugin Is Nothing Or Err.Number <> 0 Then
@@ -3404,6 +3465,8 @@ Dim m_glbGlobals As Fury2Globals
     m_sprSprites.SetEngine Me
     If LoadFromFile(m_sprSprites, Filesystem.File(Filename)) Then
         Set LoadSprites = m_sprSprites
+    Else
+        DebugOut "Unable to load sprite collection """ & Filename & """"
     End If
     Set m_glbGlobals = Nothing
     Set m_sprSprites = Nothing
@@ -3427,7 +3490,7 @@ Dim l_strDesc As String
         m_booErrorOccurred = True
         ErrorMessage l_strDesc, l_strError
     Else
-        m_booErrorOccurred = False
+        m_booErrorOccurred = True
         ErrorMessage l_strDesc, l_strError
     End If
 End Sub
@@ -3937,9 +4000,7 @@ Dim PObj As Fury2Plugin, Obj As Object
     If Not (RedrawHook Is Nothing) Then
         RedrawHook.Invoke
     End If
-    If ConsoleHeight > 0 Then
-        RedrawConsole
-    End If
+    RedrawConsole
     ProfileStop "Redraw"
     ContextLevelRemove
 End Sub
@@ -3957,15 +4018,20 @@ End Sub
 Public Sub RedrawConsole()
 On Error Resume Next
 Dim l_lngItems As Long, l_rctSize As Fury2Rect, l_strText As String, l_lngY As Long, l_lngHeight As Long
+Dim l_lngTopColor As Long, l_lngBottomColor As Long
+Dim l_rctConsole As Fury2Rect, l_rctTextbox As Fury2Rect
+    If ConsoleOffset >= ConsoleHeight Then Exit Sub
+    ConsoleCaretPos = ClipValue(ConsoleCaretPos, 1, Len(ConsoleText) + 1)
     With Backbuffer
-        Set .ClipRectangle = F2Rect(0, 0, .Width, ConsoleHeight - l_lngHeight, False)
+        Set l_rctConsole = F2Rect(0, -ConsoleOffset, ScreenWidth, ConsoleHeight, False)
+        Set .ClipRectangle = .Rectangle
+        .ClippedSetClipRectangle l_rctConsole
         l_lngHeight = ClipValue(Font.TextHeight(ConsoleText, .Width - 2) + (Font.FullHeight - Font.Height), Font.FullHeight, ConsoleHeight) + 2
-        If ConsoleHeight > l_lngHeight Then
-            .Adjust -63, F2Rect(0, 0, .Width, ClipValue(ConsoleHeight - l_lngHeight - 1, 0, ConsoleHeight), False)
-        End If
-        .Adjust -127, F2Rect(0, ClipValue(ConsoleHeight - l_lngHeight - 1, 0, ConsoleHeight), .Width, ClipValue(l_lngHeight, 0, ConsoleHeight), False)
+        l_lngTopColor = F2RGB(180, 180, 180, 192)
+        l_lngBottomColor = F2RGB(110, 110, 110, 192)
+        .GradientFill l_rctConsole, Array(l_lngTopColor, l_lngTopColor, l_lngBottomColor, l_lngBottomColor), RenderMode_SourceAlpha
         If ConsoleItems.Count > 0 Then
-            l_lngY = (ConsoleHeight) - l_lngHeight - 4
+            l_lngY = l_rctConsole.Bottom - l_lngHeight - 4
             For l_lngItems = ConsoleItems.Count To 1 Step -1
                 l_strText = ConsoleItems(l_lngItems)
                 Set l_rctSize = Font.GetTextRectangle(l_strText, .Width - 4)
@@ -3974,10 +4040,11 @@ Dim l_lngItems As Long, l_rctSize As Fury2Rect, l_strText As String, l_lngY As L
                 If l_lngY <= 0 Then Exit For
             Next l_lngItems
         End If
-        .[Line] Array(0, ConsoleHeight - l_lngHeight - 2, .Width, ConsoleHeight - l_lngHeight - 2), F2RGB(255, 255, 255, 127), RenderMode_SourceAlpha
-        Set .ClipRectangle = F2Rect(0, ConsoleHeight - l_lngHeight, .Width, l_lngHeight, False)
-        Font.Draw Backbuffer, ConsoleText, F2Rect(2, (ConsoleHeight) - l_lngHeight, .Width - 4, l_lngHeight + (Font.FullHeight - Font.Height) - 2, False)
-        .[Line] Array(0, ConsoleHeight - 1, .Width, ConsoleHeight - 1), F2RGB(255, 255, 255, 127), RenderMode_SourceAlpha
+        Set l_rctTextbox = F2Rect(l_rctConsole.Left, l_rctConsole.Bottom - l_lngHeight - 2, l_rctConsole.Right, l_rctConsole.Bottom, True)
+        Set .ClipRectangle = .Rectangle
+        .ClippedSetClipRectangle l_rctTextbox
+        .GradientFill l_rctTextbox, Array(F2RGB(0, 0, 0, 32), F2RGB(0, 0, 0, 32), F2RGB(0, 0, 0, 96), F2RGB(0, 0, 0, 96)), RenderMode_SourceAlpha
+        Font.Draw Backbuffer, ConsoleText, F2Rect(2, l_rctConsole.Bottom - l_lngHeight, .Width - 4, l_lngHeight + (Font.FullHeight - Font.Height) - 2, False), , , Font.Options(0, 0, 0, 0, 0, ConsoleCaretPos, F2White)
         Set .ClipRectangle = .Rectangle
     End With
 End Sub
@@ -4383,6 +4450,11 @@ End Sub
 Sub ShowConsole()
     #If DebugFeatures = 1 Then
         ConsoleVisible = True
+        Me.ConsoleStartOffset = ConsoleOffset
+        Me.ConsoleEndOffset = 0
+        Me.ConsoleStartTime = HiTimer
+        Me.ConsoleEndTime = HiTimer + 0.33
+        Me.ConsoleSliding = True
     #End If
 End Sub
 
@@ -5145,10 +5217,10 @@ Static m_sngLastTimer As Single
             UpdateHook.Invoke
         End If
     End If
-    If ConsoleVisible Then
-        ConsoleHeight = ClipValue(ConsoleHeight + 4, 0, ScreenHeight \ 2)
-    Else
-        ConsoleHeight = ClipValue(ConsoleHeight - 4, 0, ScreenHeight \ 2)
+    If ConsoleSliding Then
+        ConsoleOffset = (ConsoleStartOffset) + ((ConsoleEndOffset - ConsoleStartOffset) * ((HiTimer - Me.ConsoleStartTime) / (Me.ConsoleEndTime - Me.ConsoleStartTime)))
+        If ConsoleOffset < 0 Then ConsoleOffset = 0
+        If ConsoleOffset > ConsoleHeight Then ConsoleOffset = ConsoleHeight
     End If
     ProfileStop "Update"
     ContextLevelRemove
@@ -5383,7 +5455,7 @@ End Function
 
 Public Property Get Version() As String
 Attribute Version.VB_Description = "Returns the version of the engine."
-    Version = "Fury² " + Choose(App.Major + 1, "Alpha", "Beta", "Prototype") + " RC" + CStr(App.Minor) + " Build " + CStr(App.Revision)
+    Version = "Fury² " + Choose(App.Major + 1, "Alpha", "Beta", "Release") + " " + CStr(App.Minor) + " Build " + CStr(App.Revision)
 End Property
 
 Public Sub Wait(Time)
@@ -5532,6 +5604,7 @@ Dim Obj As Object
         Set Obj = Nothing
     Next Obj
     ShowCursor True
+    EmptyImageCache
     For m_lngForms = Forms.Count To 0 Step -1
         Unload Forms(m_lngForms)
     Next m_lngForms
@@ -5600,4 +5673,8 @@ Dim l_frmError As frmCriticalError
     Loop
 End Sub
 
-
+Private Sub m_ScriptEngine_InterruptPoll(Interrupt As Boolean)
+On Error Resume Next
+    Debugger.InterruptPoll Interrupt
+    DoEvents
+End Sub

@@ -213,26 +213,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\FMod_Ex.idl"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCMIDLTool"
-						TypeLibraryName="Z:\projects\FMod_Ex\FMod_Ex.tlb"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCMIDLTool"
-						TypeLibraryName="Z:\projects\FMod_Ex\FMod_Ex.tlb"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath=".\SoftFX.idl"
 				>
 				<FileConfiguration

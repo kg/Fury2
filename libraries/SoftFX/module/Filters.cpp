@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "../header/Blend.hpp"
 #include "../header/Clip.hpp"
 #include "../header/2D Filter.hpp"
-#include "../header/Mersenne.hpp"
+#include "../header/MersenneTwister.h"
 #include "../header/Blitters.hpp"
 #include <sys/timeb.h>
 
@@ -557,11 +557,9 @@ FILTERSIMPLE_INIT
     _FOS(FilterSimple_Noise, 0) _FOE
 FILTERSIMPLE_BEGIN
     // Seed the random number generator using the current time
-    _timeb tstruct;
-    _ftime(&tstruct);
-    seedMT(tstruct.time + tstruct.millitm);
+    MTRand mersenne = MTRand();
 FILTERSIMPLE_LOOPBEGIN
-    pCurrent->V = randomMT();
+    pCurrent->V = mersenne.randInt();
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 
@@ -574,13 +572,11 @@ FILTERSIMPLE_BEGIN
     Byte iteratorTable[4] = {1, 2, 3, 0}, i = 0;
     Pixel v;
     // Seed the random number generator using the current time
-    _timeb tstruct;
-    _ftime(&tstruct);
-    seedMT(tstruct.time + tstruct.millitm);
+    MTRand mersenne = MTRand();
 FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
-    if (i == 0) v.V = randomMT();
+    if (i == 0) v.V = mersenne.randInt();
     (*pCurrent)[::Blue] = (*pCurrent)[::Green] = (*pCurrent)[::Red] = v[i];
     i = iteratorTable[i];
 FILTERSIMPLE_LOOPEND
@@ -598,13 +594,11 @@ FILTERSIMPLE_BEGIN
     Byte iteratorTable[4] = {1, 2, 3, 0}, i = 0, cv = 0;
     Pixel v;
     // Seed the random number generator using the current time
-    _timeb tstruct;
-    _ftime(&tstruct);
-    seedMT(tstruct.time + tstruct.millitm);
+    MTRand mersenne = MTRand();
 FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
-    if (i == 0) v.V = randomMT();
+    if (i == 0) v.V = mersenne.randInt();
     cv = AlphaFromLevel(aSource, v[i]);
     (*pCurrent)[::Blue] = AlphaFromLevel(aDest, (*pCurrent)[::Blue]) + cv;
     (*pCurrent)[::Green] = AlphaFromLevel(aDest, (*pCurrent)[::Green]) + cv;
@@ -623,13 +617,11 @@ FILTERSIMPLE_BEGIN
     Byte iteratorTable[4] = {1, 2, 3, 0}, i = 0;
     Pixel v;
     // Seed the random number generator using the current time
-    _timeb tstruct;
-    _ftime(&tstruct);
-    seedMT(tstruct.time + tstruct.millitm);
+    MTRand mersenne = MTRand();
 FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
-    if (i == 0) v.V = randomMT();
+    if (i == 0) v.V = mersenne.randInt();
     (*pCurrent)[::Blue] = ClipByteLow((*pCurrent)[::Blue] - v[i]);
     (*pCurrent)[::Green] = ClipByteLow((*pCurrent)[::Green] - v[i]);
     (*pCurrent)[::Red] = ClipByteLow((*pCurrent)[::Red] - v[i]);
@@ -649,13 +641,11 @@ FILTERSIMPLE_BEGIN
     Byte iteratorTable[4] = {1, 2, 3, 0}, i = 0, cv = 0;
     Pixel v;
     // Seed the random number generator using the current time
-    _timeb tstruct;
-    _ftime(&tstruct);
-    seedMT(tstruct.time + tstruct.millitm);
+    MTRand mersenne = MTRand();
 FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
-    if (i == 0) v.V = randomMT();
+    if (i == 0) v.V = mersenne.randInt();
     cv = AlphaFromLevel(aSource, v[i]);
     (*pCurrent)[::Blue] = ClipByteLow((*pCurrent)[::Blue] - cv);
     (*pCurrent)[::Green] = ClipByteLow((*pCurrent)[::Green] - cv);
@@ -673,13 +663,11 @@ FILTERSIMPLE_BEGIN
     Byte iteratorTable[4] = {1, 2, 3, 0}, i = 0;
     Pixel v;
     // Seed the random number generator using the current time
-    _timeb tstruct;
-    _ftime(&tstruct);
-    seedMT(tstruct.time + tstruct.millitm);
+    MTRand mersenne = MTRand();
 FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
-    if (i == 0) v.V = randomMT();
+    if (i == 0) v.V = mersenne.randInt();
     (*pCurrent)[Channel] = v[i];
     i = iteratorTable[i];
 FILTERSIMPLE_LOOPEND
@@ -696,16 +684,14 @@ FILTERSIMPLE_BEGIN
     Pixel v;
     DoubleWord d;
     // Seed the random number generator using the current time
-    _timeb tstruct;
-    _ftime(&tstruct);
-    seedMT(tstruct.time + tstruct.millitm);
+    MTRand mersenne = MTRand();
     for (int s = 0; s < 256; ++s) {
       scaleTable[s] = ClipByteHigh((s * Strength) / 255);
     }
 FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
-    if (i == 0) v.V = randomMT();
+    if (i == 0) v.V = mersenne.randInt();
     d = scaleTable[v[i]];
     if (d) {
       (*pCurrent)[::Blue] = ((*pCurrent)[::Blue] / d) * d;

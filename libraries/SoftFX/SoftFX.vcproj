@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="SoftFX"
 	ProjectGUID="{ED4A2B1F-A8EB-4F0D-BE84-D29D90FFBA34}"
+	RootNamespace="SoftFX"
 	>
 	<Platforms>
 		<Platform
@@ -82,7 +83,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="../../../libraries/lib/corona_debug.lib"
+				AdditionalDependencies="../../../libraries/lib/corona.lib"
 				OutputFile=".\../../../binary/sys/SoftFX.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
@@ -115,6 +116,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -196,7 +198,7 @@
 				Name="VCLinkerTool"
 				RegisterOutput="FALSE"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="../../../libraries/lib/corona_release.lib"
+				AdditionalDependencies="../../../libraries/lib/corona.lib"
 				OutputFile=".\../../../binary/sys/SoftFX.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
@@ -231,6 +233,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -312,7 +315,7 @@
 				RegisterOutput="FALSE"
 				IgnoreImportLibrary="TRUE"
 				AdditionalOptions="/LTCG"
-				AdditionalDependencies="../../../libraries/lib/corona_release.lib"
+				AdditionalDependencies="../../../libraries/lib/corona.lib"
 				ShowProgress="2"
 				OutputFile=".\../../../binary/sys/SoftFX.dll"
 				LinkIncremental="0"
@@ -351,6 +354,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -650,41 +654,6 @@
 				>
 			</File>
 			<File
-				RelativePath="module\Mersenne.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_USRDLL;$(NoInherit)"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Development|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_USRDLL;$(NoInherit)"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath=".\module\Override.cpp"
 				>
 			</File>
@@ -907,7 +876,7 @@
 				>
 			</File>
 			<File
-				RelativePath="header\Mersenne.hpp"
+				RelativePath=".\header\MersenneTwister.h"
 				>
 			</File>
 			<File

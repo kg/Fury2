@@ -23,7 +23,7 @@ Begin VB.Form frmGridRemover
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   391
    ShowInTaskbar   =   0   'False
-   StartUpPosition =   1  'CenterOwner
+   StartUpPosition =   2  'CenterScreen
    Visible         =   0   'False
    Begin ngPlugins.ObjectInspector insSettings 
       Height          =   3930
@@ -74,6 +74,25 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+'
+'    ngPlugins (Fury² Game Creation System Next-Generation Editor Standard Plugin Set)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Public Options As ImageGridRemoverOptions
 

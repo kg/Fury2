@@ -91,7 +91,13 @@ struct SpritePosition {
 };
 
 struct SpriteVelocity {
-    float X, Y, Z, V, B, BR, BRT, A, AT, VM;
+    float X, Y, Z; // x/y/z independent velocities
+    float V, B; // forward velocity and bearing
+    float BR, BRT; // bearing rotational velocity and rotational target
+    float A, AT; // alpha velocity and target
+    float VM; // velocity multiplier
+    float XF, YF; // x and y forces
+    float FW; // force weight
 };
 
 struct VisualParameters {
@@ -111,7 +117,7 @@ struct VisualParameters {
 struct PhysicalParameters {
     Byte Solid;
     Byte Pushable;
-    Byte Platform;
+    Byte CanPush;
     Byte Cull;
     float Weight;
 };

@@ -19,26 +19,39 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 Implements IVirtualFileSaveable
 
-Private m_tbrParent As ngToolbar
+Private m_lstParent As ngToolbar
 Private m_colCollection As Collection
 
 Friend Sub Free()
 On Error Resume Next
 Dim l_btnButton As ngToolButton
-    Set m_tbrParent = Nothing
+    Set m_lstParent = Nothing
     For Each l_btnButton In m_colCollection
         l_btnButton.Free
     Next l_btnButton
 End Sub
 
-Friend Sub SetParent(Parent As ngToolbar)
+Friend Sub Reindex()
 On Error Resume Next
-    Set m_tbrParent = Parent
+Dim l_btnButton As ngToolButton
+Dim l_lngIndex As Long
+    l_lngIndex = 1
+    For Each l_btnButton In m_colCollection
+        l_btnButton.Index = l_lngIndex
+        l_lngIndex = l_lngIndex + 1
+    Next l_btnButton
 End Sub
 
-Public Function AddNew(Optional ByRef Text As String = "", Optional ByRef Key As String = "", Optional ByRef Image As Fury2Image = Nothing, Optional ByRef Tooltip As String = "", Optional ByVal Style As ngToolButtonStyles = bsyNormal, Optional ByVal TextAlignment As ngToolButtonTextAlignment = btaRight, Optional ByVal Enabled As Boolean = True, Optional ByVal Checked As Boolean = False, Optional ByVal AtIndex As Long = -1) As ngToolButton
+Friend Sub SetParent(Parent As ngToolbar)
+On Error Resume Next
+    Set m_lstParent = Parent
+End Sub
+
+Public Function AddNew(Optional ByRef Text As String = "", Optional ByRef Key As String = "", Optional ByRef Image As Variant = Nothing, Optional ByRef Tooltip As String = "", Optional ByVal Style As ngToolButtonStyles = bsyNormal, Optional ByVal TextAlignment As ngToolButtonTextAlignment = btaRight, Optional ByVal Enabled As Boolean = True, Optional ByVal Checked As Boolean = False, Optional ByVal AtIndex As Long = -1) As ngToolButton
 On Error Resume Next
 Dim l_btnNew As ngToolButton
+Dim l_imgImage As Fury2Image
+Dim l_picImage As StdPicture
     Set l_btnNew = New ngToolButton
     With l_btnNew
         .Key = Key
@@ -49,7 +62,14 @@ Dim l_btnNew As ngToolButton
             .Style = Style
         End If
         .Tooltip = Tooltip
-        Set .Image = Image
+        If VarType(Image) = vbString Then
+            Set .Image = m_lstParent.ResourceFile(Replace(m_lstParent.ResourcePattern, "*", Image)).LoadImage()
+        ElseIf VarType(Image) = vbObject Then
+            If TypeOf Image Is Fury2Image Then
+                Set l_imgImage = Image
+                Set .Image = l_imgImage
+            End If
+        End If
         .TextAlignment = TextAlignment
         .Enabled = Enabled
         .Checked = Checked
@@ -91,8 +111,9 @@ Dim l_strKey As String
             End If
         End If
     End If
-    Obj.SetParent m_tbrParent
-    m_tbrParent.Reflow
+    Obj.SetParent m_lstParent
+    Reindex
+    m_lstParent.Reflow
     Err.Clear
 End Sub
 
@@ -136,7 +157,8 @@ On Error Resume Next
         IndexOrKey = CLng(IndexOrKey)
     End If
     m_colCollection.Remove IndexOrKey
-    m_tbrParent.Reflow
+    Reindex
+    m_lstParent.Reflow
 End Sub
 
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)

@@ -29,6 +29,7 @@ On Error Resume Next
 Dim m_objObj As IShellFolderEx_TLB.IUnknown, m_lngCount As Long
 Dim m_sndObj As SoundHandle, m_lngObj As Long
     If m_Handles.Count < 1 Then Exit Sub
+    m_Engine.DebugOut "Flushing sound cache"
     m_lngObj = 1
     Do While m_lngObj < m_Handles.Count
         Set m_objObj = Nothing
@@ -41,7 +42,6 @@ Dim m_sndObj As SoundHandle, m_lngObj As Long
             Set m_objObj = Nothing
             If m_lngCount <= 2 Then
                 Set m_sndObj = m_Handles(m_lngObj)
-                'TextOut "Flushed " & m_sndObj.Name
                 Set m_sndObj = Nothing
                 FreeSound m_lngObj
                 m_lngObj = m_lngObj + 1
@@ -137,7 +137,7 @@ On Error Resume Next
         Load = LoadSample(Filename, Looping)
         If Load <> -1 Then Exit Function
     Else
-        m_Engine.TextOut "Unable to load audio file: " + Filename
+        m_Engine.DebugOut "Unable to load audio file: """ + Filename + """"
     End If
 End Function
 
@@ -229,7 +229,7 @@ Dim m_filFile As Object
     Set m_Obj = New SoundHandle
     Filename = m_Engine.FileSystem.AutoSelectExtension(Filename, "wav;aiff;aif;ogg;mp3;mp2;wma")
     If Not m_Engine.FileSystem.FileExists(Filename) Then
-        m_Engine.TextOut "Unable to load stream file: " + Filename
+        m_Engine.DebugOut "Unable to load stream: """ + Filename + """"
         Exit Function
     End If
     Set m_filFile = m_Engine.FileSystem.File(Filename)
@@ -275,7 +275,7 @@ Dim m_filFile As Object
             End If
         End If
         If Not m_Engine.FileSystem.FileExists(Filename) Then
-            m_Engine.TextOut "Unable to load sound file: " + Filename
+            m_Engine.DebugOut "Unable to load sample: """ + Filename + """"
             Exit Function
         End If
         Set m_filFile = m_Engine.FileSystem.File(Filename)
@@ -318,7 +318,7 @@ Dim m_filFile As Object
     Set m_Obj = New SoundHandle
     Filename = m_Engine.FileSystem.AutoSelectExtension(Filename, "oxm;it;xm;s3m;mod;mid;midi")
     If Not m_Engine.FileSystem.FileExists(Filename) Then
-        m_Engine.TextOut "Unable to load music file: " + Filename
+        m_Engine.DebugOut "Unable to load music: """ + Filename + """"
         Exit Function
     End If
     Set m_filFile = m_Engine.FileSystem.File(Filename)

@@ -63,29 +63,55 @@ On Error Resume Next
 Dim l_sngX As Single, l_sngY As Single
 Dim l_sngW As Single, l_sngXO As Single, l_sngYO As Single, l_sngM As Single
 Dim l_sngXW As Single, l_sngYW As Single, l_sngD As Single, l_sngSum As Single
-Dim l_sngWMul As Single
+Dim l_sngWMul As Single, l_sngBlend As Single
+Dim l_lngX As Long, l_lngY As Long
+Dim l_filLow As Fury2ConvolutionFilter, l_filHigh As Fury2ConvolutionFilter
     Set F2GaussianBlurFilter = New Fury2ConvolutionFilter
-    Call F2GaussianBlurFilter.Resize(Ceil(Radius) * 2 + 1, Ceil(Radius) * 2 + 1)
-    l_sngM = F2GaussianBlurFilter.Width - 1
-    l_sngXO = ((F2GaussianBlurFilter.Width - 1) / 2)
-    l_sngYO = ((F2GaussianBlurFilter.Height - 1) / 2)
-    l_sngWMul = 1 / (Sqr(2))
-    For l_sngY = 0 To l_sngM
-        l_sngYW = (l_sngY) / Radius
-        If l_sngYW < 0 Then l_sngYW = 0
-        If l_sngYW > 1 Then l_sngYW = 1 - (l_sngYW - 1)
-        l_sngYW = l_sngYW * l_sngYW
-        For l_sngX = 0 To l_sngM
-            l_sngXW = (l_sngX) / Radius
-            If l_sngXW < 0 Then l_sngXW = 0
-            If l_sngXW > 1 Then l_sngXW = 1 - (l_sngXW - 1)
-            l_sngXW = l_sngXW * l_sngXW
-            l_sngW = Sqr(l_sngXW + l_sngYW) * l_sngWMul
-            F2GaussianBlurFilter.Weight(CLng(l_sngX), CLng(l_sngY)) = l_sngW
-            l_sngSum = l_sngSum + l_sngW
-        Next l_sngX
-    Next l_sngY
-    F2GaussianBlurFilter.Divisor = l_sngSum
+    If Radius <= 0 Then
+        F2GaussianBlurFilter.Resize 1, 1
+        F2GaussianBlurFilter.Divisor = 1
+        F2GaussianBlurFilter.Weight(0, 0) = 1
+        Exit Function
+    End If
+    If Ceil(Radius) = Floor(Radius) Then
+        Call F2GaussianBlurFilter.Resize(Ceil(Radius) * 2 + 1, Ceil(Radius) * 2 + 1)
+        l_sngM = F2GaussianBlurFilter.Width - 1
+        l_sngXO = ((F2GaussianBlurFilter.Width - 1) / 2)
+        l_sngYO = ((F2GaussianBlurFilter.Height - 1) / 2)
+        l_sngWMul = 1 / (Sqr(2))
+        For l_sngY = 0 To l_sngM
+            l_sngYW = (l_sngY) / Radius
+            If l_sngYW < 0 Then l_sngYW = 0
+            If l_sngYW > 1 Then l_sngYW = 1 - (l_sngYW - 1)
+            l_sngYW = l_sngYW * l_sngYW
+            For l_sngX = 0 To l_sngM
+                l_sngXW = (l_sngX) / Radius
+                If l_sngXW < 0 Then l_sngXW = 0
+                If l_sngXW > 1 Then l_sngXW = 1 - (l_sngXW - 1)
+                l_sngXW = l_sngXW * l_sngXW
+                l_sngW = (Sqr(l_sngXW + l_sngYW) * l_sngWMul)
+                F2GaussianBlurFilter.Weight(CLng(l_sngX), CLng(l_sngY)) = l_sngW
+                l_sngSum = l_sngSum + l_sngW
+            Next l_sngX
+        Next l_sngY
+        F2GaussianBlurFilter.Divisor = l_sngSum
+    Else
+        Set l_filLow = F2GaussianBlurFilter(Floor(Radius))
+        Set l_filHigh = F2GaussianBlurFilter(Ceil(Radius))
+        l_sngBlend = (Radius) - Floor(Radius)
+        With l_filHigh
+            For l_lngY = 0 To .Height - 1
+                For l_lngX = 0 To .Width - 1
+                    l_sngW = (l_filLow.Weight(l_lngX - 1, l_lngY - 1) * (1 - l_sngBlend)) + (.Weight(l_lngX, l_lngY) * l_sngBlend)
+                    .Weight(l_lngX, l_lngY) = l_sngW
+                    l_sngSum = l_sngSum + l_sngW
+                Next l_lngX
+            Next l_lngY
+            .Divisor = l_sngSum
+        End With
+        Set l_filLow = Nothing
+        Set F2GaussianBlurFilter = l_filHigh
+    End If
 End Function
 
 ' P.S.: I'm a retard
@@ -570,6 +596,8 @@ Dim l_imgLayer As Fury2Image
         F2LoadImage.AlphaChannel = False
     Case "png", "tga", "gif"
         Set F2LoadImage = F2LoadPicture(m_strFilename)
+    Case "ico", "cur"
+        Set F2LoadImage = F2ImageFromPicture(LoadPicture(m_strFilename))
     End Select
     For m_lngParameter = LBound(m_varParameters) To UBound(m_varParameters)
         If InStr(m_varParameters(m_lngParameter), "(") Then
@@ -734,6 +762,24 @@ Dim newImage As Fury2Image
     Set newImage = New Fury2Image
     Set newImage.Picture = Picture
     Set F2ImageFromPicture = newImage
+    Set newImage = Nothing
+End Function
+
+Public Function F2ImageFromString(ByRef Data As String) As Fury2Image
+On Error Resume Next
+Dim newImage As Fury2Image
+    Set newImage = New Fury2Image
+    newImage.LoadString Data
+    Set F2ImageFromString = newImage
+    Set newImage = Nothing
+End Function
+
+Public Function F2ImageFromByteArray(ByRef Data() As Byte) As Fury2Image
+On Error Resume Next
+Dim newImage As Fury2Image
+    Set newImage = New Fury2Image
+    newImage.LoadBytes Data
+    Set F2ImageFromByteArray = newImage
     Set newImage = Nothing
 End Function
 

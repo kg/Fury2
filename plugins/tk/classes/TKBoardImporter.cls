@@ -106,6 +106,7 @@ End Property
 Private Sub iPlugin_Shutdown()
 End Sub
 
-
-
+Private Property Get iPlugin_ToolbarIcon() As libGraphics.Fury2Image
+On Error Resume Next
+End Property
 

@@ -373,7 +373,7 @@ End Function
 Function Save(ByVal Filename) As Boolean
 On Error Resume Next
     m_strFilename = Filename
-    Save = Engine.SaveToFile(Me, Engine.Filesystem.File(Filename))
+    Save = Engine.SaveToFile(Me, Engine.Filesystem.CreateFile(Filename))
 End Function
 
 Function Duplicate() As Fury2WindowSkin

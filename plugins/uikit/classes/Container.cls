@@ -442,7 +442,7 @@ Dim l_wdgMouseWidget As iWidget
 Dim l_wdgWidget As iWidget
 Dim l_cntChild As iContainer
     With Rectangle
-        If .PointInside(X, Y) Then
+        If (.PointInside(X, Y)) Or ((Button <> 0) And (Not (CapturedWidget Is Nothing))) Then
             Set l_wdgMouseWidget = iContainer_WidgetFromPoint(X, Y)
             If l_wdgMouseWidget Is LastMouseWidget Then
             Else

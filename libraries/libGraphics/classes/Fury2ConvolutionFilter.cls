@@ -77,11 +77,16 @@ End Sub
 
 Public Property Get Weight(ByVal X As Long, ByVal Y As Long) As Single
 On Error Resume Next
-    Weight = m_sngWeights(X, Y)
+    If X < 0 Or Y < 0 Or X >= Width Or Y >= Width Then
+        Weight = 0
+    Else
+        Weight = m_sngWeights(X, Y)
+    End If
 End Property
 
 Public Property Let Weight(ByVal X As Long, ByVal Y As Long, ByVal NewValue As Single)
 On Error Resume Next
+    If X < 0 Or Y < 0 Or X >= Width Or Y >= Width Then Exit Property
     m_sngWeights(X, Y) = NewValue
 End Property
 
@@ -92,6 +97,7 @@ End Property
 
 Public Property Let Divisor(NewValue As Single)
 On Error Resume Next
+    If NewValue = 0 Then Exit Property
     m_fpFilter.Divisor = NewValue
 End Property
 

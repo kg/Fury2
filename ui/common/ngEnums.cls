@@ -12,7 +12,6 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
-
 Public Enum ngToolButtonTextAlignment
     btaLeft
     btaRight
@@ -24,7 +23,6 @@ Public Enum ngToolButtonStyles
     bsyNormal
     bsyCheck
     bsyGroup
-    bsyDropdown
     bsySeparator
 End Enum
 
@@ -41,22 +39,27 @@ Public Enum ngToolbarColors
     tbcText
     tbcTint
     tbcBorder
+    tbcGlow
     tbcHighlight
     tbcHighlightText
     tbcHighlightTint
     tbcHighlightBorder
+    tbcHighlightGlow
     tbcPressed
     tbcPressedText
     tbcPressedTint
     tbcPressedBorder
+    tbcPressedGlow
     tbcChecked
     tbcCheckedText
     tbcCheckedTint
     tbcCheckedBorder
+    tbcCheckedGlow
     tbcDisabled
     tbcDisabledText
     tbcDisabledTint
     tbcDisabledBorder
+    tbcDisabledGlow
     tbcSeparator
     tbc_max
 End Enum
@@ -73,4 +76,19 @@ End Enum
 Public Enum ngToolButtonOrientations
     borHorizontal
     borVertical
+End Enum
+
+Public Enum ngListBoxTextAlignment
+    ltaLeft
+    ltaRight
+    ltaTop
+    ltaBottom
+End Enum
+
+Public Enum ngResourceTypes
+    rtyUnknown
+    rtyImage
+    rtyText
+    rtyScript
+    rtyIcon
 End Enum

@@ -94,7 +94,7 @@ inline void _DebugTrace(const wchar_t *text) {
 #endif
 
 // fix issue with using .lib instead of .dll
-#define COR_DECL
+// #define COR_DECL
 #include "../../../3rdparty/headers/corona.h"
 
 extern bool Initialized;

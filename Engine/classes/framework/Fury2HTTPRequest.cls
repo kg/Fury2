@@ -51,7 +51,7 @@ Public Sub SaveFile(Filename As String)
 On Error Resume Next
 Dim l_vfFile As New VirtualFile
     l_vfFile.Save Me
-    Engine.Filesystem.File(Filename).Save l_vfFile
+    Engine.Filesystem.CreateFile(Filename).Save l_vfFile
     Set l_vfFile = Nothing
 End Sub
 

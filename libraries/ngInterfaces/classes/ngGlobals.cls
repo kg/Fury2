@@ -65,6 +65,10 @@ End Function
 Public Function GetPath(ByRef Filename As String) As String
 On Error Resume Next
 Dim l_lngPos As Long
+    If Right(Filename, 1) = "\" Then
+        GetPath = GetPath(Left(Filename, Len(Filename) - 1))
+        Exit Function
+    End If
     l_lngPos = InStrRev(Filename, "\")
     If l_lngPos Then
         GetPath = Left(Filename, l_lngPos - 1)

@@ -1,8 +1,8 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{396F7AC0-A0DD-11D3-93EC-00C0DFE7442A}#1.0#0"; "vbalIml6.ocx"
-Object = "{E142732F-A852-11D4-B06C-00500427A693}#2.0#0"; "vbalTbar6.ocx"
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#7.4#0"; "ngUI.ocx"
 Begin VB.Form frmCommandBrowser 
    BorderStyle     =   0  'None
    Caption         =   "Command Browser"
@@ -50,6 +50,15 @@ Begin VB.Form frmCommandBrowser
       TabIndex        =   1
       Top             =   0
       Width           =   1995
+      Begin ngUI.ngToolbar tbrObjects 
+         Height          =   270
+         Left            =   360
+         TabIndex        =   8
+         Top             =   180
+         Width           =   405
+         _ExtentX        =   714
+         _ExtentY        =   476
+      End
       Begin VB.TextBox txtFilterObjects 
          BorderStyle     =   0  'None
          BeginProperty Font 
@@ -63,7 +72,7 @@ Begin VB.Form frmCommandBrowser
          EndProperty
          Height          =   240
          Left            =   1290
-         TabIndex        =   4
+         TabIndex        =   3
          Top             =   0
          Width           =   105
       End
@@ -92,27 +101,6 @@ Begin VB.Form frmCommandBrowser
             Strikethrough   =   0   'False
          EndProperty
       End
-      Begin vbalTBar6.cToolbar tbrObjects 
-         Height          =   240
-         Left            =   180
-         Top             =   135
-         Visible         =   0   'False
-         Width           =   2400
-         _ExtentX        =   4233
-         _ExtentY        =   423
-         DrawStyle       =   2
-      End
-      Begin vbalTBar6.cToolbarHost tbhObjects 
-         Height          =   180
-         Left            =   0
-         TabIndex        =   3
-         Top             =   0
-         Width           =   315
-         _ExtentX        =   556
-         _ExtentY        =   318
-         BorderStyle     =   0
-         MDIToolbar      =   -1  'True
-      End
    End
    Begin VB.PictureBox picObjectMembers 
       BorderStyle     =   0  'None
@@ -137,7 +125,7 @@ Begin VB.Form frmCommandBrowser
          Left            =   0
          Locked          =   -1  'True
          MultiLine       =   -1  'True
-         TabIndex        =   9
+         TabIndex        =   7
          Top             =   3000
          Width           =   3450
       End
@@ -147,7 +135,7 @@ Begin VB.Form frmCommandBrowser
          ScaleHeight     =   190
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   226
-         TabIndex        =   5
+         TabIndex        =   4
          Top             =   0
          Width           =   3450
          Begin VB.TextBox txtFilterMembers 
@@ -163,30 +151,9 @@ Begin VB.Form frmCommandBrowser
             EndProperty
             Height          =   240
             Left            =   1290
-            TabIndex        =   6
+            TabIndex        =   5
             Top             =   -15
             Width           =   105
-         End
-         Begin vbalTBar6.cToolbar tbrMembers 
-            Height          =   240
-            Left            =   180
-            Top             =   135
-            Visible         =   0   'False
-            Width           =   2400
-            _ExtentX        =   4233
-            _ExtentY        =   423
-            DrawStyle       =   2
-         End
-         Begin vbalTBar6.cToolbarHost tbhMembers 
-            Height          =   180
-            Left            =   0
-            TabIndex        =   7
-            Top             =   0
-            Width           =   315
-            _ExtentX        =   556
-            _ExtentY        =   318
-            BorderStyle     =   0
-            MDIToolbar      =   -1  'True
          End
          Begin vbalIml6.vbalImageList ilMembers 
             Left            =   705
@@ -203,7 +170,7 @@ Begin VB.Form frmCommandBrowser
          Begin vbalTreeViewLib6.vbalTreeView tvMembers 
             Height          =   4080
             Left            =   0
-            TabIndex        =   8
+            TabIndex        =   6
             Top             =   0
             Width           =   1695
             _ExtentX        =   2990
@@ -225,6 +192,15 @@ Begin VB.Form frmCommandBrowser
                Strikethrough   =   0   'False
             EndProperty
          End
+         Begin ngUI.ngToolbar tbrMembers 
+            Height          =   270
+            Left            =   0
+            TabIndex        =   9
+            Top             =   0
+            Width           =   405
+            _ExtentX        =   714
+            _ExtentY        =   476
+         End
       End
    End
    Begin sMDIinActiveX.MDIActiveX extender 
@@ -239,6 +215,25 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+'
+'    ngPlugins (Fury² Game Creation System Next-Generation Editor Standard Plugin Set)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Implements iExtendedForm
 Implements iDocument
@@ -261,23 +256,24 @@ Private Property Get iDocument_Object() As Object
 End Property
 
 Public Sub InitToolbars()
-    tbrObjects.Wrappable = True
-    tbrObjects.CreateToolbar ilObjects.IconSizeX, False, False, True, ilObjects.IconSizeX
-    tbrObjects.Wrappable = True
-    DefineToolbar tbrObjects, ilObjects, Buttons( _
-        ButtonString("Go Back", , "Back", "BACK"), ButtonString("Go Forward", , "Forward", "FORWARD"), "-", _
-        ButtonString("Reset Filter", , "ResetFilter", "RESET"), "-" _
-    )
-    tbhObjects.Capture tbrObjects
-    
-    tbrMembers.Wrappable = True
-    tbrMembers.CreateToolbar ilMembers.IconSizeX, False, False, True, ilMembers.IconSizeX
-    tbrMembers.Wrappable = True
-    DefineToolbar tbrMembers, ilMembers, Buttons( _
-        ButtonString("Go Back", , "Back", "BACK"), ButtonString("Go Forward", , "Forward", "FORWARD"), "-", _
-        ButtonString("Reset Filter", , "ResetFilter", "RESET"), "-" _
-    )
-    tbhMembers.Capture tbrMembers
+    Set tbrObjects.ResourceFile = Plugin.Editor.Resources
+    tbrObjects.ResourcePattern = "toolbar\*.png"
+    With tbrObjects.Buttons
+        .AddNew , "Back", "undo", "Go Back"
+        .AddNew , "Forward", "redo", "Go Forward"
+        .AddNew "-"
+        .AddNew , "ResetFilter", "delete", "Reset Filter"
+        .AddNew "Filter:", , , , , , False
+    End With
+    Set tbrMembers.ResourceFile = Plugin.Editor.Resources
+    tbrMembers.ResourcePattern = "toolbar\*.png"
+    With tbrMembers.Buttons
+        .AddNew , "Back", "undo", "Go Back"
+        .AddNew , "Forward", "redo", "Go Forward"
+        .AddNew "-"
+        .AddNew , "ResetFilter", "delete", "Reset Filter"
+        .AddNew "Filter:", , , , , , False
+    End With
 End Sub
 
 Public Function TLIToString(ByRef VT As VarTypeInfo, ByRef Value) As String
@@ -714,9 +710,9 @@ End Property
 Private Sub picMembers_Resize()
 On Error Resume Next
 Dim l_rctArea As RECT
-    tbhMembers.Move 0, 0, tbrMembers.ToolbarWidth, tbrMembers.ToolbarHeight
-    txtFilterMembers.Move tbhMembers.Width, 3, picMembers.ScaleWidth - tbhMembers.Width - 3, tbhMembers.Height - 6
-    tvMembers.Move 0, tbrMembers.ToolbarHeight, picMembers.ScaleWidth, picMembers.ScaleHeight - tbrMembers.ToolbarHeight
+    tbrMembers.Move 0, 0, tbrMembers.IdealWidth, tbrMembers.IdealHeight
+    txtFilterMembers.Move tbrMembers.Width, 3, picMembers.ScaleWidth - tbrMembers.Width - 3, tbrMembers.Height - 6
+    tvMembers.Move 0, tbrMembers.IdealHeight, picMembers.ScaleWidth, picMembers.ScaleHeight - tbrMembers.IdealHeight
     l_rctArea.Right = tvMembers.Width
     l_rctArea.Bottom = tvMembers.Height
     InvalidateRect tvMembers.hWndTreeView, l_rctArea, 0
@@ -741,26 +737,26 @@ End Sub
 Private Sub picObjects_Resize()
 On Error Resume Next
 Dim l_rctArea As RECT
-    tbhObjects.Move 0, 0, tbrObjects.ToolbarWidth, tbrObjects.ToolbarHeight
-    txtFilterObjects.Move tbhObjects.Width, 3, picObjects.ScaleWidth - tbhObjects.Width - 3, tbhObjects.Height - 6
-    tvObjects.Move 0, tbrObjects.ToolbarHeight, picObjects.ScaleWidth, picObjects.ScaleHeight - tbrObjects.ToolbarHeight
+    tbrObjects.Move 0, 0, tbrObjects.IdealWidth, tbrObjects.IdealHeight
+    txtFilterObjects.Move tbrObjects.Width, 3, picObjects.ScaleWidth - tbrObjects.Width - 3, tbrObjects.Height - 6
+    tvObjects.Move 0, tbrObjects.IdealHeight, picObjects.ScaleWidth, picObjects.ScaleHeight - tbrObjects.IdealHeight
     l_rctArea.Right = tvObjects.Width
     l_rctArea.Bottom = tvObjects.Height
     InvalidateRect tvObjects.hWndTreeView, l_rctArea, 0
 End Sub
 
-Private Sub tbrMembers_ButtonClick(ByVal lButton As Long)
+Private Sub tbrMembers_ButtonClick(Button As ngUI.ngToolButton)
 On Error Resume Next
-    Select Case LCase(Trim(tbrObjects.ButtonKey(lButton)))
+    Select Case LCase(Trim(Button.key))
     Case "resetfilter"
         txtFilterMembers.Text = ""
     Case Else
     End Select
 End Sub
 
-Private Sub tbrObjects_ButtonClick(ByVal lButton As Long)
+Private Sub tbrObjects_ButtonClick(Button As ngUI.ngToolButton)
 On Error Resume Next
-    Select Case LCase(Trim(tbrObjects.ButtonKey(lButton)))
+    Select Case LCase(Trim(Button.key))
     Case "resetfilter"
         txtFilterObjects.Text = ""
     Case Else

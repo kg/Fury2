@@ -96,14 +96,14 @@ Public Property Get CollisionType_Rectangle() As Long
     CollisionType_Rectangle = 3
 End Property
 
-Public Property Get LoopMode_PlayOnce() As Long
-    LoopMode_PlayOnce = 0
+Public Property Get F2LM_PlayOnce() As Long
+    F2LM_PlayOnce = 0
 End Property
-Public Property Get LoopMode_Restart() As Long
-    LoopMode_Restart = 1
+Public Property Get F2LM_Restart() As Long
+    F2LM_Restart = 1
 End Property
-Public Property Get LoopMode_PingPong() As Long
-    LoopMode_PingPong = 2
+Public Property Get F2LM_PingPong() As Long
+    F2LM_PingPong = 2
 End Property
 
 Public Property Get Transition_None() As Long

@@ -34,7 +34,7 @@ On Error Resume Next
     End If
     If VarType(BindParameters) = vbObject Then
         Set BoundParameters = Nothing
-    Else
+    ElseIf (VarType(BindParameters) And vbArray) = vbArray Then
         BoundParameters = BindParameters
     End If
 End Sub

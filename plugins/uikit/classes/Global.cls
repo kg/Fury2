@@ -492,8 +492,10 @@ On Error Resume Next
     If Desktop.Visible Then
         Desktop.Widget.MouseMove Nothing, Button, Shift, X - Me.Rectangle.Left, Y - Me.Rectangle.Top
         If Desktop.Rectangle.PointInside(X - Me.Rectangle.Left, Y - Me.Rectangle.Top) Then
-            X = -32767
-            Y = -32767
+            If Button = 0 Then
+                X = -32767
+                Y = -32767
+            End If
         End If
     End If
 End Sub

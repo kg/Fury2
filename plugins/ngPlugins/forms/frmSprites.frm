@@ -364,6 +364,25 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+'
+'    ngPlugins (Fury² Game Creation System Next-Generation Editor Standard Plugin Set)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Private Declare Function LBItemFromPt Lib "comctl32.dll" _
   (ByVal hwnd As Long, ByVal ptx As Long, ByVal pty As Long, ByVal bAutoScroll As Long) As Long
@@ -404,7 +423,8 @@ Private m_fpgPlugin As iFileTypePlugin
 
 Private m_booVisible As Boolean
 
-Private m_tbhHandler As iToolbarHandler
+Private WithEvents m_tbrToolbar As ngToolbar
+Attribute m_tbrToolbar.VB_VarHelpID = -1
 Private m_lngCurrentView As SpriteEditorViews
 
 Private Property Get iDocument_Object() As Object
@@ -723,7 +743,7 @@ Public Sub RedrawSprites()
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.RECT
+Dim l_rctText As Win32.Rect
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long
@@ -1385,7 +1405,11 @@ On Error Resume Next
 End Sub
 
 Public Sub Form_Activate()
-On Error GoTo 0
+On Error Resume Next
+    Set insFrameOptions.Editor = Editor
+    Set insOverview.Editor = Editor
+    Set insPoseOptions.Editor = Editor
+    Set insStateOptions.Editor = Editor
     AllocateBuffers
     Form_Resize
     dtViews_Resize
@@ -2007,7 +2031,7 @@ Private Sub picSprites_MouseDown(Button As Integer, Shift As Integer, X As Singl
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.RECT
+Dim l_rctText As Win32.Rect
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long

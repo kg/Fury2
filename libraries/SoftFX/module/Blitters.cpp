@@ -791,18 +791,22 @@ BLITTERSIMPLE_INIT
     if (Source->OptimizeData.transparentOnly) return Trivial_Success;
     _BOS(BlitSimple_Merge, 0) _BOE
 BLITTERSIMPLE_BEGIN
-    AlphaLevel *aSource, *aDest;
+    int sai, a;
 BLITTERSIMPLE_LOOPBEGIN
     if ((*pSource)[::Alpha]) {
       if ((*pSource)[::Alpha] == 255) {
         pDest->V = pSource->V;
       } else {
-        aSource = AlphaLevelLookup( ClipByteHigh((*pSource)[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF )) );
-        aDest = AlphaLevelLookup( ClipByteHigh(((*pSource)[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF ))) ^ 0xFF );
-        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, (*pSource)[::Blue]);
-        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, (*pSource)[::Green]);
-        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, (*pSource)[::Red]);
-        (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aSource, (*pSource)[::Alpha]));
+        sai = (*pSource)[::Alpha] ^ 0xFF;
+        if ((*pDest)[::Alpha] == 0) {
+          a = (*pSource)[::Alpha];
+        } else {
+          a = (*pSource)[::Alpha] + (sai * (*pDest)[::Alpha] / 255);
+        }
+        (*pDest)[::Blue] = ClipByteHigh((((*pSource)[::Blue] * (*pSource)[::Alpha]) + ((*pDest)[::Blue] * (*pDest)[::Alpha] * sai / 255)) / a);
+        (*pDest)[::Green] = ClipByteHigh((((*pSource)[::Green] * (*pSource)[::Alpha]) + ((*pDest)[::Green] * (*pDest)[::Alpha] * sai / 255)) / a);
+        (*pDest)[::Red] = ClipByteHigh((((*pSource)[::Red] * (*pSource)[::Alpha]) + ((*pDest)[::Red] * (*pDest)[::Alpha] * sai / 255)) / a);
+        (*pDest)[::Alpha] = ClipByteHigh(a);
       }
     }
 BLITTERSIMPLE_LOOPEND
@@ -816,26 +820,22 @@ BLITTERSIMPLE_INIT
     if (Source->OptimizeData.transparentOnly) return Trivial_Success;
     _BOS(BlitSimple_Merge_Opacity, 1) , Opacity _BOE
 BLITTERSIMPLE_BEGIN
-    AlphaLevel *aSource, *aDest, *aScale, *aScale2;
+    AlphaLevel *aScale;
     aScale = AlphaLevelLookup( ClipByte(Opacity) );
-    aScale2 = AlphaLevelLookup( ClipByte(Opacity) ^ 0xFF );
+    int sa, sai, a;
 BLITTERSIMPLE_LOOPBEGIN
     if ((*pSource)[::Alpha]) {
-      if ((*pSource)[::Alpha] == 255) {
-        (*pDest)[::Blue] = AlphaFromLevel2(aScale2, (*pDest)[::Blue], aScale, (*pSource)[::Blue]);
-        (*pDest)[::Green] = AlphaFromLevel2(aScale2, (*pDest)[::Green], aScale, (*pSource)[::Green]);
-        (*pDest)[::Red] = AlphaFromLevel2(aScale2, (*pDest)[::Red], aScale, (*pSource)[::Red]);
-        (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, Opacity));
-//        (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + Opacity);
+      sa = AlphaFromLevel(aScale, (*pSource)[::Alpha]);
+      sai = sa ^ 0xFF;
+      if ((*pDest)[::Alpha] == 0) {
+        a = sa;
       } else {
-        aSource = AlphaLevelLookup( AlphaFromLevel(aScale, ClipByteHigh((*pSource)[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF ))));
-        aDest = AlphaLevelLookup( AlphaFromLevel(aScale, ClipByteHigh(((*pSource)[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF )))) ^ 0xFF );
-        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, (*pSource)[::Blue]);
-        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, (*pSource)[::Green]);
-        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, (*pSource)[::Red]);
-        (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, AlphaFromLevel(aScale, (*pSource)[::Alpha])));
-//        (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, (*pSource)[::Alpha]));
+        a = sa + (sai * (*pDest)[::Alpha] / 255);
       }
+      (*pDest)[::Blue] = ClipByteHigh((((*pSource)[::Blue] * sa) + ((*pDest)[::Blue] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Green] = ClipByteHigh((((*pSource)[::Green] * sa) + ((*pDest)[::Green] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Red] = ClipByteHigh((((*pSource)[::Red] * sa) + ((*pDest)[::Red] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Alpha] = ClipByteHigh(a);
     }
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
@@ -1103,20 +1103,26 @@ BLITTERSIMPLE_INIT
     if (Source->OptimizeData.transparentOnly) return Trivial_Success;
     _BOS(BlitSimple_Font_Merge_RGB, 1) , Color _BOE
 BLITTERSIMPLE_BEGIN
-    AlphaLevel *aSource, *aDest, *aScale;
-    AlphaLevel *aRed, *aGreen, *aBlue;
+    AlphaLevel *aScale;
     aScale = AlphaLevelLookup( Color[::Alpha] );
+    int sa, a, sai;
+    int sr, sg, sb;
 BLITTERSIMPLE_LOOPBEGIN
-    if ((*pSource)[::Alpha]) {
-        aSource = AlphaLevelLookup( AlphaFromLevel(aScale, ClipByteHigh((*pSource)[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF ))) );
-        aDest = AlphaLevelLookup( AlphaFromLevel(aScale, ClipByteHigh((*pSource)[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF ))) ^ 0xFF );
-        aBlue = AlphaLevelLookup( (*pSource)[::Blue] );
-        aGreen = AlphaLevelLookup( (*pSource)[::Green] );
-        aRed = AlphaLevelLookup( (*pSource)[::Red] );
-        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, AlphaFromLevel(aBlue, Color[::Blue]));
-        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, AlphaFromLevel(aGreen, Color[::Green]));
-        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, AlphaFromLevel(aRed, Color[::Red]));
-        (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, AlphaFromLevel(aScale, (*pSource)[::Alpha])));
+    sa = AlphaFromLevel(aScale, (*pSource)[::Alpha]);
+    if (sa) {
+      sai = sa ^ 0xFF;
+      if ((*pDest)[::Alpha] == 0) {
+        a = sa;
+      } else {
+        a = sa + (sai * (*pDest)[::Alpha] / 255);
+      }
+      sb = AlphaLookup((*pSource)[::Blue], Color[::Blue]);
+      sg = AlphaLookup((*pSource)[::Green], Color[::Green]);
+      sr = AlphaLookup((*pSource)[::Red], Color[::Red]);
+      (*pDest)[::Blue] = ClipByteHigh(((sb * sa) + ((*pDest)[::Blue] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Green] = ClipByteHigh(((sg * sa) + ((*pDest)[::Green] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Red] = ClipByteHigh(((sr * sa) + ((*pDest)[::Red] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Alpha] = ClipByteHigh(a);
     }
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
@@ -1129,20 +1135,22 @@ BLITTERSIMPLE_INIT
     if (Source->OptimizeData.transparentOnly) return Trivial_Success;
     _BOS(BlitSimple_Font_Merge_RGB_Opacity, 2) , Color, Opacity _BOE
 BLITTERSIMPLE_BEGIN
-    AlphaLevel *aSource, *aDest, *aScale;
-    AlphaLevel *aRed, *aGreen, *aBlue;
+    AlphaLevel *aScale;
     aScale = AlphaLevelLookup( ScaleAlpha(Color, Opacity)[::Alpha] );
+    int sa, a, sai;
 BLITTERSIMPLE_LOOPBEGIN
-    if ((*pSource)[::Alpha]) {
-        aSource = AlphaLevelLookup( AlphaFromLevel(aScale, ClipByteHigh((*pSource)[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF ))) );
-        aDest = AlphaLevelLookup( AlphaFromLevel(aScale, ClipByteHigh((*pSource)[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF ))) ^ 0xFF );
-        aBlue = AlphaLevelLookup( (*pSource)[::Blue] );
-        aGreen = AlphaLevelLookup( (*pSource)[::Green] );
-        aRed = AlphaLevelLookup( (*pSource)[::Red] );
-        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, AlphaFromLevel(aBlue, Color[::Blue]));
-        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, AlphaFromLevel(aGreen, Color[::Green]));
-        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, AlphaFromLevel(aRed, Color[::Red]));
-        (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, AlphaFromLevel(aScale, (*pSource)[::Alpha])));
+    sa = AlphaFromLevel(aScale, (*pSource)[::Alpha]);
+    if (sa) {
+      sai = sa ^ 0xFF;
+      if ((*pDest)[::Alpha] == 0) {
+        a = sa;
+      } else {
+        a = sa + (sai * (*pDest)[::Alpha] / 255);
+      }
+      (*pDest)[::Blue] = ClipByteHigh(((AlphaLookup((*pSource)[::Blue], Color[::Blue]) * sa) + ((*pDest)[::Blue] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Green] = ClipByteHigh(((AlphaLookup((*pSource)[::Green], Color[::Green]) * sa) + ((*pDest)[::Green] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Red] = ClipByteHigh(((AlphaLookup((*pSource)[::Red], Color[::Red]) * sa) + ((*pDest)[::Red] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Alpha] = ClipByteHigh(a);
     }
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
@@ -1709,18 +1717,22 @@ BLITTERRESAMPLE_SIGNATURE(Merge)
 BLITTERRESAMPLE_INIT
     _RBOS(BlitResample_Merge, 0) _RBOE
 BLITTERRESAMPLE_BEGIN
-    AlphaLevel *aSource, *aDest;
+    int sai, a;
 BLITTERRESAMPLE_LOOPBEGIN
     if (S[::Alpha]) {
       if (S[::Alpha] == 255) {
         pDest->V = S.V;
       } else {
-        aSource = AlphaLevelLookup( ClipByteHigh(S[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF )) );
-        aDest = AlphaLevelLookup( ClipByteHigh((S[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF ))) ^ 0xFF );
-        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, S[::Blue]);
-        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, S[::Green]);
-        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, S[::Red]);
-        (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aSource, S[::Alpha]));
+        sai = S[::Alpha] ^ 0xFF;
+        if ((*pDest)[::Alpha] == 0) {
+          a = S[::Alpha];
+        } else {
+          a = S[::Alpha] + (sai * (*pDest)[::Alpha] / 255);
+        }
+        (*pDest)[::Blue] = ClipByteHigh(((S[::Blue] * S[::Alpha]) + ((*pDest)[::Blue] * (*pDest)[::Alpha] * sai / 255)) / a);
+        (*pDest)[::Green] = ClipByteHigh(((S[::Green] * S[::Alpha]) + ((*pDest)[::Green] * (*pDest)[::Alpha] * sai / 255)) / a);
+        (*pDest)[::Red] = ClipByteHigh(((S[::Red] * S[::Alpha]) + ((*pDest)[::Red] * (*pDest)[::Alpha] * sai / 255)) / a);
+        (*pDest)[::Alpha] = ClipByteHigh(a);
       }
     }
 BLITTERRESAMPLE_LOOPEND
@@ -1733,24 +1745,22 @@ BLITTERRESAMPLE_INIT
     if (Opacity >= 255) return BlitResample_Merge(Dest, Source, DestRect, SourceRect, Scaler);
     _RBOS(BlitResample_Merge_Opacity, 1) , Opacity _RBOE
 BLITTERRESAMPLE_BEGIN
-    AlphaLevel *aSource, *aDest, *aScale, *aScale2;
+    AlphaLevel *aScale;
     aScale = AlphaLevelLookup( ClipByte(Opacity) );
-    aScale2 = AlphaLevelLookup( ClipByte(Opacity) ^ 0xFF );
+    int sa, sai, a;
 BLITTERRESAMPLE_LOOPBEGIN
     if (S[::Alpha]) {
-      if (S[::Alpha] == 255) {
-        (*pDest)[::Blue] = AlphaFromLevel2(aScale2, (*pDest)[::Blue], aScale, S[::Blue]);
-        (*pDest)[::Green] = AlphaFromLevel2(aScale2, (*pDest)[::Green], aScale, S[::Green]);
-        (*pDest)[::Red] = AlphaFromLevel2(aScale2, (*pDest)[::Red], aScale, S[::Red]);
-        (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, Opacity));
+      sa = AlphaFromLevel(aScale, S[::Alpha]);
+      sai = sa ^ 0xFF;
+      if ((*pDest)[::Alpha] == 0) {
+        a = S[::Alpha];
       } else {
-        aSource = AlphaLevelLookup( AlphaFromLevel(aScale, ClipByteHigh(S[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF ))));
-        aDest = AlphaLevelLookup( AlphaFromLevel(aScale, ClipByteHigh((S[::Alpha] + ( (*pDest)[::Alpha] ^ 0xFF )))) ^ 0xFF );
-        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, S[::Blue]);
-        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, S[::Green]);
-        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, S[::Red]);
-        (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, AlphaFromLevel(aScale, S[::Alpha])));
+        a = S[::Alpha] + (sai * (*pDest)[::Alpha] / 255);
       }
+      (*pDest)[::Blue] = ClipByteHigh(((S[::Blue] * sa) + ((*pDest)[::Blue] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Green] = ClipByteHigh(((S[::Green] * sa) + ((*pDest)[::Green] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Red] = ClipByteHigh(((S[::Red] * sa) + ((*pDest)[::Red] * (*pDest)[::Alpha] * sai / 255)) / a);
+      (*pDest)[::Alpha] = ClipByteHigh(a);
     }
 BLITTERRESAMPLE_LOOPEND
 BLITTERRESAMPLE_END
@@ -1863,6 +1873,109 @@ BLITTERRESAMPLE_LOOPBEGIN
 BLITTERRESAMPLE_LOOPEND
 BLITTERRESAMPLE_END
 
+Export int BlitMask_SourceAlpha_Opacity(Image *Dest, Image *Source, Image *Mask,
+                          Rectangle *Rect, Coordinate SX, Coordinate SY, Coordinate MX, Coordinate MY, int Opacity)
+{
+    if (!Dest || !Source || !Mask) {
+        return Failure;
+    }
+    if (!Dest->initialized()) {
+        return Failure;
+    }
+    if (!Source->initialized()) {
+        return Failure;
+    }
+    if (!Mask->initialized()) {
+        return Failure;
+    }
+
+    if (Opacity == 0) {
+      return Trivial_Success;
+    }
+
+    {
+        int overrideresult = Override::EnumOverrides(Override::BlitMask_Merge_Opacity, 9, Dest, Source, Mask, Rect, SX, SY, MX, MY, Opacity);
+#ifdef OVERRIDES
+        if (overrideresult != 0) return overrideresult;
+#endif
+    }
+
+    if (!Dest->Unlocked) {
+        return Failure;
+    }
+    if (!Source->Unlocked) {
+        return Failure;
+    }
+    if (!Mask->Unlocked) {
+        return Failure;
+    }
+
+    int DSX = SX, DSY = SY, MSX = MX, MSY = MY;
+
+    Rectangle rCoordinates;
+    if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
+        Rect, DSX, DSY)) {
+          return Trivial_Success;
+      }
+
+    rCoordinates.Width = ClipValue(rCoordinates.Width, 0, Mask->Width - MX);
+    rCoordinates.Height = ClipValue(rCoordinates.Height, 0, Mask->Height - MY);
+
+    Pixel *pSource = Source->pointer(DSX, DSY),
+        *pDest = Dest->pointer(
+        rCoordinates.Left, rCoordinates.Top),
+        *pMask = Mask->pointer(MSX, MSY);
+    if ((!pSource) || (!pDest) || (!pMask)) {
+      return Failure;
+    }
+    
+    Dest->dirty();
+    
+    DoubleWord iCX = 0 , iCY = rCoordinates.Height;
+    
+    DoubleWord iMaskRowOffset =
+        (Mask->Width - rCoordinates.Width) + Mask->Pitch;
+    DoubleWord iSourceRowOffset =
+        (Source->Width - rCoordinates.Width) + Source->Pitch;
+    DoubleWord iDestRowOffset =
+        (Dest->Width - rCoordinates.Width) + Dest->Pitch;
+    
+    AlphaLevel *aScale, *aMask, *aSource, *aDest;
+    aScale = AlphaLevelLookup( ClipByte(Opacity) );
+    int sa;
+
+    while (iCY--) {
+        iCX = (DoubleWord)rCoordinates.Width;
+        while (iCX--) {
+            if ((*pMask)[::Red]) {
+                if ((*pSource)[::Alpha]) {
+                    aMask = AlphaLevelLookup(AlphaFromLevel(aScale, (*pMask)[::Red]));
+                    sa = AlphaFromLevel(aMask, (*pSource)[::Alpha]);
+                    if (sa == 255) {
+                      (*pDest)[::Blue] = (*pSource)[::Blue];
+                      (*pDest)[::Green] = (*pSource)[::Green];
+                      (*pDest)[::Red] = (*pSource)[::Red];
+                    } else {
+                      aSource = AlphaLevelLookup(sa);
+                      aDest = AlphaLevelLookup(sa ^ 0xFF);
+                      (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, (*pSource)[::Blue]);
+                      (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, (*pSource)[::Green]);
+                      (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, (*pSource)[::Red]);
+                    }
+                }
+            }
+            pMask++;
+            pSource++;
+            pDest++;
+        }
+        pMask += iMaskRowOffset;
+        pSource += iSourceRowOffset;
+        pDest += iDestRowOffset;
+    }
+
+    return Success;
+}
+
 Export int BlitMask_Merge_Opacity(Image *Dest, Image *Source, Image *Mask,
                           Rectangle *Rect, Coordinate SX, Coordinate SY, Coordinate MX, Coordinate MY, int Opacity)
 {
@@ -1930,50 +2043,27 @@ Export int BlitMask_Merge_Opacity(Image *Dest, Image *Source, Image *Mask,
     DoubleWord iDestRowOffset =
         (Dest->Width - rCoordinates.Width) + Dest->Pitch;
     
-    AlphaLevel *aSource, *aDest, *aScale, *aScale2, *aMask, *aMask2;
+    AlphaLevel *aScale, *aMask;
     aScale = AlphaLevelLookup( ClipByte(Opacity) );
-    aScale2 = AlphaLevelLookup( ClipByte(Opacity) ^ 0xFF );
+    int sa, sai, a;
 
     while (iCY--) {
         iCX = (DoubleWord)rCoordinates.Width;
         while (iCX--) {
             if ((*pMask)[::Red]) {
                 if ((*pSource)[::Alpha]) {
-                    if ((*pMask)[::Red] == 255) {
-                        if ((*pSource)[::Alpha] == 255) {
-                            (*pDest)[::Blue] = AlphaFromLevel2(aScale2, (*pDest)[::Blue], aScale, (*pSource)[::Blue]);
-                            (*pDest)[::Green] = AlphaFromLevel2(aScale2, (*pDest)[::Green], aScale, (*pSource)[::Green]);
-                            (*pDest)[::Red] = AlphaFromLevel2(aScale2, (*pDest)[::Red], aScale, (*pSource)[::Red]);
-                            (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, Opacity));
-                            // (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + Opacity);
-                        } else {
-                            aSource = AlphaLevelLookup( AlphaFromLevel(aScale, (*pSource)[::Alpha]) );
-                            aDest = AlphaLevelLookup( AlphaFromLevel(aScale, (*pSource)[::Alpha]) ^ 0xFF );
-                            (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, (*pSource)[::Blue]);
-                            (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, (*pSource)[::Green]);
-                            (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, (*pSource)[::Red]);
-                            (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, AlphaFromLevel(aScale, (*pSource)[::Alpha])));
-                            // (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, (*pSource)[::Alpha]));
-                        }
+                    aMask = AlphaLevelLookup(AlphaFromLevel(aScale, (*pMask)[::Red]));
+                    sa = AlphaFromLevel(aMask, (*pSource)[::Alpha]);
+                    sai = sa ^ 0xFF;
+                    if ((*pDest)[::Alpha] == 0) {
+                      a = sa;
                     } else {
-                        aMask = AlphaLevelLookup(AlphaFromLevel(aScale, (*pMask)[::Red]));
-                        if ((*pSource)[::Alpha] == 255) {
-                            aMask2 = AlphaLevelLookup(AlphaFromLevel(aScale, (*pMask)[::Red]) ^ 0xFF);
-                            (*pDest)[::Blue] = AlphaFromLevel2(aMask2, (*pDest)[::Blue], aMask, (*pSource)[::Blue]);
-                            (*pDest)[::Green] = AlphaFromLevel2(aMask2, (*pDest)[::Green], aMask, (*pSource)[::Green]);
-                            (*pDest)[::Red] = AlphaFromLevel2(aMask2, (*pDest)[::Red], aMask, (*pSource)[::Red]);
-                            (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, Opacity));
-                            // (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + Opacity);
-                        } else {
-                            aSource = AlphaLevelLookup( AlphaFromLevel(aMask, (*pSource)[::Alpha]) );
-                            aDest = AlphaLevelLookup( AlphaFromLevel(aMask, (*pSource)[::Alpha]) ^ 0xFF );
-                            (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, (*pSource)[::Blue]);
-                            (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, (*pSource)[::Green]);
-                            (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, (*pSource)[::Red]);
-                            (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, AlphaFromLevel(aScale, (*pSource)[::Alpha])));
-                            // (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aScale, (*pSource)[::Alpha]));
-                        }
+                      a = sa + (sai * (*pDest)[::Alpha] / 255);
                     }
+                    (*pDest)[::Blue] = ClipByteHigh((((*pSource)[::Blue] * sa) + ((*pDest)[::Blue] * (*pDest)[::Alpha] * sai / 255)) / a);
+                    (*pDest)[::Green] = ClipByteHigh((((*pSource)[::Green] * sa) + ((*pDest)[::Green] * (*pDest)[::Alpha] * sai / 255)) / a);
+                    (*pDest)[::Red] = ClipByteHigh((((*pSource)[::Red] * sa) + ((*pDest)[::Red] * (*pDest)[::Alpha] * sai / 255)) / a);
+                    (*pDest)[::Alpha] = ClipByteHigh(a);
                 }
             }
             pMask++;
@@ -2027,10 +2117,6 @@ signed char *cxo, *cyo;
       }
     }
 
-//    cxo = AllocateArray(signed char, cells);
-//    cyo = AllocateArray(signed char, cells);
-//    cellTables = AllocateArray(short*, cells);
-
     cxo = LookupAllocate<signed char>(cells);
     cyo = LookupAllocate<signed char>(cells);
     cellTables = LookupAllocate<short*>(cells);
@@ -2044,10 +2130,9 @@ signed char *cxo, *cyo;
           if (w) {
             cxo[i] = x + Filter->XOffset;
             cyo[i] = y + Filter->YOffset;
-            // cellTables[i] = AllocateArray(short, 256);
             cellTables[i] = LookupAllocate<short>(256);
             for (int v = 0; v < 256; v++) {
-              cellTables[i][v] = floor((v * w));
+              cellTables[i][v] = ceil((v * w));
             }
             i++;
           }
@@ -2064,7 +2149,7 @@ signed char *cxo, *cyo;
     DoubleWord iDestRowOffset =
         (Dest->Width - rCoordinates.Width) + Dest->Pitch;
     
-    short b = 0, g = 0, r = 0, a = 0;
+    int b = 0, g = 0, r = 0, a = 0;
 
     while (iCY--) {
       iCX = (DoubleWord)rCoordinates.Width;
@@ -2090,12 +2175,8 @@ signed char *cxo, *cyo;
     }
 
     for (DoubleWord i = 0; i < cells; i++) {
-//      DeleteArray(cellTables[i]);
       LookupDeallocate(cellTables[i]);
     }
-//    DeleteArray(cellTables);
-//    DeleteArray(cxo);
-//    DeleteArray(cyo);
     LookupDeallocate(cellTables);
     LookupDeallocate(cxo);
     LookupDeallocate(cyo);
@@ -2142,10 +2223,6 @@ signed char *cxo, *cyo;
       }
     }
 
-//    cxo = AllocateArray(signed char, cells);
-//    cyo = AllocateArray(signed char, cells);
-//    cellTables = AllocateArray(short*, cells);
-
     cxo = LookupAllocate<signed char>(cells);
     cyo = LookupAllocate<signed char>(cells);
     cellTables = LookupAllocate<short*>(cells);
@@ -2159,10 +2236,9 @@ signed char *cxo, *cyo;
           if (w) {
             cxo[i] = x + Filter->XOffset;
             cyo[i] = y + Filter->YOffset;
-            // cellTables[i] = AllocateArray(short, 256);
             cellTables[i] = LookupAllocate<short>(256);
             for (int v = 0; v < 256; v++) {
-              cellTables[i][v] = floor((v * w));
+              cellTables[i][v] = ceil((v * w));
             }
             i++;
           }
@@ -2179,7 +2255,7 @@ signed char *cxo, *cyo;
     DoubleWord iDestRowOffset =
         (Dest->Width - rCoordinates.Width) + Dest->Pitch;
     
-    short b = 0, g = 0, r = 0;
+    int b = 0, g = 0, r = 0;
 
     while (iCY--) {
       iCX = (DoubleWord)rCoordinates.Width;
@@ -2203,12 +2279,8 @@ signed char *cxo, *cyo;
     }
 
     for (DoubleWord i = 0; i < cells; i++) {
-//      DeleteArray(cellTables[i]);
       LookupDeallocate(cellTables[i]);
     }
-//    DeleteArray(cellTables);
-//    DeleteArray(cxo);
-//    DeleteArray(cyo);
     LookupDeallocate(cellTables);
     LookupDeallocate(cxo);
     LookupDeallocate(cyo);
@@ -2255,10 +2327,6 @@ signed char *cxo, *cyo;
       }
     }
 
-//    cxo = AllocateArray(signed char, cells);
-//    cyo = AllocateArray(signed char, cells);
-//    cellTables = AllocateArray(short*, cells);
-
     cxo = LookupAllocate<signed char>(cells);
     cyo = LookupAllocate<signed char>(cells);
     cellTables = LookupAllocate<short*>(cells);
@@ -2272,10 +2340,9 @@ signed char *cxo, *cyo;
           if (w) {
             cxo[i] = x + Filter->XOffset;
             cyo[i] = y + Filter->YOffset;
-            // cellTables[i] = AllocateArray(short, 256);
             cellTables[i] = LookupAllocate<short>(256);
             for (int v = 0; v < 256; v++) {
-              cellTables[i][v] = floor((v * w));
+              cellTables[i][v] = ceil((v * w));
             }
             i++;
           }
@@ -2292,7 +2359,7 @@ signed char *cxo, *cyo;
     DoubleWord iDestRowOffset =
         (Dest->Width - rCoordinates.Width) + Dest->Pitch;
     
-    short b = 0, g = 0, r = 0;
+    int b = 0, g = 0, r = 0;
 
     while (iCY--) {
       iCX = (DoubleWord)rCoordinates.Width;
@@ -2318,12 +2385,8 @@ signed char *cxo, *cyo;
     }
 
     for (DoubleWord i = 0; i < cells; i++) {
-//      DeleteArray(cellTables[i]);
       LookupDeallocate(cellTables[i]);
     }
-//    DeleteArray(cellTables);
-//    DeleteArray(cxo);
-//    DeleteArray(cyo);
     LookupDeallocate(cellTables);
     LookupDeallocate(cxo);
     LookupDeallocate(cyo);
@@ -2372,10 +2435,6 @@ signed char *cxo, *cyo;
       }
     }
 
-//    cxo = AllocateArray(signed char, cells);
-//    cyo = AllocateArray(signed char, cells);
-//    cellTables = AllocateArray(short*, cells);
-
     cxo = LookupAllocate<signed char>(cells);
     cyo = LookupAllocate<signed char>(cells);
     cellTables = LookupAllocate<short*>(cells);
@@ -2389,10 +2448,9 @@ signed char *cxo, *cyo;
           if (w) {
             cxo[i] = x + Filter->XOffset;
             cyo[i] = y + Filter->YOffset;
-            // cellTables[i] = AllocateArray(short, 256);
             cellTables[i] = LookupAllocate<short>(256);
             for (int v = 0; v < 256; v++) {
-              cellTables[i][v] = floor((v * w));
+              cellTables[i][v] = ceil((v * w));
             }
             i++;
           }
@@ -2411,7 +2469,7 @@ signed char *cxo, *cyo;
     DoubleWord iDestRowOffset =
         (Dest->Width - rCoordinates.Width) + Dest->Pitch;
     
-    short a = 0;
+    int a = 0;
     AlphaLevel *aScale, *aSource, *aDest;
     aScale = AlphaLevelLookup( ShadowColor[::Alpha] );
 
@@ -2440,12 +2498,8 @@ signed char *cxo, *cyo;
     }
 
     for (DoubleWord i = 0; i < cells; i++) {
-//      DeleteArray(cellTables[i]);
       LookupDeallocate(cellTables[i]);
     }
-//    DeleteArray(cellTables);
-//    DeleteArray(cxo);
-//    DeleteArray(cyo);
     LookupDeallocate(cellTables);
     LookupDeallocate(cxo);
     LookupDeallocate(cyo);
@@ -2492,10 +2546,6 @@ signed char *cxo, *cyo;
       }
     }
 
-//    cxo = AllocateArray(signed char, cells);
-//    cyo = AllocateArray(signed char, cells);
-//    cellTables = AllocateArray(short*, cells);
-
     cxo = LookupAllocate<signed char>(cells);
     cyo = LookupAllocate<signed char>(cells);
     cellTables = LookupAllocate<short*>(cells);
@@ -2509,10 +2559,9 @@ signed char *cxo, *cyo;
           if (w) {
             cxo[i] = x + Filter->XOffset;
             cyo[i] = y + Filter->YOffset;
-            // cellTables[i] = AllocateArray(short, 256);
             cellTables[i] = LookupAllocate<short>(256);
             for (int v = 0; v < 256; v++) {
-              cellTables[i][v] = floor((v * w));
+              cellTables[i][v] = ceil((v * w));
             }
             i++;
           }
@@ -2529,7 +2578,7 @@ signed char *cxo, *cyo;
     DoubleWord iDestRowOffset =
         (Dest->Width - rCoordinates.Width) + Dest->Pitch;
     
-    short b = 0, g = 0, r = 0, a = 0;
+    int b = 0, g = 0, r = 0, a = 0;
     AlphaLevel *aSource, *aDest;
 
     while (iCY--) {
@@ -2564,12 +2613,8 @@ signed char *cxo, *cyo;
     }
 
     for (DoubleWord i = 0; i < cells; i++) {
-//      DeleteArray(cellTables[i]);
       LookupDeallocate(cellTables[i]);
     }
-//    DeleteArray(cellTables);
-//    DeleteArray(cxo);
-//    DeleteArray(cyo);
     LookupDeallocate(cellTables);
     LookupDeallocate(cxo);
     LookupDeallocate(cyo);

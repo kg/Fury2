@@ -76,5 +76,8 @@ End Property
 Private Sub iPlugin_Shutdown()
 End Sub
 
-
+Private Property Get iPlugin_ToolbarIcon() As libGraphics.Fury2Image
+On Error Resume Next
+    Set iPlugin_ToolbarIcon = m_objEditor.LoadResources("tk").ItemData("icons\tileset importer.png")
+End Property
 

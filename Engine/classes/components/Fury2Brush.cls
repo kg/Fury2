@@ -14,7 +14,7 @@ Attribute VB_Exposed = False
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
 Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 '
-'    IDE (Fury² Game Creation System Integrated Editor)
+'    ngPlugins (Fury² Game Creation System Next-Generation Editor Standard Plugin Set)
 '    Copyright (C) 2003 Kevin Gadd
 '
 '    This library is free software; you can redistribute it and/or

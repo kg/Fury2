@@ -8,7 +8,7 @@ BEGIN
 END
 Attribute VB_Name = "Fury2FSModule"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 '
@@ -32,9 +32,6 @@ Attribute VB_Exposed = True
 
 Option Explicit
 
-Public Property Get Initialized() As Boolean
-End Property
-
 Public Property Get Enabled() As Boolean
 End Property
 
@@ -53,14 +50,29 @@ End Property
 Public Property Get FolderCount() As Long
 End Property
 
-Public Property Get File(Index As Long) As String
+Public Property Get FileExists(ByRef Path As String) As Boolean
 End Property
 
-Public Property Get Folder(Index As Long) As String
+Public Property Get FolderExists(ByRef Path As String) As Boolean
 End Property
 
-Public Function EnumFiles(ByVal Path As String, ByVal PathAppend As String, ByRef Count As Long, ByVal Filter As String, ByVal Recursive As Boolean, ByRef Target() As FileEnumerationEntry, ByVal Index As Long) As Long
+Public Property Get NamedFile(ByRef Name As String) As FileEnumerationEntry
+End Property
+
+Public Property Get NamedFolder(ByRef Name As String) As FolderEnumerationEntry
+End Property
+
+Public Property Get File(ByVal Index As Long) As FileEnumerationEntry
+End Property
+
+Public Property Get Folder(ByVal Index As Long) As FolderEnumerationEntry
+End Property
+
+Public Function EnumFiles(ByVal Path As String, ByVal PathAppend As String, ByRef Count As Long, ByVal Filter As String, ByVal Recursive As Boolean, ByRef Target() As FileEnumerationEntry) As Long
 End Function
 
-Public Function EnumFolders(ByVal Path As String, ByVal PathAppend As String, ByRef Count As Long, ByVal Recursive As Boolean, ByRef Target() As FileEnumerationEntry, ByVal Index As Long) As Long
+Public Function EnumFolders(ByVal Path As String, ByVal PathAppend As String, ByRef Count As Long, ByVal Recursive As Boolean, ByRef Target() As FolderEnumerationEntry) As Long
+End Function
+
+Public Function LocateFile(ByRef Filename As String) As String
 End Function

@@ -117,7 +117,17 @@ End Property
 
 Public Property Let CursorPos(ByVal NewCursorPos As Long)
 On Error Resume Next
-    m_lngCursorPos = NewCursorPos
+    m_lngCursorPos = ClipValue(NewCursorPos, 1, UBound(m_bytData) + 1)
+End Property
+
+Public Property Get Position() As Long
+On Error Resume Next
+    Position = m_lngCursorPos
+End Property
+
+Public Property Let Position(ByVal NewCursorPos As Long)
+On Error Resume Next
+    m_lngCursorPos = ClipValue(NewCursorPos, 1, UBound(m_bytData) + 1)
 End Property
 
 Private Sub IncSegLength(Amount As Long)

@@ -564,7 +564,7 @@ Public Function FindByNames(ByVal Match As String) As Fury2Collection
 On Error Resume Next
 Dim l_colItems As Fury2Collection
 Dim l_sprSprite As Fury2Sprite
-    Set l_colItems = New Fury2Collection
+    Set l_colItems = Engine.F2Collection()
     For Each l_sprSprite In mCol
         If l_sprSprite.Name Like Match Then
             l_colItems.Add l_sprSprite

@@ -1,10 +1,12 @@
-Fury2Filesystem = 18, 30, 942, 637, 
-Fury2Package = 66, 87, 990, 694, C
+Fury2Filesystem = 18, 30, 942, 637, C
+Fury2Package2 = 66, 87, 990, 694, C
 Fury2Files = 110, 145, 1034, 752, C
-Fury2File = 103, 172, 1027, 779, Z
+Fury2File = 103, 172, 1027, 779, C
 Fury2Folder = 154, 203, 1078, 810, C
 Fury2Folders = 176, 232, 1100, 839, C
 Fury2Collection = 198, 261, 1122, 867, C
 mdlRecursiveSearch = 78, 120, 1002, 726, C
 Fury2FSModule = 66, 72, 813, 520, C
 Fury2FSGlobals = 88, 116, 617, 420, C
+mdlText = 22, 25, 803, 543, C
+Fury2DiskFolder = 110, 125, 911, 645, C

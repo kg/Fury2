@@ -120,8 +120,8 @@ End Sub
 
 Public Sub Flip()
 On Error Resume Next
-Dim l_rctDest As DxVBLib.RECT
-Dim l_rctSource As DxVBLib.RECT
+Dim l_rctDest As DxVBLib.Rect
+Dim l_rctSource As DxVBLib.Rect
     If m_Closed Then Exit Sub
     LockBackbuffer
     If m_ddsBackbuffer.isLost Then
@@ -193,7 +193,7 @@ End Sub
 
 Friend Sub LockBackbuffer()
 On Error Resume Next
-Dim l_rcLock As DxVBLib.RECT
+Dim l_rcLock As DxVBLib.Rect
     SoftFX.SetImagePitch Backbuffer.Handle, 0
     SoftFX.SetImagePointer Backbuffer.Handle, 0
     SoftFX.SetImageLocked Backbuffer.Handle, 1
@@ -207,7 +207,7 @@ End Sub
 Friend Sub UnlockBackbuffer()
 On Error Resume Next
 Dim l_sdDesc As DDSURFACEDESC2
-Dim l_rcLock As DxVBLib.RECT
+Dim l_rcLock As DxVBLib.Rect
     m_ddsBackbuffer.GetSurfaceDesc l_sdDesc
     SoftFX.SetImagePointer Backbuffer.Handle, 0
     SoftFX.SetImageLocked Backbuffer.Handle, 1
@@ -246,7 +246,7 @@ End Sub
 
 Public Sub Allocate()
 On Error Resume Next
-Dim l_rctSurface As DxVBLib.RECT
+Dim l_rctSurface As DxVBLib.Rect
     SoftFX.SetImageWidth Backbuffer.Handle, m_lngWidth
     SoftFX.SetImageHeight Backbuffer.Handle, m_lngHeight
     SoftFX.SetImagePitch Backbuffer.Handle, 0
@@ -288,6 +288,8 @@ Private Sub m_OutForm_KeyDown(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
     If KeyCode = vbKeyF4 And Shift = vbAltMask Then
         m_OutForm.Hide
+        Shutdown
+        m_Hooked.GFXEngine_Closed
         m_Closed = True
     ElseIf KeyCode = vbKeyReturn And Shift = vbAltMask Then
         If Fullscreen Then

@@ -16,8 +16,7 @@ Public KeyCode As Long
 Public Shift As Boolean
 Public Ctrl As Boolean
 Public Alt As Boolean
-Public Hook As Object
-Public HookMethod As String
+Public Hook As ngEvent
 
 Public Property Get KeyString() As String
 On Error Resume Next

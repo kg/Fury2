@@ -80,7 +80,7 @@ Dim lCount As Long
       FORMAT_MESSAGE_FROM_SYSTEM Or FORMAT_MESSAGE_IGNORE_INSERTS, _
       0, lLastDLLError, 0&, sBuff, Len(sBuff), ByVal 0)
    If lCount Then
-      WinAPIError = left$(sBuff, lCount)
+      WinAPIError = Left$(sBuff, lCount)
    End If
    
 End Function

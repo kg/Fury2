@@ -56,3 +56,6 @@ End Sub
 
 Public Sub DebugFrameEnd()
 End Sub
+
+Public Sub InterruptPoll(ByRef Interrupt As Boolean)
+End Sub

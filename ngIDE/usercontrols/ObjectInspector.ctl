@@ -124,10 +124,30 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+
+'    ngIDE (Fury² Game Creation System Next-Generation Editor)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
-Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.RECT, ByVal wFormat As Long) As Long
+Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.Rect, ByVal wFormat As Long) As Long
 Private Const DT_WORDBREAK = &H10
 Private Const DT_NOPREFIX = &H800
+Private Const MinimumEditWidth As Long = 60
 
 Private m_colObjectStack As New Collection
 Private m_colNameStack As New Collection
@@ -183,6 +203,8 @@ Private m_imgColorBufferBG As Fury2Image
 
 Private m_booShowInfobox As Boolean
 Private m_booShowHierarchy As Boolean
+
+Public Editor As Object
 
 Public Event EllipsisPressed(ByVal Index As Long)
 Public Event ItemSelected(ByVal Index As Long)
@@ -285,8 +307,8 @@ Dim l_lngItems As Long, l_lngY As Long
     With m_oiItems(m_lngSelectedItem)
         If Err <> 0 Then Exit Sub
         l_lngNameWidth = m_lngNameWidth
-        If (l_lngNameWidth > ((picItems.ScaleWidth - vsScroll.Width) \ 2)) Then
-            l_lngNameWidth = ((picItems.ScaleWidth - vsScroll.Width) \ 2)
+        If (l_lngNameWidth > ((picItems.ScaleWidth - vsScroll.Width - MinimumEditWidth))) Then
+            l_lngNameWidth = ((picItems.ScaleWidth - vsScroll.Width - MinimumEditWidth))
         End If
         If (VarType(.Value) = vbBoolean) And ((.CallTypes And VbLet) = VbLet) Then
             .ShowDropdown = True
@@ -707,6 +729,20 @@ Dim l_varItems As Variant
     EditBoxChanged
 End Sub
 
+Public Sub SetCurrentPropertyValue_(ByVal NewValue As String)
+On Error Resume Next
+    txtEdit.Text = NewValue
+    EditBoxChanged
+End Sub
+
+Public Sub CopyImageToGameFolder_(ByVal Filename As String)
+On Error Resume Next
+    FileCopy Filename, Editor.GamePath & "\" & GetTitle(Filename)
+    txtEdit.Text = GetTitle(Filename)
+    Editor.RefreshFileSidebar
+    EditBoxChanged
+End Sub
+
 Private Sub cmdElipsis_Click()
 On Error Resume Next
 Dim l_objValue As Object
@@ -732,32 +768,26 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
+                    EditBoxChanged
                 Else
-                    Select Case MsgBox("The file you have selected is not inside your game folder. The engine will not be able to load it. Continue?", vbInformation Or vbYesNo, "Warning")
-                    Case vbYes
-                        txtEdit.Text = l_strValue
-                    End Select
+                    Editor.ShowNotice "Question", "The file you have selected is not inside your game folder. The engine will not be able to load it.", Editor.NoticeIcon("question"), Array(Array("Cancel"), Array("Ignore", BindEvent(Me, "SetCurrentPropertyValue_", Array(l_strValue))), Array("Copy To Game Folder", BindEvent(Me, "CopyImageToGameFolder_", Array(l_strValue))))
                 End If
-                EditBoxChanged
             End If
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
+                    EditBoxChanged
                 Else
-                    Select Case MsgBox("The file you have selected is not inside your game folder. The engine will not be able to load it. Continue?", vbInformation Or vbYesNo, "Warning")
-                    Case vbYes
-                        txtEdit.Text = l_strValue
-                    End Select
+                    Editor.ShowNotice "Question", "The file you have selected is not inside your game folder. The engine will not be able to load it.", Editor.NoticeIcon("question"), Array(Array("Cancel"), Array("Ignore", BindEvent(Me, "SetCurrentPropertyValue_", Array(l_strValue))), Array("Copy To Game Folder", BindEvent(Me, "CopyImageToGameFolder_", Array(l_strValue))))
                 End If
-                EditBoxChanged
             End If
         Else
             RaiseEvent EllipsisPressed(m_lngSelectedItem)
@@ -843,7 +873,7 @@ End Sub
 
 Private Sub picInfo_Paint()
 On Error Resume Next
-Dim l_rcRect As Win32.RECT
+Dim l_rcRect As Win32.Rect
 Dim l_lngLength As Long
     picInfo.Line (0, 0)-(picInfo.ScaleWidth - 1, picInfo.ScaleHeight - 1), vbButtonShadow, B
     picInfo.Line (1, 1)-(picInfo.ScaleWidth - 2, picInfo.ScaleHeight - 2), vbButtonFace, BF
@@ -1020,8 +1050,8 @@ Dim l_lngNameWidth As Long
     End If
     l_lngY = picHierarchy.Height - vsScroll.Value
     l_lngNameWidth = m_lngNameWidth
-    If (l_lngNameWidth > ((picItems.ScaleWidth - vsScroll.Width) \ 2)) Then
-        l_lngNameWidth = ((picItems.ScaleWidth - vsScroll.Width) \ 2)
+    If (l_lngNameWidth > ((picItems.ScaleWidth - vsScroll.Width - MinimumEditWidth))) Then
+        l_lngNameWidth = ((picItems.ScaleWidth - vsScroll.Width - MinimumEditWidth))
     End If
     For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
         If (m_oiItems(l_lngItems).CallTypes And VbGet) = VbGet Then

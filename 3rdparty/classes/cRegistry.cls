@@ -1,6 +1,10 @@
 VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
+  Persistable = 0  'NotPersistable
+  DataBindingBehavior = 0  'vbNone
+  DataSourceBehavior  = 0  'vbNone
+  MTSTransactionMode  = 0  'NotAnMTSObject
 END
 Attribute VB_Name = "cRegistry"
 Attribute VB_GlobalNameSpace = False
@@ -669,6 +673,92 @@ Public Sub CreateAdditionalEXEAssociations(ByVal sClassName As String, ParamArra
       End If
    End If
    
+End Sub
+
+Public Sub CreateEXEAssociationEx( _
+        ByVal sExePath As String, _
+        ByVal sClassName As String, _
+        ByVal sClassDescription As String, _
+        ByVal sAssociation As String, _
+        Optional ByVal sOpenMenuText As String = "&Open", _
+        Optional ByVal bSupportPrint As Boolean = False, _
+        Optional ByVal sPrintMenuText As String = "&Print", _
+        Optional ByVal bSupportNew As Boolean = False, _
+        Optional ByVal sNewMenuText As String = "&New", _
+        Optional ByVal bSupportInstall As Boolean = False, _
+        Optional ByVal sInstallMenuText As String = "", _
+        Optional ByRef sDefaultIcon As String = "", _
+        Optional ByVal lDefaultIconIndex As Long = -1 _
+    )
+   ' Check if path is wrapped in quotes:
+   sExePath = Trim$(sExePath)
+   If (Left$(sExePath, 1) <> """") Then
+      sExePath = """" & sExePath
+   End If
+   If (Right$(sExePath, 1) <> """") Then
+      sExePath = sExePath & """"
+   End If
+    
+    ' Create the .File to Class association:
+   SectionKey = "." & sAssociation
+   ValueType = REG_SZ
+   ValueKey = ""
+   pSetClassValue sClassName
+   
+   ' Create the Class shell open command:
+   SectionKey = sClassName
+   pSetClassValue sClassDescription
+   
+   SectionKey = sClassName & "\shell\open"
+   If (sOpenMenuText = "") Then sOpenMenuText = "&Open"
+   ValueKey = ""
+   pSetClassValue sOpenMenuText
+   SectionKey = sClassName & "\shell\open\command"
+   ValueKey = ""
+   pSetClassValue sExePath & " ""%1"""
+   
+   If (bSupportPrint) Then
+      SectionKey = sClassName & "\shell\print"
+      If (sPrintMenuText = "") Then sPrintMenuText = "&Print"
+      ValueKey = ""
+      pSetClassValue sPrintMenuText
+      SectionKey = sClassName & "\shell\print\command"
+      ValueKey = ""
+      pSetClassValue sExePath & " /p ""%1"""
+   End If
+   
+   If (bSupportInstall) Then
+      If (sInstallMenuText = "") Then
+         sInstallMenuText = "&Install " & sAssociation
+      End If
+      SectionKey = sClassName & "\shell\add"
+      ValueKey = ""
+      pSetClassValue sInstallMenuText
+      SectionKey = sClassName & "\shell\add\command"
+      ValueKey = ""
+      pSetClassValue sExePath & " /a ""%1"""
+   End If
+   
+   If (bSupportNew) Then
+      SectionKey = sClassName & "\shell\new"
+      ValueKey = ""
+      If (sNewMenuText = "") Then sNewMenuText = "&New"
+      pSetClassValue sNewMenuText
+      SectionKey = sClassName & "\shell\new\command"
+      ValueKey = ""
+      pSetClassValue sExePath & " /n ""%1"""
+   End If
+   
+   If lDefaultIconIndex > -1 Then
+      SectionKey = sClassName & "\DefaultIcon"
+      ValueKey = ""
+      If (Len(sDefaultIcon) = 0) Then
+          pSetClassValue sExePath & "," & CStr(lDefaultIconIndex)
+      Else
+          pSetClassValue sDefaultIcon & "," & CStr(lDefaultIconIndex)
+      End If
+   End If
+    
 End Sub
 
 Public Property Get ValueType() As ERegistryValueTypes

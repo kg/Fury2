@@ -11,6 +11,25 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+'
+'    ngIDE (Fury² Game Creation System Next-Generation Editor)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 ' Handles notifying the main form of child changes
 
 Option Explicit
@@ -71,9 +90,9 @@ On Error Resume Next
     Set Accelerators = m_frmForm
 End Property
 
-Public Property Get Toolbars() As iToolbars
+Public Property Get Toolbar() As iToolbar
 On Error Resume Next
-    Set Toolbars = m_frmForm
+    Set Toolbar = m_frmForm
 End Property
 
 Public Property Get Document() As iDocument

@@ -1,4 +1,23 @@
 Attribute VB_Name = "mdlEditor"
+'
+'    ngIDE (Fury² Game Creation System Next-Generation Editor)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Global g_edEditor As cEditor
 Global g_strVersion As String
@@ -7,9 +26,11 @@ Private m_lngBusyCount As Long
 
 Public Sub Main()
 On Error Resume Next
+Dim l_varFiles As Variant
     InitCommonControls
     F2Init
     Set g_edEditor = New cEditor
+    g_edEditor.LoadOptions
     Err.Clear
     g_strVersion = Engine.Fury2Globals.GetEngineVersion()
     If (Err <> 0) Or Len(Trim(g_strVersion)) = "" Then
@@ -51,6 +72,23 @@ On Error Resume Next
     g_edEditor.AcceleratorManager.Attach frmMain.hwnd
     g_edEditor.Event_FocusChanged
     
+    frmMain.RefreshActiveDocument
+    frmMain.RefreshGameState
+    
+    If (g_edEditor.Options.OpenPreviousGameAtStartup) Then
+        OpenGame ReadRegSetting("Previous Game", "")
+    End If
+    
+    If (g_edEditor.Options.OpenPreviousDocumentsAtStartup) Then
+        l_varFiles = ParseFileList(ReadRegSetting("Previous Documents", ""))
+        g_edEditor.OpenFiles l_varFiles
+    End If
+    
+    If Trim(Command$) <> "" Then
+        l_varFiles = ParseFileList(Command$)
+        g_edEditor.OpenFiles l_varFiles
+    End If
+    
     SetBusyState False
 End Sub
 
@@ -58,7 +96,6 @@ Public Sub TerminateProgram()
 On Error Resume Next
 Dim l_lngForms As Long
     SetBusyState True
-    frmMain.CloseAllChildren
     ShutdownPlugins
     ShutdownFilesystem
     frmMain.Hide
@@ -75,6 +112,7 @@ Dim l_lngForms As Long
     frmTerminate.Hide
     Unload frmTerminate
     ShutdownEngine
+    g_edEditor.SaveOptions
     F2Shutdown
     SetBusyState False
     If InIDE Then
@@ -87,7 +125,7 @@ End Sub
 Public Sub ExitProgram()
 On Error Resume Next
 Dim l_docDocument As cChildManager
-Dim l_lngCount As Long
+Dim l_strDocs As String
     If GameIsRunning Then
         If GameIsPaused Then
             g_dbgDebugger.GameEngine.Halted = False
@@ -95,20 +133,24 @@ Dim l_lngCount As Long
         g_dbgDebugger.GameEngine.Quit
         DoEvents
     End If
-    If frmMain.WindowState = 1 Then frmMain.WindowState = 0
-    For Each l_docDocument In frmMain.Documents
-        If l_docDocument.Document.CanSave Then l_lngCount = l_lngCount + 1
-    Next l_docDocument
-    If l_lngCount > 0 Then
-        Load frmSaveOpenDocuments
-        frmSaveOpenDocuments.Show vbModal, frmMain
-        If frmSaveOpenDocuments.Cancelled Then
-            Unload frmSaveOpenDocuments
-            Exit Sub
-        Else
-            Unload frmSaveOpenDocuments
-        End If
+    If frmMain.WindowState <> 0 Then frmMain.WindowState = 0
+    If g_edEditor.Options.OpenPreviousGameAtStartup Then
+        mdlRegistry.WriteRegSetting "Previous Game", g_edEditor.GamePath
     End If
+    If g_edEditor.Options.OpenPreviousDocumentsAtStartup Then
+        For Each l_docDocument In frmMain.Documents
+            If (Trim(l_docDocument.Document.Filename) <> "") Then
+                If Not (l_docDocument.Document.Plugin Is Nothing) Then
+                    If (TypeOf l_docDocument.Document.Plugin Is iFileTypePlugin) Then
+                        If Len(l_strDocs) > 0 Then l_strDocs = l_strDocs & " "
+                        l_strDocs = l_strDocs & """" & l_docDocument.Document.Filename & """"
+                    End If
+                End If
+            End If
+        Next l_docDocument
+        mdlRegistry.WriteRegSetting "Previous Documents", l_strDocs
+    End If
+    frmMain.CloseAllChildren g_edEditor.Options.PromptSaveWhenClosing
     SetBusyState True
     SetStatus "Shutting Down"
     Load frmTerminate
@@ -199,3 +241,53 @@ Public Sub SetStatus(Optional ByVal Status As String = "Ready")
 On Error Resume Next
     If g_booMainWindowLoaded Then frmMain.SetStatus Status
 End Sub
+
+Public Function ParseFileList(ByRef Files As String) As Variant
+On Error Resume Next
+Dim l_varFiles As Variant
+Dim l_lngFileCount As Long
+Dim l_lngCharacter As Long, l_strCharacter As String
+Dim l_strFilename As String
+Dim l_bytFiles() As Byte
+Dim l_booQuotes As Boolean, l_booEnd As Boolean
+    If Len(Trim(Files)) = 0 Then Exit Function
+    l_bytFiles = StrConv(Files, vbFromUnicode)
+    ReDim l_varFiles(0 To 3)
+    For l_lngCharacter = LBound(l_bytFiles) To UBound(l_bytFiles)
+        l_strCharacter = Chr(l_bytFiles(l_lngCharacter))
+        Select Case l_strCharacter
+        Case " "
+            If l_booQuotes Then
+                l_strFilename = l_strFilename & l_strCharacter
+            Else
+                l_booEnd = True
+            End If
+        Case """"
+            If l_booQuotes Then
+                l_booQuotes = False
+                l_booEnd = True
+            Else
+                l_booQuotes = True
+            End If
+        Case Else
+            l_strFilename = l_strFilename & l_strCharacter
+        End Select
+        If l_booEnd Then
+            If Len(Trim(l_strFilename)) > 0 Then
+                l_varFiles(l_lngFileCount) = l_strFilename
+                l_strFilename = ""
+                l_lngFileCount = l_lngFileCount + 1
+                If l_lngFileCount > UBound(l_varFiles) Then
+                    ReDim Preserve l_varFiles(0 To UBound(l_varFiles) + 4)
+                End If
+            End If
+            l_booEnd = False
+        End If
+    Next l_lngCharacter
+    If Len(Trim(l_strFilename)) > 0 Then
+        l_varFiles(l_lngFileCount) = l_strFilename
+        l_lngFileCount = l_lngFileCount + 1
+    End If
+    ReDim Preserve l_varFiles(0 To l_lngFileCount - 1)
+    ParseFileList = l_varFiles
+End Function

@@ -12,11 +12,14 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
-Private m_tbrParent As ngToolbar
+Public Tag As Variant
+Private m_lstParent As ngToolbar
 Private m_strTooltip As String
 Private m_strText As String
 Private m_strKey As String
+Private m_lngIndex As Long
 Private m_imgImage As Fury2Image
+Private m_imgGlow As Fury2Image
 Private m_evtClick As ngEvent
 Private m_booPressed As Boolean
 Private m_booHovering As Boolean
@@ -28,6 +31,26 @@ Private m_tbsStyle As ngToolButtonStyles
 Private m_txaTextAlignment As ngToolButtonTextAlignment
 Private m_lngLeft As Long
 Private m_lngTop As Long
+Private m_fntFont As StdFont
+
+Public Property Get Font() As StdFont
+On Error Resume Next
+    Set Font = m_fntFont
+End Property
+
+Public Property Set Font(ByVal NewFont As StdFont)
+On Error Resume Next
+    Set m_fntFont = NewFont
+    If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
+End Property
+
+Public Property Get Index() As Long
+    Index = m_lngIndex
+End Property
+
+Friend Property Let Index(ByVal NewValue As Long)
+    m_lngIndex = NewValue
+End Property
 
 Public Property Get Orientation() As ngToolButtonOrientations
     Orientation = m_oriOrientation
@@ -36,6 +59,29 @@ End Property
 Friend Property Let Orientation(ByVal NewValue As ngToolButtonOrientations)
 On Error Resume Next
     m_oriOrientation = NewValue
+End Property
+
+Private Sub GenerateGlow()
+On Error Resume Next
+Dim l_filFilter As Fury2ConvolutionFilter
+Dim l_imgTemp As Fury2Image
+    Set m_imgGlow = F2Image(m_imgImage.Width + 4, m_imgImage.Height + 4)
+    Set l_imgTemp = m_imgGlow.Duplicate
+    l_imgTemp.Blit F2Rect(2, 2, m_imgImage.Width, m_imgImage.Height, False), , m_imgImage
+    l_imgTemp.AdjustRGB 255, 255, 255
+    Set l_filFilter = F2GaussianBlurFilter(3)
+    l_filFilter.Filter m_imgGlow, l_imgTemp, , , RenderMode_Normal
+    Set l_filFilter = F2GaussianBlurFilter(2)
+    l_filFilter.Filter m_imgGlow, l_imgTemp, , , RenderMode_Additive
+    m_imgGlow.AdjustChannelGamma Alpha, 400
+End Sub
+
+Friend Property Get GlowImage() As Fury2Image
+On Error Resume Next
+    If m_imgGlow Is Nothing Then
+        GenerateGlow
+    End If
+    Set GlowImage = m_imgGlow
 End Property
 
 Friend Sub MouseDown()
@@ -64,17 +110,19 @@ End Sub
 
 Friend Sub Free()
 On Error Resume Next
-    Set m_tbrParent = Nothing
+    Set m_lstParent = Nothing
     Set m_imgImage = Nothing
+    Set m_imgGlow = Nothing
     Set m_evtClick = Nothing
+    Set m_fntFont = Nothing
 End Sub
 
 Public Property Get Parent() As ngToolbar
-    Set Parent = m_tbrParent
+    Set Parent = m_lstParent
 End Property
 
 Friend Sub SetParent(ByRef NewParent As ngToolbar)
-    Set m_tbrParent = NewParent
+    Set m_lstParent = NewParent
 End Sub
 
 Public Property Get Rectangle() As Fury2Rect
@@ -127,26 +175,19 @@ Public Property Get Width() As Long
 On Error Resume Next
 Dim l_lngImageWidth As Long
 Dim l_lngTextWidth As Long
-    If m_tbrParent Is Nothing Then Exit Property
-    l_lngTextWidth = IIf(Len(m_strText) = 0, 0, m_tbrParent.TextWidth(m_strText) + (m_tbrParent.Metrics(tbmTextMargin) * 2))
-    l_lngImageWidth = IIf(m_imgImage Is Nothing, 0, m_imgImage.Width + (m_tbrParent.Metrics(tbmImageMargin) * 2))
+    If m_lstParent Is Nothing Then Exit Property
+    l_lngTextWidth = IIf(Len(m_strText) = 0, 0, m_lstParent.TextWidth(Font, m_strText) + (m_lstParent.Metrics(tbmTextMargin) * 2))
+    l_lngImageWidth = IIf(m_imgImage Is Nothing, 0, m_imgImage.Width + (m_lstParent.Metrics(tbmImageMargin) * 2))
     Select Case m_tbsStyle
     Case bsyNormal, bsyCheck, bsyGroup
         Select Case m_txaTextAlignment
         Case btaLeft, btaRight
-            Width = l_lngTextWidth + l_lngImageWidth + (m_tbrParent.Metrics(tbmButtonMargin) * 2)
+            Width = l_lngTextWidth + l_lngImageWidth + (m_lstParent.Metrics(tbmButtonMargin) * 2)
         Case btaTop, btaBottom
-            Width = IIf(l_lngTextWidth > l_lngImageWidth, l_lngTextWidth, l_lngImageWidth) + (m_tbrParent.Metrics(tbmButtonMargin) * 2)
-        End Select
-    Case bsyDropdown
-        Select Case m_txaTextAlignment
-        Case btaLeft, btaRight
-            Width = l_lngTextWidth + l_lngImageWidth + (m_tbrParent.Metrics(tbmButtonMargin) * 2)
-        Case btaTop, btaBottom
-            Width = IIf(l_lngTextWidth > l_lngImageWidth, l_lngTextWidth, l_lngImageWidth) + (m_tbrParent.Metrics(tbmButtonMargin) * 2)
+            Width = IIf(l_lngTextWidth > l_lngImageWidth, l_lngTextWidth, l_lngImageWidth) + (m_lstParent.Metrics(tbmButtonMargin) * 2)
         End Select
     Case bsySeparator
-        Width = m_tbrParent.Metrics(tbmSeparatorSize) + (m_tbrParent.Metrics(tbmSeparatorMargin) * 2)
+        Width = m_lstParent.Metrics(tbmSeparatorSize) + (m_lstParent.Metrics(tbmSeparatorMargin) * 2)
     End Select
 End Property
 
@@ -154,19 +195,19 @@ Public Property Get Height() As Long
 On Error Resume Next
 Dim l_lngImageHeight As Long
 Dim l_lngTextHeight As Long
-    If m_tbrParent Is Nothing Then Exit Property
-    l_lngTextHeight = IIf(Len(m_strText) = 0, 0, m_tbrParent.TextHeight(m_strText) + (m_tbrParent.Metrics(tbmTextMargin) * 2))
-    l_lngImageHeight = IIf(m_imgImage Is Nothing, 0, m_imgImage.Height + (m_tbrParent.Metrics(tbmImageMargin) * 2))
+    If m_lstParent Is Nothing Then Exit Property
+    l_lngTextHeight = IIf(Len(m_strText) = 0, 0, m_lstParent.TextHeight(Font, m_strText) + (m_lstParent.Metrics(tbmTextMargin) * 2))
+    l_lngImageHeight = IIf(m_imgImage Is Nothing, 0, m_imgImage.Height + (m_lstParent.Metrics(tbmImageMargin) * 2))
     Select Case m_tbsStyle
-    Case bsyNormal, bsyCheck, bsyGroup, bsyDropdown
+    Case bsyNormal, bsyCheck, bsyGroup
         Select Case m_txaTextAlignment
         Case btaLeft, btaRight
-            Height = IIf(l_lngTextHeight > l_lngImageHeight, l_lngTextHeight, l_lngImageHeight) + (m_tbrParent.Metrics(tbmButtonMargin) * 2)
+            Height = IIf(l_lngTextHeight > l_lngImageHeight, l_lngTextHeight, l_lngImageHeight) + (m_lstParent.Metrics(tbmButtonMargin) * 2)
         Case btaTop, btaBottom
-            Height = l_lngTextHeight + l_lngImageHeight + (m_tbrParent.Metrics(tbmButtonMargin) * 2)
+            Height = l_lngTextHeight + l_lngImageHeight + (m_lstParent.Metrics(tbmButtonMargin) * 2)
         End Select
     Case bsySeparator
-        Height = m_tbrParent.Metrics(tbmSeparatorSize) + (m_tbrParent.Metrics(tbmSeparatorMargin) * 2)
+        Height = m_lstParent.Metrics(tbmSeparatorSize) + (m_lstParent.Metrics(tbmSeparatorMargin) * 2)
     End Select
 End Property
 
@@ -186,7 +227,7 @@ End Property
 Public Property Let Text(ByRef NewValue As String)
 On Error Resume Next
     m_strText = NewValue
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
 End Property
 
 Public Property Get Key() As String
@@ -204,7 +245,8 @@ End Property
 Public Property Set Image(ByVal NewValue As Fury2Image)
 On Error Resume Next
     Set m_imgImage = NewValue
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    Set m_imgGlow = Nothing
+    If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
 End Property
 
 Public Property Get ClickEvent() As ngEvent
@@ -222,7 +264,7 @@ End Property
 Public Property Let Checked(ByVal NewValue As Boolean)
 On Error Resume Next
     m_booChecked = NewValue
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Redraw
+    If Not (m_lstParent Is Nothing) Then m_lstParent.Redraw
 End Property
 
 Public Property Get Enabled() As Boolean
@@ -236,7 +278,7 @@ End Property
 Public Property Let Enabled(ByVal NewValue As Boolean)
 On Error Resume Next
     m_booEnabled = NewValue
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Redraw
+    If Not (m_lstParent Is Nothing) Then m_lstParent.Redraw
 End Property
 
 Public Property Get Visible() As Boolean
@@ -246,7 +288,7 @@ End Property
 Public Property Let Visible(ByVal NewValue As Boolean)
 On Error Resume Next
     m_booVisible = NewValue
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
 End Property
 
 Public Property Get Pressed() As Boolean
@@ -264,7 +306,7 @@ End Property
 Public Property Let Style(ByVal NewValue As ngToolButtonStyles)
 On Error Resume Next
     m_tbsStyle = NewValue
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
 End Property
 
 Public Property Get TextAlignment() As ngToolButtonTextAlignment
@@ -274,7 +316,7 @@ End Property
 Public Property Let TextAlignment(ByVal NewValue As ngToolButtonTextAlignment)
 On Error Resume Next
     m_txaTextAlignment = NewValue
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
 End Property
 
 Private Sub Class_Initialize()

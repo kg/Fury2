@@ -15,7 +15,7 @@ CompatibleMode="1"
 CompatibleEXE32="..\..\..\binary\sys\debugger.dll"
 MajorVer=1
 MinorVer=0
-RevisionVer=136
+RevisionVer=321
 AutoIncrementVer=1
 ServerSupportFiles=0
 VersionCompanyName="Squared Interactive"
@@ -35,7 +35,6 @@ Unattended=0
 Retained=0
 ThreadPerObject=0
 MaxNumberOfThreads=1
-ThreadingModel=1
 DebugStartupOption=0
 
 [MS Transaction Server]

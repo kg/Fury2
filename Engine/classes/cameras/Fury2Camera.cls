@@ -46,6 +46,7 @@ Public ShowSprites As Boolean
 Public ShowTiles As Boolean
 Public DisableBuffer As Boolean
 
+Private mvarLightingSoftness As Single
 Private mvarLightmapScratch As Fury2Image
 Private mvarLightmap As Fury2Image
 Private mvarBuffer As Fury2Image
@@ -72,6 +73,16 @@ Private mvarMap As Long
 Private mvarConstrainToMap As Boolean
 Private mvarUnGhostLayer As Long
 Private m_engEngine As Fury2Engine
+Private m_filBlur As Fury2ConvolutionFilter
+
+Public Property Get LightingSoftness() As Single
+    LightingSoftness = mvarLightingSoftness
+End Property
+
+Public Property Let LightingSoftness(ByVal NewValue As Single)
+    mvarLightingSoftness = NewValue
+    Set m_filBlur = Nothing
+End Property
 
 Friend Sub SetEngine(Engine As Fury2Engine)
     Set m_engEngine = Engine
@@ -88,6 +99,8 @@ End Property
 
 Public Property Let UnGhostLayer(ByVal NewLayer As Long)
 On Error Resume Next
+    If mvarViewingMap Is Nothing Then Exit Property
+    If mvarViewingMap.Layers.Count < 0 Then Exit Property
     mvarUnGhostLayer = ClipValue(NewLayer, 0, mvarViewingMap.Layers.Count)
 End Property
 
@@ -542,6 +555,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                 If Err.Number <> 0 Then Engine.CriticalError "Fury2Camera.Redraw", "Layers(" + CStr(Layers) + ").Sprites.Sort Me": Exit Sub
             End If
             If EnableLighting And .Layers(Layers).Lighting.ResetLight Then
+                Set mvarLightmap.ClipRectangle = mvarLightmap.Rectangle
                 mvarLightmap.Clear .Layers(Layers).Lighting.AmbientLight
             End If
             If EnableLighting And .Layers(Layers).Lit Then
@@ -561,10 +575,20 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                 .Layers(Layers).Lighting.Render l_lcaCamera
             End If
             If EnableLighting And .Layers(Layers).Lighting.RenderLight Then
+                Set mvarLightmap.ClipRectangle = mvarLightmap.Rectangle
+                Set mvarLightmapScratch.ClipRectangle = mvarLightmap.Rectangle
                 If Gamma <> 255 Then
                     mvarLightmap.AdjustGamma mvarGamma
                 End If
-                l_imgBuffer.Blit Area, , mvarLightmap, 1, BlitMode_Lightmap_RGB
+                If mvarLightingSoftness > 0 Then
+                    If m_filBlur Is Nothing Then
+                        Set m_filBlur = F2GaussianBlurFilter(mvarLightingSoftness)
+                    End If
+                    m_filBlur.Filter mvarLightmapScratch, mvarLightmap, , , RenderMode_Normal
+                    l_imgBuffer.Blit Area, , mvarLightmapScratch, 1, BlitMode_Lightmap_RGB
+                Else
+                    l_imgBuffer.Blit Area, , mvarLightmap, 1, BlitMode_Lightmap_RGB
+                End If
             End If
             If ShowSprites Then
                 .Layers(Layers).Sprites.Redraw Me, l_imgBuffer

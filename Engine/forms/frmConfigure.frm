@@ -274,6 +274,7 @@ Private Sub cmdOK_Click()
 End Sub
 
 Private Sub Form_Load()
+    Cancelled = False
     SetAppIcon Me
     LoadSettings
 End Sub

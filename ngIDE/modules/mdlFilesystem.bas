@@ -1,8 +1,39 @@
 Attribute VB_Name = "mdlFilesystem"
+'
+'    ngIDE (Fury² Game Creation System Next-Generation Editor)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Private Const c_lngFilesystemUpdateDelay As Long = 10
 
 Global g_fsFilesystem As Fury2Filesystem
+
+Private Declare Function GetShortPathName Lib "kernel32" Alias _
+    "GetShortPathNameA" (ByVal lpszLongPath As String, _
+    ByVal lpszShortPath As String, ByVal cchBuffer As Long) As Long
+
+Function GetShortFileName(ByVal LongFileName As String) As String
+On Error Resume Next
+    Dim buffer As String, length As Long
+    buffer = Space(256)
+    length = GetShortPathName(LongFileName, buffer, Len(buffer))
+    GetShortFileName = Left(buffer, length)
+End Function
 
 Public Sub EnumFilesystem(Output As vbalTreeView, FS As Fury2Filesystem, Optional Path As String = "/", Optional Filter As String = "*.*", Optional Recursive As Boolean = True, Optional HardDisk As Boolean = False)
 On Error Resume Next
@@ -37,6 +68,7 @@ Dim l_strSelected As String
         If l_fdsFolders.Count > 0 Then
             l_varNames = l_fdsFolders.Names
             For l_lngFolder = LBound(l_varNames) To UBound(l_varNames)
+                If l_fdsFolders Is Nothing Then Exit For
                 Set l_nodParent = Nothing
                 If InStr(l_varNames(l_lngFolder), "/") <> InStrRev(l_varNames(l_lngFolder), "/") Then
                     Set l_nodParent = .Nodes(FS.GetPath(l_varNames(l_lngFolder)))
@@ -61,6 +93,7 @@ Dim l_strSelected As String
         If l_flsFiles.Count > 0 Then
             l_varNames = l_flsFiles.Names
             For l_lngFile = LBound(l_varNames) To UBound(l_varNames)
+                If l_flsFiles Is Nothing Then Exit For
                 Set l_nodParent = Nothing
                 Set l_nodParent = .Nodes(FS.GetPath(l_varNames(l_lngFile)))
                 Err.Clear
@@ -117,12 +150,15 @@ On Error Resume Next
 Dim l_fpgPlugin As iFileTypePlugin
 Dim l_dlgDialog As New GCommonDialog
 Dim l_strFilename As String
+Dim l_booOldState As Boolean
     Set l_fpgPlugin = Document.Plugin
     l_strFilename = Document.Filename
     If Trim(l_strFilename) = "" Then
         l_strFilename = "Untitled"
         l_fpgPlugin.FixUpSaveFilename l_strFilename
     End If
+    l_booOldState = g_edEditor.AcceleratorManager.Enabled
+    g_edEditor.AcceleratorManager.Enabled = False
     If l_dlgDialog.VBGetSaveFileName(l_strFilename, , True, l_fpgPlugin.FilterString & "|All Files|*.*", , , Title) Then
         If FileExists(l_strFilename) Then
         Else
@@ -130,6 +166,7 @@ Dim l_strFilename As String
         End If
         SelectNewFilename = l_strFilename
     End If
+    g_edEditor.AcceleratorManager.Enabled = l_booOldState
 End Function
 
 Public Function SelectLocalFiles(Optional ByRef Filter As String = "", Optional ByRef Title As String = "Open...", Optional ByVal MultiSelect As Boolean = True) As Variant
@@ -139,6 +176,7 @@ Dim l_dlgDialog As New GCommonDialog
 Dim l_strFilter As String, l_strPluginFilter As String
 Dim l_plgPlugin As iFileTypePlugin
 Dim l_varFilters As Variant, l_lngFilters As Long
+Dim l_booOldState As Boolean
     l_strFilter = Filter
     If l_strFilter = "" Then
         For Each l_plgPlugin In g_colFileTypePlugins
@@ -169,7 +207,10 @@ Dim l_varFilters As Variant, l_lngFilters As Long
             l_strFilter = "All Supported Formats|" & l_strPluginFilter & "|" & l_strFilter
         End If
     End If
+    l_booOldState = g_edEditor.AcceleratorManager.Enabled
+    g_edEditor.AcceleratorManager.Enabled = False
     l_dlgDialog.VBGetOpenFileName l_strFilename, , True, MultiSelect, False, True, l_strFilter, , , Title
+    g_edEditor.AcceleratorManager.Enabled = l_booOldState
     If InStr(l_strFilename, Chr(0)) Then
         l_strFilename = Left(l_strFilename, InStr(l_strFilename, Chr(0) & Chr(0)) - 1)
         SelectLocalFiles = Split(l_strFilename, Chr(0))

@@ -22,6 +22,7 @@ Private WithEvents m_Engine As SCRHostLib.Host
 Attribute m_Engine.VB_VarHelpID = -1
 
 Private m_Language As IScriptLanguage
+Private m_booScriptInterrupted As Boolean
 
 Public Event Error(ByVal LineNumber As Long, ByVal Character As Long, ByRef Description As String)
 Public Event InterruptPoll(ByRef Interrupt As Boolean)
@@ -202,6 +203,9 @@ On Error Resume Next
 Dim l_booResult As Boolean
     RaiseEvent InterruptPoll(l_booResult)
     m_Engine_InterruptPoll = l_booResult
+    If l_booResult Then
+        m_booScriptInterrupted = True
+    End If
 End Function
 
 Private Sub m_Engine_OnEnterScript()
@@ -218,7 +222,12 @@ End Sub
 
 Private Sub m_Engine_OnScriptError(ByVal ulLineNumber As Long, ByVal ichCharPosition As Long, ByVal bstrDescription As String)
 On Error Resume Next
-    RaiseEvent Error(ulLineNumber, ichCharPosition, bstrDescription)
+    If m_booScriptInterrupted Then
+        m_booScriptInterrupted = False
+        RaiseEvent Error(ulLineNumber, ichCharPosition, "Script Interrupted")
+    Else
+        RaiseEvent Error(ulLineNumber, ichCharPosition, bstrDescription)
+    End If
 End Sub
 
 Private Sub m_Engine_OnScriptTerminate(ByVal varResult As Variant, ByVal bstrError As String)

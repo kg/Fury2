@@ -1,9 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
-Object = "{E142732F-A852-11D4-B06C-00500427A693}#2.0#0"; "vbalTbar6.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#3.2#0"; "ngUI.ocx"
 Begin VB.Form frmMap 
    BorderStyle     =   0  'None
    ClientHeight    =   5580
@@ -29,14 +27,16 @@ Begin VB.Form frmMap
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   634
    ShowInTaskbar   =   0   'False
-   Begin ngUI.ngToolbar tbrMapTools 
-      Height          =   465
-      Left            =   3555
+   Begin VB.PictureBox picHarmless 
+      BorderStyle     =   0  'None
+      Height          =   15
+      Left            =   0
+      ScaleHeight     =   1
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   1
       TabIndex        =   25
-      Top             =   30
-      Width           =   2430
-      _ExtentX        =   4286
-      _ExtentY        =   820
+      Top             =   0
+      Width           =   15
    End
    Begin VB.Timer tmrResize 
       Interval        =   1
@@ -56,15 +56,6 @@ Begin VB.Form frmMap
       Top             =   15
       Visible         =   0   'False
       Width           =   1200
-   End
-   Begin vbalTBar6.cToolbar tbrTools 
-      Height          =   360
-      Left            =   1125
-      Top             =   15
-      Width           =   2400
-      _ExtentX        =   4233
-      _ExtentY        =   635
-      DrawStyle       =   2
    End
    Begin sMDIinActiveX.MDIActiveX extender 
       Left            =   -15
@@ -418,13 +409,32 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+'
+'    ngPlugins (Fury² Game Creation System Next-Generation Editor Standard Plugin Set)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
 Implements iExtendedForm
 Implements iEditingCommands
 Implements iCustomMenus
 Implements iDocument
-Implements iToolbars
+Implements iToolbar
 
 Private Const c_lngAutoscrollOffset As Long = 8
 
@@ -471,8 +481,8 @@ End Enum
 Private Enum SpriteTools
     SpriteTool_Cursor
     SpriteTool_Insert
-    SpriteTool_Select_Path
     SpriteTool_Add_Path
+    SpriteTool_Select_Path
 End Enum
 
 Private Enum ObjectTools
@@ -569,7 +579,8 @@ Private m_brsBrush As Fury2Brush
 
 Private m_intLayerCache() As Integer
 
-Private m_tbhHandler As iToolbarHandler
+Private WithEvents m_tbrToolbar As ngToolbar
+Attribute m_tbrToolbar.VB_VarHelpID = -1
 
 Public Property Get ActiveType() As String
 On Error Resume Next
@@ -753,18 +764,23 @@ End Sub
 
 Public Sub Cleanup()
 On Error Resume Next
+    Set elAreas.BoundObject = Nothing
+    Set elLayers.BoundObject = Nothing
+    Set elLights.BoundObject = Nothing
+    Set elObjects.BoundObject = Nothing
+    Set elSprites.BoundObject = Nothing
     DeallocateBackbuffer
     Set m_imgOverlay = Nothing
     DeleteDC m_lngOverlayDC
-    m_mapMap.Free
     Set m_fpgPlugin = Nothing
     Set m_camCamera = Nothing
-    Set m_mapMap = Nothing
     Set m_splSidebar = Nothing
     Set m_splSidebarPanels = Nothing
     Set m_splSidebarInspectors = Nothing
     Set m_ctlCurrentList = Nothing
     Set m_ctlCurrentInspector = Nothing
+    m_mapMap.Free
+    Set m_mapMap = Nothing
 End Sub
 
 Public Sub ClearOverlay()
@@ -1446,12 +1462,12 @@ On Error Resume Next
     RefreshInspector
 End Sub
 
-Private Sub elLayers_ToolbarClick(ByVal ButtonIndex As Long)
+Private Sub elLayers_ToolbarClick(ByVal Button As ngUI.ngToolButton)
 On Error Resume Next
-    Select Case LCase(Trim(elLayers.Toolbar.ButtonKey(ButtonIndex)))
+    Select Case LCase(Trim(Button.key))
     Case "ghostlayers", "tintlayers"
         Redraw
-    Case "deletelayer"
+    Case "removelayer"
         DeleteLayer
     Case "duplicatelayer"
         DuplicateLayer
@@ -1612,6 +1628,9 @@ End Sub
 
 Public Sub Form_Activate()
 On Error Resume Next
+    Set insInspect.Editor = Editor
+    Set insMap.Editor = Editor
+    Set insTool.Editor = Editor
     picMapViewport.AutoRedraw = True
     picOverlay.AutoRedraw = True
     Form_Resize
@@ -1622,6 +1641,7 @@ End Sub
 
 Private Sub Form_Deactivate()
 On Error Resume Next
+    picHarmless.SetFocus
     picMapViewport.AutoRedraw = False
     picOverlay.AutoRedraw = False
     Editor.SetLocation
@@ -1639,7 +1659,6 @@ On Error Resume Next
     elObjects.ShowVisibilityToggles = True
     insTool.ShowInfobox = False
     insTool.ShowHierarchy = False
-    InitToolbars
     InitViews
     InitSplitters
     hsMap.Height = GetScrollbarSize(hsMap) + 1
@@ -1652,6 +1671,7 @@ End Sub
 
 Private Sub Form_QueryUnload(Cancel As Integer, UnloadMode As Integer)
 On Error Resume Next
+    picHarmless.SetFocus
     Editor.SaveSettings "MapEditor\View", m_voViewOptions
     Cleanup
 End Sub
@@ -2128,14 +2148,6 @@ On Error Resume Next
     End With
 End Sub
 
-Public Sub InitToolbars()
-On Error Resume Next
-    elLayers.InitializeToolbar frmIcons.ilMapBig, Buttons( _
-    ButtonString("Create New Layer", , "NewLayer", "NEW LAYER"), ButtonString("Duplicate Selected Layer", , "DuplicateLayer", "DUPLICATE LAYER"), ButtonString("Delete Selected Layer", , "DeleteLayer", "DELETE LAYER"), "-", _
-    ButtonString("Ghost Non-Selected Layers", , "GhostLayers", "GHOST LAYERS", , CTBCheck), ButtonString("Tint Layers", , "TintLayers", "TINT LAYERS", , CTBCheck) _
-    )
-End Sub
-
 Public Sub InitViews()
 On Error Resume Next
     dtViews.Tabs.Add "t" & CStr(View_Tiles), , "Tiles"
@@ -2279,43 +2291,6 @@ On Error Resume Next
     RefreshTool
 End Sub
 
-Private Sub iToolbars_HideToolbars(Handler As ngInterfaces.iToolbarHandler)
-On Error Resume Next
-'    Exit Sub
-    Set m_tbhHandler = Nothing
-    With Handler
-        .RemoveToolbar "Map Tools"
-        ResizeAll
-    End With
-End Sub
-
-Private Sub iToolbars_ShowToolbars(Handler As ngInterfaces.iToolbarHandler)
-On Error Resume Next
-Dim l_optOptions As ToolbarOptions
-'    Exit Sub
-    Set m_tbhHandler = Handler
-    RefreshMapTools
-    With Handler
-        With l_optOptions
-            .Title = "Map Tools"
-            .Closable = False
-            .FullRow = False
-            .ShowChevron = False
-            .Undockable = True
-            .XDockable = True
-            .YDockable = True
-            .XWidth = tbrMapTools.IdealWidth
-            .XHeight = tbrMapTools.IdealHeight
-            .YWidth = tbrMapTools.Buttons(1).Width
-            .YHeight = tbrMapTools.IdealHeight(.YWidth)
-            .DefaultPosition = TBP_Left
-        End With
-        .AddToolbar "Map Tools", tbrMapTools.hwnd, l_optOptions
-        ResizeAll
-        tbrMapTools.Reflow
-    End With
-End Sub
-
 Public Sub Lighting_ToolChanged()
 On Error Resume Next
     m_booDraggingLight = False
@@ -2445,44 +2420,13 @@ Dim l_sngSmallestDistance As Single, l_mobSmallest As Fury2MapObject
     End If
 End Function
 
-Private Function MapToolButtons(View As MapViews) As Variant
+Friend Sub SetVisibilityIcons(ByRef List As EntityList, ByRef Name As String)
 On Error Resume Next
-    Select Case View
-    Case View_Tiles
-        MapToolButtons = Buttons( _
-            ButtonString2("Pen", , "Tool(0)", "PEN"), ButtonString2("Line", , "Tool(1)", "LINE"), "-", _
-            ButtonString2("Rectangle", , "Tool(2)", "RECTANGLE"), ButtonString2("Filled Rectangle", , "Tool(3)", "RECTANGLE FILLED"), "-", _
-            ButtonString2("Circle", , "Tool(4)", "CIRCLE", False), ButtonString2("Filled Circle", , "Tool(5)", "CIRCLE FILLED", False), "-", _
-            ButtonString2("Flood Fill", , "Tool(6)", "FLOOD FILL"), ButtonString2("Replace", , "Tool(7)", "COLOR ERASER"), "-", _
-            ButtonString2("Select", , "Tool(8)", "SELECTION", False) _
-            )
-    Case View_Blocking
-        MapToolButtons = Buttons( _
-            ButtonString2("Line", , "Tool(0)", "LINE"), ButtonString2("Polygon", , "Tool(1)", "POLYLINE"), ButtonString2("Rectangle", , "Tool(2)", "RECTANGLE"), "-", _
-            ButtonString2("Select", , "Tool(3)", "SELECTION"), ButtonString2("Move", , "Tool(4)", "MOVE") _
-            )
-    Case View_Lighting
-        MapToolButtons = Buttons( _
-            ButtonString2("Cursor", , "Tool(0)", "CURSOR"), ButtonString2("Place Light", , "Tool(1)", "BRIGHTNESS"), "-", _
-            ButtonString2("Place Obstruction", , "Tool(2)", "LIGHTING OBSTRUCTION"), ButtonString2("Place Obstruction Rectangle", , "Tool(3)", "LIGHTING OBSTRUCTION RECTANGLE"), ButtonString2("Select Obstructions", , "Tool(4)", "SELECTION"), ButtonString2("Move Obstructions", , "Tool(5)", "MOVE"), "-", _
-            ButtonString2("Place Plane", , "Tool(6)", "LIGHTING PLANE"), ButtonString2("Select Planes", , "Tool(7)", "SELECTION"), ButtonString2("Move Planes", , "Tool(8)", "MOVE") _
-            )
-    Case View_Areas
-        MapToolButtons = Buttons( _
-            ButtonString2("Cursor", , "Tool(0)", "CURSOR"), ButtonString2("Draw Area", , "Tool(1)", "RECTANGLE FILLED") _
-            )
-    Case View_Sprites
-        MapToolButtons = Buttons( _
-            ButtonString2("Cursor", , "Tool(0)", "CURSOR"), ButtonString2("Insert Sprite", , "Tool(1)", "COPY"), "-", _
-            ButtonString2("Select Path Nodes", , "Tool(2)", "SELECT PATH NODES"), ButtonString2("Add Path Nodes", , "Tool(3)", "ADD PATH NODES") _
-            )
-    Case View_Objects
-        MapToolButtons = Buttons( _
-            ButtonString2("Cursor", , "Tool(0)", "CURSOR"), ButtonString2("Insert Sound", , "Tool(1)", "SOUND") _
-            )
-    Case Else
-    End Select
-End Function
+    With Editor.LoadResources("ng")
+        Set List.VisibleIcon = .ItemData("map editor\icons\" & Name & "\visible.png")
+        Set List.InvisibleIcon = .ItemData("map editor\icons\" & Name & "\invisible.png")
+    End With
+End Sub
 
 Public Sub MoveOverlay(ByVal X As Long, ByVal Y As Long, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1)
 On Error Resume Next
@@ -2795,6 +2739,20 @@ Dim l_sngSmallestDistance As Single, l_wpSmallest As Fury2Waypoint
         Set PathNodeFromPoint = l_wpSmallest
     End If
 End Function
+
+Private Sub iToolbar_HideToolbar(Toolbar As Object)
+On Error Resume Next
+    Set m_tbrToolbar = Toolbar
+    m_tbrToolbar.Visible = False
+    Set m_tbrToolbar = Nothing
+End Sub
+
+Private Sub iToolbar_ShowToolbar(Toolbar As Object)
+On Error Resume Next
+    Set m_tbrToolbar = Toolbar
+    m_tbrToolbar.Visible = True
+    RefreshMapTools
+End Sub
 
 Private Sub picBrush_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
@@ -3424,13 +3382,27 @@ End Sub
 
 Public Sub RefreshLayers()
 On Error Resume Next
-    elLayers.VisibleIcon = "LAYER VISIBLE"
-    elLayers.InvisibleIcon = "LAYER HIDDEN"
+    With elLayers.Toolbar
+        If (.Buttons.Count = 0) And (Not (Editor Is Nothing)) Then
+            Set .ResourceFile = Editor.LoadResources("ng")
+            .ResourcePattern = "map editor\layers\*.png"
+            With .Buttons
+                .AddNew , "NewLayer", "add", "Add New Layer"
+                .AddNew , "DuplicateLayer", "duplicate", "Duplicate Selected Layer"
+                .AddNew , "RemoveLayer", "remove", "Remove Selected Layer"
+                .AddNew "-"
+                .AddNew , "GhostLayers", "ghost", "Ghost Non-Selected Layers", bsyCheck
+                .AddNew , "TintLayers", "tint", "Auto-Tint Layers", bsyCheck
+            End With
+        End If
+    End With
+    elLayers.ShowToolbar
+    SetVisibilityIcons elLayers, "layers"
     If m_mapMap Is Nothing Then
     Else
         Set elLayers.BoundObject = m_mapMap.Layers
         With elLayers.Toolbar
-            .ButtonEnabled("DeleteLayer") = (m_mapMap.Layers.Count > 1)
+            .Buttons("DeleteLayer").Enabled = (m_mapMap.Layers.Count > 1)
         End With
         If elLayers.SelectedItem <> m_lngSelectedLayer Then
             elLayers.SelectedItem = m_lngSelectedLayer
@@ -3444,8 +3416,7 @@ End Sub
 
 Public Sub RefreshLights()
 On Error Resume Next
-    elLights.VisibleIcon = "LIGHT ON"
-    elLights.InvisibleIcon = "LIGHT OFF"
+    SetVisibilityIcons elLights, "lights"
     Set elLights.BoundObject = m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights
     If elLights.SelectedItem <> m_lngSelectedLight Then
         elLights.SelectedItem = m_lngSelectedLight
@@ -3476,21 +3447,86 @@ End Sub
 Public Sub RefreshMapTools()
 On Error Resume Next
 Dim l_lngButtons As Long
+    If m_tbrToolbar Is Nothing Then Exit Sub
     If m_lngCurrentView < View_Script Then
-        tbrMapTools.Buttons.Clear
-        DefineToolbar2 tbrMapTools, frmIcons.ilMapBig, MapToolButtons(m_lngCurrentView)
-        For l_lngButtons = 1 To tbrMapTools.Buttons.Count
-            If tbrMapTools.Buttons(l_lngButtons).Style = bsyNormal Then
-                tbrMapTools.Buttons(l_lngButtons).Style = bsyGroup
-            End If
-        Next l_lngButtons
-        DefineToolbar2 tbrMapTools, frmIcons.ilMapBig, Buttons("-", ButtonString2("Zoom In", , "Zoom In", "ZOOM IN"), ButtonString2("Zoom Out", , "Zoom Out", "ZOOM OUT"))
-        DefineToolbar2 tbrMapTools, frmIcons.ilMapBig, Buttons("-", ButtonString2("Show Grid", , "Show Grid", "SHOW GRID", , bsyCheck), ButtonString2("Snap To Grid", , "Snap To Grid", "SNAP TO GRID", , bsyCheck))
-        tbrMapTools.Buttons(m_lngCurrentTool(m_lngCurrentView)).Checked = True
-        tbrMapTools.Buttons("Show Grid").Checked = m_voViewOptions.ShowGrid
-        tbrMapTools.Buttons("Snap To Grid").Checked = m_voViewOptions.SnapToGrid
-        tbrMapTools.Width = tbrMapTools.Buttons(1).Width
-        tbrMapTools.Reflow
+        Set m_tbrToolbar.ResourceFile = Editor.LoadResources("ng")
+        m_tbrToolbar.DisableUpdates = True
+        m_tbrToolbar.Buttons.Clear
+        With m_tbrToolbar.Buttons
+            Select Case m_lngCurrentView
+            Case View_Tiles
+                m_tbrToolbar.ResourcePattern = "map editor\tools\tiles\*.png"
+                .AddNew , "Tool(0)", "pen", "Pen", bsyGroup
+                .AddNew , "Tool(1)", "line", "Line", bsyGroup
+                .AddNew "-"
+                .AddNew , "Tool(2)", "box", "Box", bsyGroup
+                .AddNew , "Tool(3)", "rectangle", "Rectangle", bsyGroup
+                .AddNew "-"
+                .AddNew , "Tool(4)", "ellipse", "Ellipse", bsyGroup, , False
+                .AddNew , "Tool(5)", "filled ellipse", "Filled Ellipse", bsyGroup, , False
+                .AddNew "-"
+                .AddNew , "Tool(6)", "flood fill", "Flood Fill", bsyGroup
+                .AddNew , "Tool(7)", "replace", "Replace", bsyGroup
+                .AddNew "-"
+                .AddNew , "Tool(8)", "selection", "Selection", bsyGroup, , False
+            Case View_Blocking
+                m_tbrToolbar.ResourcePattern = "map editor\tools\blocking\*.png"
+                .AddNew , "Tool(0)", "line", "Line", bsyGroup
+                .AddNew , "Tool(1)", "polygon", "Polygon", bsyGroup
+                .AddNew , "Tool(2)", "box", "Box", bsyGroup
+                .AddNew "-"
+                .AddNew , "Tool(3)", "selection", "Selection", bsyGroup
+                .AddNew , "Tool(4)", "mover", "Mover", bsyGroup
+            Case View_Lighting
+                m_tbrToolbar.ResourcePattern = "map editor\tools\lighting\*.png"
+                .AddNew , "Tool(0)", "cursor", "Cursor", bsyGroup
+                .AddNew , "Tool(1)", "create light", "Create Light", bsyGroup
+                .AddNew "-"
+                .AddNew , "Tool(2)", "obstruction", "Place Obstruction", bsyGroup
+                .AddNew , "Tool(3)", "obstruction box", "Place Obstruction Box", bsyGroup
+                .AddNew , "Tool(4)", "obstruction selection", "Select Obstructions", bsyGroup
+                .AddNew , "Tool(5)", "obstruction mover", "Move Obstructions", bsyGroup
+                .AddNew "-"
+                .AddNew , "Tool(6)", "plane", "Place Plane", bsyGroup
+                .AddNew , "Tool(7)", "plane selection", "Select Planes", bsyGroup
+                .AddNew , "Tool(8)", "plane mover", "Move Planes", bsyGroup
+            Case View_Areas
+                m_tbrToolbar.ResourcePattern = "map editor\tools\areas\*.png"
+                .AddNew , "Tool(0)", "cursor", "Cursor", bsyGroup
+                .AddNew , "Tool(1)", "create", "Create Area", bsyGroup
+            Case View_Sprites
+                m_tbrToolbar.ResourcePattern = "map editor\tools\sprites\*.png"
+                .AddNew , "Tool(0)", "cursor", "Cursor", bsyGroup
+                .AddNew , "Tool(1)", "insert", "Insert Sprite", bsyGroup, , False
+                .AddNew "-"
+                .AddNew , "Tool(2)", "add path node", "Add Path Node", bsyGroup
+                .AddNew , "Tool(3)", "select path nodes", "Select Path Nodes", bsyGroup
+            Case View_Objects
+                m_tbrToolbar.ResourcePattern = "map editor\tools\objects\*.png"
+                .AddNew , "Tool(0)", "cursor", "Cursor", bsyGroup
+'                .AddNew , "Tool(1)", "create sound", "Create Sound", bsyGroup
+            Case Else
+            End Select
+            m_tbrToolbar.ResourcePattern = "map editor\tools\*.png"
+            .AddNew "-"
+            .AddNew , "ZoomIn", "zoom in", "Zoom In"
+            .AddNew , "ZoomOut", "zoom out", "Zoom Out"
+            .AddNew "-"
+            .AddNew , "ShowGrid", "show grid", "Show Grid", bsyCheck
+            .AddNew , "SnapToGrid", "snap to grid", "Snap To Grid", bsyCheck
+        End With
+        m_tbrToolbar.Buttons("Tool(" & m_lngCurrentTool(m_lngCurrentView) & ")").Checked = True
+        m_tbrToolbar.Buttons("ShowGrid").Checked = m_voViewOptions.ShowGrid
+        m_tbrToolbar.Buttons("SnapToGrid").Checked = m_voViewOptions.SnapToGrid
+        m_tbrToolbar.Buttons("ZoomIn").Enabled = (Zoom < 16)
+        m_tbrToolbar.Buttons("ZoomOut").Enabled = (Zoom > 0.25)
+        m_tbrToolbar.Reflow
+        m_tbrToolbar.DisableUpdates = False
+        m_tbrToolbar.Width = m_tbrToolbar.IdealVerticalWidth
+        m_tbrToolbar.Visible = True
+        m_tbrToolbar.Reflow
+    Else
+        m_tbrToolbar.Visible = False
     End If
 End Sub
 
@@ -3512,8 +3548,7 @@ End Sub
 Public Sub RefreshObjects()
 On Error Resume Next
 Dim l_mobObject As Fury2MapObject
-    elObjects.VisibleIcon = "VISIBLE"
-    elObjects.InvisibleIcon = "HIDDEN"
+    SetVisibilityIcons elObjects, "objects"
     Set elObjects.BoundObject = m_mapMap.Objects
     If elObjects.SelectedItem <> m_lngSelectedObject Then
         elObjects.SelectedItem = m_lngSelectedObject
@@ -3551,8 +3586,7 @@ End Sub
 
 Public Sub RefreshSprites()
 On Error Resume Next
-    elLights.VisibleIcon = "VISIBLE"
-    elLights.InvisibleIcon = "HIDDEN"
+    SetVisibilityIcons elSprites, "sprites"
     Set elSprites.BoundObject = m_mapMap.Layers(m_lngSelectedLayer).Sprites
     If elSprites.SelectedItem <> m_lngSelectedSprite Then
         elSprites.SelectedItem = m_lngSelectedSprite
@@ -3626,45 +3660,7 @@ End Sub
 
 Public Sub ResizeMapTools()
 On Error Resume Next
-Dim l_optOptions As ToolbarOptions
-    With m_tbhHandler
-        If m_lngCurrentView < View_Script Then
-            tbrMapTools.Reflow
-            With l_optOptions
-                .Title = "Map Tools"
-                .Closable = False
-                .FullRow = False
-                .ShowChevron = False
-                .Undockable = True
-                .XDockable = True
-                .YDockable = True
-                .XWidth = tbrMapTools.IdealWidth
-                .XHeight = tbrMapTools.IdealHeight
-                .YWidth = tbrMapTools.Buttons(1).Width
-                .YHeight = tbrMapTools.IdealHeight(.YWidth)
-                .DefaultPosition = TBP_Left
-            End With
-            .ResizeToolbar "Map Tools", tbrMapTools.hwnd, l_optOptions
-            tbrMapTools.Reflow
-        Else
-            With l_optOptions
-                .Title = "Map Tools"
-                .Closable = False
-                .FullRow = False
-                .ShowChevron = False
-                .Undockable = False
-                .XDockable = True
-                .YDockable = True
-                .XWidth = 0
-                .XHeight = 0
-                .YWidth = 0
-                .YHeight = 0
-                .DefaultPosition = TBP_Left
-            End With
-            .ResizeToolbar "Map Tools", 0, l_optOptions
-            tbrMapTools.Reflow
-        End If
-    End With
+    m_tbrToolbar.Reflow
 End Sub
 
 Public Sub ResizeViewport()
@@ -3833,7 +3829,7 @@ Dim l_sprSprite As Fury2Sprite
     Next l_sprSprite
 End Function
 
-Private Sub tbrMapTools_ButtonClick(Button As ngUI.ngToolButton)
+Private Sub m_tbrToolbar_ButtonClick(Button As ngUI.ngToolButton)
 On Error Resume Next
 Dim l_strKey As String
     l_strKey = LCase(Trim(Button.key))
@@ -3842,19 +3838,19 @@ Dim l_strKey As String
         ToolChanged
     Else
         Select Case l_strKey
-        Case "show grid"
+        Case "showgrid"
             m_voViewOptions.ShowGrid = Button.Checked
             RefreshToolInspector
             Redraw
-        Case "snap to grid"
+        Case "snaptogrid"
             m_voViewOptions.SnapToGrid = Button.Checked
             RefreshToolInspector
-        Case "zoom in"
+        Case "zoomin"
             Zoom = Zoom * 2
             If Zoom > 16 Then Zoom = 16
             ResizeViewport
             ZoomChanged
-        Case "zoom out"
+        Case "zoomout"
             Zoom = Zoom / 2
             If Zoom < 0.25 Then Zoom = 0.25
             ResizeViewport
@@ -4952,12 +4948,15 @@ Public Sub ToolChanged()
 On Error Resume Next
 Dim l_lngButtons As Long
 Dim l_strTool As String
-    For l_lngButtons = 1 To tbrMapTools.Buttons.Count
-        l_strTool = LCase(Trim(tbrMapTools.Buttons(l_lngButtons).key))
-        If Left(l_strTool, 4) = "tool" Then
-            tbrMapTools.Buttons(l_lngButtons).Checked = (CLng(Mid(l_strTool, 6, Len(l_strTool) - 6)) = m_lngCurrentTool(m_lngCurrentView))
-        End If
-    Next l_lngButtons
+    If m_tbrToolbar Is Nothing Then
+    Else
+        For l_lngButtons = 1 To m_tbrToolbar.Buttons.Count
+            l_strTool = LCase(Trim(m_tbrToolbar.Buttons(l_lngButtons).key))
+            If Left(l_strTool, 4) = "tool" Then
+                m_tbrToolbar.Buttons(l_lngButtons).Checked = (CLng(Mid(l_strTool, 6, Len(l_strTool) - 6)) = m_lngCurrentTool(m_lngCurrentView))
+            End If
+        Next l_lngButtons
+    End If
     Screen.MousePointer = 11
     m_lngPoint = 0
     m_booDraggingSprite = False
@@ -5083,8 +5082,8 @@ On Error Resume Next
         .Width = m_imgBackbuffer.Width
         .Height = m_imgBackbuffer.Height
         .SetMap m_mapMap
-        .UnGhostLayer = IIf(elLayers.Toolbar.ButtonChecked("GhostLayers"), m_lngSelectedLayer, 0)
-        .AutoTintLayers = elLayers.Toolbar.ButtonChecked("TintLayers")
+        .UnGhostLayer = IIf(elLayers.Toolbar.Buttons("GhostLayers").Checked, m_lngSelectedLayer, 0)
+        .AutoTintLayers = elLayers.Toolbar.Buttons("TintLayers").Checked
         .Alpha = 1
     End With
 End Sub
@@ -5160,6 +5159,8 @@ End Property
 
 Public Sub ZoomChanged()
 On Error Resume Next
+    m_tbrToolbar.Buttons("ZoomIn").Enabled = (Zoom < 16)
+    m_tbrToolbar.Buttons("ZoomOut").Enabled = (Zoom > 0.25)
     RefreshToolInspector
     ResizeViewport
     Redraw

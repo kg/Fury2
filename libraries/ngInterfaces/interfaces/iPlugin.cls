@@ -31,6 +31,9 @@ End Property
 Public Property Get ShowInPluginMenu() As Boolean
 End Property
 
+Public Property Get ToolbarIcon() As Fury2Image
+End Property
+
 Public Property Get Icon() As IPictureDisp
 End Property
 

@@ -11,11 +11,35 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+'
+'    ngIDE (Fury² Game Creation System Next-Generation Editor)
+'    Copyright (C) 2003 Kevin Gadd
+'
+'    This library is free software; you can redistribute it and/or
+'    modify it under the terms of the GNU Lesser General Public
+'    License as published by the Free Software Foundation; either
+'    version 2.1 of the License, or (at your option) any later version.
+'
+'    This library is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+'    Lesser General Public License for more details.
+'
+'    You should have received a copy of the GNU Lesser General Public
+'    License along with this library; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+'
+
 Option Explicit
 Implements iPlugin
 Implements iFileTypePlugin
 Private m_objEditor As Object
 Private Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+
+Private Property Get iFileTypePlugin_SupportedExtensions() As Variant
+On Error Resume Next
+    iFileTypePlugin_SupportedExtensions = Array()
+End Property
 
 Private Sub iPlugin_ShowConfiguration()
 End Sub
@@ -96,3 +120,6 @@ End Property
 Private Sub iPlugin_Shutdown()
 End Sub
 
+Private Property Get iPlugin_ToolbarIcon() As libGraphics.Fury2Image
+On Error Resume Next
+End Property

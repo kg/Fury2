@@ -87,6 +87,7 @@ Dim l_imgImage As Fury2Image, l_picImage As StdPicture
                             l_varParameters(2) = ""
                         End If
                     End If
+                    Set l_picImage = Nothing
                     Set l_picImage = ImageList.ItemPicture(CLng(l_varParameters(2)) + 1)
                     If (l_picImage Is Nothing) Then
                     Else
@@ -115,11 +116,11 @@ Dim lRowHeight As Long
 Dim lRowWidth As Long
 
    lMaxWidth = vbal_getVerticalWidth(tbrThis)
-   
+
    For l = 0 To tbrThis.ButtonCount - 1
       If tbrThis.ButtonVisible(l) Then
          If tbrThis.ButtonControl(l) = 0 Then
-            
+
             If tbrThis.ButtonStyle(l) = CTBSeparator Then
                ' we'll start a new row for the next one
                lHeight = lHeight + lRowHeight + IIf(l < tbrThis.ButtonCount - 1, 8, 0)
@@ -163,7 +164,7 @@ Dim lMaxWidth As Long
       End If
    Next l
    vbal_getVerticalWidth = lMaxWidth
-   
+
 End Function
 
 

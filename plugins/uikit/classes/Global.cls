@@ -20,7 +20,40 @@ Public Fonts As Fury2Collection
 Public Forms As Fury2Collection
 Public Desktop As Container
 Public DrawBehind As Boolean
-Public Backbuffer As Fury2Image
+Public Buffer As Fury2Image
+Private m_rctRectangle As Fury2Rect
+
+Public Property Get Rectangle() As Fury2Rect
+    Set Rectangle = m_rctRectangle
+End Property
+
+Public Property Set Rectangle(NewRect As Fury2Rect)
+    Set m_rctRectangle = NewRect.Copy
+    Set Desktop.Rectangle = NewRect.Copy.Translate(-NewRect.Left, -NewRect.Top)
+End Property
+
+Sub SetUIKitTintColor(ByVal Color As Long)
+On Error Resume Next
+Dim l_sknSkin As Skin
+Dim l_sksState As SkinState
+    If Color = F2White Then
+        For Each l_sknSkin In Skins
+            For Each l_sksState In l_sknSkin.States
+                l_sksState.WindowSkin.BlitMode = BlitMode_Merge
+                l_sksState.WindowSkin.Tint = Color
+                l_sksState.TintColor = Color
+            Next l_sksState
+        Next l_sknSkin
+    Else
+        For Each l_sknSkin In Skins
+            For Each l_sksState In l_sknSkin.States
+                l_sksState.WindowSkin.BlitMode = BlitMode_Font_Merge
+                l_sksState.WindowSkin.Tint = Color
+                l_sksState.TintColor = Color
+            Next l_sksState
+        Next l_sknSkin
+    End If
+End Sub
 
 Sub UnloadForm(Name)
 On Error Resume Next
@@ -47,7 +80,7 @@ On Error Resume Next
     If (Y = -32767) Then
         Y = Engine.Mouse.Y
     End If
-    Menu.Show X, Y
+    Menu.Show X - Rectangle.Left, Y - Rectangle.Top
 End Sub
 
 Sub ShowForm(Name, Optional ByVal X As Long = -32767, Optional ByVal Y As Long = -32767)
@@ -101,11 +134,13 @@ Dim l_strChannels() As String
                 l_strKey = Replace(l_strParts(0), vbCrLf, "")
                 l_strValue = l_strParts(1)
                 Select Case LCase(Trim(l_strKey))
-                Case "textcolor", "highlightcolor"
+                Case "textcolor", "highlightcolor", "tintcolor"
                     l_strChannels = Split(l_strValue, ",")
                     CallByName Skin, LCase(Trim(l_strKey)), VbLet, F2RGB(CLng(l_strChannels(0)), CLng(l_strChannels(1)), CLng(l_strChannels(2)), CLng(l_strChannels(3)))
                 Case "edgeoffset"
                     Skin.EdgeOffset = CLng(l_strValue)
+                Case "width"
+                    Skin.Width = CLng(l_strValue)
                 Case "font"
                     Set Skin.Font = Fonts(LCase(Trim(l_strValue)))
                 Case Else
@@ -239,7 +274,7 @@ Dim l_gphGraphic As UIKit.Graphic
 Dim l_lbxListBox As UIKit.ListBox
 Dim l_mnuMenu As UIKit.Menu
 Dim l_lblLabel As UIKit.Label
-Dim l_sbrScrollBar As UIKit.ScrollBar
+Dim l_sbrScrollBar As UIKit.Scrollbar
     Select Case LCase(Trim(WidgetType))
     Case "container"
         Set l_ctrContainer = New Container
@@ -312,7 +347,7 @@ Dim l_sbrScrollBar As UIKit.ScrollBar
         End With
         Set CreateWidget = l_mnuMenu
     Case "scrollbar"
-        Set l_sbrScrollBar = New ScrollBar
+        Set l_sbrScrollBar = New Scrollbar
         With l_sbrScrollBar
             Set .Skin = Skins("scrollbar")
             If Len(Trim(Name)) > 0 Then
@@ -359,8 +394,9 @@ End Property
 Private Property Set Fury2Plugin_Engine(ByVal RHS As Engine.Fury2Engine)
 On Error Resume Next
     Set Engine = RHS
-    Set Backbuffer = RHS.Backbuffer
-    Set Desktop.Rectangle = Backbuffer.Rectangle
+    Set Buffer = RHS.Backbuffer
+    Set Me.Rectangle = Buffer.Rectangle
+    Set Desktop.Rectangle = Me.Rectangle
     Set mdlGlobal.Engine = RHS
     Engine.AddObject "UIKit", Me
 End Property
@@ -376,17 +412,23 @@ End Sub
 
 Private Sub Fury2Plugin_KeyDown(KeyCode As Long, ByVal Shift As Long)
 On Error Resume Next
-    Desktop.Widget.KeyDown Nothing, KeyCode, Shift
+    If Desktop.Visible Then
+        Desktop.Widget.KeyDown Nothing, KeyCode, Shift
+    End If
 End Sub
 
 Private Sub Fury2Plugin_KeyPress(KeyAscii As Long)
 On Error Resume Next
-    Desktop.Widget.KeyPress Nothing, KeyAscii
+    If Desktop.Visible Then
+        Desktop.Widget.KeyPress Nothing, KeyAscii
+    End If
 End Sub
 
 Private Sub Fury2Plugin_KeyUp(KeyCode As Long, ByVal Shift As Long)
 On Error Resume Next
-    Desktop.Widget.KeyUp Nothing, KeyCode, Shift
+    If Desktop.Visible Then
+        Desktop.Widget.KeyUp Nothing, KeyCode, Shift
+    End If
 End Sub
 
 Private Sub Fury2Plugin_MapLoad(Filename As String)
@@ -395,22 +437,41 @@ End Sub
 
 Private Sub Fury2Plugin_MouseDown(ByVal Button As Long, ByVal Shift As Long, ByRef X As Long, ByRef Y As Long)
 On Error Resume Next
-    Desktop.Widget.MouseDown Nothing, Button, Shift, X, Y
+    If Desktop.Visible Then
+        Desktop.Widget.MouseDown Nothing, Button, Shift, X - Me.Rectangle.Left, Y - Me.Rectangle.Top
+        If Desktop.Rectangle.PointInside(X - Me.Rectangle.Left, Y - Me.Rectangle.Top) Then
+            X = -32767
+            Y = -32767
+        End If
+    End If
 End Sub
 
 Private Sub Fury2Plugin_MouseMove(ByVal Button As Long, ByVal Shift As Long, ByRef X As Long, ByRef Y As Long)
 On Error Resume Next
-    Desktop.Widget.MouseMove Nothing, Button, Shift, X, Y
+    If Desktop.Visible Then
+        Desktop.Widget.MouseMove Nothing, Button, Shift, X - Me.Rectangle.Left, Y - Me.Rectangle.Top
+        If Desktop.Rectangle.PointInside(X - Me.Rectangle.Left, Y - Me.Rectangle.Top) Then
+            X = -32767
+            Y = -32767
+        End If
+    End If
 End Sub
 
 Private Sub Fury2Plugin_MouseUp(ByVal Button As Long, ByVal Shift As Long, ByRef X As Long, ByRef Y As Long)
 On Error Resume Next
-    Desktop.Widget.MouseUp Nothing, Button, Shift, X, Y
+    If Desktop.Visible Then
+        Desktop.Widget.MouseUp Nothing, Button, Shift, X - Me.Rectangle.Left, Y - Me.Rectangle.Top
+        If Desktop.Rectangle.PointInside(X - Me.Rectangle.Left, Y - Me.Rectangle.Top) Then
+            X = -32767
+            Y = -32767
+        End If
+    End If
 End Sub
 
 Private Sub Fury2Plugin_Redraw()
 On Error Resume Next
-    Desktop.Widget.Redraw Nothing, Backbuffer, 0, 0
+    If Buffer Is Nothing Then Exit Sub
+    Desktop.Widget.Redraw Nothing, Buffer, 0, 0, 1#
 End Sub
 
 Private Sub Fury2Plugin_Shutdown()

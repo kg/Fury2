@@ -37,18 +37,18 @@ Public Property Get Height() As Long
     End If
 End Property
 
-Public Sub Draw(Surface As Fury2Image, Rectangle As Fury2Rect, Selected As Boolean)
+Public Sub Draw(Surface As Fury2Image, Rectangle As Fury2Rect, Selected As Boolean, Opacity As Single)
 On Error Resume Next
 Dim l_rctText As Fury2Rect
     If Image Is Nothing Then
         Set l_rctText = Rectangle
     Else
         If Image.AlphaChannel Then
-            Surface.Blit Rectangle, , Image, 1, BlitMode_SourceAlpha
+            Surface.Blit Rectangle, , Image, Opacity, BlitMode_SourceAlpha
         Else
-            Surface.Blit Rectangle, , Image, 1, BlitMode_Matte
+            Surface.Blit Rectangle, , Image, Opacity, BlitMode_Matte
         End If
         Set l_rctText = F2Rect(Rectangle.Left + Image.Width + 1, Rectangle.Top, Rectangle.Width, Rectangle.Height, False)
     End If
-    Font.Draw Surface, Text, l_rctText, TextColor
+    Font.Draw Surface, Text, l_rctText, TextColor, Opacity
 End Sub

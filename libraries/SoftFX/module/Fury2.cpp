@@ -1710,7 +1710,7 @@ Polygon<GradientVertex> GradientShadowPoly;
 GradientVertex ShadowVertex;
 FPoint Point, LightPoint, LinePoint[4], LineCenter;
 FVector Vector;
-Rectangle FillRect, LightRect, CameraRect;
+Rectangle FillRect, LightRect, CameraRect, CacheRect;
 FRect LightFRect;
 float LightDistance, Falloff;
 SpriteParam *Sprite;
@@ -1720,6 +1720,8 @@ Lighting::Sector *Sector = Null;
 bool Ignore = false, Scaling = false;
 int SpriteCount = 0;
 Pixel SavedColor;
+Image* RenderTarget;
+int OffsetX = 0, OffsetY = 0;
   if (!Camera) return Failure;
   if (!Environment) return Failure;
   if (!Camera->OutputBuffer) return Failure;
@@ -1729,6 +1731,9 @@ Pixel SavedColor;
   Camera->ScratchBuffer->setClipRectangle(Camera->OutputRectangle);
 
   CameraRect = Camera->OutputRectangle;
+  RenderTarget = Camera->ScratchBuffer;
+  OffsetX = Camera->ScrollX;
+  OffsetY = Camera->ScrollY;
 
   if (Environment->LightCount < 1) return Trivial_Success;
 
@@ -1743,6 +1748,8 @@ Pixel SavedColor;
   for (int l = 0; l < Environment->LightCount; l++) {
     bool Light_Clipped = false;
 
+    OffsetX = Camera->ScrollX;
+    OffsetY = Camera->ScrollY;
     Light = &(Environment->Lights[l]);
   	Light->Culled = true;
     if (Light->Attached) {
@@ -1751,14 +1758,23 @@ Pixel SavedColor;
       Light->Angle = Light->Attached->Velocity.B;
     }
     Light->Angle = NormalizeAngle(Light->Angle);
-    Camera->ScratchBuffer->setClipRectangle(Camera->ScratchBuffer->getRectangle());
+    if ((Light->Cache != Null) && (Light->CacheValid == false)) {
+      CameraRect = Light->Cache->getRectangle();
+      RenderTarget = Light->Cache;
+      OffsetX = Light->X - Light->FalloffDistance;
+      OffsetY = Light->Y - Light->FalloffDistance;
+    } else {
+      CameraRect = Camera->OutputRectangle;
+      RenderTarget = Camera->ScratchBuffer;
+    }
+    RenderTarget->setClipRectangle(RenderTarget->getRectangle());
     if (Light->Visible) {
       if (Scaling) {
-        LightPoint = FPoint((Light->X - Camera->ScrollX) * Camera->OutputScaleRatio, (Light->Y - Camera->ScrollY) * Camera->OutputScaleRatio);
+        LightPoint = FPoint((Light->X - OffsetX) * Camera->OutputScaleRatio, (Light->Y - OffsetY) * Camera->OutputScaleRatio);
         LightDistance = Light->FalloffDistance * 1.1 * Camera->OutputScaleRatio;
         Falloff = Light->FalloffDistance * Camera->OutputScaleRatio;
       } else {
-        LightPoint = FPoint(Light->X - Camera->ScrollX, Light->Y - Camera->ScrollY);
+        LightPoint = FPoint(Light->X - OffsetX, Light->Y - OffsetY);
         LightDistance = Light->FalloffDistance * 1.1;
         Falloff = Light->FalloffDistance;
       }
@@ -1768,40 +1784,43 @@ Pixel SavedColor;
         if (Light->FalloffDistance <= 0) {
           // no falloff (fill)
           LightRect = CameraRect;
-          LightFRect.X1 = LightRect.Left + Camera->ScrollX;
-          LightFRect.Y1 = LightRect.Top + Camera->ScrollY;
-          LightFRect.X2 = LightRect.right() + Camera->ScrollX;
-          LightFRect.Y2 = LightRect.bottom() + Camera->ScrollY;
+          LightFRect.X1 = LightRect.Left + OffsetX;
+          LightFRect.Y1 = LightRect.Top + OffsetY;
+          LightFRect.X2 = LightRect.right() + OffsetX;
+          LightFRect.Y2 = LightRect.bottom() + OffsetY;
           Light_Clipped = false;
           Camera->ScratchBuffer->fill(Light->Color);
         } else {
           // falloff (radial gradient)
 
           LightRect.setValuesAbsolute(LightPoint.X - Falloff, LightPoint.Y - Falloff, LightPoint.X + Falloff, LightPoint.Y + Falloff);
-          LightFRect.X1 = LightRect.Left + Camera->ScrollX;
-          LightFRect.Y1 = LightRect.Top + Camera->ScrollY;
-          LightFRect.X2 = LightRect.right() + Camera->ScrollX;
-          LightFRect.Y2 = LightRect.bottom() + Camera->ScrollY;
+          LightFRect.X1 = LightRect.Left + OffsetX;
+          LightFRect.Y1 = LightRect.Top + OffsetY;
+          LightFRect.X2 = LightRect.right() + OffsetX;
+          LightFRect.Y2 = LightRect.bottom() + OffsetY;
           Light_Clipped = !ClipRectangle_Rect(&LightRect, &CameraRect);
 
           if (!Light_Clipped) {
             // render the light's sphere of illumination
-            Camera->ScratchBuffer->setClipRectangle(LightRect);
+            RenderTarget->setClipRectangle(LightRect);
             FillRect.setValuesAbsolute(LightPoint.X - Falloff, LightPoint.Y - Falloff, LightPoint.X + Falloff, LightPoint.Y + Falloff);
-            FilterSimple_Gradient_Radial(Camera->ScratchBuffer, &FillRect, Light->Color, Pixel(0, 0, 0, Light->Color[::Alpha]));
+            if ((Light->CacheValid) && (Light->Cache != Null)) {
+            } else {
+              FilterSimple_Gradient_Radial(RenderTarget, &FillRect, Light->Color, Pixel(0, 0, 0, Light->Color[::Alpha]));
+            }
           }
         }
       } else {
         // directional
         Camera->ScratchBuffer->setClipRectangle(Camera->ScratchBuffer->getRectangle());
-        Camera->ScratchBuffer->fill(0);
+        RenderTarget->fill(0);
         if (Light->FalloffDistance <= 0) {
           // no falloff (solid filled convex polygon extended to infinity)
           LightRect = CameraRect;
-          LightFRect.X1 = LightRect.Left + Camera->ScrollX;
-          LightFRect.Y1 = LightRect.Top + Camera->ScrollY;
-          LightFRect.X2 = LightRect.right() + Camera->ScrollX;
-          LightFRect.Y2 = LightRect.bottom() + Camera->ScrollY;
+          LightFRect.X1 = LightRect.Left + OffsetX;
+          LightFRect.Y1 = LightRect.Top + OffsetY;
+          LightFRect.X2 = LightRect.right() + OffsetX;
+          LightFRect.Y2 = LightRect.bottom() + OffsetY;
           Light_Clipped = false;
 
           ShadowPoly.Allocate(3);
@@ -1850,15 +1869,23 @@ Pixel SavedColor;
           GradientShadowPoly.Finalize();
 
           LightRect.setValuesAbsolute(GradientShadowPoly.MinimumX(), GradientShadowPoly.MinimumY(), GradientShadowPoly.MaximumX(), GradientShadowPoly.MaximumY());
-          LightFRect.X1 = LightRect.Left + Camera->ScrollX;
-          LightFRect.Y1 = LightRect.Top + Camera->ScrollY;
-          LightFRect.X2 = LightRect.right() + Camera->ScrollX;
-          LightFRect.Y2 = LightRect.bottom() + Camera->ScrollY;
+          LightFRect.X1 = LightRect.Left + OffsetX;
+          LightFRect.Y1 = LightRect.Top + OffsetY;
+          LightFRect.X2 = LightRect.right() + OffsetX;
+          LightFRect.Y2 = LightRect.bottom() + OffsetY;
           Light_Clipped = !ClipRectangle_Rect(&LightRect, &CameraRect);
 
           if (!Light_Clipped) {
-            Camera->ScratchBuffer->setClipRectangle(LightRect);
-            FilterSimple_ConvexPolygon_Gradient(Camera->ScratchBuffer, &GradientShadowPoly, Null);
+            RenderTarget->setClipRectangle(LightRect);
+            if ((Light->CacheValid) && (Light->Cache != Null)) {
+              LightRect.setValuesAbsolute(GradientShadowPoly.MinimumX(), GradientShadowPoly.MinimumY(), GradientShadowPoly.MaximumX(), GradientShadowPoly.MaximumY());
+              CacheRect = LightRect;
+              CacheRect.Left = CacheRect.Top = 0;
+              //BlitSimple_Normal(RenderTarget, Light->Cache, &LightRect, 0, 0);
+              FilterSimple_Fill(RenderTarget, &LightRect, Pixel(255, 0, 0, 255));
+            } else {
+              FilterSimple_ConvexPolygon_Gradient(RenderTarget, &GradientShadowPoly, Null);
+            }
           }
         }
       }
@@ -1878,7 +1905,7 @@ Pixel SavedColor;
 
         ProfileStart("Render Shadows");
 
-        if (Environment->Matrix) {
+        if ((Environment->Matrix) && !(Light->CacheValid && (Light->Cache != Null))) {
 			  float vs = 0;
 			for (my = my1; my <= my2; my++) {
 				for (mx = mx1; mx <= mx2; mx++) {
@@ -1887,10 +1914,10 @@ Pixel SavedColor;
 
 						LinePoint[0] = Obstruction->Line.Start;
 						LinePoint[1] = Obstruction->Line.End;
-						LinePoint[0].X -= Camera->ScrollX;
-						LinePoint[1].X -= Camera->ScrollX;
-						LinePoint[0].Y -= Camera->ScrollY;
-						LinePoint[1].Y -= Camera->ScrollY;
+						LinePoint[0].X -= OffsetX;
+						LinePoint[1].X -= OffsetX;
+						LinePoint[0].Y -= OffsetY;
+						LinePoint[1].Y -= OffsetY;
 						if (Scaling) {
 							LinePoint[0].X *= Camera->OutputScaleRatio;
 							LinePoint[0].Y *= Camera->OutputScaleRatio;
@@ -1918,13 +1945,31 @@ Pixel SavedColor;
 						Vector.Y = afloor(Vector.Y / vs);
 						ShadowPoly.SetVertex(3, FPoint(LinePoint[1].X + Vector.X, LinePoint[1].Y + Vector.Y));
 
-						FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, Pixel(0,0,0,255));
+						FilterSimple_ConvexPolygon(RenderTarget, &ShadowPoly, Pixel(0,0,0,255));
 												
 					}
 				}
 			}
         }
 
+        if ((Light->Cache != Null)) {
+          LightRect.Left = Light->X - Light->FalloffDistance - Camera->ScrollX;
+          LightRect.Top = Light->Y - Light->FalloffDistance - Camera->ScrollY;
+          LightRect.setRight(Light->X + Light->FalloffDistance - Camera->ScrollX);
+          LightRect.setBottom(Light->Y + Light->FalloffDistance - Camera->ScrollY);
+          CacheRect = Light->Cache->getRectangle();
+          Camera->ScratchBuffer->setClipRectangle(LightRect);
+          BlitSimple_Normal(Camera->ScratchBuffer, Light->Cache, &LightRect, 0, 0);
+        }
+        LightPoint.X += OffsetX;
+        LightPoint.Y += OffsetY;
+        CameraRect = Camera->OutputRectangle;
+        RenderTarget = Camera->ScratchBuffer;
+        OffsetX = Camera->ScrollX;
+        OffsetY = Camera->ScrollY;
+        LightPoint.X -= OffsetX;
+        LightPoint.Y -= OffsetY;
+  
         Sprite = Environment->Sprites;
         SpriteCount = 0;
         while (Sprite) {
@@ -1956,10 +2001,10 @@ Pixel SavedColor;
               LinePoint[0].Y = (-cos(a - Radians(90)) * s) + Sprite->Position.Y - h;
               LinePoint[1].X = (sin(a + Radians(90)) * s) + Sprite->Position.X;
               LinePoint[1].Y = (-cos(a + Radians(90)) * s) + Sprite->Position.Y - h;
-              LinePoint[0].X -= Camera->ScrollX;
-              LinePoint[1].X -= Camera->ScrollX;
-              LinePoint[0].Y -= Camera->ScrollY;
-              LinePoint[1].Y -= Camera->ScrollY;
+              LinePoint[0].X -= OffsetX;
+              LinePoint[1].X -= OffsetX;
+              LinePoint[0].Y -= OffsetY;
+              LinePoint[1].Y -= OffsetY;
               if (Scaling) {
                 LinePoint[0].X *= Camera->OutputScaleRatio;
                 LinePoint[0].Y *= Camera->OutputScaleRatio;
@@ -1987,6 +2032,9 @@ Pixel SavedColor;
 
         ProfileStop("Render Shadows");
 
+        if ((Light->Cache != Null)) {
+          Light->CacheValid = 1;
+        }
         if (Camera->SaturationMode == 1) {
           BlitSimple_Screen_Opacity(Camera->OutputBuffer, Camera->ScratchBuffer, &LightRect, (LightRect.Left - Camera->OutputRectangle.Left), (LightRect.Top - Camera->OutputRectangle.Top), Light->Color[::Alpha]);
         } else {
@@ -1995,6 +2043,9 @@ Pixel SavedColor;
       }
     }
   }
+
+  OffsetX = Camera->ScrollX;
+  OffsetY = Camera->ScrollY;
 
   ProfileStart("Calculate Sprite Illumination");
   Sprite = Environment->Sprites;
@@ -2018,37 +2069,43 @@ Pixel SavedColor;
     SortEntries = StaticAllocate<Lighting::sort_entry>(ListBuffer, SortBufferCount);
 	  _Fill<Byte>(SortEntries, 0, sizeof(Lighting::sort_entry) * SortBufferCount);
     if (Environment->Planes) {
+      Rectangle rctWall, rctTop;
       for (int i = 0; i < Environment->PlaneCount; i++) {
-        y1 = _Min(Environment->Planes[i].Start.Y - Environment->Planes[i].Height, Environment->Planes[i].End.Y - Environment->Planes[i].Height);
-        y2 = _Max(Environment->Planes[i].Start.Y, Environment->Planes[i].End.Y);
-        if ((y2 < Camera->ScrollY) || (y1 > Camera->ScrollY + Camera->OutputRectangle.Height)) {
-        } else {
-          y1 = _Max(Environment->Planes[i].Start.Y, Environment->Planes[i].End.Y);
-          SortEntries[SortEntryCount].type = Lighting::plane;
-          SortEntries[SortEntryCount].y = y1;
-          SortEntries[SortEntryCount].Plane = &(Environment->Planes[i]);
-          SortEntries[SortEntryCount].pNext = &(SortEntries[SortEntryCount + 1]);
-          SortEntryCount++;
+        {
+          Plane = &(Environment->Planes[i]);
+          rctWall = Plane->fullRect();
+          y2 = rctWall.bottom();
+          rctWall.translate(-OffsetX, -OffsetY);
+          if (ClipRectangle_Rect(&rctWall, &CameraRect)) {
+            SortEntries[SortEntryCount].type = Lighting::plane;
+            SortEntries[SortEntryCount].y = y2;
+            SortEntries[SortEntryCount].Plane = Plane;
+            SortEntries[SortEntryCount].pNext = &(SortEntries[SortEntryCount + 1]);
+            SortEntryCount++;
+          }
         }
       }
     }
-    Sprite = Environment->Sprites;
-    while (Sprite) {
-      if (Sprite->Visible) {
-        if (Sprite->Params.Alpha != 0) {
-          y1 = Sprite->Position.Y - Sprite->Graphic.Rectangle.Height;
-          y2 = Sprite->Position.Y;
-//          if ((y2 < Camera->ScrollY) || (y1 > Camera->ScrollY + Camera->OutputRectangle.Height)) {
-//          } else {
-            SortEntries[SortEntryCount].type = Lighting::sprite;
-            SortEntries[SortEntryCount].y = y2;
-            SortEntries[SortEntryCount].Sprite = Sprite;
-            SortEntries[SortEntryCount].pNext = &(SortEntries[SortEntryCount + 1]);
-//          }
-          SortEntryCount++;
+    if (Environment->Sprites) {
+      Rectangle rctSprite;
+      Sprite = Environment->Sprites;
+      while (Sprite) {
+        if (Sprite->Visible) {
+          if (Sprite->Params.Alpha != 0) {
+            rctSprite = Sprite->getRectangle();
+            y2 = rctSprite.bottom();
+            rctSprite.translate(-OffsetX, -OffsetY);
+            if (ClipRectangle_Rect(&rctSprite, &CameraRect)) {
+              SortEntries[SortEntryCount].type = Lighting::sprite;
+              SortEntries[SortEntryCount].y = y2;
+              SortEntries[SortEntryCount].Sprite = Sprite;
+              SortEntries[SortEntryCount].pNext = &(SortEntries[SortEntryCount + 1]);
+              SortEntryCount++;
+            }
+          }
         }
+        Sprite = Sprite->pNext;
       }
-      Sprite = Sprite->pNext;
     }
     SortEntries[SortEntryCount - 1].pNext = Null;
     FirstSortEntry = SortLinkedList<Lighting::sort_entry>(&(SortEntries[0]));
@@ -2079,8 +2136,8 @@ Pixel SavedColor;
         SavedColor = Sprite->Params.IlluminationLevel;
         SavedColor[::Alpha] = 255;
         w = Sprite->Graphic.Rectangle.Width / 2; h = Sprite->Graphic.Rectangle.Height;
-        x = Sprite->Position.X - Camera->ScrollX - ((w) - Sprite->Graphic.XCenter);
-        y = Sprite->Position.Y - Camera->ScrollY + (h - Sprite->Graphic.YCenter);
+        x = Sprite->Position.X - OffsetX - ((w) - Sprite->Graphic.XCenter);
+        y = Sprite->Position.Y - OffsetY + (h - Sprite->Graphic.YCenter);
         s = Sprite->Params.Scale; r = Sprite->Params.Angle;
         scaled = (s != 1); rotated = (((int)r) % 360) != 0;
         if ((!scaled) && (!rotated)) {
@@ -2099,7 +2156,11 @@ Pixel SavedColor;
               BlitSimple_SourceAlpha_Tint_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, SavedColor, abs(Sprite->Params.Alpha) * 255);
               break;
             case 7:
-              BlitSimple_Additive_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(Sprite->Params.Alpha) * 255);
+              if (Camera->SaturationMode == 1) {
+                BlitSimple_Screen_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(Sprite->Params.Alpha) * 255);
+              } else {
+                BlitSimple_Additive_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(Sprite->Params.Alpha) * 255);
+              }
             case 2: case 3: case 4: case 5: case 6: case 8:
                 break;
             }
@@ -2107,33 +2168,11 @@ Pixel SavedColor;
         }
       } else if (SortEntry->type == Lighting::plane) {
         Plane = SortEntry->Plane;
-        LinePoint[0] = Plane->Start; LinePoint[1] = Plane->End;
-        for (DoubleWord n = 0; n < 2; ++n) {
-          LinePoint[n].X -= Camera->ScrollX; LinePoint[n].Y -= Camera->ScrollY;
-          if (Scaling) {
-            LinePoint[n].X *= Camera->OutputScaleRatio; LinePoint[n].Y *= Camera->OutputScaleRatio;
-          }
-        }
-    		x = _Min(LinePoint[0].X, LinePoint[1].X);
-        rctTop.Left = x;
-        rctTop.setRight(_Max(LinePoint[0].X, LinePoint[1].X) + 1);
-        rctTop.Top = _Min(LinePoint[0].Y, LinePoint[1].Y) - Plane->Height;
-        rctTop.setBottom(_Max(LinePoint[0].Y, LinePoint[1].Y) + 1 - Plane->Height);
-        rctWall.Width = 0;
-        rctWall.Height = 0;
-        if (Plane->Height > 0) {
-          rctWall.Left = rctTop.Left;
-          rctWall.Width = rctTop.Width;
-          rctWall.Top = rctTop.bottom();
-          rctWall.Height = Plane->Height;
-        } else if (Plane->Height < 0) {
-          rctWall.Left = rctTop.Left;
-          rctWall.Width = rctTop.Width;
-          rctWall.Top = rctTop.Top + Plane->Height;
-          rctWall.Height = -Plane->Height;
-		    } else {
-		      rctWall = rctTop;
-		    }
+        rctTop = Plane->topRect();
+        rctWall = Plane->bottomRect();
+        rctTop.translate(-OffsetX, -OffsetY);
+        rctWall.translate(-OffsetX, -OffsetY);
+    		x = rctTop.Left;
 		    ClipRectangle_Image(&rctTop, Camera->OutputBuffer);
 		    ClipRectangle_Image(&rctWall, Camera->OutputBuffer);
 		    xo = (rctWall.Left - x);

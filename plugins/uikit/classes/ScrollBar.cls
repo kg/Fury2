@@ -26,15 +26,31 @@ Private CapturedWidget As iWidget
 Private FocusedWidget As iWidget
 Public HaveFocus As Boolean
 Public MouseHovering As Boolean
-Private m_btnMinus As Button
-Private m_btnPlus As Button
-Private m_btnThumb As Button
 Public ThumbSize As Single
 Public Minimum As Single
 Public Maximum As Single
 Public Increment As Single
 Public Value As Single
+Private m_booHorizontal As Boolean
+Private m_btnMinus As Button
+Private m_btnPlus As Button
+Private m_btnThumb As Button
 Private m_booFocusing As Boolean
+
+Public Property Get Horizontal() As Boolean
+    Horizontal = m_booHorizontal
+End Property
+
+Public Property Let Horizontal(ByVal NewValue As Boolean)
+    m_booHorizontal = NewValue
+    Refresh
+End Property
+
+Public Property Let BlitMode(ByVal NewMode As SFXBlitModes)
+    m_btnMinus.BlitMode = NewMode
+    m_btnPlus.BlitMode = NewMode
+    m_btnThumb.BlitMode = NewMode
+End Property
 
 Public Sub ChildRemoved(Obj As Object)
     If FocusedWidget Is Obj Then
@@ -139,20 +155,28 @@ End Property
 Public Sub Thumb_MouseMove(Button, Shift, X, Y)
 On Error Resume Next
 Dim l_staState As SkinState
-Dim l_lngBarHeight As Long
-Dim l_lngThumbHeight As Long
+Dim l_lngBarSize As Long
+Dim l_lngThumbSize As Long
 Dim l_lngBarPos As Long
 Dim l_sngValue As Single
 Dim l_lngPadding As Long
     If Button <> 1 Then Exit Sub
     Set l_staState = Skin.States("border")
     l_lngPadding = l_staState.EdgeOffset
-    l_lngBarHeight = Rectangle.Height - (m_btnMinus.Rectangle.Height + m_btnPlus.Rectangle.Height) - (l_lngPadding * 2)
-    l_lngThumbHeight = l_lngBarHeight * ThumbSize
-    l_lngBarHeight = l_lngBarHeight - (l_lngThumbHeight)
     l_sngValue = (Value - Minimum) / Maximum
-    l_lngBarPos = l_sngValue * l_lngBarHeight
-    Value = Minimum + (((Y - m_btnMinus.Rectangle.Bottom - l_lngPadding - (l_lngThumbHeight / 2)) / l_lngBarHeight) * (Maximum - Minimum))
+    If Horizontal Then
+        l_lngBarSize = Rectangle.Width - (m_btnMinus.Rectangle.Width + m_btnPlus.Rectangle.Width) - (l_lngPadding * 2)
+        l_lngThumbSize = l_lngBarSize * ThumbSize
+        l_lngBarSize = l_lngBarSize - (l_lngThumbSize)
+        l_lngBarPos = l_sngValue * l_lngBarSize
+        Value = Minimum + (((X - m_btnMinus.Rectangle.Right - l_lngPadding - (l_lngThumbSize / 2)) / l_lngBarSize) * (Maximum - Minimum))
+    Else
+        l_lngBarSize = Rectangle.Height - (m_btnMinus.Rectangle.Height + m_btnPlus.Rectangle.Height) - (l_lngPadding * 2)
+        l_lngThumbSize = l_lngBarSize * ThumbSize
+        l_lngBarSize = l_lngBarSize - (l_lngThumbSize)
+        l_lngBarPos = l_sngValue * l_lngBarSize
+        Value = Minimum + (((Y - m_btnMinus.Rectangle.Bottom - l_lngPadding - (l_lngThumbSize / 2)) / l_lngBarSize) * (Maximum - Minimum))
+    End If
     If Value < Minimum Then Value = Minimum
     If Value > Maximum Then Value = Maximum
     DispatchEvent "Scroll", Value
@@ -243,17 +267,32 @@ On Error Resume Next
     Set m_btnThumb.EventHandler = Me
     m_btnThumb.Name = "Thumb"
     m_btnThumb.Text = ""
-    Set m_btnThumb.Rectangle = F2Rect(0, 0, Rectangle.Width, 0, False)
+    Set m_btnThumb.Image = Skin.Glyphs("thumb")
+    If Horizontal Then
+        Set m_btnThumb.Rectangle = F2Rect(0, 0, 0, Rectangle.Height, False)
+    Else
+        Set m_btnThumb.Rectangle = F2Rect(0, 0, Rectangle.Width, 0, False)
+    End If
     Set m_btnMinus.EventHandler = Me
     m_btnMinus.Name = "Minus"
     m_btnMinus.Text = ""
-    Set m_btnMinus.Image = Skin.Glyphs("up")
-    Set m_btnMinus.Rectangle = F2Rect(0, 0, Rectangle.Width, Rectangle.Width, False)
+    If Horizontal Then
+        Set m_btnMinus.Image = Skin.Glyphs("left")
+        Set m_btnMinus.Rectangle = F2Rect(0, 0, Rectangle.Height, Rectangle.Height, False)
+    Else
+        Set m_btnMinus.Image = Skin.Glyphs("up")
+        Set m_btnMinus.Rectangle = F2Rect(0, 0, Rectangle.Width, Rectangle.Width, False)
+    End If
     Set m_btnPlus.EventHandler = Me
     m_btnPlus.Name = "Plus"
     m_btnPlus.Text = ""
-    Set m_btnPlus.Image = Skin.Glyphs("down")
-    Set m_btnPlus.Rectangle = F2Rect(0, Rectangle.Height - Rectangle.Width, Rectangle.Width, Rectangle.Width, False)
+    If Horizontal Then
+        Set m_btnPlus.Image = Skin.Glyphs("right")
+        Set m_btnPlus.Rectangle = F2Rect(Rectangle.Width - Rectangle.Height, 0, Rectangle.Height, Rectangle.Height, False)
+    Else
+        Set m_btnPlus.Image = Skin.Glyphs("down")
+        Set m_btnPlus.Rectangle = F2Rect(0, Rectangle.Height - Rectangle.Width, Rectangle.Width, Rectangle.Width, False)
+    End If
 End Sub
 
 Private Property Get iContainer_Captured(ByRef Widget As iWidget) As Boolean
@@ -545,6 +584,13 @@ Dim l_wdgWidget As iWidget
     End With
 End Sub
 
+Public Property Get OptimalWidth() As Long
+On Error Resume Next
+Dim l_staState As SkinState
+    Set l_staState = Skin.States("border")
+    OptimalWidth = l_staState.Width
+End Property
+
 Public Property Get EdgeOffset() As Long
 On Error Resume Next
 Dim l_staState As SkinState
@@ -552,14 +598,14 @@ Dim l_staState As SkinState
     EdgeOffset = l_staState.EdgeOffset
 End Property
 
-Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_wdgWidget As iWidget
 Dim l_rctNew As Fury2Rect
 Dim l_rctOld As Fury2Rect
 Dim l_staState As SkinState
-Dim l_lngBarHeight As Long
-Dim l_lngThumbHeight As Long
+Dim l_lngBarSize As Long
+Dim l_lngThumbSize As Long
 Dim l_lngBarPos As Long
 Dim l_sngValue As Single
 Dim l_lngPadding As Long
@@ -570,19 +616,30 @@ Dim l_lngPadding As Long
         .ClippedSetClipRectangle l_rctNew
         Set l_staState = Skin.States("border")
         l_lngPadding = l_staState.EdgeOffset
-        l_staState.WindowSkin.Draw Surface, l_rctNew
-        l_lngBarHeight = Rectangle.Height - (m_btnMinus.Rectangle.Height + m_btnPlus.Rectangle.Height) - (l_lngPadding * 2)
-        l_lngThumbHeight = l_lngBarHeight * ThumbSize
-        l_lngBarHeight = l_lngBarHeight - (l_lngThumbHeight)
+        l_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
         l_sngValue = (Value - Minimum) / Maximum
-        l_lngBarPos = l_sngValue * l_lngBarHeight
-        With m_btnThumb.Rectangle
-            .Top = (l_lngBarPos) + (m_btnMinus.Rectangle.Bottom) + l_lngPadding
-            .Height = l_lngThumbHeight
-        End With
+        If Horizontal Then
+            l_lngBarSize = Rectangle.Width - (m_btnMinus.Rectangle.Width + m_btnPlus.Rectangle.Width) - (l_lngPadding * 2)
+            l_lngThumbSize = l_lngBarSize * ThumbSize
+            l_lngBarSize = l_lngBarSize - (l_lngThumbSize)
+            l_lngBarPos = l_sngValue * l_lngBarSize
+            With m_btnThumb.Rectangle
+                .Left = (l_lngBarPos) + (m_btnMinus.Rectangle.Right) + l_lngPadding
+                .Width = l_lngThumbSize
+            End With
+        Else
+            l_lngBarSize = Rectangle.Height - (m_btnMinus.Rectangle.Height + m_btnPlus.Rectangle.Height) - (l_lngPadding * 2)
+            l_lngThumbSize = l_lngBarSize * ThumbSize
+            l_lngBarSize = l_lngBarSize - (l_lngThumbSize)
+            l_lngBarPos = l_sngValue * l_lngBarSize
+            With m_btnThumb.Rectangle
+                .Top = (l_lngBarPos) + (m_btnMinus.Rectangle.Bottom) + l_lngPadding
+                .Height = l_lngThumbSize
+            End With
+        End If
         With Rectangle
             For Each l_wdgWidget In Children
-                l_wdgWidget.Redraw Me, Surface, XOffset + .Left, YOffset + .Top
+                l_wdgWidget.Redraw Me, Surface, XOffset + .Left, YOffset + .Top, Opacity
             Next l_wdgWidget
         End With
         Set .ClipRectangle = l_rctOld

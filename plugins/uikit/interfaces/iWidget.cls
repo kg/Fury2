@@ -52,5 +52,5 @@ End Sub
 Public Sub KeyUp(ByVal Parent As iContainer, ByRef KeyCode As Long, ByVal Shift As Long)
 End Sub
 
-Public Sub Redraw(ByVal Parent As iContainer, ByVal Surface As Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Public Sub Redraw(ByVal Parent As iContainer, ByVal Surface As Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 End Sub

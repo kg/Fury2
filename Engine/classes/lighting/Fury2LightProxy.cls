@@ -47,6 +47,47 @@ Private mvarVisible As Boolean 'local copy
 Private mvarX As Single 'local copy
 Private mvarY As Single 'local copy
 Private mvarName As String
+Private mvarEnableCache As Boolean
+Private mvarCacheValid As Boolean
+Private mvarCache As Fury2Image
+
+Public Sub UpdateCache()
+On Error Resume Next
+Dim l_lngCacheWidth As Long, l_lngCacheHeight As Long
+    mvarCacheValid = False
+    If (mvarEnableCache) And (mvarFalloffDistance > 0) Then
+        l_lngCacheWidth = mvarFalloffDistance * 2 + 1
+        l_lngCacheHeight = mvarFalloffDistance * 2 + 1
+        If mvarCache Is Nothing Then
+            Set mvarCache = F2Image(l_lngCacheWidth, l_lngCacheHeight)
+        ElseIf (mvarCache.Width <> l_lngCacheWidth) Or (mvarCache.Height <> l_lngCacheHeight) Then
+            mvarCache.Resize l_lngCacheWidth, l_lngCacheHeight, False
+        End If
+    Else
+        Set mvarCache = Nothing
+    End If
+End Sub
+
+Public Property Get EnableCache() As Boolean
+    EnableCache = mvarEnableCache
+End Property
+
+Public Property Let EnableCache(NewValue As Boolean)
+    mvarEnableCache = NewValue
+    UpdateCache
+End Property
+
+Public Property Get CacheValid() As Boolean
+    CacheValid = mvarCacheValid
+End Property
+
+Friend Property Let CacheValid(NewValue As Boolean)
+    mvarCacheValid = NewValue
+End Property
+
+Public Property Get Cache() As Fury2Image
+    Set Cache = mvarCache
+End Property
 
 Public Property Get Name() As String
     Name = mvarName
@@ -80,6 +121,12 @@ On Error Resume Next
         .Visible = CByte(Abs(CLng(mvarVisible)))
         .X = mvarX
         .Y = mvarY
+        If mvarEnableCache Then
+            .Cache = mvarCache.Handle
+        Else
+            .Cache = 0
+        End If
+        .CacheValid = CByte(Abs(mvarCacheValid))
     End With
 End Property
 
@@ -97,11 +144,13 @@ On Error Resume Next
         mvarVisible = CBool(.Visible)
         mvarX = .X
         mvarY = .Y
+        mvarCacheValid = CBool(.CacheValid)
     End With
 End Property
 
 Public Property Let Y(ByVal vData As Single)
     mvarY = vData
+    UpdateCache
 End Property
 
 Public Property Get Y() As Single
@@ -110,6 +159,7 @@ End Property
 
 Public Property Let X(ByVal vData As Single)
     mvarX = vData
+    UpdateCache
 End Property
 
 Public Property Get X() As Single
@@ -126,6 +176,7 @@ End Property
 
 Public Property Let Spread(ByVal vData As Single)
     mvarSpread = vData
+    UpdateCache
 End Property
 
 Public Property Get Spread() As Single
@@ -158,6 +209,7 @@ End Property
 
 Public Property Let FalloffDistance(ByVal vData As Long)
     mvarFalloffDistance = vData
+    UpdateCache
 End Property
 
 Public Property Get FalloffDistance() As Long
@@ -167,6 +219,7 @@ End Property
 Public Property Let Color(ByVal vData As Long)
 Attribute Color.VB_Description = "{Color}"
     mvarColor = vData
+    UpdateCache
 End Property
 
 Public Property Get Color() As Long
@@ -180,6 +233,7 @@ End Property
 
 Public Property Let Angle(ByVal vData As Single)
     mvarAngle = vData
+    UpdateCache
 End Property
 
 Public Property Get Angle() As Single
@@ -208,6 +262,9 @@ On Error Resume Next
             .Load mvarX
             .Load mvarY
             .Load mvarName
+            .Load mvarEnableCache
+            Set mvarCache = Nothing
+            UpdateCache
         .ReadSegment_End
     End With
 End Sub
@@ -227,6 +284,7 @@ On Error Resume Next
             .Save mvarX
             .Save mvarY
             .Save mvarName
+            .Save mvarEnableCache
         .WriteSegment_End
     End With
 End Sub

@@ -252,6 +252,13 @@ Dim l_lngIndex As Long
     m_envEnvironment.Planes = VarPtr(m_plnPlanes(1))
     m_envEnvironment.Matrix = m_lngMatrix
     SoftFX.RenderLightingEnvironment Camera, m_envEnvironment
+    l_lngIndex = 0
+    For Each l_litLight In Lights
+        With l_litLight
+            .CacheValid = True
+        End With
+        l_lngIndex = l_lngIndex + 1
+    Next l_litLight
 End Sub
 
 Public Property Get AmbientLight() As Long
@@ -385,7 +392,7 @@ On Error Resume Next
 Dim l_litLight As Fury2LightSource
     For Each l_litLight In Lights
         With l_litLight
-            .Angle = .Angle + .SpinRate
+            If .SpinRate <> 0 Then .Angle = .Angle + .SpinRate
         End With
     Next l_litLight
 End Sub

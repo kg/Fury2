@@ -1,5 +1,5 @@
 Type=OleDll
-Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\windows\System32\STDOLE2.TLB#OLE Automation
+Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\WINDOWS\System32\stdole2.tlb#OLE Automation
 Reference=*\G{64651516-73E5-402B-B989-94EAE4C6A049}#1.0#409#..\..\..\libraries\tlb\Win32.tlb#Fury² API Declarations
 Reference=*\G{3CB89DD9-2E5A-45D3-A6FF-E87B0081CDCC}#1.0#409#..\..\..\libraries\tlb\SoftFX.tlb#Fury² Game Creation System SoftFX library
 Reference=*\G{A17C15BF-1F8F-4789-93C4-A4A642A3F18D}#3.46#409#..\..\..\libraries\tlb\FMod.tlb#FMod 3.7 Type Library, 0.3a - janusfury@citlink.net
@@ -21,7 +21,7 @@ CompatibleEXE32="..\..\..\binary\sys\sound.dll"
 VersionCompatible32="1"
 MajorVer=0
 MinorVer=0
-RevisionVer=34
+RevisionVer=38
 AutoIncrementVer=1
 ServerSupportFiles=0
 VersionCompanyName="The Janus Element Interactive"

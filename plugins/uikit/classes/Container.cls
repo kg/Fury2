@@ -478,7 +478,7 @@ Dim l_wdgWidget As iWidget
     End With
 End Sub
 
-Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_wdgWidget As iWidget
 Dim l_rctNew As Fury2Rect
@@ -492,7 +492,7 @@ Dim l_lngWidget As Long
         With Rectangle
             For l_lngWidget = Children.Count To 1 Step -1
                 Set l_wdgWidget = Children(l_lngWidget)
-                l_wdgWidget.Redraw Me, Surface, XOffset + .Left, YOffset + .Top
+                l_wdgWidget.Redraw Me, Surface, XOffset + .Left, YOffset + .Top, Opacity
             Next l_lngWidget
         End With
         Set .ClipRectangle = l_rctOld

@@ -154,8 +154,8 @@ On Error Resume Next
     If Me.Active Then Else Exit Sub
     If (m_Engine.Mouse.Visible = False) And (m_Engine.MouseCursor Is Nothing) Then Exit Sub
     If (X >= Rectangle.Left) And (Y >= Rectangle.Top) And (X < Rectangle.Right) And (Y < Rectangle.Bottom) Then
-        X = -1
-        Y = -1
+        X = -32767
+        Y = -32767
     End If
 End Sub
 
@@ -164,19 +164,23 @@ On Error Resume Next
     If Me.Active Then Else Exit Sub
     If (m_Engine.Mouse.Visible = False) And (m_Engine.MouseCursor Is Nothing) Then Exit Sub
     If (X >= Rectangle.Left) And (Y >= Rectangle.Top) And (X < Rectangle.Right) And (Y < Rectangle.Bottom) Then
-        X = -1
-        Y = -1
+        X = -32767
+        Y = -32767
     End If
 End Sub
 
 Private Sub Fury2Plugin_MouseUp(ByVal Button As Long, ByVal Shift As Long, ByRef X As Long, ByRef Y As Long)
 On Error Resume Next
     If Me.Active Then Else Exit Sub
-    If Enabled Then Else X = -1: Y = -1: Exit Sub
+    If Not Enabled Then
+        X = -32767
+        Y = -32767
+        Exit Sub
+    End If
     If (m_Engine.Mouse.Visible = False) And (m_Engine.MouseCursor Is Nothing) Then Exit Sub
     If (X >= Rectangle.Left) And (Y >= Rectangle.Top) And (X < Rectangle.Right) And (Y < Rectangle.Bottom) Then
-        X = -1
-        Y = -1
+        X = -32767
+        Y = -32767
         If Button = 2 Then
             CloseWindow
         ElseIf Button = 1 Then

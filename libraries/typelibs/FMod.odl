@@ -324,6 +324,9 @@ library FMod {
 		[helpstring("Sets the mixer to use. Only call before FSound.Init."), entry("_FSOUND_SetOutput@4")]
 		int _stdcall SetMixer([in] FSound_Mixer_Types MixerType);
 
+    [helpstring("Sets the buffer size. Only call before FSound.Init."), entry("_FSound_SetBufferSize@4")]
+    int _stdcall SetBufferSize([in] int Length);
+
 		[helpstring("Initializes FMod."), entry("_FSOUND_Init@12")]
 		int _stdcall Init(FSound_Sampling_Rates MixRate, int MaxSoftwareChannels, FSound_Init_Flags Flags);
 

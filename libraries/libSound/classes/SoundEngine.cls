@@ -101,7 +101,8 @@ Public Sub Init()
 On Error Resume Next
     If m_Engine.DisableSound Then Exit Sub
     m_FMod = LoadFMod
-    FSound.Init 44100, 32, 0
+    'FSound.SetBufferSize 50
+    FSound.Init 44100, 32, FSOUND_Init_GlobalFocus
 End Sub
 
 Public Sub Shutdown()
@@ -234,9 +235,9 @@ Dim m_filFile As Object
     Set m_filFile = m_Engine.FileSystem.File(Filename)
     If m_filFile Is Nothing Then Exit Function
     If Looping Then
-        m_Handle = FSound_Stream.Open(m_filFile.GetRealFilename, FSound_Loop_Normal, 0, 0)
+        m_Handle = FSound_Stream.Open(m_filFile.GetRealFilename, FSound_Loop_Normal Or FSound_HW2D, 0, 0)
     Else
-        m_Handle = FSound_Stream.Open(m_filFile.GetRealFilename, FSound_Loop_Off, 0, 0)
+        m_Handle = FSound_Stream.Open(m_filFile.GetRealFilename, FSound_Loop_Off Or FSound_HW2D, 0, 0)
     End If
     If m_Handle = 0 Then Exit Function
     m_Obj.SetValues SoundType_Stream, m_Handle, True

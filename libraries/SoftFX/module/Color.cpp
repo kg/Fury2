@@ -111,6 +111,16 @@ Export DoubleWord BlendColors(Pixel Dest, Pixel Source, int Opacity) {
     return Dest.V;
 }
 
+Export DoubleWord MultiplyColor(Pixel Color, Pixel Mul, int Opacity) {
+    Opacity = ClipByte(Opacity);
+    int White = Opacity ^ 0xFF;
+    Color[::Blue] = AlphaLookup(Color[::Blue], AlphaLookup(Mul[::Blue], Opacity) + White);
+    Color[::Green] = AlphaLookup(Color[::Green], AlphaLookup(Mul[::Green], Opacity) + White);
+    Color[::Red] = AlphaLookup(Color[::Red], AlphaLookup(Mul[::Red], Opacity) + White);
+    Color[::Alpha] = AlphaLookup(Color[::Alpha], AlphaLookup(Mul[::Alpha], Opacity) + White);
+    return Color.V;
+}
+
 Export DoubleWord ColorToGrayscale(Pixel Color) {
     Color.setGray(((Color[::Blue] * 11) + (Color[::Green] * 59) + (Color[::Red] * 30)) / 100);
     return Color.V;

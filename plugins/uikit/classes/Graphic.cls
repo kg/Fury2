@@ -130,7 +130,7 @@ On Error Resume Next
     DispatchEvent "MouseUp", Button, Shift, X, Y
 End Sub
 
-Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect
 Dim l_rctOld As Fury2Rect
@@ -145,13 +145,13 @@ Dim l_gphImage As Fury2Graphic
             Set l_imgImage = Image
             l_rctNew.Translate (Rectangle.Width - l_imgImage.Width) / 2, (Rectangle.Height - l_imgImage.Height) / 2
             If Image.AlphaChannel Then
-                .Blit l_rctNew, , l_imgImage, , BlitMode_SourceAlpha
+                .Blit l_rctNew, , l_imgImage, Opacity, BlitMode_SourceAlpha
             Else
-                .Blit l_rctNew, , l_imgImage, , BlitMode_Matte
+                .Blit l_rctNew, , l_imgImage, Opacity, BlitMode_Matte
             End If
         ElseIf TypeOf Image Is Fury2Graphic Then
             Set l_gphImage = Image
-            l_gphImage.Draw Surface, l_rctNew.Left + (l_rctNew.Width / 2), l_rctNew.Top + (l_rctNew.Height / 2)
+            l_gphImage.Draw Surface, l_rctNew.Left + (l_rctNew.Width / 2), l_rctNew.Top + (l_rctNew.Height / 2), Opacity
         End If
         Set .ClipRectangle = l_rctOld
     End With

@@ -8,7 +8,7 @@ library FModExAPI {
 	[v1_enum]
 	enum FModExAPIInfo {
 		[helpstring("FMod Ex Type Library by Kevin Gadd (janus@luminance.org)")]
-		FMOD_TYPELIB_VERSION = 2,
+		FMOD_TYPELIB_VERSION = 3,
 		[helpstring("For FMod Ex Alpha 0.5")]
 		FMOD_TYPELIB_FMOD_VERSION = 50
 	};
@@ -338,7 +338,7 @@ library FModExAPI {
 		FMOD_OPENRECORD          = 0x00000800,
 		[helpstring("\"name_or_data\" will be interpreted as a pointer to memory instead of filename for creating Sounds. ")]
 		FMOD_OPENMEMORY          = 0x00001000,
-		[helpstring("Will ignore file format and treat as raw pcm.  User may need to declare if data is FMOD_SIGNED or FMOD_UNSIGNED ")]
+		[helpstring("Will ignore file format and treat as raw pcm.  User may need to declare if data is FMOD_SIGNED or FMOD_ ")]
 		FMOD_OPENRAW             = 0x00002000,
 		[helpstring("Just open the file, dont prebuffer or read.  Good for fast opens for info, or when Sound::readData is to be used. ")]
 		FMOD_OPENONLY            = 0x00004000,
@@ -670,213 +670,213 @@ library FModExAPI {
 	[dllname("FModEx.DLL")]
 	module Memory {
 		[entry("FMOD_Memory_Initialize")]
-		enum FMOD_RESULT Initialize(void *poolmem_ptr, int poollen, int useralloc_callback, int userrealloc_callback, int userfree_callback);
+		enum FMOD_RESULT _cdecl Initialize(void *poolmem_ptr, int poollen, int useralloc_callback, int userrealloc_callback, int userfree_callback);
 		[entry("FMOD_Memory_GetStats")]
-		enum FMOD_RESULT GetStats([out] int *currentalloced, [out] int *maxalloced);
+		enum FMOD_RESULT _cdecl GetStats([out] int *currentalloced, [out] int *maxalloced);
 	}
 
 	[dllname("FModEX.DLL")]
 	module System {
 		[entry("FMOD_System_Create")]
-		enum FMOD_RESULT __cdecl Create([out] int *System);
+		enum FMOD_RESULT _cdecl Create([out] int *System);
 		[entry("FMOD_System_Release")]
-		enum FMOD_RESULT __cdecl Release(int System);
+		enum FMOD_RESULT _cdecl Release(int System);
 
 		[entry("FMOD_System_SetOutput")]
-		enum FMOD_RESULT SetOutput (int System, enum FMOD_OUTPUT_TYPE output);
+		enum FMOD_RESULT _cdecl SetOutput (int System, enum FMOD_OUTPUT_TYPE output);
 		[entry("FMOD_System_GetOutput")]
-		enum FMOD_RESULT GetOutput (int System, [out] enum FMOD_OUTPUT_TYPE *output);
+		enum FMOD_RESULT _cdecl GetOutput (int System, [out] enum FMOD_OUTPUT_TYPE *output);
 		[entry("FMOD_System_SetOutputFormat")]
-		enum FMOD_RESULT SetOutputFormat (int System, int samplerate, enum FMOD_SOUND_FORMAT format, int numchannels, void *extradata);
+		enum FMOD_RESULT _cdecl SetOutputFormat (int System, int samplerate, enum FMOD_SOUND_FORMAT format, int numchannels, void *extradata);
 		[entry("FMOD_System_GetOutputFormat")]
-		enum FMOD_RESULT GetOutputFormat (int System, [out] int *samplerate, [out] enum FMOD_SOUND_FORMAT *format, [out] int *numchannels, [out] int *extradata_ptr);
+		enum FMOD_RESULT _cdecl GetOutputFormat (int System, [out] int *samplerate, [out] enum FMOD_SOUND_FORMAT *format, [out] int *numchannels, [out] int *extradata_ptr);
 		[entry("FMOD_System_GetNumDrivers")]
-		enum FMOD_RESULT GetNumDrivers (int System, [out] int *numdrivers);
+		enum FMOD_RESULT _cdecl GetNumDrivers (int System, [out] int *numdrivers);
 		[entry("FMOD_System_GetDriverName")]
-		enum FMOD_RESULT GetDriverName (int System, int id, [out, string] char *name, int namelen);
+		enum FMOD_RESULT _cdecl GetDriverName (int System, int id, [out, string] char *name, int namelen);
 		[entry("FMOD_System_GetDriverCaps")]
-		enum FMOD_RESULT GetDriverCaps (int System, int id, [out] enum FMOD_CAPS *caps, [out] int *minfrequency, [out] int *maxfrequency);
+		enum FMOD_RESULT _cdecl GetDriverCaps (int System, int id, [out] enum FMOD_CAPS *caps, [out] int *minfrequency, [out] int *maxfrequency);
 		[entry("FMOD_System_SetDriver")]
-		enum FMOD_RESULT SetDriver (int System, int driver);
+		enum FMOD_RESULT _cdecl SetDriver (int System, int driver);
 		[entry("FMOD_System_GetDriver")]
-		enum FMOD_RESULT GetDriver (int System, [out] int *driver);
+		enum FMOD_RESULT _cdecl GetDriver (int System, [out] int *driver);
 		[entry("FMOD_System_SetDSPBufferSize")]
-		enum FMOD_RESULT SetDSPBufferSize (int System, int bufferlength, int numbuffers);
+		enum FMOD_RESULT _cdecl SetDSPBufferSize (int System, int bufferlength, int numbuffers);
 		[entry("FMOD_System_GetDSPBufferSize")]
-		enum FMOD_RESULT GetDSPBufferSize (int System, [out] int *bufferlength, [out] int *numbuffers);
+		enum FMOD_RESULT _cdecl GetDSPBufferSize (int System, [out] int *bufferlength, [out] int *numbuffers);
 		[entry("FMOD_System_SetMinMaxHWChannels")]
-		enum FMOD_RESULT SetMinMaxHWChannels (int System, int min, int max);
+		enum FMOD_RESULT _cdecl SetMinMaxHWChannels (int System, int min, int max);
 		[entry("FMOD_System_SetFileSystem")]
-		enum FMOD_RESULT SetFileSystem (int System, int useropen_callback, int userclose_callback, int userread_callback, int userseek_callback, int usertell_callback);
+		enum FMOD_RESULT _cdecl SetFileSystem (int System, int useropen_callback, int userclose_callback, int userread_callback, int userseek_callback, int usertell_callback);
 		[entry("FMOD_System_SetPluginPath")]
-		enum FMOD_RESULT SetPluginPath (int System, [string] const char *path);
+		enum FMOD_RESULT _cdecl SetPluginPath (int System, [string] const char *path);
 
 		[entry("FMOD_System_Init")]
-		enum FMOD_RESULT __cdecl Init (int System, int maxchannels, int maxsoftwarechannels, enum FMOD_INITFLAGS flags, const void *hwnd);
+		enum FMOD_RESULT _cdecl Init (int System, int maxchannels, int maxsoftwarechannels, enum FMOD_INITFLAGS flags, int hwnd);
 		[entry("FMOD_System_Close")]
-		enum FMOD_RESULT __cdecl Close (int System);
+		enum FMOD_RESULT _cdecl Close (int System);
 
 		[entry("FMOD_System_LoadPlugin")]
-		enum FMOD_RESULT LoadPlugin (int System, [string] const char *filename);
+		enum FMOD_RESULT _cdecl LoadPlugin (int System, [string] const char *filename);
 
 		[entry("FMOD_System_Update")]
-		enum FMOD_RESULT Update (int System);
+		enum FMOD_RESULT _cdecl Update (int System);
 		[entry("FMOD_System_SetSpeakerMode")]
-		enum FMOD_RESULT SetSpeakerMode (int System, enum FMOD_SPEAKERMODE speakermode);
+		enum FMOD_RESULT _cdecl SetSpeakerMode (int System, enum FMOD_SPEAKERMODE speakermode);
 		[entry("FMOD_System_GetSpeakerMode")]
-		enum FMOD_RESULT GetSpeakerMode (int System, [out] enum FMOD_SPEAKERMODE *speakermode);
+		enum FMOD_RESULT _cdecl GetSpeakerMode (int System, [out] enum FMOD_SPEAKERMODE *speakermode);
 		[entry("FMOD_System_SetMasterVolume")]
-		enum FMOD_RESULT SetMasterVolume (int System, int volume);
+		enum FMOD_RESULT _cdecl SetMasterVolume (int System, int volume);
 		[entry("FMOD_System_GetMasterVolume")]
-		enum FMOD_RESULT GetMasterVolume (int System, [out] int *volume);
+		enum FMOD_RESULT _cdecl GetMasterVolume (int System, [out] int *volume);
 
 		[entry("FMOD_System_Set3DSettings")]
-		enum FMOD_RESULT Set3DSettings (int System, float dopplerscale, float distancefactor, float rolloffscale);
+		enum FMOD_RESULT _cdecl Set3DSettings (int System, float dopplerscale, float distancefactor, float rolloffscale);
 		[entry("FMOD_System_Get3DSettings")]
-		enum FMOD_RESULT Get3DSettings (int System, [out] float *dopplerscale, [out] float *distancefactor, [out] float *rolloffscale);
+		enum FMOD_RESULT _cdecl Get3DSettings (int System, [out] float *dopplerscale, [out] float *distancefactor, [out] float *rolloffscale);
 		[entry("FMOD_System_Set3DNumListeners")]
-		enum FMOD_RESULT Set3DNumListeners (int System, int numlisteners);
+		enum FMOD_RESULT _cdecl Set3DNumListeners (int System, int numlisteners);
 		[entry("FMOD_System_Get3DNumListeners")]
-		enum FMOD_RESULT Get3DNumListeners (int System, [out] int *numlisteners);
+		enum FMOD_RESULT _cdecl Get3DNumListeners (int System, [out] int *numlisteners);
 		[entry("FMOD_System_Set3DListenerAttributes")]
-		enum FMOD_RESULT Set3DListenerAttributes (int System, int listener, const struct FMOD_VECTOR *pos, const struct FMOD_VECTOR *vel, const struct FMOD_VECTOR *forward, const struct FMOD_VECTOR *up);
+		enum FMOD_RESULT _cdecl Set3DListenerAttributes (int System, int listener, const struct FMOD_VECTOR *pos, const struct FMOD_VECTOR *vel, const struct FMOD_VECTOR *forward, const struct FMOD_VECTOR *up);
 		[entry("FMOD_System_Get3DListenerAttributes")]
-		enum FMOD_RESULT Get3DListenerAttributes (int System, int listener, [out] struct FMOD_VECTOR *pos, [out] struct FMOD_VECTOR *vel, [out] struct FMOD_VECTOR *forward, [out] struct FMOD_VECTOR *up);
+		enum FMOD_RESULT _cdecl Get3DListenerAttributes (int System, int listener, [out] struct FMOD_VECTOR *pos, [out] struct FMOD_VECTOR *vel, [out] struct FMOD_VECTOR *forward, [out] struct FMOD_VECTOR *up);
 
 		[entry("FMOD_System_SetFileBufferSize")]
-		enum FMOD_RESULT SetFileBufferSize (int System, int sizebytes);
+		enum FMOD_RESULT _cdecl SetFileBufferSize (int System, int sizebytes);
 		[entry("FMOD_System_GetFileBufferSize")]
-		enum FMOD_RESULT GetFileBufferSize (int System, [out] int *sizebytes);
+		enum FMOD_RESULT _cdecl GetFileBufferSize (int System, [out] int *sizebytes);
 		[entry("FMOD_System_SetStreamBufferSize")]
-		enum FMOD_RESULT SetStreamBufferSize (int System, int ms);
+		enum FMOD_RESULT _cdecl SetStreamBufferSize (int System, int ms);
 		[entry("FMOD_System_GetStreamBufferSize")]
-		enum FMOD_RESULT GetStreamBufferSize (int System, [out] int *ms);
+		enum FMOD_RESULT _cdecl GetStreamBufferSize (int System, [out] int *ms);
 
 		[entry("FMOD_System_GetVersion")]
-		enum FMOD_RESULT GetVersion (int System, [out] int *version);
+		enum FMOD_RESULT _cdecl GetVersion (int System, [out] int *version);
 		[entry("FMOD_System_GetOutputHandle")]
-		enum FMOD_RESULT GetOutputHandle (int System, [out] int *handle_ptr);
+		enum FMOD_RESULT _cdecl GetOutputHandle (int System, [out] int *handle_ptr);
 		[entry("FMOD_System_GetNumHWChannels")]
-		enum FMOD_RESULT GetNumHWChannels (int System, [out] int *numhw3dchannels, [out] int *numhw2dchannels, [out] int *totalchannels);
+		enum FMOD_RESULT _cdecl GetNumHWChannels (int System, [out] int *numhw3dchannels, [out] int *numhw2dchannels, [out] int *totalchannels);
 		[entry("FMOD_System_GetChannelsPlaying")]
-		enum FMOD_RESULT GetChannelsPlaying (int System, [out] int *Channels);
+		enum FMOD_RESULT _cdecl GetChannelsPlaying (int System, [out] int *Channels);
 		[entry("FMOD_System_GetCPUUsage")]
-		enum FMOD_RESULT GetCPUUsage (int System, [out] float *cpuusage);
+		enum FMOD_RESULT _cdecl GetCPUUsage (int System, [out] float *cpuusage);
 		[entry("FMOD_System_GetNumCDROMDrives")]
-		enum FMOD_RESULT GetNumCDROMDrives (int System, [out] int *numdrives);
+		enum FMOD_RESULT _cdecl GetNumCDROMDrives (int System, [out] int *numdrives);
 		[entry("FMOD_System_GetCDROMDriveName")]
-		enum FMOD_RESULT GetCDROMDriveName (int System, int drive, [out, string] char *drivename, int drivenamelen, [out, string] char *scsiname, int scsinamelen, [out, string] char *devicename, int devicenamelen);
+		enum FMOD_RESULT _cdecl GetCDROMDriveName (int System, int drive, [out, string] char *drivename, int drivenamelen, [out, string] char *scsiname, int scsinamelen, [out, string] char *devicename, int devicenamelen);
 
 		[entry("FMOD_System_CreateSound")]
-		enum FMOD_RESULT __cdecl CreateSound (int System, [string] const char *name, enum FMOD_MODE flags, [out] int *Sound);
+		enum FMOD_RESULT _cdecl CreateSound (int System, [string] const char *name, enum FMOD_MODE flags, [out] int *Sound);
 		[entry("FMOD_System_CreateSoundEx")]
-		enum FMOD_RESULT CreateSoundEx (int System, [string] const char *name_or_data, enum FMOD_MODE flags, int dataoffset, int datalength, int Channels, int defaultfrequency, enum FMOD_SOUND_FORMAT format, int initialsubSound, int numsubSounds, [out] int *Sound);
+		enum FMOD_RESULT _cdecl CreateSoundEx (int System, [string] const char *name_or_data, enum FMOD_MODE flags, int dataoffset, int datalength, int Channels, int defaultfrequency, enum FMOD_SOUND_FORMAT format, int initialsubSound, int numsubSounds, [out] int *Sound);
 		[entry("FMOD_System_CreateDSP")]
-		enum FMOD_RESULT CreateDSP (int System, struct FMOD_DSP_DESCRIPTION *description, [out] int *dsp);
+		enum FMOD_RESULT _cdecl CreateDSP (int System, struct FMOD_DSP_DESCRIPTION *description, [out] int *dsp);
 		[entry("FMOD_System_CreateDSPByID")]
-		enum FMOD_RESULT CreateDSPByID (int System, enum FMOD_DSP_ID type, [out] int *dsp);
+		enum FMOD_RESULT _cdecl CreateDSPByID (int System, enum FMOD_DSP_ID type, [out] int *dsp);
 
 		[entry("FMOD_System_PlaySound")]
-		enum FMOD_RESULT __cdecl PlaySound (int System, int Channelid, int Sound, int paused, [in, out] int *Channel);
+		enum FMOD_RESULT _cdecl PlaySound (int System, int Channelid, int Sound, int paused, [in, out] int *Channel);
 		[entry("FMOD_System_GetChannel")]
-		enum FMOD_RESULT GetChannel (int System, int Channelid, [out] int *Channel);
+		enum FMOD_RESULT _cdecl GetChannel (int System, int Channelid, [out] int *Channel);
 
 		[entry("FMOD_System_SetReverbProperties")]
-		enum FMOD_RESULT SetReverbProperties (int System, const struct FMOD_REVERB_PROPERTIES *prop);
+		enum FMOD_RESULT _cdecl SetReverbProperties (int System, const struct FMOD_REVERB_PROPERTIES *prop);
 		[entry("FMOD_System_GetReverbProperties")]
-		enum FMOD_RESULT GetReverbProperties (int System, [out] struct FMOD_REVERB_PROPERTIES *prop);
+		enum FMOD_RESULT _cdecl GetReverbProperties (int System, [out] struct FMOD_REVERB_PROPERTIES *prop);
 
 		[entry("FMOD_System_GetNumDSPTypes")]
-		enum FMOD_RESULT GetNumDSPTypes (int System, [out] int *numdsptypes);
+		enum FMOD_RESULT _cdecl GetNumDSPTypes (int System, [out] int *numdsptypes);
 		[entry("FMOD_System_GetDSP")]
-		enum FMOD_RESULT GetDSP (int System, int index, [out] struct FMOD_DSP_DESCRIPTION *description);
+		enum FMOD_RESULT _cdecl GetDSP (int System, int index, [out] struct FMOD_DSP_DESCRIPTION *description);
 		[entry("FMOD_System_GetDSPHead")]
-		enum FMOD_RESULT GetDSPHead (int System, [out] [out] int *dsp);
+		enum FMOD_RESULT _cdecl GetDSPHead (int System, [out] [out] int *dsp);
 
 		[entry("FMOD_System_SetRecordDriver")]
-		enum FMOD_RESULT SetRecordDriver (int System, int driver);
+		enum FMOD_RESULT _cdecl SetRecordDriver (int System, int driver);
 		[entry("FMOD_System_GetRecordDriver")]
-		enum FMOD_RESULT GetRecordDriver (int System, [out] int *driver);
+		enum FMOD_RESULT _cdecl GetRecordDriver (int System, [out] int *driver);
 		[entry("FMOD_System_GetRecordNumDrivers")]
-		enum FMOD_RESULT GetRecordNumDrivers (int System, [out] int *numdrivers);
+		enum FMOD_RESULT _cdecl GetRecordNumDrivers (int System, [out] int *numdrivers);
 		[entry("FMOD_System_GetRecordDriverName")]
-		enum FMOD_RESULT GetRecordDriverName (int System, int id, [out, string] char *name, int namelen);
+		enum FMOD_RESULT _cdecl GetRecordDriverName (int System, int id, [out, string] char *name, int namelen);
 
 		[entry("FMOD_System_SetProxy")]
-		enum FMOD_RESULT SetProxy (int System, const char *proxy);
+		enum FMOD_RESULT _cdecl SetProxy (int System, const char *proxy);
 		[entry("FMOD_System_GetProxy")]
-		enum FMOD_RESULT GetProxy (int System, char *proxy, int proxylen);
+		enum FMOD_RESULT _cdecl GetProxy (int System, char *proxy, int proxylen);
 
 		[entry("FMOD_System_SetUserData")]
-		enum FMOD_RESULT SetUserData (int System, void *userdata);
+		enum FMOD_RESULT _cdecl SetUserData (int System, int userdata);
 		[entry("FMOD_System_GetUserData")]
-		enum FMOD_RESULT GetUserData (int System, void **userdata);
+		enum FMOD_RESULT _cdecl GetUserData (int System, int userdata_ptr);
 	}
 
 	[dllname("FModEX.DLL")]
 	module Sound {
 
 		[entry("FMOD_Sound_Release")]
-		enum FMOD_RESULT __cdecl Release (int Sound);
+		enum FMOD_RESULT _cdecl Release (int Sound);
 		[entry("FMOD_Sound_GetSystemObject")]
-		enum FMOD_RESULT GetSystemObject (int Sound, int System);
+		enum FMOD_RESULT _cdecl GetSystemObject (int Sound, int System);
 
 		[entry("FMOD_Sound_Lock")]
-		enum FMOD_RESULT Lock (int Sound, int offset, int length, [out] int *ptr1, [out] int *ptr2, [out] int *len1, [out] int *len2);
+		enum FMOD_RESULT _cdecl Lock (int Sound, int offset, int length, [out] int *ptr1, [out] int *ptr2, [out] int *len1, [out] int *len2);
 		[entry("FMOD_Sound_Unlock")]
-		enum FMOD_RESULT Unlock (int Sound, int ptr1, int ptr2, int len1, int len2);
+		enum FMOD_RESULT _cdecl Unlock (int Sound, int ptr1, int ptr2, int len1, int len2);
 		[entry("FMOD_Sound_SetDefaults")]
-		enum FMOD_RESULT SetDefaults (int Sound, int frequency, int volume, int pan, int *levels, int priority, int weight);
+		enum FMOD_RESULT _cdecl SetDefaults (int Sound, int frequency, int volume, int pan, int *levels, int priority, int weight);
 		[entry("FMOD_Sound_GetDefaults")]
-		enum FMOD_RESULT GetDefaults (int Sound, [out] int *frequency, [out] int *volume, [out] int *pan, [out] int *levels, [out] int *priority, [out] int *weight);
+		enum FMOD_RESULT _cdecl GetDefaults (int Sound, [out] int *frequency, [out] int *volume, [out] int *pan, [out] int *levels, [out] int *priority, [out] int *weight);
 		[entry("FMOD_Sound_SetVariations")]
-		enum FMOD_RESULT SetVariations (int Sound, int frequency, int volume, int pan);
+		enum FMOD_RESULT _cdecl SetVariations (int Sound, int frequency, int volume, int pan);
 		[entry("FMOD_Sound_GetVariations")]
-		enum FMOD_RESULT GetVariations (int Sound, [out] int *frequency, [out] int *volume, [out] int *pan);
+		enum FMOD_RESULT _cdecl GetVariations (int Sound, [out] int *frequency, [out] int *volume, [out] int *pan);
 		[entry("FMOD_Sound_Set3DMinMaxDistance")]
-		enum FMOD_RESULT Set3DMinMaxDistance (int Sound, float min, float max);
+		enum FMOD_RESULT _cdecl Set3DMinMaxDistance (int Sound, float min, float max);
 		[entry("FMOD_Sound_Get3DMinMaxDistance")]
-		enum FMOD_RESULT Get3DMinMaxDistance (int Sound, [out] float *min, [out] float *max);
+		enum FMOD_RESULT _cdecl Get3DMinMaxDistance (int Sound, [out] float *min, [out] float *max);
 		[entry("FMOD_Sound_SetSubSound")]
-		enum FMOD_RESULT SetSubSound (int Sound, int index, int subSound);
+		enum FMOD_RESULT _cdecl SetSubSound (int Sound, int index, int subSound);
 		[entry("FMOD_Sound_GetSubSound")]
-		enum FMOD_RESULT GetSubSound (int Sound, int index, [out] int *subSound);
+		enum FMOD_RESULT _cdecl GetSubSound (int Sound, int index, [out] int *subSound);
 		[entry("FMOD_Sound_GetName")]
-		enum FMOD_RESULT GetName (int Sound, [out, string] char *name, int namelen);
+		enum FMOD_RESULT _cdecl GetName (int Sound, [out, string] char *name, int namelen);
 		[entry("FMOD_Sound_GetLength")]
-		enum FMOD_RESULT GetLength (int Sound, [out] int *lengthpcm, [out] int *lengthms, [out] int *lengthbytes);
+		enum FMOD_RESULT _cdecl GetLength (int Sound, [out] int *lengthpcm, [out] int *lengthms, [out] int *lengthbytes);
 		[entry("FMOD_Sound_GetFormat")]
-		enum FMOD_RESULT GetFormat (int Sound, [out] enum FMOD_SOUND_TYPE *type, [out] enum FMOD_SOUND_FORMAT *format, [out] int *Channels);
+		enum FMOD_RESULT _cdecl GetFormat (int Sound, [out] enum FMOD_SOUND_TYPE *type, [out] enum FMOD_SOUND_FORMAT *format, [out] int *Channels);
 		[entry("FMOD_Sound_GetNumSubSounds")]
-		enum FMOD_RESULT GetNumSubSounds (int Sound, [out] int *numsubSounds);
+		enum FMOD_RESULT _cdecl GetNumSubSounds (int Sound, [out] int *numsubSounds);
 		[entry("FMOD_Sound_GetNumTags")]
-		enum FMOD_RESULT GetNumTags (int Sound, [out] int *numtags, [out] int *numtagsupdated);
+		enum FMOD_RESULT _cdecl GetNumTags (int Sound, [out] int *numtags, [out] int *numtagsupdated);
 		[entry("FMOD_Sound_GetTag")]
-		enum FMOD_RESULT GetTag (int Sound, [string] const char *name, int index, [out] struct FMOD_TAG *tag);
+		enum FMOD_RESULT _cdecl GetTag (int Sound, [string] const char *name, int index, [out] struct FMOD_TAG *tag);
 		[entry("FMOD_Sound_GetOpenState")]
-		enum FMOD_RESULT GetOpenState (int Sound, [out] enum FMOD_OPENSTATE *openstate);
+		enum FMOD_RESULT _cdecl GetOpenState (int Sound, [out] enum FMOD_OPENSTATE *openstate);
 		[entry("FMOD_Sound_ReadData")]
-		enum FMOD_RESULT ReadData (int Sound, [out] void *buffer, int lenbytes, [out] int *read);
+		enum FMOD_RESULT _cdecl ReadData (int Sound, [out] void *buffer, int lenbytes, [out] int *read);
 		[entry("FMOD_Sound_SeekData")]
-		enum FMOD_RESULT SeekData (int Sound, int pcm);
+		enum FMOD_RESULT _cdecl SeekData (int Sound, int pcm);
 
 		[entry("FMOD_Sound_SetMode")]
-		enum FMOD_RESULT SetMode (int Sound, enum FMOD_MODE mode);
+		enum FMOD_RESULT _cdecl SetMode (int Sound, enum FMOD_MODE mode);
 		[entry("FMOD_Sound_GetMode")]
-		enum FMOD_RESULT GetMode (int Sound, [out] enum FMOD_MODE *mode);
+		enum FMOD_RESULT _cdecl GetMode (int Sound, [out] enum FMOD_MODE *mode);
 		[entry("FMOD_Sound_SetLoopCount")]
-		enum FMOD_RESULT SetLoopCount (int Sound, int loopcount);
+		enum FMOD_RESULT _cdecl SetLoopCount (int Sound, int loopcount);
 		[entry("FMOD_Sound_GetLoopCount")]
-		enum FMOD_RESULT GetLoopCount (int Sound, [out] int *loopcount);
+		enum FMOD_RESULT _cdecl GetLoopCount (int Sound, [out] int *loopcount);
 		[entry("FMOD_Sound_SetLoopPoints")]
-		enum FMOD_RESULT SetLoopPoints (int Sound, int loopstart, int loopend);
+		enum FMOD_RESULT _cdecl SetLoopPoints (int Sound, int loopstart, int loopend);
 		[entry("FMOD_Sound_GetLoopPoints")]
-		enum FMOD_RESULT GetLoopPoints (int Sound, [out] int *loopstart, [out] int *loopend);
+		enum FMOD_RESULT _cdecl GetLoopPoints (int Sound, [out] int *loopstart, [out] int *loopend);
 
 		[entry("FMOD_Sound_SetUserData")]
-		enum FMOD_RESULT SetUserData (int Sound, void *userdata);
+		enum FMOD_RESULT _cdecl SetUserData (int Sound, void *userdata);
 		[entry("FMOD_Sound_GetUserData")]
-		enum FMOD_RESULT GetUserData (int Sound, [out] int *userdata);
+		enum FMOD_RESULT _cdecl GetUserData (int Sound, [out] int *userdata);
 
 	}
 
@@ -884,94 +884,94 @@ library FModExAPI {
 	module Channel {
 
 		[entry("FMOD_Channel_GetSystemObject")]
-		enum FMOD_RESULT GetSystemObject (int Channel, [out] int *systemsystem);
+		enum FMOD_RESULT _cdecl GetSystemObject (int Channel, [out] int *systemsystem);
 
 		[entry("FMOD_Channel_Stop")]
-		enum FMOD_RESULT Stop (int Channel);
+		enum FMOD_RESULT _cdecl Stop (int Channel);
 		[entry("FMOD_Channel_SetPaused")]
-		enum FMOD_RESULT SetPaused (int Channel, int paused);
+		enum FMOD_RESULT _cdecl SetPaused (int Channel, int paused);
 		[entry("FMOD_Channel_GetPaused")]
-		enum FMOD_RESULT GetPaused (int Channel, int *paused);
+		enum FMOD_RESULT _cdecl GetPaused (int Channel, int *paused);
 		[entry("FMOD_Channel_SetVolume")]
-		enum FMOD_RESULT SetVolume (int Channel, int volume);
+		enum FMOD_RESULT _cdecl SetVolume (int Channel, int volume);
 		[entry("FMOD_Channel_GetVolume")]
-		enum FMOD_RESULT GetVolume (int Channel, int *volume);
+		enum FMOD_RESULT _cdecl GetVolume (int Channel, int *volume);
 		[entry("FMOD_Channel_SetFrequency")]
-		enum FMOD_RESULT SetFrequency (int Channel, int frequency);
+		enum FMOD_RESULT _cdecl SetFrequency (int Channel, int frequency);
 		[entry("FMOD_Channel_GetFrequency")]
-		enum FMOD_RESULT GetFrequency (int Channel, int *frequency);
+		enum FMOD_RESULT _cdecl GetFrequency (int Channel, int *frequency);
 		[entry("FMOD_Channel_SetPan")]
-		enum FMOD_RESULT SetPan (int Channel, int lrpan, int fbpan);
+		enum FMOD_RESULT _cdecl SetPan (int Channel, int lrpan, int fbpan);
 		[entry("FMOD_Channel_GetPan")]
-		enum FMOD_RESULT GetPan (int Channel, int *lrpan, int *fbpan);
+		enum FMOD_RESULT _cdecl GetPan (int Channel, int *lrpan, int *fbpan);
 		[entry("FMOD_Channel_SetSpeakerLevels")]
-		enum FMOD_RESULT SetSpeakerLevels (int Channel, int *levels, int numlevels);
+		enum FMOD_RESULT _cdecl SetSpeakerLevels (int Channel, int *levels, int numlevels);
 		[entry("FMOD_Channel_GetSpeakerLevels")]
-		enum FMOD_RESULT GetSpeakerLevels (int Channel, int *levels, int *numlevels);
+		enum FMOD_RESULT _cdecl GetSpeakerLevels (int Channel, int *levels, int *numlevels);
 		[entry("FMOD_Channel_SetMute")]
-		enum FMOD_RESULT SetMute (int Channel, int mute);
+		enum FMOD_RESULT _cdecl SetMute (int Channel, int mute);
 		[entry("FMOD_Channel_GetMute")]
-		enum FMOD_RESULT GetMute (int Channel, int *mute);
+		enum FMOD_RESULT _cdecl GetMute (int Channel, int *mute);
 		[entry("FMOD_Channel_SetPriority")]
-		enum FMOD_RESULT SetPriority (int Channel, int priority);
+		enum FMOD_RESULT _cdecl SetPriority (int Channel, int priority);
 		[entry("FMOD_Channel_GetPriority")]
-		enum FMOD_RESULT GetPriority (int Channel, int *priority);
+		enum FMOD_RESULT _cdecl GetPriority (int Channel, int *priority);
 		[entry("FMOD_Channel_SetWeight")]
-		enum FMOD_RESULT SetWeight (int Channel, int weight);
+		enum FMOD_RESULT _cdecl SetWeight (int Channel, int weight);
 		[entry("FMOD_Channel_GetWeight")]
-		enum FMOD_RESULT GetWeight (int Channel, int *weight);
+		enum FMOD_RESULT _cdecl GetWeight (int Channel, int *weight);
 		[entry("FMOD_Channel_Set3DAttributes")]
-		enum FMOD_RESULT Set3DAttributes (int Channel, const struct FMOD_VECTOR *pos, const struct FMOD_VECTOR *vel);
+		enum FMOD_RESULT _cdecl Set3DAttributes (int Channel, const struct FMOD_VECTOR *pos, const struct FMOD_VECTOR *vel);
 		[entry("FMOD_Channel_Get3DAttributes")]
-		enum FMOD_RESULT Get3DAttributes (int Channel, [out] struct FMOD_VECTOR *pos, [out] struct FMOD_VECTOR *vel);
+		enum FMOD_RESULT _cdecl Get3DAttributes (int Channel, [out] struct FMOD_VECTOR *pos, [out] struct FMOD_VECTOR *vel);
 		[entry("FMOD_Channel_Set3DMinMaxDistance")]
-		enum FMOD_RESULT Set3DMinMaxDistance (int Channel, float mindistance, float maxdistance);
+		enum FMOD_RESULT _cdecl Set3DMinMaxDistance (int Channel, float mindistance, float maxdistance);
 		[entry("FMOD_Channel_Get3DMinMaxDistance")]
-		enum FMOD_RESULT Get3DMinMaxDistance (int Channel, float *mindistance, float *maxdistance);
+		enum FMOD_RESULT _cdecl Get3DMinMaxDistance (int Channel, float *mindistance, float *maxdistance);
 		[entry("FMOD_Channel_SetReverbProperties")]
-		enum FMOD_RESULT SetReverbProperties (int Channel, const struct FMOD_REVERB_CHANNELPROPERTIES *prop);
+		enum FMOD_RESULT _cdecl SetReverbProperties (int Channel, const struct FMOD_REVERB_CHANNELPROPERTIES *prop);
 		[entry("FMOD_Channel_GetReverbProperties")]
-		enum FMOD_RESULT GetReverbProperties (int Channel, [out] struct FMOD_REVERB_CHANNELPROPERTIES *prop);
+		enum FMOD_RESULT _cdecl GetReverbProperties (int Channel, [out] struct FMOD_REVERB_CHANNELPROPERTIES *prop);
 		[entry("FMOD_Channel_SetVolumeAbsolute")]
-		enum FMOD_RESULT SetVolumeAbsolute (int Channel, int volume);
+		enum FMOD_RESULT _cdecl SetVolumeAbsolute (int Channel, int volume);
 		[entry("FMOD_Channel_IsPlaying")]
-		enum FMOD_RESULT IsPlaying (int Channel, [out] int *isplaying);
+		enum FMOD_RESULT _cdecl IsPlaying (int Channel, [out] int *isplaying);
 		[entry("FMOD_Channel_GetCurrentSound")]
-		enum FMOD_RESULT GetCurrentSound (int Channel, [out] int *sound);
+		enum FMOD_RESULT _cdecl GetCurrentSound (int Channel, [out] int *sound);
 		[entry("FMOD_Channel_GetSpectrum")]
-		enum FMOD_RESULT GetSpectrum (int Channel, [out] float *spectrum, int numentries, int latencyadjusted);
+		enum FMOD_RESULT _cdecl GetSpectrum (int Channel, [out] float *spectrum, int numentries, int latencyadjusted);
 		[entry("FMOD_Channel_GetLevels")]
-		enum FMOD_RESULT GetLevels (int Channel, [out] int *levels, [out] int *numlevels, int latencyadjusted);
+		enum FMOD_RESULT _cdecl GetLevels (int Channel, [out] int *levels, [out] int *numlevels, int latencyadjusted);
 		[entry("FMOD_Channel_SetCallback")]
-		enum FMOD_RESULT SetCallback (int Channel, enum FMOD_CHANNEL_CALLBACK_TYPE type, unsigned int evdata, int Channel_callback);
+		enum FMOD_RESULT _cdecl SetCallback (int Channel, enum FMOD_CHANNEL_CALLBACK_TYPE type, int evdata, int Channel_callback);
 		[entry("FMOD_Channel_SetPosition")]
-		enum FMOD_RESULT SetPosition (int Channel, int pcm, int nonblocking);
+		enum FMOD_RESULT _cdecl SetPosition (int Channel, int pcm, int nonblocking);
 		[entry("FMOD_Channel_GetPosition")]
-		enum FMOD_RESULT GetPosition (int Channel, [out] unsigned int *pcm, int latencyadjusted);
+		enum FMOD_RESULT _cdecl GetPosition (int Channel, [out] int *pcm, int latencyadjusted);
 		[entry("FMOD_Channel_SetTime")]
-		enum FMOD_RESULT SetTime (int Channel, unsigned int ms, int nonblocking);
+		enum FMOD_RESULT _cdecl SetTime (int Channel, int ms, int nonblocking);
 		[entry("FMOD_Channel_GetTime")]
-		enum FMOD_RESULT GetTime (int Channel, [out] unsigned int *ms, int latencyadjusted);
+		enum FMOD_RESULT _cdecl GetTime (int Channel, [out] int *ms, int latencyadjusted);
 		[entry("FMOD_Channel_GetDSPHead")]
-		enum FMOD_RESULT GetDSPHead (int Channel, [out] int *dsp);
+		enum FMOD_RESULT _cdecl GetDSPHead (int Channel, [out] int *dsp);
 
 		[entry("FMOD_Channel_SetMode")]
-		enum FMOD_RESULT SetMode (int Channel, enum FMOD_MODE mode);
+		enum FMOD_RESULT _cdecl SetMode (int Channel, enum FMOD_MODE mode);
 		[entry("FMOD_Channel_GetMode")]
-		enum FMOD_RESULT GetMode (int Channel, [out] enum FMOD_MODE *mode);
+		enum FMOD_RESULT _cdecl GetMode (int Channel, [out] enum FMOD_MODE *mode);
 		[entry("FMOD_Channel_SetLoopCount")]
-		enum FMOD_RESULT SetLoopCount (int Channel, int loopcount);
+		enum FMOD_RESULT _cdecl SetLoopCount (int Channel, int loopcount);
 		[entry("FMOD_Channel_GetLoopCount")]
-		enum FMOD_RESULT GetLoopCount (int Channel, [out] int *loopcount);
+		enum FMOD_RESULT _cdecl GetLoopCount (int Channel, [out] int *loopcount);
 		[entry("FMOD_Channel_SetLoopPoints")]
-		enum FMOD_RESULT SetLoopPoints (int Channel, unsigned int loopstart, unsigned int loopend);
+		enum FMOD_RESULT _cdecl SetLoopPoints (int Channel, int loopstart, int loopend);
 		[entry("FMOD_Channel_GetLoopPoints")]
-		enum FMOD_RESULT GetLoopPoints (int Channel, [out] unsigned int *loopstart, [out] unsigned int *loopend);
+		enum FMOD_RESULT _cdecl GetLoopPoints (int Channel, [out] int *loopstart, [out] int *loopend);
 
 		[entry("FMOD_Channel_SetUserData")]
-		enum FMOD_RESULT SetUserData (int Channel, void *userdata);
+		enum FMOD_RESULT _cdecl SetUserData (int Channel, void *userdata);
 		[entry("FMOD_Channel_GetUserData")]
-		enum FMOD_RESULT GetUserData (int Channel, [out] int *userdata);
+		enum FMOD_RESULT _cdecl GetUserData (int Channel, [out] int *userdata);
 
 	}
 

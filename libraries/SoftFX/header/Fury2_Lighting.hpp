@@ -99,6 +99,34 @@ namespace Lighting {
       pt.Y = Start.Y + ((End.Y - Start.Y) / 2);
       return pt;
     }
+    inline Rectangle topRect() {
+    		Rectangle rect;
+        rect.setValuesAbsolute(_Min(Start.X, End.X), _Min(Start.Y, End.Y) - Height, 
+          _Max(Start.X, End.X) + 1, _Max(Start.Y, End.Y) - Height + 1);
+        return rect;
+    }
+    inline Rectangle bottomRect() {
+    		Rectangle rect;
+        if (Height >= 0) {
+          rect.setValuesAbsolute(_Min(Start.X, End.X), _Max(Start.Y, End.Y) - Height + 1, 
+            _Max(Start.X, End.X) + 1, _Max(Start.Y, End.Y) + 1);
+        } else {
+          rect.setValuesAbsolute(_Min(Start.X, End.X), _Min(Start.Y, End.Y), 
+            _Max(Start.X, End.X) + 1, _Min(Start.Y, End.Y) - Height + 1);
+        }
+        return rect;
+    }
+    inline Rectangle fullRect() {
+    		Rectangle rect;
+        if (Height >= 0) {
+          rect.setValuesAbsolute(_Min(Start.X, End.X), _Min(Start.Y, End.Y) - Height, 
+            _Max(Start.X, End.X) + 1, _Max(Start.Y, End.Y) + 1);
+        } else {
+          rect.setValuesAbsolute(_Min(Start.X, End.X), _Min(Start.Y, End.Y) - Height, 
+            _Max(Start.X, End.X) + 1, _Min(Start.Y, End.Y) - Height + 1);
+        }
+        return rect;
+    }
   };
 
   Pixel Raycast(Environment *Env, float X, float Y, SpriteParam *IgnoreSprite, bool EnableCulling);

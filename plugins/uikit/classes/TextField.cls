@@ -214,7 +214,7 @@ Private Sub Class_Initialize()
 On Error Resume Next
     TextFieldCount = TextFieldCount + 1
     Name = "TextField" & TextFieldCount
-    Tip = Name
+    Tip = ""
     Text = ""
     PasswordChar = ""
     Set Rectangle = New Fury2Rect
@@ -407,7 +407,7 @@ Dim l_lngPos As Long
     m_booDragging = False
 End Sub
 
-Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect
 Dim l_rctOld As Fury2Rect
@@ -421,11 +421,11 @@ Dim l_lngHeight As Long
         m_staState.WindowSkin.Draw Surface, l_rctNew, 1
         .ClippedSetClipRectangle l_rctNew
         Set l_staState = Skin.States("tip")
-        l_staState.Font.Draw Surface, Tip, l_rctNew, l_staState.TextColor
+        l_staState.Font.Draw Surface, Tip, l_rctNew, l_staState.TextColor, Opacity
         If Locked Then
-            m_staState.Font.Draw Surface, DisplayedText, l_rctNew, m_staState.TextColor, , , l_lngHeight
+            m_staState.Font.Draw Surface, DisplayedText, l_rctNew, m_staState.TextColor, Opacity, , l_lngHeight
         Else
-            m_staState.Font.Draw Surface, DisplayedText, l_rctNew, m_staState.TextColor, , m_staState.Font.Options(0, 0, SelectionStart, SelectionEnd, m_staState.HighlightColor, SelectionStart, IIf((SelectionLength > 0) Or (Not HaveFocus), 0, m_staState.HighlightColor)), l_lngHeight
+            m_staState.Font.Draw Surface, DisplayedText, l_rctNew, m_staState.TextColor, Opacity, m_staState.Font.Options(0, 0, SelectionStart, SelectionEnd, m_staState.HighlightColor, SelectionStart, IIf((SelectionLength > 0) Or (Not HaveFocus), 0, m_staState.HighlightColor)), l_lngHeight
         End If
         If AutoSizeHeight Then
             Rectangle.Height = l_lngHeight

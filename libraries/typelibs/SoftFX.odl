@@ -1005,6 +1005,8 @@ library SoftFX {
 
         [entry("_BlendColors@12")]
         int BlendColors(int Dest, int Source, int Alpha);
+        [entry("_MultiplyColor@12")]
+        int MultiplyColor(int Color, int Mul, int Alpha);
 
         [entry("_GetAlpha@4")]
         int GetAlpha(int Color);

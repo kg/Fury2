@@ -83,7 +83,7 @@ Private Sub iWidget_MouseUp(ByVal Parent As iContainer, ByVal Button As Long, By
 On Error Resume Next
 End Sub
 
-Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 End Sub
 

@@ -1557,7 +1557,7 @@ Dim m_colObjects As New Collection, m_lngObjects As Long
         Else
             PObj.MouseDown Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
         End If
-        If m_lngX = -1 Or m_lngY = -1 Then ContextLevelRemove: Exit Sub
+        If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
     Next Obj
     If MouseDownHook <> "" Then ContextLevelAdd CStr(MouseDownHook): m_ScriptEngine.Exec MouseDownHook, Evt.LParam1, Evt.LParam2, m_lngX, m_lngY: ContextLevelRemove
     ContextLevelRemove
@@ -1584,7 +1584,7 @@ Dim m_lngHotspots As Long
         Else
             PObj.MouseMove Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
         End If
-        If m_lngX = -1 And m_lngY = -1 Then ContextLevelRemove: Exit Sub
+        If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
     Next Obj
     For m_lngHotspots = 0 To c_lngMaxHotspot
         With Hotspots(m_lngHotspots)
@@ -1618,7 +1618,7 @@ Dim m_lngHotspots As Long
                 End If
             End If
         End With
-        If m_lngX = -1 And m_lngY = -1 Then ContextLevelRemove: Exit Sub
+        If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
     Next m_lngHotspots
     If MouseMoveHook <> "" Then ContextLevelAdd CStr(MouseMoveHook): m_ScriptEngine.Exec MouseMoveHook, Evt.LParam1, Evt.LParam2, m_lngX, m_lngY: ContextLevelRemove
     ContextLevelRemove
@@ -1648,7 +1648,7 @@ Dim m_lngHotspots As Long
         Else
             PObj.MouseUp Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
         End If
-        If m_lngX = -1 Or m_lngY = -1 Then ContextLevelRemove: Exit Sub
+        If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
     Next Obj
     For m_lngHotspots = 0 To c_lngMaxHotspot
         With Hotspots(m_lngHotspots)
@@ -1666,7 +1666,7 @@ Dim m_lngHotspots As Long
                 End If
             End If
         End With
-        If m_lngX = -1 And m_lngY = -1 Then ContextLevelRemove: Exit Sub
+        If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
     Next m_lngHotspots
     If MouseUpHook <> "" Then ContextLevelAdd CStr(MouseUpHook): m_ScriptEngine.Exec MouseUpHook, Evt.LParam1, Evt.LParam2, m_lngX, m_lngY: ContextLevelRemove
     ContextLevelRemove
@@ -2227,6 +2227,7 @@ Dim l_lngThreadID As Long
             End If
             
             DoEvents
+            If Me.HarassCPU Then Else SleepEx 1, True
             
             LastFrameEnd = FrameEnd
             
@@ -3822,6 +3823,8 @@ Public Sub Redraw()
 Attribute Redraw.VB_Description = "Forces the engine to redraw."
 On Error Resume Next
 Dim l_lngObjects As Long, l_booBehind As Boolean
+Dim l_lngCount As Long
+Dim l_colHooks As New Fury2Collection
 Dim PObj As Fury2Plugin, Obj As Object
     If Running Then Else Exit Sub
     If m_booCritical Then Exit Sub
@@ -3829,23 +3832,24 @@ Dim PObj As Fury2Plugin, Obj As Object
     ContextLevelAdd "Redraw"
     If ClearEveryFrame Then m_Backbuffer.Clear BackgroundColor
     RedrawCameras
+    For Each Obj In m_EventHooks
+        l_colHooks.Add Obj, , 1
+    Next Obj
     If m_EventHooks.Count > 0 Then
-        For l_lngObjects = m_EventHooks.Count To 1 Step -1
+        For Each Obj In l_colHooks
             Set PObj = Nothing
-            Set PObj = m_EventHooks(l_lngObjects)
+            Set PObj = Obj
             Err.Clear
             If Not (PObj Is Nothing) Then
                 l_booBehind = False
                 l_booBehind = PObj.DrawBehind
                 If l_booBehind Then PObj.Redraw
             End If
-        Next l_lngObjects
+        Next Obj
     End If
     RedrawPictures
     If m_EventHooks.Count > 0 Then
-        For l_lngObjects = m_EventHooks.Count To 1 Step -1
-            Set Obj = Nothing
-            Set Obj = m_EventHooks(l_lngObjects)
+        For Each Obj In l_colHooks
             If Not (Obj Is Nothing) Then
                 Set PObj = Nothing
                 Set PObj = Obj
@@ -3858,7 +3862,7 @@ Dim PObj As Fury2Plugin, Obj As Object
                     If Not l_booBehind Then PObj.Redraw
                 End If
             End If
-        Next l_lngObjects
+        Next Obj
     End If
     If RedrawHook <> "" Then ContextLevelAdd CStr(RedrawHook): m_ScriptEngine.Exec RedrawHook: ContextLevelRemove
     If ConsoleHeight > 0 Then

@@ -490,7 +490,7 @@ Dim l_wdgWidget As iWidget
     End With
 End Sub
 
-Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_wdgWidget As iWidget, l_lngWidget As Long
 Dim l_rctNew As Fury2Rect
@@ -507,12 +507,12 @@ Dim l_staState As SkinState, l_strState As String
             l_strState = "inactive"
         End If
         Set l_staState = Skin.States(l_strState)
-        l_staState.WindowSkin.Draw Surface, l_rctNew
-        l_staState.Font.DrawCentered Surface, Text, Fury2GEGlobal.F2Rect(l_rctNew.Left, l_rctNew.Top, l_rctNew.Width, l_staState.Font.FullHeight, False), l_staState.TextColor
+        l_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
+        l_staState.Font.DrawCentered Surface, Text, Fury2GEGlobal.F2Rect(l_rctNew.Left, l_rctNew.Top, l_rctNew.Width, l_staState.Font.FullHeight, False), SetAlpha(l_staState.TextColor, GetAlpha(l_staState.TextColor) * Opacity)
         With Rectangle
             For l_lngWidget = Children.Count To 1 Step -1
                 Set l_wdgWidget = Children(l_lngWidget)
-                l_wdgWidget.Redraw Me, Surface, XOffset + .Left, YOffset + .Top
+                l_wdgWidget.Redraw Me, Surface, XOffset + .Left, YOffset + .Top, Opacity
             Next l_lngWidget
         End With
         Set .ClipRectangle = l_rctOld

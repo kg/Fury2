@@ -152,7 +152,7 @@ Dim l_lngPos As Long
     Parent.ReleaseCapture Me
 End Sub
 
-Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect
 Dim l_rctOld As Fury2Rect
@@ -170,7 +170,7 @@ Dim l_rctText As Fury2Rect
         End If
         m_staState.WindowSkin.Draw Surface, l_rctNew, 1
         .ClippedSetClipRectangle l_rctNew
-        m_staState.Font.Draw Surface, Text, l_rctText, m_staState.TextColor
+        m_staState.Font.Draw Surface, Text, l_rctText, SetAlpha(m_staState.TextColor, GetAlpha(m_staState.TextColor) * Opacity)
         If AutoSize Then
             Rectangle.Width = l_rctText.Width
             Rectangle.Height = l_rctText.Height

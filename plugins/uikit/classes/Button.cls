@@ -23,7 +23,12 @@ Public Rectangle As Fury2Rect
 Public HaveFocus As Boolean
 Public MousePressed As Boolean, KeyboardPressed As Boolean, KeyboardDisabled As Boolean
 Public MouseHovering As Boolean
-Public Image As Object
+Public Image As Object, PressedImage As Object
+Public BlitMode As SFXBlitModes
+Public Alpha As Single, HoverAlpha As Single, PressedAlpha As Single
+Public ImageOnly As Boolean
+Public ToggleButton As Boolean
+Public Value As Boolean
 Private m_staState As SkinState
 
 Public Property Get iWidget_CanGetFocus() As Boolean
@@ -41,6 +46,8 @@ Dim l_booCaptured As Boolean
     l_booCaptured = Parent.Captured(Me)
     If l_booCaptured Then
         l_strState = "inactive"
+    ElseIf Value Then
+        l_strState = "pressed"
     ElseIf MousePressed Then
         If MouseHovering Then
             l_strState = "pressed"
@@ -107,6 +114,10 @@ On Error Resume Next
     Text = Name
     Set Rectangle = New Fury2Rect
     Visible = True
+    Alpha = 1
+    HoverAlpha = 1
+    PressedAlpha = 1
+    BlitMode = BlitMode_Default
 End Sub
 
 Private Sub iWidget_GotFocus(ByVal Parent As iContainer, ByVal FromWidget As iWidget)
@@ -146,6 +157,7 @@ On Error Resume Next
     If KeyboardPressed Then
         DispatchEvent "Release"
         DispatchEvent "Click"
+        If ToggleButton Then Value = Not Value
     End If
     KeyboardPressed = False
     KeyboardDisabled = False
@@ -212,35 +224,54 @@ On Error Resume Next
     End If
     Parent.ReleaseCapture Me
     MousePressed = False
+    If ToggleButton Then Value = Not Value
     RefreshState
     DispatchEvent "MouseUp", Button, Shift, X, Y
 End Sub
 
-Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect
 Dim l_rctOld As Fury2Rect
+Dim l_objImage As Object
 Dim l_imgImage As Fury2Image
 Dim l_gphImage As Fury2Graphic
+Dim l_sngAlpha As Single
     If m_staState Is Nothing Then RefreshState
     If Visible = False Then Exit Sub
     With Surface
         Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
         .ClippedSetClipRectangle l_rctNew
-        m_staState.WindowSkin.Draw Surface, l_rctNew, 1
-        m_staState.Font.DrawCentered Surface, Text, l_rctNew, m_staState.TextColor
-        If TypeOf Image Is Fury2Image Then
-            Set l_imgImage = Image
+        If ((MousePressed And MouseHovering) Or KeyboardPressed Or Value) Then
+            l_sngAlpha = PressedAlpha * Opacity
+        ElseIf (MouseHovering) Then
+            l_sngAlpha = HoverAlpha * Opacity
+        Else
+            l_sngAlpha = Alpha * Opacity
+        End If
+        If Not ImageOnly Then m_staState.WindowSkin.Draw Surface, l_rctNew, l_sngAlpha
+        If Not ImageOnly Then m_staState.Font.DrawCentered Surface, Text, l_rctNew, m_staState.TextColor, l_sngAlpha
+        If (PressedImage Is Nothing) Or (Not ((MousePressed And MouseHovering) Or KeyboardPressed Or Value)) Then
+            Set l_objImage = Image
+        Else
+            Set l_objImage = PressedImage
+        End If
+        If TypeOf l_objImage Is Fury2Image Then
+            Set l_imgImage = l_objImage
             l_rctNew.Translate (Rectangle.Width - l_imgImage.Width) / 2, (Rectangle.Height - l_imgImage.Height) / 2
-            If Image.AlphaChannel Then
-                .Blit l_rctNew, , l_imgImage, , BlitMode_SourceAlpha
+            If BlitMode = BlitMode_Default Then
+                If Image.AlphaChannel Then
+                    .Blit l_rctNew, , l_imgImage, l_sngAlpha, BlitMode_SourceAlpha
+                Else
+                    .Blit l_rctNew, , l_imgImage, l_sngAlpha, BlitMode_Matte
+                End If
             Else
-                .Blit l_rctNew, , l_imgImage, , BlitMode_Matte
+                .Blit l_rctNew, , l_imgImage, l_sngAlpha, BlitMode, m_staState.TintColor
             End If
-        ElseIf TypeOf Image Is Fury2Graphic Then
-            Set l_gphImage = Image
-            l_gphImage.Draw Surface, l_rctNew.Left + (l_rctNew.Width / 2), l_rctNew.Top + (l_rctNew.Height / 2)
+        ElseIf TypeOf l_objImage Is Fury2Graphic Then
+            Set l_gphImage = l_objImage
+            l_gphImage.Draw Surface, l_rctNew.Left + (l_rctNew.Width / 2), l_rctNew.Top + (l_rctNew.Height / 2), l_sngAlpha
         End If
         Set .ClipRectangle = l_rctOld
     End With

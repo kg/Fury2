@@ -232,6 +232,11 @@ On Error Resume Next
     F2MixColors = SoftFX.BlendColors(Dest, Source, Alpha * 255)
 End Function
 
+Public Function F2MultiplyColor(ByVal Color As Long, ByVal Mul As Long, Optional ByVal Alpha As Single = 1) As Long
+On Error Resume Next
+    F2MultiplyColor = SoftFX.MultiplyColor(Color, Mul, Alpha * 255)
+End Function
+
 Public Sub F2SwapRedBlue(ByRef Color As Long)
     Color = SoftFX.SwapChannels(Color, 0, 2)
 End Sub

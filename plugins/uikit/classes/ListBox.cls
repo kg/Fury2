@@ -22,12 +22,16 @@ Public AutoSizeHeight As Boolean
 Public SelectedItem As Long
 Private m_colItems As ItemCollection
 Private m_staState As SkinState
-Private m_sbrScrollbar As ScrollBar
+Private m_sbrScrollbar As Scrollbar
 Private m_lngTotalHeight As Long
 Public Skin As Skin
 Public Rectangle As Fury2Rect
 Public HaveFocus As Boolean
 Public ScrollOffset As Long
+
+Public Property Get Scrollbar() As Scrollbar
+    Set Scrollbar = m_sbrScrollbar
+End Property
 
 Public Function GetItemY(ByVal Item As Long) As Long
 Dim l_itmItem As Item
@@ -272,7 +276,7 @@ Dim l_lngWidth As Long
     DispatchEvent "MouseUp", Button, Shift, X, Y
 End Sub
 
-Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect, l_rctItem As Fury2Rect
 Dim l_rctOld As Fury2Rect
@@ -295,7 +299,7 @@ Dim l_lngWidth As Long
         Set l_rctItem = l_rctNew.Copy
         m_sbrScrollbar.Visible = (m_lngTotalHeight > Rectangle.Height)
         If (m_sbrScrollbar.Visible) Then
-            Set m_sbrScrollbar.Rectangle = F2Rect(Rectangle.Width - 15, 0, 15, Rectangle.Height, False)
+            Set m_sbrScrollbar.Rectangle = F2Rect(Rectangle.Width - m_sbrScrollbar.OptimalWidth, 0, m_sbrScrollbar.OptimalWidth, Rectangle.Height, False)
             m_sbrScrollbar.Refresh
             m_sbrScrollbar.Minimum = 0
             m_sbrScrollbar.Maximum = (m_lngTotalHeight - Rectangle.Height)
@@ -306,7 +310,7 @@ Dim l_lngWidth As Long
             l_lngWidth = Rectangle.Width
         End If
         l_rctItem.Width = l_lngWidth
-        m_staState.WindowSkin.Draw Surface, l_rctNew, 1
+        m_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
         .ClippedSetClipRectangle l_rctNew
         l_lngItem = 1
         For Each l_itmItem In m_colItems
@@ -317,10 +321,10 @@ Dim l_lngWidth As Long
             l_lngItemHeight = l_itmItem.Height
             If ((l_rctItem.Top <= l_rctNew.Bottom) And ((l_rctItem.Top + l_lngItemHeight) > l_rctNew.Top)) Then
                 If l_lngItem = SelectedItem Then
-                    Surface.Fill F2Rect(l_rctItem.Left, l_rctItem.Top, l_rctItem.Width, l_lngItemHeight, False), m_staState.HighlightColor, RenderMode_SourceAlpha
-                    l_itmItem.Draw Surface, l_rctItem, True
+                    Surface.Fill F2Rect(l_rctItem.Left, l_rctItem.Top, l_rctItem.Width, l_lngItemHeight, False), SetAlpha(m_staState.HighlightColor, GetAlpha(m_staState.HighlightColor) * Opacity), RenderMode_SourceAlpha
+                    l_itmItem.Draw Surface, l_rctItem, True, Opacity
                 Else
-                    l_itmItem.Draw Surface, l_rctItem, False
+                    l_itmItem.Draw Surface, l_rctItem, False, Opacity
                 End If
             End If
             l_lngY = l_lngY + l_lngItemHeight
@@ -333,7 +337,7 @@ Dim l_lngWidth As Long
         m_lngTotalHeight = l_lngHeight
         If (m_sbrScrollbar.Visible) Then
             ' Dirty hack
-            m_sbrScrollbar.Widget.Redraw Nothing, Surface, XOffset + Rectangle.Left, YOffset + Rectangle.Top
+            m_sbrScrollbar.Widget.Redraw Nothing, Surface, XOffset + Rectangle.Left, YOffset + Rectangle.Top, Opacity
         End If
         Set .ClipRectangle = l_rctOld
     End With

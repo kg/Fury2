@@ -137,8 +137,8 @@ Dim m_lngSpace As Long
         ElseIf Button = 2 Then
             CloseMenu
         End If
-        X = -1
-        Y = -1
+        X = -32767
+        Y = -32767
     End If
 End Sub
 
@@ -178,8 +178,8 @@ Dim m_lngSpace As Long
         If m_lngOldItem <> m_lngSelectedItem Then
             SelectionChanged
         End If
-        X = -1
-        Y = -1
+        X = -32767
+        Y = -32767
     End If
 End Sub
 

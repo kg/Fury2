@@ -61,7 +61,7 @@ Dim l_cntParent As iContainer
     Visible = True
     SelectedItem = 0
     ' Trigger the autosize mechanism
-    Call Widget.Redraw(Nothing, Nothing, 0, 0)
+    Call Widget.Redraw(Nothing, Nothing, 0, 0, 0)
     Set l_cntParent = Parent
     Set m_wdgOldFocus = l_cntParent.ActiveWidget
     l_cntParent.SetCapture Me
@@ -253,7 +253,7 @@ On Error Resume Next
     Hide
 End Sub
 
-Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect, l_rctItem As Fury2Rect
 Dim l_rctOld As Fury2Rect
@@ -267,7 +267,7 @@ Dim l_rctSize As Fury2Rect
         Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
         Set l_rctItem = l_rctNew.Copy
-        m_staState.WindowSkin.Draw Surface, l_rctNew, 1
+        m_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
         .ClippedSetClipRectangle l_rctNew
         l_lngItem = 1
         For Each l_itmItem In m_colItems
@@ -279,10 +279,10 @@ Dim l_rctSize As Fury2Rect
             l_lngItemHeight = l_itmItem.Height
             If ((l_rctItem.Top <= l_rctNew.Bottom) And ((l_rctItem.Top + l_lngItemHeight) > l_rctNew.Top)) Then
                 If l_lngItem = SelectedItem Then
-                    Surface.Fill F2Rect(l_rctItem.Left, l_rctItem.Top, l_rctItem.Width, l_lngItemHeight, False), m_staState.HighlightColor, RenderMode_SourceAlpha
-                    l_itmItem.Draw Surface, l_rctItem, True
+                    Surface.Fill F2Rect(l_rctItem.Left, l_rctItem.Top, l_rctItem.Width, l_lngItemHeight, False), SetAlpha(m_staState.HighlightColor, GetAlpha(m_staState.HighlightColor) * Opacity), RenderMode_SourceAlpha
+                    l_itmItem.Draw Surface, l_rctItem, True, Opacity
                 Else
-                    l_itmItem.Draw Surface, l_rctItem, False
+                    l_itmItem.Draw Surface, l_rctItem, False, Opacity
                 End If
             End If
             If l_lngItemWidth > l_lngWidth Then l_lngWidth = l_lngItemWidth

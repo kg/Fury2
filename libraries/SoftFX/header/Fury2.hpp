@@ -154,6 +154,14 @@ struct SpriteParam {
 
     FRect getRect();
 
+    inline Rectangle getRectangle() {
+    		Rectangle rect;
+        float w = Graphic.Rectangle.Width / 2;
+        rect.setValuesAbsolute(floor(Position.X - w), floor(Position.Y - Graphic.Rectangle.Height), 
+          floor(Position.X + w), floor(Position.Y));
+        return rect;
+    }
+
     bool touches(SpriteParam *other);
     bool touches(FRect *other);
     bool touches(SpriteParam *other, VelocityVector *other_speed);

@@ -17,10 +17,14 @@ Public Font As Fury2Font
 Public TextColor As Long
 Public HighlightColor As Long
 Public EdgeOffset As Long
+Public Width As Long
+Public TintColor As Long
 
 Private Sub Class_Initialize()
 On Error Resume Next
     TextColor = F2White
     HighlightColor = F2RGB(0, 0, 220, 127)
     EdgeOffset = 0
+    Width = 15
+    TintColor = F2White
 End Sub

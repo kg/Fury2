@@ -1582,22 +1582,6 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
       LightRay.Start.Y = Env->Lights[l].Y;
       LightRay.End.X = X;
       LightRay.End.Y = Y;
-      if (Env->Lights[l].Spread < 180) {
-        // directional
-        float ls = Env->Lights[l].Spread / 2;
-        float a_l = NormalizeAngle(AngleBetween(LightRay.Start, LightRay.End));
-        float a_s = NormalizeAngle(Env->Lights[l].Angle - ls);
-        float a_e = NormalizeAngle(Env->Lights[l].Angle + ls);
-        if (a_e < a_s) {
-          a_l = NormalizeAngle(a_l - 180);
-          a_s = NormalizeAngle(a_s - 180);
-          a_e = NormalizeAngle(a_e - 180);
-          if ((a_l < a_s) || (a_l > a_e)) Obscured = true;
-        } else {
-          if ((a_l < a_s) || (a_l > a_e)) Obscured = true;
-        }
-      }
-      if (Obscured) continue;
 	  mx1 = ClipValue(floor(_Min(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
 	  my1 = ClipValue(floor(_Min(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), 0, Env->Matrix->Height - 1);
 	  mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
@@ -1616,6 +1600,22 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
       }
       if (Distance < 255) {
         Obscured = false;
+        if ((Env->Lights[l].Spread < 180) && (Distance > 0)) {
+          // directional
+          float ls = Env->Lights[l].Spread / 2;
+          float a_l = NormalizeAngle(AngleBetween(LightRay.Start, LightRay.End));
+          float a_s = NormalizeAngle(Env->Lights[l].Angle - ls);
+          float a_e = NormalizeAngle(Env->Lights[l].Angle + ls);
+          if (a_e < a_s) {
+            a_l = NormalizeAngle(a_l - 180);
+            a_s = NormalizeAngle(a_s - 180);
+            a_e = NormalizeAngle(a_e - 180);
+            if ((a_l < a_s) || (a_l > a_e)) Obscured = true;
+          } else {
+            if ((a_l < a_s) || (a_l > a_e)) Obscured = true;
+          }
+        }
+        if (Obscured) goto found;
 
 		  for (my = my1; my <= my2; my++) {
 			  for (mx = mx1; mx <= mx2; mx++) {
@@ -1768,12 +1768,20 @@ Pixel SavedColor;
         if (Light->FalloffDistance <= 0) {
           // no falloff (fill)
           LightRect = CameraRect;
+          LightFRect.X1 = LightRect.Left + Camera->ScrollX;
+          LightFRect.Y1 = LightRect.Top + Camera->ScrollY;
+          LightFRect.X2 = LightRect.right() + Camera->ScrollX;
+          LightFRect.Y2 = LightRect.bottom() + Camera->ScrollY;
           Light_Clipped = false;
           Camera->ScratchBuffer->fill(Light->Color);
         } else {
           // falloff (radial gradient)
 
           LightRect.setValuesAbsolute(LightPoint.X - Falloff, LightPoint.Y - Falloff, LightPoint.X + Falloff, LightPoint.Y + Falloff);
+          LightFRect.X1 = LightRect.Left + Camera->ScrollX;
+          LightFRect.Y1 = LightRect.Top + Camera->ScrollY;
+          LightFRect.X2 = LightRect.right() + Camera->ScrollX;
+          LightFRect.Y2 = LightRect.bottom() + Camera->ScrollY;
           Light_Clipped = !ClipRectangle_Rect(&LightRect, &CameraRect);
 
           if (!Light_Clipped) {
@@ -1790,6 +1798,10 @@ Pixel SavedColor;
         if (Light->FalloffDistance <= 0) {
           // no falloff (solid filled convex polygon extended to infinity)
           LightRect = CameraRect;
+          LightFRect.X1 = LightRect.Left + Camera->ScrollX;
+          LightFRect.Y1 = LightRect.Top + Camera->ScrollY;
+          LightFRect.X2 = LightRect.right() + Camera->ScrollX;
+          LightFRect.Y2 = LightRect.bottom() + Camera->ScrollY;
           Light_Clipped = false;
 
           ShadowPoly.Allocate(3);
@@ -1838,6 +1850,10 @@ Pixel SavedColor;
           GradientShadowPoly.Finalize();
 
           LightRect.setValuesAbsolute(GradientShadowPoly.MinimumX(), GradientShadowPoly.MinimumY(), GradientShadowPoly.MaximumX(), GradientShadowPoly.MaximumY());
+          LightFRect.X1 = LightRect.Left + Camera->ScrollX;
+          LightFRect.Y1 = LightRect.Top + Camera->ScrollY;
+          LightFRect.X2 = LightRect.right() + Camera->ScrollX;
+          LightFRect.Y2 = LightRect.bottom() + Camera->ScrollY;
           Light_Clipped = !ClipRectangle_Rect(&LightRect, &CameraRect);
 
           if (!Light_Clipped) {
@@ -1846,10 +1862,6 @@ Pixel SavedColor;
           }
         }
       }
-      LightFRect.X1 = LightRect.Left + Camera->ScrollX;
-      LightFRect.Y1 = LightRect.Top + Camera->ScrollY;
-      LightFRect.X2 = LightRect.right() + Camera->ScrollX;
-      LightFRect.Y2 = LightRect.bottom() + Camera->ScrollY;
 
       ProfileStop("Render Light Sources");
 

@@ -62,6 +62,8 @@ namespace Lighting {
     float Angle, Spread, SpinRate, FlickerLevel;
     Byte NoiseOpacity, Visible, Culled;
     SpriteParam *Attached;
+    Image *Cache;
+    Byte CacheValid;
   };
 
   class Obstruction {

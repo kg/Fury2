@@ -38,11 +38,7 @@ CompatibleEXE32="..\..\..\binary\sys\graphics.dll"
 VersionCompatible32="1"
 MajorVer=1
 MinorVer=0
-<<<<<<< libGraphics.vbp
-RevisionVer=301
-=======
-RevisionVer=291
->>>>>>> 1.25
+RevisionVer=302
 AutoIncrementVer=1
 ServerSupportFiles=0
 DllBaseAddress=&H51000000

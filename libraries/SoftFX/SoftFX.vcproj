@@ -315,7 +315,7 @@
 				OutputFile=".\../../../binary/sys/SoftFX.dll"
 				LinkIncremental="0"
 				SuppressStartupBanner="TRUE"
-				GenerateManifest="FALSE"
+				GenerateManifest="TRUE"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\../../../binary/sys/SoftFX.pdb"
 				GenerateMapFile="FALSE"

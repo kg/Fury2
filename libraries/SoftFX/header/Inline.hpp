@@ -489,8 +489,6 @@ int iClipped;
 }
 
 Export inline int WrapValue(int value, int min, int max) {
-<<<<<<< Inline.hpp
-
 	if (value < min) {
 		int v = ((min - value) % ((max - min) + 1));
 		return max + 1 - v;
@@ -498,23 +496,6 @@ Export inline int WrapValue(int value, int min, int max) {
 		int v = ((value - min) % ((max - min) + 1));
 		return min + v;
 	}
-=======
-//int offset;
-//    offset = (max - min) + 1;
-//    while ((value < min) || (value > max)) {
-//        if (value < min) {
-//            value += offset;
-//        } else if (value > max) {
-//            value -= offset;
-//        }
-//    }
-//    return value;
-	int v = ((value - min) % ((max - min) + 1));
-	if (v < 0) 
-		return max + v;
-	else
-		return min + v;
->>>>>>> 1.10
 }
 
 inline float Round(float N)

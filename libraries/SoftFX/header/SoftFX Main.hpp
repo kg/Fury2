@@ -55,6 +55,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #pragma warning( disable : 4514 )       // Unreferenced inline function has been removed (yeah, we know)  
 #pragma warning( 4 : 4761 )             // (small value) assigned to (big val), Conversion Supplied  
 #pragma warning( 4 : 4142 )             // benign redefinition of type (ex: unsigned char to char)   
+#pragma warning( disable : 4311 )
+#pragma warning( disable : 4312 )
 
 #include <string>
 #include <vector>

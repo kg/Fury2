@@ -335,10 +335,10 @@ Dim l_lngWidth As Long
             Rectangle.Height = l_lngHeight
         End If
         m_lngTotalHeight = l_lngHeight
+        Set .ClipRectangle = l_rctOld
         If (m_sbrScrollbar.Visible) Then
             ' Dirty hack
             m_sbrScrollbar.Widget.Redraw Nothing, Surface, XOffset + Rectangle.Left, YOffset + Rectangle.Top, Opacity
         End If
-        Set .ClipRectangle = l_rctOld
     End With
 End Sub

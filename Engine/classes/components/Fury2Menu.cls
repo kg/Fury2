@@ -241,6 +241,7 @@ Dim m_strCaption As String
                     Else
                         m_rctItem.SetValues Rectangle.Left + m_lngSpace + .Icon.Width, m_lngCurrentY, m_rctItem.Right, Rectangle.Bottom
                         m_lngItemHeight = Font.Draw(Engine.Backbuffer, m_strCaption, m_rctItem, m_fmiItem.Color, Alpha * .Alpha) * Font.Height
+                        If (.Icon.Height > m_lngItemHeight) Then m_lngItemHeight = .Icon.Height
                         .Icon.Draw Engine.Backbuffer, Rectangle.Left + m_lngSpace, m_lngCurrentY + m_lngItemHeight \ 2, Alpha * .Alpha
                         If m_lngDrawItems = m_lngSelectedItem Then
                             m_lngArrowCoord = m_lngCurrentY + (m_lngItemHeight \ 2)

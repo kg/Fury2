@@ -28,10 +28,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
         return Failure;                                         \
     }                                                           \
                                                                 \
-    Rectangle rCoordinates, rCopy;                              \
+    Rectangle rCoordinates, rCopy, rClip;                       \
     rCoordinates = Dest->ClipRectangle;                         \
     rCopy = *Rect;                                              \
-    Dest->setClipRectangle(rCopy);                               \
+    rClip = *Rect;                                              \
+    if (ClipRectangle_ImageClipRect(&rClip, Dest) == 0) {       \
+        return Trivial_Success;                                 \
+    }                                                           \
+    Dest->ClipRectangle = rClip;                               \
                                                                 \
     if (rCopy.empty()) {                                       \
         return Trivial_Success;                                 \

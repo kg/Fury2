@@ -829,13 +829,13 @@ Rectangle old_clip;
     clipper.setRight(ClipValue(Area->right(), clip->Left, clip->right()));
     clipper.Top = ClipValue(Area->Top, clip->Top, clip->bottom());
     clipper.setBottom(ClipValue(Area->bottom(), clip->Top, clip->bottom()));
-    Dest->setClipRectangle(clipper);
+    Dest->ClipRectangle = clipper;
     xm[0] = _Max(_Max(wp->pImages[wsTopLeft]->Width, wp->pImages[wsLeft]->Width),wp->pImages[wsBottomLeft]->Width);
     xm[1] = _Max(_Max(wp->pImages[wsTopRight]->Width, wp->pImages[wsRight]->Width),wp->pImages[wsBottomRight]->Width);
     ym[0] = _Max(_Max(wp->pImages[wsTopLeft]->Height, wp->pImages[wsTop]->Height),wp->pImages[wsTopRight]->Height);
     ym[1] = _Max(_Max(wp->pImages[wsBottomLeft]->Height, wp->pImages[wsBottom]->Height),wp->pImages[wsBottomRight]->Height);
     xs = wp->pImages[wsMiddle]->Width;
-    ys = wp->pImages[wsMiddle]->Width;
+    ys = wp->pImages[wsMiddle]->Height;
     if (SectionFlags & sfMiddle) {
       source = wp->pImages[wsMiddle]->getRectangle();
       dest.setValues(Area->Left - wp->EdgeOffsets[0], Area->Top - wp->EdgeOffsets[1], 
@@ -887,6 +887,8 @@ Rectangle old_clip;
       }
     }
 
+    Dest->ClipRectangle = old_clip;
+
     if (SectionFlags & sfTop) {
       dest.setValues(Area->Left, Area->Top - wp->pImages[wsTop]->Height, Area->Width, wp->pImages[wsTop]->Height);
       ModedTiledBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsTop], &dest, wp->TintColors[wsTop], wp->Alpha);
@@ -907,7 +909,7 @@ Rectangle old_clip;
       ModedTiledBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsRight], &dest, wp->TintColors[wsRight], wp->Alpha);
     }
 
-    Dest->ClipRectangle = Dest->getRectangle();
+    Dest->ClipRectangle = old_clip;
       
     if (SectionFlags & sfBottomRight) {
       dest.setValues(Area->right(), Area->bottom(), wp->pImages[wsBottomRight]->Width, wp->pImages[wsBottomRight]->Height);

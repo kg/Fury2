@@ -581,7 +581,7 @@ Export void SetImageClipRectangle(Image *Image, Rectangle *NewRectangle) {
 #endif
   }
 
-  if (Image) Image->setClipRectangle(NewRectangle);
+  if (Image) Image->ClipRectangle = *NewRectangle;
 
   return;
 }

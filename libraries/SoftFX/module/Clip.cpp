@@ -34,6 +34,8 @@ Export int Clip2D_Simple(Rectangle *Rect, Image *Dest, Image *Source, int &X, in
     if (Rect->Left > Dest->ClipRectangle.right()) return Failure;
     if (Rect->bottom() < Dest->ClipRectangle.Top) return Failure;
     if (Rect->right() < Dest->ClipRectangle.Left) return Failure;
+    if (Dest->ClipRectangle.Width == 0) return Failure;
+    if (Dest->ClipRectangle.Height == 0) return Failure;
     if (!enableClipping) return !Rect->empty();
     if (Rect->Left < Dest->ClipRectangle.Left) {
         Rect->Width -= (Dest->ClipRectangle.Left - Rect->Left);
@@ -83,6 +85,8 @@ Export int Clip2D_SimpleRect(Rectangle *Rect, Image *Dest, Image *Source, Rectan
     if (Rect->Left > Dest->ClipRectangle.right()) return Failure;
     if (Rect->bottom() < Dest->ClipRectangle.Top) return Failure;
     if (Rect->right() < Dest->ClipRectangle.Left) return Failure;
+    if (Dest->ClipRectangle.Width == 0) return Failure;
+    if (Dest->ClipRectangle.Height == 0) return Failure;
     if (!enableClipping) return !Rect->empty();
     if (Rect->Left < Dest->ClipRectangle.Left) {
         Rect->Width -= (Dest->ClipRectangle.Left - Rect->Left);
@@ -140,6 +144,8 @@ Export int Clip2D_PairedRect(Rectangle *Rect, Rectangle *RectS, Image *Dest, Ima
     if (Rect->Left > Dest->ClipRectangle.right()) return Failure;
     if (Rect->bottom() < Dest->ClipRectangle.Top) return Failure;
     if (Rect->right() < Dest->ClipRectangle.Left) return Failure;
+    if (Dest->ClipRectangle.Width == 0) return Failure;
+    if (Dest->ClipRectangle.Height == 0) return Failure;
     if (!enableClipping) return !Rect->empty();
     if (Rect->Left < Dest->ClipRectangle.Left) {
         if (CropOutput) CropOutput[0] = (Dest->ClipRectangle.Left - Rect->Left); 
@@ -261,19 +267,27 @@ Export int ClipRectangle_ImageClipRect(Rectangle *Rect, Image *Image) {
     if (!Image) return Failure;
 //    if (!enableClipping) return !Rect->empty();
     Rect->normalize();
-    if (Rect->Left < Image->ClipRectangle.Left) {
-        Rect->Width -= Image->ClipRectangle.Left - Rect->Left;
-        Rect->Left = Image->ClipRectangle.Left;
+    if (Image->ClipRectangle.Width == 0) {
+      Rect->Width = 0;
+    } else {
+      if (Rect->Left < Image->ClipRectangle.Left) {
+          Rect->Width -= Image->ClipRectangle.Left - Rect->Left;
+          Rect->Left = Image->ClipRectangle.Left;
+      }
+      if (Rect->right() >= Image->ClipRectangle.right()) {
+          Rect->Width -= (Rect->right() - Image->ClipRectangle.right());
+      }
     }
-    if (Rect->Top < Image->ClipRectangle.Top) {
-        Rect->Height -= Image->ClipRectangle.Top - Rect->Top;
-        Rect->Top = Image->ClipRectangle.Top;
-    }
-    if (Rect->right() >= Image->ClipRectangle.right()) {
-        Rect->Width -= (Rect->right() - Image->ClipRectangle.right());
-    }
-    if (Rect->bottom() >= Image->ClipRectangle.bottom()) {
-        Rect->Height -= (Rect->bottom() - Image->ClipRectangle.bottom());
+    if (Image->ClipRectangle.Height == 0) {
+      Rect->Height = 0;
+    } else {
+      if (Rect->Top < Image->ClipRectangle.Top) {
+          Rect->Height -= Image->ClipRectangle.Top - Rect->Top;
+          Rect->Top = Image->ClipRectangle.Top;
+      }
+      if (Rect->bottom() >= Image->ClipRectangle.bottom()) {
+          Rect->Height -= (Rect->bottom() - Image->ClipRectangle.bottom());
+      }
     }
     return !Rect->empty();
 }
@@ -283,23 +297,31 @@ int ClipRectangle_ImageClipRect(Rectangle *Rect, Image *Image, int *CropOutput) 
     if (!Image) return Failure;
 //    if (!enableClipping) return !Rect->empty();
     Rect->normalize();
-    if (Rect->Left < Image->ClipRectangle.Left) {
-        if (CropOutput) CropOutput[0] = Image->ClipRectangle.Left - Rect->Left; 
-        Rect->Width -= Image->ClipRectangle.Left - Rect->Left;
-        Rect->Left = Image->ClipRectangle.Left;
+    if (Image->ClipRectangle.Width == 0) {
+      Rect->Width = 0;
+    } else {
+      if (Rect->Left < Image->ClipRectangle.Left) {
+          if (CropOutput) CropOutput[0] = Image->ClipRectangle.Left - Rect->Left; 
+          Rect->Width -= Image->ClipRectangle.Left - Rect->Left;
+          Rect->Left = Image->ClipRectangle.Left;
+      }
+      if (Rect->right() >= Image->ClipRectangle.right()) {
+          if (CropOutput) CropOutput[2] = (Rect->right() - Image->ClipRectangle.right()); 
+          Rect->Width -= (Rect->right() - Image->ClipRectangle.right());
+      }
     }
-    if (Rect->Top < Image->ClipRectangle.Top) {
-        if (CropOutput) CropOutput[1] = Image->ClipRectangle.Top - Rect->Top; 
-        Rect->Height -= Image->ClipRectangle.Top - Rect->Top;
-        Rect->Top = Image->ClipRectangle.Top;
-    }
-    if (Rect->right() >= Image->ClipRectangle.right()) {
-        if (CropOutput) CropOutput[2] = (Rect->right() - Image->ClipRectangle.right()); 
-        Rect->Width -= (Rect->right() - Image->ClipRectangle.right());
-    }
-    if (Rect->bottom() >= Image->ClipRectangle.bottom()) {
-        if (CropOutput) CropOutput[3] = (Rect->bottom() - Image->ClipRectangle.bottom()); 
-        Rect->Height -= (Rect->bottom() - Image->ClipRectangle.bottom());
+    if (Image->ClipRectangle.Height == 0) {
+      Rect->Height = 0;
+    } else {
+      if (Rect->Top < Image->ClipRectangle.Top) {
+          if (CropOutput) CropOutput[1] = Image->ClipRectangle.Top - Rect->Top; 
+          Rect->Height -= Image->ClipRectangle.Top - Rect->Top;
+          Rect->Top = Image->ClipRectangle.Top;
+      }
+      if (Rect->bottom() >= Image->ClipRectangle.bottom()) {
+          if (CropOutput) CropOutput[3] = (Rect->bottom() - Image->ClipRectangle.bottom()); 
+          Rect->Height -= (Rect->bottom() - Image->ClipRectangle.bottom());
+      }
     }
     return !Rect->empty();
 }

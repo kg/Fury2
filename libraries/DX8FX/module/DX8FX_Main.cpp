@@ -12,6 +12,12 @@ int __cdecl DllMain(int hModule, int ul_reason_for_call, void* lpReserved)
 	return 1;
 }
 
+Export int DX8Flip(Device* Device) {
+  if (Device == Null) return Failure;
+  Device->flip();
+  return Success;
+}
+
 Export int DX8Init(HWND Window) {
   Global = new DX8FXGlobal();
 	SoftFX::Load();

@@ -265,8 +265,15 @@ Public Sub ClippedSetClipRectangle(ByVal NewRect As Fury2Rect)
 On Error Resume Next
 Dim l_rcRect As Rectangle
     l_rcRect = NewRect.GetRectangle
-    SoftFX.ClipRectangle_ImageClipRect l_rcRect, m_lngImage
-    SoftFX.SetImageClipRectangle m_lngImage, l_rcRect
+    If SoftFX.ClipRectangle_ImageClipRect(l_rcRect, m_lngImage) Then
+        SoftFX.SetImageClipRectangle m_lngImage, l_rcRect
+    Else
+        l_rcRect.Left = 0
+        l_rcRect.Top = 0
+        l_rcRect.Width = 0
+        l_rcRect.Height = 0
+        SoftFX.SetImageClipRectangle m_lngImage, l_rcRect
+    End If
 End Sub
 
 Public Property Get Initialized() As Boolean

@@ -34,4 +34,6 @@ public:
 
 	template <class Type> void drawTrangles(Type* Vertexes, int Count);
 	template <class Type> void drawLines(Type* Vertexes, int Count);
+
+  void flip();
 };

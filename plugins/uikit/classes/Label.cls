@@ -170,7 +170,7 @@ Dim l_rctText As Fury2Rect
         End If
         m_staState.WindowSkin.Draw Surface, l_rctNew, 1
         .ClippedSetClipRectangle l_rctNew
-        m_staState.Font.Draw Surface, Text, l_rctText, SetAlpha(m_staState.TextColor, GetAlpha(m_staState.TextColor) * Opacity)
+        m_staState.Font.Draw Surface, Engine.Engine.ParseString(Text), l_rctText, SetAlpha(m_staState.TextColor, GetAlpha(m_staState.TextColor) * Opacity)
         If AutoSize Then
             Rectangle.Width = l_rctText.Width
             Rectangle.Height = l_rctText.Height

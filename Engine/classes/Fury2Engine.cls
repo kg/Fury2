@@ -3606,7 +3606,7 @@ Dim m_lngRelStartPos As Long
     If m_lngStartPos <> 0 Then
         Do While m_lngStartPos <> 0
             If m_lngRelPos > Len(m_strText) Then Exit Do
-            If InStr(m_lngPos, m_strText, "%>") = 0 Then Exit Do
+            If InStr(m_lngRelPos, m_strText, "%>") = 0 Then Exit Do
             m_lngLength = InStr(m_lngPos, m_strOldText, "%>") - (m_lngStartPos + 3)
             m_strConstant = Mid(m_strOldText, m_lngStartPos + 3, m_lngLength)
             m_strValue = "<error>"

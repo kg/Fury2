@@ -79,7 +79,7 @@ template <class Type> void Device::setVertexFormat(Type& Vertex) {
 	return;
 }
 
-template <class Type> void drawTrangles(Type* Vertexes, int Count) {
+template <class Type> void Device::drawTrangles(Type* Vertexes, int Count) {
 	if (ready()) {
 		if (Count >= 1) {
 			_device->DrawPrimitiveUP(D3DPT_TRIANGLELIST, Count, (void*)Vertexes, sizeof(Type));
@@ -88,11 +88,18 @@ template <class Type> void drawTrangles(Type* Vertexes, int Count) {
 	return;
 }
 
-template <class Type> void drawLines(Type* Vertexes, int Count) {
+template <class Type> void Device::drawLines(Type* Vertexes, int Count) {
 	if (ready()) {
 		if (Count >= 1) {
 			_device->DrawPrimitiveUP(D3DPT_LINELIST, Count, (void*)Vertexes, sizeof(Type));
 		}
 	}
 	return;
+}
+
+void Device::flip() {
+	if (ready()) {
+    _device->Present(Null, Null, Null, Null);
+  }
+  return;
 }

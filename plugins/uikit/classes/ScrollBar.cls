@@ -31,6 +31,7 @@ Public Minimum As Single
 Public Maximum As Single
 Public Increment As Single
 Public Value As Single
+Public IntegerValue As Boolean
 Private m_booHorizontal As Boolean
 Private m_btnMinus As Button
 Private m_btnPlus As Button
@@ -163,7 +164,7 @@ Dim l_lngPadding As Long
     If Button <> 1 Then Exit Sub
     Set l_staState = Skin.States("border")
     l_lngPadding = l_staState.EdgeOffset
-    l_sngValue = (Value - Minimum) / Maximum
+    l_sngValue = (Value - Minimum) / (Maximum - Minimum)
     If Horizontal Then
         l_lngBarSize = Rectangle.Width - (m_btnMinus.Rectangle.Width + m_btnPlus.Rectangle.Width) - (l_lngPadding * 2)
         l_lngThumbSize = l_lngBarSize * ThumbSize
@@ -179,6 +180,7 @@ Dim l_lngPadding As Long
     End If
     If Value < Minimum Then Value = Minimum
     If Value > Maximum Then Value = Maximum
+    If IntegerValue Then Value = Round(Value)
     DispatchEvent "Scroll", Value
 End Sub
 
@@ -611,13 +613,14 @@ Dim l_sngValue As Single
 Dim l_lngPadding As Long
     If Visible = False Then Exit Sub
     With Surface
-        Set l_rctOld = .ClipRectangle
+'        Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
-        .ClippedSetClipRectangle l_rctNew
+'        .ClippedSetClipRectangle l_rctNew
         Set l_staState = Skin.States("border")
         l_lngPadding = l_staState.EdgeOffset
         l_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
-        l_sngValue = (Value - Minimum) / Maximum
+        If IntegerValue Then Value = Round(Value)
+        l_sngValue = (Value - Minimum) / (Maximum - Minimum)
         If Horizontal Then
             l_lngBarSize = Rectangle.Width - (m_btnMinus.Rectangle.Width + m_btnPlus.Rectangle.Width) - (l_lngPadding * 2)
             l_lngThumbSize = l_lngBarSize * ThumbSize
@@ -642,7 +645,7 @@ Dim l_lngPadding As Long
                 l_wdgWidget.Redraw Me, Surface, XOffset + .Left, YOffset + .Top, Opacity
             Next l_wdgWidget
         End With
-        Set .ClipRectangle = l_rctOld
+'        Set .ClipRectangle = l_rctOld
     End With
 End Sub
 

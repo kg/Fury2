@@ -242,7 +242,6 @@ Dim l_sngAlpha As Single
     With Surface
         Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
-        .ClippedSetClipRectangle l_rctNew
         If ((MousePressed And MouseHovering) Or KeyboardPressed Or Value) Then
             l_sngAlpha = PressedAlpha * Opacity
         ElseIf (MouseHovering) Then
@@ -251,6 +250,7 @@ Dim l_sngAlpha As Single
             l_sngAlpha = Alpha * Opacity
         End If
         If Not ImageOnly Then m_staState.WindowSkin.Draw Surface, l_rctNew, l_sngAlpha
+        .ClippedSetClipRectangle l_rctNew
         If Not ImageOnly Then m_staState.Font.DrawCentered Surface, Text, l_rctNew, m_staState.TextColor, l_sngAlpha
         If (PressedImage Is Nothing) Or (Not ((MousePressed And MouseHovering) Or KeyboardPressed Or Value)) Then
             Set l_objImage = Image

@@ -42,7 +42,14 @@ Dim l_devDevice As Direct3DDevice8
     F2LockingMode = LockingMode_Default
     Set l_devDevice = GetImageDevice(m_imgBuffer)
     With m_imgBuffer
+        Set .ClipRectangle = .Rectangle
         .Clear F2RGB(63, 63, 63, 255)
+        .ClippedSetClipRectangle F2Rect(50, 50, 200, 150, False)
+        .Fill .Rectangle, F2Black
+        .ClippedSetClipRectangle F2Rect(0, 0, 240, 150, False)
+        .Fill .Rectangle, F2RGB(255, 0, 0, 255)
+        .ClippedSetClipRectangle F2Rect(-50, 40, 100, 100, False)
+        .Fill .Rectangle, F2RGB(0, 255, 0, 255)
         If PointInPolygon(m_varPoly, Array(m_lngX, m_lngY)) Then
             .ConvexPolygon m_varPoly, F2RGB(0, 255, 0, 255)
             .Fill F2Rect(m_lngX - 2, m_lngY - 2, 5, 5, False), F2RGB(0, 0, 255, 255)

@@ -500,7 +500,6 @@ Dim l_staState As SkinState, l_strState As String
     With Surface
         Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
-        .ClippedSetClipRectangle l_rctNew
         If HaveFocus Then
             l_strState = "active"
         Else
@@ -508,6 +507,7 @@ Dim l_staState As SkinState, l_strState As String
         End If
         Set l_staState = Skin.States(l_strState)
         l_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
+        .ClippedSetClipRectangle l_rctNew
         l_staState.Font.DrawCentered Surface, Text, Fury2GEGlobal.F2Rect(l_rctNew.Left, l_rctNew.Top, l_rctNew.Width, l_staState.Font.FullHeight, False), SetAlpha(l_staState.TextColor, GetAlpha(l_staState.TextColor) * Opacity)
         With Rectangle
             For l_lngWidget = Children.Count To 1 Step -1

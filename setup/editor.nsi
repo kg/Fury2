@@ -5,8 +5,10 @@ SetDateSave on
 XPStyle on
 
 Name "Fury²"
+Var ALREADY_INSTALLED
 !define NAME "Fury²"
 
+!include Library.nsh
 !include "MUI.nsh"
 
   !define MUI_ABORTWARNING
@@ -40,6 +42,9 @@ Name "Fury²"
 
 Section "-Engine"
 	SetOutPath "$INSTDIR"
+    IfFileExists "$INSTDIR\Uninstall.exe" 0 new_installation
+     StrCpy $ALREADY_INSTALLED 1
+    new_installation:
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayName" "${NAME}"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "UninstallString" "$INSTDIR\Uninstall.exe"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "0.8"
@@ -69,7 +74,6 @@ Section "-Engine"
 	File "J:\development\binary\sys\compressed\filesystem.dll"
 	File "J:\development\binary\sys\compressed\script2.dll"
 	File "J:\development\binary\sys\compressed\scriptengine.dll"
-	File "J:\development\binary\sys\compressed\vbscript.dll"
 	File "J:\development\binary\sys\compressed\corona.dll"
 	File "J:\development\binary\sys\compressed\softfx.dll"
 	File "J:\development\binary\sys\compressed\glfx.dll"
@@ -80,8 +84,9 @@ Section "-Engine"
 	File "J:\development\binary\sys\compressed\uikit.dll"
 	File "J:\development\binary\sys\compressed\http.dll"
 
+   !insertmacro InstallLib REGDLL $ALREADY_INSTALLED REBOOT_PROTECTED    "J:\development\binary\sys\win32\vbscript.dll" "$SYSDIR\vbscript.dll" "$SYSDIR"
+
     SetOutPath "$INSTDIR\sys\"
-	RegDLL "$INSTDIR\sys\vbscript.dll"
 	RegDLL "$INSTDIR\sys\graphics.dll"
 	RegDLL "$INSTDIR\sys\engine.dll"
 	RegDLL "$INSTDIR\sys\sound.dll"
@@ -111,13 +116,12 @@ Section "Editor"
 	File "J:\development\binary\sys\compressed\debugger.dll"
 
 	SetOutPath "$INSTDIR\sys\editor"
-    File "J:\development\binary\sys\editor\tlbinf32.dll"
+    !insertmacro InstallLib REGDLL $ALREADY_INSTALLED REBOOT_PROTECTED    "J:\development\binary\sys\win32\tlbinf32.dll" "$SYSDIR\tlbinf32.dll" "$SYSDIR"
 	File "J:\development\binary\sys\compressed\corona.dll"
 	File "J:\development\binary\sys\compressed\softfx.dll"
     File "J:\development\binary\sys\editor\*.dll"
     File "J:\development\binary\sys\editor\*.ocx"
 
-    RegDLL "$INSTDIR\sys\editor\tlbinf32.dll"
     RegDLL "$INSTDIR\sys\editor\SSubTmr6.dll"
     RegDLL "$INSTDIR\sys\editor\vbalHook6.dll"
     RegDLL "$INSTDIR\sys\editor\MDIActiveX.ocx"
@@ -169,6 +173,9 @@ ExampleInstalled:
   CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Menus Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\menus" "$INSTDIR\sys\fury².exe"
   CreateShortCut "$SMPROGRAMS\${NAME}\Examples\HTTP Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\http" "$INSTDIR\sys\fury².exe"
   CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Paint Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\paint" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Explosion Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\explosion" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Reveal Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\reveal" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Reflect Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\reflect" "$INSTDIR\sys\fury².exe"
 ExampleNotInstalled:
   CreateShortCut "$SMPROGRAMS\${NAME}\${NAME} Engine.lnk" "$INSTDIR\sys\fury².exe" "" "$INSTDIR\sys\fury².exe"
   CreateShortCut "$SMPROGRAMS\${NAME}\Uninstall ${NAME}.lnk" "$INSTDIR\uninstall.exe"
@@ -217,12 +224,6 @@ Section "Uninstall"
 	UnRegDLL "$INSTDIR\sys\video_directdraw.dll"
 	UnRegDLL "$INSTDIR\sys\video_opengl.dll"
 	UnRegDLL "$INSTDIR\sys\engine.dll"
-	UnRegDLL "$INSTDIR\sys\vbscript.dll"
-
-    IfFileExists "$SYSDIR\vbscript.dll" RepairVBScript SkipVBScript
-RepairVBScript:
-    RegDLL "$SYSDIR\vbscript.dll"
-SkipVBScript:
 
     IfFileExists "$INSTDIR\sys\ngIDE.exe" UninstallEditor SkipEditor
 UninstallEditor:
@@ -248,10 +249,6 @@ UninstallEditor:
     UnRegDLL "$INSTDIR\sys\editor\vbalMDITabs6.dll"
     UnRegDLL "$INSTDIR\sys\editor\vbalMDISplit6.dll"
     UnRegDLL "$INSTDIR\sys\editor\tlbinf32.dll"
-    IfFileExists "$SYSDIR\tlbinf32.dll" RepairTLBInf SkipTLBInf
-RepairTLBInf:
-    RegDLL "$SYSDIR\tlbinf32.dll"
-SkipTLBInf:
     RmDir /r "$INSTDIR\sys\resources"
     RmDir /r "$INSTDIR\sys\editor"
 SkipEditor:

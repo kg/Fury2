@@ -878,10 +878,10 @@ FILTERSIMPLE_ROW
 FILTERSIMPLE_COL
         aColor1 = AlphaLevelLookup(table[iCX]);
         aColor2 = AlphaLevelLookup(table[iCX] ^ 0xFF);
-        (*pCurrent)[::Alpha] = AlphaFromLevel2(aColor1, Color1[::Alpha], aColor2, Color2[::Alpha]);
-        (*pCurrent)[::Blue] = AlphaFromLevel2(aColor1, Color1[::Blue], aColor2, Color2[::Blue]);
-        (*pCurrent)[::Green] = AlphaFromLevel2(aColor1, Color1[::Green], aColor2, Color2[::Green]);
-        (*pCurrent)[::Red] = AlphaFromLevel2(aColor1, Color1[::Red], aColor2, Color2[::Red]);
+        color[::Alpha] = AlphaFromLevel2(aColor1, Color1[::Alpha], aColor2, Color2[::Alpha]);
+        color[::Blue] = AlphaFromLevel2(aColor1, Color1[::Blue], aColor2, Color2[::Blue]);
+        color[::Green] = AlphaFromLevel2(aColor1, Color1[::Green], aColor2, Color2[::Green]);
+        color[::Red] = AlphaFromLevel2(aColor1, Color1[::Red], aColor2, Color2[::Red]);
         aSource = AlphaLevelLookup(color[::Alpha]);
         aDest = AlphaLevelLookup(color[::Alpha] ^ 0xFF);
         BLENDPIXEL_ALPHA_OPACITY(pCurrent, pCurrent, pColor, aDest, aSource);

@@ -98,6 +98,8 @@ struct SpriteVelocity {
     float VM; // velocity multiplier
     float XF, YF; // x and y forces
     float FW; // force weight
+    float CXF, CYF; // constant x and y forces
+    float CFM; // constant force multiplier
 };
 
 struct VisualParameters {
@@ -109,9 +111,9 @@ struct VisualParameters {
     float Angle;
     Pixel IlluminationLevel;
     Byte DiffuseLight;
+    Byte RenderTarget;
     Byte Reserved1;
     Byte Reserved2;
-    Byte Reserved3;
 };
 
 struct PhysicalParameters {
@@ -159,7 +161,8 @@ struct SpriteParam {
     short Index;
     AnimatedGraphicParam *pAttachedGraphic;
     float ZHeight;
-    int Obj;
+    unsigned short Reserved1;
+    unsigned short Reserved2;
     SpriteParam *pNext;
     SpriteParam *pSortedNext;
 
@@ -204,11 +207,27 @@ struct std::greater<SpriteParam*> {
 };
 
 struct CameraParam {
-    Image *pImage;
+    Image **pRenderTargets;
+    int RenderTargetCount;
     Rectangle Rectangle;
     float Alpha;
     int ViewportX;
     int ViewportY;
+
+    inline Image* pImage() {
+      if (RenderTargetCount >= 1) return pRenderTargets[0];
+      return Null;
+    }
+
+    inline Image* pLightmap() {
+      if (RenderTargetCount >= 2) return pRenderTargets[1];
+      return Null;
+    }
+
+    inline Image* pLightmapScratch() {
+      if (RenderTargetCount >= 3) return pRenderTargets[2];
+      return Null;
+    }
 };
 
 struct CharacterParam {
@@ -482,6 +501,8 @@ struct TilemapLayerParam {
     int Effect;
     Byte WrapX;
     Byte WrapY;
+    Byte RenderTarget;
+    Byte Reserved;
     short *pAnimationMap;
     Pixel TintColor;
 };
@@ -516,4 +537,13 @@ struct MapCamera {
     int BackgroundOpacity, MapOpacity;
     float ScaleRatioX, ScaleRatioY;
     ScalerFunction* Scaler;
+};
+
+struct ForceEntry {
+  ForceEntry() {
+    Items = std::list<ForceEntry>();
+  }
+
+  SpriteParam* Sprite;
+  std::list<ForceEntry> Items;
 };

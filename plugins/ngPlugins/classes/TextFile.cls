@@ -117,7 +117,7 @@ End Sub
 
 Private Property Get iPlugin_PluginDescription() As String
 On Error Resume Next
-    iPlugin_PluginDescription = "Enables loading of .TXT, .INI, and Readme files."
+    iPlugin_PluginDescription = "Enables loading of .TXT, .INI, and config files."
 End Property
 
 Private Property Get iPlugin_PluginName() As String
@@ -139,7 +139,7 @@ End Sub
 
 Private Property Get iFileTypePlugin_FilterString() As String
 On Error Resume Next
-    iFileTypePlugin_FilterString = "Text Files|*.txt;*.ini;README;*.f2config"
+    iFileTypePlugin_FilterString = "Text Files|*.txt;*.ini;*.f2config"
 End Property
 
 Private Property Get iPlugin_ToolbarIcon() As libGraphics.Fury2Image

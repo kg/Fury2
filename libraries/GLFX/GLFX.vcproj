@@ -334,6 +334,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\header\PBuffer.hpp"
+				>
+			</File>
+			<File
 				RelativePath="..\SoftFX\header\Pixel.hpp"
 				>
 			</File>

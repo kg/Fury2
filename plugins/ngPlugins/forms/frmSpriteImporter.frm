@@ -1,11 +1,12 @@
 VERSION 5.00
+Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Begin VB.Form frmSpriteImporter 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Sprite Importer"
-   ClientHeight    =   3990
+   ClientHeight    =   5250
    ClientLeft      =   45
    ClientTop       =   345
-   ClientWidth     =   5865
+   ClientWidth     =   7500
    BeginProperty Font 
       Name            =   "Tahoma"
       Size            =   8.25
@@ -19,20 +20,30 @@ Begin VB.Form frmSpriteImporter
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   ScaleHeight     =   266
+   ScaleHeight     =   350
    ScaleMode       =   3  'Pixel
-   ScaleWidth      =   391
+   ScaleWidth      =   500
    ShowInTaskbar   =   0   'False
    StartUpPosition =   2  'CenterScreen
    Visible         =   0   'False
+   Begin VB.PictureBox picPreview 
+      Height          =   4785
+      Left            =   75
+      ScaleHeight     =   315
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   384
+      TabIndex        =   4
+      Top             =   390
+      Width           =   5820
+   End
    Begin ngPlugins.ObjectInspector insSettings 
-      Height          =   3930
-      Left            =   30
+      Height          =   4800
+      Left            =   75
       TabIndex        =   2
-      Top             =   30
-      Width           =   4275
-      _ExtentX        =   7541
-      _ExtentY        =   6932
+      Top             =   375
+      Width           =   5820
+      _ExtentX        =   10266
+      _ExtentY        =   8467
    End
    Begin VB.CommandButton cmdCancel 
       Caption         =   "Cancel"
@@ -46,7 +57,7 @@ Begin VB.Form frmSpriteImporter
          Strikethrough   =   0   'False
       EndProperty
       Height          =   390
-      Left            =   4335
+      Left            =   5970
       TabIndex        =   1
       Top             =   480
       Width           =   1500
@@ -63,10 +74,41 @@ Begin VB.Form frmSpriteImporter
          Strikethrough   =   0   'False
       EndProperty
       Height          =   390
-      Left            =   4335
+      Left            =   5970
       TabIndex        =   0
       Top             =   30
       Width           =   1500
+   End
+   Begin vbalDTab6.vbalDTabControl dtViews 
+      Height          =   5205
+      Left            =   30
+      TabIndex        =   3
+      Top             =   15
+      Width           =   5910
+      _ExtentX        =   10425
+      _ExtentY        =   9181
+      AllowScroll     =   0   'False
+      TabAlign        =   0
+      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   700
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      ShowCloseButton =   0   'False
+      MoveableTabs    =   0   'False
    End
 End
 Attribute VB_Name = "frmSpriteImporter"
@@ -94,7 +136,35 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
+Private m_imgPreview As Fury2Image
+Private m_imgSource As Fury2Image
 Public Options As SpriteImporterOptions
+
+Public Sub RefreshPreview()
+On Error Resume Next
+Dim l_rctFrame As Fury2Rect
+Dim l_lngWidth As Long, l_lngHeight As Long
+Dim l_lngCellsX As Long, l_lngCellsY As Long
+Dim l_lngX As Long, l_lngY As Long
+    Set m_imgPreview = F2Image(picPreview.ScaleWidth, picPreview.ScaleHeight)
+    m_imgPreview.Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+    With Options
+        If m_imgSource Is Nothing Then
+            Set m_imgSource = DefaultEngine.LoadImage(Options.Image, True)
+        End If
+        l_lngWidth = m_imgSource.Width - .MarginLeft - .MarginRight
+        l_lngHeight = m_imgSource.Height - .MarginTop - .MarginBottom
+        l_lngCellsX = ClipValue(l_lngWidth \ (.CellWidth + .GridWidth), 0, .MaxFrames)
+        l_lngCellsY = ClipValue(l_lngHeight \ (.CellHeight + .GridHeight), 0, .MaxPoses)
+        For l_lngY = 0 To l_lngCellsY - 1
+            For l_lngX = 0 To l_lngCellsX - 1
+                Set l_rctFrame = F2Rect(l_lngX * (.CellWidth + .GridWidth) + .MarginLeft, l_lngY * (.CellHeight + .GridHeight) + .MarginTop, .CellWidth, .CellHeight, False)
+                m_imgPreview.Blit F2Rect(l_lngX * (.CellWidth + 1), l_lngY * (.CellHeight + 1), .CellWidth, .CellHeight, False), l_rctFrame, m_imgSource
+            Next l_lngX
+        Next l_lngY
+    End With
+    picPreview_Paint
+End Sub
 
 Public Sub RefreshSettings()
 On Error Resume Next
@@ -112,7 +182,30 @@ On Error Resume Next
     Me.Hide
 End Sub
 
+Private Sub dtViews_TabSelected(theTab As vbalDTab6.cTab)
+On Error Resume Next
+    Select Case theTab.Index
+    Case 1
+        picPreview.Visible = False
+        insSettings.Visible = True
+        Set m_imgSource = Nothing
+        RefreshSettings
+    Case 2
+        picPreview.Visible = True
+        insSettings.Visible = False
+        RefreshPreview
+    Case Else
+    End Select
+End Sub
+
 Private Sub Form_Load()
 On Error Resume Next
     Set Options = New SpriteImporterOptions
+    dtViews.Tabs.Add "Options", , "Options"
+    dtViews.Tabs.Add "Preview", , "Preview"
+End Sub
+
+Private Sub picPreview_Paint()
+On Error Resume Next
+    CopyImageToDC picPreview.hdc, m_imgPreview.Rectangle, m_imgPreview
 End Sub

@@ -28,6 +28,19 @@ Public Sub Main()
 On Error Resume Next
 Dim l_varFiles As Variant
     InitCommonControls
+    If App.PrevInstance Then
+        If Trim(Command$) <> "" Then
+            Load frmDDE
+            frmDDE.Show
+            DoEvents
+            Err.Clear
+            frmDDE.lblDDE.LinkMode = vbLinkManual
+            DoEvents
+            frmDDE.lblDDE.LinkExecute Command$
+            Unload frmDDE
+        End If
+        End
+    End If
     F2Init
     Set g_edEditor = New cEditor
     g_edEditor.LoadOptions

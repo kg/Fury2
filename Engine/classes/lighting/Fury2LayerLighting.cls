@@ -59,10 +59,14 @@ End Sub
 
 Public Sub Refresh()
 On Error Resume Next
+Dim l_lsLight As Fury2LightSource
     If m_lngMatrix <> 0 Then
         EraseLightingMatrix m_lngMatrix
         AppendObstructionsToLightingMatrix m_lngMatrix, m_obsObstructions(1), UBound(m_obsObstructions)
     End If
+    For Each l_lsLight In m_colLights
+        l_lsLight.CacheValid = False
+    Next l_lsLight
 End Sub
 
 Public Sub CreateLightingMatrix(Width As Long, Height As Long)
@@ -252,11 +256,21 @@ Public Sub Render(ByRef Camera As LightingCamera)
 On Error Resume Next
 Dim l_litLight As Fury2LightSource
 Dim l_lngIndex As Long
+Dim l_booDestroyed As Boolean
     l_lngIndex = 0
     If m_colLights.Count > 0 Then
         For Each l_litLight In m_colLights
-            m_litLights(l_lngIndex) = l_litLight.LightSource
-            l_lngIndex = l_lngIndex + 1
+            l_booDestroyed = False
+            If l_litLight.AttachedSprite Is Nothing Then
+            ElseIf l_litLight.AttachedSprite.Destroyed Then
+                l_booDestroyed = True
+            End If
+            If Not l_booDestroyed Then
+                m_litLights(l_lngIndex) = l_litLight.LightSource
+                l_lngIndex = l_lngIndex + 1
+            Else
+                Lights.Remove Lights.Find(l_litLight)
+            End If
         Next l_litLight
         m_envEnvironment.Lights = VarPtr(m_litLights(0))
     Else
@@ -316,7 +330,6 @@ On Error Resume Next
     ReDim m_obsObstructions(0 To 0)
     ReDim m_plnPlanes(0 To 0)
     Set m_colLights = New Fury2LightSources
-    m_colLights.Hook Me
 End Sub
 
 Private Sub Class_Terminate()
@@ -409,6 +422,10 @@ Dim l_litLight As Fury2LightSource
     For Each l_litLight In Lights
         With l_litLight
             If .SpinRate <> 0 Then .Angle = .Angle + .SpinRate
+            If .AttachedSprite Is Nothing Then
+            Else
+                .Alpha = .AttachedSprite.Alpha
+            End If
         End With
     Next l_litLight
 End Sub

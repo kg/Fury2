@@ -204,7 +204,7 @@ Dim l_booOldState As Boolean
             End If
             l_strPluginFilter = Replace(l_strPluginFilter, "*.*;", "")
             l_strPluginFilter = StripEndCharacters(l_strPluginFilter, 1)
-            l_strFilter = "All Supported Formats|" & l_strPluginFilter & "|" & l_strFilter
+            l_strFilter = "Fury2 File Formats|*.f2*|" & l_strFilter
         End If
     End If
     l_booOldState = g_edEditor.AcceleratorManager.Enabled

@@ -65,7 +65,7 @@ End Sub
 Private Function iFileTypePlugin_CanOpenFile(Filename As String) As Boolean
 On Error Resume Next
     Select Case LCase(Trim(GetExtension(Filename)))
-    Case "f2script", "vbs", "js", "f2sc"
+    Case "f2script", "vbs", "js", "f2sc", "f2macro"
         iFileTypePlugin_CanOpenFile = True
     Case Else
     End Select
@@ -141,7 +141,7 @@ End Sub
 
 Private Property Get iFileTypePlugin_FilterString() As String
 On Error Resume Next
-    iFileTypePlugin_FilterString = "Scripts|*.f2script;*.vbs;*.js"
+    iFileTypePlugin_FilterString = "Scripts|*.f2script;*.f2sf;*.vbs;*.js;*.f2macro"
 End Property
 
 Private Property Get iPlugin_ToolbarIcon() As libGraphics.Fury2Image
@@ -150,6 +150,6 @@ End Property
 
 Private Property Get iFileTypePlugin_SupportedExtensions() As Variant
 On Error Resume Next
-    iFileTypePlugin_SupportedExtensions = Array("f2script", "f2sf") ' Array("f2script", "f2sf", "vbs", "js")
+    iFileTypePlugin_SupportedExtensions = Array("f2script", "f2sf", "f2macro") ' Array("f2script", "f2sf", "vbs", "js")
 End Property
 

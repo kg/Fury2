@@ -40,6 +40,7 @@ Option Explicit
 Implements Fury2Object
 #End If
 Implements IVirtualFileSaveable
+Implements IInspectableCollection
 
 Private mCol As Collection
 Private mHook As Object
@@ -198,6 +199,8 @@ Attribute Item.VB_UserMemId = 0
 On Error Resume Next
     If VarType(vntIndexKey) = vbString Then
         vntIndexKey = LCase(Trim(CStr(vntIndexKey)))
+    Else
+        vntIndexKey = CLng(vntIndexKey)
     End If
     Err.Clear
     Set Item = mCol(vntIndexKey)
@@ -293,6 +296,28 @@ On Error Resume Next
     Set mCol = Nothing
 End Sub
 
+Private Property Get IInspectableCollection_ItemCount() As Long
+On Error Resume Next
+    IInspectableCollection_ItemCount = mCol.Count
+End Property
+
+Private Property Set IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+On Error Resume Next
+End Property
+
+Private Property Let IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+On Error Resume Next
+End Property
+
+Private Property Get IInspectableCollection_ItemValue(ByVal Index As Long) As Variant
+On Error Resume Next
+    Err.Clear
+    Set IInspectableCollection_ItemValue = mCol(Index)
+    If Err <> 0 Then
+        IInspectableCollection_ItemValue = mCol(Index)
+    End If
+End Property
+
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
 Dim l_lngCount As Long
@@ -316,18 +341,10 @@ Dim l_objItem As Object, l_strItem As String
                         mCol.Add Nothing
                     Else
                         #If ExternalModule = 0 Then
-                        Err.Clear
-                        Set l_objItem = Engine.ScriptEngine.Eval(Engine.ScriptEngine.Language.GenerateInstantiation(l_strType))
-                        If l_objItem Is Nothing Then
+                            Set l_objItem = Engine.InstantiateByName(l_strType)
                             Err.Clear
-                            Set l_objItem = CreateObject("Engine." & l_strType)
-                            If l_objItem Is Nothing Then
-                                Err.Clear
-                                Set l_objItem = CreateObject("libGraphics." & l_strType)
-                            End If
-                        End If
-                        .Load l_objItem
-                        mCol.Add l_objItem
+                            .Load l_objItem
+                            mCol.Add l_objItem
                         #End If
                     End If
                     .ReadSegment_End

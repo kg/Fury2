@@ -179,7 +179,7 @@ Export int Clip2D_PairedRect(Rectangle *Rect, Rectangle *RectS, Image *Dest, Ima
         if (CropOutput) CropOutput[3] = (Rect->bottom() - Dest->ClipRectangle.bottom()); 
         Rect->Height -= (Rect->bottom() - Dest->ClipRectangle.bottom());
     }
-    return (!Rect->empty()) && (!RectS->empty());
+    return (!Rect->empty()) && (RectS->Width != 0) && (RectS->Height != 0);
 }
 
 Export int Clip2D_SimpleRectWrap(Rectangle *Rect, Image *Dest, Image *Source, Rectangle *DestRect) {

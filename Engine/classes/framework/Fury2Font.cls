@@ -644,15 +644,47 @@ On Error Resume Next
     m_cpmCharParams(Character).XIncrement = Value
 End Property
 
+Public Property Get CharacterHeight(ByVal Character As Long) As Long
+On Error Resume Next
+    CharacterHeight = m_cpmCharParams(Character).YIncrement
+End Property
+
+Public Property Let CharacterHeight(ByVal Character As Long, ByVal Value As Long)
+On Error Resume Next
+    m_cpmCharParams(Character).YIncrement = Value
+End Property
+
+Public Property Get CharacterXOffset(ByVal Character As Long) As Long
+On Error Resume Next
+    CharacterXOffset = m_cpmCharParams(Character).XOffset
+End Property
+
+Public Property Let CharacterXOffset(ByVal Character As Long, ByVal Value As Long)
+On Error Resume Next
+    m_cpmCharParams(Character).XOffset = Value
+End Property
+
+Public Property Get CharacterYOffset(ByVal Character As Long) As Long
+On Error Resume Next
+    CharacterYOffset = m_cpmCharParams(Character).YOffset
+End Property
+
+Public Property Let CharacterYOffset(ByVal Character As Long, ByVal Value As Long)
+On Error Resume Next
+    m_cpmCharParams(Character).YOffset = Value
+End Property
+
 Function ImportTTF(ByVal Font As StdFont) As Boolean
 On Error Resume Next
 Dim l_lngChars As Long
+Dim l_imgNullChar As Fury2Image
 Dim m_imgChar As Fury2Image
 Dim m_lngMaxHeight As Long
 Dim l_lngDC As Long, l_lngDeskWindow As Long, l_lngDeskDC As Long
 Dim l_varAttr As Variant, l_lngBaseline As Long
     m_lngFullHeight = 0
     m_lngCharCount = 250
+    Set l_imgNullChar = libGraphics.GetGlyphBitmap(Font, 0)
     Engine.DebugOut "Importing TrueType font"
     ReDim m_lngCharMappings(0 To c_lngMaxCharMappings - 1)
     ReDim m_cpmCharParams(1 To m_lngCharCount)
@@ -663,6 +695,9 @@ Dim l_varAttr As Variant, l_lngBaseline As Long
             Set m_imgChar = libGraphics.GetGlyphBitmap(Font, 32)
         Else
             Set m_imgChar = libGraphics.GetGlyphBitmap(Font, l_lngChars)
+        End If
+        If m_imgChar.Compare(, , l_imgNullChar) = 1 Then
+            Set m_imgChar = Nothing
         End If
         m_cpmCharParams(l_lngChars).MapValue = l_lngChars
         m_lngCharMappings(l_lngChars) = VarPtr(m_cpmCharParams(l_lngChars))
@@ -901,7 +936,7 @@ Dim l_bytValues() As Byte
     Err.Clear
 End Function
 
-Function Load(ByVal Filename) As Boolean
+Function Load(ByVal Filename As String) As Boolean
 On Error Resume Next
 Dim l_strExtension As String
     If InStr(Filename, ";") Then

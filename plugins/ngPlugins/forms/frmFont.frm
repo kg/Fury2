@@ -1,6 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
+Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
 Begin VB.Form frmFont 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -29,14 +30,79 @@ Begin VB.Form frmFont
    Begin VB.PictureBox picCharacters 
       BorderStyle     =   0  'None
       Height          =   5580
-      Left            =   2145
+      Left            =   2850
       ScaleHeight     =   372
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   393
       TabIndex        =   3
-      Top             =   840
+      Top             =   1020
       Visible         =   0   'False
       Width           =   5895
+      Begin cFScroll.FlatScrollBar hsCharacters 
+         Height          =   210
+         Left            =   30
+         TabIndex        =   5
+         Top             =   1500
+         Width           =   5835
+         _ExtentX        =   10292
+         _ExtentY        =   370
+         Max             =   100
+         LargeChange     =   64
+         SmallChange     =   16
+         Style           =   -1
+      End
+      Begin VB.PictureBox picCharacterList 
+         AutoRedraw      =   -1  'True
+         Height          =   1500
+         Left            =   30
+         ScaleHeight     =   96
+         ScaleMode       =   3  'Pixel
+         ScaleWidth      =   385
+         TabIndex        =   4
+         Top             =   15
+         Width           =   5835
+      End
+      Begin ngPlugins.ObjectInspector insCharacter 
+         Height          =   3435
+         Left            =   1230
+         TabIndex        =   7
+         Top             =   2385
+         Visible         =   0   'False
+         Width           =   5745
+         _ExtentX        =   10134
+         _ExtentY        =   6059
+      End
+      Begin vbalDTab6.vbalDTabControl dtCharacter 
+         Height          =   3825
+         Left            =   270
+         TabIndex        =   6
+         Top             =   1965
+         Width           =   5835
+         _ExtentX        =   10292
+         _ExtentY        =   6747
+         AllowScroll     =   0   'False
+         TabAlign        =   0
+         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+            Name            =   "Tahoma"
+            Size            =   8.25
+            Charset         =   0
+            Weight          =   400
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
+         BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+            Name            =   "Tahoma"
+            Size            =   8.25
+            Charset         =   0
+            Weight          =   700
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
+         ShowCloseButton =   0   'False
+         MoveableTabs    =   0   'False
+      End
    End
    Begin VB.PictureBox picPreview 
       Height          =   1485
@@ -59,7 +125,7 @@ Begin VB.Form frmFont
       Height          =   3045
       Left            =   855
       TabIndex        =   0
-      Top             =   990
+      Top             =   1170
       Visible         =   0   'False
       Width           =   1710
       _ExtentX        =   3016
@@ -67,7 +133,7 @@ Begin VB.Form frmFont
    End
    Begin vbalDTab6.vbalDTabControl dtViews 
       Height          =   7290
-      Left            =   1725
+      Left            =   1710
       TabIndex        =   1
       Top             =   540
       Width           =   9150
@@ -140,6 +206,9 @@ Private Const c_lngUndoStackLength As Long = 50
 Private Const c_lngRedoStackLength As Long = 25
 
 Private m_imgPreview As Fury2Image
+Private m_imgCharacterList As Fury2Image
+
+Private m_lngSelectedCharacter As Long
 
 Private m_colUndo As New Engine.Fury2Collection
 Private m_colRedo As New Engine.Fury2Collection
@@ -153,6 +222,15 @@ Private m_booVisible As Boolean
 Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
 Private m_lngCurrentView As FontEditorViews
+
+Private Sub dtCharacter_Resize()
+On Error Resume Next
+    insCharacter.Move (2) + dtCharacter.Left, dtCharacter.Top + 24, dtCharacter.Width - 4, dtCharacter.Height - 26
+End Sub
+
+Private Sub hsCharacters_Change()
+    RedrawCharacterList
+End Sub
 
 Private Property Get iDocument_Object() As Object
     Set iDocument_Object = Me
@@ -208,11 +286,49 @@ On Error Resume Next
     Case View_Overview
         insOverview.Inspect m_fntFont, "Font", True, True
     Case View_Characters
-'        RedrawCharacters
+        RedrawCharacters
     Case View_Preview
         RedrawPreview
     Case Else
     End Select
+End Sub
+
+Public Sub RedrawCharacters()
+On Error Resume Next
+    RedrawCharacterList
+    RedrawSelectedCharacter
+End Sub
+
+Public Sub RedrawSelectedCharacter()
+On Error Resume Next
+Dim l_prxProxy As CharacterProxy
+    Set l_prxProxy = New CharacterProxy
+    Set l_prxProxy.Font = m_fntFont
+    l_prxProxy.Character = m_lngSelectedCharacter
+    insCharacter.Inspect l_prxProxy, "Character " & m_lngSelectedCharacter, , , True
+    insCharacter.Visible = True
+End Sub
+
+Public Sub RedrawCharacterList()
+On Error Resume Next
+Dim l_imgCharacter As Fury2Image
+Dim l_lngCharacter As Long
+Dim l_lngX As Long
+Dim l_lngWidth As Long
+Dim l_rctCharacter As Fury2Rect
+    m_imgCharacterList.Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+    l_lngX = -hsCharacters.Value
+    For l_lngCharacter = 1 To m_fntFont.CharacterCount
+        Set l_imgCharacter = m_fntFont.Character(l_lngCharacter)
+        If m_lngSelectedCharacter = l_lngCharacter Then
+            m_imgCharacterList.Fill F2Rect(l_lngX, 0, ClipValue(l_imgCharacter.Width, 6, 999), picCharacterList.ScaleHeight, False), SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue)
+        End If
+        m_imgCharacterList.Blit F2Rect(l_lngX, m_fntFont.CharacterYOffset(l_lngCharacter) + (m_fntFont.Height - l_imgCharacter.Height), l_imgCharacter.Width, l_imgCharacter.Height, False), , l_imgCharacter, , BlitMode_Font_SourceAlpha, SetAlpha(SwapChannels(IIf(m_lngSelectedCharacter = l_lngCharacter, GetSystemColor(SystemColor_Highlight_Text), GetSystemColor(SystemColor_Button_Text)), Red, Blue), 255)
+        l_lngX = l_lngX + ClipValue(l_imgCharacter.Width, 6, 999) + 1
+        l_lngWidth = l_lngWidth + ClipValue(l_imgCharacter.Width, 6, 999) + 1
+    Next l_lngCharacter
+    picCharacterList.Refresh
+    hsCharacters.Max = l_lngWidth - picCharacterList.ScaleWidth
 End Sub
 
 Private Sub FixRectCoords(ByRef X1 As Long, ByRef Y1 As Long, ByRef X2 As Long, ByRef Y2 As Long)
@@ -376,12 +492,15 @@ Dim l_objObject As Object
     Screen.MousePointer = 11
     insOverview.Visible = False
     picPreview.Visible = False
+    picCharacters.Visible = False
     dtViews_Resize
     Select Case m_lngCurrentView
     Case View_Overview
         insOverview.Visible = True
     Case View_Preview
         picPreview.Visible = True
+    Case View_Characters
+        picCharacters.Visible = True
     Case Else
     End Select
     Redraw
@@ -445,6 +564,8 @@ On Error Resume Next
         insOverview.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
     Case View_Preview
         picPreview.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
+    Case View_Characters
+        picCharacters.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
     Case Else
     End Select
 End Sub
@@ -473,6 +594,7 @@ End Sub
 Private Sub Form_Load()
 On Error Resume Next
 '    vsFont.Width = GetScrollbarSize(vsFont)
+    hsCharacters.Height = GetScrollbarSize(hsCharacters) + 1
     Set m_fntFont = DefaultEngine.F2Font()
     InitViews
     Form_Activate
@@ -563,7 +685,6 @@ End Property
 Private Function iDocument_Save(Filename As String) As Boolean
 On Error Resume Next
 Dim l_vfFile As VirtualFile
-    Kill Filename
     Err.Clear
     Set l_vfFile = F2File()
     SaveToFile m_fntFont, l_vfFile
@@ -696,6 +817,44 @@ End Sub
 Friend Sub SetFont(Font As Fury2Font)
 On Error Resume Next
     Set m_fntFont = Font
+End Sub
+
+Private Sub picCharacterList_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+Dim l_imgCharacter As Fury2Image
+Dim l_lngCharacter As Long
+Dim l_lngX As Long
+Dim l_lngWidth As Long
+Dim l_rctCharacter As Fury2Rect
+    l_lngX = -hsCharacters.Value
+    For l_lngCharacter = 1 To m_fntFont.CharacterCount
+        Set l_imgCharacter = m_fntFont.Character(l_lngCharacter)
+        If l_imgCharacter Is Nothing Then
+        Else
+            Set l_rctCharacter = F2Rect(l_lngX, 0, ClipValue(l_imgCharacter.Width, 6, 999) + 1, picCharacterList.ScaleHeight, False)
+            If l_rctCharacter.PointInside(X, Y) Then
+                m_lngSelectedCharacter = l_lngCharacter
+                RedrawCharacterList
+                RedrawSelectedCharacter
+                Exit For
+            End If
+            l_lngX = l_lngX + ClipValue(l_imgCharacter.Width, 6, 999) + 1
+        End If
+    Next l_lngCharacter
+End Sub
+
+Private Sub picCharacterList_Resize()
+On Error Resume Next
+    Set m_imgCharacterList = F2DIBSection(picCharacterList.ScaleWidth, picCharacterList.ScaleHeight, picCharacterList.hdc)
+    SelectObject picCharacterList.hdc, m_imgCharacterList.DIBHandle
+    RedrawCharacterList
+End Sub
+
+Private Sub picCharacters_Resize()
+On Error Resume Next
+    picCharacterList.Move 2, 2, picCharacters.ScaleWidth - 4, m_fntFont.FullHeight + 16
+    hsCharacters.Move 2, picCharacterList.Top + picCharacterList.Height + 2, picCharacterList.Width, hsCharacters.Height
+    dtCharacter.Move 2, hsCharacters.Top + hsCharacters.Height + 2, picCharacterList.Width, picCharacters.ScaleHeight - hsCharacters.Height - picCharacterList.Height - 8
 End Sub
 
 Private Sub picPreview_Paint()

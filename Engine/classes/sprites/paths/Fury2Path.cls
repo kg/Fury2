@@ -37,12 +37,35 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 
 Option Explicit
 Implements IInspectable
+Implements IInspectableCollection
 Implements Fury2Object
 Implements IVirtualFileCollection
 
 Private mCol As Collection
 Private mvarLooping As Boolean
 Private mvarParent As Fury2Sprite
+
+Private Property Get IInspectableCollection_ItemCount() As Long
+On Error Resume Next
+    IInspectableCollection_ItemCount = mCol.Count
+End Property
+
+Private Property Set IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+On Error Resume Next
+End Property
+
+Private Property Let IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+On Error Resume Next
+End Property
+
+Private Property Get IInspectableCollection_ItemValue(ByVal Index As Long) As Variant
+On Error Resume Next
+    Err.Clear
+    Set IInspectableCollection_ItemValue = mCol(Index)
+    If Err <> 0 Then
+        IInspectableCollection_ItemValue = mCol(Index)
+    End If
+End Property
 
 Friend Sub SetParent(ByRef Parent As Fury2Sprite)
 On Error Resume Next

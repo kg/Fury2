@@ -235,6 +235,7 @@ Attribute HideConfiguration.VB_VarDescription = "This flag controls whether the 
 Public ClearEveryFrame As Boolean, BackgroundColor As Long
 Attribute ClearEveryFrame.VB_VarDescription = "This flag causes the engine to clear the backbuffer to black every frame. Usually not necessary if a camera is visible, so defaults to off to increase speed."
 
+Private Graphics As Fury2Collection
 Public Controls As Fury2Collection
 Public RepeatDelay As Long
 
@@ -349,6 +350,9 @@ Dim m_teNew As Fury2TextElement
     With m_teNew
         .Realtime = Realtime
         .Text = ToString(Text)
+        If Not Realtime Then
+            .Text = ParseString(Text)
+        End If
         .Color = F2White
         .Alpha = 1
         Set .Font = Me.Font
@@ -923,11 +927,13 @@ End Function
 
 Public Property Get Camera() As Fury2Camera
 Attribute Camera.VB_Description = "The default camera. (Equal to Cameras(1))"
+On Error Resume Next
     Set Camera = Cameras(1)
 End Property
 
 Public Property Get Cameras() As Fury2Cameras
 Attribute Cameras.VB_Description = "The engine's camera array. Usually contains one camera."
+On Error Resume Next
     Set Cameras = mvarCameras
 End Property
 
@@ -1024,6 +1030,7 @@ On Error Resume Next
     Set Timers = F2Collection()
     Set MessageQueue = F2Collection()
     Set MessageWindows = F2Collection()
+    Set Graphics = F2Collection()
     Set m_colPluginStack = New Collection
     Set m_colReversePluginStack = New Collection
     Set m_Images = New Collection
@@ -1586,6 +1593,7 @@ Private Sub Event_MouseDown(Evt As Fury2QueueEvent)
 On Error Resume Next
 Dim Obj As Object
 Dim m_lngX As Long, m_lngY As Long
+Dim m_varX As Variant, m_varY As Variant
 Dim m_colObjects As Collection, m_lngObjects As Long
 Dim l_lngHotspots As Long, l_booInside As Boolean
     If Not Mouse.Enabled Then Exit Sub
@@ -1593,16 +1601,19 @@ Dim l_lngHotspots As Long, l_booInside As Boolean
     ContextLevelAdd "MouseDown"
     m_lngX = Evt.LParam3
     m_lngY = Evt.LParam4
+    m_varX = Evt.LParam3
+    m_varY = Evt.LParam4
     Dim PObj As Fury2Plugin
     For Each Obj In m_colPluginStack
         Set PObj = Nothing
         Set PObj = Obj
         If PObj Is Nothing Then
-            Obj.MouseDown Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
+            Obj.MouseDown Evt.LParam1, Evt.LParam2, m_varX, m_varY
+            If m_varX = -32767 Or m_varY = -32767 Then ContextLevelRemove: Exit Sub
         Else
             PObj.MouseDown Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
+            If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
         End If
-        If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
     Next Obj
     For l_lngHotspots = LBound(Hotspots) To UBound(Hotspots)
         With Hotspots(l_lngHotspots)
@@ -1635,16 +1646,20 @@ Private Sub Event_MouseMove(Evt As Fury2QueueEvent)
 On Error Resume Next
 Dim Obj As Object
 Dim m_lngX As Long, m_lngY As Long
+Dim m_varX As Variant, m_varY As Variant
 Dim l_lngHotspots As Long, l_booInside As Boolean
     ContextLevelAdd "MouseMove"
     m_lngX = Evt.LParam3
     m_lngY = Evt.LParam4
+    m_varX = Evt.LParam3
+    m_varY = Evt.LParam4
     Dim PObj As Fury2Plugin
     For Each Obj In m_colPluginStack
         Set PObj = Nothing
         Set PObj = Obj
         If PObj Is Nothing Then
-            Obj.MouseMove Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
+            Obj.MouseMove Evt.LParam1, Evt.LParam2, m_varX, m_varY
+            If m_varX = -32767 Or m_varY = -32767 Then ContextLevelRemove: Exit Sub
         Else
             PObj.MouseMove Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
         End If
@@ -1679,6 +1694,7 @@ Private Sub Event_MouseUp(Evt As Fury2QueueEvent)
 On Error Resume Next
 Dim Obj As Object
 Dim m_lngX As Long, m_lngY As Long
+Dim m_varX As Variant, m_varY As Variant
 Dim m_colObjects As Collection, m_lngObjects As Long
 Dim m_lngHotspots As Long
     If Not Mouse.Enabled Then Exit Sub
@@ -1686,12 +1702,15 @@ Dim m_lngHotspots As Long
     ContextLevelAdd "MouseUp"
     m_lngX = Evt.LParam3
     m_lngY = Evt.LParam4
+    m_varX = Evt.LParam3
+    m_varY = Evt.LParam4
     Dim PObj As Fury2Plugin
     For Each Obj In m_colPluginStack
         Set PObj = Nothing
         Set PObj = Obj
         If PObj Is Nothing Then
-            Obj.MouseUp Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
+            Obj.MouseUp Evt.LParam1, Evt.LParam2, m_varX, m_varY
+            If m_varX = -32767 Or m_varY = -32767 Then ContextLevelRemove: Exit Sub
         Else
             PObj.MouseUp Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
         End If
@@ -1827,9 +1846,34 @@ Dim l_lngImages As Long
         .LoopMode = LoopMode
         .AnimationDelay = AnimationDelay
         .BlitMode = BlitMode
+        Graphics.Add l_gfcGraphic
+'        RemoveRef l_gfcGraphic
     End With
     Err.Clear
     Set F2Graphic = l_gfcGraphic
+End Function
+
+Friend Sub GraphicDestroyed(ByRef Obj As Fury2Graphic)
+On Error Resume Next
+'    Graphics.Remove Graphics.Find(Obj)
+End Sub
+
+Private Sub RemoveRef(ByRef Obj As IShellFolderEx_TLB.IUnknown)
+On Error Resume Next
+    Obj.Release
+End Sub
+
+Private Sub AddRef(ByRef Obj As IShellFolderEx_TLB.IUnknown)
+On Error Resume Next
+    Obj.AddRef
+End Sub
+
+Public Function F2Sprite() As Fury2Sprite
+On Error Resume Next
+Dim l_sprNew As Fury2Sprite
+    Set l_sprNew = New Fury2Sprite
+    l_sprNew.SetEngine Me
+    Set F2Sprite = l_sprNew
 End Function
 
 Public Function F2Map(Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal Layers As Long = 1, Optional ByVal Tileset As Fury2Tileset = Nothing) As Fury2Map
@@ -2415,6 +2459,28 @@ Dim l_evtBinding As Fury2Event, l_booActive As Boolean
         If ConsoleVisible Then
             ConsoleDelete
         End If
+    Case 13
+        If Shift = 1 Then ' Shift
+            If ConsoleVisible Then
+                ConsoleInsert vbCrLf
+            Else
+                KeysEntered = KeysEntered + vbCrLf
+            End If
+            KeyCode = 0
+        Else
+            If ConsoleVisible Then
+                m_booErrorOccurred = False
+                ContextLevelAdd "Console"
+                ConsoleCommand ConsoleText
+                ContextLevelRemove
+                If (Err.Number = 0) And (Not m_booErrorOccurred) Then
+                    ConsoleText = ""
+                    ConsoleCaretPos = 1
+                Else
+                    Err.Clear
+                End If
+            End If
+        End If
     Case 8
         If Shift = 2 Then ' Ctrl
             If ConsoleVisible Then
@@ -2470,16 +2536,6 @@ Dim l_strTemp As String
         End If
     ElseIf KeyAscii = 13 Then
         If ConsoleVisible Then
-            m_booErrorOccurred = False
-            ContextLevelAdd "Console"
-            ConsoleCommand ConsoleText
-            ContextLevelRemove
-            If (Err.Number = 0) And (Not m_booErrorOccurred) Then
-                ConsoleText = ""
-                ConsoleCaretPos = 1
-            Else
-                Err.Clear
-            End If
         ElseIf TrapKeys Then
             ContextLevelAdd "Engine_KeyPress"
             ScriptEngine.Exec "Engine_KeyPress", KeyAscii
@@ -2692,36 +2748,45 @@ Public Function HookEvents(ByVal Obj As Object, Optional ByVal Priority As Boole
 Attribute HookEvents.VB_Description = "Hooks an object into the engine's event system. Usually used for plugins."
 On Error Resume Next
 Dim l_plgObj As Fury2Plugin
-    If Running Then Else Exit Function
-    If Obj Is Nothing Then Exit Function
-    Err.Clear
-    If TypeOf Obj Is Fury2Plugin Then
-        Set l_plgObj = Obj
-        Set l_plgObj.Engine = Me
+    If EditMode Then
+        If TypeOf Obj Is Fury2Plugin Then
+            Set l_plgObj = Obj
+            Set l_plgObj.Engine = Me
+        Else
+            Set Obj.Engine = Me
+        End If
     Else
-        Set Obj.Engine = Me
-    End If
-    If Err.Number <> 0 Then
-        DebugOut "HookEvents failed on " & ToString(Obj)
-    Else
-        UnHookEvents Obj
-        Obj.Startup
-        If l_plgObj Is Nothing Then Else l_plgObj.Init
-        If m_colPluginStack.Count > 0 Then
-            If Priority Then
-                m_colPluginStack.Add Obj
-                m_colReversePluginStack.Add Obj, , 1
+        If Running Then Else Exit Function
+        If Obj Is Nothing Then Exit Function
+        Err.Clear
+        If TypeOf Obj Is Fury2Plugin Then
+            Set l_plgObj = Obj
+            Set l_plgObj.Engine = Me
+        Else
+            Set Obj.Engine = Me
+        End If
+        If Err.Number <> 0 Then
+            DebugOut "HookEvents failed on " & ToString(Obj)
+        Else
+            UnHookEvents Obj
+            Obj.Startup
+            If l_plgObj Is Nothing Then Else l_plgObj.Init
+            If m_colPluginStack.Count > 0 Then
+                If Priority Then
+                    m_colPluginStack.Add Obj
+                    m_colReversePluginStack.Add Obj, , 1
+                Else
+                    m_colPluginStack.Add Obj, , 1
+                    m_colReversePluginStack.Add Obj
+                End If
             Else
-                m_colPluginStack.Add Obj, , 1
+                m_colPluginStack.Add Obj
                 m_colReversePluginStack.Add Obj
             End If
-        Else
-            m_colPluginStack.Add Obj
-            m_colReversePluginStack.Add Obj
+            HookEvents = True
         End If
-        HookEvents = True
+        Err.Clear
     End If
-    Err.Clear
 End Function
 
 Function HTTPGet(ByVal URL As String, Optional ByVal Port As Long = 80, Optional ByRef CompleteEvent = "", Optional ByRef ProgressEvent = "") As Fury2HTTPRequest
@@ -2768,42 +2833,40 @@ Static m_lngHere As Long
     Err.Clear
     Filename = Filesystem.AutoSelectExtension(Filename, "png;f2g;tga;jpg;bmp;gif")
     m_strName = Filename
-    If EditMode Then
-    Else
-        If m_Images.Count > 0 Then
-            For m_lngImages = 1 To m_Images.Count
-                If m_Images(m_lngImages) Is Nothing Then
-                Else
-                    If m_Images(m_lngImages).Name = LCase(Trim(Filename)) Then
-                        iLoadImage = m_lngImages
-                        m_lngHere = m_lngHere - 1
-                        Exit Function
-                    End If
-                End If
-            Next m_lngImages
-        End If
-        If Filesystem.FileExists(Filename) Then
-            Set m_filFile = Filesystem.File(Filename)
-            Set m_imgImage = F2LoadImage(m_filFile.GetRealFilename)
-        Else
-        End If
-        If m_imgImage Is Nothing Then
-            If IgnoreErrors Then
+    If m_Images.Count > 0 Then
+        For m_lngImages = 1 To m_Images.Count
+            If m_Images(m_lngImages) Is Nothing Then
             Else
-                If m_booErrorsOff Then
-                Else
-                    CriticalError "LoadImage", "LoadImage", "Unable to load image: """ + Filename + """"
+                If m_Images(m_lngImages).Name = LCase(Trim(Filename)) Then
+                    iLoadImage = m_lngImages
+                    m_lngHere = m_lngHere - 1
+                    Exit Function
                 End If
             End If
-            Exit Function
-        End If
-        SetImageTag m_imgImage.Handle, 1, 1234
-        m_imgImage.Name = LCase(Trim(m_strName))
-        m_Images.Add m_imgImage, LCase(Trim(m_strName))
-        iLoadImage = m_Images.Count
-        m_lngHere = m_lngHere - 1
-        Err.Clear
+        Next m_lngImages
     End If
+    If Filesystem.FileExists(Filename) Then
+        Set m_filFile = Filesystem.File(Filename)
+        Set m_imgImage = F2LoadImage(m_filFile.GetRealFilename)
+        m_imgImage.Name = m_filFile.GetRealFilename
+    Else
+    End If
+    If m_imgImage Is Nothing Then
+        If IgnoreErrors Then
+        Else
+            If m_booErrorsOff Then
+            Else
+                If Not EditMode Then CriticalError "LoadImage", "LoadImage", "Unable to load image: """ + Filename + """"
+            End If
+        End If
+        Exit Function
+    End If
+    SetImageTag m_imgImage.Handle, 1, 1234
+'    m_imgImage.Name = LCase(Trim(m_strName))
+    m_Images.Add m_imgImage, LCase(Trim(m_strName))
+    iLoadImage = m_Images.Count
+    m_lngHere = m_lngHere - 1
+    Err.Clear
 End Function
 
 Public Property Get Images()
@@ -2897,6 +2960,9 @@ On Error Resume Next
     m_ScriptEngine.AddObject "Engine", Me
     m_ScriptEngine.AddObject "Graphics", m_Graphics
     m_ScriptEngine.AddObject "Constants", m_objConstants
+    m_ScriptEngine.AddObject "Enums", New Fury2GEEnums
+    m_ScriptEngine.AddObject "Types", New Fury2GETypes
+    m_ScriptEngine.AddObject "Globals", New Fury2Globals
 End Sub
 
 Public Sub iTerminate()
@@ -3063,14 +3129,20 @@ Dim l_objObject As Object
     Configuration.Load "global.f2config"
     ParseConfiguration
     InitScriptEngine
-    If Not EditMode Then
+    If EditMode Then
+        Err.Clear
+        l_varPackages = Split(Filesystem.File("editor_packages.f2config").Text, vbCrLf)
+        l_lngPackages = UBound(l_varPackages)
+        If Err = 0 Then
+            For l_lngPackages = LBound(l_varPackages) To UBound(l_varPackages)
+    '            Filesystem.LoadPackage Trim(l_varPackages(l_lngPackages))
+            Next l_lngPackages
+        End If
+    Else
         Include "constants", False
         Include "settings.vbs", False
         Include "game.f2cfg", False
         Include "global.f2cfg", False
-        ScriptEngine.AddObject "Enums", New Fury2GEEnums
-        ScriptEngine.AddObject "Types", New Fury2GETypes
-        ScriptEngine.AddObject "Globals", New Fury2Globals
         If Not (HideConfiguration) Then
             Load frmConfigure
             frmConfigure.Cancelled = False
@@ -3136,16 +3208,14 @@ Dim l_objObject As Object
         Cameras(1).SetEngine Me
         Cameras(1).Reposition 0, 0, ScreenWidth, ScreenHeight
         Cameras(1).Map = 1
-    End If
-    Err.Clear
-    l_varPackages = Split(Filesystem.File("packages.f2config").Text, vbCrLf)
-    l_lngPackages = UBound(l_varPackages)
-    If Err = 0 Then
-        For l_lngPackages = LBound(l_varPackages) To UBound(l_varPackages)
-'            Filesystem.LoadPackage Trim(l_varPackages(l_lngPackages))
-        Next l_lngPackages
-    End If
-    If Not EditMode Then
+        Err.Clear
+        l_varPackages = Split(Filesystem.File("packages.f2config").Text, vbCrLf)
+        l_lngPackages = UBound(l_varPackages)
+        If Err = 0 Then
+            For l_lngPackages = LBound(l_varPackages) To UBound(l_varPackages)
+    '            Filesystem.LoadPackage Trim(l_varPackages(l_lngPackages))
+            Next l_lngPackages
+        End If
         Include "party", False
         Include "system", False
         Include "joystick", False
@@ -3170,6 +3240,7 @@ Dim l_objObject As Object
         For Each l_objObject In EventHooks
             l_objObject.Init
         Next l_objObject
+    End If
         LoadProgress "Game", 10
         Set Font = New Fury2Font
         Font.SetEngine Me
@@ -3209,6 +3280,16 @@ Dim l_objObject As Object
             DebugOut "No default cursor specified"
         End If
         LoadProgress "Game", 20
+    If EditMode Then
+        Err.Clear
+        l_varScripts = Split(Filesystem.File("editor_scripts.f2config").Text, vbCrLf)
+        l_lngScripts = UBound(l_varScripts)
+        If Err = 0 Then
+            For l_lngScripts = LBound(l_varScripts) To UBound(l_varScripts)
+                Include Trim(l_varScripts(l_lngScripts))
+            Next l_lngScripts
+        End If
+    Else
         If Trim(StartMap) = "" Then
         Else
             LoadMap StartMap, StartX, StartY, StartLayer
@@ -3239,24 +3320,20 @@ Attribute LoadImage.VB_Description = "Loads an image file into the cache and ret
 On Error Resume Next
 Dim m_imgPicture As Fury2Image
     If Trim(CStr(Filename)) = "" Then Exit Function
+    If EditMode Then FlushImageCache
     Err.Clear
     Set m_imgPicture = Nothing
-    If EditMode Then
-        Filename = Filesystem.AutoSelectExtension(Filename, "png;f2g;tga;jpg;bmp;gif")
+    Filename = LCase(Trim(Filesystem.AutoSelectExtension(Filename, "png;f2g;tga;jpg;bmp;gif")))
+    Set m_imgPicture = m_Images(Filename)
+    If (m_imgPicture Is Nothing) Or (Err.Number <> 0) Then
         If Filesystem.FileExists(Filename) Then
-            Set m_imgPicture = F2LoadImage(Filesystem.File(Filename).GetRealFilename)
-            m_imgPicture.Name = Filename
-        End If
-    Else
-        Filename = LCase(Trim(Filesystem.AutoSelectExtension(Filename, "png;f2g;tga;jpg;bmp;gif")))
-        Set m_imgPicture = m_Images(Filename)
-        If (m_imgPicture Is Nothing) Or (Err.Number <> 0) Then
             Err.Clear
             Set m_imgPicture = m_Images(Me.iLoadImage(Filename, IgnoreErrors))
         End If
-        If m_imgPicture Is Nothing Then
-            'If EditMode = False Then CriticalError "LoadImage", "LoadImage", "Unable to load image: """ + filename + """"
-        End If
+    End If
+    If m_imgPicture.Handle = 0 Then Set m_imgPicture = Nothing
+    If m_imgPicture Is Nothing Then
+        'If EditMode = False Then CriticalError "LoadImage", "LoadImage", "Unable to load image: """ + filename + """"
     End If
     Set LoadImage = m_imgPicture
 End Function
@@ -4094,6 +4171,10 @@ End Sub
 
 Public Sub ResetTiming()
 On Error Resume Next
+Dim l_ctlControl As Fury2InputControl
+    For Each l_ctlControl In Controls
+        l_ctlControl.ResetRepeat
+    Next l_ctlControl
     m_booResetClock = True
 End Sub
 
@@ -4684,105 +4765,17 @@ End Property
 
 Function ToBoolean(Value) As Boolean
 On Error Resume Next
-    Err.Clear
     ToBoolean = CBool(Value)
-    If VarType(Value) = vbObject Then
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToBoolean = Value.ToBoolean
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToBoolean = Value.Class_ToBoolean
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToBoolean = Value.ToNumber
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToBoolean = Value.Class_ToNumber
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToBoolean = Value.ToInteger
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToBoolean = Value.Class_ToInteger
-        If Err = 0 Then Exit Function
-        Err.Raise 10241, "ToBoolean()", "Unable to convert object to boolean"
-    End If
 End Function
 
 Function ToInteger(Value) As Long
 On Error Resume Next
-    If (VarType(Value) = vbLong) Then
-        ToInteger = Value
-        Exit Function
-    ElseIf (VarType(Value) = vbSingle) Then
-        ToInteger = Value
-        Exit Function
-    ElseIf (VarType(Value) = vbDouble) Then
-        ToInteger = Value
-        Exit Function
-    End If
-    Err.Clear
     ToInteger = CLng(Value)
-    If VarType(Value) = vbObject Then
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToInteger = Value.ToInteger
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToInteger = Value.Class_ToInteger
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToInteger = Value.ToNumber
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToInteger = Value.Class_ToNumber
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToInteger = Value.ToBoolean
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToInteger = Value.Class_ToBoolean
-        If Err = 0 Then Exit Function
-        Err.Raise 10241, "ToInteger()", "Unable to convert object to integer"
-    End If
 End Function
 
 Function ToNumber(Value) As Double
 On Error Resume Next
-    If (VarType(Value) = vbDouble) Then
-        ToNumber = Value
-        Exit Function
-    ElseIf (VarType(Value) = vbSingle) Then
-        ToNumber = Value
-        Exit Function
-    ElseIf (VarType(Value) = vbLong) Then
-        ToNumber = Value
-        Exit Function
-    End If
     ToNumber = CDbl(Value)
-    If VarType(Value) = vbObject Then
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToNumber = Value.ToNumber
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToNumber = Value.Class_ToNumber
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToNumber = Value.ToInteger
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToNumber = Value.Class_ToInteger
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToNumber = Value.ToBoolean
-        If Err = 0 Then Exit Function
-        Err.Clear
-        ToNumber = Value.Class_ToBoolean
-        If Err = 0 Then Exit Function
-        Err.Raise 10241, "ToNumber()", "Unable to convert object to number"
-    End If
 End Function
 
 Function ToString(Value, Optional ByVal QuoteStrings As Boolean = False) As String
@@ -5312,6 +5305,7 @@ Dim m_tmrTimer As Fury2Timer
 Dim m_lngTimers As Long
 Dim m_lngHooks As Long
 Dim Obj As Object, PObj As Fury2Plugin
+Dim l_gphGraphic As Fury2Graphic
     If EnableTimers Then
         If Timers.Count > 0 Then
             ContextLevelAdd "Timers"
@@ -5332,6 +5326,9 @@ Dim Obj As Object, PObj As Fury2Plugin
             ContextLevelRemove
         End If
     End If
+    For Each l_gphGraphic In Graphics
+        l_gphGraphic.Update
+    Next l_gphGraphic
     If m_colPluginStack.Count > 0 Then
         ContextLevelAdd "SyncUpdate"
         ProfileStart "EventHooks.SyncUpdate"
@@ -5602,6 +5599,86 @@ End Sub
 
 Private Sub m_ScriptEngine_InterruptPoll(Interrupt As Boolean)
 On Error Resume Next
-    Debugger.InterruptPoll Interrupt
-    DoEvents
+    If EditMode Then
+        DoEvents
+    Else
+        Debugger.InterruptPoll Interrupt
+        DoEvents
+    End If
 End Sub
+
+Friend Function InstantiateByName(ByRef Name As String) As Object
+On Error Resume Next
+Dim l_objItem As Object
+Dim l_parItem As Fury2Party
+    Select Case LCase(Trim(Name))
+    Case "fury2party"
+        Set l_parItem = New Fury2Party
+        l_parItem.SetEngine Me
+        Set l_objItem = l_parItem
+    Case Else
+    End Select
+    If l_objItem Is Nothing Then
+        ScriptEngine.AddCode "Set Engine.IObjThis = " & ScriptEngine.Language.GenerateInstantiation(Trim(LCase(Name)))
+        Set l_objItem = IObjThis
+        Set IObjThis = Nothing
+        If l_objItem Is Nothing Then
+            Err.Clear
+            Set l_objItem = CreateObject("Engine." & Name)
+            If l_objItem Is Nothing Then
+                Err.Clear
+                Set l_objItem = CreateObject("libGraphics." & Name)
+            End If
+        End If
+    End If
+    Set InstantiateByName = l_objItem
+End Function
+
+Public Function LoadUserData(ByRef Filename As String, Optional ByVal Data As Object = Nothing) As Object
+On Error Resume Next
+Dim l_vfFile As VirtualFile
+Dim l_strType As String
+Dim l_objData As Object
+    Set l_vfFile = Filesystem.File(Filename).Load
+    Set LoadUserData = LoadUserDataFromFile(l_vfFile, Data)
+    Err.Clear
+End Function
+
+Public Sub SaveUserData(ByRef Filename As String, ByVal Data As Object)
+On Error Resume Next
+Dim l_vfFile As VirtualFile
+Dim l_strType As String
+Dim l_objData As Object
+    Set l_vfFile = F2File
+    SaveUserDataToFile l_vfFile, Data
+    Filesystem.CreateFile(Filename).Save l_vfFile
+    Err.Clear
+End Sub
+
+Public Function LoadUserDataFromFile(ByVal File As VirtualFile, Optional ByVal Data As Object = Nothing) As Object
+On Error Resume Next
+Dim l_strType As String
+    File.ReadSegment_Begin
+        File.Load l_strType
+        If (Data Is Nothing) Then
+            Set Data = InstantiateByName(l_strType)
+        End If
+        File.Load Data
+    File.ReadSegment_End
+    Set Data.Engine = Me
+    Set LoadUserDataFromFile = Data
+    Err.Clear
+End Function
+
+Public Sub SaveUserDataToFile(ByVal File As VirtualFile, ByVal Data As Object)
+On Error Resume Next
+Dim l_strType As String
+Dim l_objData As Object
+    File.WriteSegment_Begin
+        l_strType = TypeName(Data)
+        File.Save l_strType
+        File.Save Data
+    File.WriteSegment_End
+    Err.Clear
+End Sub
+

@@ -275,6 +275,7 @@ void BlitSimple_FBTex_Core(Override::OverrideParameters *Parameters) {
   readParam(int, SourceY, 4);
   FX::Rectangle AreaCopy = Area;
   if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
+    copyFramebufferToTexture(getNamedTag(Dest, Texture), Dest);
     int texWidth = powerOfTwo(GetImageWidth(Source));
     int texHeight = powerOfTwo(GetImageHeight(Source));
     float xScale = 1.0f / texWidth;
@@ -289,8 +290,6 @@ void BlitSimple_FBTex_Core(Override::OverrideParameters *Parameters) {
     float U4 = U3 + (Area.Width * xScale), V4 = V3 + (Area.Height * yScale);
     enableTexture<0>();
     enableTexture<1>();
-    selectImageAsTextureN<0>(Source);
-    selectImageAsTextureN<1>(Dest);
     selectImageAsTextureN<0>(Source);
     selectImageAsTextureN<1>(Dest);
     setScaleMode<Linear>();
@@ -696,6 +695,24 @@ void BlitMask_Core(Override::OverrideParameters *Parameters) {
   }
 }
 
+defOverride(BlitMask_Normal_Opacity) {
+  readParam(int, Dest, 0);
+  readParam(int, Opacity, 8);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  enableTexture<0>();
+  setTextureColor(Pixel(255, 255, 255, Opacity));
+  enableTexture<1>();
+  setTextureColor(Pixel(255, 255, 255, Opacity));
+  setBlendMode<Mask_Normal>();
+  setVertexColor(White);
+  BlitMask_Core(Parameters);
+  disableTexture<1>();
+  switchTextureStage<0>();
+  return Success;
+}
+
 defOverride(BlitMask_SourceAlpha_Opacity) {
   readParam(int, Dest, 0);
   readParam(int, Opacity, 8);
@@ -705,6 +722,7 @@ defOverride(BlitMask_SourceAlpha_Opacity) {
   enableTexture<0>();
   setTextureColor(Pixel(255, 255, 255, Opacity));
   enableTexture<1>();
+  setTextureColor(Pixel(255, 255, 255, Opacity));
   setBlendMode<Mask_SourceAlpha>();
   setVertexColor(White);
   BlitMask_Core(Parameters);
@@ -1180,6 +1198,7 @@ int dx = 0, dy = 0;
 short *pRow, *pTile;
 FX::Rectangle rctDest;
 FX::Rectangle oldRect;
+int pTarget = 0;
 int maxX = 0, maxY = 0;
 int cv = 0;
   readParam(TilemapLayerParam*, Layer, 0);
@@ -1192,9 +1211,14 @@ int cv = 0;
   readParam(int, cameray, 7);
   readParam(int, alpha, 8);
 
-  contextCheck(Camera->pImage);
-  lockCheck(Camera->pImage);
-  selectContext(Camera->pImage);
+  pTarget = Camera->pImage();
+  if (Layer->RenderTarget < Camera->RenderTargetCount) {
+    pTarget = Camera->pRenderTargets[Layer->RenderTarget];
+  }
+
+  contextCheck(pTarget);
+  lockCheck(pTarget);
+  selectContext(pTarget);
 
   maxX = Layer->Width - 1;
   maxY = Layer->Height - 1;
@@ -1283,7 +1307,7 @@ int cv = 0;
       }
       dy += tileHeight;
   }
-  SetImageDirty(Camera->pImage, 1);
+  SetImageDirty(pTarget, 1);
   disableFog();
   return Success;
 }
@@ -1368,6 +1392,7 @@ void InstallOverrides() {
   addOverride(BlitResample_Normal_Opacity);
   addOverride(BlitResample_SourceAlpha);
   addOverride(BlitResample_SourceAlpha_Opacity);
+  addOverride(BlitMask_Normal_Opacity);
   addOverride(BlitMask_SourceAlpha_Opacity);
   addOverride(BlitMask_Merge_Opacity);
   addOverride(FilterSimple_Gradient_4Point);
@@ -1443,6 +1468,7 @@ void UninstallOverrides() {
   removeOverride(BlitResample_Normal_Opacity);
   removeOverride(BlitResample_SourceAlpha);
   removeOverride(BlitResample_SourceAlpha_Opacity);
+  removeOverride(BlitMask_Normal_Opacity);
   removeOverride(BlitMask_SourceAlpha_Opacity);
   removeOverride(BlitMask_Merge_Opacity);
   removeOverride(FilterSimple_Gradient_4Point);

@@ -62,7 +62,7 @@ namespace GL {
   }
 
   template <int Stage> void selectImageAsTextureN(int image) {
-    switchTextureStage<0>();
+    switchTextureStage<Stage>();
     GLuint handle = 0;
     handle = getNamedTag(image, Texture);
     if (handle == 0) {
@@ -105,17 +105,17 @@ namespace GL {
   }
 
   template <int Stage> void enableTexture() {
+    switchTextureStage<Stage>();
     if (texturesEnabled[Stage]) return;
     endDraw();
-    switchTextureStage<Stage>();
     glEnable(GL_TEXTURE_2D);
     texturesEnabled[Stage] = true;
   }
 
   template <int Stage> void disableTexture() {
+    switchTextureStage<Stage>();
     if (!texturesEnabled[Stage]) return;
     endDraw();
-    switchTextureStage<Stage>();
     glDisable(GL_TEXTURE_2D);
     texturesEnabled[Stage] = false;
   }

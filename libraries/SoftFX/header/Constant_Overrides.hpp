@@ -114,6 +114,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(BlitSimple_Burn) \
   defItem(BlitSimple_Burn_Opacity) \
   defItem(BlitSimple_Channel) \
+  defItem(BlitSimple_Compare) \
   defItem(BlitSimple_Dither) \
   defItem(BlitSimple_Dither_Opacity) \
   defItem(BlitSimple_Dither_DualOpacity) \
@@ -184,6 +185,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(BlitResample_Subtractive) \
   defItem(BlitResample_Subtractive_Opacity) \
   defItem(BlitResample_) \
+  defItem(BlitMask_Normal_Opacity) \
   defItem(BlitMask_SourceAlpha_Opacity) \
   defItem(BlitMask_Merge_Opacity) \
   defItem(BlitMask_) \

@@ -38,9 +38,9 @@ Implements IInspectable
 Implements Fury2Object
 Implements IVirtualFileSaveable
 
+Private mvarRenderEvent As Fury2Event
 Private mvarWidth As Long
 Private mvarHeight As Long
-Private mvarTintColor As Long
 Private mvarMatrix As Long
 Private mvarDepthmap As String
 Private mvarDepthmapImage As Fury2Image
@@ -68,6 +68,27 @@ Private mvarWrapY As Boolean
 Private mvarParent As Fury2Map
 Private mvarColor As Long
 Private mvarIndex As Long
+Private mvarRenderTarget As Long
+
+Public Property Get RenderEvent() As Fury2Event
+On Error Resume Next
+    Set RenderEvent = mvarRenderEvent
+End Property
+
+Public Property Set RenderEvent(ByVal Evt As Fury2Event)
+On Error Resume Next
+    Set mvarRenderEvent = Evt
+End Property
+
+Public Property Get RenderTarget() As Long
+On Error Resume Next
+    RenderTarget = mvarRenderTarget + 1
+End Property
+
+Public Property Let RenderTarget(ByVal Index As Long)
+On Error Resume Next
+    mvarRenderTarget = Index - 1
+End Property
 
 Public Property Get Index() As Long
     Index = mvarIndex
@@ -160,6 +181,7 @@ End Property
 Private Sub Class_Initialize()
 On Error Resume Next
     mvarVisible = True
+    mvarRenderTarget = 0
     ParallaxX = 1
     ParallaxY = 1
     mvarBlockGridWidth = 16
@@ -493,6 +515,8 @@ Dim m_lngLineCount As Long
                         .Load mvarDepthmapYRatio
                     .ReadSegment_End
                 End If
+                .Load mvarColor
+                .Load mvarRenderTarget
             .ReadSegment_End
             Set mvarTileset = New Fury2Tileset
             mvarTileset.SetParent Me
@@ -534,7 +558,6 @@ Dim m_lngLineCount As Long
                 End If
             .ReadSegment_End
             .Load mvarLighting
-            .Load mvarColor
         .ReadSegment_End
     End With
     If mvarDisableBlocking Then ReDim mvarBlocking(0 To 0, 0 To 0)
@@ -576,6 +599,8 @@ On Error Resume Next
                     .Save mvarDepthmapXRatio
                     .Save mvarDepthmapYRatio
                 .WriteSegment_End
+                .Save mvarColor
+                .Save mvarRenderTarget
             .WriteSegment_End
             .Save mvarTileset
             .Skip 4
@@ -589,7 +614,6 @@ On Error Resume Next
                 .RawSave VarPtr(mvarBlockingLines(0)), CollisionLineCount * 16
             .WriteSegment_End
             .Save mvarLighting
-            .Save mvarColor
         .WriteSegment_End
     End With
 End Sub
@@ -600,7 +624,6 @@ Attribute Lighting.VB_Description = "~The layer's lighting data."
 End Property
 
 Public Property Let Lit(ByVal vData As Boolean)
-Attribute Lit.VB_MemberFlags = "40"
     mvarLit = vData
     If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
@@ -646,6 +669,7 @@ Friend Sub SetParent(ByVal NewParent As Fury2Map)
 On Error Resume Next
     Set mvarParent = NewParent
     mvarSprites.SetEngine Me.Parent.Engine
+    mvarLighting.Lights.SetParent Me.Parent
 End Sub
 
 Public Property Get Parent() As Fury2Map

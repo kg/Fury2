@@ -565,7 +565,6 @@ End Property
 Private Function iDocument_Save(Filename As String) As Boolean
 On Error Resume Next
 Dim l_vfFile As VirtualFile
-    Kill Filename
     Err.Clear
     Set l_vfFile = F2File()
     SaveToFile Design, l_vfFile

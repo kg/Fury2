@@ -253,9 +253,9 @@ Dim m_lngFileHandle As Long
 Dim m_lngSourceLength As Long
 Dim m_lngDestLength As Long
 Dim m_bytCompressed() As Byte
-    Kill Filename
+    Kill Filename & ".tmp"
     m_lngFileHandle = FreeFile
-    Open Filename For Binary Access Write As #m_lngFileHandle
+    Open Filename & ".tmp" For Binary Access Write As #m_lngFileHandle
         m_bytCompressed = zlibCompressBytes(m_bytData)
         m_lngSourceLength = UBound(m_bytCompressed) + 1
         m_lngDestLength = UBound(m_bytData) + 1
@@ -263,17 +263,21 @@ Dim m_bytCompressed() As Byte
         Put #m_lngFileHandle, , m_lngSourceLength
         Put #m_lngFileHandle, , m_bytCompressed()
     Close #m_lngFileHandle
+    Kill Filename
+    Name Filename & ".tmp" As Filename
     Err.Clear
 End Sub
 
 Public Sub SaveFile(ByVal Filename As String)
 On Error Resume Next
 Dim m_lngFileHandle As Long
-    Kill Filename
+    Kill Filename & ".tmp"
     m_lngFileHandle = FreeFile
-    Open Filename For Binary Access Write As #m_lngFileHandle
+    Open Filename & ".tmp" For Binary Access Write As #m_lngFileHandle
         Put #m_lngFileHandle, 1, m_bytData
     Close #m_lngFileHandle
+    Kill Filename
+    Name Filename & ".tmp" As Filename
     Err.Clear
 End Sub
 

@@ -3,7 +3,7 @@ Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
 Object = "{4F11FEBA-BBC2-4FB6-A3D3-AA5B5BA087F4}#1.0#0"; "vbalSbar6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#7.7#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.6#0"; "ngUI.ocx"
 Begin VB.MDIForm frmMain 
    AutoShowChildren=   0   'False
    BackColor       =   &H8000000C&
@@ -13,7 +13,8 @@ Begin VB.MDIForm frmMain
    ClientTop       =   495
    ClientWidth     =   8325
    Icon            =   "frmMain.frx":0000
-   LinkTopic       =   "MDIForm1"
+   LinkMode        =   1  'Source
+   LinkTopic       =   "Main"
    OLEDropMode     =   1  'Manual
    StartUpPosition =   3  'Windows Default
    Begin ngUI.ngToolbar tbrLeft 
@@ -303,8 +304,8 @@ Attribute VB_Exposed = False
 Option Explicit
 Implements iCustomMenuHandler
 Private Const WM_MDIGETACTIVE = &H229
-Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
-Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
 
 Dim WithEvents m_mdiTabs As cMDITabs
 Attribute m_mdiTabs.VB_VarHelpID = -1
@@ -322,15 +323,16 @@ Public Sub RefreshGameState()
 On Error Resume Next
 '    tbrMain.Buttons("File:Open").Enabled = GameIsLoaded
 '    tbrMain.Buttons("File:OpenMenu").Enabled = GameIsLoaded
-    tbrGame.Buttons("Game:Play").Enabled = GameIsLoaded
-    tbrGame.Buttons("Game:Play").Checked = GameIsRunning
+    tbrGame.Buttons("Game:Run").Enabled = GameIsLoaded
+    tbrGame.Buttons("Game:Debug").Enabled = GameIsLoaded
+    tbrGame.Buttons("Game:Debug").Checked = GameIsRunning
     tbrGame.Buttons("Game:Pause").Enabled = GameIsRunning And GameIsLoaded
     tbrGame.Buttons("Game:Pause").Checked = GameIsPaused
 End Sub
 
 Private Function GetToolbarX(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
+Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0))) * Screen.TwipsPerPixelX
@@ -338,7 +340,7 @@ End Function
 
 Private Function GetToolbarY(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
+Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0))) * Screen.TwipsPerPixelY
@@ -563,12 +565,14 @@ Dim l_mgrDocument As cChildManager
     Set l_mgrDocument = ActiveChild
     If l_mgrDocument Is Nothing Then
         tbrMain.Buttons("File:Save").Enabled = False
+        g_aclSave.Enabled = False
         With GetMenu("Main Menu")
             .Enabled(.IndexForKey("File:Save")) = False
             .Enabled(.IndexForKey("File:SaveAs")) = False
         End With
     Else
         tbrMain.Buttons("File:Save").Enabled = l_mgrDocument.Document.CanSave
+        g_aclSave.Enabled = l_mgrDocument.Document.CanSave
         With GetMenu("Main Menu")
             .Enabled(.IndexForKey("File:Save")) = l_mgrDocument.Document.CanSave
             .Enabled(.IndexForKey("File:SaveAs")) = l_mgrDocument.Document.CanSave
@@ -676,7 +680,8 @@ Dim l_fntMarlett As StdFont
         .AddNew , "Game:Open", "open game", "Open Game"
         Set .AddNew("6", "Game:OpenMenu", , "Open Recent Game").Font = l_fntMarlett
         .AddNew "-"
-        .AddNew , "Game:Play", "play", "Play Game"
+        .AddNew , "Game:Run", "run", "Run Game"
+        .AddNew , "Game:Debug", "debug", "Debug Game"
         .AddNew , "Game:Pause", "pause", "Pause Game"
     End With
     RefreshPluginToolbar
@@ -816,6 +821,18 @@ On Error Resume Next
     g_edEditor.AcceleratorManager.Enabled = False
 End Sub
 
+Private Sub MDIForm_LinkExecute(CmdStr As String, Cancel As Integer)
+On Error Resume Next
+Dim l_varFiles As Variant
+    l_varFiles = ParseFileList(CmdStr)
+    g_edEditor.OpenFiles l_varFiles
+    Cancel = 0
+End Sub
+
+Private Sub MDIForm_LinkOpen(Cancel As Integer)
+On Error Resume Next
+End Sub
+
 Private Sub MDIForm_Load()
 On Error Resume Next
     Set m_colNoticeQueue = New Fury2Collection
@@ -851,7 +868,11 @@ Dim l_lngForms As Long
     Select Case UnloadMode
     Case 0
         Cancel = True
-        ExitProgram
+        If GameIsRunning Then
+            g_edEditor.Game_Debug
+        Else
+            ExitProgram
+        End If
     Case Else
         SaveFormPosition Me
         For l_lngForms = Forms.Count To 0 Step -1
@@ -940,7 +961,7 @@ End Sub
 
 Private Sub sbStatus_DrawItem(ByVal lhDC As Long, ByVal iPanel As Long, ByVal lLeftPixels As Long, ByVal lTopPixels As Long, ByVal lRightPixels As Long, ByVal lBottomPixels As Long)
 On Error Resume Next
-Dim l_rctProgress As Rect
+Dim l_rctProgress As RECT
 Dim l_lngBrush As Long
     If LCase(sbStatus.PanelKey(iPanel)) = "progress" Then
         With l_rctProgress
@@ -1441,8 +1462,10 @@ Dim l_fsFilesystem As Fury2Filesystem
         If l_nodNode Is Nothing Then
             ' Blank
             Select Case QuickShowMenu(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-                Menus("New Folder"))
+                Menus("Explore", "-", "New Folder"))
             Case 1
+                Shell "explorer """ & Replace(l_fsFilesystem.Root, "/", "\") & """", vbNormalFocus
+            Case 3
                 l_strFolderName = InputBox("Folder Name", "New Folder", "New Folder")
                 MkDir l_fsFilesystem.Root & l_strFolderName
                 RefreshFileSidebar
@@ -1452,13 +1475,15 @@ Dim l_fsFilesystem As Fury2Filesystem
             If Right(l_nodNode.key, 1) = "/" Then
                 ' Folder
                 Select Case QuickShowMenu(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-                    Menus("Expand", "-", "Delete", "-", "New Folder"))
+                    Menus("Expand", "Explore", "-", "Delete", "-", "New Folder"))
                 Case 1
                     l_nodNode.Expanded = True
-                Case 3
+                Case 2
+                    Shell "explorer """ & Replace(l_fsFilesystem.Root & Replace(l_nodNode.key, "/", "\"), "\\", "\") & """", vbNormalFocus
+                Case 4
                     RmDir l_fsFilesystem.Root & Replace(l_nodNode.key, "/", "\")
                     RefreshFileSidebar
-                Case 5
+                Case 6
                     l_strFolderName = InputBox("Folder Name", "New Folder", "New Folder")
                     MkDir l_fsFilesystem.Root & Replace(l_nodNode.key, "/", "\") & l_strFolderName
                     RefreshFileSidebar
@@ -1495,9 +1520,9 @@ Dim l_lngLeftSpace As Long, l_lngRightSpace As Long
 Dim l_lngTopSpace As Long, l_lngBottomSpace As Long
 Dim l_lngTextHeight As Long, l_lngTitleHeight As Long
 Dim l_lngWidth As Long, l_lngHeight As Long
-Dim l_rctWindow As Win32.Rect
+Dim l_rctWindow As Win32.RECT
 Dim l_lngWindowWidth As Long, l_lngWindowHeight As Long
-Dim l_rctTextSize As Win32.Rect, l_rctText As Win32.Rect
+Dim l_rctTextSize As Win32.RECT, l_rctText As Win32.RECT
 Dim l_sngCloseTime As Single
 Dim l_strWaitingNotices As String
     GetClientRect Me.hwnd, l_rctWindow

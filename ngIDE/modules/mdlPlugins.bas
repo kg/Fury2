@@ -149,7 +149,7 @@ Dim l_plgPlugin As iPlugin
         InstallPlugin "ngPlugins.FontEditor", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.CommandBrowser", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.ShowPictureDesigner", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.UserData", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.UserDataEditor", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "tk.TKTilesetImporter", GetPath(App.Path) & "\tk.dll"
 '        InstallPlugin "tk.TKBoardImporter", GetPath(App.Path) & "\tk.dll"
         l_lngCount = ReadRegSetting("Plugins\Count", 0)

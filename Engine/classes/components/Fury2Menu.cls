@@ -279,7 +279,6 @@ On Error Resume Next
     Behaviors.SetParent Me
     Behaviors.Update
 #End If
-    Cursor.Update
     mCol(m_lngSelectedItem).Update
     Err.Clear
 End Sub
@@ -352,6 +351,7 @@ Dim l_lngOldItem As Long
     If Me.Active = False Then Exit Sub
     l_lngOldItem = m_lngSelectedItem
     If (Control.Name = "Up") Then
+        Control.Consume
         m_lngSelectedItem = m_lngSelectedItem - 1
         If m_lngSelectedItem < 1 Then m_lngSelectedItem = 1
         If m_lngSelectedItem > mCol.Count Then m_lngSelectedItem = mCol.Count
@@ -366,8 +366,8 @@ Dim l_lngOldItem As Long
             m_lngSelectedItem = l_lngOldItem
         End If
         SelectionChanged
-        Control.Consume
     ElseIf (Control.Name = "Down") Then
+        Control.Consume
         m_lngSelectedItem = m_lngSelectedItem + 1
         If m_lngSelectedItem < 1 Then m_lngSelectedItem = 1
         If m_lngSelectedItem > mCol.Count Then m_lngSelectedItem = mCol.Count
@@ -382,12 +382,11 @@ Dim l_lngOldItem As Long
             m_lngSelectedItem = l_lngOldItem
         End If
         SelectionChanged
-        Control.Consume
     ElseIf (Control.Name = "OK") Or (Control.Name = "Select") Or (Control.Name = "Primary") Then
+        Control.Consume
         If m_lngSelectedItem < 1 Then m_lngSelectedItem = 1
         If m_lngSelectedItem > mCol.Count Then m_lngSelectedItem = mCol.Count
         ItemSelect m_lngSelectedItem
-        Control.Consume
     ElseIf (Control.Name = "Cancel") Or (Control.Name = "Close") Or (Control.Name = "Secondary") Then
         Control.Consume
         CloseMenu

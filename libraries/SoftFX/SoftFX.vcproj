@@ -828,6 +828,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\header\Debug_Flags.hpp"
+				>
+			</File>
+			<File
 				RelativePath="header\DLL.hpp"
 				>
 			</File>

@@ -144,7 +144,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.RECT, ByVal wFormat As Long) As Long
+Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.Rect, ByVal wFormat As Long) As Long
 Private Const DT_WORDBREAK = &H10
 Private Const DT_NOPREFIX = &H800
 Private Const MinimumEditWidth As Long = 60
@@ -162,6 +162,7 @@ Private Enum ObjectItemTypes
     OIT_Hex
     OIT_Color
     OIT_Enum
+    OIT_CollectionItem
 End Enum
 
 Private Type ObjectItem
@@ -325,6 +326,8 @@ Dim l_lngItems As Long, l_lngY As Long
                 .CanInspect = False
             ElseIf TypeOf .Value Is IInspectable Then
                 .CanInspect = True
+            ElseIf TypeOf .Value Is IInspectableCollection Then
+                .CanInspect = True
             Else
                 .CanInspect = InspectAny
             End If
@@ -428,17 +431,31 @@ End Sub
 
 Public Sub RefreshValues()
 On Error Resume Next
-Dim l_lngItems As Long
+Dim l_lngItems As Long, l_lngIndex As Long
 Dim m_itValue As IInspectorType
 Dim l_varValue As Variant
 Dim l_varFirstValue As Variant
 Dim l_objObject As Object, l_lngObject As Long
-Dim l_strValue As String
+Dim l_strValue As String, l_strIndex As String
+Dim l_colObject As IInspectableCollection
+Dim l_booInspectorType As Boolean
+    Set l_colObject = m_objObject
+    Err.Clear
     If m_objObject Is Nothing Then Exit Sub
     For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
         With m_oiItems(l_lngItems)
-            If (.CallTypes And VbGet) = VbGet Then
-                If m_booMultiple Then
+            If ((.CallTypes And VbGet) = VbGet) Then
+                If .SpecialType = OIT_CollectionItem Then
+                    l_varValue = Empty
+                    l_strIndex = Replace(.Name, "Item ", "")
+                    l_lngIndex = CLng(l_strIndex)
+                    Err.Clear
+                    Set .Value = l_colObject.ItemValue(l_lngIndex)
+                    If Err <> 0 Then
+                        .Value = l_colObject.ItemValue(l_lngIndex)
+                    End If
+                    Err.Clear
+                ElseIf m_booMultiple Then
                     l_varFirstValue = Empty
                     l_varValue = Empty
                     For l_lngObject = LBound(m_objObjects) To UBound(m_objObjects)
@@ -492,7 +509,12 @@ Dim l_strValue As String
                         End If
                     End If
                 End If
-                If TypeOf .Value Is IInspectorType Then
+                If (.Value Is Nothing) Or (VarType(.Value) <> vbObject) Then
+                    l_booInspectorType = False
+                Else
+                    l_booInspectorType = (TypeOf .Value Is IInspectorType)
+                End If
+                If l_booInspectorType Then
                     Set m_itValue = .Value
                     .ValueText = m_itValue.ToString
                 Else
@@ -631,7 +653,7 @@ Dim l_strSelectedItem As String
         Redraw
         Exit Sub
     End If
-    If (TypeOf Obj Is IInspectable) Or (Force) Or (InspectAny) Then
+    If (TypeOf Obj Is IInspectable) Or (TypeOf Obj Is IInspectableCollection) Or (Force) Or (InspectAny) Then
     Else
         Erase m_oiItems
         ReDim m_oiItems(0 To 0)
@@ -683,8 +705,9 @@ Dim l_lngItemCount As Long
 Dim l_booAddNew As Boolean
 Dim l_lngStack As Long, l_booFound As Boolean
 Dim l_strInfo As String
-Dim l_lngOldIndex As Long, l_lngIndex As Long, l_objFind As Object
+Dim l_lngOldIndex As Long, l_lngIndex As Long, l_objFind As Object, l_lngOffset As Long
 Dim l_strSelectedItem As String
+Dim l_colObject As IInspectableCollection
     EditBoxChanged
     m_booEditBoxActive = False
     l_strSelectedItem = m_oiItems(m_lngSelectedItem).Name
@@ -714,75 +737,89 @@ Dim l_strSelectedItem As String
     With l_iifObject.Members
         For l_lngItems = 1 To .Count
             With .Item(l_lngItems)
-                l_booAddNew = True
-                Select Case .InvokeKind
-                Case VbGet, VbLet, VbSet, 0
-                    If .Parameters.Count = 0 Then
-                        l_strInfo = .HelpString
-                        If Left(l_strInfo, 1) = "*" Then
-                        Else
-                            If (l_lngItemCount < 1) Then
+                If ((.AttributeMask And 1) = 0) And ((.AttributeMask And 64) = 0) Then
+                    l_booAddNew = True
+                    Select Case .InvokeKind
+                    Case VbGet, VbLet, VbSet, 0
+                        If .Parameters.Count = 0 Then
+                            l_strInfo = .HelpString
+                            If Left(l_strInfo, 1) = "*" Then
                             Else
-                                If (m_oiItems(l_lngItemCount - 1).Name = .Name) Then
-                                    l_booAddNew = False
+                                If (l_lngItemCount < 1) Then
+                                Else
+                                    If (m_oiItems(l_lngItemCount - 1).Name = .Name) Then
+                                        l_booAddNew = False
+                                    End If
                                 End If
-                            End If
-                            If (l_booAddNew) Then
-                                l_lngItemCount = l_lngItemCount + 1
-                                If UBound(m_oiItems) < (l_lngItemCount - 1) Then
-                                    ReDim Preserve m_oiItems(0 To l_lngItemCount - 1)
+                                If (l_booAddNew) Then
+                                    l_lngItemCount = l_lngItemCount + 1
+                                    If UBound(m_oiItems) < (l_lngItemCount - 1) Then
+                                        ReDim Preserve m_oiItems(0 To l_lngItemCount - 1)
+                                    End If
+                                    Erase m_oiItems(l_lngItemCount).DropdownValues
+                                    Erase m_oiItems(l_lngItemCount).DropdownText
+                                    m_oiItems(l_lngItemCount - 1).Name = .Name
+                                    m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Normal
+                                    m_oiItems(l_lngItemCount - 1).DataType = .ReturnType.VarType
+                                    If (.ReturnType.TypeInfo Is Nothing) Then
+                                    ElseIf .ReturnType.TypeInfo.TypeKind = TKIND_ENUM Then
+                                        m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Enum
+                                        ReDim m_oiItems(l_lngItemCount - 1).DropdownValues(0 To .ReturnType.TypeInfo.Members.Count - 1)
+                                        ReDim m_oiItems(l_lngItemCount - 1).DropdownText(0 To .ReturnType.TypeInfo.Members.Count - 1)
+                                        Dim l_memMember As MemberInfo, l_lngValue As Long
+                                        l_lngValue = 0
+                                        For Each l_memMember In .ReturnType.TypeInfo.Members
+                                            m_oiItems(l_lngItemCount - 1).DropdownText(l_lngValue) = l_memMember.Name
+                                            m_oiItems(l_lngItemCount - 1).DropdownValues(l_lngValue) = l_memMember.Value
+                                            l_lngValue = l_lngValue + 1
+                                        Next l_memMember
+                                    End If
+                                    If Left(l_strInfo, 1) = "~" Then
+                                        l_strInfo = Mid(l_strInfo, 2)
+                                        m_oiItems(l_lngItemCount - 1).ShowElipsis = True
+                                    End If
+                                    If InStr(l_strInfo, "{") Then
+                                        Select Case LCase(Trim(Mid(l_strInfo, InStr(l_strInfo, "{") + 1, InStrRev(l_strInfo, "}") - InStr(l_strInfo, "{") - 1)))
+                                        Case "hex"
+                                            m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Hex
+                                        Case "color"
+                                            m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Color
+                                        Case "filename", "path"
+                                            m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Filename
+                                        Case "imagefilename", "imagepath"
+                                            m_oiItems(l_lngItemCount - 1).SpecialType = OIT_ImageFilename
+                                        Case "winfilename"
+                                            m_oiItems(l_lngItemCount - 1).SpecialType = OIT_WindowsFilename
+                                        End Select
+                                        l_strInfo = Left(l_strInfo, InStr(l_strInfo, "{") - 1)
+                                    End If
+                                    m_oiItems(l_lngItemCount - 1).Description = l_strInfo
                                 End If
-                                Erase m_oiItems(l_lngItemCount).DropdownValues
-                                Erase m_oiItems(l_lngItemCount).DropdownText
-                                m_oiItems(l_lngItemCount - 1).Name = .Name
-                                m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Normal
-                                m_oiItems(l_lngItemCount - 1).DataType = .ReturnType.VarType
-                                If (.ReturnType.TypeInfo Is Nothing) Then
-                                ElseIf .ReturnType.TypeInfo.TypeKind = TKIND_ENUM Then
-                                    m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Enum
-                                    ReDim m_oiItems(l_lngItemCount - 1).DropdownValues(0 To .ReturnType.TypeInfo.Members.Count - 1)
-                                    ReDim m_oiItems(l_lngItemCount - 1).DropdownText(0 To .ReturnType.TypeInfo.Members.Count - 1)
-                                    Dim l_memMember As MemberInfo, l_lngValue As Long
-                                    l_lngValue = 0
-                                    For Each l_memMember In .ReturnType.TypeInfo.Members
-                                        m_oiItems(l_lngItemCount - 1).DropdownText(l_lngValue) = l_memMember.Name
-                                        m_oiItems(l_lngItemCount - 1).DropdownValues(l_lngValue) = l_memMember.Value
-                                        l_lngValue = l_lngValue + 1
-                                    Next l_memMember
+                                If .InvokeKind = 0 Then
+                                    m_oiItems(l_lngItemCount - 1).CallTypes = VbGet Or VbLet Or VbSet
+                                Else
+                                    m_oiItems(l_lngItemCount - 1).CallTypes = m_oiItems(l_lngItemCount - 1).CallTypes Or .InvokeKind
                                 End If
-                                If Left(l_strInfo, 1) = "~" Then
-                                    l_strInfo = Mid(l_strInfo, 2)
-                                    m_oiItems(l_lngItemCount - 1).ShowElipsis = True
-                                End If
-                                If InStr(l_strInfo, "{") Then
-                                    Select Case LCase(Trim(Mid(l_strInfo, InStr(l_strInfo, "{") + 1, InStrRev(l_strInfo, "}") - InStr(l_strInfo, "{") - 1)))
-                                    Case "hex"
-                                        m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Hex
-                                    Case "color"
-                                        m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Color
-                                    Case "filename", "path"
-                                        m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Filename
-                                    Case "imagefilename", "imagepath"
-                                        m_oiItems(l_lngItemCount - 1).SpecialType = OIT_ImageFilename
-                                    Case "winfilename"
-                                        m_oiItems(l_lngItemCount - 1).SpecialType = OIT_WindowsFilename
-                                    End Select
-                                    l_strInfo = Left(l_strInfo, InStr(l_strInfo, "{") - 1)
-                                End If
-                                m_oiItems(l_lngItemCount - 1).Description = l_strInfo
-                            End If
-                            If .InvokeKind = 0 Then
-                                m_oiItems(l_lngItemCount - 1).CallTypes = VbGet Or VbLet Or VbSet
-                            Else
-                                m_oiItems(l_lngItemCount - 1).CallTypes = m_oiItems(l_lngItemCount - 1).CallTypes Or .InvokeKind
                             End If
                         End If
-                    End If
-                Case Else
-                End Select
+                    Case Else
+                    End Select
+                End If
             End With
         Next l_lngItems
     End With
+    If TypeOf m_objObject Is IInspectableCollection Then
+        Set l_colObject = m_objObject
+        l_lngOffset = UBound(m_oiItems)
+        ReDim Preserve m_oiItems(0 To UBound(m_oiItems) + l_colObject.ItemCount)
+        For l_lngIndex = 1 To l_colObject.ItemCount
+            m_oiItems(l_lngIndex + l_lngOffset).Name = "Item " & l_lngIndex
+            m_oiItems(l_lngIndex + l_lngOffset).SpecialType = OIT_CollectionItem
+            m_oiItems(l_lngIndex + l_lngOffset).CanInspect = True
+            m_oiItems(l_lngIndex + l_lngOffset).ShowElipsis = True
+            m_oiItems(l_lngIndex + l_lngOffset).CallTypes = VbGet
+        Next l_lngIndex
+    End If
     If l_lngItemCount = 0 Then txtEdit.Visible = False
     CalculateSize
     RefreshValues
@@ -844,8 +881,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -856,8 +893,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -869,7 +906,7 @@ Dim l_booOldLocked As Boolean
             RaiseEvent EllipsisPressed(m_lngSelectedItem)
         End If
     Else
-        If (TypeOf l_objValue Is IInspectable) Or InspectAny Then
+        If (TypeOf l_objValue Is IInspectable) Or (TypeOf l_objValue Is IInspectableCollection) Or InspectAny Then
             Inspect l_objValue, m_oiItems(m_lngSelectedItem).Name, False
         Else
             RaiseEvent EllipsisPressed(m_lngSelectedItem)
@@ -901,7 +938,7 @@ Dim l_lngSpace As Long
         picHierarchy.Font.Bold = (m_colObjectStack(l_lngNames) Is m_objObject)
         l_lngWidth = l_lngX + picHierarchy.TextWidth(m_colNameStack(l_lngNames))
         If (X >= l_lngX) And (X < l_lngWidth) Then
-            If ((TypeOf m_colObjectStack(l_lngNames) Is IInspectable) Or (InspectAny)) And (Not (m_colObjectStack(l_lngNames) Is Nothing)) Then
+            If ((TypeOf m_colObjectStack(l_lngNames) Is IInspectable) Or (TypeOf m_colObjectStack(l_lngNames) Is IInspectableCollection) Or (InspectAny)) And (Not (m_colObjectStack(l_lngNames) Is Nothing)) Then
                 Inspect m_colObjectStack(l_lngNames), m_colNameStack(l_lngNames), False
                 Exit Sub
             End If
@@ -932,7 +969,7 @@ Dim l_lngSpace As Long
     picHierarchy.CurrentY = 1
     For l_lngNames = 1 To m_colNameStack.Count
         picHierarchy.Font.Bold = (m_colObjectStack(l_lngNames) Is m_objObject)
-        picHierarchy.Font.Underline = (TypeOf m_colObjectStack(l_lngNames) Is IInspectable) Or (InspectAny)
+        picHierarchy.Font.Underline = (TypeOf m_colObjectStack(l_lngNames) Is IInspectable) Or (InspectAny) Or (TypeOf m_colObjectStack(l_lngNames) Is IInspectableCollection)
         picHierarchy.Print m_colNameStack(l_lngNames);
         picHierarchy.Font.Underline = False
         picHierarchy.Font.Bold = False
@@ -949,7 +986,7 @@ End Sub
 
 Private Sub picInfo_Paint()
 On Error Resume Next
-Dim l_rcRect As Win32.RECT
+Dim l_rcRect As Win32.Rect
 Dim l_lngLength As Long
     picInfo.Line (0, 0)-(picInfo.ScaleWidth - 1, picInfo.ScaleHeight - 1), vbButtonShadow, B
     picInfo.Line (1, 1)-(picInfo.ScaleWidth - 2, picInfo.ScaleHeight - 2), vbButtonFace, BF

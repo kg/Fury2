@@ -14,6 +14,7 @@ Begin VB.UserControl ngListBox
       Italic          =   0   'False
       Strikethrough   =   0   'False
    EndProperty
+   OLEDropMode     =   1  'Manual
    ScaleHeight     =   240
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   320
@@ -39,6 +40,8 @@ Option Explicit
 Private Declare Function UpdateWindow Lib "user32" (ByVal hwnd As Long) As Long
 Private Declare Function InvalidateRect Lib "user32" (ByVal hwnd As Long, lpRect As Rect, ByVal bErase As Long) As Long
 
+Event OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
+Event OLEDragOver(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single, State As Integer)
 Event SelectionChange()
 Event ItemContextMenu(ByRef Item As ngListItem)
 Event ItemSelect(ByRef Item As ngListItem)
@@ -497,7 +500,7 @@ Private Sub UserControl_EnterFocus()
 On Error Resume Next
     If Not m_booVisible Then Exit Sub
     m_booHaveFocus = True
-    Redraw
+    Reflow
 End Sub
 
 Private Sub UserControl_ExitFocus()
@@ -656,6 +659,16 @@ Dim l_booToggle As Boolean
         End If
     End If
     Redraw
+End Sub
+
+Private Sub UserControl_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+    RaiseEvent OLEDragDrop(Data, Effect, Button, Shift, X, Y)
+End Sub
+
+Private Sub UserControl_OLEDragOver(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single, State As Integer)
+On Error Resume Next
+    RaiseEvent OLEDragOver(Data, Effect, Button, Shift, X, Y, State)
 End Sub
 
 Private Sub UserControl_Paint()

@@ -57,8 +57,8 @@ Dim l_sprSprite As Fury2Sprite
     Set l_sprSprite = DefaultEngine.RM2kSprite(l_strFilename, CLng(InputBox("Character number:", "Select Character", 0)))
     l_sprSprite.Initialize
     l_sprSprite.Load
-    l_sprSprite.Poses.LoadGraphics
     l_docSprite.Sprites.Add l_sprSprite
+    l_docSprite.ReloadGraphics
     m_objEditor.NewDocument l_docSprite
     Err.Clear
 End Sub

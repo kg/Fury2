@@ -69,8 +69,10 @@ Static l_sngS As Single, l_sngR As Single
 '    glClearColor 0.33, 0.33, 0.33, 0
 '    glClear clrColorBufferBit
 ''    m_imgBuffer.ConvexPolygon Array(Array(10, 10), Array(50, 10), Array(50, 50), Array(25, 75), Array(10, 50)), F2White
-    m_imgBuffer.Adjust -16
+'    m_imgBuffer.Adjust -16
+    m_imgBuffer.Clear 0
     m_imgTexture.Draw m_imgBuffer, m_imgBuffer.Width / 2, m_imgBuffer.Height / 2, 1, 1, l_sngR, BlitMode_Additive, , ResampleMode_Bilinear
+    m_imgBuffer.Blit f2rect(50, 50, 100, 100, False), , m_imgBuffer
 '    m_imgBuffer.Blit , , m_imgTexture, 1, BlitMode_SourceAlpha_Tint, F2RGB(0, 255, 0, 255)
 '    m_imgBuffer.Fill F2Rect(10, 10, 50, 50, False), F2RGB(0, 31, 0, 127)
 '    m_imgBuffer.Fill F2Rect(60, 10, 50, 50, False), F2RGB(0, 31, 0, 127), RenderMode_SourceAlpha

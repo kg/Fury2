@@ -57,6 +57,8 @@ Public Function FindByNames(ByVal Match As String) As Fury2Collection
 On Error Resume Next
 Dim l_colItems As Fury2Collection
 Dim l_litLight As Fury2LightSource
+    If mvarParent Is Nothing Then Stop
+    If mvarParent.Engine Is Nothing Then Stop
     Set l_colItems = mvarParent.Engine.F2Collection()
     For Each l_litLight In mCol
         If l_litLight.Name Like Match Then

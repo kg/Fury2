@@ -1,9 +1,10 @@
 VERSION 5.00
 Begin VB.Form frmOpenGL 
    BackColor       =   &H00000000&
+   BorderStyle     =   1  'Fixed Single
    ClientHeight    =   3600
-   ClientLeft      =   60
-   ClientTop       =   450
+   ClientLeft      =   45
+   ClientTop       =   435
    ClientWidth     =   4800
    BeginProperty Font 
       Name            =   "Tahoma"
@@ -17,6 +18,8 @@ Begin VB.Form frmOpenGL
    Icon            =   "frmOpenGL.frx":0000
    KeyPreview      =   -1  'True
    LinkTopic       =   "Form1"
+   MaxButton       =   0   'False
+   MinButton       =   0   'False
    MouseIcon       =   "frmOpenGL.frx":708A
    ScaleHeight     =   240
    ScaleMode       =   3  'Pixel

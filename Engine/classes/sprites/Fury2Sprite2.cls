@@ -67,6 +67,7 @@ Private m_booTrueMovement As Boolean, m_booRelativeAnimation As Boolean
 Private m_booDisplayRotation As Boolean
 
 Private m_booMoved As Boolean
+Private m_booLoaded As Boolean
 
 Private m_lngProcessType As Long
 Private m_booCull As Boolean
@@ -92,7 +93,7 @@ Private m_booAreasUpdated As Boolean
 
 Private m_lngWalkState As Long, m_lngIdleState As Long
 
-Public LinkState As Boolean, LinkPose As Boolean, LinkFrame As Boolean
+Public LinkState As Boolean, LinkPose As Boolean, LinkFrame As Boolean, LinkProperties As Boolean
 
 Public SavedPaths As Fury2Collection
 Attribute SavedPaths.VB_VarDescription = "*"
@@ -103,6 +104,16 @@ Attribute Tag.VB_VarDescription = "An additional piece of data."
 Public AnimationMultiplier As Single
 Public Ignore As Boolean
 Private mvarEngine As Fury2Engine
+
+Public Property Get RenderTarget() As Long
+On Error Resume Next
+    RenderTarget = m_spParam.Params.RenderTarget + 1
+End Property
+
+Public Property Let RenderTarget(ByVal Index As Long)
+On Error Resume Next
+    m_spParam.Params.RenderTarget = Index - 1
+End Property
 
 Friend Sub SetEngine(NewEngine As Fury2Engine)
 On Error Resume Next
@@ -425,6 +436,7 @@ On Error Resume Next
     m_posPoses.SetParent Me
     Set m_staStates = New Fury2States
     Set m_pthPath = New Fury2Path
+    m_spParam.Velocity.CFM = 1
     m_pthPath.SetParent Me
     m_lngAnimationDirection = 1
     m_lngState = 1
@@ -436,6 +448,7 @@ On Error Resume Next
     LinkState = True
     LinkPose = True
     LinkFrame = True
+    LinkProperties = True
     Name = "Sprite"
     SpriteType = F2ST_Entity
     VelocityMultiplier = 1
@@ -656,6 +669,7 @@ Dim l_posPose As Fury2Pose
     Set m_sprAttached = Nothing
     Set m_sprSprites = Nothing
     Set m_mapMap = Nothing
+    m_booLoaded = False
 End Sub
 
 Friend Property Let Index(ByVal NewValue As Long)
@@ -689,6 +703,7 @@ On Error Resume Next
 Dim l_booValue As Boolean, l_sngValue As Single, l_lngValue As Long, l_bytValue As Byte
 Dim l_sngStateVelocity As Single, l_staState As Fury2State
     With File
+        m_booLoaded = False
         DoEvents
         .ReadSegment_Begin
             .ReadSegment_Begin
@@ -741,6 +756,9 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 l_booValue = True
                 If Not .EOS Then .Load l_booValue
                 LinkFrame = l_booValue
+                l_booValue = True
+                If Not .EOS Then .Load l_booValue
+                LinkProperties = l_booValue
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load l_booValue
@@ -773,6 +791,8 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 If Not .EOS Then .Load l_booValue
                 DiffuseLight = l_booValue
                 .Load m_booDisplayRotation
+                .Load l_lngValue
+                m_spParam.Params.RenderTarget = CByte(l_lngValue)
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load m_strScript
@@ -877,6 +897,7 @@ On Error Resume Next
                 .Save LinkState
                 .Save LinkPose
                 .Save LinkFrame
+                .Save LinkProperties
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save CBool(m_spParam.Stats.Solid)
@@ -897,6 +918,7 @@ On Error Resume Next
                 .Save m_spParam.Params.Color
                 .Save DiffuseLight
                 .Save m_booDisplayRotation
+                .Save CLng(m_spParam.Params.RenderTarget)
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save m_strScript
@@ -950,7 +972,10 @@ Public Sub Load()
 On Error Resume Next
     If Engine.EditMode Then
     Else
-        Script.Load
+        If Not m_booLoaded Then
+            Script.Load
+            m_booLoaded = True
+        End If
     End If
     If m_booDestroyed Then Exit Sub
     m_posPoses.LoadGraphics
@@ -1074,7 +1099,8 @@ Public Property Let PoseOverride(ByVal NewValue As Boolean)
     m_booPoseOverride = NewValue
 End Property
 
-Friend Property Set Poses(ByVal NewValue As Fury2Poses)
+Public Property Set Poses(ByVal NewValue As Fury2Poses)
+On Error Resume Next
     Set m_posPoses = NewValue
     UpdatePose True
 End Property
@@ -1164,9 +1190,12 @@ Public Sub Render(ByVal Surface As Fury2Image, ByVal X As Long, ByVal Y As Long)
 On Error Resume Next
 Dim m_cpCamera As CameraParam
 Dim m_spSprite As SpriteParam
+Dim l_lngTargets(0 To 0) As Long
     m_spSprite = m_spParam
     m_cpCamera.Rectangle = Surface.Rectangle.GetRectangle
-    m_cpCamera.pImage = Surface.Handle
+    l_lngTargets(0) = Surface.Handle
+    m_cpCamera.pRenderTargets = VarPtr(l_lngTargets(0))
+    m_cpCamera.RenderTargetCount = 1
     m_cpCamera.ViewportX = 0
     m_cpCamera.ViewportY = 0
     m_cpCamera.Alpha = 255
@@ -1381,7 +1410,8 @@ Public Property Get State() As Long
     State = m_lngState
 End Property
 
-Friend Property Set States(ByVal NewValue As Fury2States)
+Public Property Set States(ByVal NewValue As Fury2States)
+On Error Resume Next
     Set m_staStates = NewValue
     UpdateState True
 End Property
@@ -1477,15 +1507,25 @@ Dim l_sprCollided As Fury2Sprite
     
     If m_spParam.Events.CollidedWith <> 0 Then
         mvarEngine.ContextLevelAdd "Sprite_Hit"
-        Err.Clear
         Set l_sprCollided = m_mapMap.Layers(m_lngLayer).Sprites(m_spParam.Events.CollidedWith)
     
+        Err.Clear
         m_objScript.Hit l_sprCollided
     
         If Err <> 0 Then
             Err.Clear
         
             m_objScript.Hit
+        
+        End If
+        
+        Err.Clear
+        l_sprCollided.Script.Hit Me
+    
+        If Err <> 0 Then
+            Err.Clear
+        
+            l_sprCollided.Script.Hit
         
         End If
         mvarEngine.ContextLevelRemove
@@ -1506,14 +1546,14 @@ Dim l_sprCollided As Fury2Sprite
         With m_sprAttached
             m_spParam.Position.X = .X + m_sngAttachX
             m_spParam.Position.Y = .Y + m_sngAttachY
-            Me.Angle = .Angle
-            Me.RotationAngle = .RotationAngle
-            Me.ScaleLevel = .ScaleLevel
+            If LinkProperties Then Me.Angle = .Angle
+            If LinkProperties Then Me.RotationAngle = .RotationAngle
+            If LinkProperties Then Me.ScaleLevel = .ScaleLevel
             If LinkState Then Me.State = .State
             Me.Velocity = .Velocity
             If LinkPose Then Me.Pose = .Pose
             If LinkFrame Then Me.Frame = .Frame
-            Me.Alpha = .Alpha
+            If LinkProperties Then Me.Alpha = .Alpha
         End With
     End If
     
@@ -1824,6 +1864,14 @@ Public Property Let Weight(ByVal NewValue As Single)
     m_spParam.Stats.Weight = NewValue
 End Property
 
+Public Property Get ConstantForceMultiplier() As Single
+    ConstantForceMultiplier = m_spParam.Velocity.CFM
+End Property
+
+Public Property Let ConstantForceMultiplier(ByVal NewValue As Single)
+    m_spParam.Velocity.CFM = NewValue
+End Property
+
 Public Property Get X() As Single
     X = m_spParam.Position.X
 End Property
@@ -1852,8 +1900,16 @@ Public Property Let XVelocity(ByVal NewValue As Single)
     m_spParam.Velocity.X = NewValue
 End Property
 
+Public Property Get ConstantXForce() As Single
+    ConstantXForce = m_spParam.Velocity.CXF
+End Property
+
+Public Property Let ConstantXForce(ByVal NewValue As Single)
+    m_spParam.Velocity.CXF = NewValue
+End Property
+
 Public Property Get XForce() As Single
-    XForce = m_spParam.Velocity.XF
+    XForce = m_spParam.Velocity.XF + m_spParam.Velocity.CXF
 End Property
 
 Public Property Get Y() As Single
@@ -1872,8 +1928,16 @@ Public Property Get YTop() As Single
     YTop = m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height)
 End Property
 
+Public Property Get ConstantYForce() As Single
+    ConstantYForce = m_spParam.Velocity.CYF
+End Property
+
+Public Property Let ConstantYForce(ByVal NewValue As Single)
+    m_spParam.Velocity.CYF = NewValue
+End Property
+
 Public Property Get YForce() As Single
-    YForce = m_spParam.Velocity.YF
+    YForce = m_spParam.Velocity.YF + m_spParam.Velocity.CYF
 End Property
 
 Public Property Get YVelocity() As Single
@@ -1904,3 +1968,8 @@ Public Property Get Pressure() As Single
     Pressure = m_spParam.Velocity.FW
 End Property
 
+Public Sub ApplyForce(ByVal X As Single, ByVal Y As Single)
+On Error Resume Next
+    m_spParam.Velocity.CXF = m_spParam.Velocity.CXF + X
+    m_spParam.Velocity.CYF = m_spParam.Velocity.CYF + Y
+End Sub

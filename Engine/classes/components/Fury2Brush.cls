@@ -220,6 +220,7 @@ Dim l_camCamera As CameraParam
 Dim l_tstTileset As Fury2Tileset
 Dim l_lngTileWidth As Long, l_lngTileHeight As Long
 Dim l_lngBrushWidth As Long, l_lngBrushHeight As Long
+Dim l_lngTargets(0 To 0) As Long
     If Layer Is Nothing Then Exit Sub
     If Layer.Tileset Is Nothing Then Exit Sub
     l_lngTileWidth = Layer.Tileset.TileWidth
@@ -229,7 +230,9 @@ Dim l_lngBrushWidth As Long, l_lngBrushHeight As Long
     With l_camCamera
         .Rectangle = Image.Rectangle.GetRectangle
         .Alpha = 255
-        .pImage = Image.Handle
+        l_lngTargets(0) = Image.Handle
+        .pRenderTargets = VarPtr(l_lngTargets(0))
+        .RenderTargetCount = 1
         .ViewportX = 0
         .ViewportY = 0
     End With

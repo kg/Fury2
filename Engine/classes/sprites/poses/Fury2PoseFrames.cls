@@ -36,8 +36,31 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 Implements Fury2Object
 Implements IVirtualFileCollection
+Implements IInspectableCollection
 Private m_posParent As Fury2Pose
 Private mCol As Collection
+
+Private Property Get IInspectableCollection_ItemCount() As Long
+On Error Resume Next
+    IInspectableCollection_ItemCount = mCol.Count
+End Property
+
+Private Property Set IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+On Error Resume Next
+End Property
+
+Private Property Let IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+On Error Resume Next
+End Property
+
+Private Property Get IInspectableCollection_ItemValue(ByVal Index As Long) As Variant
+On Error Resume Next
+    Err.Clear
+    Set IInspectableCollection_ItemValue = mCol(Index)
+    If Err <> 0 Then
+        IInspectableCollection_ItemValue = mCol(Index)
+    End If
+End Property
 
 Public Property Get Parent() As Fury2Pose
     Set Parent = m_posParent

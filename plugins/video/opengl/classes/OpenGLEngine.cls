@@ -28,6 +28,8 @@ Public Event KeyUp(KeyCode As Integer, Shift As Integer)
 Public Event Closed()
 Public Event Resize()
 Public Event Paint()
+Private m_booError As Boolean
+Private m_booEnabled As Boolean
 Private m_Hooked As Object
 Private m_lngWidth As Long, m_lngHeight As Long
 Public ScaleRatio As Single
@@ -56,6 +58,8 @@ End Function
 
 Private Sub InitBackbuffer()
 On Error Resume Next
+    If m_booError Then Exit Sub
+    If Not m_booEnabled Then Exit Sub
     GLSetOutputSize m_OutForm.ScaleWidth, m_OutForm.ScaleHeight
     GLInstallAllocateHook
     If Backbuffer Is Nothing Then
@@ -131,7 +135,6 @@ On Error Resume Next
 '    End If
     Set m_OutForm = New frmOpenGL
     Load m_OutForm
-    GLInit m_OutForm.HWND, m_OutForm.HDC
     m_OutForm.Caption = Caption
     #If UseWindowBuffer Then
         m_OutForm.AutoRedraw = True
@@ -142,12 +145,21 @@ On Error Resume Next
     m_lngHeight = YRes
     SetFormSize m_OutForm, XRes * ScaleRatio, YRes * ScaleRatio
     m_OutForm.Show
+    Err.Clear
+    GLInit m_OutForm.HWND, m_OutForm.HDC
+    If Err <> 0 Then
+        MsgBox "Unable to load OpenGL!", vbExclamation, "Error"
+        m_booError = True
+        Exit Sub
+    End If
+    m_booEnabled = True
     Reallocate
 End Sub
 
 Public Sub Flip()
 On Error Resume Next
     If m_Closed Then Exit Sub
+    If Not m_booEnabled Then Exit Sub
     GLFlip ' m_OutForm.HDC
 End Sub
 

@@ -38,7 +38,7 @@ Begin VB.Form frmConfigure
       EndProperty
       Height          =   405
       Left            =   3450
-      TabIndex        =   8
+      TabIndex        =   7
       Top             =   1380
       Width           =   1200
    End
@@ -56,7 +56,7 @@ Begin VB.Form frmConfigure
       EndProperty
       Height          =   405
       Left            =   30
-      TabIndex        =   4
+      TabIndex        =   6
       Top             =   1380
       Width           =   1200
    End
@@ -73,7 +73,7 @@ Begin VB.Form frmConfigure
       EndProperty
       Height          =   270
       Left            =   30
-      TabIndex        =   3
+      TabIndex        =   4
       Top             =   1080
       Width           =   4620
       Begin VB.PictureBox picEnableSound 
@@ -82,7 +82,7 @@ Begin VB.Form frmConfigure
          Left            =   3765
          ScaleHeight     =   195
          ScaleWidth      =   780
-         TabIndex        =   9
+         TabIndex        =   10
          Top             =   0
          Width           =   780
          Begin VB.CheckBox chkEnableSound 
@@ -90,7 +90,7 @@ Begin VB.Form frmConfigure
             Caption         =   "Enable"
             Height          =   195
             Left            =   0
-            TabIndex        =   10
+            TabIndex        =   5
             Top             =   0
             Value           =   1  'Checked
             Width           =   780
@@ -120,7 +120,7 @@ Begin VB.Form frmConfigure
          Left            =   3255
          List            =   "frmConfigure.frx":493A
          Style           =   2  'Dropdown List
-         TabIndex        =   7
+         TabIndex        =   3
          Top             =   615
          Width           =   1260
       End
@@ -131,7 +131,7 @@ Begin VB.Form frmConfigure
          Left            =   1470
          List            =   "frmConfigure.frx":497E
          Style           =   2  'Dropdown List
-         TabIndex        =   5
+         TabIndex        =   2
          Top             =   615
          Width           =   1755
       End
@@ -141,7 +141,7 @@ Begin VB.Form frmConfigure
          Left            =   1470
          List            =   "frmConfigure.frx":49D6
          Style           =   2  'Dropdown List
-         TabIndex        =   2
+         TabIndex        =   1
          Top             =   255
          Width           =   3045
       End
@@ -152,7 +152,7 @@ Begin VB.Form frmConfigure
          Enabled         =   0   'False
          Height          =   195
          Left            =   435
-         TabIndex        =   6
+         TabIndex        =   9
          Top             =   675
          Width           =   1005
       End
@@ -162,7 +162,7 @@ Begin VB.Form frmConfigure
          Caption         =   "Output Plugin:"
          Height          =   195
          Left            =   405
-         TabIndex        =   1
+         TabIndex        =   8
          Top             =   315
          Width           =   1035
       End

@@ -37,6 +37,7 @@ Implements IInspectable
 Implements IVirtualFileSaveable
 Private mvarAngle As Single 'local copy
 Private mvarAttachedSprite As Fury2Sprite 'local copy
+Private mvarAlpha As Single
 Private mvarColor As Long 'local copy
 Private mvarFalloffDistance As Long 'local copy
 Private mvarFlickerLevel As Single 'local copy
@@ -51,6 +52,17 @@ Private mvarEnableCache As Boolean
 Private mvarCacheValid As Boolean
 Private mvarCache As Fury2Image
 Private mvarFuzziness As Byte
+
+Public Property Get Alpha() As Single
+On Error Resume Next
+    Alpha = mvarAlpha
+End Property
+
+Public Property Let Alpha(ByVal NewAlpha As Single)
+On Error Resume Next
+    mvarAlpha = NewAlpha
+    mvarCacheValid = False
+End Property
 
 Public Sub UpdateCache()
 On Error Resume Next
@@ -121,7 +133,7 @@ On Error Resume Next
         Else
             .AttachedSprite = mvarAttachedSprite.Pointer
         End If
-        .Color = mvarColor
+        .Color = BlendColors(0, mvarColor, mvarAlpha * 255)
         .FalloffDistance = mvarFalloffDistance
         .FlickerLevel = mvarFlickerLevel
         .NoiseOpacity = mvarNoiseOpacity
@@ -251,10 +263,12 @@ Public Property Get Angle() As Single
 End Property
 
 Private Sub Class_Initialize()
+On Error Resume Next
     mvarSpread = 360
     mvarColor = F2RGB(255, 255, 255, 255)
     mvarVisible = True
     mvarName = "Light"
+    mvarAlpha = 1
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
@@ -274,6 +288,11 @@ On Error Resume Next
             .Load mvarName
             .Load mvarEnableCache
             .Load mvarFuzziness
+            If .EOS Then
+                mvarAlpha = 1
+            Else
+                .Load mvarAlpha
+            End If
             Set mvarCache = Nothing
             UpdateCache
         .ReadSegment_End
@@ -297,6 +316,7 @@ On Error Resume Next
             .Save mvarName
             .Save mvarEnableCache
             .Save mvarFuzziness
+            .Save mvarAlpha
         .WriteSegment_End
     End With
 End Sub

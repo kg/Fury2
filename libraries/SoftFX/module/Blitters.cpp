@@ -60,6 +60,16 @@ BLITTERSIMPLE_LOOPBEGIN
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
 
+BLITTERSIMPLE_SIGNATURE(Compare)
+    ) {
+BLITTERSIMPLE_INIT
+    _BOS(BlitSimple_Compare, 2) _BOE
+BLITTERSIMPLE_BEGIN
+BLITTERSIMPLE_LOOPBEGIN
+  if ((*pDest) != (*pSource)) return Failure;
+BLITTERSIMPLE_LOOPEND
+BLITTERSIMPLE_END
+
 BLITTERSIMPLE_SIGNATURE(Normal_Opacity)
     , int Opacity) {
 BLITTERSIMPLE_INIT
@@ -1880,6 +1890,106 @@ BLITTERRESAMPLE_LOOPBEGIN
     }
 BLITTERRESAMPLE_LOOPEND
 BLITTERRESAMPLE_END
+
+Export int BlitMask_Normal_Opacity(Image *Dest, Image *Source, Image *Mask,
+                          Rectangle *Rect, Coordinate SX, Coordinate SY, Coordinate MX, Coordinate MY, int Opacity)
+{
+    if (!Dest || !Source || !Mask) {
+        return Failure;
+    }
+    if (!Dest->initialized()) {
+        return Failure;
+    }
+    if (!Source->initialized()) {
+        return Failure;
+    }
+    if (!Mask->initialized()) {
+        return Failure;
+    }
+
+    if (Opacity == 0) {
+      return Trivial_Success;
+    }
+
+    {
+        int overrideresult = Override::EnumOverrides(Override::BlitMask_Normal_Opacity, 9, Dest, Source, Mask, Rect, SX, SY, MX, MY, Opacity);
+#ifdef OVERRIDES
+        if (overrideresult != 0) return overrideresult;
+#endif
+    }
+
+    if (!Dest->Unlocked) {
+        return Failure;
+    }
+    if (!Source->Unlocked) {
+        return Failure;
+    }
+    if (!Mask->Unlocked) {
+        return Failure;
+    }
+
+    int DSX = SX, DSY = SY, MSX = MX, MSY = MY;
+
+    Rectangle rCoordinates;
+    if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
+        Rect, DSX, DSY)) {
+          return Trivial_Success;
+      }
+
+    rCoordinates.Width = ClipValue(rCoordinates.Width, 0, Mask->Width - MX);
+    rCoordinates.Height = ClipValue(rCoordinates.Height, 0, Mask->Height - MY);
+
+    Pixel *pSource = Source->pointer(DSX, DSY),
+        *pDest = Dest->pointer(
+        rCoordinates.Left, rCoordinates.Top),
+        *pMask = Mask->pointer(MSX, MSY);
+    if ((!pSource) || (!pDest) || (!pMask)) {
+      return Failure;
+    }
+    
+    Dest->dirty();
+    
+    DoubleWord iCX = 0 , iCY = rCoordinates.Height;
+    
+    DoubleWord iMaskRowOffset =
+        (Mask->Width - rCoordinates.Width) + Mask->Pitch;
+    DoubleWord iSourceRowOffset =
+        (Source->Width - rCoordinates.Width) + Source->Pitch;
+    DoubleWord iDestRowOffset =
+        (Dest->Width - rCoordinates.Width) + Dest->Pitch;
+    
+    AlphaLevel *aScale, *aMask, *aSource, *aDest;
+    aScale = AlphaLevelLookup( ClipByte(Opacity) );
+    int sa;
+
+    while (iCY--) {
+        iCX = (DoubleWord)rCoordinates.Width;
+        while (iCX--) {
+            if ((*pMask)[::Alpha]) {
+                sa = AlphaFromLevel(aScale, (*pMask)[::Alpha]);
+                if (sa == 255) {
+                  (*pDest)[::Blue] = (*pSource)[::Blue];
+                  (*pDest)[::Green] = (*pSource)[::Green];
+                  (*pDest)[::Red] = (*pSource)[::Red];
+                } else {
+                  aSource = AlphaLevelLookup(sa);
+                  aDest = AlphaLevelLookup(sa ^ 0xFF);
+                  (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, (*pSource)[::Blue]);
+                  (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, (*pSource)[::Green]);
+                  (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, (*pSource)[::Red]);
+                }
+            }
+            pMask++;
+            pSource++;
+            pDest++;
+        }
+        pMask += iMaskRowOffset;
+        pSource += iSourceRowOffset;
+        pDest += iDestRowOffset;
+    }
+
+    return Success;
+}
 
 Export int BlitMask_SourceAlpha_Opacity(Image *Dest, Image *Source, Image *Mask,
                           Rectangle *Rect, Coordinate SX, Coordinate SY, Coordinate MX, Coordinate MY, int Opacity)

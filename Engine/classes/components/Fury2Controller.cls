@@ -231,7 +231,8 @@ Private Sub Fury2Plugin_ControlActivate(Control As Fury2InputControl)
 On Error Resume Next
     If Enabled = False Then Exit Sub
     If Control.Name = ActivateBinding Then
-        If Obj.ActionAhead Then Control.Consume
+        Control.Consume
+        Obj.ActionAhead
     ElseIf Control.Name = UpBinding Then
         InputState(0) = True
         Control.Consume

@@ -35,6 +35,7 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 
 Implements Fury2Object
 Implements IVirtualFileSaveable
+Implements IInspectable
 Private mvarX As Single
 Private mvarY As Single
 Private mvarWait As Long

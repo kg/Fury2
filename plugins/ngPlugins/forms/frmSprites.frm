@@ -523,20 +523,25 @@ Dim l_sprSprite As Fury2Sprite
     End If
 End Function
 
-Public Sub InsertSprite(Optional ByVal Index As Long = -1)
+Public Function InsertSprite(Optional ByVal Index As Long = -1) As Fury2Sprite
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
+Dim l_staState As Fury2State
     If Index = -1 Then Index = m_scSprites.Count + 1
     Set l_sprSprite = New Fury2Sprite
     l_sprSprite.Initialize
     l_sprSprite.Load
     l_sprSprite.Name = "New Sprite"
+    Set l_staState = New Fury2State
+    l_staState.Name = "New State"
+    l_sprSprite.States.Add l_staState
     m_scSprites.Add l_sprSprite, , Index
     m_lngSelectedSprite = Index
     ViewChanged
     RedrawSprites
     Editor.ToolbarUpdate
-End Sub
+    Set InsertSprite = l_sprSprite
+End Function
 
 Public Sub CutStates()
 On Error Resume Next
@@ -595,10 +600,12 @@ End Sub
 Public Sub InsertState(Optional ByVal Index As Long = -1)
 On Error Resume Next
 Dim l_staState As Fury2State
-    If Index = -1 Then Index = m_lngSelectedState
+    If Index = -1 Then Index = SelectedSprite.States.Count + 1
     Set l_staState = New Fury2State
-    SelectedSprite.States.Add l_staState ', , Index
+    SelectedSprite.States.Add l_staState, , Index
+    m_lngSelectedState = Index
     StatesViewChanged
+    lstStates.SelectItems Index
     Editor.ToolbarUpdate
 End Sub
 
@@ -667,6 +674,7 @@ Dim l_posPose As Fury2Pose
     Set l_posPose = New Fury2Pose
     SelectedSprite.Poses.Add l_posPose, , Index
     PosesViewChanged
+    lstPoses.SelectItems Index
     Editor.ToolbarUpdate
 End Sub
 
@@ -731,8 +739,8 @@ Dim l_fraFrame As Fury2PoseFrame
     If Index = -1 Then Index = SelectedPose.Frames.Count + 1
     Set l_fraFrame = New Fury2PoseFrame
     SelectedPose.Frames.Add l_fraFrame, , Index
-    m_lngSelectedFrame = Index
     FramesViewChanged
+    lstFrames.SelectItems Index
     Editor.ToolbarUpdate
 End Sub
 
@@ -886,7 +894,7 @@ Public Sub RedrawSprites()
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.RECT
+Dim l_rctText As Win32.Rect
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long
@@ -960,13 +968,13 @@ Dim l_liItem As ngListItem
             .Clear
             l_lngItems = 1
             For Each l_fraFrame In SelectedPose.Frames
-                Set .AddNew("Frame " & l_lngItems).Tag = l_fraFrame
+                Set .AddNew(IIf(l_lngItems = 1, "Stopped Frame", "Animation Frame " & l_lngItems - 1)).Tag = l_fraFrame
                 l_lngItems = l_lngItems + 1
             Next l_fraFrame
         Else
             l_lngItems = 1
             For Each l_liItem In lstFrames.ListItems
-                l_liItem.Text = "Frame " & l_lngItems
+                l_liItem.Text = IIf(l_lngItems = 1, "Stopped Frame", "Animation Frame " & l_lngItems - 1)
                 Set l_liItem.Tag = SelectedPose.Frames(l_lngItems)
                 l_lngItems = l_lngItems + 1
             Next l_liItem
@@ -1236,6 +1244,7 @@ End Sub
 
 Public Sub Cleanup()
 On Error Resume Next
+    m_scSprites.Free
     Set m_fpgPlugin = Nothing
     Set m_scSprites = Nothing
     Set m_splSidebar = Nothing
@@ -1455,6 +1464,10 @@ End Sub
 
 Public Sub RedrawFrameView()
 On Error Resume Next
+Dim l_lngIndex As Long
+Dim l_liItems() As ngListItem
+Dim l_fraFrame As Fury2PoseFrame
+    l_liItems = lstFrames.SelectedItems
     If (m_imgFrameDisplay.Width <> picFrameDisplay.ScaleWidth) Or (m_imgFrameDisplay.Height <> picFrameDisplay.ScaleHeight) Then
         m_imgFrameDisplay.Resize picFrameDisplay.ScaleWidth, picFrameDisplay.ScaleHeight
     End If
@@ -1464,9 +1477,18 @@ On Error Resume Next
         Select Case dtFrames.SelectedTab.key
         Case "Rectangle"
             .Blit , , SelectedFrame.Image, 0.5, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
-            .Fill SelectedFrame.Rectangle, SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
-            .Fill SelectedFrame.Rectangle, SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), RenderMode_SourceAlpha
-            .Blit SelectedFrame.Rectangle, SelectedFrame.Rectangle, SelectedFrame.Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
+            Err.Clear
+            l_lngIndex = -1
+            l_lngIndex = UBound(l_liItems)
+            If l_lngIndex = -1 Or Err <> 0 Then
+            Else
+                For l_lngIndex = LBound(l_liItems) To UBound(l_liItems)
+                    Set l_fraFrame = SelectedPose.Frames(l_liItems(l_lngIndex).Index)
+                    .Fill l_fraFrame.Rectangle, SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+                    .Fill l_fraFrame.Rectangle, SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), RenderMode_SourceAlpha
+                    .Blit l_fraFrame.Rectangle, l_fraFrame.Rectangle, l_fraFrame.Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
+                Next l_lngIndex
+            End If
             txtFrameProperty.Text = SelectedFrame.Rectangle.Class_ToString()
         Case "Alignment"
             .Blit F2Rect(0, 0, SelectedFrame.Rectangle.Width, SelectedFrame.Rectangle.Height, False), SelectedFrame.Rectangle, SelectedFrame.Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
@@ -1695,7 +1717,6 @@ End Property
 Private Function iDocument_Save(Filename As String) As Boolean
 On Error Resume Next
 Dim l_vfFile As VirtualFile
-    Kill Filename
     Err.Clear
     Set l_vfFile = F2File()
     SaveToFile m_scSprites, l_vfFile
@@ -2002,13 +2023,21 @@ Dim l_ptMouse As POINTAPI
     ListContext(Not (Item Is Nothing)), _
     frmIcons.ilContextMenus)
     Case 1
-        InsertFrame Item.Index
+        If Item Is Nothing Then
+            InsertFrame
+        Else
+            InsertFrame Item.Index
+        End If
     Case 3
         CutFrames
     Case 4
         CopyFrames
     Case 5
-        PasteFrames Item.Index
+        If Item Is Nothing Then
+            PasteFrames
+        Else
+            PasteFrames Item.Index
+        End If
     Case 6
         DeleteFrames
     Case Else
@@ -2043,13 +2072,21 @@ Dim l_ptMouse As POINTAPI
     ListContext(Not (Item Is Nothing)), _
     frmIcons.ilContextMenus)
     Case 1
-        InsertPose Item.Index
+        If Item Is Nothing Then
+            InsertPose
+        Else
+            InsertPose Item.Index
+        End If
     Case 3
         CutPoses
     Case 4
         CopyPoses
     Case 5
-        PastePoses Item.Index
+        If Item Is Nothing Then
+            PastePoses
+        Else
+            PastePoses Item.Index
+        End If
     Case 6
         DeletePoses
     Case Else
@@ -2136,13 +2173,21 @@ Dim l_ptMouse As POINTAPI
     ListContext(Not (Item Is Nothing)), _
     frmIcons.ilContextMenus)
     Case 1
-        InsertState Item.Index
+        If Item Is Nothing Then
+            InsertState
+        Else
+            InsertState Item.Index
+        End If
     Case 3
         CutStates
     Case 4
         CopyStates
     Case 5
-        PasteStates Item.Index
+        If Item Is Nothing Then
+            PasteStates
+        Else
+            PasteStates Item.Index
+        End If
     Case 6
         DeleteStates
     Case Else
@@ -2226,7 +2271,7 @@ Private Sub picSprites_MouseDown(Button As Integer, Shift As Integer, X As Singl
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.RECT
+Dim l_rctText As Win32.Rect
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long

@@ -37,8 +37,31 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 
 Implements Fury2Object
 Implements IVirtualFileCollection
+Implements IInspectableCollection
 Private mCol As Collection
 Public Parent As Fury2Map
+
+Private Property Get IInspectableCollection_ItemCount() As Long
+On Error Resume Next
+    IInspectableCollection_ItemCount = mCol.Count
+End Property
+
+Private Property Set IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+On Error Resume Next
+End Property
+
+Private Property Let IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+On Error Resume Next
+End Property
+
+Private Property Get IInspectableCollection_ItemValue(ByVal Index As Long) As Variant
+On Error Resume Next
+    Err.Clear
+    Set IInspectableCollection_ItemValue = mCol(Index)
+    If Err <> 0 Then
+        IInspectableCollection_ItemValue = mCol(Index)
+    End If
+End Property
 
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)
 On Error Resume Next

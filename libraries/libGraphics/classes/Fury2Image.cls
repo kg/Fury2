@@ -238,6 +238,23 @@ Dim l_lngScaler As Long
     End If
 End Sub
 
+Public Function Compare(Optional ByVal DestRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal Source As Fury2Image = Nothing) As Long
+On Error Resume Next
+Dim l_rctDest As Fury2Rect, l_rctSource As Fury2Rect
+Dim l_imgSource As Fury2Image
+    Set l_rctDest = DestRectangle
+    Set l_rctSource = SourceRectangle
+    Set l_imgSource = Source
+    If Err <> 0 Then
+        Err.Clear
+        Exit Function
+    End If
+    If l_imgSource Is Nothing Then Exit Function
+    If l_rctDest Is Nothing Then Set l_rctDest = Me.Rectangle
+    If l_rctSource Is Nothing Then Set l_rctSource = l_imgSource.Rectangle
+    Compare = SoftFX.Blit_Compare(m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top)
+End Function
+
 Public Property Get BlitMode() As SFXBlitModes
     BlitMode = m_bmdBlitMode
 End Property
@@ -749,7 +766,8 @@ Public Property Get Height() As Long
 End Property
 
 Public Property Get Initialized() As Boolean
-    Initialized = (SoftFX.GetInitialized())
+On Error Resume Next
+    Initialized = (SoftFX.GetInitialized() And (Handle <> 0))
 End Property
 
 Public Sub Invert(Optional ByVal Area As Fury2Rect = Nothing)
@@ -877,7 +895,7 @@ On Error Resume Next
     Locked = (SoftFX.GetImageLocked(m_lngImage) <> 0)
 End Property
 
-Public Sub MaskBlit(Optional ByVal DestRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByRef MaskRectangle = Nothing, Optional ByVal Source As Fury2Image = Nothing, Optional ByRef Mask = Nothing, Optional ByVal Alpha As Single = 1, Optional ByVal Mode As SFXBlitModes = BlitMode_Default)
+Public Sub MaskBlit(Optional ByVal DestRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal MaskRectangle As Fury2Rect = Nothing, Optional ByVal Source As Fury2Image = Nothing, Optional ByVal Mask As Fury2Image = Nothing, Optional ByVal Alpha As Single = 1, Optional ByVal Mode As SFXBlitModes = BlitMode_Default)
 On Error Resume Next
 Dim l_rctDest As Fury2Rect, l_rctSource As Fury2Rect, l_rctMask As Fury2Rect
 Dim l_imgSource As Fury2Image, l_imgMask As Fury2Image
@@ -901,6 +919,8 @@ Dim l_lngAlpha As Long
     End If
     If Mode = BlitMode_Default Then Mode = m_bmdBlitMode
     Select Case Mode
+    Case SFXBlitModes.BlitMode_Normal
+        SoftFX.Blit_Mask_Normal_Opacity m_lngImage, l_imgSource.Handle, l_imgMask.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_rctMask.Left, l_rctMask.Top, l_lngAlpha
     Case SFXBlitModes.BlitMode_SourceAlpha
         SoftFX.Blit_Mask_SourceAlpha_Opacity m_lngImage, l_imgSource.Handle, l_imgMask.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_rctMask.Left, l_rctMask.Top, l_lngAlpha
     Case SFXBlitModes.BlitMode_Merge

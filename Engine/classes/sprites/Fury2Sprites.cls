@@ -39,6 +39,7 @@ Option Explicit
 Implements Fury2Object
 Implements Fury2TrackedObject
 Implements IVirtualFileCollection
+Implements IInspectableCollection
 
 Public Loaded As Boolean
 Private mvarDirty As Boolean
@@ -50,6 +51,28 @@ Private mvarFirst As Long, mvarSortedFirst As Long
 Private mvarFilename As String
 Private mvarParent As Fury2Map
 Private mvarEngine As Fury2Engine
+
+Private Property Get IInspectableCollection_ItemCount() As Long
+On Error Resume Next
+    IInspectableCollection_ItemCount = mCol.Count
+End Property
+
+Private Property Set IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+On Error Resume Next
+End Property
+
+Private Property Let IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+On Error Resume Next
+End Property
+
+Private Property Get IInspectableCollection_ItemValue(ByVal Index As Long) As Variant
+On Error Resume Next
+    Err.Clear
+    Set IInspectableCollection_ItemValue = mCol(Index)
+    If Err <> 0 Then
+        IInspectableCollection_ItemValue = mCol(Index)
+    End If
+End Property
 
 Public Function CreateSprite() As Fury2Sprite
 On Error Resume Next
@@ -227,7 +250,7 @@ Dim l_rctArea As FRect
     If l_lngResult > 0 Then Set SpriteFromScreenArea = mCol.Item(l_lngResult)
 End Function
 
-Public Function SpritesFromDistance(ByVal Sprite As Long, ByVal MaxDistance As Single, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
+Public Function SpritesFromDistance(ByVal Sprite As Fury2Sprite, ByVal MaxDistance As Single, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
 On Error Resume Next
 Dim l_varResult As Variant
 Dim l_lngResult As Long, l_lngStart As Long
@@ -236,18 +259,21 @@ Dim l_sprSprite As Fury2Sprite, l_sprCheck As Fury2Sprite
 Dim l_sngDistance As Single
     ReDim l_varResult(0 To 7)
     l_lngSize = 8
-    Set l_sprCheck = mCol(Sprite)
     For Each l_sprSprite In mCol
         If l_sprSprite Is Exclude Then
         Else
-            l_sngDistance = mvarParent.Engine.DistanceBetween(l_sprSprite.X, l_sprSprite.Y, l_sprCheck.X, l_sprCheck.Y)
-            If l_sngDistance <= MaxDistance Then
-                If l_lngCount > (UBound(l_varResult)) Then
-                    l_lngSize = l_lngSize + 8
-                    ReDim Preserve l_varResult(0 To l_lngCount - 1)
+            If ((l_sprSprite.Class = Class) Or (Class = -1)) And (l_sprSprite.Class <> ExcludedClass) Then
+                If (Not MustBeSolid) Or (l_sprSprite.Solid) Then
+                    l_sngDistance = mvarEngine.DistanceBetween(l_sprSprite.X, l_sprSprite.Y, Sprite.X, Sprite.Y)
+                    If l_sngDistance <= MaxDistance Then
+                        If l_lngCount > (UBound(l_varResult)) Then
+                            l_lngSize = l_lngSize + 8
+                            ReDim Preserve l_varResult(0 To l_lngCount - 1)
+                        End If
+                        Set l_varResult(l_lngCount) = l_sprSprite
+                        l_lngCount = l_lngCount + 1
+                    End If
                 End If
-                Set l_varResult(l_lngCount) = l_sprSprite
-                l_lngCount = l_lngCount + 1
             End If
         End If
     Next l_sprSprite
@@ -441,21 +467,20 @@ End Sub
 Public Sub Redraw(Camera As Fury2Camera, Optional OutputBuffer As Fury2Image = Nothing)
 On Error Resume Next
 Dim m_camCamera As CameraParam
+Dim l_lngRenderTargets() As Long
     If mvarDirty Then RefreshList
     Err.Clear
     If mCol.Count = 0 Then
     Else
         Err.Clear
         With m_camCamera
+            l_lngRenderTargets = Camera.RenderTargetArray
             If OutputBuffer Is Nothing Then
-                If (mvarParent.Engine.Cameras.Count = 1) And (mvarParent.Engine.DisableCameraBuffers) Then
-                    .pImage = mvarParent.Engine.Backbuffer.Handle
-                Else
-                    .pImage = Camera.Buffer.Handle
-                End If
             Else
-                .pImage = OutputBuffer.Handle
+                l_lngRenderTargets(0) = OutputBuffer.Handle
             End If
+            .pRenderTargets = VarPtr(l_lngRenderTargets(0))
+            .RenderTargetCount = UBound(l_lngRenderTargets) + 1
             .ViewportX = Camera.ViewportX
             .ViewportY = Camera.ViewportY
             .Alpha = 255
@@ -673,9 +698,9 @@ End Sub
 
 Private Sub IVirtualFileCollection_AddItem(Item As Object)
 On Error Resume Next
-'    mvarParent.Engine.ContextLevelAdd "Add Sprite(""" + CStr(Item.Name) + """)"
+'    mvarEngine.ContextLevelAdd "Add Sprite(""" + CStr(Item.Name) + """)"
     Add Item, False
-'    mvarParent.Engine.ContextLevelRemove
+'    mvarEngine.ContextLevelRemove
     Err.Clear
 End Sub
 

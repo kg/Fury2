@@ -133,7 +133,7 @@ Dim l_wndActive As Long
                 Set l_aclAccelerator = m_colAccelerators.Item(l_strKey)
                 If l_aclAccelerator Is Nothing Then
                 ElseIf l_aclAccelerator.Hook Is Nothing Then
-                Else
+                ElseIf l_aclAccelerator.Enabled Then
                     If m_booEnabled Then
                         Err.Clear
                         l_booResult = True

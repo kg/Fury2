@@ -88,6 +88,7 @@ Module=mdlXPIcon; ..\common\modules\mdlXPIcon.bas
 Class=Fury2Debugger; classes\interfaces\Fury2Debugger.cls
 Class=Fury2SoundFader; classes\components\Fury2SoundFader.cls
 Class=Fury2Keyboard; classes\Fury2Keyboard.cls
+Class=Fury2UserdataUI; classes\interfaces\Fury2UserdataUI.cls
 IconForm="frmConfigure"
 Startup="(None)"
 HelpFile=""
@@ -103,7 +104,7 @@ CompatibleMode="1"
 CompatibleEXE32="..\..\binary\sys\engine.dll"
 MajorVer=1
 MinorVer=7
-RevisionVer=1502
+RevisionVer=1586
 AutoIncrementVer=1
 ServerSupportFiles=0
 DllBaseAddress=&H23000000
@@ -127,8 +128,7 @@ Unattended=0
 Retained=0
 ThreadPerObject=0
 MaxNumberOfThreads=1
-DebugStartupOption=2
-DebugStartupComponent=J:\development\binary\sys\ngide.exe
+DebugStartupOption=0
 
 [MS Transaction Server]
 AutoRefresh=1

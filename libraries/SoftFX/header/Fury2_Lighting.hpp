@@ -60,11 +60,13 @@ namespace Lighting {
     Pixel Color;
     int FalloffDistance;
     float Angle, Spread, SpinRate, FlickerLevel;
-    Byte NoiseOpacity, Visible, Culled;
+    Byte NoiseOpacity, Visible, Culled, PlaneCulled;
     SpriteParam *Attached;
     Image *Cache;
     Byte CacheValid;
     Byte Fuzziness;
+    Byte Reserved[2];
+    Rectangle Rect;
   };
 
   class Obstruction {

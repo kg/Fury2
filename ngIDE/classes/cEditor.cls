@@ -361,6 +361,14 @@ Dim l_edcDocument As iEditingCommands, l_ctlControl As Control
         .Buttons("Action:SelectAll").Enabled = CanSelectAll
         .Buttons("Action:SelectNone").Enabled = CanSelectNone
     End With
+    g_aclUndo.Enabled = CanUndo
+    g_aclRedo.Enabled = CanRedo
+    g_aclCut.Enabled = CanCut
+    g_aclCopy.Enabled = CanCopy
+    g_aclPaste.Enabled = CanPaste
+    g_aclDelete.Enabled = CanDelete
+    g_aclSelectAll.Enabled = CanSelectAll
+    g_aclSelectNone.Enabled = CanSelectNone
 End Sub
 
 Public Sub ActivateDocument(ByRef Document As iDocument)
@@ -394,11 +402,20 @@ End Sub
 
 Public Sub CloseDocument(ByRef Doc As iDocument)
 On Error Resume Next
-Dim l_lngIndex As Long
-    l_lngIndex = frmMain.Documents.Find(Doc)
-    frmMain.Documents(l_lngIndex).Hide
+Dim l_lngIndex As Long, l_lngDocIndex As Long
+Dim l_mgrForm As cChildManager
+    For Each l_mgrForm In frmMain.Documents
+        l_lngIndex = l_lngIndex + 1
+        Err.Clear
+        If (l_mgrForm.Form Is Doc) Then
+            l_lngDocIndex = l_lngIndex
+            Exit For
+        End If
+    Next l_mgrForm
+    frmMain.Documents(l_lngDocIndex).Hide
+    DoEvents
     Err.Clear
-    frmMain.Documents(l_lngIndex).Activate
+    frmMain.Documents(l_lngDocIndex).Activate
     If Err <> 0 Then
         Err.Clear
         frmMain.Documents(1).Activate
@@ -694,7 +711,17 @@ On Error Resume Next
     m_sngPauseClicked = HiResTimer
 End Sub
 
-Public Sub Game_Play()
+Public Sub Game_Run()
+On Error Resume Next
+    If InIDE Then
+        Shell App.Path & "\..\..\binary\sys\fury².exe " & GamePath
+    Else
+        Shell App.Path & "\fury².exe " & GamePath
+    End If
+    Err.Clear
+End Sub
+
+Public Sub Game_Debug()
 On Error Resume Next
     If GameIsRunning Then
         If GameIsPaused Then
@@ -704,11 +731,6 @@ On Error Resume Next
     Else
         frmMain.tmrPlayGame.Enabled = True
     End If
-'    If InIDE Then
-'        Shell App.Path & "\..\..\binary\sys\fury².exe " & GamePath
-'    Else
-'        Shell App.Path & "\fury².exe " & GamePath
-'    End If
     Err.Clear
 End Sub
 
@@ -898,7 +920,7 @@ Dim l_booFound As Boolean
                     ShowNotice "Warning", "The game """ & g_edEditor.Engine.GameName & """ was automatically loaded so a file could be opened. Your current game and all associated files were closed.", NoticeIcon("warning")
                 End If
             End If
-            If GamePath <> l_strGame Then Exit Sub
+            If LCase(Trim(GamePath)) <> LCase(Trim(l_strGame)) Then Exit Sub
         End If
     End If
     If Not GameIsLoaded Then
@@ -1057,3 +1079,7 @@ On Error Resume Next
     Debug.Print "Plugin: " & Text
 End Sub
 
+Public Function SelectFile(Optional Filter As String = "", Optional Title As String = "Open...") As String
+On Error Resume Next
+    SelectFile = SelectLocalFile(Filter, Title)
+End Function

@@ -97,21 +97,22 @@ namespace GL {
   void copyFramebufferToTexture(GLuint handle, int image) {
     int width = SoftFX::GetImageWidth(image);
     int height = SoftFX::GetImageHeight(image);
+    int texWidth = powerOfTwo(width);
+    int texHeight = powerOfTwo(height);
     int yOffset = (Global->OutputHeight - height);
     FX::Rectangle rect = FX::Rectangle(0, 0, width, height);
+    disableTexture<1>();
     selectTexture(handle);
     endDraw();
     glFlush();
+    setBlendMode<BlendModes::Normal>();
     glDisable(GL_BLEND);
-    glPixelZoom(1, -1);
-    glRasterPos2i(0, 0);
-    glCopyPixels(0, yOffset, width, height, GL_COLOR);
-    glPixelZoom(1, 1);
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, yOffset, width, height);
-    glPixelZoom(1, -1);
-    glRasterPos2i(0, 0);
-    glCopyPixels(0, yOffset, width, height, GL_COLOR);
-    glPixelZoom(1, 1);
+    drawTexturedRectangleF(0, 0, width, height, 0, 0, (float)width / texWidth, (float)height / texHeight);
+    endDraw();
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, yOffset, width, height);
+    drawTexturedRectangleF(0, 0, width, height, 0, 0, (float)width / texWidth, (float)height / texHeight);
+    endDraw();
     glEnable(GL_BLEND);
     SoftFX::SetImageDirty(image, 0);
   }

@@ -18,7 +18,17 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "../header/SoftFX Main.hpp"
 #include "../header/Resample.hpp"
+#define TRANSLATION_TABLE
+#include "../header/Debug_Flags.hpp"
 #include "../header/MersenneTwister.h"
+#undef SetDebugFlag
+#undef GetDebugFlag
+
+namespace DebugFlags {
+  int Flags[DebugFlags::count];
+  std::string FlagIToSTable[DebugFlags::count];
+  SToFTable FlagSToITable;
+}
 
 // Variables
 AlphaLevel*       AlphaTable          = Null;
@@ -152,6 +162,37 @@ Export void SetDefaultSampleFunction(ScalerFunction *Default) {
     return;
 }
 
+Export void SetDebugFlag(int id, int value) {
+  if ((id < 0) || (id >= DebugFlags::count)) return;
+  DebugFlags::Flags[id] = value;
+  return;
+}
+
+Export int GetDebugFlag(int id) {
+  if ((id < 0) || (id >= DebugFlags::count)) return 0;
+  return DebugFlags::Flags[id];
+}
+
+Export int GetDebugFlagId(const char* name) {
+  std::string key = std::string(name);
+  DebugFlags::SToFTable::const_iterator iter = DebugFlags::FlagSToITable.find(key);
+  if (iter != DebugFlags::FlagSToITable.end()) {
+    return iter->second;
+  } else {
+    return -1;
+  }
+}
+
+void InitDebugFlags() {
+  InitDebugFlagTranslationTable<DebugFlags::SToFTable, std::string>(DebugFlags::FlagSToITable, DebugFlags::FlagIToSTable);
+  SetDebugFlag(DebugFlags::RenderAmbientLight, true);
+  SetDebugFlag(DebugFlags::RenderLightCoronas, true);
+  SetDebugFlag(DebugFlags::RenderLightShadows, true);
+  SetDebugFlag(DebugFlags::RenderLightSurfaces, true);
+  SetDebugFlag(DebugFlags::RenderLightSprites, true);
+  SetDebugFlag(DebugFlags::RenderLightSourceSingle, 0);
+}
+
 Export void Initialize() {
 
     Processor::DetectProcessor();
@@ -161,7 +202,8 @@ Export void Initialize() {
     Override::InitOverrides();
     InitHeap();
     StaticInit();
-
+    InitDebugFlags();
+ 
     DefaultSampleFunction = SampleRow_Linear;
 
     Initialized = true;

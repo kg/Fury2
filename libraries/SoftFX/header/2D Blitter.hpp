@@ -183,6 +183,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
         return Failure;                                         \
     }                                                           \
     int CropOffsets[4] = {0,0,0,0};                             \
+    bool vflip = false;                                         \
+    if (SourceRect->Height < 0) vflip = true;                   \
+    SourceRect->normalize();                                    \
     Rectangle rCoordinates, rSourceCoordinates;                 \
         if (!Clip2D_PairedRect(&rCoordinates,                   \
          &rSourceCoordinates, Dest, Source, DestRect,           \
@@ -200,19 +203,21 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
     int iRDH = DestRect->Height;                                \
     int iRSW = rSourceCoordinates.Width;                        \
     int iRSH = rSourceCoordinates.Height;                       \
-    float fIX = ((float)iRSW / (float)iRDW);                    \
-    float fIY = ((float)iRSH / (float)iRDH);                    \
+    float fIX = abs((float)iRSW / (float)iRDW);                 \
+    float fIY = abs((float)iRSH / (float)iRDH);                 \
     float fSX = (rSourceCoordinates.Left +                      \
       CropOffsets[0] * fIX),                                    \
       fSY = (rSourceCoordinates.Top +                           \
       CropOffsets[1] * fIY);                                    \
+    if (vflip) fSY = (rSourceCoordinates.bottom() - CropOffsets[1] * fIY); \
+    if (vflip) fIY = -fIY;                                      \
     Pixel S;                                                    \
     Pixel *pS = &S;                                             \
     *pS = *pS;                                                  \
     DoubleWord iDX = 0, iDY = rCoordinates.Height;              \
     DoubleWord iMX = rCoordinates.Width;                        \
     Pixel *rowTable = StaticAllocate<Pixel>(BlitterBuffer, iMX);\
-    iDY = rCoordinates.Height;                                  \
+    iDY = abs(rCoordinates.Height);                             \
     bool noChange = (rSourceCoordinates.Height == 1);           \
                                                                 \
     DoubleWord iDestRowOffset =                                 \

@@ -314,6 +314,14 @@ On Error Resume Next
             .Load ScriptSource
             .Load mvarRandomChance
             .Load mvarName
+            If mvarWidth < 0 Then
+                mvarX = mvarX + mvarWidth
+                mvarWidth = -mvarWidth
+            End If
+            If mvarHeight < 0 Then
+                mvarY = mvarY + mvarHeight
+                mvarHeight = -mvarHeight
+            End If
         .ReadSegment_End
     End With
 End Sub

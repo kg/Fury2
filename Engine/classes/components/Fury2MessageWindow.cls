@@ -279,8 +279,10 @@ On Error Resume Next
         Exit Sub
     End If
     If (Control.Name = "Cancel") Or (Control.Name = "Close") Or (Control.Name = "Secondary") Then
+        Control.Consume
         CloseWindow
     ElseIf (Control.Name = "OK") Or (Control.Name = "Select") Or (Control.Name = "Primary") Then
+        Control.Consume
         If (TotalHeight + ScrollY) > (Rectangle.Height) Then
             ScrollEnd = ScrollY - (Rectangle.Height)
             ScrollSpeed = -1
@@ -292,8 +294,6 @@ On Error Resume Next
             End If
         End If
     End If
-    Control.Consume
-    Control.Reset
 End Sub
 
 Private Sub Fury2Plugin_Unload()

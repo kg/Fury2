@@ -17,8 +17,13 @@ Public Shift As Boolean
 Public Ctrl As Boolean
 Public Alt As Boolean
 Public Hook As ngEvent
+Public Enabled As Boolean
 
 Public Property Get KeyString() As String
 On Error Resume Next
     KeyString = Format(KeyCode, "000") & IIf(Shift, "1", "0") & IIf(Ctrl, "1", "0") & IIf(Alt, "1", "0")
 End Property
+
+Private Sub Class_Initialize()
+    Enabled = True
+End Sub

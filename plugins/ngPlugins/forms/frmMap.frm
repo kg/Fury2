@@ -429,7 +429,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As PointAPI) As Long
+Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
 Implements iExtendedForm
 Implements iEditingCommands
 Implements iCustomMenus
@@ -582,6 +582,26 @@ Private m_intLayerCache() As Integer
 Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
 
+Private Function Engine() As Fury2Engine
+On Error Resume Next
+    Set Engine = Editor.Engine
+End Function
+
+Public Property Get Map() As Fury2Map
+On Error Resume Next
+    Set Map = m_mapMap
+End Property
+
+Public Sub RunMacro()
+On Error Resume Next
+Dim l_strFilename As String
+    l_strFilename = Editor.SelectFile("*.f2macro;*.f2script", "Select Macro")
+    If Len(Trim(l_strFilename)) > 0 Then
+        Engine.ScriptEngine.AddObject "Document", Me, True, True, True
+        Engine.ScriptEngine.AddCode ReadTextFile(l_strFilename)
+    End If
+End Sub
+
 Public Property Get ActiveType() As String
 On Error Resume Next
     Select Case LCase(Trim(Me.ActiveControl.Name))
@@ -672,7 +692,7 @@ Public Sub AutoScroll(Optional ByVal X As Long = -32767, Optional ByVal Y As Lon
 On Error Resume Next
 Dim l_lngX1 As Long, l_lngY1 As Long, l_lngX2 As Long, l_lngY2 As Long
 Dim l_lngScrollX As Long, l_lngScrollY As Long
-Dim l_ptCursor As PointAPI
+Dim l_ptCursor As POINTAPI
 Dim l_lngCapture As Long
     If Not m_voViewOptions.AutoScroll Then Exit Sub
     hsMap.Tag = "lock"
@@ -1714,6 +1734,7 @@ On Error Resume Next
         .DestroyMenu "ToolsEndSeparator"
         .DestroyMenu "AddEdgeBlocking"
         .DestroyMenu "BlockingToolsEndSeparator"
+        .DestroyMenu "RunMacro"
     End With
 End Sub
 
@@ -1738,6 +1759,7 @@ On Error Resume Next
         .DefineMenu "-", "TileToolsEndSeparator", "TileTools"
         .DefineMenu "Place blocking around edges", "AddEdgeBlocking", "BlockingTools"
         .DefineMenu "-", "BlockingToolsEndSeparator", "BlockingTools"
+        .DefineMenu "Run &Macro...", "RunMacro"
     End With
 End Sub
 
@@ -1799,7 +1821,6 @@ End Property
 Private Function iDocument_Save(Filename As String) As Boolean
 On Error Resume Next
 Dim l_vfFile As VirtualFile
-    Kill Filename
     Err.Clear
     Set l_vfFile = F2File()
     SaveToFile m_mapMap, l_vfFile
@@ -2677,7 +2698,7 @@ End Sub
 Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
-Dim l_ptMouse As PointAPI
+Dim l_ptMouse As POINTAPI
     With m_mapMap.Layers(m_lngSelectedLayer).Sprites
         BeginProcess "Performing Paste..."
         If AtIndex < 1 Then

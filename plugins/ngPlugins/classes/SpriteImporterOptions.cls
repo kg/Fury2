@@ -35,6 +35,10 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 Implements IVirtualFileSaveable
 Implements IInspectable
+Private mvarMarginLeft As Long
+Private mvarMarginTop As Long
+Private mvarMarginRight As Long
+Private mvarMarginBottom As Long
 Private mvarCellWidth As Long
 Private mvarCellHeight As Long
 Private mvarAlignmentX As Single
@@ -43,6 +47,75 @@ Private mvarFrameDelay As Long
 Private mvarImage As String
 Private mvarMatteColor As Long
 Private mvarDuplicateFirstFrame As Boolean
+Private mvarMultiRowPoses As Boolean
+Private mvarGridWidth As Long
+Private mvarGridHeight As Long
+Private mvarMaxPoses As Long
+Private mvarMaxFrames As Long
+
+Public Property Let MaxPoses(ByVal vData As Long)
+    mvarMaxPoses = vData
+End Property
+
+Public Property Get MaxPoses() As Long
+    MaxPoses = mvarMaxPoses
+End Property
+
+Public Property Let MaxFrames(ByVal vData As Long)
+    mvarMaxFrames = vData
+End Property
+
+Public Property Get MaxFrames() As Long
+    MaxFrames = mvarMaxFrames
+End Property
+
+Public Property Let GridHeight(ByVal vData As Long)
+    mvarGridHeight = vData
+End Property
+
+Public Property Get GridHeight() As Long
+    GridHeight = mvarGridHeight
+End Property
+
+Public Property Let GridWidth(ByVal vData As Long)
+    mvarGridWidth = vData
+End Property
+
+Public Property Get GridWidth() As Long
+    GridWidth = mvarGridWidth
+End Property
+
+Public Property Let MarginBottom(ByVal vData As Long)
+    mvarMarginBottom = vData
+End Property
+
+Public Property Get MarginBottom() As Long
+    MarginBottom = mvarMarginBottom
+End Property
+
+Public Property Let MarginRight(ByVal vData As Long)
+    mvarMarginRight = vData
+End Property
+
+Public Property Get MarginRight() As Long
+    MarginRight = mvarMarginRight
+End Property
+
+Public Property Let MarginTop(ByVal vData As Long)
+    mvarMarginTop = vData
+End Property
+
+Public Property Get MarginTop() As Long
+    MarginTop = mvarMarginTop
+End Property
+
+Public Property Let MarginLeft(ByVal vData As Long)
+    mvarMarginLeft = vData
+End Property
+
+Public Property Get MarginLeft() As Long
+    MarginLeft = mvarMarginLeft
+End Property
 
 Public Property Let DuplicateFirstFrame(ByVal vData As Boolean)
 Attribute DuplicateFirstFrame.VB_Description = "Imports the first frame of each imported pose as both the stopped frame and the first animation frame."
@@ -51,6 +124,14 @@ End Property
 
 Public Property Get DuplicateFirstFrame() As Boolean
     DuplicateFirstFrame = mvarDuplicateFirstFrame
+End Property
+
+Public Property Let MultiRowPoses(ByVal vData As Boolean)
+    mvarMultiRowPoses = vData
+End Property
+
+Public Property Get MultiRowPoses() As Boolean
+    MultiRowPoses = mvarMultiRowPoses
 End Property
 
 Public Property Let MatteColor(ByVal vData As Long)
@@ -120,6 +201,8 @@ Private Sub Class_Initialize()
     AlignmentX = 8
     AlignmentY = 32
     MatteColor = 0
+    MaxPoses = 999
+    MaxFrames = 999
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
@@ -133,6 +216,15 @@ On Error Resume Next
         .Load mvarMatteColor
         .Load mvarImage
         .Load mvarDuplicateFirstFrame
+        .Load mvarGridWidth
+        .Load mvarGridHeight
+        .Load mvarMarginLeft
+        .Load mvarMarginTop
+        .Load mvarMarginRight
+        .Load mvarMarginBottom
+        .Load mvarMaxPoses
+        .Load mvarMaxFrames
+        .Load mvarMultiRowPoses
     End With
 End Sub
 
@@ -147,6 +239,15 @@ On Error Resume Next
         .Save mvarMatteColor
         .Save mvarImage
         .Save mvarDuplicateFirstFrame
+        .Save mvarGridWidth
+        .Save mvarGridHeight
+        .Save mvarMarginLeft
+        .Save mvarMarginTop
+        .Save mvarMarginRight
+        .Save mvarMarginBottom
+        .Save mvarMaxPoses
+        .Save mvarMaxFrames
+        .Save mvarMultiRowPoses
     End With
 End Sub
 

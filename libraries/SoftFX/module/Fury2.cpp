@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "../header/SoftFX Main.hpp"
 #include <string.h>
+#include "../header/Debug_Flags.hpp"
 #include "../header/SortLL.hpp"
 #include "../header/Fury2.hpp"
 #include "../header/Blend.hpp"
@@ -174,13 +175,19 @@ int cv = 0;
 TileBlitter* Blitter = Null;
 TintedTileBlitter* TintBlitter = Null;
 bool yClip = false;
+Image *pTarget;
 if (!Layer) return Failure;
     if (!Camera) return Failure;
-    if (!Camera->pImage) return Failure;
+    if (!Camera->pImage()) return Failure;
     if (!Layer->pTileset) return Failure;
     ProfileStart("RenderTilemapLayer()");
-    oldRect = Camera->pImage->ClipRectangle;
-    Camera->pImage->ClipRectangle = Camera->Rectangle;
+    pTarget = Camera->pImage();
+    if (Layer->RenderTarget < Camera->RenderTargetCount) {
+      pTarget = Camera->pRenderTargets[Layer->RenderTarget];
+    }
+    pTarget->dirty();
+    oldRect = pTarget->ClipRectangle;
+    pTarget->ClipRectangle = Camera->Rectangle;
 //    Camera->pImage->fill(Pixel(0), &(Camera->Rectangle));
 
     maxX = Layer->Width - 1;
@@ -281,14 +288,14 @@ if (!Layer) return Failure;
     if (Layer->TintColor[::Alpha]) {
       if (TintBlitter == Null) {
         enableClipping = true;
-        Camera->pImage->ClipRectangle = oldRect;
+        pTarget->ClipRectangle = oldRect;
         ProfileStop("RenderTilemapLayer()");
         return Failure;
       }
     } else {
       if (Blitter == Null) {
         enableClipping = true;
-        Camera->pImage->ClipRectangle = oldRect;
+        pTarget->ClipRectangle = oldRect;
         ProfileStop("RenderTilemapLayer()");
         return Failure;
       }
@@ -300,7 +307,7 @@ if (!Layer) return Failure;
         Layer->pAnimationMap = Null;
       }
       enableClipping = true;
-      Camera->pImage->ClipRectangle = oldRect;
+      pTarget->ClipRectangle = oldRect;
       ProfileStop("RenderTilemapLayer()");
       return result;
     }
@@ -315,7 +322,7 @@ if (!Layer) return Failure;
         } else {
             pRow = Layer->pData + (Layer->Width * cy);
         }
-        yClip = (dy >= Camera->pImage->ClipRectangle.Top) && ((dy + Layer->pTileset->TileHeight) < Camera->pImage->ClipRectangle.bottom());
+        yClip = (dy >= pTarget->ClipRectangle.Top) && ((dy + Layer->pTileset->TileHeight) < pTarget->ClipRectangle.bottom());
         pTile = pRow + sx;
         if (Layer->TintColor[::Alpha]) {
           for (cx = sx; cx < ex; ++cx) {
@@ -326,8 +333,8 @@ if (!Layer) return Failure;
               cv = *pTile;
               if ((cv == Layer->MaskedTile) || (cv >= Layer->pTileset->TileCount) || (cv < 0)) {
               } else {
-                  enableClipping = !((dx >= Camera->pImage->ClipRectangle.Left) && ((dx + Layer->pTileset->TileWidth) < Camera->pImage->ClipRectangle.right()) && yClip);
-                  TintBlitter(Camera->pImage, Layer->pTileset->tile(cv), &rctDest, 0, 0, Layer->TintColor, alpha);
+                  enableClipping = !((dx >= pTarget->ClipRectangle.Left) && ((dx + Layer->pTileset->TileWidth) < pTarget->ClipRectangle.right()) && yClip);
+                  TintBlitter(pTarget, Layer->pTileset->tile(cv), &rctDest, 0, 0, Layer->TintColor, alpha);
               }
               dx += Layer->pTileset->TileWidth;
               pTile++;
@@ -341,8 +348,8 @@ if (!Layer) return Failure;
               cv = *pTile;
               if ((cv == Layer->MaskedTile) || (cv >= Layer->pTileset->TileCount) || (cv < 0)) {
               } else {
-                  enableClipping = !((dx >= Camera->pImage->ClipRectangle.Left) && ((dx + Layer->pTileset->TileWidth) < Camera->pImage->ClipRectangle.right()) && yClip);
-                  Blitter(Camera->pImage, Layer->pTileset->tile(cv), &rctDest, 0, 0, alpha);
+                  enableClipping = !((dx >= pTarget->ClipRectangle.Left) && ((dx + Layer->pTileset->TileWidth) < pTarget->ClipRectangle.right()) && yClip);
+                  Blitter(pTarget, Layer->pTileset->tile(cv), &rctDest, 0, 0, alpha);
               }
               dx += Layer->pTileset->TileWidth;
               pTile++;
@@ -356,7 +363,7 @@ if (!Layer) return Failure;
       Layer->pAnimationMap = Null;
     }
     enableClipping = true;
-    Camera->pImage->ClipRectangle = oldRect;
+    pTarget->ClipRectangle = oldRect;
     ProfileStop("RenderTilemapLayer()");
     return Success;
 }
@@ -535,6 +542,16 @@ bool resolved = false;
     }
 
     Sprite->Position = spOldPosition;
+    Sprite->Position.X += ResolvedSpeed.X;
+    Sprite->Position.Y += ResolvedSpeed.Y;
+    _check;
+    if (iCollide == 0) {
+    } else {
+      ResolvedSpeed.X = 0;
+      ResolvedSpeed.Y = 0;
+    }
+
+    Sprite->Position = spOldPosition;
     ProfileStop("ResolveCollisions()");
     return true;
 }
@@ -542,11 +559,14 @@ bool resolved = false;
 #undef _check
 
 Export int UpdateSprites(SpriteParam *List, CollisionMatrix *Matrix) {
-SpriteParam *pCurrent = List;
-VelocityVector vSpeed;
+SpriteParam *pCurrent = List, *pCheck;
+VelocityVector vSpeed, vCheck;
 int iCount = 0;
 bool bCollided = false;
 float fRadian = 3.14159265358979 / 180.0;
+std::vector<ForceEntry> forceEntries;
+std::vector<ForceEntry>::iterator currentEntry;
+ForceEntry newEntry;
     if (!List) return Failure;
     if (!Matrix) return Failure;
     ProfileStart("UpdateSprites()");
@@ -557,47 +577,105 @@ float fRadian = 3.14159265358979 / 180.0;
         pCurrent->Events.FadedOut = false;
         pCurrent->Events.Changed = false;
         pCurrent->Events.Moved = false;
-        pCurrent->Velocity.XF = pCurrent->Velocity.YF = pCurrent->Velocity.FW = 0;
+        pCurrent->Velocity.XF = pCurrent->Velocity.CXF;
+        pCurrent->Velocity.YF = pCurrent->Velocity.CYF;
+        pCurrent->Velocity.CXF *= pCurrent->Velocity.CFM;
+        pCurrent->Velocity.CYF *= pCurrent->Velocity.CFM;
+        pCurrent->Velocity.FW = 0;
         pCurrent = pCurrent->pNext;
     }
     // calculate forces
-    pCurrent = List;
-    while (pCurrent) {
+    bool restart = true;
+    forceEntries = std::vector<ForceEntry>();
+    _DebugTrace("beginning physics loop");
+    while (restart) {
+      _DebugTrace("iterating\n");
+      restart = false;
+      pCurrent = List;
+      while (pCurrent) {
         SpritePosition oldposition;
-        SpriteParam *collided;
+        SpritePosition oldcheckposition;
         float forcemultiplier;
         if (!(pCurrent->Stats.Cull && pCurrent->Culled)) {
-          if (pCurrent->Stats.CanPush) {
-            vSpeed.X = pCurrent->Velocity.X + (sin(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V); // + pCurrent->Velocity.XF;
-            vSpeed.Y = pCurrent->Velocity.Y + (-cos(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V); // + pCurrent->Velocity.YF;
+          if ((pCurrent->Reserved1 == 0) || (pCurrent->Stats.CanPush) || ((pCurrent->Stats.Solid) && ((pCurrent->Velocity.XF != 0) || (pCurrent->Velocity.YF != 0)))) {
+            pCurrent->Reserved1 = 1;
+            vSpeed.X = pCurrent->Velocity.X + (sin(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V) + pCurrent->Velocity.XF;
+            vSpeed.Y = pCurrent->Velocity.Y + (-cos(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V) + pCurrent->Velocity.YF;
             vSpeed.X *= pCurrent->Velocity.VM;
             vSpeed.Y *= pCurrent->Velocity.VM;
 
             oldposition = pCurrent->Position;
             pCurrent->Position.X += vSpeed.X;
             pCurrent->Position.Y += vSpeed.Y;
-
-            collided = Null;
-            CollisionCheckEx(List, pCurrent, true, -1, -1, &collided);
-            if (collided) {
-              if (collided->Stats.Pushable) {
-                forcemultiplier = 1;
-                if (collided->Stats.Weight > 0) {
-                  forcemultiplier = pCurrent->Stats.Weight / collided->Stats.Weight;
-                  if (forcemultiplier > 1) forcemultiplier = 1;
-                  if (forcemultiplier < 0) forcemultiplier = 0;
-                }
-                collided->Velocity.XF += (vSpeed.X * forcemultiplier);
-                collided->Velocity.YF += (vSpeed.Y * forcemultiplier);
-                collided->Velocity.FW += (pCurrent->Stats.Weight * forcemultiplier);
+            pCheck = List;
+            currentEntry = forceEntries.end();
+            for (std::vector<ForceEntry>::iterator scan_iter = forceEntries.begin(); scan_iter != forceEntries.end(); ++scan_iter) {
+              if (scan_iter->Sprite == pCurrent) {
+                currentEntry = scan_iter;
+                break;
               }
+            }
+            if (currentEntry == forceEntries.end()) {
+              newEntry.Sprite = pCurrent;
+              newEntry.Items.clear();
+              forceEntries.push_back(newEntry);
+              currentEntry = forceEntries.end();
+              currentEntry--;
+            }
+            while (pCheck) {
+              if (pCheck != pCurrent) {
+                if (pCheck->Stats.Solid) {
+                  if (pCheck->Stats.Pushable) {
+                    vCheck.X = pCheck->Velocity.X + (sin(pCheck->Velocity.B * fRadian) * pCheck->Velocity.V) + pCheck->Velocity.XF;
+                    vCheck.Y = pCheck->Velocity.Y + (-cos(pCheck->Velocity.B * fRadian) * pCheck->Velocity.V) + pCheck->Velocity.YF;
+                    vCheck.X *= pCheck->Velocity.VM;
+                    vCheck.Y *= pCheck->Velocity.VM;
+
+                    oldcheckposition = pCheck->Position;
+                    pCheck->Position.X += vCheck.X;
+                    pCheck->Position.Y += vCheck.Y;
+                    if (pCurrent->touches(pCheck)) {
+                      std::list<ForceEntry>::iterator iter = currentEntry->Items.begin();
+                      bool alreadyProcessed = false;
+                      while (iter != currentEntry->Items.end()) {
+                        if (iter->Sprite == pCheck) {
+                          alreadyProcessed = true;
+                          break;
+                        }
+                        iter++;
+                      }
+                      if (!alreadyProcessed) {
+                        newEntry.Sprite = pCheck;
+                        newEntry.Items.clear();
+                        currentEntry->Items.push_back(newEntry);
+                        forcemultiplier = 1;
+                        if (pCheck->Stats.Weight > 0) {
+                          forcemultiplier = pCurrent->Stats.Weight / pCheck->Stats.Weight;
+                          if (forcemultiplier > 1) forcemultiplier = 1;
+                          if (forcemultiplier < 0) forcemultiplier = 0;
+                        }
+                        pCheck->Velocity.XF += (vSpeed.X * forcemultiplier);
+                        pCheck->Velocity.YF += (vSpeed.Y * forcemultiplier);
+                        pCheck->Velocity.FW += (pCurrent->Stats.Weight * forcemultiplier);
+                        pCheck->Reserved1 = 0;
+                        restart = true;
+                        _DebugTrace("sprite pushed\n");
+                      }
+                    }
+                    pCheck->Position = oldcheckposition;
+                  }
+                }
+              }
+              pCheck = pCheck->pNext;
             }
             pCurrent->Position = oldposition;
           }
           pCurrent->Events.Moved = false;
           pCurrent = pCurrent->pNext;
         }
+      }
     }
+    forceEntries.clear();
     pCurrent = List;
     while (pCurrent) {
         iCount++;
@@ -728,7 +806,7 @@ SpriteParam *result = Null;
 Export int RenderSprites(SpriteParam *Start, CameraParam *Camera) {
 SpriteParam *pCurrent = Start;
 Rectangle rctDest, rctSource, rctCopy;
-Image *pImage;
+Image *pImage, *pTarget;
 float x = 0, y = 0, w = 0, h = 0;
 float s = 0, r = 0;
 float px = 0, py = 0;
@@ -739,12 +817,16 @@ int iCount = 0, iTemp = 0;
 Pixel white = Pixel(255,255,255,255);
     if (!Start) return Failure;
     if (!Camera) return Failure;
-    if (!Camera->pImage) return Failure;
+    if (!Camera->pImage()) return Failure;
     ProfileStart("RenderSprites()");
     poly.Allocate(4);
     while (pCurrent) {
       iCount++;
       if (pCurrent->Visible) {
+        pTarget = Camera->pImage();
+        if (pCurrent->Params.RenderTarget < Camera->RenderTargetCount) {
+          pTarget = Camera->pRenderTargets[pCurrent->Params.RenderTarget];
+        }
         if ((pCurrent->Params.Alpha != 0)) {
           if (pCurrent->Graphic.pImage) {
             w = pCurrent->Graphic.Rectangle.Width;
@@ -764,7 +846,7 @@ Pixel white = Pixel(255,255,255,255);
                 rctDest.Width = pCurrent->Obstruction.W;
                 rctDest.Height = pCurrent->Obstruction.H;
                 rctSource = ShadowImage->getRectangle();
-                BlitResample_Subtractive_Opacity(Camera->pImage, ShadowImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                BlitResample_Subtractive_Opacity(pTarget, ShadowImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
               }
               break;
             case fxCastShadow:
@@ -792,44 +874,44 @@ Pixel white = Pixel(255,255,255,255);
                       iTemp = pCurrent->Graphic.pImage->MatteColor.V;
                       pCurrent->Graphic.pImage->MatteColor = pCurrent->Graphic.MaskColor;
                       if (pCurrent->Params.Color[::Alpha] > 0) {
-                        BlitSimple_Matte_Tint_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, pCurrent->Params.Color, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        BlitSimple_Matte_Tint_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, pCurrent->Params.Color, abs(pCurrent->Params.Alpha) * Camera->Alpha);
                       } else {
-                        BlitSimple_Matte_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        BlitSimple_Matte_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
                       }
                       pCurrent->Graphic.pImage->MatteColor.V = iTemp;
                       break;
                   case 1:
                       if (pCurrent->Params.Color[::Alpha] > 0) {
-                        BlitSimple_SourceAlpha_Tint_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, pCurrent->Params.Color, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        BlitSimple_SourceAlpha_Tint_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, pCurrent->Params.Color, abs(pCurrent->Params.Alpha) * Camera->Alpha);
                       } else {
-                        BlitSimple_Automatic_SourceAlpha_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        BlitSimple_Automatic_SourceAlpha_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
                       }
                       break;
                   case 2:
-                      BlitSimple_Additive_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                      BlitSimple_Additive_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
                       break;
                   case 3:
-                      BlitSimple_Subtractive_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                      BlitSimple_Subtractive_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
                       break;
                   case 4:
                       // Gamma
                       break;
                   case 5:
-                      BlitSimple_Screen_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                      BlitSimple_Screen_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
                       break;
                   case 6:
-                      BlitSimple_Multiply_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                      BlitSimple_Multiply_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
                       break;
                   case 7:
-//                      BlitSimple_Lightmap_RGB_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+//                      BlitSimple_Lightmap_RGB_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
                       // Lightmap
                       break;
                   case 8:
-                      BlitSimple_Merge_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                      BlitSimple_Merge_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
                       break;
                   }
               }
-            } else if (pCurrent->Params.Scale > 0) {
+            } else {
               if (rotated) {
                 switch(pCurrent->Params.BlitMode) {
                 default:
@@ -856,7 +938,7 @@ Pixel white = Pixel(255,255,255,255);
                 r *= Radian;
                 y -= (h * s / 2);
                 s /= 2;
-                w *= s; h *= s;
+                w *= abs(s); h *= s;
                 poly.Empty();
                 px = -w; py = -h;
                 RotatePoint(px, py, r);
@@ -874,33 +956,36 @@ Pixel white = Pixel(255,255,255,255);
                 RotatePoint(px, py, r);
                 px += x; py += y;
                 poly.Append(TexturedVertex(px, py, pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.bottom_exclusive()));
-                FilterSimple_ConvexPolygon_Textured(Camera->pImage, pCurrent->Graphic.pImage, &poly, DefaultSampleFunction, renderer, pCurrent->Params.Color.V);
+                FilterSimple_ConvexPolygon_Textured(pTarget, pCurrent->Graphic.pImage, &poly, DefaultSampleFunction, renderer, pCurrent->Params.Color.V);
               } else {
-                w *= pCurrent->Params.Scale / 2;
-                if ((y) < Camera->Rectangle.Top) goto nextsprite;
-                if ((y - h) > Camera->Rectangle.bottom()) goto nextsprite;
-                if ((x + w) < Camera->Rectangle.Left) goto nextsprite;
-                if ((x - w) > Camera->Rectangle.right()) goto nextsprite;
+                w *= abs(pCurrent->Params.Scale) / 2;
                 rctDest.Left = ceil(x - (w));
                 rctDest.Top = ceil(y - (h * pCurrent->Params.Scale));
-                rctDest.Width = pCurrent->Graphic.Rectangle.Width * pCurrent->Params.Scale;
+                rctDest.Width = pCurrent->Graphic.Rectangle.Width * abs(pCurrent->Params.Scale);
                 rctDest.Height = pCurrent->Graphic.Rectangle.Height * pCurrent->Params.Scale;
-                rctSource = pCurrent->Graphic.Rectangle;
+                rctDest.normalize();
+                if (pCurrent->Params.Scale < 0) { 
+                  rctSource = pCurrent->Graphic.Rectangle;
+                  rctSource.Top += rctSource.Height;
+                  rctSource.Height = -rctSource.Height;
+                } else {
+                  rctSource = pCurrent->Graphic.Rectangle;
+                }
                 rctCopy = rctDest;
                 if (ClipRectangle_Rect(&rctCopy, &(Camera->Rectangle))) {
                   switch(pCurrent->Params.BlitMode) {
                   default:
                   case 0:
-                    BlitResample_SourceAlpha_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                    BlitResample_SourceAlpha_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
                     break;
                   case 1:
-                    BlitResample_SourceAlpha_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                    BlitResample_SourceAlpha_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
                     break;
                   case 2:
-                    BlitResample_Additive_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                    BlitResample_Additive_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
                     break;
                   case 3:
-                    BlitResample_Subtractive_Opacity(Camera->pImage, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                    BlitResample_Subtractive_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
                     break;
                   }
                 }
@@ -914,7 +999,7 @@ Pixel white = Pixel(255,255,255,255);
                   rctDest.Top = ceil(y - (h + (float)pImage->Height) - pCurrent->pAttachedGraphic->YCenter);
                   rctDest.Width = pImage->Width;
                   rctDest.Height = pImage->Height;
-                  ModedBlit((SFX_BlitModes)(pCurrent->pAttachedGraphic->BlitMode), Camera->pImage, pImage, &rctDest, 0, 0, pCurrent->pAttachedGraphic->Alpha);
+                  ModedBlit((SFX_BlitModes)(pCurrent->pAttachedGraphic->BlitMode), pTarget, pImage, &rctDest, 0, 0, pCurrent->pAttachedGraphic->Alpha);
                 }
               }
             }
@@ -1791,7 +1876,7 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
   ProfileStart("Raycast");
   for (int l = 0; l < Env->LightCount; ++l) {
     Obscured = false;
-	  if (((!Env->Lights[l].Culled) || (!EnableCulling)) && (Env->Lights[l].Visible)) {
+	  if (((!Env->Lights[l].Culled) || (!Env->Lights[l].PlaneCulled) || (!EnableCulling)) && (Env->Lights[l].Visible)) {
       Falloff = Env->Lights[l].FalloffDistance > 0;
       if (Falloff) {
         DistanceMultiplier = (255.0F / Env->Lights[l].FalloffDistance);
@@ -2145,12 +2230,14 @@ fuzzyrender:
       ProfileStop("Render Light Sources");
 
 	    Light->Culled = Light_Clipped;
+      Light->Rect.setValues(0, 0, 0, 0);
       if (!Light_Clipped) {
 
 	      mx1 = ClipValue(floor((Light->X - Light->FalloffDistance) / (float)Environment->Matrix->SectorWidth), 0, Environment->Matrix->Width - 1);
 	      my1 = ClipValue(floor((Light->Y - Light->FalloffDistance) / (float)Environment->Matrix->SectorHeight), 0, Environment->Matrix->Height - 1);
 	      mx2 = ClipValue(ceil((Light->X + Light->FalloffDistance) / (float)Environment->Matrix->SectorWidth), 0, Environment->Matrix->Width - 1);
 	      my2 = ClipValue(ceil((Light->Y + Light->FalloffDistance) / (float)Environment->Matrix->SectorHeight), 0, Environment->Matrix->Height - 1);
+        Light->Rect.setValues(_Min(mx1, mx2), _Min(my1, my2), _Max(mx1, mx2) - _Min(mx1, mx2), _Max(my1, my2) - _Min(my1, my2));
 
         ShadowPoly.Allocate(4);
         ShadowPoly.SetCount(4);
@@ -2374,7 +2461,7 @@ fuzzyrender:
   Lighting::sort_entry *SortEntry = FirstSortEntry;
   {
     Rectangle rctDest, rctSource, rctCopy;
-    Rectangle rctWall, rctTop;
+    Rectangle rctWall, rctTop, rctFullWall;
     float x = 0, y = 0, s = 0, r = 0;
   	int xo = 0;
     DoubleWord n = 0;
@@ -2382,10 +2469,11 @@ fuzzyrender:
     DoubleWord iTemp = 0;
 
     TexturedPolygon PlanePoly;
+    Image* PlaneTexture;
     FPoint TexPoint[2];
     PlanePoly.Allocate(4);
     PlanePoly.SetCount(4);
-//    PlaneTexture = new Image(StaticAllocate<Pixel>(TextureBuffer, 256), 256, 1, 0);
+    PlaneTexture = new Image(StaticAllocate<Pixel>(TextureBuffer, 512) + 127, 256, 1, 0);
 
     while (SortEntry) {
       if (SortEntry->type == Lighting::sprite) {
@@ -2432,49 +2520,45 @@ fuzzyrender:
         rctWall = Plane->bottomRect();
         rctTop.translate(-OffsetX, -OffsetY);
         rctWall.translate(-OffsetX, -OffsetY);
-    		x = rctTop.Left;
+        rctFullWall = rctWall;
+    		x = rctWall.Left;
 		    ClipRectangle_Image(&rctTop, Camera->OutputBuffer);
 		    ClipRectangle_Image(&rctWall, Camera->OutputBuffer);
 		    xo = (rctWall.Left - x);
 		    if (Plane->Height != 0) FilterSimple_Fill(Camera->OutputBuffer, &rctTop, Environment->AmbientLight);
           if ((rctWall.Width > 0) && (rctWall.Height > 0)) {
-            /*
             if (rctWall.Width > PlaneTexture->Width) {
-              PlaneTexture->Data = StaticAllocate<Pixel>(TextureBuffer, rctWall.Width);
+              PlaneTexture->Data = StaticAllocate<Pixel>(TextureBuffer, rctWall.Width + 256) + 127;
               PlaneTexture->Width = rctWall.Width;
             }
             rctSource.Width = rctWall.Width;
             rctSource.Height = 1;
             rctSource.Left = 0;
             rctSource.Top = 0;
-            */
-            rctSource.Width = 1;
-            rctSource.Height = rctWall.Height;
-            rctSource.Top = rctWall.Top;
-            rctSource.Left =  rctWall.Left;
             float y = _Max<float>(Plane->Start.Y, Plane->End.Y);
-            float ex = Plane->End.X;
-            float sx = Plane->Start.X;
+            float ex = _Max(Plane->Start.X, Plane->End.X);
+            float sx = _Min(Plane->Start.X, Plane->End.X);
 		        Pixel color = Pixel(0, 0, 0, 255);
 		        int i = 0;
-            /*
-		        PlaneTexture->clear();
+            for (int l = 0; l < Environment->LightCount; l++) {
+              Environment->Lights[l].PlaneCulled = !(Environment->Lights[l].Rect.intersect(rctFullWall));
+            }
             for (float x = sx; x <= ex; x += 1.0) {
       			  if (i >= rctWall.Width) break;
 			        color = Raycast(Environment, x + xo, y, Null, true);
-              PlaneTexture->setPixelFast(i++, 0, color);
+              PlaneTexture->setPixel(i++, 0, color);
             }
+            PlaneTexture->dirty();
             BlitResample_Normal(Camera->OutputBuffer, PlaneTexture, &rctWall, &rctSource, DefaultSampleFunction);
-            */
-            for (float x = sx; x <= ex; x += 1.0) {
-      			  if (i >= rctWall.Width) break;
-              rctSource.Left = rctWall.Left + i;
-              if ((rctSource.Left >= Camera->OutputBuffer->ClipRectangle.Left) && (rctSource.Left < Camera->OutputBuffer->ClipRectangle.right())) {
-  			        color = Raycast(Environment, x + xo, y, Null, true);
-                FilterSimple_Fill(Camera->OutputBuffer, &rctSource, color);
-              }
-              i++;
-            }
+           // for (float x = sx; x <= ex; x += 1.0) {
+      			  //if (i >= rctWall.Width) break;
+           //   rctSource.Left = rctWall.Left + i;
+           //   if ((rctSource.Left >= Camera->OutputBuffer->ClipRectangle.Left) && (rctSource.Left < Camera->OutputBuffer->ClipRectangle.right())) {
+  			      //  color = Raycast(Environment, x + xo, y, Null, true);
+           //     FilterSimple_Fill(Camera->OutputBuffer, &rctSource, color);
+           //   }
+           //   i++;
+           // }
           }
           ProfileStop("Render Planes");
         }
@@ -2482,8 +2566,8 @@ fuzzyrender:
         n++;
       }
       PlanePoly.Deallocate();
-//	    PlaneTexture->Data = Null;
-//      delete PlaneTexture;
+	    PlaneTexture->Data = Null;
+      delete PlaneTexture;
   }
   ProfileStop("Render Planes & Sprites");
 
@@ -3034,11 +3118,6 @@ bool Lighting::Sector::addPlanes(Lighting::Plane *Planes, int Count, int XOffset
 }
 
 Export int IterateSprites(SpriteParam *sprites, SpriteIterator *func) {
-  if (!sprites) return Failure;
-  SpriteParam *pCurrent = sprites;
-  while (pCurrent) {
-    func(pCurrent->Obj);
-    pCurrent = pCurrent->pNext;
-  }
-  return Success;
+  // NYI
+  return 0;
 }

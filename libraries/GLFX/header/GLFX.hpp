@@ -21,9 +21,9 @@ typedef Byte Channel;
 
 #define Align(n) __declspec(align(n))
 
-#define Trivial_Success 2
-#define Success 1
-#define Failure 0
+static const int Trivial_Success = 2;
+static const int Success = 1;
+static const int Failure = 0;
 
 const double Pi = 3.14159265358979;
 const double Radian = 1.74532925199433E-02;

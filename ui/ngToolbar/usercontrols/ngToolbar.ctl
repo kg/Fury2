@@ -18,8 +18,7 @@ Begin VB.UserControl ngToolbar
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   162
    Begin VB.Timer tmrMouseTracker 
-      Enabled         =   0   'False
-      Interval        =   1
+      Interval        =   100
       Left            =   615
       Top             =   0
    End
@@ -133,7 +132,7 @@ End Property
 Private Sub MouseEntered()
 On Error Resume Next
     If m_booMouseOver Then Exit Sub
-    tmrMouseTracker.Enabled = True
+    tmrMouseTracker.Interval = 1
 End Sub
 
 Public Property Get hwnd() As Long
@@ -748,7 +747,7 @@ Dim l_ptMouse As PointAPI
     m_lngMouseY = l_ptMouse.Y
     If (m_lngMouseX < 0) Or (m_lngMouseX >= UserControl.ScaleWidth) Or (m_lngMouseY < 0) Or (m_lngMouseY >= UserControl.ScaleHeight) Then
         m_booMouseOver = False
-        tmrMouseTracker.Enabled = False
+        tmrMouseTracker.Interval = 100
         UpdateMouse
     End If
 End Sub
@@ -775,7 +774,6 @@ Dim l_booCancel As Boolean
     m_lngMouseY = Y
     If m_btnPressed Is Nothing Then UpdateMouse
     If Button = 1 Then
-        tmrMouseTracker.Enabled = False
         Set m_btnPressed = ButtonFromPoint(X, Y)
         If m_btnPressed Is Nothing Then Exit Sub
         If m_btnPressed.Enabled Then
@@ -786,7 +784,6 @@ Dim l_booCancel As Boolean
                 Set m_btnHover = Nothing
                 m_btnPressed.MouseLeave
                 Set m_btnPressed = Nothing
-                tmrMouseTracker.Enabled = True
                 UpdateMouse
             End If
             Redraw m_btnPressed.Rectangle
@@ -815,7 +812,7 @@ Dim m_btnHover As ngToolButton
         m_btnPressed.MouseUp
         Set m_btnPressed = Nothing
     End If
-    tmrMouseTracker.Enabled = m_booMouseOver
+    tmrMouseTracker.Interval = IIf(m_booMouseOver, 1, 100)
     UpdateMouse
     Redraw
 End Sub

@@ -200,6 +200,14 @@ Dim l_lngImage As Long, l_imgFile As Fury2Image
     End If
 End Sub
 
+Private Sub Class_Terminate()
+On Error Resume Next
+    If Engine Is Nothing Then
+    Else
+        Engine.GraphicDestroyed Me
+    End If
+End Sub
+
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
 Dim l_lngFilenames As Long, l_lngCount As Long

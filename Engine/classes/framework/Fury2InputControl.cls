@@ -83,7 +83,12 @@ Public Sub Trigger()
     Deactivate
 End Sub
 
-Public Sub TriggerRepeat()
+Friend Sub ResetRepeat()
+On Error Resume Next
+    m_sngLastActivate = Engine.HiTimer
+End Sub
+
+Friend Sub TriggerRepeat()
 On Error Resume Next
 Dim l_sngNow As Single
     If (Repeat) Then

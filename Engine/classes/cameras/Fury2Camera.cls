@@ -45,11 +45,10 @@ Public AutoTintLayers As Boolean
 Public ShowSprites As Boolean
 Public ShowTiles As Boolean
 Public DisableBuffer As Boolean
+Public LightmapBlitMode As SFXBlitModes
 
+Private mvarRenderTargets As Collection
 Private mvarLightingSoftness As Single
-Private mvarLightmapScratch As Fury2Image
-Private mvarLightmap As Fury2Image
-Private mvarBuffer As Fury2Image
 Private mvarWidth As Long
 Private mvarHeight As Long
 Private mvarSubthreaded As Boolean
@@ -74,6 +73,45 @@ Private mvarConstrainToMap As Boolean
 Private mvarUnGhostLayer As Long
 Private m_engEngine As Fury2Engine
 Private m_filBlur As Fury2ConvolutionFilter
+
+Public Function RenderTargetArray() As Long()
+On Error Resume Next
+Dim l_lngTargets() As Long
+Dim l_lngIndex As Long
+Dim l_imgTarget As Fury2Image
+    ReDim l_lngTargets(0 To mvarRenderTargets.Count - 1)
+    For Each l_imgTarget In mvarRenderTargets
+        l_lngTargets(l_lngIndex) = l_imgTarget.Handle
+        l_lngIndex = l_lngIndex + 1
+    Next l_imgTarget
+    RenderTargetArray = l_lngTargets
+End Function
+
+Friend Sub ClearRenderTargets()
+On Error Resume Next
+Dim l_imgTarget As Fury2Image
+    For Each l_imgTarget In mvarRenderTargets
+        l_imgTarget.Clear
+    Next l_imgTarget
+End Sub
+
+Friend Sub ResizeRenderTargets()
+On Error Resume Next
+Dim l_imgTarget As Fury2Image
+    For Each l_imgTarget In mvarRenderTargets
+        If l_imgTarget.Tag = "AutoSize" Then
+        Else
+            l_imgTarget.Resize mvarWidth, mvarHeight
+        End If
+    Next l_imgTarget
+End Sub
+
+Public Function AddRenderTarget(Optional ByVal AutoSize As Boolean = False) As Fury2Image
+On Error Resume Next
+    Set AddRenderTarget = F2Image(mvarWidth, mvarHeight)
+    If AutoSize Then AddRenderTarget.Tag = "AutoSize"
+    mvarRenderTargets.Add AddRenderTarget
+End Function
 
 Public Property Get LightingSoftness() As Single
     LightingSoftness = mvarLightingSoftness
@@ -145,6 +183,14 @@ Public Property Let Dirty(ByVal NewDirty As Boolean)
     mvarDirty = NewDirty
 End Property
 
+Sub Free()
+On Error Resume Next
+Dim l_imgTarget As Fury2Image
+    For Each l_imgTarget In mvarRenderTargets
+        l_imgTarget.Unsize
+    Next l_imgTarget
+End Sub
+
 Sub FlushBuffer()
 On Error Resume Next
 Dim m_sngNewX As Single, m_sngNewY As Single, m_booAnimated As Boolean
@@ -176,8 +222,7 @@ On Error Resume Next
     If mvarViewingMap.Layers.Count <= 0 Then Exit Sub
     If ((Engine.DisableCameraBuffers = True) And (Engine.Cameras.Count = 1)) Or (DisableBuffer) Then
     Else
-        Set mvarBuffer = F2Image(mvarWidth, mvarHeight)
-        If Err.Number <> 0 Then Engine.CriticalError "Fury2Camera.Init", "Set mvarBuffer = F2Image(mvarWidth, mvarHeight)"
+        Buffer.Resize mvarWidth, mvarHeight
     End If
     mvarDirty = True
     Err.Clear
@@ -291,11 +336,11 @@ Dim m_lngEffects As Long
         Render , Engine.Backbuffer
         Exit Sub
     End If
-    If mvarBuffer Is Nothing Then Exit Sub
-    If mvarBuffer.Width < mvarWidth Then Exit Sub
-    If mvarBuffer.Height < mvarHeight Then Exit Sub
-    If mvarBuffer.Width <= 0 Then Exit Sub
-    If mvarBuffer.Height <= 0 Then Exit Sub
+    If Buffer Is Nothing Then Exit Sub
+    If Buffer.Width < mvarWidth Then Exit Sub
+    If Buffer.Height < mvarHeight Then Exit Sub
+    If Buffer.Width <= 0 Then Exit Sub
+    If Buffer.Height <= 0 Then Exit Sub
     If mvarDirty Then FlushBuffer
     Err.Clear
     If mvarX < 0 Then mvarX = 0
@@ -307,14 +352,14 @@ Dim m_lngEffects As Long
     If mvarAlpha = 0 Then
     ElseIf mvarAlpha = 1 Then
         'If (mvarGamma = 0) Or (Engine.SpecialFX = False) Then
-            Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), mvarBuffer.Rectangle, mvarBuffer, 1, BlitMode_Normal
+            Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer.Rectangle, Buffer, 1, BlitMode_Normal
             If Err.Number <> 0 Then Engine.Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2Black
         'Else
-        '    Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), mvarBuffer.Rectangle, mvarBuffer, ((mvarGamma) / 255), BlitMode_Matte_Tint, F2White
+        '    Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer.Rectangle, Buffer, ((mvarGamma) / 255), BlitMode_Matte_Tint, F2White
         '    If Err.Number <> 0 Then Engine.Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2Black
         'End If
     Else
-        Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), mvarBuffer.Rectangle, mvarBuffer, mvarAlpha, BlitMode_Normal
+        Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer.Rectangle, Buffer, mvarAlpha, BlitMode_Normal
         If Err.Number <> 0 Then Engine.Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2RGB(0, 0, 0, mvarAlpha * 255)
     End If
     Set Engine.Backbuffer.ClipRectangle = Engine.Backbuffer.Rectangle
@@ -322,7 +367,7 @@ End Sub
 
 Public Sub CopyToDC(ByVal hdc As Long)
 On Error Resume Next
-    CopyImageToDC hdc, F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), mvarBuffer
+    CopyImageToDC hdc, F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer
 End Sub
 
 Private Function SelectTintColor(ByVal Index As Long, ByVal Count As Long) As Long
@@ -361,9 +406,11 @@ Dim m_lngSprites As Long, m_lngPath As Long
 Dim gr As Win32.Rect
 Dim m_lnLines() As FLine, m_lngLines As Long
 Dim l_imgBuffer As Fury2Image
+Dim l_imgTarget As Fury2Image
 Dim l_sngAlpha As Single
 Dim l_lcaCamera As LightingCamera
 Dim l_sprSprite As Fury2Sprite
+Dim l_lngTargets() As Long
 Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
     Err.Clear
     If mvarMap <> 0 Then Set mvarViewingMap = Engine.Maps(mvarMap)
@@ -379,31 +426,28 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
         If (Engine.Cameras.Count = 1) And (Engine.DisableCameraBuffers) Then
             Set l_imgBuffer = Engine.Backbuffer
         Else
-            Set l_imgBuffer = mvarBuffer
+            Set l_imgBuffer = Buffer
         End If
     End If
     If EnableLighting Then
-        If mvarLightmap Is Nothing Then
-            Set mvarLightmap = Engine.CreateHardwareImage(Ceil(l_imgBuffer.Width * LightingScaleRatio), Ceil(l_imgBuffer.Height * LightingScaleRatio))
+        If (Lightmap.Width <> Ceil(l_imgBuffer.Width * LightingScaleRatio)) Or (Lightmap.Height <> Ceil(l_imgBuffer.Height * LightingScaleRatio)) Then
+            Lightmap.Resize Ceil(l_imgBuffer.Width * LightingScaleRatio), Ceil(l_imgBuffer.Height * LightingScaleRatio)
         End If
-        If mvarLightmapScratch Is Nothing Then
-            Set mvarLightmapScratch = Engine.CreateHardwareImage(mvarLightmap.Width, mvarLightmap.Height)
-        End If
-        If (mvarLightmap.Width <> Ceil(l_imgBuffer.Width * LightingScaleRatio)) Or (mvarLightmap.Height <> Ceil(l_imgBuffer.Height * LightingScaleRatio)) Then
-            Set mvarLightmap = Engine.CreateHardwareImage(Ceil(l_imgBuffer.Width * LightingScaleRatio), Ceil(l_imgBuffer.Height * LightingScaleRatio))
-        End If
-        If (mvarLightmapScratch.Width <> mvarLightmap.Width) Or (mvarLightmapScratch.Height <> mvarLightmap.Height) Then
-            Set mvarLightmapScratch = Engine.CreateHardwareImage(mvarLightmap.Width, mvarLightmap.Height)
+        If (ScratchBuffer.Width <> Lightmap.Width) Or (ScratchBuffer.Height <> Lightmap.Height) Then
+            ScratchBuffer.Resize Ceil(l_imgBuffer.Width * LightingScaleRatio), Ceil(l_imgBuffer.Height * LightingScaleRatio)
         End If
     End If
+    l_lngTargets = RenderTargetArray()
+    l_lngTargets(0) = l_imgBuffer.Handle
     With mvarViewingMap.Layers(1)
     With CameraParam
         .Alpha = Me.Alpha * 255
-        .pImage = l_imgBuffer.Handle
+        .pRenderTargets = VarPtr(l_lngTargets(0))
+        .RenderTargetCount = mvarRenderTargets.Count
         .Rectangle = l_imgBuffer.Rectangle.GetRectangle
     End With
-    If (l_imgBuffer Is mvarBuffer) And (Output Is Nothing) Then
-        If (mvarBuffer.Width <> mvarWidth) Or (mvarBuffer.Height <> mvarHeight) Then
+    If (l_imgBuffer Is Buffer) And (Output Is Nothing) Then
+        If (Buffer.Width <> mvarWidth) Or (Buffer.Height <> mvarHeight) Then
             Init
         End If
     End If
@@ -478,17 +522,22 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                     Set DestTileRect = F2Rect((m_lngXOff), (m_lngYOff), m_lngViewX, m_lngViewY, False)
                     Set SourceTileRect = F2Rect(m_lngVPX, m_lngVPY, m_lngViewX + m_lngBGX, m_lngViewY + m_lngBGY, False)
                     If ShowTiles Then
+                        If .RenderTarget = 0 Then
+                            Set l_imgTarget = l_imgBuffer
+                        Else
+                            Set l_imgTarget = RenderTargets(.RenderTarget)
+                        End If
                         If .Tileset.HasAlpha Then
-                            l_imgBuffer.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, .Alpha * l_sngAlpha, BlitMode_SourceAlpha
+                            l_imgTarget.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, .Alpha * l_sngAlpha, BlitMode_SourceAlpha
                         Else
                             If .Alpha >= 1 Then
                                 If .Tileset.MaskColor = c_lngNullColor Then
-                                    l_imgBuffer.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, l_sngAlpha, BlitMode_Normal
+                                    l_imgTarget.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, l_sngAlpha, BlitMode_Normal
                                 Else
-                                    l_imgBuffer.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, l_sngAlpha, BlitMode_Matte
+                                    l_imgTarget.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, l_sngAlpha, BlitMode_Matte
                                 End If
                             Else
-                                l_imgBuffer.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, .Alpha * l_sngAlpha, BlitMode_Matte
+                                l_imgTarget.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, .Alpha * l_sngAlpha, BlitMode_Matte
                             End If
                         End If
                     End If
@@ -521,6 +570,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                     .Height = mvarViewingMap.Layers(Layers).Height
                     .Width = mvarViewingMap.Layers(Layers).Width
                     .pData = mvarViewingMap.Layers(Layers).TilePointer(0, 0)
+                    .RenderTarget = mvarViewingMap.Layers(Layers).RenderTarget - 1
                     .MaskedTile = mvarViewingMap.Layers(Layers).Tileset.TransparentTile
                     .pTileset = mvarViewingMap.Layers(Layers).Tileset.Handle
                     .pAnimationMap = 0
@@ -550,14 +600,14 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                 If Err.Number <> 0 Then Engine.CriticalError "Fury2Camera.Redraw", "Layers(" + CStr(Layers) + ").Sprites.Sort Me": Exit Sub
             End If
             If EnableLighting And .Layers(Layers).Lighting.ResetLight Then
-                Set mvarLightmap.ClipRectangle = mvarLightmap.Rectangle
-                mvarLightmap.Clear .Layers(Layers).Lighting.AmbientLight
+                Set Lightmap.ClipRectangle = Lightmap.Rectangle
+                Lightmap.Clear .Layers(Layers).Lighting.AmbientLight
             End If
             If EnableLighting And .Layers(Layers).Lit Then
                 With l_lcaCamera
-                    .OutputBuffer = mvarLightmap.Handle
-                    .OutputRectangle = mvarLightmap.Rectangle.GetRectangle
-                    .ScratchBuffer = mvarLightmapScratch.Handle
+                    .OutputBuffer = Lightmap.Handle
+                    .OutputRectangle = Lightmap.Rectangle.GetRectangle
+                    .ScratchBuffer = ScratchBuffer.Handle
                     .OutputScaleRatio = 1
                     .ScrollX = mvarViewportX
                     .ScrollY = mvarViewportY
@@ -570,19 +620,19 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                 .Layers(Layers).Lighting.Render l_lcaCamera
             End If
             If EnableLighting And .Layers(Layers).Lighting.RenderLight Then
-                Set mvarLightmap.ClipRectangle = mvarLightmap.Rectangle
-                Set mvarLightmapScratch.ClipRectangle = mvarLightmap.Rectangle
+                Set Lightmap.ClipRectangle = Lightmap.Rectangle
+                Set ScratchBuffer.ClipRectangle = Lightmap.Rectangle
                 If Gamma <> 255 Then
-                    mvarLightmap.AdjustGamma mvarGamma
+                    Lightmap.AdjustGamma mvarGamma
                 End If
                 If mvarLightingSoftness > 0 Then
                     If m_filBlur Is Nothing Then
                         Set m_filBlur = F2GaussianBlurFilter(mvarLightingSoftness)
                     End If
-                    m_filBlur.Filter mvarLightmapScratch, mvarLightmap, , , RenderMode_Normal
-                    l_imgBuffer.Blit Area, , mvarLightmapScratch, 1, BlitMode_Lightmap_RGB
+                    m_filBlur.Filter ScratchBuffer, Lightmap, , , RenderMode_Normal
+                    l_imgBuffer.Blit Area, , ScratchBuffer, 1, LightmapBlitMode
                 Else
-                    l_imgBuffer.Blit Area, , mvarLightmap, 1, BlitMode_Lightmap_RGB
+                    l_imgBuffer.Blit Area, , Lightmap, 1, LightmapBlitMode
                 End If
             End If
             If ShowSprites Then
@@ -590,6 +640,12 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                 If Err.Number <> 0 Then Engine.CriticalError "Fury2Camera.Redraw", "Layers(" + CStr(Layers) + ").Sprites.Redraw l_imgBuffer, Area": Exit Sub
                 Err.Clear
             End If
+            With .Layers(Layers)
+                If .RenderEvent Is Nothing Then
+                Else
+                    .RenderEvent.Invoke
+                End If
+            End With
         End If
     Next Layers
     For Each l_sprSprite In mvarViewingMap.Sprites
@@ -687,31 +743,46 @@ Public Property Get Width() As Long
     Width = mvarWidth
 End Property
 
-Public Property Set Buffer(ByVal vData As Fury2Image)
-    Set mvarBuffer = vData
+Public Property Get RenderTargets(ByVal Index As Long)
+    Set RenderTargets = mvarRenderTargets(Index)
+End Property
+
+Friend Property Get ScratchBuffer() As Fury2Image
+On Error Resume Next
+    Set ScratchBuffer = RenderTargets(3)
+End Property
+
+Public Property Get Lightmap() As Fury2Image
+On Error Resume Next
+    Set Lightmap = RenderTargets(2)
 End Property
 
 Public Property Get Buffer() As Fury2Image
-    Set Buffer = mvarBuffer
+On Error Resume Next
+    Set Buffer = RenderTargets(1)
 End Property
 
 Private Sub Class_Initialize()
 On Error Resume Next
     mvarAlpha = 1
-    Set mvarBuffer = New Fury2Image
+    Set mvarRenderTargets = New Collection
+    AddRenderTarget True
+    AddRenderTarget True
+    AddRenderTarget True
     mvarDirty = True
     ShowSprites = True
     ShowTiles = True
     EnableParallax = True
     EnableWrapping = True
     LightingScaleRatio = 1
+    LightmapBlitMode = BlitMode_Lightmap_RGB
     Gamma = 255
 End Sub
 
 Private Sub Class_Terminate()
 On Error Resume Next
     Err.Clear
-    Set mvarBuffer = Nothing
+    Set Buffer = Nothing
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)

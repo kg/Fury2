@@ -1,0 +1,3 @@
+﻿Title: Documentation.$EnumName$
+Description: 
+Namespace: Documentation.$EnumName$

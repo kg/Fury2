@@ -11,10 +11,17 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
+Public Blocking As Boolean
 Public Object As Variant
 Public Method As String
 Public BoundParameters As Variant
+Private m_lngBlocked As Long
 Private m_engEngine As Fury2Engine
+
+Public Property Get Blocked() As Boolean
+On Error Resume Next
+    Blocked = m_lngBlocked > 0
+End Property
 
 Friend Sub SetEngine(Engine As Fury2Engine)
     Set m_engEngine = Engine
@@ -46,6 +53,7 @@ Dim l_varParameters() As Variant
 Dim l_lngParameterOffset As Long
 Dim l_lngParameters As Long
 Dim l_lngParameterCount As Long
+    If Blocking And Blocked Then Exit Function
     If VarType(Object) = vbString Then
         Set l_objObject = Engine.Evaluate(Object)
     Else
@@ -89,6 +97,7 @@ Dim l_lngParameterCount As Long
         Next l_lngParameters
     End If
     Err.Clear
+    m_lngBlocked = m_lngBlocked + 1
     Select Case l_lngParameterCount
     Case 0
         Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0))
@@ -109,6 +118,7 @@ Dim l_lngParameterCount As Long
     Case Else
         Invoke = CallByName(l_objObject, Method, VbMethod)
     End Select
+    m_lngBlocked = m_lngBlocked - 1
     If Err = 438 Then
         Engine.DebugOut "Bound event failed to invoke: " & TypeName(l_objObject) & "." & Method
     End If

@@ -129,6 +129,18 @@ Export Image* GetTile(Tileset *pTileset, int Index) {
     return pTileset->tile(Index);
 }
 
+Export int GetTileCount(Tileset *pTileset) {
+    return pTileset->TileCount;
+}
+
+Export int GetTileWidth(Tileset *pTileset) {
+    return pTileset->TileWidth;
+}
+
+Export int GetTileHeight(Tileset *pTileset) {
+    return pTileset->TileHeight;
+}
+
 Export void AddTile(Tileset *pTileset, Image* Tile) {
     pTileset->addTile(Tile);
 }
@@ -208,14 +220,14 @@ if (!Layer) return Failure;
 
     // clip the start and end tile values so we don't try and draw stuff that isn't there
     if (Layer->WrapX) {
-		ex = sx + (Camera->Rectangle.Width / Layer->pTileset->TileWidth) + 2;
+		    ex = sx + (Camera->Rectangle.Width / Layer->pTileset->TileWidth) + 2;
     } else {
-        ex = sx + ClipValue(mx, 0, Layer->Width);
+        ex = sx + ClipValue(ClipValue(mx, 0, (Camera->Rectangle.Width / Layer->pTileset->TileWidth) + 2), 0, Layer->Width);
     }
     if (Layer->WrapY) {
-		ey = sy + (Camera->Rectangle.Height / Layer->pTileset->TileHeight) + 2;
+		    ey = sy + (Camera->Rectangle.Height / Layer->pTileset->TileHeight) + 2;
     } else {
-        ey = sy + ClipValue(my, 0, Layer->Height);
+        ey = sy + ClipValue(ClipValue(my, 0, (Camera->Rectangle.Height / Layer->pTileset->TileHeight) + 2), 0, Layer->Height);
     }
 
     // some final clipping
@@ -267,9 +279,30 @@ if (!Layer) return Failure;
     rctDest.Height = Layer->pTileset->TileHeight;
 
     if (Layer->TintColor[::Alpha]) {
-      if (TintBlitter == Null) return Failure;
+      if (TintBlitter == Null) {
+        enableClipping = true;
+        Camera->pImage->ClipRectangle = oldRect;
+        ProfileStop("RenderTilemapLayer()");
+        return Failure;
+      }
     } else {
-      if (Blitter == Null) return Failure;
+      if (Blitter == Null) {
+        enableClipping = true;
+        Camera->pImage->ClipRectangle = oldRect;
+        ProfileStop("RenderTilemapLayer()");
+        return Failure;
+      }
+    }
+
+    int result;
+    if (result = Override::EnumOverrides(Override::RenderTilemapLayer, 9, Layer, Camera, sx, sy, ex, ey, camerax, cameray, alpha)) {
+      if (temporaryAnimationMap) {
+        Layer->pAnimationMap = Null;
+      }
+      enableClipping = true;
+      Camera->pImage->ClipRectangle = oldRect;
+      ProfileStop("RenderTilemapLayer()");
+      return result;
     }
 
     // initialize the y coordinate

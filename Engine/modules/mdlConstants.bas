@@ -20,6 +20,8 @@ Attribute VB_Name = "mdlConstants"
 
 Option Explicit
 
+Global Const c_lngKeyCount As Long = 255
+
 Global Const c_dblPi As Double = 3.14159265358979
 Global Const c_dblRadian As Double = 1.74532925199433E-02
 

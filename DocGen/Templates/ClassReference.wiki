@@ -1,0 +1,7 @@
+Documentation.[Documentation] > Documentation.[ClassReference]
+!Enumerations
+$EnumLinks$
+$ClassLinks$
+----
+Last automated update at: $Date$
+This documentation is for $Version$

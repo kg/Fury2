@@ -37,6 +37,15 @@ Implements Fury2Object
 Private m_lngXDelta As Long, m_lngYDelta As Long
 Private m_lngLastX As Long, m_lngLastY As Long
 Private m_engEngine As Fury2Engine
+Private m_booEnabled As Boolean
+
+Public Property Get Enabled() As Boolean
+    Enabled = m_booEnabled
+End Property
+
+Public Property Let Enabled(ByVal NewValue As Boolean)
+    m_booEnabled = NewValue
+End Property
 
 Friend Sub SetEngine(Engine As Fury2Engine)
     Set m_engEngine = Engine
@@ -71,26 +80,13 @@ Public Property Set Cursor(RHS As Fury2Image)
 End Property
 
 Public Property Let Visible(ByVal vData As Boolean)
-    If (m_booIDE) Or (Engine.EditMode) Or (Not (Engine.Debugger Is Nothing)) Then
-        If m_booMouseVisible <> True Then
-            ShowCursor True
-            m_booMouseVisible = True
-        End If
-    Else
-        If vData <> m_booMouseVisible Then
-            ShowCursor vData
-'            m_objOutputPlugin.Form.MousePointer = IIf(vData, 0, 99)
-            m_booMouseVisible = vData
-        End If
-    End If
+On Error Resume Next
+    Engine.GFXEngine.MouseVisible = vData
 End Property
 
 Public Property Get Visible() As Boolean
-    If (m_booIDE) Or (Engine.EditMode) Or (Not (Engine.Debugger Is Nothing)) Then
-        Visible = True
-    Else
-        Visible = m_booMouseVisible
-    End If
+On Error Resume Next
+    Visible = Engine.GFXEngine.MouseVisible
 End Property
 
 Public Property Let Y(ByVal vData As Single)
@@ -103,6 +99,10 @@ End Property
 
 Public Property Get Y() As Single
     Y = g_lngMouseY
+End Property
+
+Public Property Get State(ByVal Button As Long) As Boolean
+    State = (g_lngMouseButtons And Button) = Button
 End Property
 
 Public Property Get Buttons() As Long
@@ -133,4 +133,9 @@ On Error Resume Next
     m_lngLastY = g_lngMouseY
     m_lngXDelta = 0
     m_lngYDelta = 0
+End Sub
+
+Private Sub Class_Initialize()
+On Error Resume Next
+    m_booEnabled = True
 End Sub

@@ -41,6 +41,9 @@ Public Enum SpriteEditorClipboardFormats
     SCF_SpriteState
     SCF_SpritePose
     SCF_SpriteFrame
+    SCF_SpriteStates
+    SCF_SpritePoses
+    SCF_SpriteFrames
     SCF_MAX_
 End Enum
 Private m_lngClipboardFormats(SCF_MIN_ To SCF_MAX_)
@@ -68,6 +71,9 @@ On Error Resume Next
     m_lngClipboardFormats(SCF_SpriteState) = m_clpClipboard.AddFormat("Fury2State")
     m_lngClipboardFormats(SCF_SpritePose) = m_clpClipboard.AddFormat("Fury2Pose")
     m_lngClipboardFormats(SCF_SpriteFrame) = m_clpClipboard.AddFormat("Fury2PoseFrame")
+    m_lngClipboardFormats(SCF_SpriteStates) = m_clpClipboard.AddFormat("Fury2States")
+    m_lngClipboardFormats(SCF_SpritePoses) = m_clpClipboard.AddFormat("Fury2Poses")
+    m_lngClipboardFormats(SCF_SpriteFrames) = m_clpClipboard.AddFormat("Fury2PoseFrames")
 End Sub
 
 Private Sub Class_Terminate()

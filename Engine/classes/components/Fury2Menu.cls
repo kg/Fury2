@@ -117,7 +117,6 @@ Dim m_lngSpace As Long
     Else
         m_lngSpace = 2
     End If
-    If (Engine.Mouse.Visible = False) And (Engine.MouseCursor Is Nothing) Then Exit Sub
     If X >= Rectangle.Left And X < Rectangle.Right And Y >= Rectangle.Top And Y < Rectangle.Bottom Then
         m_lngSelectedItem = ((Y - (Rectangle.Top + m_lngSpace)) \ Font.Height) + 1 + ScrollOffset
         If m_lngSelectedItem < 1 Then m_lngSelectedItem = 1
@@ -143,7 +142,6 @@ Dim m_lngSpace As Long
     Else
         m_lngSpace = 2
     End If
-    If (Engine.Mouse.Visible = False) And (Engine.MouseCursor Is Nothing) Then Exit Sub
     If X >= Rectangle.Left And X < Rectangle.Right And Y >= Rectangle.Top And Y < Rectangle.Bottom Then
         m_lngOldItem = m_lngSelectedItem
         Err.Clear

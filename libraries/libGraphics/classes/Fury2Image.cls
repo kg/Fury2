@@ -378,7 +378,7 @@ Dim l_plyPoly As GenericPolygon
     End Select
 End Sub
 
-Public Sub Copy(Image)
+Public Sub Copy(ByVal Image As Fury2Image)
 On Error Resume Next
     If TypeOf Image Is Fury2Image Then Else Exit Sub
     If Initialized Then SoftFX.CopyImage m_lngImage, Image.Handle
@@ -1384,6 +1384,12 @@ Dim l_rctClip As Fury2Rect
         SoftFX.Blit_Tile_SourceAlpha_Tint_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_lngColor, l_lngAlpha
     Case SFXBlitModes.BlitMode_Merge
         SoftFX.Blit_Tile_Merge_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_lngAlpha
+    Case SFXBlitModes.BlitMode_Font
+        SoftFX.Blit_Tile_Font_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_lngColor, l_lngAlpha
+    Case SFXBlitModes.BlitMode_Font_SourceAlpha
+        SoftFX.Blit_Tile_Font_SourceAlpha_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_lngColor, l_lngAlpha
+    Case SFXBlitModes.BlitMode_Font_Merge
+        SoftFX.Blit_Tile_Font_Merge_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_lngColor, l_lngAlpha
     Case Else
     End Select
 End Sub

@@ -97,6 +97,17 @@ Public Enum Fury2TransitionTypes
     TR_CircleIn = 11
 End Enum
 
+Public Enum Fury2LayerEffects
+    F2LE_Normal = 0
+    F2LE_Matte = 1
+    F2LE_Alpha = 2
+    F2LE_Additive = 3
+    F2LE_Subtractive = 4
+    F2LE_Screen = 6
+    F2LE_Multiply = 7
+    F2LE_Lightmap = 8
+End Enum
+
 Public Enum Fury2SpriteEffects
     F2SB_Matte
     F2SB_Alpha

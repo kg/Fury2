@@ -36,8 +36,6 @@ Attribute VB_Ext_KEY = "Member0" ,"SoundEngine"
 
 Option Explicit
 
-Private Declare Function GetAsyncKeyState Lib "user32" (ByVal vKey As Long) As Integer
-
 Private Type Fury2Picture
     Visible As Boolean
     DestRect As Fury2Rect
@@ -74,11 +72,10 @@ Option Compare Text
 
 Implements IVirtualFileSaveable
 Public Mouse As Fury2Mouse
+Public Keyboard As Fury2Keyboard
+Public Joystick As Fury2Joystick
 
 Public ErrorOccurred As Boolean
-
-Private KeyBindings(0 To 255) As Variant
-Private BindState(0 To 255) As Boolean
 
 Private m_booErrorsOff As Boolean, m_booErrorOccurred As Boolean
 
@@ -87,10 +84,7 @@ Private m_booBreak As Boolean, m_booResetClock As Boolean
 Public DisableUserInput As Boolean
 
 Public ConsoleText As String, ConsoleHeight As Long, ConsoleOffset As Single, ConsoleSliding As Boolean, ConsoleEndOffset As Single, ConsoleStartOffset As Single, ConsoleEndTime As Single, ConsoleStartTime As Single, ConsoleCaretPos As Long
-
 Public ConsoleVisible As Boolean
-
-Public Joystick As Fury2Joystick
 
 Public ScriptLanguage As String
 
@@ -273,9 +267,6 @@ Public LogToClipboard As Boolean
 
 Public Terminating As Boolean, TerminateEngine As Boolean
 
-Private m_KeyState(0 To 255) As Boolean
-Private m_KeyMap(0 To 255) As Byte
-
 Public Paused As Boolean
 Attribute Paused.VB_VarDescription = "This flag pauses the entire engine's updating routines."
 Public Running As Boolean
@@ -333,6 +324,10 @@ Public LogDebugMessages As Boolean
 Public Debugger As Fury2Debugger
 Public Halted As Boolean
 Public EditMode As Boolean
+
+Public Property Get GFXEngine() As Object
+    Set GFXEngine = m_objOutputPlugin
+End Property
 
 Public Sub SetNotify(ByRef Obj As Object)
 On Error Resume Next
@@ -828,6 +823,10 @@ On Error Resume Next
     If VarType(Method) = vbString Then
         If Len(Trim(ToString(Method))) = 0 Then Exit Function
         Method = ToString(Method)
+        If InStr(Method, ".") Then
+            Object = Left(Method, InStr(Method, ".") - 1)
+            Method = Mid(Method, InStr(Method, ".") + 1)
+        End If
         If InStr(Method, " ") Then
             BindParameters = m_ScriptEngine.Eval("Array(" & Mid(Method, InStr(Method, " ") + 1) & ")")
             Method = Left(Method, InStr(Method, " ") - 1)
@@ -852,31 +851,17 @@ On Error Resume Next
     End If
 End Function
 
-Sub BindKey(KeyCode, Binding)
+Sub BindKey(ByVal KeyCode As Long, ByVal Binding As Variant)
 Attribute BindKey.VB_Description = "Attaches a default script to a key. Key bindings are executed right after the Engine_KeyDown event, but only if the event and all plugins don't block it."
 On Error Resume Next
-Dim m_lngKeyCode As Long
-Dim l_ctlControl As Fury2InputControl
-Dim l_evtEvent As Fury2Event
-    If VarType(KeyCode) = vbString Then
-        m_lngKeyCode = Asc(ToString(KeyCode))
-    Else
-        m_lngKeyCode = CLng(KeyCode)
-    End If
-    If m_lngKeyCode < 1 Then Exit Sub
-    If m_lngKeyCode > 255 Then Exit Sub
-    If VarType(Binding) = vbObject Then
-        If TypeOf Binding Is Fury2InputControl Then
-            Set l_ctlControl = Binding
-            Set KeyBindings(m_lngKeyCode) = l_ctlControl
-        ElseIf TypeOf Binding Is Fury2Event Then
-            Set l_evtEvent = Binding
-            Set KeyBindings(m_lngKeyCode) = l_evtEvent
-        End If
-    ElseIf VarType(Binding) = vbString Then
-        KeyBindings(m_lngKeyCode) = ToString(Binding)
-    End If
-    Err.Clear
+    Select Case VarType(Binding)
+    Case vbString
+        Set Keyboard.Binding(KeyCode) = BindEvent(Binding)
+    Case vbObject
+        Set Keyboard.Binding(KeyCode) = Binding
+    Case Else
+        DebugOut "Unable to bind key " & KeyCode & " to " & ToString(Binding, True)
+    End Select
 End Sub
 
 Public Sub Break(Optional ByVal Name As String = "")
@@ -985,6 +970,10 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error Resume Next
+    Set Mouse = New Fury2Mouse
+    Mouse.SetEngine Me
+    Set Keyboard = New Fury2Keyboard
+    Keyboard.SetEngine Me
     m_booIDE = InIDE
     RanStartEvent = False
     ReDim OnscreenPictures(0 To c_lngMaxPictureSlot)
@@ -1023,7 +1012,6 @@ On Error Resume Next
     ShowTitlebar = True
     ShowFPS = True
     HarassCPU = True
-    ResetKeyMappings
     InitDefaultControls
     Set Filesystem = New Fury2Filesystem
     Set Filesystem.OutputHook = Me
@@ -1036,8 +1024,6 @@ On Error Resume Next
     Set Timers = F2Collection()
     Set MessageQueue = F2Collection()
     Set MessageWindows = F2Collection()
-    Set Mouse = New Fury2Mouse
-    Mouse.SetEngine Me
     Set m_colPluginStack = New Collection
     Set m_colReversePluginStack = New Collection
     Set m_Images = New Collection
@@ -1528,6 +1514,7 @@ On Error Resume Next
 Dim Obj As Object, m_lngKeyCode As Long
 Dim PObj As Fury2Plugin
     If ConsoleVisible Then Exit Sub
+    If Not Keyboard.Enabled Then Exit Sub
     ContextLevelAdd "KeyDown"
     m_lngKeyCode = CLng(Evt.LParam1)
     For Each Obj In m_colPluginStack
@@ -1544,28 +1531,32 @@ Dim PObj As Fury2Plugin
     m_ScriptEngine.Exec "Engine_KeyDown", m_lngKeyCode, CLng(Evt.LParam2)
     If m_lngKeyCode = 0 Then ContextLevelRemove: Exit Sub
     If (Not ConsoleVisible) And (Not TrapKeys) Then
-        If Evt.LParam3 <> 1 Then
-            If VarType(KeyBindings(m_lngKeyCode)) = vbString Then
-                Err.Clear
-                If BindState(m_lngKeyCode) Then
-                Else
-                    BindState(m_lngKeyCode) = True
-                    If Not ConsoleVisible Then m_ScriptEngine.AddCode ToString(KeyBindings(m_lngKeyCode))
-                    BindState(m_lngKeyCode) = False
-                End If
-                Err.Clear
-            Else
-                If TypeOf KeyBindings(m_lngKeyCode) Is Fury2Event Then
-                    KeyBindings(m_lngKeyCode).Invoke
-                ElseIf TypeOf KeyBindings(m_lngKeyCode) Is Fury2InputControl Then
-                    If KeyBindings(m_lngKeyCode).State Then
-                        KeyBindings(m_lngKeyCode).Deactivate
-                    End If
-                    KeyBindings(m_lngKeyCode).Activate
-                End If
-            End If
+        If Evt.LParam3 = 1 Then
+            ' Repeated press
+            Keyboard.KeyDown m_lngKeyCode, True
         Else
+            ' First press
+            Keyboard.KeyDown m_lngKeyCode, True
         End If
+'            If VarType(KeyBindings(m_lngKeyCode)) = vbString Then
+'                Err.Clear
+'                If BindState(m_lngKeyCode) Then
+'                Else
+'                    BindState(m_lngKeyCode) = True
+'                    If Not ConsoleVisible Then m_ScriptEngine.AddCode ToString(KeyBindings(m_lngKeyCode))
+'                    BindState(m_lngKeyCode) = False
+'                End If
+'                Err.Clear
+'            Else
+'                If TypeOf KeyBindings(m_lngKeyCode) Is Fury2Event Then
+'                    KeyBindings(m_lngKeyCode).Invoke
+'                ElseIf TypeOf KeyBindings(m_lngKeyCode) Is Fury2InputControl Then
+'                    If KeyBindings(m_lngKeyCode).State Then
+'                        KeyBindings(m_lngKeyCode).Deactivate
+'                    End If
+'                    KeyBindings(m_lngKeyCode).Activate
+'                End If
+'            End If
     End If
     ContextLevelRemove
 End Sub
@@ -1575,6 +1566,7 @@ On Error Resume Next
 Dim Obj As Object, m_lngKeyCode As Long
     ContextLevelAdd "KeyUp"
     m_lngKeyCode = CLng(Evt.LParam1)
+    Keyboard.KeyUp m_lngKeyCode
     Dim PObj As Fury2Plugin
     For Each Obj In m_colPluginStack
         Set PObj = Nothing
@@ -1587,11 +1579,6 @@ Dim Obj As Object, m_lngKeyCode As Long
         If m_lngKeyCode = 0 Then ContextLevelRemove: Exit Sub
     Next Obj
     m_ScriptEngine.Exec "Engine_KeyUp", CLng(Evt.LParam1), CLng(Evt.LParam2)
-    If VarType(KeyBindings(m_lngKeyCode)) = vbObject Then
-        If TypeOf KeyBindings(m_lngKeyCode) Is Fury2InputControl Then
-            KeyBindings(m_lngKeyCode).Deactivate
-        End If
-    End If
     ContextLevelRemove
 End Sub
 
@@ -1601,6 +1588,7 @@ Dim Obj As Object
 Dim m_lngX As Long, m_lngY As Long
 Dim m_colObjects As Collection, m_lngObjects As Long
 Dim l_lngHotspots As Long, l_booInside As Boolean
+    If Not Mouse.Enabled Then Exit Sub
     Set m_colObjects = New Collection
     ContextLevelAdd "MouseDown"
     m_lngX = Evt.LParam3
@@ -1693,6 +1681,7 @@ Dim Obj As Object
 Dim m_lngX As Long, m_lngY As Long
 Dim m_colObjects As Collection, m_lngObjects As Long
 Dim m_lngHotspots As Long
+    If Not Mouse.Enabled Then Exit Sub
     Set m_colObjects = New Collection
     ContextLevelAdd "MouseUp"
     m_lngX = Evt.LParam3
@@ -1730,9 +1719,12 @@ Dim m_facBehavior As fury2behaviorfactory
 End Function
 #End If
 
-Public Function F2Camera() As Fury2Camera
+Public Function F2Camera(Optional ByVal Rectangle As Fury2Rect = Nothing, Optional ByVal Map As Long = 1) As Fury2Camera
 On Error Resume Next
+    If Rectangle Is Nothing Then Set Rectangle = Backbuffer.Rectangle
     Set F2Camera = New Fury2Camera
+    F2Camera.Map = Map
+    F2Camera.Reposition Rectangle.Left, Rectangle.Top, Rectangle.Width, Rectangle.Height, False
     F2Camera.SetEngine Me
 End Function
 
@@ -2386,8 +2378,9 @@ Public Sub GFXEngine_KeyDown(ByVal KeyCode As Integer, ByVal Shift As Integer, O
 Attribute GFXEngine_KeyDown.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_lngType As Long
+Dim l_evtBinding As Fury2Event, l_booActive As Boolean
     Select Case KeyCode
-    Case 192 ' Tilda
+    Case 192 ' Tilde
         If Shift = 1 Then
             If m_objOutputPlugin.Fullscreen Then
             Else
@@ -2442,14 +2435,14 @@ Dim l_lngType As Long
     Case Else
     End Select
     If (DisableUserInput) And (Not Force) Then Exit Sub
-    If m_KeyState(m_KeyMap(KeyCode)) = True Then
+    If Keyboard.State(KeyCode) = True Then
         l_lngType = 1 ' Repeated key
-    Else
-        m_KeyState(m_KeyMap(KeyCode)) = True
     End If
-    If BindState(m_KeyMap(KeyCode)) Then
+    Set l_evtBinding = Keyboard.Binding(KeyCode)
+    l_booActive = (l_evtBinding.Blocked) And (l_evtBinding.Blocking)
+    If (l_booActive) Then
     Else
-        QueueEvent 0, , , CLng(m_KeyMap(KeyCode)), CLng(Shift), l_lngType
+        QueueEvent 0, , , CLng(KeyCode), CLng(Shift), l_lngType
     End If
 End Sub
 
@@ -2536,9 +2529,8 @@ End Sub
 Public Sub GFXEngine_KeyUp(ByVal KeyCode As Integer, ByVal Shift As Integer, Optional ByVal Force As Boolean = False)
 Attribute GFXEngine_KeyUp.VB_MemberFlags = "40"
 On Error Resume Next
-    m_KeyState(m_KeyMap(KeyCode)) = False
     If DisableUserInput Then Exit Sub
-    QueueEvent 1, , , CLng(m_KeyMap(KeyCode)), CLng(Shift)
+    QueueEvent 1, , , CLng(KeyCode), CLng(Shift)
 End Sub
 
 Public Sub GFXEngine_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single, Optional ByVal Force As Boolean = False)
@@ -2948,37 +2940,15 @@ Dim m_lngItems As Long
     Err.Clear
 End Function
 
-Public Property Get KeyMapping(ByVal Index As Long) As Long
-On Error Resume Next
-    KeyMapping = m_KeyMap(Index)
-End Property
-
-Public Property Let KeyMapping(ByVal Index As Long, ByVal NewValue As Long)
-On Error Resume Next
-    m_KeyMap(Index) = NewValue
-End Property
-
 Public Property Get KeyState(ByVal Key As Long) As Boolean
 Attribute KeyState.VB_Description = "Returns the state of a key."
 On Error Resume Next
-    If (Key < 0) Or (Key > 255) Then Exit Property
-    KeyState = m_KeyState(Key)
+    KeyState = Keyboard.State(Key)
 End Property
 
 Public Property Let KeyState(ByVal Key As Long, ByVal Value As Boolean)
 On Error Resume Next
-    If (Key < 0) Or (Key > 255) Then Exit Property
-    If m_KeyState(Key) <> Value Then
-        m_KeyState(Key) = Value
-        If VarType(KeyBindings(Key) = vbString) Then
-        Else
-            If Value Then
-                KeyBindings(Key).Activate
-            Else
-                KeyBindings(Key).Deactivate
-            End If
-        End If
-    End If
+    Keyboard.State(Key) = Value
 End Property
 
 Function LoadBrush(ByVal Filename As String) As Object
@@ -3308,19 +3278,6 @@ Dim l_lngImages As Long
     End If
     LoadImages = l_imgImages
 End Function
-
-Public Sub LoadKeyMappings(ByVal File As VirtualFile)
-On Error Resume Next
-Dim l_lngKey As Long
-    If Err <> 0 Then Exit Sub
-    With File
-        .ReadSegment_Begin
-            For l_lngKey = 0 To 255
-                .Load m_KeyMap(l_lngKey)
-            Next l_lngKey
-        .ReadSegment_End
-    End With
-End Sub
 
 Public Sub LoadMap(ByVal Filename As String, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
 Attribute LoadMap.VB_Description = "Loads a map."
@@ -4123,20 +4080,9 @@ Dim l_lngHotspot As Long
     ReDim Hotspots(0 To c_lngMaxHotspot)
 End Sub
 
-Public Sub ResetKeyMappings()
-On Error Resume Next
-Dim l_lngKey As Long
-    For l_lngKey = 0 To 255
-        m_KeyMap(l_lngKey) = CByte(l_lngKey)
-    Next l_lngKey
-End Sub
-
 Public Sub ResetKeys()
 On Error Resume Next
-Dim l_lngKey As Long
-    For l_lngKey = 0 To 255
-        m_KeyState(l_lngKey) = False
-    Next l_lngKey
+    Keyboard.Reset
 End Sub
 
 Sub ResetPictures()
@@ -4356,21 +4302,6 @@ Dim l_lngFlags As Long
         .WriteSegment_End
     End With
 End Function
-
-Public Sub SaveKeyMappings(ByVal File As VirtualFile)
-On Error Resume Next
-Dim m_vfFile As VirtualFile
-Dim l_lngKey As Long
-    Set m_vfFile = File
-    If Err <> 0 Then Exit Sub
-    With m_vfFile
-        .WriteSegment_Begin
-            For l_lngKey = 0 To 255
-                .Save m_KeyMap(l_lngKey)
-            Next l_lngKey
-        .WriteSegment_End
-    End With
-End Sub
 
 Public Sub SaveMapState(ByVal Index As Long, ByRef Name As String)
 Attribute SaveMapState.VB_Description = "Saves the current state of a map."
@@ -5239,6 +5170,7 @@ Dim m_lngCount As Long
 Dim l_lngBindings As Long, l_lngType As Long
 Dim l_lngProcessedCount As Long
 Dim m_ctlControl As Fury2InputControl
+Dim l_evtEvent As Fury2QueueEvent
     ProfileStart "Process Input"
     ContextLevelAdd "Controls"
         For Each m_ctlControl In Controls
@@ -5252,24 +5184,29 @@ Dim m_ctlControl As Fury2InputControl
     ContextLevelAdd "Events"
     m_lngCount = EventQueueLength
     Do Until EventQueueLength <= 0 Or m_lngQueue > EventQueueLength
-        With EventQueue(m_lngQueue)
+        l_evtEvent = EventQueue(m_lngQueue)
+        EventQueue(m_lngQueue).Type = -1
+        EventQueue(m_lngQueue).LParam1 = 0
+        EventQueue(m_lngQueue).LParam2 = 0
+        EventQueue(m_lngQueue).LParam3 = 0
+        EventQueue(m_lngQueue).LParam4 = 0
+        With l_evtEvent
             l_lngType = .Type
-            .Type = -1
             Select Case l_lngType
             Case 0 ' KeyDown
-                Event_KeyDown EventQueue(m_lngQueue)
+                Event_KeyDown l_evtEvent
                 l_lngProcessedCount = l_lngProcessedCount + 1
             Case 1 ' KeyUp
-                Event_KeyUp EventQueue(m_lngQueue)
+                Event_KeyUp l_evtEvent
                 l_lngProcessedCount = l_lngProcessedCount + 1
             Case 2 ' MouseDown
-                Event_MouseDown EventQueue(m_lngQueue)
+                Event_MouseDown l_evtEvent
                 l_lngProcessedCount = l_lngProcessedCount + 1
             Case 3 ' MouseMove
-                Event_MouseMove EventQueue(m_lngQueue)
+                Event_MouseMove l_evtEvent
                 l_lngProcessedCount = l_lngProcessedCount + 1
             Case 4 ' MouseUp
-                Event_MouseUp EventQueue(m_lngQueue)
+                Event_MouseUp l_evtEvent
                 l_lngProcessedCount = l_lngProcessedCount + 1
             Case -1 ' None
             Case Else ' ?
@@ -5286,19 +5223,9 @@ End Sub
 
 Public Sub UpdateKeyboard()
 On Error Resume Next
-Dim l_lngKeys As Long
-Dim l_booState As Boolean
-    If InIDE Then Exit Sub
+    'If InIDE Then Exit Sub
     ContextLevelAdd "UpdateKeyboard"
-    For l_lngKeys = 1 To 254
-        l_booState = CBool(Abs(GetAsyncKeyState(l_lngKeys)))
-        If l_booState <> m_KeyState(m_KeyMap(l_lngKeys)) Then
-            If l_booState = False Then
-                m_KeyState(m_KeyMap(l_lngKeys)) = False
-                If Not DisableUserInput Then QueueEvent 1, , , CLng(m_KeyMap(l_lngKeys)), 0, 0
-            End If
-        End If
-    Next l_lngKeys
+    Keyboard.Update
     ContextLevelRemove
 End Sub
 

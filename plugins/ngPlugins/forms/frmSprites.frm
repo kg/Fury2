@@ -2,6 +2,7 @@ VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.6#0"; "ngUI.ocx"
 Begin VB.Form frmSprites 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -27,6 +28,17 @@ Begin VB.Form frmSprites
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   613
    ShowInTaskbar   =   0   'False
+   Begin VB.PictureBox picHarmless 
+      BorderStyle     =   0  'None
+      Height          =   15
+      Left            =   0
+      ScaleHeight     =   1
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   1
+      TabIndex        =   23
+      Top             =   0
+      Width           =   15
+   End
    Begin sMDIinActiveX.MDIActiveX extender 
       Left            =   -15
       Top             =   0
@@ -46,7 +58,7 @@ Begin VB.Form frmSprites
       Begin ngPlugins.Script scSprite 
          Height          =   750
          Left            =   105
-         TabIndex        =   20
+         TabIndex        =   17
          Top             =   6285
          Width           =   480
          _ExtentX        =   847
@@ -59,7 +71,7 @@ Begin VB.Form frmSprites
          ScaleHeight     =   384
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   396
-         TabIndex        =   10
+         TabIndex        =   9
          Top             =   1470
          Visible         =   0   'False
          Width           =   5940
@@ -70,17 +82,38 @@ Begin VB.Form frmSprites
             ScaleHeight     =   384
             ScaleMode       =   3  'Pixel
             ScaleWidth      =   396
-            TabIndex        =   12
+            TabIndex        =   10
             Top             =   480
             Visible         =   0   'False
             Width           =   5940
+            Begin ngUI.ngListBox lstFrames 
+               Height          =   1140
+               Left            =   210
+               TabIndex        =   20
+               Top             =   120
+               Width           =   4830
+               _ExtentX        =   8520
+               _ExtentY        =   2011
+               BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+                  Name            =   "Tahoma"
+                  Size            =   8.25
+                  Charset         =   0
+                  Weight          =   400
+                  Underline       =   0   'False
+                  Italic          =   0   'False
+                  Strikethrough   =   0   'False
+               EndProperty
+               AllowReorder    =   -1  'True
+               AllowMultiSelect=   -1  'True
+               AllowNullSelection=   0   'False
+            End
             Begin VB.PictureBox picFrameDisplay 
                Height          =   1485
                Left            =   975
                ScaleHeight     =   95
                ScaleMode       =   3  'Pixel
                ScaleWidth      =   143
-               TabIndex        =   22
+               TabIndex        =   19
                Top             =   1905
                Visible         =   0   'False
                Width           =   2205
@@ -88,25 +121,15 @@ Begin VB.Form frmSprites
             Begin VB.TextBox txtFrameProperty 
                Height          =   285
                Left            =   930
-               TabIndex        =   21
+               TabIndex        =   18
                Top             =   3420
                Visible         =   0   'False
                Width           =   2565
             End
-            Begin VB.ListBox lstFrames 
-               Height          =   1245
-               IntegralHeight  =   0   'False
-               ItemData        =   "frmSprites.frx":2372
-               Left            =   510
-               List            =   "frmSprites.frx":2379
-               TabIndex        =   13
-               Top             =   315
-               Width           =   4665
-            End
             Begin ngPlugins.ObjectInspector insFrameOptions 
                Height          =   1725
                Left            =   2250
-               TabIndex        =   15
+               TabIndex        =   12
                Top             =   3045
                Visible         =   0   'False
                Width           =   2310
@@ -116,7 +139,7 @@ Begin VB.Form frmSprites
             Begin ngPlugins.Script scFrame 
                Height          =   975
                Left            =   3960
-               TabIndex        =   16
+               TabIndex        =   13
                Top             =   2115
                Visible         =   0   'False
                Width           =   810
@@ -126,7 +149,7 @@ Begin VB.Form frmSprites
             Begin vbalDTab6.vbalDTabControl dtFrames 
                Height          =   4350
                Left            =   225
-               TabIndex        =   14
+               TabIndex        =   11
                Top             =   1365
                Width           =   5685
                _ExtentX        =   10028
@@ -155,20 +178,10 @@ Begin VB.Form frmSprites
                MoveableTabs    =   0   'False
             End
          End
-         Begin VB.ListBox lstPoses 
-            Height          =   1245
-            IntegralHeight  =   0   'False
-            ItemData        =   "frmSprites.frx":2387
-            Left            =   510
-            List            =   "frmSprites.frx":238E
-            TabIndex        =   11
-            Top             =   315
-            Width           =   4665
-         End
          Begin ngPlugins.ObjectInspector insPoseOptions 
             Height          =   1725
             Left            =   315
-            TabIndex        =   18
+            TabIndex        =   15
             Top             =   1950
             Visible         =   0   'False
             Width           =   2310
@@ -178,7 +191,7 @@ Begin VB.Form frmSprites
          Begin vbalDTab6.vbalDTabControl dtPoses 
             Height          =   4350
             Left            =   210
-            TabIndex        =   17
+            TabIndex        =   14
             Top             =   1365
             Width           =   5685
             _ExtentX        =   10028
@@ -206,6 +219,27 @@ Begin VB.Form frmSprites
             ShowCloseButton =   0   'False
             MoveableTabs    =   0   'False
          End
+         Begin ngUI.ngListBox lstPoses 
+            Height          =   1140
+            Left            =   0
+            TabIndex        =   21
+            Top             =   0
+            Width           =   4830
+            _ExtentX        =   8520
+            _ExtentY        =   2011
+            BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+               Name            =   "Tahoma"
+               Size            =   8.25
+               Charset         =   0
+               Weight          =   400
+               Underline       =   0   'False
+               Italic          =   0   'False
+               Strikethrough   =   0   'False
+            EndProperty
+            AllowReorder    =   -1  'True
+            AllowMultiSelect=   -1  'True
+            AllowNullSelection=   0   'False
+         End
       End
       Begin VB.PictureBox picStates 
          BorderStyle     =   0  'None
@@ -218,22 +252,12 @@ Begin VB.Form frmSprites
          Top             =   1275
          Visible         =   0   'False
          Width           =   5115
-         Begin VB.ListBox lstStates 
-            Height          =   1245
-            IntegralHeight  =   0   'False
-            ItemData        =   "frmSprites.frx":239C
-            Left            =   510
-            List            =   "frmSprites.frx":239E
-            TabIndex        =   6
-            Top             =   315
-            Width           =   4665
-         End
          Begin VB.ListBox lstStatePoses 
             Height          =   1680
             IntegralHeight  =   0   'False
             Left            =   2895
             MultiSelect     =   1  'Simple
-            TabIndex        =   8
+            TabIndex        =   7
             Top             =   1905
             Visible         =   0   'False
             Width           =   2175
@@ -241,7 +265,7 @@ Begin VB.Form frmSprites
          Begin ngPlugins.ObjectInspector insStateOptions 
             Height          =   1725
             Left            =   540
-            TabIndex        =   9
+            TabIndex        =   8
             Top             =   1950
             Visible         =   0   'False
             Width           =   2355
@@ -251,7 +275,7 @@ Begin VB.Form frmSprites
          Begin vbalDTab6.vbalDTabControl dtStates 
             Height          =   2205
             Left            =   135
-            TabIndex        =   7
+            TabIndex        =   6
             Top             =   1395
             Width           =   4980
             _ExtentX        =   8784
@@ -278,6 +302,27 @@ Begin VB.Form frmSprites
             EndProperty
             ShowCloseButton =   0   'False
             MoveableTabs    =   0   'False
+         End
+         Begin ngUI.ngListBox lstStates 
+            Height          =   1140
+            Left            =   120
+            TabIndex        =   22
+            Top             =   105
+            Width           =   4830
+            _ExtentX        =   8520
+            _ExtentY        =   2011
+            BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+               Name            =   "Tahoma"
+               Size            =   8.25
+               Charset         =   0
+               Weight          =   400
+               Underline       =   0   'False
+               Italic          =   0   'False
+               Strikethrough   =   0   'False
+            EndProperty
+            AllowReorder    =   -1  'True
+            AllowMultiSelect=   -1  'True
+            AllowNullSelection=   0   'False
          End
       End
       Begin VB.PictureBox picSidebar 
@@ -320,7 +365,7 @@ Begin VB.Form frmSprites
       Begin ngPlugins.ObjectInspector insOverview 
          Height          =   3045
          Left            =   180
-         TabIndex        =   19
+         TabIndex        =   16
          Top             =   1965
          Visible         =   0   'False
          Width           =   1710
@@ -427,6 +472,17 @@ Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
 Private m_lngCurrentView As SpriteEditorViews
 
+Private Sub InspectListItems(Inspector As ObjectInspector, Items() As ngListItem)
+On Error Resume Next
+Dim l_objObjects() As Object
+Dim l_lngIndex As Long
+    ReDim l_objObjects(LBound(Items) To UBound(Items))
+    For l_lngIndex = LBound(Items) To UBound(Items)
+        Set l_objObjects(l_lngIndex) = Items(l_lngIndex).Tag
+    Next l_lngIndex
+    Inspector.InspectMultiple l_objObjects
+End Sub
+
 Private Property Get iDocument_Object() As Object
     Set iDocument_Object = Me
 End Property
@@ -482,38 +538,59 @@ Dim l_sprSprite As Fury2Sprite
     Editor.ToolbarUpdate
 End Sub
 
-Public Sub CutState()
+Public Sub CutStates()
 On Error Resume Next
-    CopyState
-    DeleteState
+    CopyStates
+    DeleteStates
 End Sub
 
-Public Sub CopyState()
+Public Sub CopyStates()
 On Error Resume Next
+Dim l_vfData As VirtualFile
+Dim l_liItem As ngListItem
+Dim l_staState As Fury2State
     CustomClipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize CustomClipboard, ClipboardFormat(SCF_SpriteState), SelectedState
+    Set l_vfData = New VirtualFile
+    l_vfData.Save lstStates.SelectedItemCount
+    For Each l_liItem In lstStates.SelectedItemCollection
+        Set l_staState = l_liItem.Tag
+        l_vfData.Save l_staState
+    Next l_liItem
+    CustomClipboard.ClearClipboard
+    CustomClipboard.SetBinaryData ClipboardFormat(SCF_SpriteStates), l_vfData.Data
+    Set l_vfData = Nothing
     CustomClipboard.ClipboardClose
 End Sub
 
-Public Function PasteState(Optional ByVal AtIndex As Long = -1) As Fury2State
+Public Sub PasteStates(Optional ByVal AtIndex As Long = -1)
 On Error Resume Next
+Dim l_lngCount As Long
+Dim l_lngIndex As Long
 Dim l_staState As Fury2State
-    If AtIndex < 1 Then
+Dim l_vfFile As VirtualFile
+    If AtIndex = -1 Then
         AtIndex = SelectedSprite.States.Count + 1
     End If
-    Set l_staState = New Fury2State
+    If AtIndex < 1 Then
+        AtIndex = 1
+    End If
     CustomClipboard.ClipboardOpen Me.hwnd
-    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(SCF_SpriteState), l_staState) Then
+    Set l_vfFile = New VirtualFile
+    If ClipboardDeserializeFile(CustomClipboard, ClipboardFormat(SCF_SpriteStates), l_vfFile) Then
         CustomClipboard.ClipboardClose
-        SelectedSprite.States.Add l_staState
-        m_lngSelectedState = AtIndex
-        StatesViewChanged
-        Editor.ToolbarUpdate
-        Set PasteState = l_staState
+        l_vfFile.Load l_lngCount
+        If l_lngCount > 0 Then
+            For l_lngIndex = 1 To l_lngCount
+                Set l_staState = New Fury2State
+                l_vfFile.Load l_staState
+                SelectedSprite.States.Add l_staState, , AtIndex + (l_lngIndex - 1)
+            Next l_lngIndex
+        End If
+        lstStates.SelectItems AtIndex, AtIndex + l_lngCount - 1
     Else
         CustomClipboard.ClipboardClose
     End If
-End Function
+End Sub
 
 Public Sub InsertState(Optional ByVal Index As Long = -1)
 On Error Resume Next
@@ -525,42 +602,63 @@ Dim l_staState As Fury2State
     Editor.ToolbarUpdate
 End Sub
 
-Public Sub CutPose()
+Public Sub CutPoses()
 On Error Resume Next
-    CopyPose
-    DeletePose
+    CopyPoses
+    DeletePoses
 End Sub
 
-Public Sub CopyPose()
+Public Sub CopyPoses()
 On Error Resume Next
+Dim l_vfData As VirtualFile
+Dim l_liItem As ngListItem
+Dim l_posPose As Fury2Pose
     CustomClipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize CustomClipboard, ClipboardFormat(SCF_SpritePose), SelectedPose
+    Set l_vfData = New VirtualFile
+    l_vfData.Save lstPoses.SelectedItemCount
+    For Each l_liItem In lstPoses.SelectedItemCollection
+        Set l_posPose = l_liItem.Tag
+        l_vfData.Save l_posPose
+    Next l_liItem
+    CustomClipboard.ClearClipboard
+    CustomClipboard.SetBinaryData ClipboardFormat(SCF_SpritePoses), l_vfData.Data
+    Set l_vfData = Nothing
     CustomClipboard.ClipboardClose
 End Sub
 
-Public Function PastePose(Optional ByVal AtIndex As Long = -1) As Fury2Pose
+Public Sub PastePoses(Optional ByVal AtIndex As Long = -1)
 On Error Resume Next
+Dim l_lngCount As Long
+Dim l_lngIndex As Long
 Dim l_posPose As Fury2Pose
 Dim l_fraFrame As Fury2PoseFrame
-    If AtIndex < 1 Then
+Dim l_vfFile As VirtualFile
+    If AtIndex = -1 Then
         AtIndex = SelectedSprite.Poses.Count + 1
     End If
-    Set l_posPose = New Fury2Pose
+    If AtIndex < 1 Then
+        AtIndex = 1
+    End If
     CustomClipboard.ClipboardOpen Me.hwnd
-    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(SCF_SpritePose), l_posPose) Then
+    Set l_vfFile = New VirtualFile
+    If ClipboardDeserializeFile(CustomClipboard, ClipboardFormat(SCF_SpritePoses), l_vfFile) Then
         CustomClipboard.ClipboardClose
-        For Each l_fraFrame In l_posPose.Frames
-            l_fraFrame.LoadGraphics
-        Next l_fraFrame
-        SelectedSprite.Poses.Add l_posPose, , AtIndex
-        m_lngSelectedPose = AtIndex
-        PosesViewChanged
-        Editor.ToolbarUpdate
-        Set PastePose = l_posPose
+        l_vfFile.Load l_lngCount
+        If l_lngCount > 0 Then
+            For l_lngIndex = 1 To l_lngCount
+                Set l_posPose = New Fury2Pose
+                l_vfFile.Load l_posPose
+                SelectedSprite.Poses.Add l_posPose, , AtIndex + (l_lngIndex - 1)
+                For Each l_fraFrame In l_posPose.Frames
+                    l_fraFrame.LoadGraphics
+                Next l_fraFrame
+            Next l_lngIndex
+        End If
+        lstPoses.SelectItems AtIndex, AtIndex + l_lngCount - 1
     Else
         CustomClipboard.ClipboardClose
     End If
-End Function
+End Sub
 
 Public Sub InsertPose(Optional ByVal Index As Long = -1)
 On Error Resume Next
@@ -572,39 +670,60 @@ Dim l_posPose As Fury2Pose
     Editor.ToolbarUpdate
 End Sub
 
-Public Sub CutFrame()
+Public Sub CutFrames()
 On Error Resume Next
-    CopyFrame
-    DeleteFrame
+    CopyFrames
+    DeleteFrames
 End Sub
 
-Public Sub CopyFrame()
+Public Sub CopyFrames()
 On Error Resume Next
+Dim l_vfData As VirtualFile
+Dim l_liItem As ngListItem
+Dim l_fraFrame As Fury2PoseFrame
     CustomClipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize CustomClipboard, ClipboardFormat(SCF_SpriteFrame), SelectedFrame
+    Set l_vfData = New VirtualFile
+    l_vfData.Save lstFrames.SelectedItemCount
+    For Each l_liItem In lstFrames.SelectedItemCollection
+        Set l_fraFrame = l_liItem.Tag
+        l_vfData.Save l_fraFrame
+    Next l_liItem
+    CustomClipboard.ClearClipboard
+    CustomClipboard.SetBinaryData ClipboardFormat(SCF_SpriteFrames), l_vfData.Data
+    Set l_vfData = Nothing
     CustomClipboard.ClipboardClose
 End Sub
 
-Public Function PasteFrame(Optional ByVal AtIndex As Long = -1) As Fury2PoseFrame
+Public Sub PasteFrames(Optional ByVal AtIndex As Long = -1)
 On Error Resume Next
+Dim l_lngCount As Long
+Dim l_lngIndex As Long
 Dim l_fraFrame As Fury2PoseFrame
-    If AtIndex < 1 Then
+Dim l_vfFile As VirtualFile
+    If AtIndex = -1 Then
         AtIndex = SelectedPose.Frames.Count + 1
     End If
-    Set l_fraFrame = New Fury2PoseFrame
+    If AtIndex < 1 Then
+        AtIndex = 1
+    End If
     CustomClipboard.ClipboardOpen Me.hwnd
-    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(SCF_SpriteFrame), l_fraFrame) Then
+    Set l_vfFile = New VirtualFile
+    If ClipboardDeserializeFile(CustomClipboard, ClipboardFormat(SCF_SpriteFrames), l_vfFile) Then
         CustomClipboard.ClipboardClose
-        l_fraFrame.LoadGraphics
-        SelectedPose.Frames.Add l_fraFrame, , AtIndex
-        m_lngSelectedFrame = AtIndex
-        FramesViewChanged
-        Editor.ToolbarUpdate
-        Set PasteFrame = l_fraFrame
+        l_vfFile.Load l_lngCount
+        If l_lngCount > 0 Then
+            For l_lngIndex = 1 To l_lngCount
+                Set l_fraFrame = New Fury2PoseFrame
+                l_vfFile.Load l_fraFrame
+                SelectedPose.Frames.Add l_fraFrame, , AtIndex + (l_lngIndex - 1)
+                l_fraFrame.LoadGraphics
+            Next l_lngIndex
+        End If
+        lstPoses.SelectItems AtIndex, AtIndex + l_lngCount - 1
     Else
         CustomClipboard.ClipboardClose
     End If
-End Function
+End Sub
 
 Public Sub InsertFrame(Optional ByVal Index As Long = -1)
 On Error Resume Next
@@ -617,27 +736,44 @@ Dim l_fraFrame As Fury2PoseFrame
     Editor.ToolbarUpdate
 End Sub
 
-Public Sub DeleteFrame()
+Public Sub DeleteFrames()
 On Error Resume Next
-    SelectedPose.Frames.Remove m_lngSelectedFrame
-    ViewChanged
-    Redraw
+Dim l_liItem As ngListItem
+Dim l_fraFrame As Fury2PoseFrame
+    For Each l_liItem In lstFrames.SelectedItemCollection
+        Set l_fraFrame = l_liItem.Tag
+        SelectedPose.Frames.Remove SelectedPose.Frames.Find(l_fraFrame)
+    Next l_liItem
+    FramesViewChanged
     Editor.ToolbarUpdate
 End Sub
 
-Public Sub DeletePose()
+Public Sub DeletePoses()
 On Error Resume Next
-    SelectedSprite.Poses.Remove m_lngSelectedPose
-    ViewChanged
-    Redraw
+Dim l_liItem As ngListItem
+Dim l_posPose As Fury2Pose
+    For Each l_liItem In lstPoses.SelectedItemCollection
+        Set l_posPose = l_liItem.Tag
+        SelectedSprite.Poses.Remove SelectedSprite.Poses.Find(l_posPose)
+    Next l_liItem
+    PosesViewChanged
+    Select Case LCase(Trim(dtPoses.SelectedTab.key))
+    Case "frames"
+        FramesViewChanged
+    Case Else
+    End Select
     Editor.ToolbarUpdate
 End Sub
 
-Public Sub DeleteState()
+Public Sub DeleteStates()
 On Error Resume Next
-    SelectedSprite.States.Remove m_lngSelectedState
-    ViewChanged
-    Redraw
+Dim l_liItem As ngListItem
+Dim l_staState As Fury2State
+    For Each l_liItem In lstStates.SelectedItemCollection
+        Set l_staState = l_liItem.Tag
+        SelectedSprite.States.Remove SelectedSprite.States.Find(l_staState)
+    Next l_liItem
+    StatesViewChanged
     Editor.ToolbarUpdate
 End Sub
 
@@ -650,10 +786,17 @@ On Error Resume Next
     Editor.ToolbarUpdate
 End Sub
 
-Function ListContext() As Variant
-    ListContext = Menus(MenuString("Insert &New", , , "NEW"), _
-        MenuString("-"), _
-        MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete))
+Function ListContext(Optional ByVal ItemSelected As Boolean = True) As Variant
+On Error Resume Next
+    If ItemSelected Then
+        ListContext = Menus(MenuString("Insert &New", , , "NEW"), _
+            MenuString("-"), _
+            MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete))
+    Else
+        ListContext = Menus(MenuString("Insert &New", , , "NEW"), _
+            MenuString("-"), _
+            MenuString("Cu&t", , , "CUT", , , False), MenuString("&Copy", , , "COPY", , , False), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , False))
+    End If
 End Function
 
 Public Property Get ActiveType() As String
@@ -743,7 +886,7 @@ Public Sub RedrawSprites()
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.Rect
+Dim l_rctText As Win32.RECT
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long
@@ -760,8 +903,10 @@ Dim l_lngIndex As Long
         l_lngHeight = l_rctSprite.Height + 4 + picSprites.TextHeight(l_sprSprite.Name)
         If m_lngSelectedSprite = l_lngIndex Then
             m_imgSpriteBuffer.Clear SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue)
+            picSprites.ForeColor = GetSystemColor(SystemColor_Highlight_Text)
         Else
             m_imgSpriteBuffer.Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+            picSprites.ForeColor = GetSystemColor(SystemColor_Button_Text)
         End If
         With l_sprSprite
             .Refresh
@@ -805,62 +950,88 @@ End Sub
 Public Sub RedrawFrames()
 On Error Resume Next
 Dim l_lngItems As Long
+Dim l_fraFrame As Fury2PoseFrame
+Dim l_liItem As ngListItem
     If SelectedPose Is Nothing Then Exit Sub
-    LockRedraw lstFrames.hwnd, False
-    m_lngSelectedFrame = lstFrames.ListIndex + 1
-    For l_lngItems = 1 To SelectedPose.Frames.Count
-        If lstFrames.ListCount < l_lngItems Then
-            lstFrames.AddItem IIf(l_lngItems = 1, "Stopped Frame", "Animation Frame " & l_lngItems - 1)
+    lstFrames.AllowReorder = True
+    lstFrames.DisableUpdates = True
+    With lstFrames.ListItems
+        If .Count <> SelectedPose.Frames.Count Then
+            .Clear
+            l_lngItems = 1
+            For Each l_fraFrame In SelectedPose.Frames
+                Set .AddNew("Frame " & l_lngItems).Tag = l_fraFrame
+                l_lngItems = l_lngItems + 1
+            Next l_fraFrame
         Else
-            lstFrames.List(l_lngItems - 1) = IIf(l_lngItems = 1, "Stopped Frame", "Animation Frame " & l_lngItems - 1)
+            l_lngItems = 1
+            For Each l_liItem In lstFrames.ListItems
+                l_liItem.Text = "Frame " & l_lngItems
+                Set l_liItem.Tag = SelectedPose.Frames(l_lngItems)
+                l_lngItems = l_lngItems + 1
+            Next l_liItem
         End If
-    Next l_lngItems
-    Do While lstFrames.ListCount > SelectedPose.Frames.Count
-        lstFrames.RemoveItem lstFrames.ListCount - 1
-    Loop
-    lstFrames.ListIndex = m_lngSelectedFrame - 1
-    LockRedraw lstFrames.hwnd, True
-    lstFrames.Refresh
+    End With
+    lstFrames.DisableUpdates = False
+    lstFrames.Reflow
 End Sub
 
 Public Sub RedrawPoses()
 On Error Resume Next
 Dim l_lngItems As Long
+Dim l_posPose As Fury2Pose
+Dim l_liItem As ngListItem
     If SelectedSprite Is Nothing Then Exit Sub
-    LockRedraw lstPoses.hwnd, False
-    For l_lngItems = 1 To SelectedSprite.Poses.Count
-        If lstPoses.ListCount < l_lngItems Then
-            lstPoses.AddItem SelectedSprite.Poses(l_lngItems).Name
+    lstPoses.AllowReorder = True
+    lstPoses.DisableUpdates = True
+    With lstPoses.ListItems
+        If .Count <> SelectedSprite.Poses.Count Then
+            .Clear
+            l_lngItems = 1
+            For Each l_posPose In SelectedSprite.Poses
+                Set .AddNew(l_posPose.Name).Tag = l_posPose
+                l_lngItems = l_lngItems + 1
+            Next l_posPose
         Else
-            lstPoses.List(l_lngItems - 1) = SelectedSprite.Poses(l_lngItems).Name
+            l_lngItems = 1
+            For Each l_liItem In lstPoses.ListItems
+                l_liItem.Text = SelectedSprite.Poses(l_lngItems).Name
+                Set l_liItem.Tag = SelectedSprite.Poses(l_lngItems)
+                l_lngItems = l_lngItems + 1
+            Next l_liItem
         End If
-    Next l_lngItems
-    Do While lstPoses.ListCount > SelectedSprite.Poses.Count
-        lstPoses.RemoveItem lstPoses.ListCount - 1
-    Loop
-    lstPoses.ListIndex = m_lngSelectedPose - 1
-    LockRedraw lstPoses.hwnd, True
-    lstPoses.Refresh
+    End With
+    lstPoses.DisableUpdates = False
+    lstPoses.Reflow
 End Sub
 
 Public Sub RedrawStates()
 On Error Resume Next
 Dim l_lngItems As Long
+Dim l_staState As Fury2State
+Dim l_liItem As ngListItem
     If SelectedSprite Is Nothing Then Exit Sub
-    LockRedraw lstStates.hwnd, False
-    For l_lngItems = 1 To SelectedSprite.States.Count
-        If lstStates.ListCount < l_lngItems Then
-            lstStates.AddItem SelectedSprite.States(l_lngItems).Name
+    lstStates.AllowReorder = True
+    lstStates.DisableUpdates = True
+    With lstStates.ListItems
+        If .Count <> SelectedSprite.States.Count Then
+            .Clear
+            l_lngItems = 1
+            For Each l_staState In SelectedSprite.States
+                Set .AddNew(l_staState.Name).Tag = l_staState
+                l_lngItems = l_lngItems + 1
+            Next l_staState
         Else
-            lstStates.List(l_lngItems - 1) = SelectedSprite.States(l_lngItems).Name
+            l_lngItems = 1
+            For Each l_liItem In lstStates.ListItems
+                l_liItem.Text = SelectedSprite.States(l_lngItems).Name
+                Set l_liItem.Tag = SelectedSprite.States(l_lngItems)
+                l_lngItems = l_lngItems + 1
+            Next l_liItem
         End If
-    Next l_lngItems
-    Do While lstStates.ListCount > SelectedSprite.States.Count
-        lstStates.RemoveItem lstStates.ListCount - 1
-    Loop
-    lstStates.ListIndex = m_lngSelectedState - 1
-    LockRedraw lstStates.hwnd, True
-    lstStates.Refresh
+    End With
+    lstStates.DisableUpdates = False
+    lstStates.Reflow
 End Sub
 
 Public Sub RedrawStatePoses()
@@ -1203,7 +1374,11 @@ On Error Resume Next
     Select Case LCase(Trim(dtStates.SelectedTab.key))
     Case "options"
         insStateOptions.ShowHierarchy = False
-        insStateOptions.Inspect SelectedState, "State", True
+        If lstStates.SelectedItemCount > 1 Then
+            InspectListItems insStateOptions, lstStates.SelectedItems
+        Else
+            insStateOptions.Inspect SelectedState, "State #" & m_lngSelectedState, True
+        End If
         insStateOptions.Visible = True
         insStateOptions.ZOrder
     Case "poses"
@@ -1225,7 +1400,11 @@ On Error Resume Next
     Select Case LCase(Trim(dtPoses.SelectedTab.key))
     Case "options"
         insPoseOptions.ShowHierarchy = True
-        insPoseOptions.Inspect SelectedPose, "Pose", True
+        If lstPoses.SelectedItemCount > 1 Then
+            InspectListItems insPoseOptions, lstPoses.SelectedItems
+        Else
+            insPoseOptions.Inspect SelectedPose, "Pose #" & m_lngSelectedPose, True
+        End If
         insPoseOptions.Visible = True
         insPoseOptions.ZOrder
     Case "frames"
@@ -1250,7 +1429,11 @@ On Error Resume Next
     Select Case LCase(Trim(dtFrames.SelectedTab.key))
     Case "options"
         insFrameOptions.ShowHierarchy = True
-        insFrameOptions.Inspect SelectedFrame, "Frame", True
+        If lstFrames.SelectedItemCount > 1 Then
+            InspectListItems insFrameOptions, lstFrames.SelectedItems
+        Else
+            insFrameOptions.Inspect SelectedFrame, "Frame #" & m_lngSelectedFrame, True
+        End If
         insFrameOptions.Visible = True
         insFrameOptions.ZOrder
     Case "script"
@@ -1421,6 +1604,7 @@ End Sub
 
 Private Sub Form_Deactivate()
 On Error Resume Next
+    picHarmless.SetFocus
     DeallocateBuffers
 End Sub
 
@@ -1431,13 +1615,11 @@ On Error Resume Next
     InitViews
     InitSplitters
     Form_Activate
-    lstPoses.Clear
-    lstStates.Clear
-    lstStatePoses.Clear
 End Sub
 
 Private Sub Form_QueryUnload(Cancel As Integer, UnloadMode As Integer)
 On Error Resume Next
+    picHarmless.SetFocus
     Cleanup
 End Sub
 
@@ -1534,11 +1716,11 @@ Private Sub iEditingCommands_CanCopy(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Frames"
-        NewValue = (lstFrames.ListIndex >= 0)
+        NewValue = (Not (lstFrames.FirstSelectedItem Is Nothing))
     Case "Poses"
-        NewValue = (lstPoses.ListIndex >= 0)
+        NewValue = (Not (lstPoses.FirstSelectedItem Is Nothing))
     Case "States"
-        NewValue = (lstStates.ListIndex >= 0)
+        NewValue = (Not (lstStates.FirstSelectedItem Is Nothing))
     Case "Sprites"
         NewValue = Not (SelectedSprite Is Nothing)
     Case "Sprite Script"
@@ -1553,11 +1735,11 @@ Private Sub iEditingCommands_CanCut(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Frames"
-        NewValue = (lstFrames.ListIndex >= 0) And (SelectedPose.Frames.Count > 1)
+        NewValue = (Not (lstFrames.FirstSelectedItem Is Nothing)) And (SelectedPose.Frames.Count > 1)
     Case "Poses"
-        NewValue = (lstPoses.ListIndex >= 0) And (SelectedSprite.Poses.Count > 1)
+        NewValue = (Not (lstPoses.FirstSelectedItem Is Nothing)) And (SelectedSprite.Poses.Count > 1)
     Case "States"
-        NewValue = (lstStates.ListIndex >= 0) And (SelectedSprite.States.Count > 1)
+        NewValue = (Not (lstStates.FirstSelectedItem Is Nothing)) And (SelectedSprite.States.Count > 1)
     Case "Sprites"
         NewValue = Not (SelectedSprite Is Nothing)
     Case "Sprite Script"
@@ -1572,11 +1754,11 @@ Private Sub iEditingCommands_CanDelete(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Frames"
-        NewValue = (lstFrames.ListIndex >= 0) And (SelectedPose.Frames.Count > 1)
+        NewValue = (Not (lstFrames.FirstSelectedItem Is Nothing)) And (SelectedPose.Frames.Count > 1)
     Case "Poses"
-        NewValue = (lstPoses.ListIndex >= 0) And (SelectedSprite.Poses.Count > 1)
+        NewValue = (Not (lstPoses.FirstSelectedItem Is Nothing)) And (SelectedSprite.Poses.Count > 1)
     Case "States"
-        NewValue = (lstStates.ListIndex >= 0) And (SelectedSprite.States.Count > 1)
+        NewValue = (Not (lstStates.FirstSelectedItem Is Nothing)) And (SelectedSprite.States.Count > 1)
     Case "Sprites"
         NewValue = (Not (SelectedSprite Is Nothing)) And (m_scSprites.Count > 1)
     Case "Sprite Script"
@@ -1595,11 +1777,11 @@ On Error Resume Next
     Case "Frame Script"
         NewValue = scFrame.Control.CanPaste
     Case "Poses"
-        NewValue = ClipboardContainsFormat(SCF_SpritePose)
+        NewValue = ClipboardContainsFormat(SCF_SpritePoses)
     Case "Frames"
-        NewValue = ClipboardContainsFormat(SCF_SpriteFrame)
+        NewValue = ClipboardContainsFormat(SCF_SpriteFrames)
     Case "States"
-        NewValue = ClipboardContainsFormat(SCF_SpriteState)
+        NewValue = ClipboardContainsFormat(SCF_SpriteStates)
     Case "Sprites"
         NewValue = ClipboardContainsFormat(SCF_Sprite)
     Case Else
@@ -1619,9 +1801,29 @@ On Error Resume Next
 End Sub
 
 Private Sub iEditingCommands_CanSelectAll(NewValue As Boolean)
+On Error Resume Next
+    Select Case ActiveType
+    Case "Frames"
+        NewValue = True
+    Case "Poses"
+        NewValue = True
+    Case "States"
+        NewValue = True
+    Case Else
+    End Select
 End Sub
 
 Private Sub iEditingCommands_CanSelectNone(NewValue As Boolean)
+On Error Resume Next
+    Select Case ActiveType
+    Case "Frames"
+        NewValue = True
+    Case "Poses"
+        NewValue = True
+    Case "States"
+        NewValue = True
+    Case Else
+    End Select
 End Sub
 
 Private Sub iEditingCommands_CanUndo(NewValue As Boolean)
@@ -1644,11 +1846,11 @@ On Error Resume Next
     Case "Frame Script"
         scFrame.Control.Copy
     Case "States"
-        CopyState
+        CopyStates
     Case "Poses"
-        CopyPose
+        CopyPoses
     Case "Frames"
-        CopyFrame
+        CopyFrames
     Case "Sprites"
         CopySprite
     Case Else
@@ -1663,11 +1865,11 @@ On Error Resume Next
     Case "Frame Script"
         scFrame.Control.Cut
     Case "States"
-        CutState
+        CutStates
     Case "Poses"
-        CutPose
+        CutPoses
     Case "Frames"
-        CutFrame
+        CutFrames
     Case "Sprites"
         CutSprite
     Case Else
@@ -1680,11 +1882,11 @@ On Error Resume Next
     Case "Sprites"
         DeleteSprite
     Case "Frames"
-        DeleteFrame
+        DeleteFrames
     Case "Poses"
-        DeletePose
+        DeletePoses
     Case "States"
-        DeleteState
+        DeleteStates
     Case Else
     End Select
 End Sub
@@ -1697,11 +1899,11 @@ On Error Resume Next
     Case "Frame Script"
         scFrame.Control.Paste
     Case "States"
-        PasteState
+        PasteStates
     Case "Poses"
-        PastePose
+        PastePoses
     Case "Frames"
-        PasteFrame
+        PasteFrames
     Case "Sprites"
         PasteSprite
     Case Else
@@ -1715,9 +1917,29 @@ On Error Resume Next
 End Sub
 
 Private Sub iEditingCommands_SelectAll()
+On Error Resume Next
+    Select Case ActiveType
+    Case "Frames"
+        lstFrames.SelectAll
+    Case "Poses"
+        lstPoses.SelectAll
+    Case "States"
+        lstStates.SelectAll
+    Case Else
+    End Select
 End Sub
 
 Private Sub iEditingCommands_SelectNone()
+On Error Resume Next
+    Select Case ActiveType
+    Case "Frames"
+        lstFrames.SelectNone
+    Case "Poses"
+        lstPoses.SelectNone
+    Case "States"
+        lstStates.SelectNone
+    Case Else
+    End Select
 End Sub
 
 Private Sub iEditingCommands_Undo()
@@ -1759,107 +1981,86 @@ On Error Resume Next
     RedrawSprites
 End Sub
 
-Private Sub lstFrames_KeyUp(KeyCode As Integer, Shift As Integer)
+Private Sub lstFrames_DragComplete()
 On Error Resume Next
-    If KeyCode = vbKeyUp Or KeyCode = vbKeyDown Then
-        m_lngSelectedFrame = lstFrames.ListIndex + 1
-        FramesViewChanged
-    End If
+    m_lngSelectedFrame = lstFrames.FirstSelectedItem.Index
+    FramesViewChanged
 End Sub
 
-Private Sub lstFrames_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub lstFrames_DragMoveItem(Item As ngUI.ngListItem, ByVal OldIndex As Long, ByVal NewIndex As Long)
+On Error Resume Next
+    SelectedPose.Frames.Move OldIndex, NewIndex
+End Sub
+
+Private Sub lstFrames_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
 Dim l_ptMouse As POINTAPI
-Dim l_lngIndex As Long
-    If Y < 0 Then Exit Sub
-    If Y >= (lstFrames.Height * Screen.TwipsPerPixelY) Then Exit Sub
-    lstFrames.SetFocus
-    GetCursorPos l_ptMouse
-    l_lngIndex = LBItemFromPt(lstFrames.hwnd, l_ptMouse.X, l_ptMouse.Y, False)
-    If l_lngIndex <> m_lngSelectedFrame - 1 Then
-        If l_lngIndex > -1 Then
-            If Button = 1 Then lstFrames.ListIndex = l_lngIndex
-            m_lngSelectedFrame = lstFrames.ListIndex + 1
-        End If
-        FramesViewChanged
-    End If
     Editor.ActionUpdate
-    If Button = 2 Then
-        Select Case QuickShowMenu(lstFrames, X, Y, _
-        ListContext(), _
-        frmIcons.ilContextMenus)
-        Case 1
-            InsertFrame l_lngIndex
-        Case 3
-            CutFrame
-        Case 4
-            CopyFrame
-        Case 5
-            PasteFrame l_lngIndex
-        Case 6
-            DeleteFrame
-        Case Else
-        End Select
-    End If
+    GetCursorPos l_ptMouse
+    ScreenToClient lstFrames.hwnd, l_ptMouse
+    Select Case QuickShowMenu(lstFrames, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
+    ListContext(Not (Item Is Nothing)), _
+    frmIcons.ilContextMenus)
+    Case 1
+        InsertFrame Item.Index
+    Case 3
+        CutFrames
+    Case 4
+        CopyFrames
+    Case 5
+        PasteFrames Item.Index
+    Case 6
+        DeleteFrames
+    Case Else
+    End Select
 End Sub
 
-Private Sub lstFrames_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub lstFrames_SelectionChange()
 On Error Resume Next
-    If Button = 1 Then
-        If m_lngSelectedFrame <> lstFrames.ListIndex + 1 Then
-            lstFrames_MouseDown Button, Shift, X, Y
-            DoEvents
-        End If
-    End If
+    m_lngSelectedFrame = lstFrames.FirstSelectedItem.Index
+    FramesViewChanged
+    Editor.ToolbarUpdate
 End Sub
 
-Private Sub lstPoses_KeyUp(KeyCode As Integer, Shift As Integer)
+Private Sub lstPoses_DragComplete()
 On Error Resume Next
-    If KeyCode = vbKeyUp Or KeyCode = vbKeyDown Then
-        m_lngSelectedPose = lstPoses.ListIndex + 1
-        PosesViewChanged
-    End If
+    m_lngSelectedPose = lstPoses.FirstSelectedItem.Index
+    PosesViewChanged
 End Sub
 
-Private Sub lstPoses_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub lstPoses_DragMoveItem(Item As ngUI.ngListItem, ByVal OldIndex As Long, ByVal NewIndex As Long)
+On Error Resume Next
+    SelectedSprite.Poses.Move OldIndex, NewIndex
+End Sub
+
+Private Sub lstPoses_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
 Dim l_ptMouse As POINTAPI
-Dim l_lngIndex As Long
-    If Y < 0 Then Exit Sub
-    If Y >= (lstPoses.Height * Screen.TwipsPerPixelY) Then Exit Sub
-    lstPoses.SetFocus
-    GetCursorPos l_ptMouse
-    l_lngIndex = LBItemFromPt(lstPoses.hwnd, l_ptMouse.X, l_ptMouse.Y, False)
-    If l_lngIndex <> m_lngSelectedPose - 1 Then
-        If Button = 1 Then lstPoses.ListIndex = l_lngIndex
-        m_lngSelectedPose = lstPoses.ListIndex + 1
-        PosesViewChanged
-    End If
     Editor.ActionUpdate
-    If Button = 2 Then
-        Select Case QuickShowMenu(lstPoses, X, Y, _
-        ListContext(), _
-        frmIcons.ilContextMenus)
-        Case 1
-            InsertPose l_lngIndex
-        Case 3
-            CutPose
-        Case 4
-            CopyPose
-        Case 5
-            PastePose l_lngIndex
-        Case 6
-            DeletePose
-        Case Else
-        End Select
-    End If
+    GetCursorPos l_ptMouse
+    ScreenToClient lstPoses.hwnd, l_ptMouse
+    Select Case QuickShowMenu(lstPoses, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
+    ListContext(Not (Item Is Nothing)), _
+    frmIcons.ilContextMenus)
+    Case 1
+        InsertPose Item.Index
+    Case 3
+        CutPoses
+    Case 4
+        CopyPoses
+    Case 5
+        PastePoses Item.Index
+    Case 6
+        DeletePoses
+    Case Else
+    End Select
 End Sub
 
-Private Sub lstPoses_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub lstPoses_SelectionChange()
 On Error Resume Next
-    If Button = 1 Then
-        lstPoses_MouseDown Button, Shift, X, Y
-    End If
+    m_lngSelectedPose = lstPoses.FirstSelectedItem.Index
+    PosesViewChanged
+    Editor.ToolbarUpdate
 End Sub
 
 Private Sub lstStatePoses_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -1914,51 +2115,45 @@ Dim l_lngItems As Long
     End If
 End Sub
 
-Private Sub lstStates_KeyUp(KeyCode As Integer, Shift As Integer)
+Private Sub lstStates_DragComplete()
 On Error Resume Next
-    m_lngSelectedState = lstStates.ListIndex + 1
+    m_lngSelectedState = lstStates.FirstSelectedItem.Index
     StatesViewChanged
 End Sub
 
-Private Sub lstStates_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub lstStates_DragMoveItem(Item As ngUI.ngListItem, ByVal OldIndex As Long, ByVal NewIndex As Long)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
-Dim l_lngIndex As Long
-    If Y < 0 Then Exit Sub
-    If Y >= (lstStates.Height * Screen.TwipsPerPixelY) Then Exit Sub
-    lstStates.SetFocus
-    GetCursorPos l_ptMouse
-    l_lngIndex = LBItemFromPt(lstStates.hwnd, l_ptMouse.X, l_ptMouse.Y, False)
-    If l_lngIndex <> m_lngSelectedState - 1 Then
-        If Button = 1 Then lstStates.ListIndex = l_lngIndex
-        m_lngSelectedState = lstStates.ListIndex + 1
-        StatesViewChanged
-    End If
-    Editor.ActionUpdate
-    If Button = 2 Then
-        Select Case QuickShowMenu(lstStates, X, Y, _
-        ListContext(), _
-        frmIcons.ilContextMenus)
-        Case 1
-            InsertState l_lngIndex
-        Case 3
-            CutState
-        Case 4
-            CopyState
-        Case 5
-            PasteState l_lngIndex
-        Case 6
-            DeleteState
-        Case Else
-        End Select
-    End If
+    SelectedSprite.States.Move OldIndex, NewIndex
 End Sub
 
-Private Sub lstStates_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub lstStates_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-    If Button = 1 Then
-        lstStates_MouseDown Button, Shift, X, Y
-    End If
+Dim l_ptMouse As POINTAPI
+    Editor.ActionUpdate
+    GetCursorPos l_ptMouse
+    ScreenToClient lstStates.hwnd, l_ptMouse
+    Select Case QuickShowMenu(lstStates, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
+    ListContext(Not (Item Is Nothing)), _
+    frmIcons.ilContextMenus)
+    Case 1
+        InsertState Item.Index
+    Case 3
+        CutStates
+    Case 4
+        CopyStates
+    Case 5
+        PasteStates Item.Index
+    Case 6
+        DeleteStates
+    Case Else
+    End Select
+End Sub
+
+Private Sub lstStates_SelectionChange()
+On Error Resume Next
+    m_lngSelectedState = lstStates.FirstSelectedItem.Index
+    StatesViewChanged
+    Editor.ToolbarUpdate
 End Sub
 
 Private Sub picContainer_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -2031,7 +2226,7 @@ Private Sub picSprites_MouseDown(Button As Integer, Shift As Integer, X As Singl
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.Rect
+Dim l_rctText As Win32.RECT
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long

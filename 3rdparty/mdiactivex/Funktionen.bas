@@ -7,6 +7,7 @@ Option Explicit
 '-------------------------------------------------------------'
 ' Funktionen für das MDIActiveX Control                       '
 '-------------------------------------------------------------'
+Public Declare Function DestroyWindow Lib "user32" (ByVal hwnd As Long) As Long
 Public Declare Function FindWindowEx Lib "user32" Alias "FindWindowExA" (ByVal hWnd1 As Long, ByVal hWnd2 As Long, ByVal lpsz1 As String, ByVal lpsz2 As String) As Long
 
 'Ändere Window Style auf Child...
@@ -85,13 +86,25 @@ Private Function MyWndProc(ByVal hwnd As Long, ByVal message As Long, ByVal wPar
 
     Select Case message
 
+    Case WM_PAINT
+        hChild = GetWindow(hwnd, GW_CHILD)
+        If hChild = 0 Then
+            ShowWindow hwnd, 0
+        End If
+        
     Case WM_SIZE
         hChild = GetWindow(hwnd, GW_CHILD)
-        Resize hChild
+        If hChild = 0 Then
+        Else
+            Resize hChild
+        End If
 
     Case WM_SETFOCUS
         hChild = GetWindow(hwnd, GW_CHILD)
-        APISetFocus hChild
+        If hChild = 0 Then
+        Else
+            APISetFocus hChild
+        End If
 
     Case WM_NCACTIVATE
         If wParam <> 0 Then
@@ -251,6 +264,7 @@ Public Function WndProc(ByVal hwnd As Long, ByVal iMsg As Long, ByVal wParam As 
 
     hParent = GetParent(hwnd)
     oldWndProc = GetProp(hwnd, "MDIActiveXold")
+    If oldWndProc = 0 Then Exit Function
 
     Select Case iMsg
 
@@ -315,6 +329,7 @@ Public Function WndProcMDI(ByVal hwnd As Long, ByVal iMsg As Long, ByVal wParam 
 
     hParent = GetParent(hwnd)
     oldWndProc = GetProp(hwnd, "MDIActiveXold")
+    If oldWndProc = 0 Then Exit Function
 
     Select Case iMsg
 
@@ -391,7 +406,8 @@ End Sub
 Public Sub SubStop(hwnd As Long)
     Dim OldWindowProc As Long
 
-    OldWindowProc = SetWindowLong(hwnd, GWL_WNDPROC, GetProp(hwnd, "MDIActiveXold"))
+    OldWindowProc = GetProp(hwnd, "MDIActiveXold")
+    Call SetWindowLong(hwnd, GWL_WNDPROC, OldWindowProc)
     RemoveProp hwnd, "MDIActiveXold"
 
 End Sub

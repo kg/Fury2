@@ -235,23 +235,17 @@ Dim l_lngBrushWidth As Long, l_lngBrushHeight As Long
     End With
     With l_tmpTilemap
         .Alpha = 255 * Alpha
-        If Layer.Effect <> BlitMode_Default Then
-            .Effect = Layer.Effect
-        ElseIf Layer.Tileset.HasAlpha Then
-            .Effect = 2
-        Else
-            .Effect = 1
-        End If
+        .Effect = Layer.Effect
         .MaskedTile = Layer.Tileset.TransparentTile
         .pAnimationMap = 0
         .pData = VarPtr(m_intTiles(0, 0))
         .pTileset = Layer.Tileset.Handle
         .Width = Me.Width
         .Height = Me.Height
-        .X1 = 0
-        .Y1 = 0
-        .X2 = Me.Width
-        .Y2 = Me.Height
+        .x1 = 0
+        .y1 = 0
+        .x2 = Me.Width
+        .y2 = Me.Height
     End With
     RenderTilemapLayer l_tmpTilemap, l_camCamera
 End Sub

@@ -350,3 +350,13 @@ On Error Resume Next
     End If
     InitClipper
 End Sub
+
+Public Property Get MouseVisible() As Boolean
+On Error Resume Next
+    MouseVisible = m_OutForm.MousePointer = 0
+End Property
+
+Public Property Let MouseVisible(ByVal NewValue As Boolean)
+On Error Resume Next
+    m_OutForm.MousePointer = IIf(NewValue, 0, 99)
+End Property

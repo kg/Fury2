@@ -66,20 +66,6 @@ Dim l_posPose As Fury2Pose
     Next l_posPose
 End Sub
 
-Public Function Find(Obj) As Long
-On Error Resume Next
-Dim l_objItem As Object, l_lngItems As Long
-    If mCol.Count <= 0 Then Exit Function
-    l_lngItems = 1
-    For Each l_objItem In mCol
-        If l_objItem Is Obj Then
-            Find = l_lngItems
-            Exit Function
-        End If
-        l_lngItems = l_lngItems + 1
-    Next l_objItem
-End Function
-
 Sub Free()
 On Error Resume Next
 Dim l_posPose As Fury2Pose
@@ -196,7 +182,7 @@ On Error Resume Next
         If IsMissing(AtIndex) Then
             mCol.Add Obj
         Else
-            If mCol.Count = 0 Then
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, , 1
@@ -211,7 +197,7 @@ On Error Resume Next
         If IsMissing(AtIndex) Then
             mCol.Add Obj, sKey
         Else
-            If mCol.Count = 0 Then
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj, sKey
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, sKey, 1
@@ -295,4 +281,34 @@ End Sub
 Private Sub IVirtualFileCollection_LoadHeader(File As libGraphics.VirtualFile)
 On Error Resume Next
 End Sub
+
+Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)
+On Error Resume Next
+Dim l_objObject As Object
+    If FromIndex < 1 Or FromIndex > mCol.Count Then Exit Sub
+    If ToIndex < 1 Or ToIndex > (mCol.Count + 1) Then Exit Sub
+    If FromIndex = ToIndex Then Exit Sub
+    Set l_objObject = mCol.Item(FromIndex)
+    Remove FromIndex
+    If (FromIndex < ToIndex) Then
+'        Trust me, this works - even though it doesn't make sense unless you think about it
+'        ToIndex = ToIndex - 1
+    End If
+    Add l_objObject, , ToIndex
+End Sub
+
+Public Function Find(ByVal Var As Fury2Pose) As Long
+On Error Resume Next
+Dim m_lngItems As Long, m_objItem As Fury2Pose
+    If mCol.Count <= 0 Then Exit Function
+    m_lngItems = 1
+    For Each m_objItem In mCol
+        If m_objItem Is Var Then
+            Find = m_lngItems
+            Exit Function
+        End If
+        m_lngItems = m_lngItems + 1
+    Next m_objItem
+End Function
+
 

@@ -120,4 +120,12 @@ public:
         if (this->bottom() < Rect.Top) return false;
         return true;
     }
+
+    template <class T> inline void getLine(T& start, T& end) {
+      start.X = this->Left;
+      start.Y = this->Top;
+      end.X = this->Left + this->Width + ((this->Width > 0) ? 1 : ((this->Width != 0) ? -1 : 0));
+      end.Y = this->Top + this->Height + ((this->Height > 0) ? 1 : ((this->Height != 0) ? -1 : 0));
+      return;
+    }
 };

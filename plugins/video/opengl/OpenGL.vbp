@@ -1,0 +1,53 @@
+Type=OleDll
+Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\WINDOWS\system32\STDOLE2.TLB#OLE Automation
+Reference=*\G{64651516-73E5-402B-B989-94EAE4C6A049}#1.0#409#..\..\..\..\libraries\tlb\Win32.tlb#Win32 API
+Reference=*\G{3B10323B-FEC1-4FAA-9A62-89666AC5A420}#2.0#0#..\..\..\..\binary\sys\graphics.dll#Fury² Game Creation System Graphics Engine
+Reference=*\G{3CB89DD9-2E5A-45D3-A6FF-E87B0081CDCC}#1.0#409#..\..\..\..\libraries\tlb\SoftFX.tlb#Fury² Game Creation System SoftFX library
+Reference=*\G{B96BCBE1-F886-11D0-9C63-A06801C10627}#1.2#0#..\..\..\..\libraries\tlb\ISHF_Ex.tlb#IShellFolder Extended Type Library v1.2
+Reference=*\G{03644881-8010-11D1-95AA-000000000000}#1.1#0#C:\WINDOWS\system32\vbogl.tlb#VB OpenGL API 1.2 (ANSI)
+Form=form\frmOpenGL.frm
+Class=OpenGLEngine; classes\OpenGLEngine.cls
+Module=mdlOverride; ..\..\..\common\modules\mdlOverride.bas
+Module=mdlOpenGL; module\mdlOpenGL.bas
+Module=mdlOpenGLOverride; module\mdlOpenGLOverride.bas
+Module=mdlGLFX; module\mdlGLFX.bas
+Startup="(None)"
+HelpFile=""
+NoControlUpgrade=1
+Title="OpenGL"
+ExeName32="Video_OpenGL.dll"
+Path32="..\..\..\..\binary\sys"
+Command32=""
+Name="video_opengl"
+HelpContextID="0"
+CompatibleMode="0"
+CompatibleEXE32="F:\binary\sys\video_dx8.dll"
+MajorVer=0
+MinorVer=0
+RevisionVer=327
+AutoIncrementVer=1
+ServerSupportFiles=0
+DllBaseAddress=&H25000000
+VersionCompanyName="The Janus Element Interactive"
+CompilationType=0
+OptimizationType=0
+FavorPentiumPro(tm)=-1
+CodeViewDebugInfo=-1
+NoAliasing=0
+BoundsCheck=0
+OverflowCheck=-1
+FlPointCheck=-1
+FDIVCheck=-1
+UnroundedFP=-1
+StartMode=1
+Unattended=0
+Retained=0
+ThreadPerObject=0
+MaxNumberOfThreads=1
+DebugStartupOption=0
+
+[MS Transaction Server]
+AutoRefresh=1
+
+[VBCompiler]
+LinkSwitches= -Fixed:no

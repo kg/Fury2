@@ -258,13 +258,9 @@ struct GradientVertex : FPoint {
 		this->Y = Y;
 		this->Color = Color;
 	}
-    DoubleWord Color;
-    inline Pixel color();
-    inline void setColor(Pixel V);
-};
-
-struct EdgeTexVertex : FPoint {
-    Image *Tex;
+  DoubleWord Color;
+  inline Pixel color();
+  inline void setColor(Pixel V);
 };
 
 struct ColorFilter {

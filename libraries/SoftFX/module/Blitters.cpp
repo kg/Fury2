@@ -1546,6 +1546,14 @@ TILEBLITTERSIMPLE_LOOPBEGIN
 TILEBLITTERSIMPLE_LOOPEND
 TILEBLITTERSIMPLE_END
 
+TILEBLITTERSIMPLE_SIGNATURE(Font_Opacity)
+    , Pixel Tint, int Opacity) {
+TILEBLITTERSIMPLE_BEGIN
+TILEBLITTERSIMPLE_LOOPBEGIN
+    BlitSimple_Font_Opacity(Dest, Source, &rDest, 0, 0, Tint, Opacity);
+TILEBLITTERSIMPLE_LOOPEND
+TILEBLITTERSIMPLE_END
+
 BLITTERRESAMPLE_SIGNATURE(Normal)
     ) {
 BLITTERRESAMPLE_INIT
@@ -1894,7 +1902,7 @@ Export int BlitMask_SourceAlpha_Opacity(Image *Dest, Image *Source, Image *Mask,
     }
 
     {
-        int overrideresult = Override::EnumOverrides(Override::BlitMask_Merge_Opacity, 9, Dest, Source, Mask, Rect, SX, SY, MX, MY, Opacity);
+        int overrideresult = Override::EnumOverrides(Override::BlitMask_SourceAlpha_Opacity, 9, Dest, Source, Mask, Rect, SX, SY, MX, MY, Opacity);
 #ifdef OVERRIDES
         if (overrideresult != 0) return overrideresult;
 #endif
@@ -1947,9 +1955,9 @@ Export int BlitMask_SourceAlpha_Opacity(Image *Dest, Image *Source, Image *Mask,
     while (iCY--) {
         iCX = (DoubleWord)rCoordinates.Width;
         while (iCX--) {
-            if ((*pMask)[::Red]) {
+            if ((*pMask)[::Alpha]) {
                 if ((*pSource)[::Alpha]) {
-                    aMask = AlphaLevelLookup(AlphaFromLevel(aScale, (*pMask)[::Red]));
+                    aMask = AlphaLevelLookup(AlphaFromLevel(aScale, (*pMask)[::Alpha]));
                     sa = AlphaFromLevel(aMask, (*pSource)[::Alpha]);
                     if (sa == 255) {
                       (*pDest)[::Blue] = (*pSource)[::Blue];
@@ -2050,9 +2058,9 @@ Export int BlitMask_Merge_Opacity(Image *Dest, Image *Source, Image *Mask,
     while (iCY--) {
         iCX = (DoubleWord)rCoordinates.Width;
         while (iCX--) {
-            if ((*pMask)[::Red]) {
+            if ((*pMask)[::Alpha]) {
                 if ((*pSource)[::Alpha]) {
-                    aMask = AlphaLevelLookup(AlphaFromLevel(aScale, (*pMask)[::Red]));
+                    aMask = AlphaLevelLookup(AlphaFromLevel(aScale, (*pMask)[::Alpha]));
                     sa = AlphaFromLevel(aMask, (*pSource)[::Alpha]);
                     sai = sa ^ 0xFF;
                     if ((*pDest)[::Alpha] == 0) {

@@ -160,7 +160,7 @@ On Error Resume Next
         If IsMissing(AtIndex) Then
             mCol.Add Obj
         Else
-            If mCol.Count = 0 Then
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, , 1
@@ -175,7 +175,7 @@ On Error Resume Next
         If IsMissing(AtIndex) Then
             mCol.Add Obj, sKey
         Else
-            If mCol.Count = 0 Then
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj, sKey
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, sKey, 1
@@ -359,7 +359,7 @@ Dim l_lngIndex As Long
                             .Save "String"
                             .Save l_strItem
                         Else
-                            l_strType = Typename(l_objItem)
+                            l_strType = TypeName(l_objItem)
                             .Save l_strType
                             If Not (l_objItem Is Nothing) Then .Save l_objItem
                         End If

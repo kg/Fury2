@@ -86,6 +86,7 @@ void Particle::tick() {
 }
 
 Export ParticleEngine* CreateParticleEngine() {
+  return Null;
 }
 
 Export int DestroyParticleEngine(ParticleEngine *Engine) {
@@ -127,6 +128,6 @@ Export int UpdateParticleEngine(ParticleEngine *Engine) {
 Export int RenderParticleEngine(Image *Surface, ParticleEngine *Engine, float XOffset, float YOffset) {
   if (!Engine) return Failure;
   if (!Surface) return Failure;
-  Engine->render(Surface, XOffset, YOffset);
+  //Engine->render(Surface, XOffset, YOffset);
   return Success;
 }

@@ -1,11 +1,11 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#7.2#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.5#0"; "ngUI.ocx"
 Begin VB.Form frmTest 
    Caption         =   "ngToolbar Test"
-   ClientHeight    =   3150
+   ClientHeight    =   5490
    ClientLeft      =   60
    ClientTop       =   390
-   ClientWidth     =   4500
+   ClientWidth     =   6285
    BeginProperty Font 
       Name            =   "Tempus Sans ITC"
       Size            =   8.25
@@ -16,19 +16,28 @@ Begin VB.Form frmTest
       Strikethrough   =   0   'False
    EndProperty
    LinkTopic       =   "Form1"
-   ScaleHeight     =   210
+   ScaleHeight     =   366
    ScaleMode       =   3  'Pixel
-   ScaleWidth      =   300
+   ScaleWidth      =   419
    StartUpPosition =   3  'Windows Default
+   Begin ngUI.ngListBox lbxTest 
+      Height          =   3600
+      Left            =   735
+      TabIndex        =   1
+      Top             =   945
+      Width           =   4800
+      _ExtentX        =   8467
+      _ExtentY        =   6350
+   End
    Begin ngUI.ngToolbar tbrTest 
-      Align           =   3  'Align Left
-      Height          =   3150
+      Align           =   1  'Align Top
+      Height          =   195
       Left            =   0
       TabIndex        =   0
       Top             =   0
-      Width           =   720
-      _ExtentX        =   1270
-      _ExtentY        =   5556
+      Width           =   6285
+      _ExtentX        =   11086
+      _ExtentY        =   344
    End
 End
 Attribute VB_Name = "frmTest"
@@ -42,11 +51,13 @@ Private Sub Form_Load()
 On Error Resume Next
 Dim l_imgTest As Fury2Image
 Dim l_rfFile As ngResourceFile
-    Set l_rfFile = LoadResourceFile("J:\development\binary\sys\resources.zip")
-    Set Me.Icon = l_rfFile.ItemData("editor.ico")
+Dim l_lngIndex As Long
+    Set l_rfFile = LoadResourceFile("J:\development\binary\sys\resources\common.zip")
     Set tbrTest.ResourceFile = l_rfFile
     Set l_imgTest = Nothing
+    tbrTest.Orientation = tboHorizontal
     tbrTest.ResourcePattern = "*.png"
+    tbrTest.LoadTheme "theme\toolbar\"
     Set tbrTest.Buttons.AddNew("Left", "Test1", "tileset", , , btaLeft).Font = Me.Font
     tbrTest.Buttons.AddNew "Right", "Test2", l_imgTest, , , btaRight
     tbrTest.Buttons.AddNew "-"
@@ -60,5 +71,9 @@ Dim l_rfFile As ngResourceFile
     tbrTest.Buttons.AddNew "-"
     tbrTest.Buttons.AddNew "Toggle", "Test8", F2ImageFromPicture(Me.Icon), , bsyCheck
     tbrTest.AutoSize
+    lbxTest.AllowReorder = True
+    For l_lngIndex = 0 To 99
+        lbxTest.ListItems.AddNew "Item &" & l_lngIndex
+    Next l_lngIndex
 End Sub
 

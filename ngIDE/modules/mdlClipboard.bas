@@ -1,6 +1,18 @@
 Attribute VB_Name = "mdlClipboard"
 Option Explicit
 
+Public Function ClipboardDeserializeFile(Clipboard As cCustomClipboard, Format As Long, File As VirtualFile) As Boolean
+On Error Resume Next
+Dim l_lngLength As Long
+    l_lngLength = Clipboard.GetBinaryDataSize(Format)
+    If l_lngLength Then
+        File.Length = l_lngLength
+        Clipboard.CopyBinaryData Format, File.Pointer
+        ClipboardDeserializeFile = True
+    End If
+    Err.Clear
+End Function
+
 Public Function ClipboardDeserialize(Clipboard As cCustomClipboard, Format As Long, Object As IVirtualFileSaveable) As Boolean
 On Error Resume Next
 Dim l_vfData As VirtualFile

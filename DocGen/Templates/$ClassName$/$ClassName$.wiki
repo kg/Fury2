@@ -1,0 +1,10 @@
+Documentation.[Documentation] > Documentation.[ClassReference] > Documentation.$ClassName$.[$ClassName$]
+!Summary
+$Summary$
+!Properties
+$Properties$
+!Methods
+$Methods$
+----
+Last automated update at: $Date$
+This documentation is for $Version$

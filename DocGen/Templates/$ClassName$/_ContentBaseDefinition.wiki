@@ -1,0 +1,3 @@
+﻿Title: Documentation.$ClassName$
+Description: 
+Namespace: Documentation.$ClassName$

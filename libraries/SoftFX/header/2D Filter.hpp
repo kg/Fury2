@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
     Rectangle rCoordinates;                                     \
         if (!Area) {                                            \
             rCoordinates = Image->ClipRectangle;                \
+            Area = &rCoordinates;                               \
         } else {                                                \
             rCoordinates = *Area;                               \
         }                                                       \
@@ -49,7 +50,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
         return Trivial_Success;                                 \
     }                                                           \
                                                                 \
-    Image->dirty();                                \
+    Image->dirty();                                             \
                                                                 \
     Pixel *pCurrent = Image->pointer(                           \
         rCoordinates.Left, rCoordinates.Top);                   \

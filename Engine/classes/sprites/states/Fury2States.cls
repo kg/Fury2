@@ -57,15 +57,40 @@ Dim m_lngStates As Long
     End With
 End Function
 
-Public Function Add(Obj As Fury2State, Optional sKey As String) As Fury2State
+Public Sub Add(Obj As Fury2State, Optional ByVal sKey, Optional ByVal AtIndex)
 On Error Resume Next
-    If mCol.Count >= c_lngMaxStates Then Exit Function
-    If Len(sKey) = 0 Then
-        mCol.Add Obj
+    If IsMissing(sKey) Then
+        If IsMissing(AtIndex) Then
+            mCol.Add Obj
+        Else
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
+                mCol.Add Obj
+            ElseIf AtIndex <= 1 Then
+                mCol.Add Obj, , 1
+            ElseIf mCol.Count > AtIndex Then
+                mCol.Add Obj, , AtIndex
+            Else
+                mCol.Add Obj, , , AtIndex - 1
+            End If
+        End If
     Else
-        mCol.Add Obj, sKey
+        sKey = LCase(Trim(CStr(sKey)))
+        If IsMissing(AtIndex) Then
+            mCol.Add Obj, sKey
+        Else
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
+                mCol.Add Obj, sKey
+            ElseIf AtIndex <= 1 Then
+                mCol.Add Obj, sKey, 1
+            ElseIf mCol.Count > AtIndex Then
+                mCol.Add Obj, sKey, AtIndex
+            Else
+                mCol.Add Obj, sKey, , AtIndex - 1
+            End If
+        End If
     End If
-End Function
+    Err.Clear
+End Sub
 
 Public Property Get Item(vntIndexKey As Variant) As Fury2State
 Attribute Item.VB_UserMemId = 0
@@ -130,3 +155,34 @@ End Sub
 Private Sub IVirtualFileCollection_LoadHeader(File As libGraphics.VirtualFile)
 On Error Resume Next
 End Sub
+
+Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)
+On Error Resume Next
+Dim l_objObject As Object
+    If FromIndex < 1 Or FromIndex > mCol.Count Then Exit Sub
+    If ToIndex < 1 Or ToIndex > (mCol.Count + 1) Then Exit Sub
+    If FromIndex = ToIndex Then Exit Sub
+    Set l_objObject = mCol.Item(FromIndex)
+    Remove FromIndex
+    If (FromIndex < ToIndex) Then
+'        Trust me, this works - even though it doesn't make sense unless you think about it
+'        ToIndex = ToIndex - 1
+    End If
+    Add l_objObject, , ToIndex
+End Sub
+
+Public Function Find(ByVal Var As Fury2State) As Long
+On Error Resume Next
+Dim m_lngItems As Long, m_objItem As Fury2State
+    If mCol.Count <= 0 Then Exit Function
+    m_lngItems = 1
+    For Each m_objItem In mCol
+        If m_objItem Is Var Then
+            Find = m_lngItems
+            Exit Function
+        End If
+        m_lngItems = m_lngItems + 1
+    Next m_objItem
+End Function
+
+

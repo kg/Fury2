@@ -1,6 +1,5 @@
 Attribute VB_Name = "mdlDX8Override"
 Option Explicit
-
 Private l_imgRadialGradient As Fury2Image
 
 Private l_devRTDevice As Direct3DDevice8
@@ -689,13 +688,15 @@ Dim l_lngSX As Long, l_lngSY As Long
 Dim l_sngSX As Single, l_sngSY As Single
 Dim l_sngU(0 To 3) As Single, l_sngV(0 To 3) As Single
 Dim l_sdDesc As D3DSURFACE_DESC, l_texTexture As Direct3DTexture8
+Dim l_sngW As Single, l_sngH As Single
+Dim l_sngX1 As Single, l_sngY1 As Single, l_sngX2 As Single, l_sngY2 As Single
     Dim l_srfRenderTarget As Direct3DSurface8
     Set l_srfRenderTarget = ChangeRenderTarget(Device, GetImageRenderTargetH(Parameters.Dest))
     DerefRectangle Parameters.Rectangle, l_rctParameter, Parameters.Dest
     l_rctCopy = l_rctParameter
     l_lngSX = Parameters.SX
     l_lngSY = Parameters.SY
-    SoftFX.Clip2D_SimpleRect l_rctParameter, Parameters.Dest, Parameters.Source, l_rctCopy, l_lngSX, l_lngSY
+    If SoftFX.Clip2D_SimpleRect(l_rctParameter, Parameters.Dest, Parameters.Source, l_rctCopy, l_lngSX, l_lngSY) Then Exit Sub
     mdlDX8.UseImageAsTextureH Device, Parameters.Source, 0
     Set l_texTexture = Device.GetTexture(0)
     l_texTexture.GetLevelDesc 0, l_sdDesc
@@ -703,8 +704,14 @@ Dim l_sdDesc As D3DSURFACE_DESC, l_texTexture As Direct3DTexture8
     l_sngYR = 1 / l_sdDesc.Height
     l_sngSX = (l_lngSX + 0.5) * l_sngXR
     l_sngSY = (l_lngSY + 0.5) * l_sngYR
-    l_sngU2 = (l_sngSX) + (l_rctParameter.Width * l_sngXR)
-    l_sngV2 = (l_sngSY) + (l_rctParameter.Height * l_sngYR)
+    l_sngW = l_rctParameter.Width
+    l_sngH = l_rctParameter.Height
+    l_sngU2 = (l_sngSX) + (l_sngW * l_sngXR)
+    l_sngV2 = (l_sngSY) + (l_sngH * l_sngYR)
+    l_sngX1 = l_rctParameter.Left
+    l_sngY1 = l_rctParameter.Top
+    l_sngX2 = l_sngX1 + l_sngW
+    l_sngY2 = l_sngY1 + l_sngH
     If FBTex Then
         l_sngU(0) = l_sngSX
         l_sngV(0) = l_sngSY
@@ -714,13 +721,13 @@ Dim l_sdDesc As D3DSURFACE_DESC, l_texTexture As Direct3DTexture8
         l_texTexture.GetLevelDesc 0, l_sdDesc
         l_sngXR = 1 / l_sdDesc.Width
         l_sngYR = 1 / l_sdDesc.Height
-        l_sngU(2) = (l_rctParameter.Left + 0.5) * l_sngXR
-        l_sngV(2) = (l_rctParameter.Top + 0.5) * l_sngYR
-        l_sngU(3) = (l_rctParameter.Left + l_rctParameter.Width + 0.5) * l_sngXR
-        l_sngV(3) = (l_rctParameter.Top + l_rctParameter.Height + 0.5) * l_sngYR
-        mdlDX8.DrawMultiTexturedQuad Device, l_rctParameter.Left, l_rctParameter.Top, l_rctParameter.Width, l_rctParameter.Height, l_sngU, l_sngV, TintColor
+        l_sngU(2) = (l_sngX1 + 0.5) * l_sngXR
+        l_sngV(2) = (l_sngY1 + 0.5) * l_sngYR
+        l_sngU(3) = (l_sngX2) * l_sngXR
+        l_sngV(3) = (l_sngY2) * l_sngYR
+        mdlDX8.DrawMultiTexturedQuad Device, l_sngX1, l_sngY1, l_sngW, l_sngH, l_sngU, l_sngV, TintColor
     Else
-        mdlDX8.DrawTexturedQuad Device, l_rctParameter.Left, l_rctParameter.Top, l_rctParameter.Width, l_rctParameter.Height, l_sngSX, l_sngSY, l_sngU2, l_sngV2, TintColor
+        mdlDX8.DrawTexturedQuad Device, l_sngX1, l_sngY1, l_sngW, l_sngH, l_sngSX, l_sngSY, l_sngU2, l_sngV2, TintColor
     End If
 '    ChangeRenderTarget Device, l_srfRenderTarget
 End Sub
@@ -1305,8 +1312,6 @@ End Function
 ' OK
 Public Function IsImageDX8(ByRef Image As Fury2Image) As Boolean
 On Error Resume Next
-#If (DEIC <> 1) And (DEI1 <> 1) And (DEI1G <> 1) Then
     IsImageDX8 = (GetImageTag(Image.Handle, IdentifierTagIndex) = IdentifierTag)
-#End If
 End Function
 ' OK

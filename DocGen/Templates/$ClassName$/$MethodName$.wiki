@@ -1,0 +1,12 @@
+Documentation.[Documentation] > Documentation.[ClassReference] > Documentation.$ClassName$.[$ClassName$] > Documentation.$ClassName$.[$MethodName$] Method
+!Summary
+$Summary$
+!Example
+$Example$
+!Return Type
+$ReturnType$
+!Parameters
+$Parameters$
+----
+Last automated update at: $Date$
+This documentation is for $Version$

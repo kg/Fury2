@@ -54,7 +54,7 @@ Private mvarParallaxX As Single
 Private mvarParallaxY As Single
 Private mvarVisible As Boolean
 Private mvarAlpha As Single
-Private mvarEffect As SFXBlitModes
+Private mvarEffect As Fury2LayerEffects
 Private mvarLit As Boolean
 Private mvarTiles() As Integer
 Private mvarBlocking() As Byte
@@ -320,7 +320,7 @@ Dim m_lyrNew As Fury2MapLayer
         .WrapY = mvarWrapY
         .Visible = mvarVisible
         .Alpha = mvarAlpha
-        .Effect = mvarEffect - 1
+        .Effect = mvarEffect
         .Name = mvarName
         .Lit = mvarLit
         .Tiles = mvarTiles
@@ -333,13 +333,13 @@ Dim m_lyrNew As Fury2MapLayer
     Set m_lyrNew = Nothing
 End Function
 
-Public Property Let Effect(ByVal vData As SFXBlitModes)
-    mvarEffect = vData + 1
+Public Property Let Effect(ByVal vData As Fury2LayerEffects)
+    mvarEffect = vData
     If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
 
-Public Property Get Effect() As SFXBlitModes
-    Effect = mvarEffect - 1 ' Hack to make a value of 0 (the default) actually be -1
+Public Property Get Effect() As Fury2LayerEffects
+    Effect = mvarEffect
 End Property
 
 Public Sub FloodFill(ByVal X As Long, ByVal Y As Long, ByVal Tile As Integer)
@@ -463,6 +463,7 @@ Dim m_lngLineCount As Long
             .ReadSegment_Begin
                 .Load mvarAlpha
                 .Load mvarEffect
+                mvarEffect = mvarEffect - 1
                 .Load mvarVisible
                 .ReadSegment_Begin
                     .Load mvarParallaxX
@@ -502,6 +503,13 @@ Dim m_lngLineCount As Long
             End If
             If mvarBlockGridHeight <= 0 Then
                 mvarBlockGridHeight = mvarTileset.TileHeight
+            End If
+            If mvarEffect < 0 Then
+                If mvarTileset.HasAlpha Then
+                    mvarEffect = F2LE_Alpha
+                Else
+                    mvarEffect = F2LE_Matte
+                End If
             End If
             .Load m_lngValue
             .Skip m_lngValue
@@ -546,7 +554,7 @@ On Error Resume Next
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save mvarAlpha
-                .Save mvarEffect
+                .Save mvarEffect + 1
                 .Save mvarVisible
                 .WriteSegment_Begin
                     .Save mvarParallaxX

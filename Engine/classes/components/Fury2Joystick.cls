@@ -91,10 +91,18 @@ Private m_mnuBindings As Fury2Menu
 Private m_msgText As Fury2MessageWindow
 Private m_msgPrompt As Fury2MessageWindow
 Public Engine As Fury2Engine
-Public LogKeypresses As Boolean
 Public Bindings As Fury2JoystickBindings
+Private m_booEnabled As Boolean
 
 Implements DirectXEvent8
+
+Public Property Get Enabled() As Boolean
+    Enabled = m_booEnabled
+End Property
+
+Public Property Let Enabled(ByVal NewValue As Boolean)
+    m_booEnabled = NewValue
+End Property
 
 Public Function AddBinding(Name, Optional BoundControl As Fury2InputControl = Nothing) As Fury2JoystickBinding
 On Error Resume Next
@@ -115,7 +123,7 @@ On Error Resume Next
     If m_DID Is Nothing Then Axes = -1: Exit Function
     If Index >= m_Caps.lAxes Then Axes = -1: Exit Function
     With m_DS
-        Axes = CLng(Choose(CLng(Index), .X, .Y, .Z, .slider, .ax, .ay, .az, .aslider, .arx, .ary, .arz, _
+        Axes = CLng(Choose(CLng(Index), .X, .Y, .Z, .Slider, .ax, .ay, .az, .aslider, .arx, .ary, .arz, _
         .fx, .fy, .fz, .fslider, .frx, .fry, .frz, .Rx, .Ry, .rz, .vrx, .vry, .vrz, .vx, .vy, .vz, .vslider))
     End With
     If Err <> 0 Then Axes = -1
@@ -203,6 +211,7 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error Resume Next
+    m_booEnabled = True
     Set Bindings = New Fury2JoystickBindings
     Set Bindings.Parent = Me
 End Sub
@@ -324,7 +333,7 @@ On Error Resume Next
     If m_DID Is Nothing Then OldAxes = -1: Exit Function
     If Index >= m_Caps.lAxes Then OldAxes = -1: Exit Function
     With m_OldDS
-        OldAxes = CLng(Choose(CLng(Index), .X, .Y, .Z, .slider, .ax, .ay, .az, .aslider, .arx, .ary, .arz, _
+        OldAxes = CLng(Choose(CLng(Index), .X, .Y, .Z, .Slider, .ax, .ay, .az, .aslider, .arx, .ary, .arz, _
         .fx, .fy, .fz, .fslider, .frx, .fry, .frz, .Rx, .Ry, .rz, .vrx, .vry, .vrz, .vx, .vy, .vz, .vslider))
     End With
     If Err <> 0 Then OldAxes = -1

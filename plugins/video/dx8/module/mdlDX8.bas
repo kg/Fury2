@@ -12,6 +12,9 @@ Public Type D3DVertex
     V2 As Single
 End Type
 
+Private m_vbBuffer As Direct3DVertexBuffer8
+Private Const c_lngVertexBufferSize As Long = 4
+
 Public m_dxDX8 As DirectX8
 Public m_dxD3D8 As Direct3D8
 Public m_lngAdapter As Long
@@ -242,40 +245,68 @@ Dim l_booSame As Boolean
                 l_booSame = False
             End If
         End If
-        ProfileStart "Texture Switches"
+        ' ProfileStart "Texture Switches"
         Device.SetTexture Stage, l_texTexture
-        ProfileStop "Texture Switches"
+        ' ProfileStop "Texture Switches"
         l_lngTexture = 0
         CopyMemory l_texTexture, l_lngTexture, 4
         CopyMemory l_unkTexture, l_lngTexture, 4
     End If
 End Sub
 
-Public Sub InitQuad(ByRef Vertexes() As D3DVertex, ByVal x1 As Long, ByVal y1 As Long, ByVal x2 As Long, ByVal y2 As Long)
+Public Sub InitQuadEx(ByRef Vertexes() As D3DVertex, ByVal x1 As Single, ByVal y1 As Single, ByVal x2 As Single, ByVal y2 As Single, ByVal U1 As Single, ByVal V1 As Single, ByVal U2 As Single, ByVal V2 As Single, ByVal Color As Long)
 On Error Resume Next
     With Vertexes(0)
         .X = x1: .Y = y1
-        .RHW = 1#
+        .RHW = 1!
+        .Color = Color
+        .U1 = U1: .V1 = V1
+        .U2 = U1: .V2 = V1
     End With
     With Vertexes(1)
         .X = x2: .Y = y1
-        .RHW = 1#
+        .RHW = 1!
+        .Color = Color
+        .U1 = U2: .V1 = V1
+        .U2 = U2: .V2 = V1
     End With
     With Vertexes(2)
         .X = x1: .Y = y2
-        .RHW = 1#
+        .RHW = 1!
+        .Color = Color
+        .U1 = U1: .V1 = V2
+        .U2 = U1: .V2 = V2
     End With
     With Vertexes(3)
-        .X = x2: .Y = y1
-        .RHW = 1#
-    End With
-    With Vertexes(4)
         .X = x2: .Y = y2
-        .RHW = 1#
+        .RHW = 1!
+        .Color = Color
+        .U1 = U2: .V1 = V2
+        .U2 = U2: .V2 = V2
     End With
-    With Vertexes(5)
+End Sub
+
+Public Sub InitQuad(ByRef Vertexes() As D3DVertex, ByVal x1 As Single, ByVal y1 As Single, ByVal x2 As Single, ByVal y2 As Single)
+On Error Resume Next
+    With Vertexes(0)
+        .X = x1: .Y = y1
+        .RHW = 1
+        .Color = &HFFFFFFFF
+    End With
+    With Vertexes(1)
+        .X = x2: .Y = y1
+        .RHW = 1
+        .Color = &HFFFFFFFF
+    End With
+    With Vertexes(2)
         .X = x1: .Y = y2
-        .RHW = 1#
+        .RHW = 1
+        .Color = &HFFFFFFFF
+    End With
+    With Vertexes(3)
+        .X = x2: .Y = y2
+        .RHW = 1
+        .Color = &HFFFFFFFF
     End With
 End Sub
 
@@ -294,16 +325,8 @@ On Error Resume Next
         .U2 = U1: .V2 = V2
     End With
     With Vertexes(3)
-        .U1 = U2: .V1 = V1
-        .U2 = U2: .V2 = V1
-    End With
-    With Vertexes(4)
         .U1 = U2: .V1 = V2
         .U2 = U2: .V2 = V2
-    End With
-    With Vertexes(5)
-        .U1 = U1: .V1 = V2
-        .U2 = U1: .V2 = V2
     End With
 End Sub
 
@@ -349,12 +372,6 @@ On Error Resume Next
     With Vertexes(3)
         .Color = ColorTR
     End With
-    With Vertexes(4)
-        .Color = ColorBR
-    End With
-    With Vertexes(5)
-        .Color = ColorBL
-    End With
 End Sub
 
 Public Function NextPowerOf2(ByVal Number As Long) As Long
@@ -377,7 +394,7 @@ Dim l_srfTarget As Direct3DSurface8
     Set l_srfTarget = GetImageRenderTargetH(Image)
     If l_devDevice Is Nothing Then
         ' Image
-        ProfileStart "Texture Uploads"
+        ' ProfileStart "Texture Uploads"
         Texture.GetLevelDesc 0, l_sdDesc
         l_lngWidth = l_sdDesc.Width
         l_lngHeight = l_sdDesc.Height
@@ -402,14 +419,14 @@ Dim l_srfTarget As Direct3DSurface8
             SetImageLocked Image, CLng(Abs(l_booLocked))
         End If
         Texture.UnlockRect 0
-        ProfileStop "Texture Uploads"
+        ' ProfileStop "Texture Uploads"
     ElseIf l_srfTarget Is l_devDevice.GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO) Then
         ' Device
-        ProfileStart "Texture Copies"
+        ' ProfileStart "Texture Copies"
         l_devDevice.EndScene
         l_devDevice.CopyRects l_devDevice.GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO), ByVal 0, 0, Texture.GetSurfaceLevel(0), ByVal 0
         l_devDevice.BeginScene
-        ProfileStop "Texture Copies"
+        ' ProfileStop "Texture Copies"
     Else
         ' Render Target
     End If
@@ -432,9 +449,9 @@ Dim l_lngWidth As Long, l_lngHeight As Long
     l_lngWidth = NextPowerOf2(GetImageWidth(Image))
     l_lngHeight = NextPowerOf2(GetImageHeight(Image))
     Err.Clear
-    ProfileStart "Texture Allocation"
+    ' ProfileStart "Texture Allocation"
     Set l_texTexture = Device.CreateTexture(l_lngWidth, l_lngHeight, 0, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED)
-    ProfileStop "Texture Allocation"
+    ' ProfileStop "Texture Allocation"
     If Not (l_texTexture Is Nothing) Then
         CopyImageToTextureH l_texTexture, Image
     End If
@@ -454,38 +471,39 @@ On Error Resume Next
     End With
 End Function
 
-Public Sub DrawTexturedQuad(ByRef Device As Direct3DDevice8, ByVal Left As Long, ByVal Top As Long, ByVal Width As Long, ByVal Height As Long, ByVal U1 As Single, ByVal V1 As Single, ByVal U2 As Single, ByVal V2 As Single, ByVal Color As Long)
+Public Sub DrawTexturedQuad(ByRef Device As Direct3DDevice8, ByVal Left As Single, ByVal Top As Single, ByVal Width As Single, ByVal Height As Single, ByVal U1 As Single, ByVal V1 As Single, ByVal U2 As Single, ByVal V2 As Single, ByVal Color As Long)
 On Error Resume Next
-Dim l_verVertexes(0 To 5) As D3DVertex
+Dim l_verVertexes(0 To 3) As D3DVertex
 Dim l_lngPtr As Long
-    ProfileStart "Textured Quad Rendering"
-    InitQuad l_verVertexes, Left, Top, Left + Width, Top + Height
-    InitQuadUV l_verVertexes, U1, V1, U2, V2
-    InitQuadColor l_verVertexes, Color, Color, Color, Color
-    Device.DrawPrimitiveUP D3DPT_TRIANGLELIST, 2, ByVal VarPtr(l_verVertexes(0)), Len(l_verVertexes(0))
-    ProfileStop "Textured Quad Rendering"
+    ' ProfileStart "Textured Quad Rendering"
+    InitQuadEx l_verVertexes, Left, Top, Left + Width, Top + Height, U1, V1, U2, V2, Color
+'    InitQuad l_verVertexes, Left, Top, Left + Width, Top + Height
+'    InitQuadUV l_verVertexes, U1, V1, U2, V2
+'    If Color <> &HFFFFFFFF Then InitQuadColor l_verVertexes, Color, Color, Color, Color
+    Device.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2, ByVal VarPtr(l_verVertexes(0)), Len(l_verVertexes(0))
+    ' ProfileStop "Textured Quad Rendering"
 End Sub
 
-Public Sub DrawMultiTexturedQuad(ByRef Device As Direct3DDevice8, ByVal Left As Long, ByVal Top As Long, ByVal Width As Long, ByVal Height As Long, ByRef U() As Single, ByRef V() As Single, ByVal Color As Long)
+Public Sub DrawMultiTexturedQuad(ByRef Device As Direct3DDevice8, ByVal Left As Single, ByVal Top As Single, ByVal Width As Single, ByVal Height As Single, ByRef U() As Single, ByRef V() As Single, ByVal Color As Long)
 On Error Resume Next
-Dim l_verVertexes(0 To 5) As D3DVertex
+Dim l_verVertexes(0 To 3) As D3DVertex
 Dim l_lngPtr As Long
-    ProfileStart "Textured Quad Rendering"
+    ' ProfileStart "Textured Quad Rendering"
     InitQuad l_verVertexes, Left, Top, Left + Width, Top + Height
     InitQuadUVMT l_verVertexes, U, V
-    InitQuadColor l_verVertexes, Color, Color, Color, Color
-    Device.DrawPrimitiveUP D3DPT_TRIANGLELIST, 2, ByVal VarPtr(l_verVertexes(0)), Len(l_verVertexes(0))
-    ProfileStop "Textured Quad Rendering"
+    If Color <> &HFFFFFFFF Then InitQuadColor l_verVertexes, Color, Color, Color, Color
+    Device.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2, ByVal VarPtr(l_verVertexes(0)), Len(l_verVertexes(0))
+    ' ProfileStop "Textured Quad Rendering"
 End Sub
 
-Public Sub DrawFilledRect(ByRef Device As Direct3DDevice8, ByVal Left As Long, ByVal Top As Long, ByVal Width As Long, ByVal Height As Long, ByVal Color As Long)
+Public Sub DrawFilledRect(ByRef Device As Direct3DDevice8, ByVal Left As Single, ByVal Top As Single, ByVal Width As Single, ByVal Height As Single, ByVal Color As Long)
 On Error Resume Next
-Dim l_verVertexes(0 To 5) As D3DVertex
-    ProfileStart "Filled Quad Rendering"
+Dim l_verVertexes(0 To 3) As D3DVertex
+    ' ProfileStart "Filled Quad Rendering"
     InitQuad l_verVertexes, Left, Top, Left + Width, Top + Height
     InitQuadColor l_verVertexes, Color, Color, Color, Color
-    Device.DrawPrimitiveUP D3DPT_TRIANGLELIST, 2, ByVal VarPtr(l_verVertexes(0)), Len(l_verVertexes(0))
-    ProfileStop "Filled Quad Rendering"
+    Device.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2, ByVal VarPtr(l_verVertexes(0)), Len(l_verVertexes(0))
+    ' ProfileStop "Filled Quad Rendering"
 End Sub
 
 Public Function ChangeRenderTarget(ByRef Device As Direct3DDevice8, ByRef NewTarget As Direct3DSurface8) As Direct3DSurface8
@@ -506,9 +524,9 @@ Dim l_lngWidth As Long, l_lngHeight As Long
     l_lngWidth = NextPowerOf2(Width)
     l_lngHeight = NextPowerOf2(Height)
     Err.Clear
-    ProfileStart "Texture Allocation"
+    ' ProfileStart "Texture Allocation"
     Set l_texTexture = Device.CreateTexture(l_lngWidth, l_lngHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT)
-    ProfileStop "Texture Allocation"
+    ' ProfileStop "Texture Allocation"
     Set CreateRenderTarget = l_texTexture
 End Function
 
@@ -532,13 +550,16 @@ Dim l_verVertex As D3DVertex
     If hWnd = -1 Then hWnd = m_lngDXWindow
     Set CreateDevice = m_dxD3D8.CreateDevice(m_lngAdapter, D3DDEVTYPE_HAL, hWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, l_ppPresent)
     If CreateDevice Is Nothing Then Exit Function
+    Set m_vbBuffer = CreateDevice.CreateVertexBuffer(Len(l_verVertex) * c_lngVertexBufferSize, 0, D3DFVF_TEX1 Or D3DFVF_TEX2 Or D3DFVF_XYZRHW Or D3DFVF_DIFFUSE, D3DPOOL_DEFAULT)
     With CreateDevice
         .SetRenderState D3DRS_CULLMODE, D3DCULL_NONE
         .SetRenderState D3DRS_ZENABLE, 0
         .SetRenderState D3DRS_LIGHTING, 0
+        .SetRenderState D3DRS_CLIPPLANEENABLE, 0
         .SetTextureStageState 0, D3DTSS_MINFILTER, D3DTEXF_LINEAR
         .SetTextureStageState 0, D3DTSS_MAGFILTER, D3DTEXF_LINEAR
         .SetVertexShader D3DFVF_TEX1 Or D3DFVF_TEX2 Or D3DFVF_XYZRHW Or D3DFVF_DIFFUSE
+'        .SetStreamSource 0, m_vbBuffer, Len(l_verVertex)
         .BeginScene
     End With
 End Function

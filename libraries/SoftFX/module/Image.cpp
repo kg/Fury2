@@ -442,13 +442,14 @@ void Image::reallocate(Size Width, Size Height) {
 }
 
 void Image::deallocate() {
-  if (this->Width == 0) return;
 
   if (this->Unlocked) {
     this->lock();
   }
 
   if (Override::EnumOverrides(Override::Deallocate, 1, this)) return;
+
+  if (this->Data == Null) return;
 
   if(this->CoronaImage != 0) {
 
@@ -512,6 +513,7 @@ void Image::setClipRectangle(Rectangle NewRectangle) {
 void Image::clear() {
 
     if (Override::EnumOverrides(Override::Clear, 1, this)) return;
+    IfLocked(return);
 
     _Fill<Pixel>(this->Data, Pixel(0), this->Width * this->Height);
     this->dirty();
@@ -522,6 +524,7 @@ void Image::clear() {
 void Image::fill(Pixel Value) {
 
     if (Override::EnumOverrides(Override::Fill, 2, this, Value)) return;
+    IfLocked(return);
 
     _Fill<Pixel>(this->Data, Value, this->Width * this->Height);
     this->dirty();
@@ -532,7 +535,6 @@ void Image::fill(Pixel Value) {
 void Image::fill(Pixel Value, Rectangle *Rectangle) {
 
     FilterSimple_Fill(this, Rectangle, Value);
-    this->dirty();
 
     return;
 }
@@ -562,11 +564,12 @@ Rectangle Image::getRectangle() {
 void Image::copy(Image *Source) {
   if (Source) {
     if (Override::EnumOverrides(Override::Copy, 2, this, Source)) return;
-    ImageLockManager ilSource = ImageLockManager(lockingMode, Source);
+    ImageLockManager ilSource(lockingMode, Source);
     if (!ilSource.performUnlock()) return;
     if ((this->Width != Source->Width) || (this->Height != Source->Height)) {
       this->reallocate(Source->Width, Source->Height);
     }
+    IfLocked(return);
     for (int i = 0; i < this->Height; i++) {
       _Copy<Byte>(this->fast_pointer(0, i), Source->pointer(0, i), this->Width * 4);
     }

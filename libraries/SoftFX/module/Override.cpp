@@ -185,6 +185,10 @@ Export const char * GetOverrideKey(int index) {
   return Override::OverrideIndexToKey((Override::OverrideIndex)index).c_str();
 }
 
+Export int GetOverrideKeyLength(int index) {
+  return Override::OverrideIndexToKey((Override::OverrideIndex)index).length();
+}
+
 Export int KeyMatches(const char *key1, const char *key2) {
   SS_Start
   if (!key1) return false;

@@ -144,7 +144,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.Rect, ByVal wFormat As Long) As Long
+Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.RECT, ByVal wFormat As Long) As Long
 Private Const DT_WORDBREAK = &H10
 Private Const DT_NOPREFIX = &H800
 Private Const MinimumEditWidth As Long = 60
@@ -181,6 +181,9 @@ End Type
 
 Public InspectAny As Boolean
 
+Private m_booGroupEdit As Boolean
+Private m_objGroupItems() As Object
+
 Private m_booVisible As Boolean
 
 Private m_booHaveFocus As Boolean
@@ -196,7 +199,10 @@ Private m_lngItemHeight As Long
 Private m_lngEditY As Long
 
 Private m_objObject As Object
+Private m_objObjects() As Object
 Private m_oiItems() As ObjectItem
+
+Private m_booMultiple As Boolean
 
 Private m_imgColorBuffer As Fury2Image
 Private m_imgColorBufferBG As Fury2Image
@@ -424,17 +430,66 @@ Public Sub RefreshValues()
 On Error Resume Next
 Dim l_lngItems As Long
 Dim m_itValue As IInspectorType
+Dim l_varValue As Variant
+Dim l_varFirstValue As Variant
+Dim l_objObject As Object, l_lngObject As Long
+Dim l_strValue As String
     If m_objObject Is Nothing Then Exit Sub
     For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
         With m_oiItems(l_lngItems)
             If (.CallTypes And VbGet) = VbGet Then
-                Err.Clear
-                Set .Value = CallByName(m_objObject, .Name, VbGet)
-                If Err <> 0 Then
+                If m_booMultiple Then
+                    l_varFirstValue = Empty
+                    l_varValue = Empty
+                    For l_lngObject = LBound(m_objObjects) To UBound(m_objObjects)
+                        Set l_objObject = m_objObjects(l_lngObject)
+                        Err.Clear
+                        Set l_varValue = CallByName(l_objObject, .Name, VbGet)
+                        If Err <> 0 Then
+                            Err.Clear
+                            l_varValue = CallByName(l_objObject, .Name, VbGet)
+                            If Err <> 0 Then
+                                l_varValue = "{Error}"
+                                Exit For
+                            Else
+                                If IsEmpty(l_varFirstValue) Then l_varFirstValue = l_varValue
+                                If Not (l_varFirstValue = l_varValue) Then
+                                    l_varValue = "{Multiple Values}"
+                                    Exit For
+                                End If
+                            End If
+                        Else
+                            If TypeOf l_varValue Is IInspectorType Then
+                                Set m_itValue = l_varValue
+                                l_strValue = m_itValue.ToString
+                                If IsEmpty(l_varFirstValue) Then l_varFirstValue = l_strValue
+                                If Not (l_varFirstValue = l_strValue) Then
+                                    l_varValue = "{Multiple Values}"
+                                    Exit For
+                                End If
+                            Else
+                                If IsEmpty(l_varFirstValue) Then Set l_varFirstValue = l_varValue
+                                If Not (l_varFirstValue Is l_varValue) Then
+                                    l_varValue = "{Multiple Values}"
+                                    Exit For
+                                End If
+                            End If
+                        End If
+                    Next l_lngObject
                     Err.Clear
-                    .Value = CallByName(m_objObject, .Name, VbGet)
+                    Set .Value = l_varValue
                     If Err <> 0 Then
-                        .Value = "{Error}"
+                        .Value = l_varValue
+                    End If
+                Else
+                    Err.Clear
+                    Set .Value = CallByName(m_objObject, .Name, VbGet)
+                    If Err <> 0 Then
+                        Err.Clear
+                        .Value = CallByName(m_objObject, .Name, VbGet)
+                        If Err <> 0 Then
+                            .Value = "{Error}"
+                        End If
                     End If
                 End If
                 If TypeOf .Value Is IInspectorType Then
@@ -535,6 +590,26 @@ Dim Temp As ObjectItem
     Err.Clear
 End Sub
 
+Public Sub InspectMultiple(Objects() As Object)
+On Error Resume Next
+Dim l_iifObject As InterfaceInfo
+Dim l_lngItems As Long
+Dim l_lngItemCount As Long
+Dim l_booAddNew As Boolean
+Dim l_lngStack As Long, l_booFound As Boolean
+Dim l_strInfo As String
+Dim l_lngOldIndex As Long, l_lngIndex As Long, l_objFind As Object
+Dim l_strSelectedItem As String
+    Set m_colObjectStack = New Collection
+    Set m_colNameStack = New Collection
+    Set m_objObject = Objects(LBound(Objects))
+    m_objObjects = Objects
+    m_colObjectStack.Add Nothing
+    m_colNameStack.Add "(" & (UBound(Objects) - LBound(Objects) + 1) & " objects)"
+    m_booMultiple = True
+    Reinspect
+End Sub
+
 Public Sub Inspect(Obj As Object, Optional ByVal Title As String = "Object", Optional ByVal TopLevel As Boolean = True, Optional ByVal IgnoreStack As Boolean = False, Optional ByVal Force As Boolean = False)
 On Error Resume Next
 Dim l_iifObject As InterfaceInfo
@@ -545,6 +620,7 @@ Dim l_lngStack As Long, l_booFound As Boolean
 Dim l_strInfo As String
 Dim l_lngOldIndex As Long, l_lngIndex As Long, l_objFind As Object
 Dim l_strSelectedItem As String
+    m_booMultiple = False
     If Obj Is Nothing Then
         ClearStack
         Erase m_oiItems
@@ -768,8 +844,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -780,8 +856,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -825,7 +901,7 @@ Dim l_lngSpace As Long
         picHierarchy.Font.Bold = (m_colObjectStack(l_lngNames) Is m_objObject)
         l_lngWidth = l_lngX + picHierarchy.TextWidth(m_colNameStack(l_lngNames))
         If (X >= l_lngX) And (X < l_lngWidth) Then
-            If (TypeOf m_colObjectStack(l_lngNames) Is IInspectable) Or (InspectAny) Then
+            If ((TypeOf m_colObjectStack(l_lngNames) Is IInspectable) Or (InspectAny)) And (Not (m_colObjectStack(l_lngNames) Is Nothing)) Then
                 Inspect m_colObjectStack(l_lngNames), m_colNameStack(l_lngNames), False
                 Exit Sub
             End If
@@ -873,7 +949,7 @@ End Sub
 
 Private Sub picInfo_Paint()
 On Error Resume Next
-Dim l_rcRect As Win32.Rect
+Dim l_rcRect As Win32.RECT
 Dim l_lngLength As Long
     picInfo.Line (0, 0)-(picInfo.ScaleWidth - 1, picInfo.ScaleHeight - 1), vbButtonShadow, B
     picInfo.Line (1, 1)-(picInfo.ScaleWidth - 2, picInfo.ScaleHeight - 2), vbButtonFace, BF
@@ -1087,7 +1163,11 @@ Dim l_lngNameWidth As Long
                         picItems.CurrentY = l_lngY + 2
                     End Select
                     
-                    If (m_oiItems(l_lngItems).CallTypes And VbLet) = VbLet Then
+                    If (m_oiItems(l_lngItems).ValueText = "{Error}") Then
+                        picItems.ForeColor = vbButtonShadow
+                    ElseIf (m_oiItems(l_lngItems).ValueText = "{Multiple Values}") Then
+                        picItems.ForeColor = vbButtonShadow
+                    ElseIf (m_oiItems(l_lngItems).CallTypes And VbLet) = VbLet Then
                         picItems.ForeColor = vbWindowText
                     ElseIf (TypeOf m_oiItems(l_lngItems).Value Is IInspectorType) Then
                         picItems.ForeColor = vbWindowText
@@ -1138,17 +1218,20 @@ End Sub
 
 Private Sub EditBoxChanged()
 On Error Resume Next
+Dim l_objObject As Object, l_lngObject As Long
 Dim l_booCancel As Boolean
 Dim l_varOldValue As Variant
 Dim l_sngValue As Single, l_dblValue As Double
 Dim l_intValue As Integer, l_lngValue As Long
 Dim l_bytValue As Byte, l_strValue As String
+Dim l_varValue As Variant
 Dim l_booValue As Boolean
 Dim l_itValue As IInspectorType
 Dim l_vtType As VbVarType
 Dim l_strText As String
 Dim l_lngValues As Long
     l_strText = txtEdit.Text
+    If l_strText = "{Multiple Values}" Then Exit Sub
     If l_strText = m_oiItems(m_lngSelectedItem).ValueText Then Exit Sub
     Select Case m_oiItems(m_lngSelectedItem).SpecialType
     Case OIT_Color, OIT_Hex
@@ -1174,37 +1257,84 @@ Dim l_lngValues As Long
     l_varOldValue = m_oiItems(m_lngSelectedItem).Value
     l_vtType = VarType(l_varOldValue)
     Err.Clear
-    Select Case l_vtType
-    Case vbBoolean
-        l_booValue = CBool(l_strText)
-        CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_booValue
-        RaiseEvent AfterItemChange(l_varOldValue, l_booValue)
-    Case vbSingle
-        l_sngValue = CSng(l_strText)
-        CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_sngValue
-        RaiseEvent AfterItemChange(l_varOldValue, l_sngValue)
-    Case vbDouble
-        l_dblValue = CDbl(l_strText)
-        CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_dblValue
-        RaiseEvent AfterItemChange(l_varOldValue, l_dblValue)
-    Case vbLong
-        l_lngValue = CLng(l_strText)
-        CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_lngValue
-        RaiseEvent AfterItemChange(l_varOldValue, l_lngValue)
-    Case vbInteger
-        l_intValue = CInt(l_strText)
-        CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_intValue
-        RaiseEvent AfterItemChange(l_varOldValue, l_intValue)
-    Case vbByte
-        l_bytValue = CByte(l_strText)
-        CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_bytValue
-        RaiseEvent AfterItemChange(l_varOldValue, l_bytValue)
-    Case vbString
-        l_strValue = CStr(l_strText)
-        CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_strValue
-        RaiseEvent AfterItemChange(l_varOldValue, l_strValue)
-    Case Else
-    End Select
+    If m_booMultiple Then
+        Select Case l_vtType
+        Case vbBoolean
+            l_booValue = CBool(l_strText)
+            l_varValue = l_booValue
+        Case vbSingle
+            l_sngValue = CSng(l_strText)
+            l_varValue = l_sngValue
+        Case vbDouble
+            l_dblValue = CDbl(l_strText)
+            l_varValue = l_dblValue
+        Case vbLong
+            l_lngValue = CLng(l_strText)
+            l_varValue = l_lngValue
+        Case vbInteger
+            l_intValue = CInt(l_strText)
+            l_varValue = l_intValue
+        Case vbByte
+            l_bytValue = CByte(l_strText)
+            l_varValue = l_bytValue
+        Case vbString
+            l_strValue = CStr(l_strText)
+            l_varValue = l_strValue
+        Case Else
+        End Select
+        For l_lngObject = LBound(m_objObjects) To UBound(m_objObjects)
+            Set l_objObject = m_objObjects(l_lngObject)
+            Select Case l_vtType
+            Case vbBoolean
+                CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_booValue
+            Case vbSingle
+                CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_sngValue
+            Case vbDouble
+                CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_dblValue
+            Case vbLong
+                CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_lngValue
+            Case vbInteger
+                CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_intValue
+            Case vbByte
+                CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_bytValue
+            Case vbString
+                CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_strValue
+            Case Else
+            End Select
+        Next l_lngObject
+    Else
+        Select Case l_vtType
+        Case vbBoolean
+            l_booValue = CBool(l_strText)
+            CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_booValue
+            RaiseEvent AfterItemChange(l_varOldValue, l_booValue)
+        Case vbSingle
+            l_sngValue = CSng(l_strText)
+            CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_sngValue
+            RaiseEvent AfterItemChange(l_varOldValue, l_sngValue)
+        Case vbDouble
+            l_dblValue = CDbl(l_strText)
+            CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_dblValue
+            RaiseEvent AfterItemChange(l_varOldValue, l_dblValue)
+        Case vbLong
+            l_lngValue = CLng(l_strText)
+            CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_lngValue
+            RaiseEvent AfterItemChange(l_varOldValue, l_lngValue)
+        Case vbInteger
+            l_intValue = CInt(l_strText)
+            CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_intValue
+            RaiseEvent AfterItemChange(l_varOldValue, l_intValue)
+        Case vbByte
+            l_bytValue = CByte(l_strText)
+            CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_bytValue
+            RaiseEvent AfterItemChange(l_varOldValue, l_bytValue)
+        Case vbString
+            l_strValue = CStr(l_strText)
+            CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_strValue
+            RaiseEvent AfterItemChange(l_varOldValue, l_strValue)
+        Case Else
+        End Select
+    End If
     RefreshValues
     RefreshEditBox
 End Sub

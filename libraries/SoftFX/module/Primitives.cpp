@@ -749,30 +749,24 @@ FILTERSIMPLE_SIGNATURE(Gradient_Horizontal)
 FILTERSIMPLE_INIT
     _FOS(FilterSimple_Gradient_Horizontal, 2) , Color1, Color2 _FOE
 FILTERSIMPLE_BEGIN
-    Pixel *colorTable = StaticAllocate<Pixel>(XColorBuffer, abs(Area->Width) + 2);
-    if (!colorTable) return Failure;
 
-    GenerateGradientTableFast(colorTable, Color1, Color2, abs(Area->Width) + 2);
-
-    if (Color1[::Alpha] != Color2[::Alpha]) {
-
-FILTERSIMPLE_ROW
-FILTERSIMPLE_COL
-        pCurrent->V = colorTable[iCX + 1].V;
-FILTERSIMPLE_COLEND
-FILTERSIMPLE_ROWEND
-
-    } else {
-
-FILTERSIMPLE_ROW
-FILTERSIMPLE_COL
-        pCurrent->V = colorTable[iCX + 1].V;
-FILTERSIMPLE_COLEND
-FILTERSIMPLE_ROWEND
-
+    Byte* table = StaticAllocate<Byte>(XBuffer, rCoordinates.Width);
+    for (int x = 0; x < rCoordinates.Width; x++) {
+        table[x] = (((rCoordinates.Width - x - 1) + CropOffsets[0]) * 255) / (Area->Width);
     }
 
-//    LookupDeallocate(colorTable);
+    AlphaLevel *aColor1, *aColor2;
+
+FILTERSIMPLE_ROW
+FILTERSIMPLE_COL
+        aColor1 = AlphaLevelLookup(table[iCX]);
+        aColor2 = AlphaLevelLookup(table[iCX] ^ 0xFF);
+        (*pCurrent)[::Alpha] = AlphaFromLevel2(aColor1, Color1[::Alpha], aColor2, Color2[::Alpha]);
+        (*pCurrent)[::Blue] = AlphaFromLevel2(aColor1, Color1[::Blue], aColor2, Color2[::Blue]);
+        (*pCurrent)[::Green] = AlphaFromLevel2(aColor1, Color1[::Green], aColor2, Color2[::Green]);
+        (*pCurrent)[::Red] = AlphaFromLevel2(aColor1, Color1[::Red], aColor2, Color2[::Red]);
+FILTERSIMPLE_COLEND
+FILTERSIMPLE_ROWEND
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Gradient_Vertical)
@@ -780,45 +774,38 @@ FILTERSIMPLE_SIGNATURE(Gradient_Vertical)
 FILTERSIMPLE_INIT
     _FOS(FilterSimple_Gradient_Vertical, 2) , Color1, Color2 _FOE
 FILTERSIMPLE_BEGIN
-    Pixel *colorTable = StaticAllocate<Pixel>(YColorBuffer, abs(Area->Height) + 2);
-    if (!colorTable) return Failure;
 
-    GenerateGradientTableFast(colorTable, Color1, Color2, abs(Area->Height) + 2);
-
-    if (Color1[::Alpha] != Color2[::Alpha]) {
-
-FILTERSIMPLE_ROW
-FILTERSIMPLE_COL
-        // set the pixel using the row's entry in the lookup table
-        pCurrent->V = colorTable[iCY + 1].V;
-FILTERSIMPLE_COLEND
-FILTERSIMPLE_ROWEND
-
-    } else {
-
-FILTERSIMPLE_ROW
-FILTERSIMPLE_COL
-        pCurrent->V = colorTable[iCY + 1].V;
-FILTERSIMPLE_COLEND
-FILTERSIMPLE_ROWEND
-
+    Byte* table = StaticAllocate<Byte>(XBuffer, rCoordinates.Height);
+    for (int y = 0; y < rCoordinates.Height; y++) {
+        table[y] = (((rCoordinates.Height - y - 1) + CropOffsets[1]) * 255) / (Area->Height);
     }
 
-    //LookupDeallocate(colorTable);
+    AlphaLevel *aColor1, *aColor2;
+    Pixel color;
+
+FILTERSIMPLE_ROW
+        aColor1 = AlphaLevelLookup(table[iCY]);
+        aColor2 = AlphaLevelLookup(table[iCY] ^ 0xFF);
+        color[::Alpha] = AlphaFromLevel2(aColor1, Color1[::Alpha], aColor2, Color2[::Alpha]);
+        color[::Blue] = AlphaFromLevel2(aColor1, Color1[::Blue], aColor2, Color2[::Blue]);
+        color[::Green] = AlphaFromLevel2(aColor1, Color1[::Green], aColor2, Color2[::Green]);
+        color[::Red] = AlphaFromLevel2(aColor1, Color1[::Red], aColor2, Color2[::Red]);
+FILTERSIMPLE_COL
+        pCurrent->V = color.V;
+FILTERSIMPLE_COLEND
+FILTERSIMPLE_ROWEND
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Gradient_4Point)
     , Pixel Color1, Pixel Color2, Pixel Color3, Pixel Color4) {
-FILTERSIMPLE_INIT
-    _FOS(FilterSimple_Gradient_4Point, 4) , Color1, Color2, Color3, Color4 _FOE
-FILTERSIMPLE_BEGIN
-    
+FILTERSIMPLE_INIT    
     // just in case, 'cause it's faster and all
     if ((Color1.V == Color2.V) && (Color3.V == Color4.V) && (Color3.V == Color1.V) && (Color4.V == Color2.V)) return FilterSimple_Fill(Image, Area, Color1);
     if ((Color1.V == Color2.V) && (Color3.V == Color4.V)) return FilterSimple_Gradient_Vertical(Image, Area, Color3, Color1);
     if ((Color1.V == Color3.V) && (Color2.V == Color4.V)) return FilterSimple_Gradient_Horizontal(Image, Area, Color2, Color1);
+    _FOS(FilterSimple_Gradient_4Point, 4) , Color1, Color2, Color3, Color4 _FOE
+FILTERSIMPLE_BEGIN
 
-    AlphaLevel *aSource;
     AlphaLevel *aColor1, *aColor2, *aColor3, *aColor4;
     Byte *xTable, *yTable;
     Pixel color;
@@ -826,29 +813,25 @@ FILTERSIMPLE_BEGIN
     int weights[4];
 
     // allocate two lookup tables
-//    xTable = AllocateArray(Byte, rCoordinates.Width);
-//    yTable = AllocateArray(Byte, rCoordinates.Height);
-//    xTable = LookupAllocate<Byte>(rCoordinates.Width);
-//    yTable = LookupAllocate<Byte>(rCoordinates.Height);
     xTable = StaticAllocate<Byte>(XBuffer, rCoordinates.Width);
     yTable = StaticAllocate<Byte>(YBuffer, rCoordinates.Height);
 
     // fill 'em
     for (int x = 0; x < rCoordinates.Width; x++) {
-        xTable[x] = ((x) * 255) / (rCoordinates.Width - 1);
+        xTable[x] = (((rCoordinates.Width - x - 1) + CropOffsets[0]) * 255) / (Area->Width);
     }
     for (int y = 0; y < rCoordinates.Height; y++) {
-        yTable[y] = ((y) * 255) / (rCoordinates.Height - 1);
+        yTable[y] = (((rCoordinates.Height - y - 1) + CropOffsets[1]) * 255) / (Area->Height);
     }
 
 FILTERSIMPLE_ROW
     // calculate the weight/opposite weight for this row
-    yWeight = yTable[iCY];
-    yWeight2 = yWeight ^ 0xFF;
+    yWeight2 = yTable[iCY];
+    yWeight = yWeight2 ^ 0xFF;
 FILTERSIMPLE_COL
     // calculate the weight/opposite weight for this column
-    xWeight = xTable[iCX];
-    xWeight2 = xWeight ^ 0xFF;
+    xWeight2 = xTable[iCX];
+    xWeight = xWeight2 ^ 0xFF;
     // calculate the four weights for the source colors
     weights[0] = (xWeight * yWeight) / 255;
     weights[1] = (xWeight2 * yWeight) / 255;
@@ -859,98 +842,20 @@ FILTERSIMPLE_COL
     aColor2 = AlphaLevelLookup( weights[1] );
     aColor3 = AlphaLevelLookup( weights[2] );
     aColor4 = AlphaLevelLookup( weights[3] );
-    // mix the alpha
     color[::Alpha] = AlphaFromLevel(aColor1, Color1[::Alpha]) + AlphaFromLevel(aColor2, Color2[::Alpha]) + AlphaFromLevel(aColor3, Color3[::Alpha]) + AlphaFromLevel(aColor4, Color4[::Alpha]);
-    // retrieve the two lookup pointers for the actual drawing
-    aSource = AlphaLevelLookup( color[::Alpha] );
-//    aDest = AlphaLevelLookup( color[::Alpha] ^ 0xFF );
-    // mix the blue, green, and red
-    color[::Blue] = AlphaFromLevel(aSource, (AlphaFromLevel(aColor1, Color1[::Blue]) + AlphaFromLevel(aColor2, Color2[::Blue]) + AlphaFromLevel(aColor3, Color3[::Blue]) + AlphaFromLevel(aColor4, Color4[::Blue])));
-    color[::Green] = AlphaFromLevel(aSource, (AlphaFromLevel(aColor1, Color1[::Green]) + AlphaFromLevel(aColor2, Color2[::Green]) + AlphaFromLevel(aColor3, Color3[::Green]) + AlphaFromLevel(aColor4, Color4[::Green])));
-    color[::Red] = AlphaFromLevel(aSource, (AlphaFromLevel(aColor1, Color1[::Red]) + AlphaFromLevel(aColor2, Color2[::Red]) + AlphaFromLevel(aColor3, Color3[::Red]) + AlphaFromLevel(aColor4, Color4[::Red])));
+    color[::Blue] = (AlphaFromLevel(aColor1, Color1[::Blue]) + AlphaFromLevel(aColor2, Color2[::Blue]) + AlphaFromLevel(aColor3, Color3[::Blue]) + AlphaFromLevel(aColor4, Color4[::Blue]));
+    color[::Green] = (AlphaFromLevel(aColor1, Color1[::Green]) + AlphaFromLevel(aColor2, Color2[::Green]) + AlphaFromLevel(aColor3, Color3[::Green]) + AlphaFromLevel(aColor4, Color4[::Green]));
+    color[::Red] = (AlphaFromLevel(aColor1, Color1[::Red]) + AlphaFromLevel(aColor2, Color2[::Red]) + AlphaFromLevel(aColor3, Color3[::Red]) + AlphaFromLevel(aColor4, Color4[::Red]));
     // finally set the stupid pixel
     pCurrent->V = color.V;
 FILTERSIMPLE_COLEND
 FILTERSIMPLE_ROWEND
-
-    // aren't we glad it's over
-//    DeleteArray(xTable);
-//    DeleteArray(yTable);
-    //LookupDeallocate(xTable);
-    //LookupDeallocate(yTable);
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Gradient_4Edge)
     , ::Image *Edge1, ::Image *Edge2, ::Image *Edge3, ::Image *Edge4) {
 FILTERSIMPLE_INIT
-    _FOS(FilterSimple_Gradient_4Edge, 4) , Edge1, Edge2, Edge3, Edge4 _FOE
 FILTERSIMPLE_BEGIN
-/*
-    ProfileStart("FilterSimple_Gradient_4Edge");
-    
-    AlphaLevel *aColor1, *aColor2, *aColor3, *aColor4;
-    Byte *xTable, *yTable;
-    Pixel Color1, Color2, Color3, Color4;
-    Pixel column, row;
-    Pixel color;
-    int xWeight, yWeight, xWeight2, yWeight2;
-    int weights[4];
-
-    // allocate two lookup tables
-//    xTable = AllocateArray(Byte, rCoordinates.Width);
-//    yTable = AllocateArray(Byte, rCoordinates.Height);
-//    xTable = LookupAllocate<Byte>(rCoordinates.Width);
-//    yTable = LookupAllocate<Byte>(rCoordinates.Height);
-    xTable = StaticAllocate<Byte>(XBuffer, rCoordinates.Width);
-    yTable = StaticAllocate<Byte>(YBuffer, rCoordinates.Height);
-
-    // fill 'em
-    for (int x = 0; x < rCoordinates.Width; x++) {
-        xTable[x] = ((x) * 255) / (rCoordinates.Width - 1);
-    }
-    for (int y = 0; y < rCoordinates.Height; y++) {
-        yTable[y] = ((y) * 255) / (rCoordinates.Height - 1);
-    }
-
-FILTERSIMPLE_ROW
-    // calculate the weight/opposite weight for this row
-    yWeight = yTable[iCY];
-    yWeight2 = yWeight ^ 0xFF;
-FILTERSIMPLE_COL
-    // calculate the weight/opposite weight for this column
-    xWeight = xTable[iCX];
-    xWeight2 = xWeight ^ 0xFF;
-    // calculate the four weights for the source colors
-    weights[0] = yWeight2;
-    weights[1] = xWeight;
-    weights[2] = yWeight;
-    weights[3] = xWeight2;
-    // retrieve the lookup pointers
-    aColor1 = AlphaLevelLookup( weights[0] );
-    aColor2 = AlphaLevelLookup( weights[1] );
-    aColor3 = AlphaLevelLookup( weights[2] );
-    aColor4 = AlphaLevelLookup( weights[3] );
-    Color1 = Edge3->getPixelClip(iCX, 0);
-    Color2 = Edge4->getPixelClip(0, iCY);
-    Color3 = Edge1->getPixelClip(iCX, 0);
-    Color4 = Edge2->getPixelClip(0, iCY);
-    // mix it up yo
-    color = TableBlend(color, aColor3, Color1, aColor1);
-    color = TableBlend(color, aColor4, Color2, aColor2);
-    color = TableBlend(color, aColor1, Color3, aColor3);
-    color = TableBlend(color, aColor2, Color4, aColor4);
-    // finally set the stupid pixel
-    pCurrent->V = color.V;
-FILTERSIMPLE_COLEND
-FILTERSIMPLE_ROWEND
-
-    // aren't we glad it's over
-//    DeleteArray(xTable);
-//    DeleteArray(yTable);
-    //LookupDeallocate(xTable);
-    //LookupDeallocate(yTable);
-    ProfileStop("FilterSimple_Gradient_4Edge");
-*/
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Gradient_Horizontal_SourceAlpha)
@@ -958,38 +863,30 @@ FILTERSIMPLE_SIGNATURE(Gradient_Horizontal_SourceAlpha)
 FILTERSIMPLE_INIT
     _FOS(FilterSimple_Gradient_Horizontal_SourceAlpha, 2) , Color1, Color2 _FOE
 FILTERSIMPLE_BEGIN
-    AlphaLevel *aDest;
-    Pixel *colorTable = StaticAllocate<Pixel>(XColorBuffer, abs(Area->Width) + 2);
-    if (!colorTable) return Failure;
 
-    GenerateGradientTable(colorTable, Color1, Color2, abs(Area->Width) + 2);
-
-    if (Color1[::Alpha] != Color2[::Alpha]) {
-
-FILTERSIMPLE_ROW
-FILTERSIMPLE_COL
-        // initialize the lookup pointer for the destination pixel
-        aDest = AlphaLevelLookup( colorTable[iCX + 1][::Alpha] );
-        // set the pixel using the column's entry in the lookup table
-        BLENDPIXEL_ALPHA_PREMULTIPLIED_OPACITY(pCurrent, pCurrent, &colorTable[iCX + 1], aDest)
-FILTERSIMPLE_COLEND
-FILTERSIMPLE_ROWEND
-
-    } else {
-
-        // we can initialize the lookup pointer before the loop since the alpha does not change between the two colors
-        aDest = AlphaLevelLookup( Color1[::Alpha] ^ 0xFF );
-
-FILTERSIMPLE_ROW
-FILTERSIMPLE_COL
-        // set the pixel using the column's entry in the lookup table
-        BLENDPIXEL_ALPHA_PREMULTIPLIED_OPACITY(pCurrent, pCurrent, &colorTable[iCX + 1], aDest)
-FILTERSIMPLE_COLEND
-FILTERSIMPLE_ROWEND
-
+    Byte* table = StaticAllocate<Byte>(XBuffer, rCoordinates.Width);
+    for (int x = 0; x < rCoordinates.Width; x++) {
+        table[x] = (((rCoordinates.Width - x - 1) + CropOffsets[0]) * 255) / (Area->Width);
     }
 
-    //LookupDeallocate(colorTable);
+    AlphaLevel *aColor1, *aColor2;
+    AlphaLevel *aSource, *aDest;
+    Pixel color;
+    Pixel *pColor = &color;
+
+FILTERSIMPLE_ROW
+FILTERSIMPLE_COL
+        aColor1 = AlphaLevelLookup(table[iCX]);
+        aColor2 = AlphaLevelLookup(table[iCX] ^ 0xFF);
+        (*pCurrent)[::Alpha] = AlphaFromLevel2(aColor1, Color1[::Alpha], aColor2, Color2[::Alpha]);
+        (*pCurrent)[::Blue] = AlphaFromLevel2(aColor1, Color1[::Blue], aColor2, Color2[::Blue]);
+        (*pCurrent)[::Green] = AlphaFromLevel2(aColor1, Color1[::Green], aColor2, Color2[::Green]);
+        (*pCurrent)[::Red] = AlphaFromLevel2(aColor1, Color1[::Red], aColor2, Color2[::Red]);
+        aSource = AlphaLevelLookup(color[::Alpha]);
+        aDest = AlphaLevelLookup(color[::Alpha] ^ 0xFF);
+        BLENDPIXEL_ALPHA_OPACITY(pCurrent, pCurrent, pColor, aDest, aSource);
+FILTERSIMPLE_COLEND
+FILTERSIMPLE_ROWEND
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Gradient_Vertical_SourceAlpha)
@@ -997,50 +894,42 @@ FILTERSIMPLE_SIGNATURE(Gradient_Vertical_SourceAlpha)
 FILTERSIMPLE_INIT
     _FOS(FilterSimple_Gradient_Vertical_SourceAlpha, 2) , Color1, Color2 _FOE
 FILTERSIMPLE_BEGIN
-    AlphaLevel *aDest;
-    Pixel *colorTable = StaticAllocate<Pixel>(YColorBuffer, abs(Area->Height) + 2);
-    if (!colorTable) return Failure;
 
-    GenerateGradientTable(colorTable, Color1, Color2, abs(Area->Height) + 2);
-
-    if (Color1[::Alpha] != Color2[::Alpha]) {
-
-FILTERSIMPLE_ROW
-        // initialize the lookup pointer for the destination pixel
-        aDest = AlphaLevelLookup( colorTable[iCY + 1][::Alpha] );
-FILTERSIMPLE_COL
-        // set the pixel using the row's entry in the lookup table
-        BLENDPIXEL_ALPHA_PREMULTIPLIED_OPACITY(pCurrent, pCurrent, &colorTable[iCY + 1], aDest)
-FILTERSIMPLE_COLEND
-FILTERSIMPLE_ROWEND
-
-    } else {
-
-        // we can initialize the lookup pointer before the loop since the alpha does not change between the two colors
-        aDest = AlphaLevelLookup( Color1[::Alpha] ^ 0xFF );
-
-FILTERSIMPLE_ROW
-FILTERSIMPLE_COL
-        // set the pixel using the row's entry in the lookup table
-        BLENDPIXEL_ALPHA_PREMULTIPLIED_OPACITY(pCurrent, pCurrent, &colorTable[iCY + 1], aDest)
-FILTERSIMPLE_COLEND
-FILTERSIMPLE_ROWEND
-
+    Byte* table = StaticAllocate<Byte>(XBuffer, rCoordinates.Height);
+    for (int y = 0; y < rCoordinates.Height; y++) {
+        table[y] = (((rCoordinates.Height - y - 1) + CropOffsets[1]) * 255) / (Area->Height);
     }
 
-    //LookupDeallocate(colorTable);
+    AlphaLevel *aColor1, *aColor2;
+    AlphaLevel *aSource, *aDest;
+    Pixel color;
+    Pixel *pColor = &color;
+
+FILTERSIMPLE_ROW
+        aColor1 = AlphaLevelLookup(table[iCY]);
+        aColor2 = AlphaLevelLookup(table[iCY] ^ 0xFF);
+        color[::Alpha] = AlphaFromLevel2(aColor1, Color1[::Alpha], aColor2, Color2[::Alpha]);
+        color[::Blue] = AlphaFromLevel2(aColor1, Color1[::Blue], aColor2, Color2[::Blue]);
+        color[::Green] = AlphaFromLevel2(aColor1, Color1[::Green], aColor2, Color2[::Green]);
+        color[::Red] = AlphaFromLevel2(aColor1, Color1[::Red], aColor2, Color2[::Red]);
+        aSource = AlphaLevelLookup(color[::Alpha]);
+        aDest = AlphaLevelLookup(color[::Alpha] ^ 0xFF);
+FILTERSIMPLE_COL
+        BLENDPIXEL_ALPHA_OPACITY(pCurrent, pCurrent, pColor, aDest, aSource);
+FILTERSIMPLE_COLEND
+FILTERSIMPLE_ROWEND
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Gradient_4Point_SourceAlpha)
     , Pixel Color1, Pixel Color2, Pixel Color3, Pixel Color4) {
 FILTERSIMPLE_INIT
-    _FOS(FilterSimple_Gradient_4Point_SourceAlpha, 4) , Color1, Color2, Color3, Color4 _FOE
-FILTERSIMPLE_BEGIN
-    
     // just in case, 'cause it's faster and all
     if ((Color1.V == Color2.V) && (Color3.V == Color4.V) && (Color3.V == Color1.V) && (Color4.V == Color2.V)) return FilterSimple_Fill_SourceAlpha(Image, Area, Color1);
+    if ((Color1[::Alpha] == 255) && (Color2[::Alpha] == 255) && (Color3[::Alpha] == 255) && (Color4[::Alpha] == 255)) return FilterSimple_Gradient_4Point(Image, Area, Color1, Color2, Color3, Color4);
     if ((Color1.V == Color2.V) && (Color3.V == Color4.V)) return FilterSimple_Gradient_Vertical_SourceAlpha(Image, Area, Color3, Color1);
     if ((Color1.V == Color3.V) && (Color2.V == Color4.V)) return FilterSimple_Gradient_Horizontal_SourceAlpha(Image, Area, Color2, Color1);
+    _FOS(FilterSimple_Gradient_4Point_SourceAlpha, 4) , Color1, Color2, Color3, Color4 _FOE
+FILTERSIMPLE_BEGIN
 
     AlphaLevel *aSource, *aDest;
     AlphaLevel *aColor1, *aColor2, *aColor3, *aColor4;
@@ -1050,29 +939,25 @@ FILTERSIMPLE_BEGIN
     int weights[4];
 
     // allocate two lookup tables
-//    xTable = AllocateArray(Byte, rCoordinates.Width);
-//    yTable = AllocateArray(Byte, rCoordinates.Height);
-//    xTable = LookupAllocate<Byte>(rCoordinates.Width);
-//    yTable = LookupAllocate<Byte>(rCoordinates.Height);
     xTable = StaticAllocate<Byte>(XBuffer, rCoordinates.Width);
     yTable = StaticAllocate<Byte>(YBuffer, rCoordinates.Height);
 
     // fill 'em
     for (int x = 0; x < rCoordinates.Width; x++) {
-        xTable[x] = ((x) * 255) / (rCoordinates.Width - 1);
+        xTable[x] = (((rCoordinates.Width - x - 1) + CropOffsets[0]) * 255) / (Area->Width);
     }
     for (int y = 0; y < rCoordinates.Height; y++) {
-        yTable[y] = ((y) * 255) / (rCoordinates.Height - 1);
+        yTable[y] = (((rCoordinates.Height - y - 1) + CropOffsets[1]) * 255) / (Area->Height);
     }
 
 FILTERSIMPLE_ROW
     // calculate the weight/opposite weight for this row
-    yWeight = yTable[iCY];
-    yWeight2 = yWeight ^ 0xFF;
+    yWeight2 = yTable[iCY];
+    yWeight = yWeight2 ^ 0xFF;
 FILTERSIMPLE_COL
     // calculate the weight/opposite weight for this column
-    xWeight = xTable[iCX];
-    xWeight2 = xWeight ^ 0xFF;
+    xWeight2 = xTable[iCX];
+    xWeight = xWeight2 ^ 0xFF;
     // calculate the four weights for the source colors
     weights[0] = (xWeight * yWeight) / 255;
     weights[1] = (xWeight2 * yWeight) / 255;
@@ -1222,7 +1107,7 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
     }
 
     {
-        int overrideresult = Override::EnumOverrides(Override::FilterSimple_ConvexPolygon, 3, Image, InPoly, Color);
+        int overrideresult = Override::EnumOverrides(Override::FilterSimple_ConvexPolygon, 5, Image, InPoly, Color, Renderer, RenderArgument);
 #ifdef OVERRIDES
         if (overrideresult != 0) return overrideresult;
 #endif
@@ -1596,7 +1481,7 @@ Export int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, Text
     }
 
     {
-        int overrideresult = Override::EnumOverrides(Override::FilterSimple_ConvexPolygon_Textured, 5, Dest, Texture, InPoly, Scaler, Renderer);
+        int overrideresult = Override::EnumOverrides(Override::FilterSimple_ConvexPolygon_Textured, 6, Dest, Texture, InPoly, Scaler, Renderer, RenderArgument);
 #ifdef OVERRIDES
         if (overrideresult != 0) return overrideresult;
 #endif

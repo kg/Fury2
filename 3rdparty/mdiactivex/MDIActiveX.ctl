@@ -31,6 +31,7 @@ Option Explicit
 '---------------------'
 'Private definitionen '
 '---------------------'
+Private m_booDead As Boolean
 
 Private m_inMDI As Boolean              'Control run in MDIForm
 Private m_inUserMode As Boolean         'Control run in UserMode
@@ -148,6 +149,7 @@ End Property
 
 Public Property Let Visible(Value As Boolean)
     ' NYI
+    If m_booDead Then Exit Property
     If Value Then
         ShowWindow m_hWndParent, 5
     Else
@@ -156,6 +158,7 @@ Public Property Let Visible(Value As Boolean)
 End Property
 
 Public Sub SetFocus()
+    If m_booDead Then Exit Sub
     ShowWindow ActiveWindow, 0
     ShowWindow m_hWndParent, 3
     ShowWindow m_lngHWnd, 5
@@ -195,6 +198,7 @@ End Property
 'set the windowstate of the activex form (when control in an activex form)
 'or the windowstate of the actual mdichild (when control in the MDIForm)
 Property Let WindowState(State As Long)
+    If m_booDead Then Exit Property
     Dim hWindow As Long
 
     If m_inMDI Then
@@ -409,6 +413,39 @@ Private Sub myForm_Load()
 
 End Sub
 
+Private Sub myForm_QueryUnload(Cancel As Integer, UnloadMode As Integer)
+On Error Resume Next
+    m_booDead = True
+    Dim ctl As Control
+    If m_inUserMode Then
+        If m_inMDI Then
+        Else
+            myForm.Visible = False
+            'delete from the forms collection in the MDIForm
+            For Each ctl In Me.MDIForm.Controls
+                If TypeOf ctl Is MDIActiveX Then
+                    ctl.Forms.Remove CStr(m_hWndParent)
+                    Exit For
+                End If
+            Next
+            SubStop m_hWndForm
+        End If
+    End If
+End Sub
+
+Private Sub myForm_Unload(Cancel As Integer)
+On Error Resume Next
+    Dim ctl As Control
+    If m_inUserMode Then
+        If m_inMDI Then
+        Else
+            SetWindowText m_hWndParent, ""
+            ShowWindow m_hWndParent, 0
+'            DestroyWindow m_hWndParent
+        End If
+    End If
+End Sub
+
 'event MDIForm load
 Private Sub myMDIForm_Load()
     'Original Menuhandle der Applikation sichern
@@ -461,15 +498,6 @@ Private Sub UserControl_Terminate()
             myUnregisterClass
             RemoveProp myMDIForm.hwnd, "pMDIFrame"
         Else
-            'delete from the forms collection in the MDIForm
-            For Each ctl In Me.MDIForm.Controls
-                If TypeOf ctl Is MDIActiveX Then
-                    ctl.Forms.Remove CStr(m_hWndParent)
-                    Exit For
-                End If
-            Next
-            SubStop m_hWndForm
-            SendMessage m_hWndParent, WM_CLOSE, 255, ByVal 0&
         End If
     End If
 End Sub

@@ -13,6 +13,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
 Public Tag As Variant
+Private m_lngDragPosition As Long
 Private m_lstParent As ngListBox
 Private m_strText As String
 Private m_strKey As String
@@ -20,10 +21,18 @@ Private m_lngIndex As Long
 Private m_imgImage As Fury2Image
 Private m_booSelected As Boolean
 Private m_booVisible As Boolean
-Private m_txaTextAlignment As ngListBoxTextAlignment
-Private m_lngLeft As Long
+Private m_txaTextAlignment As ngListItemTextAlignment
 Private m_lngTop As Long
 Private m_fntFont As StdFont
+
+Friend Property Let DragPosition(ByVal NewValue As Long)
+On Error Resume Next
+    m_lngDragPosition = NewValue
+End Property
+
+Friend Property Get DragPosition() As Long
+    DragPosition = m_lngDragPosition
+End Property
 
 Public Property Get Font() As StdFont
 On Error Resume Next
@@ -44,16 +53,6 @@ Friend Property Let Index(ByVal NewValue As Long)
     m_lngIndex = NewValue
 End Property
 
-Friend Sub MouseEnter()
-On Error Resume Next
-    m_booHovering = True
-End Sub
-
-Friend Sub MouseLeave()
-On Error Resume Next
-    m_booHovering = False
-End Sub
-
 Friend Sub Free()
 On Error Resume Next
     Set m_lstParent = Nothing
@@ -71,15 +70,7 @@ End Sub
 
 Public Property Get Rectangle() As Fury2Rect
 On Error Resume Next
-    Set Rectangle = F2Rect(m_lngLeft, m_lngTop, Width, Height, False)
-End Property
-
-Public Property Get Left() As Long
-    Left = m_lngLeft
-End Property
-
-Friend Property Let Left(ByVal NewValue As Long)
-    m_lngLeft = NewValue
+    Set Rectangle = F2Rect(0, m_lngTop - m_lstParent.ScrollY, m_lstParent.ScaleWidth, Height, False)
 End Property
 
 Public Property Get Top() As Long
@@ -90,28 +81,17 @@ Friend Property Let Top(ByVal NewValue As Long)
     m_lngTop = NewValue
 End Property
 
-Public Property Get Width() As Long
-On Error Resume Next
-Dim l_lngImageWidth As Long
-Dim l_lngTextWidth As Long
-    If m_lstParent Is Nothing Then Exit Property
-    l_lngTextWidth = IIf(Len(m_strText) = 0, 0, m_lstParent.TextWidth(Font, m_strText) + (m_lstParent.Metrics(tbmTextMargin) * 2))
-    l_lngImageWidth = IIf(m_imgImage Is Nothing, 0, m_imgImage.Width + (m_lstParent.Metrics(tbmImageMargin) * 2))
-    Select Case m_txaTextAlignment
-    Case ltaLeft, ltaRight
-        Width = l_lngTextWidth + l_lngImageWidth + (m_lstParent.Metrics(tbmButtonMargin) * 2)
-    Case ltaTop, ltaBottom
-        Width = IIf(l_lngTextWidth > l_lngImageWidth, l_lngTextWidth, l_lngImageWidth) + (m_lstParent.Metrics(tbmButtonMargin) * 2)
-    End Select
-End Property
-
 Public Property Get Height() As Long
 On Error Resume Next
 Dim l_lngImageHeight As Long
 Dim l_lngTextHeight As Long
     If m_lstParent Is Nothing Then Exit Property
-    l_lngTextHeight = IIf(Len(m_strText) = 0, 0, m_lstParent.TextHeight(Font, m_strText) + (m_lstParent.Metrics(tbmTextMargin) * 2))
-    l_lngImageHeight = IIf(m_imgImage Is Nothing, 0, m_imgImage.Height + (m_lstParent.Metrics(tbmImageMargin) * 2))
+    If Len(m_strText) > 0 Then
+        l_lngTextHeight = m_lstParent.TextHeight(Font, m_strText) + (m_lstParent.Metrics(tbmTextMargin) * 2)
+    End If
+    If Not (m_imgImage Is Nothing) Then
+        l_lngImageHeight = m_imgImage.Height + (m_lstParent.Metrics(tbmImageMargin) * 2)
+    End If
     Select Case m_txaTextAlignment
     Case ltaLeft, ltaRight
         Height = IIf(l_lngTextHeight > l_lngImageHeight, l_lngTextHeight, l_lngImageHeight) + (m_lstParent.Metrics(tbmButtonMargin) * 2)
@@ -126,6 +106,7 @@ End Property
 
 Public Property Let Text(ByRef NewValue As String)
 On Error Resume Next
+    If NewValue = m_strText Then Exit Property
     m_strText = NewValue
     If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
 End Property
@@ -145,7 +126,6 @@ End Property
 Public Property Set Image(ByVal NewValue As Fury2Image)
 On Error Resume Next
     Set m_imgImage = NewValue
-    Set m_imgGlow = Nothing
     If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
 End Property
 
@@ -155,6 +135,7 @@ End Property
 
 Public Property Let Selected(ByVal NewValue As Boolean)
 On Error Resume Next
+    If NewValue = m_booSelected Then Exit Property
     m_booSelected = NewValue
     If Not (m_lstParent Is Nothing) Then m_lstParent.Redraw
 End Property
@@ -165,15 +146,16 @@ End Property
 
 Public Property Let Visible(ByVal NewValue As Boolean)
 On Error Resume Next
+    If NewValue = m_booVisible Then Exit Property
     m_booVisible = NewValue
     If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
 End Property
 
-Public Property Get TextAlignment() As ngListBoxTextAlignment
+Public Property Get TextAlignment() As ngListItemTextAlignment
     TextAlignment = m_txaTextAlignment
 End Property
 
-Public Property Let TextAlignment(ByVal NewValue As ngListBoxTextAlignment)
+Public Property Let TextAlignment(ByVal NewValue As ngListItemTextAlignment)
 On Error Resume Next
     m_txaTextAlignment = NewValue
     If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
@@ -183,6 +165,5 @@ Private Sub Class_Initialize()
 On Error Resume Next
     m_txaTextAlignment = ltaRight
     m_booVisible = True
-    m_booEnabled = True
 End Sub
 

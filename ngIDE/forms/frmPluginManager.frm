@@ -1,7 +1,6 @@
 VERSION 5.00
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
-Object = "{396F7AC0-A0DD-11D3-93EC-00C0DFE7442A}#1.0#0"; "vbalIml6.ocx"
-Object = "{462EF1F4-16AF-444F-9DEE-F41BEBEC2FD8}#1.1#0"; "vbalODCL6.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.5#0"; "ngUI.ocx"
 Begin VB.Form frmPluginManager 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Plugin Manager"
@@ -42,16 +41,9 @@ Begin VB.Form frmPluginManager
       EndProperty
       Height          =   390
       Left            =   4335
-      TabIndex        =   6
+      TabIndex        =   5
       Top             =   1860
       Width           =   1500
-   End
-   Begin vbalIml6.vbalImageList ilPlugins 
-      Left            =   5295
-      Top             =   1860
-      _ExtentX        =   953
-      _ExtentY        =   953
-      ColourDepth     =   24
    End
    Begin VB.CommandButton cmdConfigureSelected 
       Caption         =   "&Configure..."
@@ -67,7 +59,7 @@ Begin VB.Form frmPluginManager
       EndProperty
       Height          =   390
       Left            =   4335
-      TabIndex        =   5
+      TabIndex        =   4
       Top             =   1440
       Width           =   1500
    End
@@ -85,7 +77,7 @@ Begin VB.Form frmPluginManager
       EndProperty
       Height          =   390
       Left            =   4335
-      TabIndex        =   4
+      TabIndex        =   3
       Top             =   1020
       Width           =   1500
    End
@@ -102,7 +94,7 @@ Begin VB.Form frmPluginManager
       EndProperty
       Height          =   390
       Left            =   4335
-      TabIndex        =   3
+      TabIndex        =   2
       Top             =   540
       Width           =   1500
    End
@@ -120,7 +112,7 @@ Begin VB.Form frmPluginManager
       EndProperty
       Height          =   390
       Left            =   4335
-      TabIndex        =   2
+      TabIndex        =   1
       Top             =   120
       Width           =   1500
    End
@@ -131,35 +123,20 @@ Begin VB.Form frmPluginManager
       TabIndex        =   0
       Top             =   30
       Width           =   4275
-      Begin ODCboLst6.OwnerDrawComboList lstPlugins 
+      Begin ngUI.ngListBox lstPlugins 
          Height          =   2220
          Left            =   75
-         TabIndex        =   1
+         TabIndex        =   21
          Top             =   225
          Width           =   4110
          _ExtentX        =   7250
          _ExtentY        =   3916
-         ExtendedUI      =   -1  'True
-         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-            Name            =   "Tahoma"
-            Size            =   8.25
-            Charset         =   0
-            Weight          =   400
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         ForeColor       =   -2147483630
-         Style           =   4
-         FullRowSelect   =   -1  'True
-         MaxLength       =   0
-         NoDimWhenOutOfFocus=   -1  'True
       End
    End
    Begin vbalDTab6.vbalDTabControl dtSelected 
       Height          =   2220
       Left            =   30
-      TabIndex        =   7
+      TabIndex        =   6
       Top             =   2595
       Width           =   5805
       _ExtentX        =   10239
@@ -193,7 +170,7 @@ Begin VB.Form frmPluginManager
          ScaleHeight     =   69
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   383
-         TabIndex        =   8
+         TabIndex        =   7
          Top             =   360
          Visible         =   0   'False
          Width           =   5745
@@ -202,7 +179,7 @@ Begin VB.Form frmPluginManager
             Enabled         =   0   'False
             Height          =   255
             Left            =   975
-            TabIndex        =   12
+            TabIndex        =   11
             Top             =   765
             Width           =   4635
          End
@@ -211,7 +188,7 @@ Begin VB.Form frmPluginManager
             Enabled         =   0   'False
             Height          =   255
             Left            =   975
-            TabIndex        =   11
+            TabIndex        =   10
             Top             =   510
             Width           =   4635
          End
@@ -220,7 +197,7 @@ Begin VB.Form frmPluginManager
             Enabled         =   0   'False
             Height          =   255
             Left            =   975
-            TabIndex        =   9
+            TabIndex        =   8
             Top             =   0
             Width           =   4635
          End
@@ -229,7 +206,7 @@ Begin VB.Form frmPluginManager
             Enabled         =   0   'False
             Height          =   255
             Left            =   975
-            TabIndex        =   10
+            TabIndex        =   9
             Top             =   255
             Width           =   4635
          End
@@ -241,7 +218,7 @@ Begin VB.Form frmPluginManager
          ScaleHeight     =   122
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   383
-         TabIndex        =   13
+         TabIndex        =   12
          Top             =   360
          Visible         =   0   'False
          Width           =   5745
@@ -252,7 +229,7 @@ Begin VB.Form frmPluginManager
             Locked          =   -1  'True
             MultiLine       =   -1  'True
             ScrollBars      =   2  'Vertical
-            TabIndex        =   21
+            TabIndex        =   20
             Top             =   945
             Width           =   4635
          End
@@ -261,7 +238,7 @@ Begin VB.Form frmPluginManager
             Height          =   300
             Left            =   975
             Locked          =   -1  'True
-            TabIndex        =   19
+            TabIndex        =   18
             Top             =   630
             Width           =   4635
          End
@@ -270,7 +247,7 @@ Begin VB.Form frmPluginManager
             Height          =   300
             Left            =   975
             Locked          =   -1  'True
-            TabIndex        =   17
+            TabIndex        =   16
             Top             =   315
             Width           =   4635
          End
@@ -279,7 +256,7 @@ Begin VB.Form frmPluginManager
             Height          =   300
             Left            =   975
             Locked          =   -1  'True
-            TabIndex        =   15
+            TabIndex        =   14
             Top             =   0
             Width           =   4635
          End
@@ -289,7 +266,7 @@ Begin VB.Form frmPluginManager
             Caption         =   "Description:"
             Height          =   195
             Left            =   60
-            TabIndex        =   20
+            TabIndex        =   19
             Top             =   990
             Width           =   855
          End
@@ -299,7 +276,7 @@ Begin VB.Form frmPluginManager
             Caption         =   "Path:"
             Height          =   195
             Left            =   525
-            TabIndex        =   18
+            TabIndex        =   17
             Top             =   675
             Width           =   390
          End
@@ -309,7 +286,7 @@ Begin VB.Form frmPluginManager
             Caption         =   "Type:"
             Height          =   195
             Left            =   495
-            TabIndex        =   16
+            TabIndex        =   15
             Top             =   360
             Width           =   420
          End
@@ -319,7 +296,7 @@ Begin VB.Form frmPluginManager
             Caption         =   "Name:"
             Height          =   195
             Left            =   450
-            TabIndex        =   14
+            TabIndex        =   13
             Top             =   45
             Width           =   465
          End
@@ -357,7 +334,7 @@ On Error Resume Next
 Dim l_plgPlugin As iPlugin
 Dim l_fpgPlugin As iFileTypePlugin
     'cmdRemoveSelected.Enabled = (lstPlugins.ListCount > 0) And (lstPlugins.ListIndex >= 0)
-    Set l_plgPlugin = g_colPlugins(lstPlugins.ItemData(lstPlugins.ListIndex))
+    Set l_plgPlugin = lstPlugins.FirstSelectedItem.Tag
     If l_plgPlugin Is Nothing Then
     Else
         With l_plgPlugin
@@ -405,25 +382,25 @@ Public Sub RefreshPluginList()
 On Error Resume Next
 Dim l_plgPlugin As iPlugin, l_lngPluginIndex As Long, l_lngIcon As Long
 Dim l_icnIcon As IPictureDisp
-    ilPlugins.Clear
-    ilPlugins.AddFromHandle Me.Icon.Handle, Image_Icon, "DEFAULT"
+Dim l_imgIcon As Fury2Image, l_imgDefault As Fury2Image
+    Set l_imgDefault = F2ImageFromPicture(Me.Icon).Resample(16, 16, ResampleMode_Bilinear)
     With lstPlugins
-        .ImageList = ilPlugins.hIml
-        .Clear
-        l_lngPluginIndex = 1
+        .ListItems.Clear
         For Each l_plgPlugin In g_colPlugins
             With l_plgPlugin
                 Set l_icnIcon = Nothing
-                Set l_icnIcon = .Icon
-                If l_icnIcon Is Nothing Then
-                    l_lngIcon = 0
-                Else
-                    ilPlugins.AddFromHandle l_icnIcon.Handle, Image_Icon, "ICON_" & l_icnIcon.Handle
-                    l_lngIcon = ilPlugins.ItemIndex("ICON_" & l_icnIcon.Handle) - 1
+                Set l_imgIcon = Nothing
+                Set l_imgIcon = .ToolbarIcon
+                If l_imgIcon Is Nothing Then
+                    Set l_icnIcon = .Icon
+                    If l_icnIcon Is Nothing Then
+                        Set l_imgIcon = l_imgDefault
+                    Else
+                        Set l_imgIcon = F2ImageFromPicture(l_icnIcon).Resample(16, 16, ResampleMode_Bilinear)
+                    End If
                 End If
-                lstPlugins.AddItemAndData " " & .PluginName, l_lngIcon, 2, , , l_lngPluginIndex, , 18, eixLeft, eixVCentre
+                Set lstPlugins.ListItems.AddNew(.PluginName, , l_imgIcon).Tag = l_plgPlugin
             End With
-            l_lngPluginIndex = l_lngPluginIndex + 1
         Next l_plgPlugin
     End With
 End Sub
@@ -432,7 +409,7 @@ Private Sub chkShowInOpenDialog_Click()
 On Error Resume Next
 Dim l_plgPlugin As iFileTypePlugin
     If chkShowInOpenDialog.Value = 2 Then Exit Sub
-    Set l_plgPlugin = g_colPlugins(lstPlugins.ItemData(lstPlugins.ListIndex))
+    Set l_plgPlugin = lstPlugins.FirstSelectedItem.Tag
     If l_plgPlugin Is Nothing Then
     Else
         WriteRegSetting "Plugins\Show In Open Dialog\" & TypeName(l_plgPlugin), CLng(chkShowInOpenDialog.Value)
@@ -443,7 +420,7 @@ Private Sub chkShowNewMenu_Click()
 On Error Resume Next
 Dim l_plgPlugin As iFileTypePlugin
     If chkShowNewMenu.Value = 2 Then Exit Sub
-    Set l_plgPlugin = g_colPlugins(lstPlugins.ItemData(lstPlugins.ListIndex))
+    Set l_plgPlugin = lstPlugins.FirstSelectedItem.Tag
     If l_plgPlugin Is Nothing Then
     ElseIf l_plgPlugin.ShowInNewMenu Then
         WriteRegSetting "Plugins\Show In New Menu\" & TypeName(l_plgPlugin), CLng(chkShowNewMenu.Value)
@@ -454,7 +431,7 @@ Private Sub chkShowPluginButton_Click()
 On Error Resume Next
 Dim l_plgPlugin As iPlugin
     If chkShowPluginButton.Value = 2 Then Exit Sub
-    Set l_plgPlugin = g_colPlugins(lstPlugins.ItemData(lstPlugins.ListIndex))
+    Set l_plgPlugin = lstPlugins.FirstSelectedItem.Tag
     If l_plgPlugin Is Nothing Then
     ElseIf l_plgPlugin.ShowInPluginMenu Then
         WriteRegSetting "Plugins\Show In Toolbar\" & TypeName(l_plgPlugin), CLng(chkShowPluginButton.Value)
@@ -465,7 +442,7 @@ Private Sub chkShowPluginMenu_Click()
 On Error Resume Next
 Dim l_plgPlugin As iPlugin
     If chkShowPluginMenu.Value = 2 Then Exit Sub
-    Set l_plgPlugin = g_colPlugins(lstPlugins.ItemData(lstPlugins.ListIndex))
+    Set l_plgPlugin = lstPlugins.FirstSelectedItem.Tag
     If l_plgPlugin Is Nothing Then
     ElseIf l_plgPlugin.ShowInPluginMenu Then
         WriteRegSetting "Plugins\Show In Menu\" & TypeName(l_plgPlugin), CLng(chkShowPluginMenu.Value)
@@ -515,12 +492,9 @@ End Sub
 
 Private Sub Form_QueryUnload(Cancel As Integer, UnloadMode As Integer)
 On Error Resume Next
-    lstPlugins.Clear
-    lstPlugins.ImageList = 0
-    ilPlugins.Destroy
 End Sub
 
-Private Sub lstPlugins_Change()
+Private Sub lstPlugins_SelectionChange()
 On Error Resume Next
     RefreshPluginProperties
 End Sub

@@ -52,6 +52,7 @@ On Error Resume Next
 Dim l_btnNew As ngToolButton
 Dim l_imgImage As Fury2Image
 Dim l_picImage As StdPicture
+Dim l_resFile As ngResource
     Set l_btnNew = New ngToolButton
     With l_btnNew
         .Key = Key
@@ -63,7 +64,10 @@ Dim l_picImage As StdPicture
         End If
         .Tooltip = Tooltip
         If VarType(Image) = vbString Then
-            Set .Image = m_lstParent.ResourceFile(Replace(m_lstParent.ResourcePattern, "*", Image)).LoadImage()
+            Set l_resFile = m_lstParent.ResourceFile(Replace(m_lstParent.ResourcePattern, "*", Image))
+            If Not (l_resFile Is Nothing) Then
+                Set .Image = l_resFile.LoadImage()
+            End If
         ElseIf VarType(Image) = vbObject Then
             If TypeOf Image Is Fury2Image Then
                 Set l_imgImage = Image
@@ -86,7 +90,7 @@ Dim l_strKey As String
         If AtIndex = -1 Then
             m_colCollection.Add Obj
         Else
-            If m_colCollection.Count = 0 Then
+            If (m_colCollection.Count = 0) Or (AtIndex > m_colCollection.Count) Then
                 m_colCollection.Add Obj
             ElseIf AtIndex <= 1 Then
                 m_colCollection.Add Obj, , 1
@@ -100,7 +104,7 @@ Dim l_strKey As String
         If AtIndex = -1 Then
             m_colCollection.Add Obj, l_strKey
         Else
-            If m_colCollection.Count = 0 Then
+            If (m_colCollection.Count = 0) Or (AtIndex > m_colCollection.Count) Then
                 m_colCollection.Add Obj, l_strKey
             ElseIf AtIndex <= 1 Then
                 m_colCollection.Add Obj, l_strKey, 1

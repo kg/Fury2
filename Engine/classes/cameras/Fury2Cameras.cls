@@ -86,14 +86,14 @@ Dim l_objObject As Object
     Add l_objObject, , ToIndex
 End Sub
 
-Public Sub Add(Obj As Fury2Camera, Optional sKey, Optional AtIndex)
+Public Sub Add(ByVal Obj As Fury2Camera, Optional sKey, Optional ByVal AtIndex As Long = -1)
 On Error Resume Next
     If mCol.Count >= c_lngMaxCameras Then Exit Sub
     If IsMissing(sKey) Then
-        If IsMissing(AtIndex) Then
+        If AtIndex = -1 Then
             mCol.Add Obj
         Else
-            If mCol.Count = 0 Then
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, , 1
@@ -104,10 +104,10 @@ On Error Resume Next
             End If
         End If
     Else
-        If IsMissing(AtIndex) Then
+        If AtIndex = -1 Then
             mCol.Add Obj, sKey
         Else
-            If mCol.Count = 0 Then
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj, sKey
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, sKey, 1

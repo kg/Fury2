@@ -19,27 +19,29 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 Implements IVirtualFileSaveable
 
+Private m_booDisableEvents As Boolean
 Private m_lstParent As ngListBox
 Private m_colCollection As Collection
 
 Friend Sub Free()
 On Error Resume Next
-Dim l_liButton As ngListItem
+Dim l_liItem As ngListItem
     Set m_lstParent = Nothing
-    For Each l_liButton In m_colCollection
-        l_liButton.Free
-    Next l_liButton
+    For Each l_liItem In m_colCollection
+        l_liItem.Free
+    Next l_liItem
 End Sub
 
 Friend Sub Reindex()
 On Error Resume Next
-Dim l_liButton As ngListItem
+Dim l_liItem As ngListItem
 Dim l_lngIndex As Long
+    If m_lstParent Is Nothing Then Exit Sub
     l_lngIndex = 1
-    For Each l_liButton In m_colCollection
-        l_liButton.Index = l_lngIndex
+    For Each l_liItem In m_colCollection
+        l_liItem.Index = l_lngIndex
         l_lngIndex = l_lngIndex + 1
-    Next l_liButton
+    Next l_liItem
 End Sub
 
 Friend Sub SetParent(Parent As ngListBox)
@@ -47,7 +49,7 @@ On Error Resume Next
     Set m_lstParent = Parent
 End Sub
 
-Public Function AddNew(Optional ByRef Text As String = "", Optional ByRef Key As String = "", Optional ByRef Image As Variant = Nothing, Optional ByVal TextAlignment As ngListItemTextAlignment = ltaRight, Optional ByVal AtIndex As Long = -1) As ngListItem
+Public Function AddNew(Optional ByRef Text As String = "", Optional ByRef Key As String = "", Optional ByRef Image As Variant = Nothing, Optional ByVal TextAlignment As ngListItemTextAlignment = ltaLeft, Optional ByVal AtIndex As Long = -1) As ngListItem
 On Error Resume Next
 Dim l_liNew As ngListItem
 Dim l_imgImage As Fury2Image
@@ -78,7 +80,7 @@ Dim l_strKey As String
         If AtIndex = -1 Then
             m_colCollection.Add Obj
         Else
-            If m_colCollection.Count = 0 Then
+            If (m_colCollection.Count = 0) Or (AtIndex > m_colCollection.Count) Then
                 m_colCollection.Add Obj
             ElseIf AtIndex <= 1 Then
                 m_colCollection.Add Obj, , 1
@@ -92,7 +94,7 @@ Dim l_strKey As String
         If AtIndex = -1 Then
             m_colCollection.Add Obj, l_strKey
         Else
-            If m_colCollection.Count = 0 Then
+            If (m_colCollection.Count = 0) Or (AtIndex > m_colCollection.Count) Then
                 m_colCollection.Add Obj, l_strKey
             ElseIf AtIndex <= 1 Then
                 m_colCollection.Add Obj, l_strKey, 1
@@ -103,9 +105,12 @@ Dim l_strKey As String
             End If
         End If
     End If
+    If m_lstParent Is Nothing Then Exit Sub
     Obj.SetParent m_lstParent
-    Reindex
-    m_lstParent.Reflow
+    If Not m_booDisableEvents Then
+        Reindex
+        m_lstParent.Reflow
+    End If
     Err.Clear
 End Sub
 
@@ -149,23 +154,29 @@ On Error Resume Next
         IndexOrKey = CLng(IndexOrKey)
     End If
     m_colCollection.Remove IndexOrKey
-    Reindex
-    m_lstParent.Reflow
+    If Not m_booDisableEvents Then
+        Reindex
+        m_lstParent.Reflow
+    End If
 End Sub
 
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)
 On Error Resume Next
-Dim l_liButton As Object
+Dim l_liItem As Object
     If FromIndex < 1 Or FromIndex > m_colCollection.Count Then Exit Sub
     If ToIndex < 1 Or ToIndex > (m_colCollection.Count + 1) Then Exit Sub
     If FromIndex = ToIndex Then Exit Sub
-    Set l_liButton = m_colCollection.Item(FromIndex)
+    Set l_liItem = m_colCollection.Item(FromIndex)
+    m_booDisableEvents = True
     Remove FromIndex
     If (FromIndex < ToIndex) Then
 '        Trust me, this works - even though it doesn't make sense unless you think about it
 '        ToIndex = ToIndex - 1
     End If
-    Add l_liButton, ToIndex
+    Add l_liItem, ToIndex
+    m_booDisableEvents = False
+    Reindex
+    m_lstParent.Reflow
 End Sub
 
 Public Sub Clear()

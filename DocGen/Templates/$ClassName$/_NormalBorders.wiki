@@ -1,0 +1,111 @@
+:MenuItem:{ tip, command, url |
+	with (Presentations) 
+	{[
+		"||{T-}", 
+		Image(federation.LinkMaker.LinkToImage("images/go.gif"), command, url), 
+		"||{+}", 
+		Link(url, command, tip), 
+		"||", 
+		Newline
+	]}
+}
+
+
+RightBorder:{
+aTopic|
+	[
+	request.IsAuthenticated.IfTrue
+	{[
+		"||{C2+}",
+		"Welcome '''", 
+		request.AuthenticatedUserName,
+		"'''",
+		"||",
+		Newline,
+		request.CanLogInAndOut.IfTrue
+		{[	
+			"||",
+			with (Presentations)
+			{
+				Link(federation.LinkMaker.LinkToLogoff(aTopic.Namespace.Name), "Log off", "Log off.")
+			},
+			"||",
+			Newline
+		]}
+		IfFalse{""},
+	]}
+	IfFalse
+	{
+		""
+	},
+	namespace.Description,
+	Newline, "----", Newline, 
+	federation.About,
+	Newline, "----", Newline
+	]
+}
+
+
+LeftBorder:{
+aTopic |
+	[
+	MenuItem("Visit the official forum", "Official Forum", federation.LinkMaker.LinkToTopic("Documentation.OfficialForum")),
+	MenuItem("View the documentation index", "Documentation Index", federation.LinkMaker.LinkToTopic("Documentation.Index")),
+request.AreDifferencesShown.IfTrue
+	{
+		MenuItem("Don't highlight differences between this topic and previous version", "Hide Changes", federation.LinkMaker.LinkToTopic(aTopic.Fullname))
+	}
+	IfFalse
+	{
+		MenuItem("Show differences between this topic and previous version", "Show Changes", federation.LinkMaker.LinkToTopicWithDiffs(aTopic.Fullname))
+	},
+	aTopic.Version.IfNull
+	{
+		MenuItem("Edit this topic", "Edit", federation.LinkMaker.LinkToEditTopic(aTopic.Fullname))
+	}
+	Else
+	{
+		""
+	},
+	MenuItem("Show printable view of this topic", "Print", federation.LinkMaker.LinkToPrintView(aTopic.Fullname)),
+	MenuItem("Show recently changed topics", "Recent Changes", federation.LinkMaker.LinkToRecentChanges(aTopic.Namespace.Name)),
+	MenuItem("Show RSS feeds to keep up-to-date", "Subscriptions", federation.LinkMaker.LinkToSubscriptions(aTopic.Namespace.Name)),
+	MenuItem("Show disconnected topics", "Lost and Found", federation.LinkMaker.LinkToLostAndFound(aTopic.Namespace.Name)),
+	MenuItem("Find references to this topic", "Find References", federation.LinkMaker.LinkToSearchFor(null, aTopic.Name)),
+	MenuItem("Rename this topic", "Rename", federation.LinkMaker.LinkToRename(aTopic.Fullname)),
+	"----", Newline,
+	[
+		"||{T-}",
+		"'''Search'''", 
+		"||",
+		Newline, 
+		"||{+}",
+		Presentations.FormStart(federation.LinkMaker.LinkToSearchNamespace(aTopic.Namespace.Name), "get"),
+		Presentations.HiddenField("namespace", aTopic.Namespace.Name),
+		Presentations.InputField("search", "", 15),
+		Presentations.ImageButton("goButton", federation.LinkMaker.LinkToImage("images/go-dark.gif"), "Search for this text"), 
+		Presentations.FormEnd(),
+		"||",
+		Newline
+	],
+	Newline, "----", Newline,
+	[
+		MenuItem("List all versions of this topic", "Show History", federation.LinkMaker.LinkToVersions(aTopic.Fullname)),
+		aTopic.Version.IfNotNull
+		{[
+			Newline,
+			Presentations.FormStart(federation.LinkMaker.LinkToRestore(aTopic.Fullname), "post"),
+			Presentations.HiddenField("RestoreTopic", aTopic.Fullname),
+			Presentations.SubmitButton("restoreButton", "Restore Version"), 
+			Presentations.FormEnd(),
+		]}
+		Else
+		{
+			""
+		},
+		Newline
+	]
+
+	]
+}
+

@@ -1,0 +1,12 @@
+Documentation.[Documentation] > Documentation.[ClassReference] > Documentation.$ClassName$.[$ClassName$] > Documentation.$ClassName$.[$PropertyName$] Property
+!Summary
+$Summary$
+!Example
+$Example$
+!Type
+$Type$
+!Parameters
+$Parameters$
+----
+Last automated update at: $Date$
+This documentation is for $Version$

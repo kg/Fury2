@@ -73,12 +73,38 @@ Public Enum ngToolbarMetrics
     tbm_max
 End Enum
 
+Public Enum ngToolbarOrientations
+    tboHorizontal
+    tboVertical
+End Enum
+
 Public Enum ngToolButtonOrientations
     borHorizontal
     borVertical
 End Enum
 
-Public Enum ngListBoxTextAlignment
+Public Enum ngListBoxColors
+    lbcBackground
+    lbcText
+    lbcTint
+    lbcBorder
+    lbcGlow
+    lbcHighlight
+    lbcHighlightText
+    lbcHighlightTint
+    lbcHighlightBorder
+    lbcHighlightGlow
+    lbc_max
+End Enum
+
+Public Enum ngListBoxMetrics
+    lbmItemMargin
+    lbmImageMargin
+    lbmTextMargin
+    lbm_max
+End Enum
+
+Public Enum ngListItemTextAlignment
     ltaLeft
     ltaRight
     ltaTop

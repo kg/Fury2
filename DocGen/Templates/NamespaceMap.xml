@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FederationConfiguration xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <DefaultNamespace>Documentation</DefaultNamespace>
+  <About></About>
+  <WikiTalkVersion>1</WikiTalkVersion>
+  <DefaultDirectoryForNewNamespaces>.</DefaultDirectoryForNewNamespaces>
+  <Namespaces>
+    <Namespace Root=".\Users" Secure="false" Namespace="Users" />
+    <Namespace Root=".\Documentation" Secure="false" Namespace="Documentation" />
+    $Namespaces$
+  </Namespaces>
+</FederationConfiguration>

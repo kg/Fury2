@@ -1,0 +1,8 @@
+Documentation.[Documentation] > Documentation.[ClassReference] > Documentation.$EnumName$.[$EnumName$] > Documentation.$EnumName$.[$ValueName$]
+!Summary
+$Summary$
+!Value
+$Value$
+----
+Last automated update at: $Date$
+This documentation is for $Version$

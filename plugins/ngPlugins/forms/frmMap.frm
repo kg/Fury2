@@ -27,17 +27,6 @@ Begin VB.Form frmMap
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   634
    ShowInTaskbar   =   0   'False
-   Begin VB.PictureBox picHarmless 
-      BorderStyle     =   0  'None
-      Height          =   15
-      Left            =   0
-      ScaleHeight     =   1
-      ScaleMode       =   3  'Pixel
-      ScaleWidth      =   1
-      TabIndex        =   25
-      Top             =   0
-      Width           =   15
-   End
    Begin VB.Timer tmrResize 
       Interval        =   1
       Left            =   4155
@@ -56,6 +45,17 @@ Begin VB.Form frmMap
       Top             =   15
       Visible         =   0   'False
       Width           =   1200
+      Begin VB.PictureBox picHarmless 
+         BorderStyle     =   0  'None
+         Height          =   15
+         Left            =   0
+         ScaleHeight     =   1
+         ScaleMode       =   3  'Pixel
+         ScaleWidth      =   1
+         TabIndex        =   25
+         Top             =   0
+         Width           =   15
+      End
    End
    Begin sMDIinActiveX.MDIActiveX extender 
       Left            =   -15
@@ -429,7 +429,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As PointAPI) As Long
 Implements iExtendedForm
 Implements iEditingCommands
 Implements iCustomMenus
@@ -672,7 +672,7 @@ Public Sub AutoScroll(Optional ByVal X As Long = -32767, Optional ByVal Y As Lon
 On Error Resume Next
 Dim l_lngX1 As Long, l_lngY1 As Long, l_lngX2 As Long, l_lngY2 As Long
 Dim l_lngScrollX As Long, l_lngScrollY As Long
-Dim l_ptCursor As POINTAPI
+Dim l_ptCursor As PointAPI
 Dim l_lngCapture As Long
     If Not m_voViewOptions.AutoScroll Then Exit Sub
     hsMap.Tag = "lock"
@@ -2677,7 +2677,7 @@ End Sub
 Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     With m_mapMap.Layers(m_lngSelectedLayer).Sprites
         BeginProcess "Performing Paste..."
         If AtIndex < 1 Then

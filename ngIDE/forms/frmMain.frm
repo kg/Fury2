@@ -3,7 +3,7 @@ Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
 Object = "{4F11FEBA-BBC2-4FB6-A3D3-AA5B5BA087F4}#1.0#0"; "vbalSbar6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#7.4#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#7.7#0"; "ngUI.ocx"
 Begin VB.MDIForm frmMain 
    AutoShowChildren=   0   'False
    BackColor       =   &H8000000C&
@@ -303,8 +303,8 @@ Attribute VB_Exposed = False
 Option Explicit
 Implements iCustomMenuHandler
 Private Const WM_MDIGETACTIVE = &H229
-Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
-Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
+Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
 
 Dim WithEvents m_mdiTabs As cMDITabs
 Attribute m_mdiTabs.VB_VarHelpID = -1
@@ -330,7 +330,7 @@ End Sub
 
 Private Function GetToolbarX(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
+Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0))) * Screen.TwipsPerPixelX
@@ -338,7 +338,7 @@ End Function
 
 Private Function GetToolbarY(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
+Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0))) * Screen.TwipsPerPixelY
@@ -632,13 +632,25 @@ End Sub
 Public Sub InitToolbars()
 On Error Resume Next
 Dim l_fntMarlett As StdFont
-    RefreshMenus
 '    tbrMain.CreateToolbar 16, False, False, True, 16
 '    tbrMain.Wrappable = True
+    RefreshMenus
+    Set tbrMenus.ResourceFile = g_edEditor.Resources
+    tbrMenus.LoadTheme "theme\toolbar\"
+    tbrMenus.ResourcePattern = "toolbar\*.png"
     Set tbrMain.ResourceFile = g_edEditor.Resources
+    tbrMain.LoadTheme "theme\toolbar\"
     tbrMain.ResourcePattern = "toolbar\*.png"
     Set tbrGame.ResourceFile = g_edEditor.Resources
     tbrGame.ResourcePattern = "toolbar\*.png"
+    tbrGame.LoadTheme "theme\toolbar\"
+    Set tbrPlugins.ResourceFile = g_edEditor.Resources
+    tbrPlugins.ResourcePattern = "toolbar\*.png"
+    tbrPlugins.LoadTheme "theme\toolbar\"
+    Set tbrLeft.ResourceFile = g_edEditor.Resources
+    tbrLeft.ResourcePattern = "toolbar\*.png"
+    tbrLeft.LoadTheme "theme\toolbar\"
+    tbrLeft.Orientation = tboVertical
     Set l_fntMarlett = New StdFont
     l_fntMarlett.Name = "Marlett"
     l_fntMarlett.Size = 8
@@ -858,16 +870,16 @@ Dim l_lngWidth As Long, l_lngHeight As Long, l_lngTotalHeight As Long
     l_lngWidth = IIf(tbrMain.Visible, tbrMain.IdealWidth, 0)
     l_lngHeight = IIf(tbrMain.Visible, tbrMain.Height, 0)
     If l_lngHeight > l_lngTotalHeight Then l_lngTotalHeight = l_lngHeight
-    tbrMain.Move 1, tbrMenus.Height + 1, l_lngWidth, tbrGame.IdealHeight
+    tbrMain.Move 0, tbrMenus.Height, l_lngWidth, tbrGame.IdealHeight
     l_lngWidth = IIf(tbrGame.Visible, tbrGame.IdealWidth, 0)
     l_lngHeight = IIf(tbrGame.Visible, tbrGame.Height, 0)
     If l_lngHeight > l_lngTotalHeight Then l_lngTotalHeight = l_lngHeight
-    tbrGame.Move tbrMain.Left + IIf(tbrMain.Visible, tbrMain.Width + 5, 0), tbrMain.Top, l_lngWidth, tbrGame.IdealHeight
+    tbrGame.Move tbrMain.Left + IIf(tbrMain.Visible, tbrMain.Width, 0), tbrMain.Top, l_lngWidth, tbrGame.IdealHeight
     l_lngWidth = IIf(tbrPlugins.Visible, tbrPlugins.IdealWidth, 0)
     l_lngHeight = IIf(tbrPlugins.Visible, tbrPlugins.Height, 0)
     If l_lngHeight > l_lngTotalHeight Then l_lngTotalHeight = l_lngHeight
-    tbrPlugins.Move tbrGame.Left + IIf(tbrGame.Visible, tbrGame.Width + 5, 0), tbrMain.Top, l_lngWidth, tbrPlugins.IdealHeight
-    picToolbarsTop.Height = (tbrMenus.Height + l_lngTotalHeight + 1) * Screen.TwipsPerPixelY
+    tbrPlugins.Move tbrGame.Left + IIf(tbrGame.Visible, tbrGame.Width, 0), tbrMain.Top, l_lngWidth, tbrPlugins.IdealHeight
+    picToolbarsTop.Height = (tbrMenus.Height + l_lngTotalHeight) * Screen.TwipsPerPixelY
 End Sub
 
 Private Sub MDIForm_Resize()
@@ -928,7 +940,7 @@ End Sub
 
 Private Sub sbStatus_DrawItem(ByVal lhDC As Long, ByVal iPanel As Long, ByVal lLeftPixels As Long, ByVal lTopPixels As Long, ByVal lRightPixels As Long, ByVal lBottomPixels As Long)
 On Error Resume Next
-Dim l_rctProgress As RECT
+Dim l_rctProgress As Rect
 Dim l_lngBrush As Long
     If LCase(sbStatus.PanelKey(iPanel)) = "progress" Then
         With l_rctProgress
@@ -1483,9 +1495,9 @@ Dim l_lngLeftSpace As Long, l_lngRightSpace As Long
 Dim l_lngTopSpace As Long, l_lngBottomSpace As Long
 Dim l_lngTextHeight As Long, l_lngTitleHeight As Long
 Dim l_lngWidth As Long, l_lngHeight As Long
-Dim l_rctWindow As Win32.RECT
+Dim l_rctWindow As Win32.Rect
 Dim l_lngWindowWidth As Long, l_lngWindowHeight As Long
-Dim l_rctTextSize As Win32.RECT, l_rctText As Win32.RECT
+Dim l_rctTextSize As Win32.Rect, l_rctText As Win32.Rect
 Dim l_sngCloseTime As Single
 Dim l_strWaitingNotices As String
     GetClientRect Me.hwnd, l_rctWindow

@@ -76,7 +76,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(FilterSimple_Gamma) \
   defItem(FilterSimple_Gamma_Channel) \
   defItem(FilterSimple_Gamma_RGB) \
-  defItem(FilterSimple_Gradient_4Edge) \
   defItem(FilterSimple_Gradient_4Point) \
   defItem(FilterSimple_Gradient_4Point_SourceAlpha) \
   defItem(FilterSimple_Gradient_Horizontal) \
@@ -185,8 +184,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(BlitResample_Subtractive) \
   defItem(BlitResample_Subtractive_Opacity) \
   defItem(BlitResample_) \
+  defItem(BlitMask_SourceAlpha_Opacity) \
   defItem(BlitMask_Merge_Opacity) \
   defItem(BlitMask_) \
+  defItem(RenderTilemapLayer) \
 /* OVERRIDES GO HERE */ \
   defEnd
 

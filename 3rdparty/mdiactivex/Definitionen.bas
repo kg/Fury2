@@ -141,6 +141,8 @@ Public Const WM_SIZE = &H5
 
 Public Const WM_KEYDOWN = &H100
 
+Public Const WM_PAINT = &HF
+
 Public Const WM_CLOSE = &H10
 Public Const WM_COMMAND = &H111
 Public Const WM_SYSCOMMAND = &H112

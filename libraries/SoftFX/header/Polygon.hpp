@@ -371,4 +371,3 @@ template <class T> Polygon<T>* ClipPolygon(Polygon<T> *Poly, Rectangle *ClipRegi
 typedef Polygon<FPoint> SimplePolygon;
 typedef Polygon<TexturedVertex> TexturedPolygon;
 typedef Polygon<GradientVertex> GradientPolygon;
-typedef Polygon<EdgeTexVertex> EdgeTexPolygon;

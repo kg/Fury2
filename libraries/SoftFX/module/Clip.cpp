@@ -265,6 +265,7 @@ Export int ClipRectangle_Rect(Rectangle *Rect, Rectangle *Clip) {
 Export int ClipRectangle_ImageClipRect(Rectangle *Rect, Image *Image) {
     if (!Rect) return Failure;
     if (!Image) return Failure;
+    if (!ClipRectangle_Image(Rect, Image)) return Failure;
 //    if (!enableClipping) return !Rect->empty();
     Rect->normalize();
     if (Image->ClipRectangle.Width == 0) {

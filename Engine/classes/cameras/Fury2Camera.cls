@@ -302,7 +302,8 @@ Dim m_lngEffects As Long
     If mvarY < 0 Then mvarY = 0
     If mvarWidth > Engine.Backbuffer.Width - mvarX Then mvarWidth = Engine.Backbuffer.Width - mvarX
     If mvarHeight > Engine.Backbuffer.Height - mvarY Then mvarHeight = Engine.Backbuffer.Height - mvarY
-    Set Engine.Backbuffer.ClipRectangle = F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False)
+'    Set Engine.Backbuffer.ClipRectangle = F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False)
+    Set Engine.Backbuffer.ClipRectangle = Engine.Backbuffer.Rectangle
     If mvarAlpha = 0 Then
     ElseIf mvarAlpha = 1 Then
         'If (mvarGamma = 0) Or (Engine.SpecialFX = False) Then
@@ -515,13 +516,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                     mvarViewportTrueY = ((m_lngVPY) \ .Tileset.TileHeight) * .Tileset.TileHeight
                 End With
                 With Tilemap
-                    If mvarViewingMap.Layers(Layers).Effect <> BlitMode_Default Then
-                        .Effect = mvarViewingMap.Layers(Layers).Effect
-                    ElseIf mvarViewingMap.Layers(Layers).Tileset.HasAlpha Then
-                        .Effect = 2
-                    Else
-                        .Effect = 1
-                    End If
+                    .Effect = mvarViewingMap.Layers(Layers).Effect
                     .Alpha = CLng(mvarViewingMap.Layers(Layers).Alpha * 255 * l_sngAlpha)
                     .Height = mvarViewingMap.Layers(Layers).Height
                     .Width = mvarViewingMap.Layers(Layers).Width

@@ -138,6 +138,7 @@ Private Enum ObjectItemTypes
     OIT_MapFilename
     OIT_ImageFilename
     OIT_SpriteFilename
+    OIT_WindowsFilename
     OIT_Hex
     OIT_Color
     OIT_Enum
@@ -299,11 +300,11 @@ Dim l_lngItems As Long, l_lngY As Long
         If .SpecialType = OIT_Color Then
             l_lngLeftSpace = m_imgColorBuffer.Width + 2
             .ShowElipsis = True
-        End If
-        If .SpecialType = OIT_Filename Then
+        ElseIf .SpecialType = OIT_Filename Then
             .ShowElipsis = True
-        End If
-        If .SpecialType = OIT_ImageFilename Then
+        ElseIf .SpecialType = OIT_ImageFilename Then
+            .ShowElipsis = True
+        ElseIf .SpecialType = OIT_WindowsFilename Then
             .ShowElipsis = True
         End If
         txtEdit.Visible = False
@@ -638,6 +639,8 @@ Dim l_strSelectedItem As String
                                         m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Filename
                                     Case "imagefilename", "imagepath"
                                         m_oiItems(l_lngItemCount - 1).SpecialType = OIT_ImageFilename
+                                    Case "winfilename"
+                                        m_oiItems(l_lngItemCount - 1).SpecialType = OIT_WindowsFilename
                                     End Select
                                     l_strInfo = Left(l_strInfo, InStr(l_strInfo, "{") - 1)
                                 End If
@@ -685,6 +688,12 @@ Dim l_strValue As String
             l_lngValue = SelectColor(m_oiItems(m_lngSelectedItem).Value)
             txtEdit.Text = Hex(l_lngValue)
             txtEdit_LostFocus
+        ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_WindowsFilename Then
+            l_strValue = SelectFiles(, "Select File...", False)
+            If Trim(l_strValue) <> "" Then
+                txtEdit.Text = l_strValue
+                txtEdit_LostFocus
+            End If
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
@@ -1233,3 +1242,5 @@ On Error Resume Next
     cmdElipsis.Top = m_lngEditY - vsScroll.Value + 1 + picHierarchy.Height
     picItems_Paint
 End Sub
+
+

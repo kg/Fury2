@@ -102,6 +102,10 @@ Private m_imgImageCache As Fury2Image
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
 
+Private Property Get iDocument_Object() As Object
+    Set iDocument_Object = Me
+End Property
+
 Private Sub Form_Activate()
 On Error Resume Next
     picImage.AutoRedraw = True
@@ -130,11 +134,11 @@ On Error Resume Next
     End With
 End Sub
 
-Private Sub iCustomMenus_MenuClick(Key As String)
+Private Sub iCustomMenus_MenuClick(key As String)
 On Error Resume Next
 Dim l_strParameter As String, l_lngParameter As Long
 Dim CommandName As String
-    CommandName = Key
+    CommandName = key
     If InStr(CommandName, "(") Then
         l_strParameter = Trim(Mid(CommandName, InStr(CommandName, "(") + 1))
         If Right(l_strParameter, 1) = ")" Then l_strParameter = Trim(Left(l_strParameter, Len(l_strParameter) - 1))
@@ -166,7 +170,7 @@ On Error Resume Next
     Set m_fpgPlugin = RHS
 End Property
 
-Friend Sub SetImage(Image As Fury2Image)
+Public Sub SetImage(Image As Fury2Image)
 On Error Resume Next
 Dim l_sngXRatio As Single, l_sngYRatio As Single
     Set m_imgImage = Image
@@ -199,7 +203,7 @@ Dim l_sngXRatio As Single, l_sngYRatio As Single
     txtZoom.Text = CStr(CLng(m_sngZoom * 100))
 End Sub
 
-Friend Sub SetFilename(Name As String)
+Public Sub SetFilename(Name As String)
 On Error Resume Next
     m_strFilename = Name
     Me.Caption = IIf(Trim(Name) = "", "Untitled.png", GetTitle(Name))

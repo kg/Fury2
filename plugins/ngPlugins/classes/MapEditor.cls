@@ -94,46 +94,59 @@ On Error Resume Next
     End Select
 End Function
 
-Private Function iFileTypePlugin_CreateNew() As iDocument
+Public Function CreateBlank() As iDocument
+On Error Resume Next
+Dim l_frmNew As New frmMap
+    m_objEditor.LoadSettings "MapEditor\View", l_frmNew.ViewOptions
+    Set CreateBlank = l_frmNew
+    Set CreateBlank.Plugin = Me
+    Err.Clear
+End Function
+
+Private Function iFileTypePlugin_CreateNew(Optional ByVal EnableWizard As Boolean = True) As iDocument
 On Error Resume Next
 Dim l_frmNew As New frmMap
 Dim l_mapMap As Fury2Map
 Dim l_tstTileset As Fury2Tileset
 Dim l_lyrLayer As Fury2MapLayer
-    Load frmNewMap
-    m_objEditor.LoadSettings "MapEditor\DefaultSettings", frmNewMap.Options
-    frmNewMap.RefreshSettings
-    frmNewMap.Show vbModal
-    If Not (frmNewMap.Options Is Nothing) Then
-        m_objEditor.SaveSettings "MapEditor\DefaultSettings", frmNewMap.Options
-        With frmNewMap.Options
-            l_frmNew.SetFilename ""
-            l_frmNew.RefreshAll
-            Set l_mapMap = New Fury2Map
-            l_mapMap.EditMode = True
-            Set l_tstTileset = New Fury2Tileset
-            l_tstTileset.TileWidth = .TileWidth
-            l_tstTileset.TileHeight = .TileHeight
-            l_tstTileset.MatteColor = .TileMatteColor
-            l_tstTileset.Filename = .Tileset
-            l_tstTileset.Load
-            l_mapMap.CreateNew .Name, .Width, .Height, .Layers, l_tstTileset
-            l_mapMap.CollisionType = .CollisionType
-            l_mapMap.Resize .Width, .Height
-            l_mapMap.Init
-            l_mapMap.Load
-            For Each l_lyrLayer In l_mapMap.Layers
-                l_lyrLayer.Effect = .LayerEffect
-            Next l_lyrLayer
-            l_frmNew.SetMap l_mapMap
-            m_objEditor.LoadSettings "MapEditor\View", l_frmNew.ViewOptions
-            l_frmNew.ViewChanged
-            Set iFileTypePlugin_CreateNew = l_frmNew
-            Set iFileTypePlugin_CreateNew.Plugin = Me
-        End With
+    If EnableWizard Then
+        Load frmNewMap
+        m_objEditor.LoadSettings "MapEditor\DefaultSettings", frmNewMap.Options
+        frmNewMap.RefreshSettings
+        frmNewMap.Show vbModal
+        If Not (frmNewMap.Options Is Nothing) Then
+            m_objEditor.SaveSettings "MapEditor\DefaultSettings", frmNewMap.Options
+            With frmNewMap.Options
+                l_frmNew.SetFilename ""
+                l_frmNew.RefreshAll
+                Set l_mapMap = New Fury2Map
+                l_mapMap.EditMode = True
+                Set l_tstTileset = New Fury2Tileset
+                l_tstTileset.TileWidth = .TileWidth
+                l_tstTileset.TileHeight = .TileHeight
+                l_tstTileset.MatteColor = .TileMatteColor
+                l_tstTileset.Filename = .Tileset
+                l_tstTileset.Load
+                l_mapMap.CreateNew .Name, .Width, .Height, .Layers, l_tstTileset
+                l_mapMap.CollisionType = .CollisionType
+                l_mapMap.Resize .Width, .Height
+                For Each l_lyrLayer In l_mapMap.Layers
+                    l_lyrLayer.Effect = .LayerEffect
+                Next l_lyrLayer
+                l_frmNew.SetMap l_mapMap
+                m_objEditor.LoadSettings "MapEditor\View", l_frmNew.ViewOptions
+                l_frmNew.ViewChanged
+                Set iFileTypePlugin_CreateNew = l_frmNew
+                Set iFileTypePlugin_CreateNew.Plugin = Me
+            End With
+        End If
+        Unload frmNewMap
+        Err.Clear
+    Else
+        m_objEditor.LoadSettings "MapEditor\View", l_frmNew.ViewOptions
+        Set iFileTypePlugin_CreateNew = l_frmNew
+        Set iFileTypePlugin_CreateNew.Plugin = Me
     End If
-    Unload frmNewMap
-    Err.Clear
 End Function
 
 Private Property Get iFileTypePlugin_FileTypeName() As String
@@ -152,9 +165,6 @@ Dim l_mapMap As Fury2Map
     Set l_mapMap = New Fury2Map
     l_mapMap.EditMode = True
     If Engine.LoadFromFile(l_mapMap, F2File(Filename)) Then
-        l_mapMap.EditMode = True
-        l_mapMap.Init
-        l_mapMap.Load
         l_frmNew.SetFilename Filename
         l_frmNew.SetMap l_mapMap
         m_objEditor.LoadSettings "MapEditor\View", l_frmNew.ViewOptions

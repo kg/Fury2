@@ -17,7 +17,7 @@ Begin VB.Form frmDirectDraw
    Icon            =   "frmDirectDraw.frx":0000
    KeyPreview      =   -1  'True
    LinkTopic       =   "Form1"
-   MouseIcon       =   "frmDirectDraw.frx":708A
+   MouseIcon       =   "frmDirectDraw.frx":000C
    ScaleHeight     =   240
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   320

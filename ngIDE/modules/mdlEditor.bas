@@ -1,15 +1,26 @@
 Attribute VB_Name = "mdlEditor"
 Option Explicit
 Global g_edEditor As cEditor
+Global g_strVersion As String
 Global g_booMainWindowLoaded As Boolean
 Private m_lngBusyCount As Long
 
 Public Sub Main()
 On Error Resume Next
-    
     InitCommonControls
     F2Init
     Set g_edEditor = New cEditor
+    Err.Clear
+    g_strVersion = Engine.Fury2Globals.GetEngineVersion()
+    If (Err <> 0) Or Len(Trim(g_strVersion)) = "" Then InstallEngine
+    Err.Clear
+    g_strVersion = Engine.Fury2Globals.GetEngineVersion()
+    If (Err <> 0) Or Len(Trim(g_strVersion)) = "" Then
+        MsgBox "Unable to load engine.", vbCritical, "Error"
+        F2Shutdown
+        End
+    End If
+    Err.Clear
     Load frmIcons
     
     DefineMenus

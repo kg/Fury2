@@ -1134,6 +1134,10 @@ library SoftFX {
         int GetTile(int Tileset, int Index);
         [entry("_SetTile@12")]
         void SetTile(int Tileset, int Index, int NewTile);
+        [entry("_AddTile@8")]
+        void AddTile(int Tileset, int NewTile);
+        [entry("_RemoveTile@8")]
+        void RemoveTile(int Tileset, int Index);
         [entry("_DeallocateTileset@4")]
         int DeallocateTileset(int Tileset);
 

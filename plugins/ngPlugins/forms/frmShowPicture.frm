@@ -88,11 +88,26 @@ Private m_booVisible As Boolean
 
 Private m_tbhHandler As iToolbarHandler
 
-'Public Sub CutPicture()
-'On Error Resume Next
-'    CopyPicture
-'    DeletePicture
-'End Sub
+Private Property Get iDocument_Object() As Object
+    Set iDocument_Object = Me
+End Property
+
+Public Sub CopyPicture()
+On Error Resume Next
+Dim l_picPicture As Picture
+    BeginProcess "Performing Copy..."
+    Set l_picPicture = Design.Pictures(m_lngSelectedPicture)
+    CustomClipboard.ClipboardOpen Me.hwnd
+    ClipboardSerialize CustomClipboard, ClipboardFormat(SPD_Picture), l_picPicture
+    CustomClipboard.ClipboardClose
+    EndProcess
+End Sub
+
+Public Sub CutPicture()
+On Error Resume Next
+    CopyPicture
+    DeletePicture
+End Sub
 
 Public Sub DeletePicture()
 On Error Resume Next
@@ -104,6 +119,24 @@ Public Sub RefreshMouse()
 On Error Resume Next
     Editor.SetLocation CStr(m_lngMouseX) & ", " & CStr(m_lngMouseY)
 End Sub
+
+Public Function PastePicture() As Picture
+On Error Resume Next
+Dim l_picPicture As Picture
+    BeginProcess "Performing Paste..."
+    Set l_picPicture = New Picture
+    CustomClipboard.ClipboardOpen Me.hwnd
+    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(SPD_Picture), l_picPicture) Then
+        CustomClipboard.ClipboardClose
+        Design.Pictures.Add l_picPicture
+        m_lngSelectedPicture = Design.Pictures.Count
+        RefreshAll
+        Set PastePicture = l_picPicture
+    Else
+        CustomClipboard.ClipboardClose
+    End If
+    EndProcess
+End Function
 
 Public Function PictureFromPoint(ByVal X As Long, ByVal Y As Long) As Picture
 On Error Resume Next
@@ -370,6 +403,7 @@ Public Sub RefreshAll()
 On Error Resume Next
     Redraw
     RefreshInspector
+    Editor.ActionUpdate
 End Sub
 
 Public Sub RefreshInspector()
@@ -532,7 +566,7 @@ On Error Resume Next
     Select Case ActiveType
     Case "Pictures"
         If m_lngSelectedPicture > 0 Then
-            'NewValue = True
+            NewValue = True
         End If
     Case Else
     End Select
@@ -543,7 +577,7 @@ On Error Resume Next
     Select Case ActiveType
     Case "Pictures"
         If m_lngSelectedPicture > 0 Then
-            'NewValue = True
+            NewValue = True
         End If
     Case Else
     End Select
@@ -563,6 +597,10 @@ End Sub
 Private Sub iEditingCommands_CanPaste(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
+    Case "Pictures"
+        If ClipboardContainsFormat(SPD_Picture) Then
+            NewValue = True
+        End If
     Case Else
     End Select
 End Sub
@@ -593,7 +631,7 @@ Private Sub iEditingCommands_Copy()
 On Error Resume Next
     Select Case ActiveType
     Case "Pictures"
-        'CopyPicture
+        CopyPicture
     Case Else
     End Select
 End Sub
@@ -602,7 +640,7 @@ Private Sub iEditingCommands_Cut()
 On Error Resume Next
     Select Case ActiveType
     Case "Pictures"
-        'CutPicture
+        CutPicture
     Case Else
     End Select
 End Sub
@@ -619,6 +657,8 @@ End Sub
 Private Sub iEditingCommands_Paste()
 On Error Resume Next
     Select Case ActiveType
+    Case "Pictures"
+        PastePicture
     Case Else
     End Select
 End Sub

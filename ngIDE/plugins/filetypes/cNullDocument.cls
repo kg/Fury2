@@ -14,6 +14,10 @@ Attribute VB_Exposed = False
 Option Explicit
 Implements iDocument
 
+Private Property Get iDocument_Object() As Object
+    Set iDocument_Object = Me
+End Property
+
 Private Property Get iDocument_CanSave() As Boolean
 
 End Property

@@ -20,7 +20,7 @@ Begin VB.Form frmAbout
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   Picture         =   "frmAbout.frx":728A
+   Picture         =   "frmAbout.frx":492A
    ScaleHeight     =   300
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   400
@@ -33,7 +33,7 @@ Begin VB.Form frmAbout
    Begin VB.Image imgOverlay 
       Height          =   2250
       Left            =   2985
-      Picture         =   "frmAbout.frx":19399
+      Picture         =   "frmAbout.frx":16A39
       Stretch         =   -1  'True
       Top             =   15
       Visible         =   0   'False
@@ -56,7 +56,7 @@ Private m_fntFont As Fury2Font
 Private m_lngYOffset As Long
 Private m_lngYOffset2 As Long
 Private m_lngCreditsY As Long
-Private m_filShadow As Fury2ConvolutionFilter
+'Private m_filShadow As Fury2ConvolutionFilter
 Private m_strText() As String
 
 Private Sub Form_Load()
@@ -77,9 +77,10 @@ Dim l_vfFile As VirtualFile
     Set m_fntFont = New Fury2Font
     m_fntFont.ImportTTF Me.Font
     m_fntFont.Color = F2White
-    m_fntFont.ShadowColor = 0
+    m_fntFont.AddOutline F2Black, 1
+    m_fntFont.ShadowColor = F2RGB(0, 0, 0, 192)
     m_fntFont.Merge = True
-    Set m_filShadow = F2GaussianBlurFilter(2)
+'    Set m_filShadow = F2GaussianBlurFilter(2)
     m_strText = Split(StrConv(LoadResData("CREDITS", "TEXT"), vbUnicode), vbCrLf)
     Screen.MousePointer = 0
 End Sub
@@ -105,8 +106,8 @@ Dim l_lngLines As Long, l_lngY As Long
     Next l_lngLines
     m_imgText.Blit F2Rect(0, 0, 360, 20, False), , m_imgTopFade, , BlitMode_Erase
     m_imgText.Blit F2Rect(0, 155 - 20, 360, 20, False), , m_imgBottomFade, , BlitMode_Erase
-    m_filShadow.Filter m_imgBuffer, m_imgText, F2Rect(20, 127, 360, 155, False), m_imgText.Rectangle, RenderMode_Shadow, F2Black
-    m_imgBuffer.Blit F2Rect(20, 125, 360, 155, False), , m_imgText, 1, BlitMode_SourceAlpha, F2White
+'    m_filShadow.Filter m_imgBuffer, m_imgText, F2Rect(20, 127, 360, 155, False), m_imgText.Rectangle, RenderMode_Shadow, F2Black
+    m_imgBuffer.Blit F2Rect(20, 125, 360, 155, False), , m_imgText, 1, BlitMode_SourceAlpha
     CopyImageToDC Me.hdc, m_imgBuffer.Rectangle, m_imgBuffer
     Me.Refresh
 End Sub

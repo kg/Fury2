@@ -30,7 +30,7 @@ On Error Resume Next
     End Select
 End Function
 
-Private Function iFileTypePlugin_CreateNew() As iDocument
+Private Function iFileTypePlugin_CreateNew(Optional ByVal EnableWizard As Boolean = True) As iDocument
 On Error Resume Next
 End Function
 

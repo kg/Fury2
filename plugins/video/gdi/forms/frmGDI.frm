@@ -19,7 +19,7 @@ Begin VB.Form frmGDI
    KeyPreview      =   -1  'True
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
-   MouseIcon       =   "frmGDI.frx":708A
+   MouseIcon       =   "frmGDI.frx":000C
    ScaleHeight     =   240
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   320

@@ -305,9 +305,12 @@ public:
         this->Initialized = true;
     }
 
-    inline Image* tile(int i);
-    inline Image* tile(int i, short* mapTable);
-    inline void setTile(int i, Image* newTile);
+    Image* tile(int i);
+    Image* tile(int i, short* mapTable);
+    void setTile(int i, Image* newTile);
+    Image* createTile();
+    void addTile(Image* newTile);
+    void removeTile(int i);
 
     ~Tileset() {
         if (!this->Initialized) return;

@@ -256,6 +256,10 @@ Dim m_tlbFilesystem As TypeLibInfo
 Dim m_splSplitMain As New cSplitter
 Dim m_splSplitMembers As New cSplitter
 
+Private Property Get iDocument_Object() As Object
+    Set iDocument_Object = Me
+End Property
+
 Public Sub InitToolbars()
     tbrObjects.Wrappable = True
     tbrObjects.CreateToolbar ilObjects.IconSizeX, False, False, True, ilObjects.IconSizeX

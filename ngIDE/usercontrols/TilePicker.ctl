@@ -5,6 +5,7 @@ Begin VB.UserControl TilePicker
    ClientLeft      =   0
    ClientTop       =   0
    ClientWidth     =   1785
+   KeyPreview      =   -1  'True
    ScaleHeight     =   275
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   119
@@ -317,9 +318,23 @@ Private Sub UserControl_Initialize()
     m_intSelectedTiles(0) = -1
 End Sub
 
+Private Sub UserControl_KeyDown(KeyCode As Integer, Shift As Integer)
+On Error Resume Next
+    Select Case KeyCode
+    Case vbKeyLeft
+        hsScrollbar.Value = hsScrollbar.Value - m_tstTileset.TileWidth
+    Case vbKeyUp
+        vsScrollbar.Value = vsScrollbar.Value - m_tstTileset.TileHeight
+    Case vbKeyDown
+        vsScrollbar.Value = vsScrollbar.Value + m_tstTileset.TileHeight
+    Case vbKeyRight
+        hsScrollbar.Value = hsScrollbar.Value + m_tstTileset.TileWidth
+    Case Else
+    End Select
+End Sub
+
 Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
-Dim l_intSelectedTiles() As Integer
     If Button = 1 Then
         m_lngStartX = X
         m_lngStartY = Y
@@ -382,11 +397,6 @@ Private Sub UserControl_Paint()
 End Sub
 
 Private Sub UserControl_Resize()
-'    If m_imgBuffer Is Nothing Then
-'    Else
-'        m_imgBuffer.Resize UserControl.ScaleWidth - vsScrollbar.Width, UserControl.ScaleHeight - hsScrollbar.Width
-'        Redraw
-'    End If
     vsScrollbar.Move UserControl.ScaleWidth - (GetScrollbarSize(vsScrollbar) + 1), 0, GetScrollbarSize(vsScrollbar) + 1, UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0)
     hsScrollbar.Move 0, UserControl.ScaleHeight - (GetScrollbarSize(hsScrollbar) + 1), UserControl.ScaleWidth - IIf(vsScrollbar.Visible, vsScrollbar.Width, 0), GetScrollbarSize(hsScrollbar) + 1
     vsScrollbar.Visible = vsScrollbar.Enabled

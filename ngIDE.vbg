@@ -2,3 +2,4 @@ VBGROUP 5.0
 StartupProject=ngIDE\ngIDE.vbp
 Project=plugins\ngPlugins\ngPlugins.vbp
 Project=libraries\ngCommon\ngCommon.vbp
+Project=plugins\tk\tk.vbp

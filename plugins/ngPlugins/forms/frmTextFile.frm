@@ -64,6 +64,10 @@ Implements iDocument
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
 
+Private Property Get iDocument_Object() As Object
+    Set iDocument_Object = Me
+End Property
+
 Private Property Get iDocument_Plugin() As ngInterfaces.iPlugin
 On Error Resume Next
     Set iDocument_Plugin = m_fpgPlugin
@@ -126,6 +130,3 @@ On Error Resume Next
     iDocument_Modified = True
 End Property
 
-Private Sub txtText_Change()
-
-End Sub

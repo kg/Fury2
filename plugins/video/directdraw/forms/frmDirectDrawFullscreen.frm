@@ -20,7 +20,7 @@ Begin VB.Form frmDirectDrawFullscreen
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   MouseIcon       =   "frmDirectDrawFullscreen.frx":708A
+   MouseIcon       =   "frmDirectDrawFullscreen.frx":000C
    ScaleHeight     =   240
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   320

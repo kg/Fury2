@@ -50,12 +50,15 @@ Option Explicit
 Implements iExtendedForm
 Implements iDocument
 Implements iEditingCommands
-Implements iCustomAccelerators
 Implements iCustomMenus
 
 Private m_colAccelerators As New Fury2Collection
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
+
+Private Property Get iDocument_Object() As Object
+    Set iDocument_Object = Me
+End Property
 
 Public Sub Show_FindDialog()
 On Error Resume Next
@@ -91,26 +94,6 @@ End Function
 
 Private Sub Form_Load()
 On Error Resume Next
-End Sub
-
-Private Sub iCustomAccelerators_DefineAccelerators(Manager As ngInterfaces.cAcceleratorManager)
-On Error Resume Next
-Dim l_aclAccelerator As cAccelerator
-    For Each l_aclAccelerator In m_colAccelerators
-        Manager.RemoveAccelerator l_aclAccelerator
-    Next l_aclAccelerator
-    m_colAccelerators.Clear
-    m_colAccelerators.Add Manager.AddAccelerator(vbKeyF, Me, "Show_FindDialog", True)
-    m_colAccelerators.Add Manager.AddAccelerator(vbKeyH, Me, "Show_ReplaceDialog", True)
-End Sub
-
-Private Sub iCustomAccelerators_UndefineAccelerators(Manager As ngInterfaces.cAcceleratorManager)
-On Error Resume Next
-Dim l_aclAccelerator As cAccelerator
-    For Each l_aclAccelerator In m_colAccelerators
-        Manager.RemoveAccelerator l_aclAccelerator
-    Next l_aclAccelerator
-    m_colAccelerators.Clear
 End Sub
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
@@ -267,14 +250,15 @@ Private Sub iEditingCommands_Delete()
 On Error Resume Next
 Dim l_rngSel As New Range
     With scScript.Control
-        If .SelLength > 0 Then
-            .SelText = ""
-        Else
-            Set l_rngSel = .GetSel(False)
-            l_rngSel.EndColNo = l_rngSel.StartColNo + 1
-            .SetSel l_rngSel, False
-            .SelText = ""
-        End If
+        .ExecuteCmd cmCmdDelete
+'        If .SelLength > 0 Then
+'            .SelText = ""
+'        Else
+'            Set l_rngSel = .GetSel(False)
+'            l_rngSel.EndColNo = l_rngSel.StartColNo + 1
+'            .SetSel l_rngSel, False
+'            .SelText = ""
+'        End If
     End With
 End Sub
 

@@ -866,7 +866,7 @@ End Property
 Public Property Let Tile(ByVal X As Long, ByVal Y As Long, ByVal Value As Integer)
 On Error Resume Next
     If (X < 0) Or (Y < 0) Or (X > UBound(mvarTiles, 1)) Or (Y > UBound(mvarTiles, 2)) Then Exit Property
-    mvarTiles(X, Y) = ClipValue(Value, -1, mvarTileset.TileCount - 1)
+    mvarTiles(X, Y) = Value ' durf ClipValue(Value, -1, mvarTileset.TileCount - 1)
     m_Engine.Cameras.Dirty
 End Property
 

@@ -33,3 +33,6 @@ End Property
 
 Public Property Set Plugin(NewPlugin As iPlugin)
 End Property
+
+Public Property Get Object() As Object
+End Property

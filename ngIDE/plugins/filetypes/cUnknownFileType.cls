@@ -15,7 +15,7 @@ Option Explicit
 Implements iPlugin
 Implements iFileTypePlugin
 Private m_objEditor As Object
-Private Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hWnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+Private Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
 
 Private Sub iPlugin_ShowConfiguration()
 End Sub
@@ -28,7 +28,7 @@ On Error Resume Next
     iFileTypePlugin_CanOpenFile = True
 End Function
 
-Private Function iFileTypePlugin_CreateNew() As iDocument
+Private Function iFileTypePlugin_CreateNew(Optional ByVal EnableWizard As Boolean = True) As iDocument
 On Error Resume Next
 End Function
 
@@ -51,7 +51,7 @@ End Function
 
 Private Function iFileTypePlugin_LoadFromFilename(Filename As String) As iDocument
 On Error Resume Next
-    Call ShellExecute(frmMain.hWnd, "Open", Filename, "", "", vbNormalFocus)
+    Call ShellExecute(frmMain.hwnd, "Open", Filename, "", "", vbNormalFocus)
     Set iFileTypePlugin_LoadFromFilename = New cNullDocument
 End Function
 

@@ -38,7 +38,7 @@ On Error Resume Next
     End If
 End Function
 
-Private Function iFileTypePlugin_CreateNew() As iDocument
+Private Function iFileTypePlugin_CreateNew(Optional ByVal EnableWizard As Boolean = True) As iDocument
 On Error Resume Next
 Dim l_frmNew As New frmImage
     l_frmNew.SetFilename ""

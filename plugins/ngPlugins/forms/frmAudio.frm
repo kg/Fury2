@@ -134,6 +134,10 @@ Private m_hndHandle As SoundHandle
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
 
+Private Property Get iDocument_Object() As Object
+    Set iDocument_Object = Me
+End Property
+
 Public Sub RefreshInfo()
 On Error Resume Next
 Dim l_sngLength As Single

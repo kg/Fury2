@@ -25,7 +25,7 @@ End Property
 Public Property Get FileTypeName() As String
 End Property
 
-Public Function CreateNew() As iDocument
+Public Function CreateNew(Optional ByVal EnableWizard As Boolean = True) As iDocument
 End Function
 
 Public Function LoadFromFilename(ByRef Filename As String) As iDocument

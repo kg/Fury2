@@ -407,6 +407,10 @@ Private m_booVisible As Boolean
 Private m_tbhHandler As iToolbarHandler
 Private m_lngCurrentView As SpriteEditorViews
 
+Private Property Get iDocument_Object() As Object
+    Set iDocument_Object = Me
+End Property
+
 Public Sub CutSprite()
 On Error Resume Next
     CopySprite

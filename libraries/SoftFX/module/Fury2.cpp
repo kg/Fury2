@@ -44,7 +44,7 @@ Export void SetShadowImage(Image* NewImage) {
     return;
 }
 
-inline Image* Tileset::tile(int i) {
+Image* Tileset::tile(int i) {
   if (this->Initialized) {
     if ((i >= 0) && (i < (int)this->Tiles->size())) {
       return (this->Tiles->at(i));
@@ -54,7 +54,7 @@ inline Image* Tileset::tile(int i) {
 }
 
 
-inline Image* Tileset::tile(int i, short* mapTable) {
+Image* Tileset::tile(int i, short* mapTable) {
   if (!mapTable) return this->tile(i);
   if (this->Initialized) {
     if ((i >= 0) && (i < (int)this->Tiles->size())) {
@@ -67,7 +67,7 @@ inline Image* Tileset::tile(int i, short* mapTable) {
   return Null;
 }
 
-inline void Tileset::setTile(int i, Image *newTile) {
+void Tileset::setTile(int i, Image *newTile) {
     if (this->Initialized) {
       if (this->Tiles->at(i)) {
         if (this->Tiles->at(i)->Tags[3] == (DoubleWord)this) {
@@ -77,6 +77,40 @@ inline void Tileset::setTile(int i, Image *newTile) {
       }
       this->Tiles->at(i) = newTile;
     }
+}
+
+Image* Tileset::createTile() {
+  Image* iTile = Null;
+  iTile = new Image(TileWidth, TileHeight);
+  if (iTile) {
+    iTile->Tags[3] = (DoubleWord)this;
+  }
+  return iTile;
+}
+
+void Tileset::addTile(Image *newTile) {
+  if (this->Initialized) {
+    Image* theTile = this->createTile();
+    theTile->copy(newTile);
+    this->Tiles->push_back(theTile);
+    this->TileCount = this->Tiles->size();
+  }
+}
+
+void Tileset::removeTile(int i) {
+  if (this->Initialized) {
+    if (this->Tiles->at(i)) {
+      if (this->Tiles->at(i)->Tags[3] == (DoubleWord)this) {
+        delete (this->Tiles->at(i));
+        this->Tiles->at(i) = Null;
+      } 
+    }
+    std::vector<Image*>::iterator iter = this->Tiles->begin();
+    for (int it = 0; it < i; i++) {
+      iter++;
+    }
+    this->Tiles->erase(iter);
+  }
 }
 
 Export Tileset* AllocateTileset(Image *pTileset, int TileWidth, int TileHeight) {
@@ -93,6 +127,14 @@ Export void SetTile(Tileset *pTileset, int Index, Image* NewImage) {
 
 Export Image* GetTile(Tileset *pTileset, int Index) {
     return pTileset->tile(Index);
+}
+
+Export void AddTile(Tileset *pTileset, Image* Tile) {
+    pTileset->addTile(Tile);
+}
+
+Export void RemoveTile(Tileset *pTileset, int Index) {
+    pTileset->removeTile(Index);
 }
 
 Export int DeallocateTileset(Tileset *pTileset) {

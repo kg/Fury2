@@ -15,3 +15,4 @@ basRadix64 = 44, 46, 971, 650, C
 iCustomAccelerators = 66, 69, 993, 673, C
 Fury2Collection = 69, 69, 988, 673, C
 GCommonDialog = 0, 0, 0, 0, C
+iUndoEntry = 0, 0, 0, 0, C

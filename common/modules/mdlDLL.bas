@@ -45,8 +45,8 @@ On Error Resume Next
     Screen.MousePointer = 11
     If InStr(DllServerPath, ":") Then
     Else
-        If Left(DllServerPath, 1) = "\" Then
-            DllServerPath = Left(CurDir, 2) + DllServerPath
+        If left(DllServerPath, 1) = "\" Then
+            DllServerPath = left(CurDir, 2) + DllServerPath
         Else
             DllServerPath = CurDir + IIf(Right(CurDir, 1) = "\", "", "\") + DllServerPath
         End If

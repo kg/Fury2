@@ -29,12 +29,12 @@ Begin VB.Form frmFont
    Begin VB.PictureBox picCharacters 
       BorderStyle     =   0  'None
       Height          =   5580
-      Left            =   1440
+      Left            =   2145
       ScaleHeight     =   372
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   393
       TabIndex        =   3
-      Top             =   660
+      Top             =   840
       Visible         =   0   'False
       Width           =   5895
    End
@@ -57,9 +57,9 @@ Begin VB.Form frmFont
    End
    Begin ngPlugins.ObjectInspector insOverview 
       Height          =   3045
-      Left            =   870
+      Left            =   855
       TabIndex        =   0
-      Top             =   855
+      Top             =   990
       Visible         =   0   'False
       Width           =   1710
       _ExtentX        =   3016
@@ -69,7 +69,7 @@ Begin VB.Form frmFont
       Height          =   7290
       Left            =   1725
       TabIndex        =   1
-      Top             =   555
+      Top             =   540
       Width           =   9150
       _ExtentX        =   16140
       _ExtentY        =   12859
@@ -133,6 +133,10 @@ Private m_booVisible As Boolean
 
 Private m_tbhHandler As iToolbarHandler
 Private m_lngCurrentView As FontEditorViews
+
+Private Property Get iDocument_Object() As Object
+    Set iDocument_Object = Me
+End Property
 
 Public Sub Recolor()
 On Error Resume Next

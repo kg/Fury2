@@ -114,9 +114,9 @@ Begin VB.Form frmConfigure
       Begin VB.ComboBox cmbBitDepth 
          Enabled         =   0   'False
          Height          =   315
-         ItemData        =   "frmConfigure.frx":708A
+         ItemData        =   "frmConfigure.frx":000C
          Left            =   3255
-         List            =   "frmConfigure.frx":709A
+         List            =   "frmConfigure.frx":001C
          Style           =   2  'Dropdown List
          TabIndex        =   8
          Top             =   735
@@ -125,9 +125,9 @@ Begin VB.Form frmConfigure
       Begin VB.ComboBox cmbDisplayMode 
          Enabled         =   0   'False
          Height          =   315
-         ItemData        =   "frmConfigure.frx":70BF
+         ItemData        =   "frmConfigure.frx":0041
          Left            =   1470
-         List            =   "frmConfigure.frx":70DE
+         List            =   "frmConfigure.frx":0060
          Style           =   2  'Dropdown List
          TabIndex        =   6
          Top             =   735
@@ -151,9 +151,9 @@ Begin VB.Form frmConfigure
       End
       Begin VB.ComboBox cmbGraphicsPlugin 
          Height          =   315
-         ItemData        =   "frmConfigure.frx":712F
+         ItemData        =   "frmConfigure.frx":00B1
          Left            =   1470
-         List            =   "frmConfigure.frx":7136
+         List            =   "frmConfigure.frx":00B8
          Style           =   2  'Dropdown List
          TabIndex        =   2
          Top             =   255

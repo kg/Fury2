@@ -75,28 +75,34 @@ On Error Resume Next
     End Select
 End Function
 
-Private Function iFileTypePlugin_CreateNew() As iDocument
+Private Function iFileTypePlugin_CreateNew(Optional ByVal EnableWizard As Boolean = True) As iDocument
 On Error Resume Next
 Dim l_frmNew As New frmFont
 Dim l_fntFont As Fury2Font
-    Load frmImportTTF
-    m_objEditor.LoadSettings "FontEditor\DefaultSettings", frmImportTTF.Options
-    frmImportTTF.RefreshSettings
-    frmImportTTF.Show vbModal
-    If Not (frmImportTTF.Options Is Nothing) Then
-        m_objEditor.SaveSettings "FontEditor\DefaultSettings", frmImportTTF.Options
-        With frmImportTTF.Options
-            l_frmNew.SetFilename ""
-            l_frmNew.RefreshAll
-            Set l_fntFont = New Fury2Font
-            l_fntFont.ImportTTF Engine.Engine.TTFont(.Name, .Size, .Bold, .Italic)
-            l_frmNew.SetFont l_fntFont
-            Set iFileTypePlugin_CreateNew = l_frmNew
-            Set iFileTypePlugin_CreateNew.Plugin = Me
-        End With
+    If EnableWizard Then
+        Load frmImportTTF
+        m_objEditor.LoadSettings "FontEditor\DefaultSettings", frmImportTTF.Options
+        frmImportTTF.RefreshSettings
+        frmImportTTF.Show vbModal
+        If Not (frmImportTTF.Options Is Nothing) Then
+            m_objEditor.SaveSettings "FontEditor\DefaultSettings", frmImportTTF.Options
+            With frmImportTTF.Options
+                l_frmNew.SetFilename ""
+                l_frmNew.RefreshAll
+                Set l_fntFont = New Fury2Font
+                l_fntFont.ImportTTF Engine.Engine.TTFont(.Name, .Size, .Bold, .Italic)
+                l_frmNew.SetFont l_fntFont
+                Set iFileTypePlugin_CreateNew = l_frmNew
+                Set iFileTypePlugin_CreateNew.Plugin = Me
+            End With
+        End If
+        Unload frmImportTTF
+        Err.Clear
+    Else
+        Set iFileTypePlugin_CreateNew = l_frmNew
+        Set iFileTypePlugin_CreateNew.Plugin = Me
+        Err.Clear
     End If
-    Unload frmImportTTF
-    Err.Clear
 End Function
 
 Private Property Get iFileTypePlugin_FileTypeName() As String

@@ -43,8 +43,6 @@ Public Handle As Long
 Attribute Handle.VB_VarDescription = "*Internal value"
 Private m_mapMap As Fury2Map
 Private m_booOwnsTileset As Boolean
-Private m_strOldFilename As String
-Private mvarTSFilename As String
 Private mvarTilesPerRow As Long
 Private mvarTilesPerColumn As Long
 Private mvarTileCount As Long
@@ -56,10 +54,12 @@ Private mvarMatteColor As Long
 Private mvarHasAlpha As Boolean
 Private mvarTransparentTile As Long
 
-Friend Sub SetData(Width As Long, Height As Long)
+Friend Sub SetData(Width As Long, Height As Long, Filename As String, Buffer As Fury2Image)
 On Error Resume Next
     mvarTileWidth = Width
     mvarTileHeight = Height
+    mvarFilename = Filename
+    Set mvarBuffer = Buffer
     RecalculateSizes
 End Sub
 
@@ -116,34 +116,26 @@ On Error Resume Next
     Set mvarBuffer = New Fury2Image
 End Sub
 
-Public Function TSFilename() As String
-    TSFilename = mvarTSFilename
-End Function
-
-Friend Sub SetTSFilename(St As String)
-    mvarTSFilename = St
-End Sub
-
 Public Function Duplicate() As Fury2Tileset
+Attribute Duplicate.VB_Description = "Creates a copy of the tileset."
 On Error Resume Next
 Dim m_tstNew As Fury2Tileset
     Set m_tstNew = New Fury2Tileset
     With m_tstNew
-        .Filename = mvarFilename
-        .SetTSFilename mvarTSFilename
         .HasAlpha = mvarHasAlpha
         Err.Clear
         .MatteColor = Buffer.MatteColor
         If Err.Number <> 0 Then .MatteColor = mvarMatteColor
         .TransparentTile = mvarTransparentTile
-        .SetData mvarTileWidth, mvarTileHeight
-        .Load
+        .SetData mvarTileWidth, mvarTileHeight, mvarFilename, mvarBuffer
+        .AllocateTileset
     End With
     Set Duplicate = m_tstNew
     Set m_tstNew = Nothing
 End Function
 
 Public Sub RecalculateSizes()
+Attribute RecalculateSizes.VB_Description = "Updates the TilesPerRow, TilesPerColumn, and TileCount values."
 On Error Resume Next
     If mvarBuffer Is Nothing Then Exit Sub
     With mvarBuffer
@@ -175,14 +167,10 @@ End Sub
 
 Public Property Let TransparentTile(ByVal vData As Long)
 Attribute TransparentTile.VB_Description = "The tile index in this tileset which will be invisible."
-'used when assigning a value to the property, on the left side of an assignment.
-'Syntax: X.TransparentTile = 5
     mvarTransparentTile = vData
 End Property
 
 Public Property Get TransparentTile() As Long
-'used when retrieving value of a property, on the right side of an assignment.
-'Syntax: Debug.Print X.TransparentTile
     TransparentTile = mvarTransparentTile
 End Property
 
@@ -256,6 +244,7 @@ Public Property Get Buffer() As Fury2Image
 End Property
 
 Sub Reload()
+Attribute Reload.VB_Description = "Reloads the tileset."
 On Error Resume Next
     mvarMatteColor = mvarBuffer.MatteColor
     m_Engine.ReLoadPicture mvarFilename
@@ -310,43 +299,27 @@ Static m_lngRecurse As Long
     End If
     m_Engine.ContextLevelAdd "Tileset.Load(""" + CStr(mvarFilename) + """)"
     m_lngRecurse = m_lngRecurse + 1
-    If LCase(Right(Trim(mvarFilename), 4)) = "f2ts" Then
-        Set m_glbGlobals = New Fury2Globals
-        m_strOldFilename = mvarFilename
-        Err.Clear
-'        If FileLen(mvarFilename) = 0 Then CriticalError "Fury2Tileset.Load", "Sanity Check", "Tileset """ + mvarFilename + """ does not exist or is empty.": m_lngRecurse = m_lngRecurse - 1: Exit Sub
-        m_Engine.LoadFromFile Me, m_Engine.Filesystem.File(mvarFilename)
-        Set m_glbGlobals = Nothing
+    If m_booEditor Then
+        Set mvarBuffer = m_Engine.LoadImage(mvarFilename)
     Else
-        If m_booEditor Then
-            Set mvarBuffer = m_Engine.LoadImage(mvarFilename)
-        Else
-            l_lngIndex = m_Engine.iLoadImage(mvarFilename)
-            If l_lngIndex = m_Engine.Images.Count Then
-                l_booNew = True
-            End If
-            Set mvarBuffer = m_Engine.Images(l_lngIndex)
+        l_lngIndex = m_Engine.iLoadImage(mvarFilename)
+        If l_lngIndex = m_Engine.Images.Count Then
+            l_booNew = True
         End If
-        If mvarBuffer Is Nothing Then CriticalError "Fury2Tileset.Load", "Sanity Check", "Tileset """ + mvarFilename + """ could not be loaded.": m_lngRecurse = m_lngRecurse - 1: Exit Sub
-        If mvarBuffer.Width <= 0 Or mvarBuffer.Height <= 0 Then CriticalError "Fury2Tileset.Load", "Sanity Check", "Tileset """ + mvarFilename + """ could not be loaded.": m_lngRecurse = m_lngRecurse - 1: Exit Sub
-        mvarBuffer.MatteColor = mvarMatteColor
-        With mvarBuffer
-            RecalculateSizes
-            If DetectMask Then
-                .MatteColor = .GetPixel(.Width - 1, .Height - 1)
-                mvarMatteColor = .MatteColor
-            Else
-            End If
-        End With
-        AllocateTileset
-        If m_strOldFilename <> "" Then
-            mvarTSFilename = mvarFilename
-            mvarFilename = m_strOldFilename
-            m_strOldFilename = ""
-        Else
-            mvarTSFilename = mvarFilename
-        End If
+        Set mvarBuffer = m_Engine.Images(l_lngIndex)
     End If
+    If mvarBuffer Is Nothing Then CriticalError "Fury2Tileset.Load", "Sanity Check", "Tileset """ + mvarFilename + """ could not be loaded.": m_lngRecurse = m_lngRecurse - 1: Exit Sub
+    If mvarBuffer.Width <= 0 Or mvarBuffer.Height <= 0 Then CriticalError "Fury2Tileset.Load", "Sanity Check", "Tileset """ + mvarFilename + """ could not be loaded.": m_lngRecurse = m_lngRecurse - 1: Exit Sub
+    mvarBuffer.MatteColor = mvarMatteColor
+    With mvarBuffer
+        RecalculateSizes
+        If DetectMask Then
+            .MatteColor = .GetPixel(.Width - 1, .Height - 1)
+            mvarMatteColor = .MatteColor
+        Else
+        End If
+    End With
+    AllocateTileset
     m_lngRecurse = m_lngRecurse - 1
     m_Engine.ContextLevelRemove
 End Sub
@@ -355,15 +328,11 @@ Public Property Let Filename(ByVal vData As String)
 Attribute Filename.VB_Description = "The name of the image the tileset's tiles will be loaded from.{ImagePath}"
 On Error Resume Next
     mvarFilename = vData
-    If LCase(Right(Trim(mvarFilename), 4)) = "f2ts" Then
-    Else
-        mvarTSFilename = vData
-    End If
-    If (Buffer Is Nothing) Then
-    Else
-        Set Buffer = Nothing
-    End If
+    Set Buffer = Nothing
     If (Handle = 0) Then
+        Load
+        RecalculateSizes
+        AllocateTileset True
     Else
         DeallocateTileset
         Load
@@ -469,4 +438,22 @@ On Error Resume Next
     End If
     Load
     Err.Clear
+End Sub
+
+Public Function Add(ByVal NewTile As Fury2Image) As Long
+Attribute Add.VB_Description = "Adds a copy of an image to the tileset as a tile."
+On Error Resume Next
+    If Handle <> 0 Then
+        SoftFX.AddTile Handle, NewTile.Handle
+        mvarTileCount = mvarTileCount + 1
+        Add = mvarTileCount
+    End If
+End Function
+
+Public Sub Remove(ByVal Index As Long)
+Attribute Remove.VB_Description = "Removes a tile from the tileset."
+On Error Resume Next
+    If Handle <> 0 Then
+        SoftFX.RemoveTile Handle, Index
+    End If
 End Sub

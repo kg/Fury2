@@ -264,7 +264,7 @@ Begin VB.Form frmMap
                ShowCloseButton =   0   'False
                MoveableTabs    =   0   'False
             End
-            Begin ngPlugins.Script scObjectScript 
+            Begin ngPlugins.Script scObject 
                Height          =   975
                Left            =   0
                TabIndex        =   23
@@ -560,6 +560,10 @@ Private m_brsBrush As Fury2Brush
 Private m_intLayerCache() As Integer
 
 Private m_tbhHandler As iToolbarHandler
+
+Private Property Get iDocument_Object() As Object
+    Set iDocument_Object = Me
+End Property
 
 Public Function AreaFromPoint(ByVal X As Long, ByVal Y As Long) As Fury2Area
 On Error Resume Next
@@ -1088,7 +1092,7 @@ On Error Resume Next
         ActiveType = "Lights"
     Case "ellayers"
         ActiveType = "Layers"
-    Case "picBrush"
+    Case "picbrush", "tpktiles"
         ActiveType = "Brush"
     Case "picoverlay", "picmapview", "picmapviewport", "hsmap", "vsmap", "dtviews"
         Select Case m_lngCurrentView
@@ -2210,7 +2214,7 @@ On Error Resume Next
     Case "Script"
         NewValue = scMap.Control.CanCopy
     Case "Object Script"
-        NewValue = scObjectScript.Control.CanCopy
+        NewValue = scObject.Control.CanCopy
     Case "Layers"
         NewValue = (elLayers.SelectedItem > 0)
     Case "Areas"
@@ -2235,7 +2239,7 @@ On Error Resume Next
     Case "Script"
         NewValue = scMap.Control.CanCut
     Case "Object Script"
-        NewValue = scObjectScript.Control.CanCut
+        NewValue = scObject.Control.CanCut
     Case "Layers"
         NewValue = (elLayers.SelectedItem > 0) And (m_mapMap.Layers.Count > 1)
     Case "Areas"
@@ -2260,7 +2264,7 @@ On Error Resume Next
     Case "Script"
         NewValue = scMap.Control.CanCut
     Case "Object Script"
-        NewValue = scObjectScript.Control.CanCut
+        NewValue = scObject.Control.CanCut
     Case "Layers"
         NewValue = (elLayers.SelectedItem > 0) And (m_mapMap.Layers.Count > 1)
     Case "Areas"
@@ -2289,7 +2293,7 @@ On Error Resume Next
     Case "Script"
         NewValue = scMap.Control.CanPaste
     Case "Object Script"
-        NewValue = scObjectScript.Control.CanPaste
+        NewValue = scObject.Control.CanPaste
     Case "Layers"
         NewValue = ClipboardContainsFormat(CF_MapLayer)
     Case "Areas"
@@ -2302,7 +2306,7 @@ On Error Resume Next
         NewValue = ClipboardContainsFormat(CF_MapObstructions)
     Case "Lights"
         NewValue = ClipboardContainsFormat(CF_LightSource)
-    Case "Lights"
+    Case "Brush"
         NewValue = ClipboardContainsFormat(CF_Brush)
     Case Else
     End Select
@@ -2313,6 +2317,8 @@ On Error Resume Next
     Select Case ActiveType
     Case "Script"
         NewValue = scMap.Control.CanRedo
+    Case "Object Script"
+        NewValue = scObject.Control.CanRedo
     Case Else
         NewValue = (m_colRedo.Count > 0)
     End Select
@@ -2341,6 +2347,8 @@ On Error Resume Next
     Select Case ActiveType
     Case "Script"
         NewValue = scMap.Control.CanUndo
+    Case "Object Script"
+        NewValue = scObject.Control.CanUndo
     Case Else
         NewValue = (m_colUndo.Count > 0)
     End Select
@@ -2352,7 +2360,7 @@ On Error Resume Next
     Case "Script"
         scMap.Control.Copy
     Case "Object Script"
-        scObjectScript.Control.Copy
+        scObject.Control.Copy
     Case "Layers"
         CopyLayer
     Case "Areas"
@@ -2377,7 +2385,7 @@ On Error Resume Next
     Case "Script"
         scMap.Control.Cut
     Case "Object Script"
-        scObjectScript.Control.Cut
+        scObject.Control.Cut
     Case "Layers"
         CutLayer
     Case "Areas"
@@ -2417,6 +2425,10 @@ On Error Resume Next
         DeleteLight
     Case "Brush"
         DeleteBrush
+    Case "Script"
+        scMap.Control.ExecuteCmd cmCmdDelete
+    Case "Object Script"
+        scObject.Control.ExecuteCmd cmCmdDelete
     Case Else
     End Select
 End Sub
@@ -2427,7 +2439,7 @@ On Error Resume Next
     Case "Script"
         scMap.Control.Paste
     Case "Object Script"
-        scObjectScript.Control.Paste
+        scObject.Control.Paste
     Case "Layers"
         PasteLayer
     Case "Areas"
@@ -2448,7 +2460,14 @@ End Sub
 
 Private Sub iEditingCommands_Redo()
 On Error Resume Next
-    Me.Redo
+    Select Case ActiveType
+    Case "Script"
+        scMap.Control.Redo
+    Case "Object Script"
+        scObject.Control.Redo
+    Case Else
+        Me.Redo
+    End Select
     Redraw
 End Sub
 
@@ -2474,7 +2493,14 @@ End Sub
 
 Private Sub iEditingCommands_Undo()
 On Error Resume Next
-    Me.Undo
+    Select Case ActiveType
+    Case "Script"
+        scMap.Control.Undo
+    Case "Object Script"
+        scObject.Control.Undo
+    Case Else
+        Me.Undo
+    End Select
     Redraw
 End Sub
 
@@ -2612,11 +2638,11 @@ Dim l_sndObject As Fury2SoundObject
                 End If
             End With
         Case "script"
-            Set m_ctlCurrentInspector = scObjectScript
+            Set m_ctlCurrentInspector = scObject
             If m_lngCurrentView = View_Sprites Then
-                scObjectScript.Text = m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).ScriptSource
+                scObject.Text = m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).ScriptSource
             ElseIf m_lngCurrentView = View_Areas Then
-                scObjectScript.Text = m_mapMap.Areas(m_lngSelectedArea).ScriptSource
+                scObject.Text = m_mapMap.Areas(m_lngSelectedArea).ScriptSource
             End If
         Case "light"
             Set m_ctlCurrentInspector = insInspect
@@ -2861,6 +2887,8 @@ End Sub
 
 Private Sub picBrush_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
+    picBrush.SetFocus
+    Editor.ActionUpdate
     Select Case QuickShowMenu(picBrush, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
         Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
         frmIcons.ilContextMenus)
@@ -3794,15 +3822,18 @@ Dim l_lngPlanes As Long
     Next l_lngPlanes
 End Sub
 
-Friend Sub SetFilename(Name As String)
+Public Sub SetFilename(Name As String)
 On Error Resume Next
     m_strFilename = Name
     Me.Caption = IIf(Trim(Name) = "", "Untitled.f2map", GetTitle(Name))
 End Sub
 
-Friend Sub SetMap(Map As Fury2Map)
+Public Sub SetMap(Map As Fury2Map)
 On Error Resume Next
     Set m_mapMap = Map
+    m_mapMap.EditMode = True
+    m_mapMap.Init
+    m_mapMap.Load
 End Sub
 
 Public Sub SetZoom(ByVal Percentage As Long)
@@ -3838,12 +3869,12 @@ On Error Resume Next
     picOverlay.Refresh
 End Sub
 
-Private Sub scObjectScript_Change()
+Private Sub scObject_Change()
 On Error Resume Next
     If m_lngCurrentView = View_Sprites Then
-        m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).ScriptSource = scObjectScript.Text
+        m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).ScriptSource = scObject.Text
     ElseIf m_lngCurrentView = View_Areas Then
-        m_mapMap.Areas(m_lngSelectedArea).ScriptSource = scObjectScript.Text
+        m_mapMap.Areas(m_lngSelectedArea).ScriptSource = scObject.Text
     End If
 End Sub
 

@@ -15,7 +15,6 @@ On Error Resume Next
     DefineMenus
     
     Load frmMain
-    LoadFormPosition frmMain
     frmMain.Show
     
     SetBusyState True
@@ -43,7 +42,6 @@ Dim l_lngForms As Long
     frmMain.CloseAllChildren
     ShutdownPlugins
     ShutdownFilesystem
-    SaveFormPosition frmMain
     frmMain.Hide
     Unload frmMain
     CleanupMenus

@@ -88,7 +88,7 @@ End Sub
 Public Sub SaveFormPosition(Form As Object)
 On Error Resume Next
 Dim l_strKey As String
-    If ReadRegSetting("Options\Remember Window Positions", 0) = 0 Then Exit Sub
+    If ReadRegSetting("Options\Remember Window Positions", 1) = 0 Then Exit Sub
     If Form Is Nothing Then Exit Sub
     If TypeOf Form Is MDIForm Then
     Else
@@ -113,7 +113,7 @@ End Sub
 Public Sub LoadFormPosition(Form As Object)
 On Error Resume Next
 Dim l_strKey As String
-    If ReadRegSetting("Options\Remember Window Positions", 0) = 0 Then Exit Sub
+    If ReadRegSetting("Options\Remember Window Positions", 1) = 0 Then Exit Sub
     If Form Is Nothing Then Exit Sub
     If TypeOf Form Is MDIForm Then
     Else

@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
-Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#1.0#0"; "vbalTreeView6.ocx"
+Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#1.2#0"; "vbalTreeView6.ocx"
 Object = "{E142732F-A852-11D4-B06C-00500427A693}#2.0#0"; "vbalTbar6.ocx"
 Object = "{76A5D4ED-0D69-44AD-835D-B1429EF8E25C}#1.1#0"; "vbalDkTb6.ocx"
 Object = "{4F11FEBA-BBC2-4FB6-A3D3-AA5B5BA087F4}#1.0#0"; "vbalSbar6.ocx"
@@ -292,6 +292,10 @@ Public Sub DocumentClosed(Document As cChildManager)
 On Error Resume Next
 Dim l_mgrForm As cChildManager
 Dim l_booHidden As Boolean
+Dim l_frmForm As Form
+    Set l_frmForm = Document.Form
+    Document.Detach
+    Unload l_frmForm
     m_colChildWindows.Remove m_colChildWindows.Find(Document)
     m_colChildWindows(m_colChildWindows.Count).Activate
     HideInactiveWindows

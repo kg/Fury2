@@ -36,7 +36,7 @@ Name "Fury²"
   UninstallIcon "icon.ico"
 
   ;General
-  OutFile "fury2_beta_02.exe"
+  OutFile "fury2_beta_03.exe"
 
   ;Folder-selection page
   InstallDir "$PROGRAMFILES\${NAME}"
@@ -98,6 +98,8 @@ Section "-Engine"
 SectionEnd
 
 Section "Editor"                
+  DeleteRegKey HKLM "Software\Squared Interactive\ngIDE"
+
     SetOutPath "$SYSDIR"
     File "J:\development\binary\sys\editor\tlbinf32.dll"
     RegDLL "$SYSDIR\tlbinf32.dll"
@@ -191,6 +193,7 @@ Section "Uninstall"
   RmDir /r "$SMPROGRAMS\${NAME}"
 
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}"
+  DeleteRegKey HKLM "Software\Squared Interactive\ngIDE"
 
 	UnRegDLL "$INSTDIR\sys\uikit.dll"
 	UnRegDLL "$INSTDIR\sys\graphics.dll"

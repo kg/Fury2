@@ -314,6 +314,8 @@ FILTERSIMPLE_END
 FILTERSIMPLE_SIGNATURE(Grid_SourceAlpha)
     , Pixel Value, int Width, int Height, int XOffset, int YOffset) {
 FILTERSIMPLE_INIT
+    if (Width < 1) return Failure;
+    if (Height < 1) return Failure;
     _FOS(FilterSimple_Grid_SourceAlpha, 5) , Value, Width, Height, XOffset, YOffset _FOE
 FILTERSIMPLE_BEGIN
 AlphaLevel *aSource, *aDest;

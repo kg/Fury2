@@ -19,12 +19,6 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 '
 Option Explicit
 
-Public Enum F2SEHandleTypes
-    SoundType_Sample = 0
-    SoundType_Stream = 1
-    SoundType_Music = 2
-End Enum
-
 Private m_Engine As SoundEngine
 Private m_strName As String
 Private m_HandleType As F2SEHandleTypes

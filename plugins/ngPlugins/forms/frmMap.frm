@@ -3202,6 +3202,8 @@ Dim l_lngButtons As Long
         DefineToolbar tbrTools, frmIcons.ilMapBig, Buttons("-", ButtonString("Zoom In", , "Zoom In", "ZOOM IN"), ButtonString("Zoom Out", , "Zoom Out", "ZOOM OUT"))
         DefineToolbar tbrTools, frmIcons.ilMapBig, Buttons("-", ButtonString("Show Grid", , "Show Grid", "SHOW GRID", , CTBCheck), ButtonString("Snap To Grid", , "Snap To Grid", "SNAP TO GRID", , CTBCheck))
         tbrTools.ButtonChecked(m_lngCurrentTool(m_lngCurrentView)) = True
+        tbrTools.ButtonChecked("Show Grid") = m_voViewOptions.ShowGrid
+        tbrTools.ButtonChecked("Snap To Grid") = m_voViewOptions.SnapToGrid
     End If
 End Sub
 

@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{E142732F-A852-11D4-B06C-00500427A693}#1.16#0"; "vbalTbar6.ocx"
+Object = "{E142732F-A852-11D4-B06C-00500427A693}#2.0#0"; "vbalTbar6.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
 Begin VB.UserControl EntityList 
    AutoRedraw      =   -1  'True
@@ -34,8 +34,8 @@ Begin VB.UserControl EntityList
    End
    Begin vbalTBar6.cToolbar tbrOptions 
       Height          =   360
-      Left            =   0
-      Top             =   0
+      Left            =   180
+      Top             =   135
       Visible         =   0   'False
       Width           =   2400
       _ExtentX        =   4233
@@ -61,7 +61,7 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
-Private Declare Function ClientToScreen Lib "user32" (ByVal hWnd As Long, lpPoint As POINTAPI) As Long
+Private Declare Function ClientToScreen Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
 Private m_objBoundObject As Object
 Private m_booEnableDragging As Boolean
 Private m_booEnableMultiSelect As Boolean
@@ -71,7 +71,7 @@ Private m_booDragging As Boolean, m_objDragItem As Object, m_booDragged As Boole
 Private m_lngSelectedItem As Long
 Private m_booSelection() As Boolean
 Private m_lngItemHeight As Long, m_lngItemTextHeight As Long
-Public Event ItemDragStart(ByVal Item As Long, ByRef Cancel As Boolean)
+Public Event ItemDragStart(ByVal Item As Long, ByRef cancel As Boolean)
 Public Event ItemDrag(ByVal Item As Long, ByVal NewIndex As Long)
 Public Event ItemDragComplete(ByVal Item As Long)
 Public Event ItemSelected(ByVal Item As Long)
@@ -246,7 +246,7 @@ Dim l_ptPoint As POINTAPI
             UserControl_Paint
         End If
     ElseIf Button = 2 Then
-        ClientToScreen UserControl.hWnd, l_ptPoint
+        ClientToScreen UserControl.hwnd, l_ptPoint
         l_lngMenuX = l_ptPoint.X + X
         If (l_lngIndex >= 1) And (l_lngIndex <= BoundObject.Count) Then
             l_lngMenuY = l_ptPoint.Y + (((l_lngIndex - 1) * m_lngItemHeight) - vsScrollbar.Value) + m_lngItemHeight
@@ -255,7 +255,7 @@ Dim l_ptPoint As POINTAPI
         End If
         l_ptPoint.X = 0
         l_ptPoint.Y = 0
-        ClientToScreen UserControl.Parent.hWnd, l_ptPoint
+        ClientToScreen UserControl.Parent.hwnd, l_ptPoint
         l_lngMenuX = l_lngMenuX - l_ptPoint.X
         l_lngMenuY = l_lngMenuY - l_ptPoint.Y
         If (l_lngIndex >= 1) And (l_lngIndex <= BoundObject.Count) Then

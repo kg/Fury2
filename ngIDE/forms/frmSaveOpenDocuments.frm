@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{396F7AC0-A0DD-11D3-93EC-00C0DFE7442A}#1.0#0"; "vbalIml6.ocx"
-Object = "{462EF1F4-16AF-444F-9DEE-F41BEBEC2FD8}#1.1#0"; "vbalodcl6.ocx"
+Object = "{462EF1F4-16AF-444F-9DEE-F41BEBEC2FD8}#1.1#0"; "vbalODCL6.ocx"
 Begin VB.Form frmSaveOpenDocuments 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Confirm Close"
@@ -140,21 +140,27 @@ Dim l_icnIcon As IPictureDisp
         l_lngDocumentIndex = 1
         For Each l_docDocument In frmMain.Documents
             With l_docDocument
-                Set l_icnIcon = Nothing
-                Set l_plgPlugin = Nothing
-                Set l_plgPlugin = .Document.Plugin
-                Set l_icnIcon = l_plgPlugin.Icon
-                If l_icnIcon Is Nothing Then
-                    l_lngIcon = 0
-                Else
-                    ilDocumentIcons.AddFromHandle l_icnIcon.Handle, Image_Icon, "ICON_" & l_icnIcon.Handle
-                    l_lngIcon = ilDocumentIcons.ItemIndex("ICON_" & l_icnIcon.Handle) - 1
+                If .Document.CanSave Then
+                    Set l_icnIcon = Nothing
+                    Set l_plgPlugin = Nothing
+                    Set l_plgPlugin = .Document.Plugin
+                    Set l_icnIcon = l_plgPlugin.Icon
+                    If l_icnIcon Is Nothing Then
+                        l_lngIcon = 0
+                    Else
+                        ilDocumentIcons.AddFromHandle l_icnIcon.Handle, Image_Icon, "ICON_" & l_icnIcon.Handle
+                        l_lngIcon = ilDocumentIcons.ItemIndex("ICON_" & l_icnIcon.Handle) - 1
+                    End If
+                    lstDocuments.AddItemAndData " " & IIf(Trim(.Document.Filename) = "", .Form.Caption, GetTitle(.Document.Filename)), l_lngIcon, 2, , , l_lngDocumentIndex, , 18, eixLeft, eixVCentre
+                    lstDocuments.Selected(lstDocuments.ListCount - 1) = True
                 End If
-                lstDocuments.AddItemAndData " " & IIf(Trim(.Document.Filename) = "", .Form.Caption, GetTitle(.Document.Filename)), l_lngIcon, 2, , , l_lngDocumentIndex, , 18, eixLeft, eixVCentre
-                lstDocuments.Selected(lstDocuments.ListCount - 1) = True
             End With
             l_lngDocumentIndex = l_lngDocumentIndex + 1
         Next l_docDocument
+        If lstDocuments.ListCount = 0 Then
+            Cancelled = False
+            Me.Hide
+        End If
     End With
 End Sub
 

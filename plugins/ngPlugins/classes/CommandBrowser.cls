@@ -19,10 +19,13 @@ Private m_objEditor As Object
 Private m_frmBrowser As frmCommandBrowser
 
 Public Sub Notify_Close()
+On Error Resume Next
+    Set m_frmBrowser.Plugin = Nothing
     Set m_frmBrowser = Nothing
 End Sub
 
 Private Sub iPlugin_Activate()
+On Error Resume Next
     If m_frmBrowser Is Nothing Then
         Set m_frmBrowser = New frmCommandBrowser
         Set m_frmBrowser.Plugin = Me

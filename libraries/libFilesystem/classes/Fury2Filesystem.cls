@@ -34,18 +34,6 @@ Attribute VB_Description = "A virtual filesystem."
 Option Explicit
 Option Compare Text
 
-Public Type FileEnumerationEntry
-    Filename As String
-    Location As Integer
-    LocationIndex As Integer
-End Type
-
-Public Enum FileEnumerationLocations
-    Location_Disk = 0
-    Location_Package = 1
-    Location_Module = 2
-End Enum
-
 Private m_strRoot As String
 Private m_strCurrentFolder As String
 Private m_colPackages As Collection

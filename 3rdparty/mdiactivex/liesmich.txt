@@ -1,0 +1,31 @@
+*-------------------------------------------------------------------*
+* Dieses Archiv enthält den Quellentext des sMDIActiveX.ocx         *
+* und eines Beispielprojektes.                                      *
+*                                                                   *
+* Copyright (c) 2000 by Michael Wallner                             *
+* ----------------------------------------------------------------- *
+*                                                                   *
+* Name:         sMDIActiveX.ocx                                     *
+* Version:      1.0.3                                               *
+* Autor:	Michael Wallner                                     *
+* Datum:        März 2000                                           *
+* WEB:          wallner.homepage.com                                *
+* eMail:        michael.wallner@iname.com                           *
+*                                                                   *
+* ----------------------------------------------------------------- *
+*                                                                   *
+* Verwenden Sie in Ihren Projekten bitte die Original OCX Datei     *
+* welche Sie in der aktuellen Version jeweils unter       	    *
+* http://wallner.homepage.com finden können!                        *
+*                                                                   *
+* Sollten Sie Änderungen an dem Control vornehmen, so geben Sie     *
+* diesem bitte umbedingt einen neuen Namen!!!                       *
+*                                                                   *
+* ----------------------------------------------------------------- *
+
+Das Archiv smdiactivex.zip enthält den Quellencode des sMDIActiveX.ocx sowie eines Demoprogrammes.
+Sie dürfen diesen für Ihre eigenen Projekte verwenden und verändern. 
+Sollten Sie den Beitrag weitergeben wollen, so müssen Sie das komplette ZIP-Archiv weitergeben! 
+Auch eine veränderte Version des Quellentextes hat einen Hinweis auf den ursprünglichen Autor zu enthalten!
+
+Wien März 2000

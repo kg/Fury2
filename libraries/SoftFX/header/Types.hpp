@@ -260,4 +260,4 @@ struct ColorFilter {
 
 typedef void ScalerFunction(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest);
 
-typedef void RenderFunction(Pixel *Dest, Pixel *Source, int Count);
+typedef void RenderFunction(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor);

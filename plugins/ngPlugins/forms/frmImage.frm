@@ -1,11 +1,11 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Begin VB.Form frmImage 
-   BorderStyle     =   4  'Fixed ToolWindow
+   BorderStyle     =   0  'None
    Caption         =   "Loading"
    ClientHeight    =   3180
-   ClientLeft      =   45
-   ClientTop       =   300
+   ClientLeft      =   0
+   ClientTop       =   -15
    ClientWidth     =   4680
    ControlBox      =   0   'False
    BeginProperty Font 
@@ -43,7 +43,7 @@ Begin VB.Form frmImage
       TabIndex        =   3
       Text            =   "100"
       ToolTipText     =   "Zoom (%)"
-      Top             =   2925
+      Top             =   2880
       Width           =   555
    End
    Begin VB.HScrollBar hsImage 
@@ -52,7 +52,7 @@ Begin VB.Form frmImage
       Left            =   -15
       SmallChange     =   16
       TabIndex        =   2
-      Top             =   2925
+      Top             =   2880
       Width           =   3885
    End
    Begin VB.VScrollBar vsImage 
@@ -61,7 +61,7 @@ Begin VB.Form frmImage
       Left            =   4425
       SmallChange     =   16
       TabIndex        =   1
-      Top             =   45
+      Top             =   0
       Width           =   255
    End
    Begin VB.PictureBox picImage 
@@ -74,7 +74,7 @@ Begin VB.Form frmImage
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   295
       TabIndex        =   0
-      Top             =   45
+      Top             =   0
       Width           =   4425
    End
    Begin sMDIinActiveX.MDIActiveX extender 
@@ -183,8 +183,8 @@ Private Sub Form_Resize()
 On Error Resume Next
     hsImage.Move 0, Me.ScaleHeight - hsImage.Height, Me.ScaleWidth - (vsImage.Width + txtZoom.Width), hsImage.Height
     txtZoom.Move hsImage.Width, hsImage.Top, txtZoom.Width, hsImage.Height
-    vsImage.Move Me.ScaleWidth - vsImage.Width, 3, vsImage.Width, Me.ScaleHeight - (3 + hsImage.Height)
-    picImage.Move 0, 3, Me.ScaleWidth - vsImage.Width, Me.ScaleHeight - (hsImage.Height + 3)
+    vsImage.Move Me.ScaleWidth - vsImage.Width, 0, vsImage.Width, Me.ScaleHeight - (hsImage.Height)
+    picImage.Move 0, 0, Me.ScaleWidth - vsImage.Width, Me.ScaleHeight - (hsImage.Height)
 End Sub
 
 Private Sub hsImage_Change()

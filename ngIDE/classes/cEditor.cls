@@ -107,6 +107,7 @@ End Property
 Public Sub ActionUpdate()
 On Error Resume Next
 Dim l_edcDocument As iEditingCommands, l_ctlControl As Control
+    Set m_docChild = frmMain.ActiveChild
     CanCut = False
     CanCopy = False
     CanPaste = False

@@ -1,11 +1,11 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Begin VB.Form frmAudio 
-   BorderStyle     =   4  'Fixed ToolWindow
+   BorderStyle     =   0  'None
    Caption         =   "Loading"
    ClientHeight    =   3180
-   ClientLeft      =   45
-   ClientTop       =   300
+   ClientLeft      =   0
+   ClientTop       =   -15
    ClientWidth     =   4665
    ControlBox      =   0   'False
    BeginProperty Font 
@@ -31,7 +31,7 @@ Begin VB.Form frmAudio
       Height          =   615
       Left            =   30
       TabIndex        =   5
-      Top             =   1020
+      Top             =   975
       Width           =   4590
       Begin VB.PictureBox picPlaybackButtons 
          BorderStyle     =   0  'None
@@ -73,7 +73,7 @@ Begin VB.Form frmAudio
       Height          =   930
       Left            =   30
       TabIndex        =   0
-      Top             =   75
+      Top             =   30
       Width           =   4605
       Begin VB.TextBox txtFileName 
          BackColor       =   &H8000000F&
@@ -116,7 +116,7 @@ Begin VB.Form frmAudio
    End
    Begin sMDIinActiveX.MDIActiveX extender 
       Left            =   15
-      Top             =   2715
+      Top             =   2670
       _ExtentX        =   847
       _ExtentY        =   794
    End

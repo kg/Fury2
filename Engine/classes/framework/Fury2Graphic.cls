@@ -40,7 +40,7 @@ Public ImageFilenames As Fury2Collection
 Public Images As Fury2Collection
 Public XCenter As Single, YCenter As Single
 Public LoopMode As Fury2LoopModes
-Public BlitMode As Long
+Public BlitMode As SFXBlitModes
 Public Alpha As Single
 Public FadeSpeed As Single
 Public AnimationDelay As Long
@@ -48,6 +48,24 @@ Public AnimationFrame As Long
 Private m_parParam As AnimatedGraphicParam
 Private m_lngImages() As Long
 Private AnimationDelayBuildup As Long
+
+Public Function Duplicate() As Fury2Graphic
+    Set Duplicate = New Fury2Graphic
+    With Duplicate
+        Set .Images = Images
+        Set .ImageFilenames = ImageFilenames
+        .Name = Name
+        .XCenter = XCenter
+        .YCenter = YCenter
+        .LoopMode = LoopMode
+        .BlitMode = BlitMode
+        .Alpha = Alpha
+        .FadeSpeed = FadeSpeed
+        .AnimationDelay = AnimationDelay
+        .AnimationFrame = AnimationFrame
+        .Refresh
+    End With
+End Function
 
 Public Property Get Handle() As Long
 On Error Resume Next
@@ -65,6 +83,7 @@ Dim l_lngImages As Long
         .FrameCount = Images.Count
         .Frame = AnimationFrame
         .BlitMode = BlitMode
+        .MatteColor = Images(AnimationFrame).MatteColor
         .Alpha = ClipByte(Alpha * 255)
         .XCenter = XCenter
         .YCenter = YCenter

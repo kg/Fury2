@@ -77,6 +77,14 @@ On Error Resume Next
     PlanePointer = VarPtr(m_plnPlanes(Index))
 End Function
 
+Public Function SightCheck(ByVal FromX As Single, ByVal FromY As Single, ByVal ToX As Single, ByVal ToY As Single, Optional ByRef IgnoreSprite1 = Nothing, Optional ByRef IgnoreSprite2 = Nothing) As Boolean
+    SightCheck = SoftFX.SightCheck(m_envEnvironment, FromX, FromY, ToX, ToY, IIf(IgnoreSprite1 Is Nothing, 0, IgnoreSprite1.Pointer), IIf(IgnoreSprite2 Is Nothing, 0, IgnoreSprite2.Pointer))
+End Function
+
+Public Function Raycast(ByVal X As Single, ByVal Y As Single, Optional ByRef IgnoreSprite = Nothing) As Long
+    Raycast = SoftFX.RaycastPoint(m_envEnvironment, X, Y, IIf(IgnoreSprite Is Nothing, 0, IgnoreSprite.Pointer))
+End Function
+
 Public Sub RemovePlane(Index As Long)
 On Error Resume Next
 Dim m_lngLines As Long

@@ -51,6 +51,7 @@ Private m_strTemplate As String
 Private m_lngState As Long, m_staState As Fury2State
 Private m_lngPose As Long, m_posPose As Fury2Pose
 Private m_lngFrame As Long, m_fraFrame As Fury2PoseFrame
+Private m_lngAIDelay As Long, m_lngAIUpdateRate As Long
 
 Private m_booDestroyed As Boolean
 
@@ -91,6 +92,22 @@ Private m_booAreasUpdated As Boolean
 
 Private m_lngWalkState As Long, m_lngIdleState As Long
 
+Public AttachedGraphic As Fury2Graphic
+
+Public Function SightCheck(ByVal X As Single, ByVal Y As Single, Optional ByRef IgnoreSprite = Nothing) As Boolean
+On Error Resume Next
+    SightCheck = m_mapMap.Layers(m_lngLayer).Lighting.SightCheck(m_spParam.Position.X, m_spParam.Position.Y, X, Y, Me, IgnoreSprite)
+End Function
+
+Public Property Get AIUpdateRate() As Long
+    AIUpdateRate = m_lngAIUpdateRate
+End Property
+
+Public Property Let AIUpdateRate(ByVal NewValue As Long)
+On Error Resume Next
+    m_lngAIUpdateRate = Abs(NewValue)
+End Property
+
 Public Property Get Attached() As Fury2Sprite
     Set Attached = m_sprAttached
 End Property
@@ -100,6 +117,27 @@ On Error Resume Next
     Set m_sprAttached = Sprite
     m_sngAttachX = XOffset
     m_sngAttachY = YOffset
+End Sub
+
+Public Sub AttachGraphic(Graphic)
+On Error Resume Next
+Dim l_gphGraphic As Fury2Graphic
+    Set l_gphGraphic = Graphic
+    Set AttachedGraphic = l_gphGraphic
+    RefreshAttachedGraphic
+    Err.Clear
+End Sub
+
+Sub RefreshAttachedGraphic()
+On Error Resume Next
+    With m_spParam
+        If AttachedGraphic Is Nothing Then
+'            .AttachedGraphic = 0
+        Else
+            AttachedGraphic.Refresh
+'            .AttachedGraphic = AttachedGraphic.Handle
+        End If
+    End With
 End Sub
 
 Public Sub Refresh()
@@ -374,6 +412,8 @@ Dim l_spOld As SpriteParam
         
         .IdleState = Me.IdleState
         .WalkState = Me.WalkState
+        
+        .AIUpdateRate = Me.AIUpdateRate
        
         If .ScriptOverride And AsTemplate Then
         Else
@@ -609,6 +649,7 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 .Load l_booValue
                 If l_booValue Then
                     Me.SpriteType = F2ST_Projectile
+                    .Load l_booValue
                 Else
                     .Load l_booValue
                     If l_booValue Then
@@ -620,6 +661,10 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 ' Projectile options
                 .ReadSegment_Begin
                     .Load m_lngDecayTime
+                .ReadSegment_End
+                ' AI Options
+                .ReadSegment_Begin
+                    .Load m_lngAIUpdateRate
                 .ReadSegment_End
             .ReadSegment_End
             
@@ -709,8 +754,14 @@ On Error Resume Next
             .WriteSegment_Begin
                 .Save CByte(m_spParam.Type)
                 .Save CBool(m_spParam.Stats.Cull)
+                .Save CBool(m_spParam.Type = F2ST_Projectile)
+                .Save CBool(m_spParam.Type = F2ST_Entity)
                 .WriteSegment_Begin
                     .Save m_lngDecayTime
+                .WriteSegment_End
+                ' AI Options
+                .WriteSegment_Begin
+                    .Save m_lngAIUpdateRate
                 .WriteSegment_End
             .WriteSegment_End
             
@@ -1171,6 +1222,25 @@ End Property
 Public Sub Update()
 On Error Resume Next
 Dim l_sprCollided As Fury2Sprite
+    m_lngAIDelay = m_lngAIDelay + 1
+    If m_lngAIDelay > m_lngAIUpdateRate Then
+        m_lngAIDelay = 0
+        If m_booScript_AIUpdate Then
+            m_Engine.ContextLevelAdd "Sprite_AIUpdate"
+            Err.Clear
+        
+            m_objScript.AIUpdate
+        
+            Err.Clear
+            m_Engine.ContextLevelRemove
+        End If
+    End If
+
+    If AttachedGraphic Is Nothing Then
+    Else
+        AttachedGraphic.Update
+    End If
+    
     'm_spParam.Params.SpecialFX = fxSoftShadow
     If m_booDisplayRotation Then
         m_spParam.Params.RotationAngle = m_spParam.Velocity.B
@@ -1182,6 +1252,10 @@ Dim l_sprCollided As Fury2Sprite
     
     If m_spParam.Events.Moved Then
         UpdateAreas
+    End If
+    
+    If SpinVelocity <> 0 Then
+        ReselectPose
     End If
     
     UpdateAnimation
@@ -1511,6 +1585,14 @@ Public Property Let X(NewValue As Single)
     m_spParam.Position.X = NewValue
 End Property
 
+Public Property Get XLeft() As Single
+    XLeft = m_spParam.Position.X - (m_spParam.Graphic.Rectangle.Width / 2)
+End Property
+
+Public Property Get XRight() As Single
+    XRight = m_spParam.Position.X + (m_spParam.Graphic.Rectangle.Width / 2)
+End Property
+
 Public Property Get XCenter() As Single
     XCenter = m_spParam.Position.X
 End Property
@@ -1533,6 +1615,10 @@ End Property
 
 Public Property Get YCenter() As Single
     YCenter = m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height \ 2)
+End Property
+
+Public Property Get YTop() As Single
+    YTop = m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height)
 End Property
 
 Public Property Get YVelocity() As Single

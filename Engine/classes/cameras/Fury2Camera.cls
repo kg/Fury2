@@ -367,6 +367,7 @@ Dim m_lnLines() As FLine, m_lngLines As Long
 Dim l_imgBuffer As Fury2Image
 Dim l_sngAlpha As Single
 Dim l_lcaCamera As LightingCamera
+Dim l_sprSprite As Fury2Sprite
 Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
     Err.Clear
     If mvarMap <> 0 Then Set mvarViewingMap = m_Engine.Maps(mvarMap)
@@ -609,6 +610,12 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
             End If
         End If
     Next Layers
+    For Each l_sprSprite In mvarViewingMap.Sprites
+        If l_sprSprite.AttachedGraphic Is Nothing Then
+        Else
+            l_sprSprite.AttachedGraphic.Draw l_imgBuffer, l_sprSprite.X - ViewportX + Area.Left, l_sprSprite.YTop - ViewportY + Area.Top
+        End If
+    Next l_sprSprite
     End With
     Err.Clear
     If mvarViewingMap.Script_Redraw = True Then

@@ -1,11 +1,11 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Begin VB.Form frmScriptFile 
-   BorderStyle     =   4  'Fixed ToolWindow
+   BorderStyle     =   0  'None
    Caption         =   "Untitled"
    ClientHeight    =   3180
-   ClientLeft      =   45
-   ClientTop       =   300
+   ClientLeft      =   0
+   ClientTop       =   -15
    ClientWidth     =   4680
    ControlBox      =   0   'False
    BeginProperty Font 
@@ -158,7 +158,7 @@ End Sub
 
 Private Sub Form_Resize()
 On Error Resume Next
-    scScript.Move 0, 3, Me.ScaleWidth, Me.ScaleHeight - 3
+    scScript.Move 0, 0, Me.ScaleWidth, Me.ScaleHeight
 End Sub
 
 Private Property Get iDocument_CanSave() As Boolean

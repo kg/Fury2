@@ -94,6 +94,7 @@ On Error Resume Next
 Dim l_parKey As vbalWinHook6.cKeyboardlParam
 Dim l_aclAccelerator As cAccelerator
 Dim l_booResult As Boolean
+Dim l_strKey As String
     If GetActiveWindow() <> m_lngAttachedWindow Then Exit Function
     If eType = WH_KEYBOARD Then
         Set l_parKey = KeyboardlParam(lParam)
@@ -101,8 +102,10 @@ Dim l_booResult As Boolean
         ElseIf (l_parKey.KeyDown) Then
             If (m_booCurrentState(wParam)) Or (wParam < 1) Or (wParam > 255) Then
             Else
-                Set l_aclAccelerator = m_colAccelerators.Item(Format(wParam, "000") & IIf(m_booCurrentState(vbKeyShift), "1", "0") & IIf(m_booCurrentState(vbKeyControl), "1", "0") & IIf(l_parKey.Alt, "1", "0"))
+                l_strKey = Format(wParam, "000") & IIf(m_booCurrentState(vbKeyShift), "1", "0") & IIf(m_booCurrentState(vbKeyControl), "1", "0") & IIf(l_parKey.Alt, "1", "0")
+                Set l_aclAccelerator = m_colAccelerators.Item(l_strKey)
                 If l_aclAccelerator Is Nothing Then
+                ElseIf l_aclAccelerator.Hook Is Nothing Then
                 Else
                     Err.Clear
                     l_booResult = True

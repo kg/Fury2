@@ -80,11 +80,11 @@ Public Property Get EdgeOverlap() As Boolean
     EdgeOverlap = m_booEdgeOverlap
 End Property
 
-Public Property Let EdgeOverlap(Value As Boolean)
+Public Property Let EdgeOverlap(ByVal Value As Boolean)
     m_booEdgeOverlap = Value
 End Property
 
-Public Property Get EdgeOffset(Optional Edge As Long = 0) As Long
+Public Property Get EdgeOffset(Optional ByVal Edge As Long = 0) As Long
 On Error Resume Next
     If Edge = 0 Then
         EdgeOffset = (m_wspParam.EdgeOffsets(0) + m_wspParam.EdgeOffsets(1) + m_wspParam.EdgeOffsets(2) + m_wspParam.EdgeOffsets(3)) \ 4
@@ -93,7 +93,7 @@ On Error Resume Next
     End If
 End Property
 
-Public Property Let EdgeOffset(Optional Edge As Long = 0, Value As Long)
+Public Property Let EdgeOffset(Optional ByVal Edge As Long = 0, ByVal Value As Long)
 On Error Resume Next
     If Edge = 0 Then
         m_wspParam.EdgeOffsets(0) = Value
@@ -105,12 +105,12 @@ On Error Resume Next
     End If
 End Property
 
-Public Property Get BackgroundColor(Corner As Long) As Long
+Public Property Get BackgroundColor(ByVal Corner As Long) As Long
 On Error Resume Next
     BackgroundColor = m_wspParam.CornerColors(Corner)
 End Property
 
-Public Property Let BackgroundColor(Corner As Long, Value As Long)
+Public Property Let BackgroundColor(ByVal Corner As Long, ByVal Value As Long)
 On Error Resume Next
     m_wspParam.CornerColors(Corner) = Value
 End Property
@@ -119,7 +119,7 @@ Public Property Get Overlap() As Long
     Overlap = m_lngEdgeOverlap
 End Property
 
-Public Property Let Overlap(NewValue As Long)
+Public Property Let Overlap(ByVal NewValue As Long)
     m_lngEdgeOverlap = NewValue
 End Property
 

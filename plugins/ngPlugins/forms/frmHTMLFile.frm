@@ -2,11 +2,11 @@ VERSION 5.00
 Object = "{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}#1.1#0"; "shdocvw.dll"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Begin VB.Form frmHTMLFile 
-   BorderStyle     =   4  'Fixed ToolWindow
+   BorderStyle     =   0  'None
    Caption         =   "Loading"
    ClientHeight    =   3180
-   ClientLeft      =   45
-   ClientTop       =   300
+   ClientLeft      =   0
+   ClientTop       =   -15
    ClientWidth     =   4680
    ControlBox      =   0   'False
    BeginProperty Font 
@@ -31,7 +31,7 @@ Begin VB.Form frmHTMLFile
       Height          =   3135
       Left            =   0
       TabIndex        =   0
-      Top             =   45
+      Top             =   0
       Width           =   4680
       ExtentX         =   8255
       ExtentY         =   5530

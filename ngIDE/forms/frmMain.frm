@@ -41,7 +41,7 @@ Begin VB.MDIForm frmMain
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   555
       TabIndex        =   0
-      Top             =   0
+      Top             =   30
       Visible         =   0   'False
       Width           =   8325
       Begin VB.Timer tmrFocusTracker 
@@ -179,7 +179,7 @@ Begin VB.MDIForm frmMain
       Height          =   30
       Left            =   0
       TabIndex        =   4
-      Top             =   3735
+      Top             =   0
       Width           =   8325
       _ExtentX        =   14684
       _ExtentY        =   53

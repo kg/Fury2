@@ -1203,7 +1203,7 @@ FILTERSIMPLE_ROWEND
 //    LookupDeallocate(yCTable);
 FILTERSIMPLE_END
 
-Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel Color) {
+Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel Color, RenderFunction *Renderer) {
     if (!Image) {
         return Failure;
     }
@@ -1308,7 +1308,11 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
                 if (X) {
                     X++;
                     Pointer = Image->fast_pointer(ClipValue(Spans[i].S, Image->ClipRectangle.Left, Image->ClipRectangle.right() - 1), Y);
-                    _Fill<Pixel>(Pointer, Color, X);
+                    if (Renderer != Null) {
+                      Renderer(Pointer, Null, X, Color);
+                    } else {
+                      _Fill<Pixel>(Pointer, Color, X);
+                    }
                 }
             }
         }
@@ -1325,99 +1329,162 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
     return Success;
 }
 
-void RenderFunction_SourceAlpha(Pixel *Dest, Pixel *Source, int Count) {
+void RenderFunction_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor) {
     AlphaLevel *aSource, *aDest;
     int i = Count;
     Byte a = 0;
-    while (i--) {
-      a = (*Source)[::Alpha];
+    if (Source) {
+      while (i--) {
+        a = (*Source)[::Alpha];
+        if (a) {
+          if (a == 255) {
+            (*Dest)[::Blue] = (*Source)[::Blue];
+            (*Dest)[::Green] = (*Source)[::Green];
+            (*Dest)[::Red] = (*Source)[::Red];
+          } else {
+            aSource = AlphaLevelLookup( a );
+            aDest = AlphaLevelLookup( a ^ 0xFF );
+            (*Dest)[::Blue] = AlphaFromLevel2(aDest, (*Dest)[::Blue], aSource, (*Source)[::Blue]);
+            (*Dest)[::Green] = AlphaFromLevel2(aDest, (*Dest)[::Green], aSource, (*Source)[::Green]);
+            (*Dest)[::Red] = AlphaFromLevel2(aDest, (*Dest)[::Red], aSource, (*Source)[::Red]);
+          }
+        }
+        Dest++;
+        Source++;
+      }
+    } else {
+      a = SolidColor[::Alpha];
       if (a) {
         if (a == 255) {
-          (*Dest)[::Blue] = (*Source)[::Blue];
-          (*Dest)[::Green] = (*Source)[::Green];
-          (*Dest)[::Red] = (*Source)[::Red];
-        } else {
+          _Fill<Pixel>(Dest, SolidColor, Count);
+        } else {          
           aSource = AlphaLevelLookup( a );
+          SolidColor[::Blue] = AlphaFromLevel(aSource, SolidColor[::Blue]);
+          SolidColor[::Green] = AlphaFromLevel(aSource, SolidColor[::Green]);
+          SolidColor[::Red] = AlphaFromLevel(aSource, SolidColor[::Red]);
           aDest = AlphaLevelLookup( a ^ 0xFF );
-          (*Dest)[::Blue] = AlphaFromLevel2(aDest, (*Dest)[::Blue], aSource, (*Source)[::Blue]);
-          (*Dest)[::Green] = AlphaFromLevel2(aDest, (*Dest)[::Green], aSource, (*Source)[::Green]);
-          (*Dest)[::Red] = AlphaFromLevel2(aDest, (*Dest)[::Red], aSource, (*Source)[::Red]);
+          while (i--) {
+            (*Dest)[::Blue] = AlphaFromLevel(aDest, (*Dest)[::Blue]) + SolidColor[::Blue];
+            (*Dest)[::Green] = AlphaFromLevel(aDest, (*Dest)[::Green]) + SolidColor[::Green];
+            (*Dest)[::Red] = AlphaFromLevel(aDest, (*Dest)[::Red]) + SolidColor[::Red];
+            Dest++;
+          }
         }
       }
-      Dest++;
-      Source++;
     }
 }
 
-void RenderFunction_Merge(Pixel *Dest, Pixel *Source, int Count) {
+void RenderFunction_Merge(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor) {
     AlphaLevel *aSource, *aDest;
     int i = Count;
     Byte a = 0;
-    while (i--) {
-      a = (*Source)[::Alpha];
-      if (a) {
-        if (a == 255) {
-          *Dest = *Source;
-        } else if (a == 255) {
-          aSource = AlphaLevelLookup( a );
-          aDest = AlphaLevelLookup( a ^ 0xFF );
-          (*Dest)[::Blue] = AlphaFromLevel2(aDest, (*Dest)[::Blue], aSource, (*Source)[::Blue]);
-          (*Dest)[::Green] = AlphaFromLevel2(aDest, (*Dest)[::Green], aSource, (*Source)[::Green]);
-          (*Dest)[::Red] = AlphaFromLevel2(aDest, (*Dest)[::Red], aSource, (*Source)[::Red]);
-        } else {
-          a = ClipByteHigh(a + ( (*Dest)[::Alpha] ^ 0xFF ));
-          aSource = AlphaLevelLookup( a );
-          aDest = AlphaLevelLookup( a ^ 0xFF );
-          (*Dest)[::Blue] = AlphaFromLevel2(aDest, (*Dest)[::Blue], aSource, (*Source)[::Blue]);
-          (*Dest)[::Green] = AlphaFromLevel2(aDest, (*Dest)[::Green], aSource, (*Source)[::Green]);
-          (*Dest)[::Red] = AlphaFromLevel2(aDest, (*Dest)[::Red], aSource, (*Source)[::Red]);
-          (*Dest)[::Alpha] = ClipByteHigh((*Dest)[::Alpha] + (*Source)[::Alpha]);
+    if (Source) {
+      while (i--) {
+        a = (*Source)[::Alpha];
+        if (a) {
+          if (a == 255) {
+            *Dest = *Source;
+          } else if (a == 255) {
+            aSource = AlphaLevelLookup( a );
+            aDest = AlphaLevelLookup( a ^ 0xFF );
+            (*Dest)[::Blue] = AlphaFromLevel2(aDest, (*Dest)[::Blue], aSource, (*Source)[::Blue]);
+            (*Dest)[::Green] = AlphaFromLevel2(aDest, (*Dest)[::Green], aSource, (*Source)[::Green]);
+            (*Dest)[::Red] = AlphaFromLevel2(aDest, (*Dest)[::Red], aSource, (*Source)[::Red]);
+          } else {
+            a = ClipByteHigh(a + ( (*Dest)[::Alpha] ^ 0xFF ));
+            aSource = AlphaLevelLookup( a );
+            aDest = AlphaLevelLookup( a ^ 0xFF );
+            (*Dest)[::Blue] = AlphaFromLevel2(aDest, (*Dest)[::Blue], aSource, (*Source)[::Blue]);
+            (*Dest)[::Green] = AlphaFromLevel2(aDest, (*Dest)[::Green], aSource, (*Source)[::Green]);
+            (*Dest)[::Red] = AlphaFromLevel2(aDest, (*Dest)[::Red], aSource, (*Source)[::Red]);
+            (*Dest)[::Alpha] = ClipByteHigh((*Dest)[::Alpha] + (*Source)[::Alpha]);
+          }
         }
+        Dest++;
+        Source++;
       }
-      Dest++;
-      Source++;
     }
 }
 
-void RenderFunction_Additive(Pixel *Dest, Pixel *Source, int Count) {
+void RenderFunction_Additive(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor) {
     int i = Count;
-    while (i--) {
-        BLENDPIXEL_ADDITIVE(Dest, Dest, Source);
+    if (Source) {
+      while (i--) {
+          BLENDPIXEL_ADDITIVE(Dest, Dest, Source);
+          Dest++;
+          Source++;
+      }
+    } else {
+      while (i--) {
+        (*Dest)[::Blue] = ClipByteHigh((*Dest)[::Blue] + (SolidColor[::Blue]));
+        (*Dest)[::Green] = ClipByteHigh((*Dest)[::Green] + (SolidColor[::Green]));
+        (*Dest)[::Red] = ClipByteHigh((*Dest)[::Red] + (SolidColor[::Red]));
         Dest++;
-        Source++;
+      }
     }
 }
 
-void RenderFunction_Screen(Pixel *Dest, Pixel *Source, int Count) {
+void RenderFunction_Screen(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor) {
     int i = Count;
-    while (i--) {
-        (*Dest)[::Blue] = AlphaLookup((*Dest)[::Blue] ^ 0xFF, (*Source)[::Blue] ^ 0xFF) ^ 0xFF;
-        (*Dest)[::Green] = AlphaLookup((*Dest)[::Green] ^ 0xFF, (*Source)[::Green] ^ 0xFF) ^ 0xFF;
-        (*Dest)[::Red] = AlphaLookup((*Dest)[::Red] ^ 0xFF, (*Source)[::Red] ^ 0xFF) ^ 0xFF;
-        Dest++;
-        Source++;
+    if (Source) {
+      while (i--) {
+          (*Dest)[::Blue] = AlphaLookup((*Dest)[::Blue] ^ 0xFF, (*Source)[::Blue] ^ 0xFF) ^ 0xFF;
+          (*Dest)[::Green] = AlphaLookup((*Dest)[::Green] ^ 0xFF, (*Source)[::Green] ^ 0xFF) ^ 0xFF;
+          (*Dest)[::Red] = AlphaLookup((*Dest)[::Red] ^ 0xFF, (*Source)[::Red] ^ 0xFF) ^ 0xFF;
+          Dest++;
+          Source++;
+      }
+    } else {
+      SolidColor[::Blue] = SolidColor[::Blue] ^ 0xFF;
+      SolidColor[::Green] = SolidColor[::Green] ^ 0xFF;
+      SolidColor[::Red] = SolidColor[::Red] ^ 0xFF;
+      while (i--) {
+          (*Dest)[::Blue] = AlphaLookup((*Dest)[::Blue] ^ 0xFF, SolidColor[::Blue]) ^ 0xFF;
+          (*Dest)[::Green] = AlphaLookup((*Dest)[::Green] ^ 0xFF, SolidColor[::Green]) ^ 0xFF;
+          (*Dest)[::Red] = AlphaLookup((*Dest)[::Red] ^ 0xFF, SolidColor[::Red]) ^ 0xFF;
+          Dest++;
+      }
     }
 }
 
-void RenderFunction_Subtractive(Pixel *Dest, Pixel *Source, int Count) {
+void RenderFunction_Subtractive(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor) {
     int i = Count;
-    while (i--) {
-        BLENDPIXEL_SUBTRACTIVE(Dest, Dest, Source);
+    if (Source) {
+      while (i--) {
+          BLENDPIXEL_SUBTRACTIVE(Dest, Dest, Source);
+          Dest++;
+          Source++;
+      }
+    } else {
+      while (i--) {
+        (*Dest)[::Blue] = ClipByteLow((*Dest)[::Blue] - (SolidColor[::Blue]));
+        (*Dest)[::Green] = ClipByteLow((*Dest)[::Green] - (SolidColor[::Green]));
+        (*Dest)[::Red] = ClipByteLow((*Dest)[::Red] - (SolidColor[::Red]));
         Dest++;
-        Source++;
+      }
     }
 }
 
-void RenderFunction_Shadow(Pixel *Dest, Pixel *Source, int Count) {
+void RenderFunction_Shadow(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor) {
     int i = Count;
     AlphaLevel *alpha;
-    while (i--) {
-        alpha = AlphaLevelLookup((*Source)[::Alpha] ^ 0xFF);
-        (*Dest)[::Blue] = AlphaFromLevel(alpha, (*Dest)[::Blue]);
-        (*Dest)[::Green] = AlphaFromLevel(alpha, (*Dest)[::Green]);
-        (*Dest)[::Red] = AlphaFromLevel(alpha, (*Dest)[::Red]);
-        Dest++;
-        Source++;
+    if (Source) {
+      while (i--) {
+          alpha = AlphaLevelLookup((*Source)[::Alpha] ^ 0xFF);
+          (*Dest)[::Blue] = AlphaFromLevel(alpha, (*Dest)[::Blue]);
+          (*Dest)[::Green] = AlphaFromLevel(alpha, (*Dest)[::Green]);
+          (*Dest)[::Red] = AlphaFromLevel(alpha, (*Dest)[::Red]);
+          Dest++;
+          Source++;
+      }
+    } else {
+      alpha = AlphaLevelLookup(SolidColor[::Alpha] ^ 0xFF);
+      while (i--) {
+          (*Dest)[::Blue] = AlphaFromLevel(alpha, (*Dest)[::Blue]);
+          (*Dest)[::Green] = AlphaFromLevel(alpha, (*Dest)[::Green]);
+          (*Dest)[::Red] = AlphaFromLevel(alpha, (*Dest)[::Red]);
+          Dest++;
+      }
     }
 }
 
@@ -1622,7 +1689,7 @@ Export int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, Text
                         CurrentPixel += Dest->ClipRectangle.Left - Spans[i].S;
                     }
                     if (Renderer != Null) {
-                        Renderer(Pointer, CurrentPixel, X);
+                        Renderer(Pointer, CurrentPixel, X, 0);
                     } else {
                         while (X--) {
                             *Pointer = *CurrentPixel;
@@ -1790,7 +1857,7 @@ Export int FilterSimple_ConvexPolygon_Gradient(Image *Dest, GradientPolygon *InP
 */
                     GenerateGradientTable(ScanlineTable, StartColor[i], EndColor[i], X, 0);
                     if (Renderer != Null) {
-                        Renderer(Pointer, CurrentPixel, X);
+                        Renderer(Pointer, CurrentPixel, X, 0);
                     } else {
                         while (X--) {
                             *Pointer = *CurrentPixel;

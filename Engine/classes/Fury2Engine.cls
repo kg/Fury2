@@ -318,6 +318,28 @@ Public FrameLength As Double
 Private NextFPS As Long
 Private OldVolume As Long
 
+Public Function NormalizeAngle(ByVal Angle As Single) As Single
+Dim N As Single
+    N = Angle / 360
+    NormalizeAngle = Angle - (Floor(N) * 360)
+End Function
+
+Public Function AngleInRange(ByVal Angle As Single, ByVal Minimum As Single, ByVal Maximum As Single) As Boolean
+On Error Resume Next
+Dim AngleDelta As Single
+    Minimum = NormalizeAngle(Minimum)
+    Maximum = NormalizeAngle(Maximum)
+    If Minimum > Maximum Then
+        AngleDelta = Minimum - Maximum
+        Minimum = NormalizeAngle(Minimum + AngleDelta)
+        Maximum = NormalizeAngle(Maximum + AngleDelta)
+        Angle = NormalizeAngle(Angle + AngleDelta)
+    Else
+        Angle = NormalizeAngle(Angle)
+    End If
+    AngleInRange = (Angle >= Minimum) And (Angle <= Maximum)
+End Function
+
 Public Function GrabScreen(Optional ByVal ForceRedraw As Boolean = True) As Fury2Image
 On Error Resume Next
 Dim l_imgCopy As Fury2Image
@@ -445,16 +467,7 @@ On Error Resume Next
     Else
         AngleBetween = (Atn(Ry / Rx) / c_dblRadian) + (90)
     End If
-    If AngleBetween >= 360 Then
-        Do While AngleBetween >= 360
-            AngleBetween = AngleBetween - 360!
-        Loop
-    End If
-    If AngleBetween < 0 Then
-        Do While AngleBetween < 0
-            AngleBetween = AngleBetween + 360!
-        Loop
-    End If
+    AngleBetween = NormalizeAngle(AngleBetween)
 End Function
 
 Public Sub AnimatePicture(ByVal Slot, Optional Length As Single = 1, Optional ByVal NewX = -32767, Optional ByVal NewY = -32767, Optional ByVal NewWidth = -32767, Optional ByVal NewHeight = -32767, Optional ByVal EndScript = "")
@@ -1751,6 +1764,7 @@ Dim l_lngImages As Long
                     If Not (l_imgImage Is Nothing) Then .Images.Add l_imgImage
                 Next l_lngImages
                 Err.Clear
+                Set l_imgImage = Images(LBound(Images))
             Else
                 Exit Function
             End If
@@ -1765,7 +1779,7 @@ Dim l_lngImages As Long
         End If
         .XCenter = XCenter
         .YCenter = YCenter
-        If BlitMode = -1 Then
+        If BlitMode = BlitMode_Default Then
             If l_imgImage.AlphaChannel Then
                 BlitMode = BlitMode_SourceAlpha
             Else
@@ -3636,20 +3650,7 @@ Dim m_sngDist As Single
         Exit Function
     End If
     m_sngDist = CSng(Distance)
-    m_sngAngle = Angle
-    If m_sngAngle < 360! Then
-    Else
-        Do Until m_sngAngle < 360!
-            m_sngAngle = m_sngAngle - 360!
-        Loop
-    End If
-    If m_sngAngle >= 0! Then
-    Else
-        Do Until m_sngAngle >= 0!
-            m_sngAngle = m_sngAngle + 360!
-        Loop
-    End If
-    m_sngAngle = CSng(m_sngAngle) * c_dblRadian
+    m_sngAngle = NormalizeAngle(CSng(m_sngAngle)) * c_dblRadian
     m_sngX = CSng(x1) + (Sin(m_sngAngle) * m_sngDist)
     m_sngY = CSng(y1) + -(Cos(m_sngAngle) * m_sngDist)
     PathTarget = Array(m_sngX, m_sngY)

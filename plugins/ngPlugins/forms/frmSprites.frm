@@ -3,10 +3,10 @@ Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
 Begin VB.Form frmSprites 
-   BorderStyle     =   4  'Fixed ToolWindow
+   BorderStyle     =   0  'None
    ClientHeight    =   7335
-   ClientLeft      =   15
-   ClientTop       =   30
+   ClientLeft      =   0
+   ClientTop       =   15
    ClientWidth     =   9195
    ControlBox      =   0   'False
    BeginProperty Font 
@@ -1386,7 +1386,7 @@ On Error GoTo 0
         m_booVisible = True
         RefreshAll
     End If
-    picContainer.Move 2, 5, Me.ScaleWidth - 4, Me.ScaleHeight - 7
+    picContainer.Move 2, 2, Me.ScaleWidth - 4, Me.ScaleHeight - 4
 End Sub
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)

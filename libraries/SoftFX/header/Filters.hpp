@@ -36,13 +36,13 @@ FSIGNATURE(Gradient_Radial) , Pixel Color1, Pixel Color2 END_FSIGNATURE
 
 Export extern int FilterSimple_Line_AA(Image *Image, float X1, float Y1, float X2, float Y2, Pixel Color);
 #ifdef _POLYGON_HPP_
-Export extern int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel Color);
+Export extern int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel Color, RenderFunction *Renderer);
 Export extern int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, TexturedPolygon *InPoly, ScalerFunction *Scaler, RenderFunction *Renderer);
-Export extern int FilterSimple_ConvexPolygon_Gradient(Image *Image, GradientPolygon *InPoly, int Renderer);
-extern void RenderFunction_SourceAlpha(Pixel *Dest, Pixel *Source, int Count);
-extern void RenderFunction_Merge(Pixel *Dest, Pixel *Source, int Count);
-extern void  RenderFunction_Additive(Pixel *Dest, Pixel *Source, int Count);
-extern void  RenderFunction_Subtractive(Pixel *Dest, Pixel *Source, int Count);
-extern void  RenderFunction_Shadow(Pixel *Dest, Pixel *Source, int Count);
-extern void  RenderFunction_Screen(Pixel *Dest, Pixel *Source, int Count);
+Export extern int FilterSimple_ConvexPolygon_Gradient(Image *Image, GradientPolygon *InPoly, RenderFunction *Renderer);
+extern void RenderFunction_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor);
+extern void RenderFunction_Merge(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor);
+extern void  RenderFunction_Additive(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor);
+extern void  RenderFunction_Subtractive(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor);
+extern void  RenderFunction_Shadow(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor);
+extern void  RenderFunction_Screen(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor);
 #endif

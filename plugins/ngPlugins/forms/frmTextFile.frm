@@ -1,11 +1,11 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Begin VB.Form frmTextFile 
-   BorderStyle     =   4  'Fixed ToolWindow
+   BorderStyle     =   0  'None
    Caption         =   "Untitled"
    ClientHeight    =   3180
-   ClientLeft      =   45
-   ClientTop       =   300
+   ClientLeft      =   0
+   ClientTop       =   -15
    ClientWidth     =   4680
    ControlBox      =   0   'False
    BeginProperty Font 
@@ -42,7 +42,7 @@ Begin VB.Form frmTextFile
       MultiLine       =   -1  'True
       ScrollBars      =   3  'Both
       TabIndex        =   0
-      Top             =   45
+      Top             =   0
       Width           =   4680
    End
    Begin sMDIinActiveX.MDIActiveX extender 
@@ -82,7 +82,7 @@ End Sub
 
 Private Sub Form_Resize()
 On Error Resume Next
-    txtText.Move 0, 3, Me.ScaleWidth, Me.ScaleHeight - 3
+    txtText.Move 0, 0, Me.ScaleWidth, Me.ScaleHeight
 End Sub
 
 Private Property Get iDocument_CanSave() As Boolean
@@ -118,6 +118,6 @@ End Property
 
 Private Property Get iExtendedForm_Extender() As Object
 On Error Resume Next
-    Set iExtendedForm_Extender = Me.Extender
+    Set iExtendedForm_Extender = Me.extender
 End Property
 

@@ -157,7 +157,7 @@ namespace Lighting {
     }
   }
 
-  static const int DefaultSectorSize = 64;
+  static const int DefaultSectorSize = 128;
 
   class Sector {
 	public:

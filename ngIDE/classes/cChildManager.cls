@@ -32,13 +32,8 @@ On Error Resume Next
 Dim l_objForm As Object
     SetBusyState True
     Err.Clear
-    With m_frmForm
-        .WindowState = 0
-        .WindowState = 2
-    End With
     With Extender
-        .WindowState = 0
-        .WindowState = 2
+        .SetFocus
     End With
     m_frmForm.Form_Activate
     If g_booMainWindowLoaded Then frmMain.RefreshWindows

@@ -115,11 +115,11 @@ struct PhysicalParameters {
 struct AnimatedGraphicParam {
     int FrameCount;
     Image **pFrames;
+    int Frame;
+    int BlitMode;
+    float Alpha;
     float XCenter, YCenter;
     Pixel MatteColor;
-    int BlitMode;
-    int Alpha;
-    int Frame;
 };
 
 struct EventParameters {

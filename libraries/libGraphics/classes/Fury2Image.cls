@@ -699,7 +699,19 @@ Dim l_plyPoly As GenericPolygon
     If Err <> 0 Then Exit Sub
     l_plyPoly.VertexPointer = VarPtr(l_ptPoints(0))
     l_plyPoly.VertexCount = (UBound(Points) - LBound(Points)) + 1
-    Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor
+    Select Case Mode
+    Case SFXRenderModes.RenderMode_Normal
+        Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, 0
+    Case SFXRenderModes.RenderMode_SourceAlpha
+        Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, GetSourceAlphaRenderer()
+    Case SFXRenderModes.RenderMode_Additive
+        Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, GetAdditiveRenderer()
+    Case SFXRenderModes.RenderMode_Subtractive
+        Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, GetSubtractiveRenderer()
+    Case SFXRenderModes.RenderMode_Merge
+        Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, GetMergeRenderer()
+    Case Else
+    End Select
 End Sub
 
 Public Sub TexturedConvexPolygon(ByVal Points, ByRef Texture, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default)

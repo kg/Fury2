@@ -195,10 +195,11 @@ library SoftFX {
     typedef struct {
         int FrameCount;
         int pFrames;
-        float XCenter, YCenter;
-        int BlitMode;
-        int Alpha;
         int Frame;
+        int BlitMode;
+        float Alpha;
+        float XCenter, YCenter;
+        int MatteColor;
     } AnimatedGraphicParam;
 
     typedef struct {
@@ -549,8 +550,8 @@ library SoftFX {
         [entry("_RenderPlaneOutlines_Masked@28")]
         int MultiPrimitive_Plane_AA_Masked_Ptr(int Image, int Planes, int Mask, int Color, int Count, float XOffset, float YOffset);
 
-        [entry("_FilterSimple_ConvexPolygon@12")]
-        int Primitive_ConvexPolygon(int Image, GenericPolygon *Poly, int Color);
+        [entry("_FilterSimple_ConvexPolygon@16")]
+        int Primitive_ConvexPolygon(int Image, GenericPolygon *Poly, int Color, int Renderer);
         [entry("_FilterSimple_ConvexPolygon_Textured@20")]
         int Primitive_ConvexPolygon_Textured(int Image, int Texture, GenericPolygon *Poly, int Scaler, int Renderer);
         [entry("_FilterSimple_ConvexPolygon_Gradient@12")]
@@ -1130,6 +1131,11 @@ library SoftFX {
         int EraseLightingMatrix(int Matrix);
         [entry("_DeleteLightingMatrix@4")]
         int DeleteLightingMatrix(int Matrix);
+
+        [entry("_SightCheck@28")]
+        int SightCheck(LightingEnvironment *Environment, float FromX, float FromY, float ToX, float ToY, int IgnoreSprite, int IgnoreSprite2);
+        [entry("_RaycastPoint@20")]
+        int RaycastPoint(LightingEnvironment *Environment, float X, float Y, int IgnoreSprite);
 
     }
 

@@ -1552,6 +1552,76 @@ Export int RenderPlaneOutlines_Masked(Image *Image, Lighting::Plane *Planes, Byt
 #define aceil(n) ((n > 0) ? ceil(n) : floor(n))
 #define afloor(n) ((n > 0) ? floor(n) : ceil(n))
 
+Export int SightCheck(Lighting::Environment *Env, float FromX, float FromY, float ToX, float ToY, SpriteParam *IgnoreSprite1, SpriteParam *IgnoreSprite2) {
+  FLine LightRay;
+  FPoint IntersectionPoint;
+  SpriteParam *Sprite;
+  FLine SpriteLine;
+  bool Obscured = false;
+  int mx1 = 0, my1 = 0, mx2 = 0, my2 = 0, mx = 0, my = 0;
+  Lighting::Sector *Sector = Null;
+  std::vector<Lighting::Obstruction>::iterator Obstruction;
+  LightRay.Start.X = FromX;
+  LightRay.Start.Y = FromY;
+  LightRay.End.X = ToX;
+  LightRay.End.Y = ToY;
+	mx1 = ClipValue(floor(_Min(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
+	my1 = ClipValue(floor(_Min(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), 0, Env->Matrix->Height - 1);
+	mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
+	my2 = ClipValue(ceil(_Max(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), 0, Env->Matrix->Height - 1);
+	for (my = my1; my <= my2; my++) {
+		for (mx = mx1; mx <= mx2; mx++) {
+			Sector = Env->Matrix->getSector(mx, my);
+			for (Obstruction = Sector->Obstructions.begin(); Obstruction != Sector->Obstructions.end(); ++Obstruction) {
+				if (LightRay.intersect((*(FLine*)&(*Obstruction)), IntersectionPoint)) {
+          return 0;
+				}
+			}
+		}
+	}
+
+  if (Env->Sprites != Null) {
+    Sprite = Env->Sprites;
+    while (Sprite) {
+      if (Sprite == IgnoreSprite1) {
+        Sprite = Sprite->pNext; 
+        continue;
+      }
+      if (Sprite == IgnoreSprite2) {
+        Sprite = Sprite->pNext; 
+        continue;
+      }
+      switch (Sprite->Params.SpecialFX) {
+      default:
+        Sprite = Sprite->pNext;
+        continue;
+        break;
+      case fxCastShadow:
+      case fxCastGraphicShadow:
+        break;
+      }
+      float s = (Sprite->Obstruction.W + Sprite->Obstruction.H) / 4;
+      float h = Sprite->Obstruction.H / 2;
+      float a = Radians(AngleBetween(Sprite->Position, FPoint(FromX, FromY)));          
+      float sdist = Sprite->ZHeight;
+      if (sdist <= 0) sdist = 10000;
+      SpriteLine.Start.X = (sin(a - Radians(90)) * s) + Sprite->Position.X;
+      SpriteLine.Start.Y = (-cos(a - Radians(90)) * s) + Sprite->Position.Y - h;
+      SpriteLine.End.X = (sin(a + Radians(90)) * s) + Sprite->Position.X;
+      SpriteLine.End.Y = (-cos(a + Radians(90)) * s) + Sprite->Position.Y - h;
+      if (LightRay.intersect(SpriteLine, IntersectionPoint)) {
+        return 0;
+      }
+      Sprite = Sprite->pNext;
+    }
+  }
+  return 1;
+}
+
+Export Pixel RaycastPoint(Lighting::Environment *Env, float X, float Y, SpriteParam *Ignore) {
+  return Lighting::Raycast(Env, X, Y, Ignore, false);
+}
+
 Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpriteParam *IgnoreSprite, bool EnableCulling) {
   Pixel Color = Env->AmbientLight;
   Pixel LightColor;
@@ -1572,6 +1642,7 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
   Lighting::Sector *Sector = Null;
   std::vector<Lighting::Obstruction>::iterator Obstruction;
   if (Env->LightCount < 1) return Color;
+  ProfileStart("Raycast");
   for (int l = 0; l < Env->LightCount; ++l) {
     Obscured = false;
 	  if (((!Env->Lights[l].Culled) || (!EnableCulling)) && (Env->Lights[l].Visible)) {
@@ -1584,10 +1655,10 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
       LightRay.Start.Y = Env->Lights[l].Y;
       LightRay.End.X = X;
       LightRay.End.Y = Y;
-	  mx1 = ClipValue(floor(_Min(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
-	  my1 = ClipValue(floor(_Min(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), 0, Env->Matrix->Height - 1);
-	  mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
-	  my2 = ClipValue(ceil(_Max(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), 0, Env->Matrix->Height - 1);
+	    mx1 = ClipValue(floor(_Min(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
+  	  my1 = ClipValue(floor(_Min(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), 0, Env->Matrix->Height - 1);
+	    mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
+	    my2 = ClipValue(ceil(_Max(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), 0, Env->Matrix->Height - 1);
       if (Falloff) {
         YDistance = abs(LightRay.End.Y - LightRay.Start.Y) * DistanceMultiplier;
         XDistance = abs(LightRay.End.X - LightRay.Start.X) * DistanceMultiplier;
@@ -1609,9 +1680,10 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
           float a_s = NormalizeAngle(Env->Lights[l].Angle - ls);
           float a_e = NormalizeAngle(Env->Lights[l].Angle + ls);
           if (a_e < a_s) {
-            a_l = NormalizeAngle(a_l - 180);
-            a_s = NormalizeAngle(a_s - 180);
-            a_e = NormalizeAngle(a_e - 180);
+            float a_d = a_s - a_e;
+            a_l = NormalizeAngle(a_l + a_d);
+            a_s = NormalizeAngle(a_s + a_d);
+            a_e = NormalizeAngle(a_e + a_d);
             if ((a_l < a_s) || (a_l > a_e)) Obscured = true;
           } else {
             if ((a_l < a_s) || (a_l > a_e)) Obscured = true;
@@ -1633,7 +1705,6 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
 				  }
 			  }
 		  }
-		  found:
 
         if (Env->Sprites != Null) {
           Sprite = Env->Sprites;
@@ -1684,6 +1755,7 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
             Sprite = Sprite->pNext;
           }
         }
+		  found:
 
         if (!Obscured) {
           if ((Falloff) && (Distance > 0)) {
@@ -1700,6 +1772,7 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
       }
     }
   }
+  ProfileStop("Raycast");
   return Color;
 }
 
@@ -1741,13 +1814,12 @@ int OffsetX = 0, OffsetY = 0;
 
   Scaling = (Camera->OutputScaleRatio != 1.0);
 
-  ProfileStart("Render Light Sources");
-
   for (int l = 0; l < Environment->LightCount; l++) {
     Environment->Lights[l].Culled = false;
   }
 
   for (int l = 0; l < Environment->LightCount; l++) {
+
     bool Light_Clipped = false;
 
     OffsetX = Camera->ScrollX;
@@ -1771,6 +1843,7 @@ int OffsetX = 0, OffsetY = 0;
     }
     RenderTarget->setClipRectangle(RenderTarget->getRectangle());
     if (Light->Visible) {
+      ProfileStart("Render Light Sources");
       if (Scaling) {
         LightPoint = FPoint((Light->X - OffsetX) * Camera->OutputScaleRatio, (Light->Y - OffsetY) * Camera->OutputScaleRatio);
         LightDistance = Light->FalloffDistance * 1.1 * Camera->OutputScaleRatio;
@@ -1842,7 +1915,7 @@ int OffsetX = 0, OffsetY = 0;
           ShadowPoly.Finalize();
 
           Camera->ScratchBuffer->setClipRectangle(LightRect);
-          FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, Light->Color);
+          FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, Light->Color, Null);
         } else {
           // falloff (gradient filled convex polygon extended to FalloffDistance pixels away)
           GradientShadowPoly.Allocate(3);
@@ -1947,7 +2020,7 @@ int OffsetX = 0, OffsetY = 0;
 						Vector.Y = afloor(Vector.Y / vs);
 						ShadowPoly.SetVertex(3, FPoint(LinePoint[1].X + Vector.X, LinePoint[1].Y + Vector.Y));
 
-						FilterSimple_ConvexPolygon(RenderTarget, &ShadowPoly, Pixel(0,0,0,255));
+						FilterSimple_ConvexPolygon(RenderTarget, &ShadowPoly, Pixel(0,0,0,255), Null);
 												
 					}
 				}
@@ -2025,7 +2098,7 @@ int OffsetX = 0, OffsetY = 0;
 
               ShadowPoly.SetVertex(3, LinePoint[1]);
 
-              FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, Pixel(0,0,0,255));
+              FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, Pixel(0,0,0,255), Null);
             }
           }
 
@@ -2130,10 +2203,11 @@ int OffsetX = 0, OffsetY = 0;
     FPoint TexPoint[2];
     PlanePoly.Allocate(4);
     PlanePoly.SetCount(4);
-    PlaneTexture = new Image(StaticAllocate<Pixel>(TextureBuffer, 256), 256, 1, 0);
+//    PlaneTexture = new Image(StaticAllocate<Pixel>(TextureBuffer, 256), 256, 1, 0);
 
     while (SortEntry) {
       if (SortEntry->type == Lighting::sprite) {
+        ProfileStart("Render Sprites");
         Sprite = SortEntry->Sprite;
         SavedColor = Sprite->Params.IlluminationLevel;
         SavedColor[::Alpha] = 255;
@@ -2168,7 +2242,9 @@ int OffsetX = 0, OffsetY = 0;
             }
           }
         }
+        ProfileStop("Render Sprites");
       } else if (SortEntry->type == Lighting::plane) {
+        ProfileStart("Render Planes");
         Plane = SortEntry->Plane;
         rctTop = Plane->topRect();
         rctWall = Plane->bottomRect();
@@ -2180,6 +2256,7 @@ int OffsetX = 0, OffsetY = 0;
 		    xo = (rctWall.Left - x);
 		    if (Plane->Height != 0) FilterSimple_Fill(Camera->OutputBuffer, &rctTop, Environment->AmbientLight);
           if ((rctWall.Width > 0) && (rctWall.Height > 0)) {
+            /*
             if (rctWall.Width > PlaneTexture->Width) {
               PlaneTexture->Data = StaticAllocate<Pixel>(TextureBuffer, rctWall.Width);
               PlaneTexture->Width = rctWall.Width;
@@ -2188,11 +2265,17 @@ int OffsetX = 0, OffsetY = 0;
             rctSource.Height = 1;
             rctSource.Left = 0;
             rctSource.Top = 0;
+            */
+            rctSource.Width = 1;
+            rctSource.Height = rctWall.Height;
+            rctSource.Top = rctWall.Top;
+            rctSource.Left =  rctWall.Left;
             float y = _Max<float>(Plane->Start.Y, Plane->End.Y);
             float ex = Plane->End.X;
             float sx = Plane->Start.X;
 		        Pixel color = Pixel(0, 0, 0, 255);
 		        int i = 0;
+            /*
 		        PlaneTexture->clear();
             for (float x = sx; x <= ex; x += 1.0) {
       			  if (i >= rctWall.Width) break;
@@ -2200,14 +2283,25 @@ int OffsetX = 0, OffsetY = 0;
               PlaneTexture->setPixelFast(i++, 0, color);
             }
             BlitResample_Normal(Camera->OutputBuffer, PlaneTexture, &rctWall, &rctSource, DefaultSampleFunction);
+            */
+            for (float x = sx; x <= ex; x += 1.0) {
+      			  if (i >= rctWall.Width) break;
+              rctSource.Left = rctWall.Left + i;
+              if ((rctSource.Left >= Camera->OutputBuffer->ClipRectangle.Left) && (rctSource.Left < Camera->OutputBuffer->ClipRectangle.right())) {
+  			        color = Raycast(Environment, x + xo, y, Null, true);
+                FilterSimple_Fill(Camera->OutputBuffer, &rctSource, color);
+              }
+              i++;
+            }
           }
+          ProfileStop("Render Planes");
         }
         SortEntry = SortEntry->pSortedNext;
         n++;
       }
       PlanePoly.Deallocate();
-	    PlaneTexture->Data = Null;
-      delete PlaneTexture;
+//	    PlaneTexture->Data = Null;
+//      delete PlaneTexture;
   }
   ProfileStop("Render Planes & Sprites");
 

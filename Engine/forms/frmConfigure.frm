@@ -85,14 +85,8 @@ Begin VB.Form frmConfigure
       TabIndex        =   0
       Top             =   0
       Width           =   4620
-      Begin VB.CheckBox chkDirectRender 
-         Height          =   195
-         Left            =   4320
-         TabIndex        =   13
-         Top             =   1185
-         Width           =   195
-      End
       Begin VB.CheckBox chkVSync 
+         Enabled         =   0   'False
          Height          =   195
          Left            =   1470
          TabIndex        =   9
@@ -100,6 +94,7 @@ Begin VB.Form frmConfigure
          Width           =   195
       End
       Begin VB.ComboBox cmbBitDepth 
+         Enabled         =   0   'False
          Height          =   315
          ItemData        =   "frmConfigure.frx":708A
          Left            =   3255
@@ -110,6 +105,7 @@ Begin VB.Form frmConfigure
          Width           =   1260
       End
       Begin VB.ComboBox cmbScreenSize 
+         Enabled         =   0   'False
          Height          =   315
          ItemData        =   "frmConfigure.frx":70C3
          Left            =   1470
@@ -139,26 +135,17 @@ Begin VB.Form frmConfigure
          Height          =   315
          ItemData        =   "frmConfigure.frx":7164
          Left            =   1470
-         List            =   "frmConfigure.frx":716E
+         List            =   "frmConfigure.frx":716B
          Style           =   2  'Dropdown List
          TabIndex        =   2
          Top             =   255
          Width           =   3045
       End
-      Begin VB.Label lblDirectRender 
-         Alignment       =   1  'Right Justify
-         AutoSize        =   -1  'True
-         Caption         =   "Direct Render (faster but buggy):"
-         Height          =   195
-         Left            =   1860
-         TabIndex        =   14
-         Top             =   1170
-         Width           =   2430
-      End
       Begin VB.Label lblVSync 
          Alignment       =   1  'Right Justify
          AutoSize        =   -1  'True
          Caption         =   "Vertical Sync:"
+         Enabled         =   0   'False
          Height          =   195
          Left            =   465
          TabIndex        =   10
@@ -169,6 +156,7 @@ Begin VB.Form frmConfigure
          Alignment       =   1  'Right Justify
          AutoSize        =   -1  'True
          Caption         =   "Screen Mode:"
+         Enabled         =   0   'False
          Height          =   195
          Left            =   450
          TabIndex        =   7

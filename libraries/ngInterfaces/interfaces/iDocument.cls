@@ -22,11 +22,14 @@ End Property
 Public Function Save(Filename As String) As Boolean
 End Function
 
+Public Property Get Modified() As Boolean
+End Property
+
 Public Property Get CanSave() As Boolean
 End Property
 
-Public Property Get Plugin() As iFileTypePlugin
+Public Property Get Plugin() As iPlugin
 End Property
 
-Public Property Set Plugin(NewPlugin As iFileTypePlugin)
+Public Property Set Plugin(NewPlugin As iPlugin)
 End Property

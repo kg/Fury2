@@ -44,6 +44,7 @@ Public Loaded As Boolean
 Private mvarDirty As Boolean
 Private mvarRevision As Fury2RevisionData
 Private mCol As Collection
+Private mColUpdate As Collection
 Private mvarIndex As Long
 Private mvarFirst As Long, mvarSortedFirst As Long
 Private mvarFilename As String
@@ -108,6 +109,7 @@ Dim l_sprSprite As Fury2Sprite, l_sprNext As Fury2Sprite
     If mvarIndex < 1 Then Exit Sub
     If mCol.Count < 1 Then Exit Sub
     ProfileStart "RefreshList"
+    mvarDirty = False
     l_lngFillSprites = 1
     mvarFirst = mCol.Item(1).Pointer
     For Each l_sprSprite In mCol
@@ -125,7 +127,6 @@ Dim l_sprSprite As Fury2Sprite, l_sprNext As Fury2Sprite
         l_lngFillSprites = l_lngFillSprites + 1
     Next l_sprSprite
     mvarFirst = mCol.Item(1).Pointer
-    mvarDirty = False
     ProfileStop "RefreshList"
     Err.Clear
 End Sub
@@ -398,22 +399,17 @@ Dim l_lngSprites As Long
     l_lngSprites = 1
     If mvarDirty Then RefreshList
     With Map.Layers(CLayer)
-'        SoftFX.UpdateSprites mvarFirst, .CollisionLinePointer(0), .CollisionLineCount
         SoftFX.UpdateSprites mvarFirst, .CollisionMatrix
     End With
+    ProfileStart "Sprite.Update"
     For Each l_sprSprite In mCol
         With l_sprSprite
-            If SetIndex Then
-                .SetAttributes l_lngSprites, CLayer, Me, Map
-            End If
-            m_Engine.ContextLevelAdd "Sprites(" + CStr(l_lngSprites) + ")"
-            ProfileStart "Sprite.Update"
+            .SetAttributes l_lngSprites, CLayer, Me, Map
             .Update
-            ProfileStop "Sprite.Update"
-            m_Engine.ContextLevelRemove
             l_lngSprites = l_lngSprites + 1
         End With
     Next l_sprSprite
+    ProfileStop "Sprite.Update"
 End Sub
 
 Public Sub Redraw(Camera As Fury2Camera, Optional OutputBuffer As Fury2Image = Nothing)
@@ -467,14 +463,14 @@ On Error Resume Next
     mvarDirty = True
 End Sub
 
-Public Sub MoveTo(ByVal Index As Long, ByVal NewLayer As Long)
+Public Sub MoveTo(ByRef Index, ByVal NewLayer As Long)
 On Error Resume Next
     Err.Clear
     With mvarParent.Layers(NewLayer).Sprites
-        .AcceptNew mCol.Item(Index)
-        mCol.Item(Index).SetAttributes .Count, NewLayer, mvarParent.Layers(NewLayer).Sprites, mvarParent
+        .AcceptNew Item(Index)
+        Item(Index).SetAttributes .Count, NewLayer, mvarParent.Layers(NewLayer).Sprites, mvarParent
     End With
-    mCol.Remove Index
+    Remove Index
     mvarDirty = True
 End Sub
 
@@ -538,6 +534,18 @@ Dim l_objObject As Object
     Add l_objObject, , ToIndex
 End Sub
 
+Public Function FindByNames(ByVal Match As String) As Fury2Collection
+On Error Resume Next
+Dim l_colItems As New Fury2Collection
+Dim l_sprSprite As Fury2Sprite
+    For Each l_sprSprite In mCol
+        If l_sprSprite.Name Like Match Then
+            l_colItems.Add l_sprSprite
+        End If
+    Next l_sprSprite
+    Set FindByNames = l_colItems
+End Function
+
 Public Function Find(vntIndexKey As Variant) As Long
 On Error Resume Next
 Dim l_lngSprites As Long
@@ -596,11 +604,14 @@ End Property
 Public Sub Remove(vntIndexKey As Variant)
 On Error Resume Next
 Dim m_lngSprites As Long, m_lngIndex As Long
+Dim l_sprSprite As Fury2Sprite
+Dim l_sprFind As Fury2Sprite
     If mCol.Count < 1 Then Exit Sub
     m_lngSprites = Find(vntIndexKey)
+    Set l_sprFind = mCol(m_lngSprites)
     If mvarParent Is Nothing Then
     Else
-        mvarParent.Sprites.Remove mCol(m_lngSprites)
+        mvarParent.Sprites.Remove l_sprFind
     End If
     mCol.Remove m_lngSprites
     mvarDirty = True
@@ -619,6 +630,7 @@ End Property
 Private Sub Class_Initialize()
     'creates the collection when this class is created
     Set mCol = New Collection
+    Set mColUpdate = New Collection
     Set mvarRevision = New Fury2RevisionData
     mvarDirty = True
 End Sub
@@ -628,6 +640,7 @@ Private Sub Class_Terminate()
     Set mvarParent = Nothing
     Set mvarRevision = Nothing
     Set mCol = Nothing
+    Set mColUpdate = Nothing
 End Sub
 
 Private Sub IVirtualFileCollection_AddItem(Item As Object)

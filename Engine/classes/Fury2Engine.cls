@@ -318,6 +318,8 @@ Public FrameLength As Double
 Private NextFPS As Long
 Private OldVolume As Long
 
+Private RanStartEvent As Boolean
+
 Public Function NormalizeAngle(ByVal Angle As Single) As Single
 Dim N As Single
     N = Angle / 360
@@ -956,6 +958,7 @@ End Sub
 Private Sub Class_Initialize()
 On Error Resume Next
     m_booIDE = InIDE
+    RanStartEvent = False
     ReDim OnscreenPictures(0 To c_lngMaxPictureSlot)
     ReDim SavedPictures(0 To c_lngMaxPictureSlot)
     ReDim Hotspots(0 To c_lngMaxHotspot)
@@ -2144,6 +2147,13 @@ Dim l_lngThreadID As Long
         ProfileStart "Subthread #" & l_lngThreadID
         ContextLevelAdd "Subthread #" & l_lngThreadID
     End If
+    If Not RanStartEvent Then
+        RanStartEvent = True
+        m_Notify.Start
+        ContextLevelAdd "Engine_Start"
+        ScriptEngine.Exec "Engine_Start"
+        ContextLevelRemove
+    End If
     Do While m_Engine.Running
         If (m_booBreak = True) And (SubthreadCount > 0) Then
             m_booBreak = False
@@ -3071,11 +3081,11 @@ Dim l_objObject As Object
             Next l_lngScripts
         End If
         If m_booIDE Then LogEntry "Starting Game"
+        m_Notify.Init
         Include "init", False
         ContextLevelAdd "Engine_Init"
         ScriptEngine.Exec "Engine_Init"
         ContextLevelRemove
-        m_Notify.Init
         Running = True
         m_GFX.Window.SetFocus
         If m_GFX.Fullscreen Then SetTopmost m_GFX.Window, True
@@ -3134,10 +3144,6 @@ Dim l_objObject As Object
         LoadProgress "Game", 100
         m_GFX.Window.SetFocus
         Include "start", False
-        ContextLevelAdd "Engine_Start"
-        ScriptEngine.Exec "Engine_Start"
-        ContextLevelRemove
-        m_Notify.Start
         Err.Clear
         GameTime = 0
         CurrentGame = Game
@@ -3294,7 +3300,9 @@ Public Function LoadPlugin(DLLFile, PluginName) As Object
 Attribute LoadPlugin.VB_Description = "Loads a plugin from a DLL."
 On Error Resume Next
 Dim l_filFile As Fury2File
-    Set l_filFile = Filesystem.File(DLLFile)
+    If Filesystem.FileExists(DLLFile) Then
+        Set l_filFile = Filesystem.File(DLLFile)
+    End If
     Err.Clear
     Set LoadPlugin = CreateObject(PluginName)
     If LoadPlugin Is Nothing Or Err.Number <> 0 Then

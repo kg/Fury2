@@ -69,6 +69,7 @@ End Sub
 
 Public Sub ExitProgram()
 On Error Resume Next
+    If frmMain.WindowState = 1 Then frmMain.WindowState = 0
     If frmMain.Documents.Count > 0 Then
         Load frmSaveOpenDocuments
         frmSaveOpenDocuments.Show vbModal, frmMain

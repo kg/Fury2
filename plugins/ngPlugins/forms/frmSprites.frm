@@ -366,7 +366,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 Private Declare Function LBItemFromPt Lib "comctl32.dll" _
-  (ByVal hWnd As Long, ByVal ptx As Long, ByVal pty As Long, ByVal bAutoScroll As Long) As Long
+  (ByVal hwnd As Long, ByVal ptx As Long, ByVal pty As Long, ByVal bAutoScroll As Long) As Long
    
 Implements iExtendedForm
 Implements iEditingCommands
@@ -415,7 +415,7 @@ End Sub
 
 Public Sub CopySprite()
 On Error Resume Next
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(SCF_Sprite), SelectedSprite
     CustomClipboard.ClipboardClose
 End Sub
@@ -427,7 +427,7 @@ Dim l_sprSprite As Fury2Sprite
         AtIndex = m_scSprites.Count + 1
     End If
     Set l_sprSprite = New Fury2Sprite
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     If ClipboardDeserialize(CustomClipboard, ClipboardFormat(SCF_Sprite), l_sprSprite) Then
         CustomClipboard.ClipboardClose
         m_scSprites.Add l_sprSprite
@@ -462,7 +462,7 @@ End Sub
 
 Public Sub CopyState()
 On Error Resume Next
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(SCF_SpriteState), SelectedState
     CustomClipboard.ClipboardClose
 End Sub
@@ -474,7 +474,7 @@ Dim l_staState As Fury2State
         AtIndex = SelectedSprite.States.Count + 1
     End If
     Set l_staState = New Fury2State
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     If ClipboardDeserialize(CustomClipboard, ClipboardFormat(SCF_SpriteState), l_staState) Then
         CustomClipboard.ClipboardClose
         SelectedSprite.States.Add l_staState
@@ -505,7 +505,7 @@ End Sub
 
 Public Sub CopyPose()
 On Error Resume Next
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(SCF_SpritePose), SelectedPose
     CustomClipboard.ClipboardClose
 End Sub
@@ -518,7 +518,7 @@ Dim l_fraFrame As Fury2PoseFrame
         AtIndex = SelectedSprite.Poses.Count + 1
     End If
     Set l_posPose = New Fury2Pose
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     If ClipboardDeserialize(CustomClipboard, ClipboardFormat(SCF_SpritePose), l_posPose) Then
         CustomClipboard.ClipboardClose
         For Each l_fraFrame In l_posPose.Frames
@@ -552,7 +552,7 @@ End Sub
 
 Public Sub CopyFrame()
 On Error Resume Next
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(SCF_SpriteFrame), SelectedFrame
     CustomClipboard.ClipboardClose
 End Sub
@@ -564,7 +564,7 @@ Dim l_fraFrame As Fury2PoseFrame
         AtIndex = SelectedPose.Frames.Count + 1
     End If
     Set l_fraFrame = New Fury2PoseFrame
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     If ClipboardDeserialize(CustomClipboard, ClipboardFormat(SCF_SpriteFrame), l_fraFrame) Then
         CustomClipboard.ClipboardClose
         l_fraFrame.LoadGraphics
@@ -649,7 +649,7 @@ End Property
 
 Public Sub LockRedraw(Window As Long, State As Boolean)
 On Error Resume Next
-    SendMessage Window, WM_SetRedraw, Abs(CLng(State)), 0
+    SendMessage Window, WM_SETREDRAW, Abs(CLng(State)), 0
 End Sub
 
 Public Property Get SelectedFrame() As Fury2PoseFrame
@@ -778,7 +778,8 @@ Public Sub RedrawFrames()
 On Error Resume Next
 Dim l_lngItems As Long
     If SelectedPose Is Nothing Then Exit Sub
-    LockRedraw lstFrames.hWnd, False
+    LockRedraw lstFrames.hwnd, False
+    m_lngSelectedFrame = lstFrames.ListIndex + 1
     For l_lngItems = 1 To SelectedPose.Frames.Count
         If lstFrames.ListCount < l_lngItems Then
             lstFrames.AddItem IIf(l_lngItems = 1, "Stopped Frame", "Animation Frame " & l_lngItems - 1)
@@ -790,7 +791,7 @@ Dim l_lngItems As Long
         lstFrames.RemoveItem lstFrames.ListCount - 1
     Loop
     lstFrames.ListIndex = m_lngSelectedFrame - 1
-    LockRedraw lstFrames.hWnd, True
+    LockRedraw lstFrames.hwnd, True
     lstFrames.Refresh
 End Sub
 
@@ -798,7 +799,7 @@ Public Sub RedrawPoses()
 On Error Resume Next
 Dim l_lngItems As Long
     If SelectedSprite Is Nothing Then Exit Sub
-    LockRedraw lstPoses.hWnd, False
+    LockRedraw lstPoses.hwnd, False
     For l_lngItems = 1 To SelectedSprite.Poses.Count
         If lstPoses.ListCount < l_lngItems Then
             lstPoses.AddItem SelectedSprite.Poses(l_lngItems).Name
@@ -810,7 +811,7 @@ Dim l_lngItems As Long
         lstPoses.RemoveItem lstPoses.ListCount - 1
     Loop
     lstPoses.ListIndex = m_lngSelectedPose - 1
-    LockRedraw lstPoses.hWnd, True
+    LockRedraw lstPoses.hwnd, True
     lstPoses.Refresh
 End Sub
 
@@ -818,7 +819,7 @@ Public Sub RedrawStates()
 On Error Resume Next
 Dim l_lngItems As Long
     If SelectedSprite Is Nothing Then Exit Sub
-    LockRedraw lstStates.hWnd, False
+    LockRedraw lstStates.hwnd, False
     For l_lngItems = 1 To SelectedSprite.States.Count
         If lstStates.ListCount < l_lngItems Then
             lstStates.AddItem SelectedSprite.States(l_lngItems).Name
@@ -830,7 +831,7 @@ Dim l_lngItems As Long
         lstStates.RemoveItem lstStates.ListCount - 1
     Loop
     lstStates.ListIndex = m_lngSelectedState - 1
-    LockRedraw lstStates.hWnd, True
+    LockRedraw lstStates.hwnd, True
     lstStates.Refresh
 End Sub
 
@@ -838,7 +839,7 @@ Public Sub RedrawStatePoses()
 On Error Resume Next
 Dim l_lngItems As Long
     If SelectedState Is Nothing Then Exit Sub
-    LockRedraw lstStatePoses.hWnd, False
+    LockRedraw lstStatePoses.hwnd, False
     For l_lngItems = 1 To SelectedSprite.Poses.Count
         If lstStatePoses.ListCount < l_lngItems Then
             lstStatePoses.AddItem SelectedSprite.Poses(l_lngItems).Name
@@ -850,7 +851,7 @@ Dim l_lngItems As Long
     Do While lstStatePoses.ListCount > SelectedSprite.Poses.Count
         lstStatePoses.RemoveItem lstStatePoses.ListCount - 1
     Loop
-    LockRedraw lstStatePoses.hWnd, True
+    LockRedraw lstStatePoses.hwnd, True
     lstStatePoses.Refresh
 End Sub
 
@@ -1259,7 +1260,7 @@ On Error Resume Next
 Dim l_objPlugin As SpriteEditor
     Set l_objPlugin = m_fpgPlugin
     With l_objPlugin.CustomClipboard
-        .GetCurrentFormats Me.hWnd
+        .GetCurrentFormats Me.hwnd
         ClipboardContainsFormat = .HasCurrentFormat(l_objPlugin.ClipboardFormat(Format))
     End With
 End Function
@@ -1452,12 +1453,12 @@ On Error Resume Next
     iDocument_Filename = m_strFilename
 End Property
 
-Private Property Get iDocument_Plugin() As ngInterfaces.iFileTypePlugin
+Private Property Get iDocument_Plugin() As ngInterfaces.iPlugin
 On Error Resume Next
     Set iDocument_Plugin = m_fpgPlugin
 End Property
 
-Private Property Set iDocument_Plugin(RHS As ngInterfaces.iFileTypePlugin)
+Private Property Set iDocument_Plugin(RHS As ngInterfaces.iPlugin)
 On Error Resume Next
     Set m_fpgPlugin = RHS
 End Property
@@ -1713,8 +1714,10 @@ End Sub
 
 Private Sub lstFrames_KeyUp(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
-    m_lngSelectedFrame = lstFrames.ListIndex + 1
-    FramesViewChanged
+    If KeyCode = vbKeyUp Or KeyCode = vbKeyDown Then
+        m_lngSelectedFrame = lstFrames.ListIndex + 1
+        FramesViewChanged
+    End If
 End Sub
 
 Private Sub lstFrames_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -1725,7 +1728,7 @@ Dim l_lngIndex As Long
     If Y >= (lstFrames.Height * Screen.TwipsPerPixelY) Then Exit Sub
     lstFrames.SetFocus
     GetCursorPos l_ptMouse
-    l_lngIndex = LBItemFromPt(lstFrames.hWnd, l_ptMouse.X, l_ptMouse.Y, False)
+    l_lngIndex = LBItemFromPt(lstFrames.hwnd, l_ptMouse.X, l_ptMouse.Y, False)
     If l_lngIndex <> m_lngSelectedFrame - 1 Then
         If l_lngIndex > -1 Then
             If Button = 1 Then lstFrames.ListIndex = l_lngIndex
@@ -1765,8 +1768,10 @@ End Sub
 
 Private Sub lstPoses_KeyUp(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
-    m_lngSelectedPose = lstPoses.ListIndex + 1
-    PosesViewChanged
+    If KeyCode = vbKeyUp Or KeyCode = vbKeyDown Then
+        m_lngSelectedPose = lstPoses.ListIndex + 1
+        PosesViewChanged
+    End If
 End Sub
 
 Private Sub lstPoses_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -1777,7 +1782,7 @@ Dim l_lngIndex As Long
     If Y >= (lstPoses.Height * Screen.TwipsPerPixelY) Then Exit Sub
     lstPoses.SetFocus
     GetCursorPos l_ptMouse
-    l_lngIndex = LBItemFromPt(lstPoses.hWnd, l_ptMouse.X, l_ptMouse.Y, False)
+    l_lngIndex = LBItemFromPt(lstPoses.hwnd, l_ptMouse.X, l_ptMouse.Y, False)
     If l_lngIndex <> m_lngSelectedPose - 1 Then
         If Button = 1 Then lstPoses.ListIndex = l_lngIndex
         m_lngSelectedPose = lstPoses.ListIndex + 1
@@ -1818,7 +1823,7 @@ Dim l_lngItems As Long
     If Button = 1 Then
         GetCursorPos l_ptMouse
         m_booStatePosesDragging = True
-        m_lngStatePosesStart = LBItemFromPt(lstStatePoses.hWnd, l_ptMouse.X, l_ptMouse.Y, 0)
+        m_lngStatePosesStart = LBItemFromPt(lstStatePoses.hwnd, l_ptMouse.X, l_ptMouse.Y, 0)
         If m_lngStatePosesStart = -1 Then
             If Y < 0 Then
                 m_lngStatePosesStart = 0
@@ -1843,7 +1848,7 @@ Dim l_lngItems As Long
     If ((Button And 1) = 1) And m_booStatePosesDragging Then
         GetCursorPos l_ptMouse
         SelectedState.PoseOffset = m_lngStatePosesStart
-        l_lngStatePosesEnd = LBItemFromPt(lstStatePoses.hWnd, l_ptMouse.X, l_ptMouse.Y, 0)
+        l_lngStatePosesEnd = LBItemFromPt(lstStatePoses.hwnd, l_ptMouse.X, l_ptMouse.Y, 0)
         If l_lngStatePosesEnd = -1 Then
             If Y < 0 Then
                 l_lngStatePosesEnd = 0
@@ -1876,7 +1881,7 @@ Dim l_lngIndex As Long
     If Y >= (lstStates.Height * Screen.TwipsPerPixelY) Then Exit Sub
     lstStates.SetFocus
     GetCursorPos l_ptMouse
-    l_lngIndex = LBItemFromPt(lstStates.hWnd, l_ptMouse.X, l_ptMouse.Y, False)
+    l_lngIndex = LBItemFromPt(lstStates.hwnd, l_ptMouse.X, l_ptMouse.Y, False)
     If l_lngIndex <> m_lngSelectedState - 1 Then
         If Button = 1 Then lstStates.ListIndex = l_lngIndex
         m_lngSelectedState = lstStates.ListIndex + 1
@@ -2049,4 +2054,10 @@ End Sub
 Private Sub vsSprites_Change()
     RedrawSprites
 End Sub
+
+
+Private Property Get iDocument_Modified() As Boolean
+On Error Resume Next
+    iDocument_Modified = True
+End Property
 

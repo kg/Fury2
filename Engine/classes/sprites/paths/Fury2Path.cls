@@ -36,6 +36,7 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 '
 
 Option Explicit
+Implements IInspectable
 Implements Fury2Object
 Implements IVirtualFileCollection
 
@@ -82,6 +83,7 @@ On Error Resume Next
 End Sub
 
 Public Property Get Looping() As Boolean
+Attribute Looping.VB_Description = "If True, the path will continue forever."
 On Error Resume Next
     Looping = mvarLooping
 End Property
@@ -112,13 +114,21 @@ On Error Resume Next
     Set objNewMember = Nothing
 End Function
 
+Public Sub AddObject(ByVal Obj As Fury2Waypoint)
+On Error Resume Next
+    If mCol.Count >= c_lngMaxWaypoints Then Exit Sub
+    mCol.Add Obj
+End Sub
+
 Public Property Get Item(vntIndexKey As Variant) As Fury2Waypoint
+Attribute Item.VB_Description = "*"
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
   Set Item = mCol(vntIndexKey)
 End Property
 
 Public Property Get Count() As Long
+Attribute Count.VB_Description = "The number of nodes in the path."
 On Error Resume Next
     Count = mCol.Count
 End Property

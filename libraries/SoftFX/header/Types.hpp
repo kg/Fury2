@@ -48,6 +48,8 @@ class Pixel;
 class Image;
 class Rectangle;
 
+struct FPoint;
+struct FVector;
 struct ILine;
 struct FLine;
 
@@ -113,7 +115,7 @@ struct FVector {
     X = 0;
     Y = 0;
   }
-  inline FVector(FPoint &a, FPoint &b) {
+  FVector(FPoint &a, FPoint &b) {
     X = b.X - a.X;
     Y = b.Y - a.Y;
   }
@@ -121,6 +123,20 @@ struct FVector {
     X *= Amount;
     Y *= Amount;
     return;
+  }
+  inline float length() {
+    return sqrt((X * X) + (Y * Y));
+  }
+  inline void Rationalize() {
+    if (X > Y) {
+      Y /= X;
+      X = 1.0;
+    } else if (Y > X) {
+      X /= Y;
+      Y = 1.0;
+    } else {
+      X = Y = 1.0;
+    }
   }
   float X;
   float Y;
@@ -257,6 +273,8 @@ struct ColorFilter {
     Byte Green[256];
     Byte Blue[256];
 };
+
+typedef void SpriteIterator(int Sprite);
 
 typedef void ScalerFunction(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest);
 

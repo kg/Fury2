@@ -4,7 +4,6 @@ Object = "{396F7AC0-A0DD-11D3-93EC-00C0DFE7442A}#1.0#0"; "vbalIml6.ocx"
 Object = "{E142732F-A852-11D4-B06C-00500427A693}#2.0#0"; "vbalTbar6.ocx"
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
 Begin VB.Form frmCommandBrowser 
-   BackColor       =   &H00000000&
    BorderStyle     =   0  'None
    Caption         =   "Command Browser"
    ClientHeight    =   4935
@@ -48,7 +47,7 @@ Begin VB.Form frmCommandBrowser
       ScaleHeight     =   325
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   129
-      TabIndex        =   2
+      TabIndex        =   1
       Top             =   0
       Width           =   1995
       Begin VB.TextBox txtFilterObjects 
@@ -64,14 +63,14 @@ Begin VB.Form frmCommandBrowser
          EndProperty
          Height          =   240
          Left            =   1290
-         TabIndex        =   5
+         TabIndex        =   4
          Top             =   0
          Width           =   105
       End
       Begin vbalTreeViewLib6.vbalTreeView tvObjects 
          Height          =   4080
          Left            =   165
-         TabIndex        =   3
+         TabIndex        =   2
          Top             =   765
          Width           =   1695
          _ExtentX        =   2990
@@ -106,7 +105,7 @@ Begin VB.Form frmCommandBrowser
       Begin vbalTBar6.cToolbarHost tbhObjects 
          Height          =   180
          Left            =   0
-         TabIndex        =   4
+         TabIndex        =   3
          Top             =   0
          Width           =   315
          _ExtentX        =   556
@@ -116,7 +115,6 @@ Begin VB.Form frmCommandBrowser
       End
    End
    Begin VB.PictureBox picObjectMembers 
-      BackColor       =   &H00000000&
       BorderStyle     =   0  'None
       Height          =   4935
       Left            =   2025
@@ -125,12 +123,31 @@ Begin VB.Form frmCommandBrowser
       TabIndex        =   0
       Top             =   0
       Width           =   3495
+      Begin VB.TextBox txtInfo 
+         BeginProperty Font 
+            Name            =   "Tahoma"
+            Size            =   9
+            Charset         =   0
+            Weight          =   400
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
+         Height          =   1890
+         Left            =   0
+         Locked          =   -1  'True
+         MultiLine       =   -1  'True
+         TabIndex        =   9
+         Top             =   3000
+         Width           =   3450
+      End
       Begin VB.PictureBox picMembers 
          Height          =   2910
          Left            =   0
-         ScaleHeight     =   2850
-         ScaleWidth      =   3390
-         TabIndex        =   6
+         ScaleHeight     =   190
+         ScaleMode       =   3  'Pixel
+         ScaleWidth      =   226
+         TabIndex        =   5
          Top             =   0
          Width           =   3450
          Begin VB.TextBox txtFilterMembers 
@@ -146,7 +163,7 @@ Begin VB.Form frmCommandBrowser
             EndProperty
             Height          =   240
             Left            =   1290
-            TabIndex        =   7
+            TabIndex        =   6
             Top             =   -15
             Width           =   105
          End
@@ -163,7 +180,7 @@ Begin VB.Form frmCommandBrowser
          Begin vbalTBar6.cToolbarHost tbhMembers 
             Height          =   180
             Left            =   0
-            TabIndex        =   8
+            TabIndex        =   7
             Top             =   0
             Width           =   315
             _ExtentX        =   556
@@ -186,7 +203,7 @@ Begin VB.Form frmCommandBrowser
          Begin vbalTreeViewLib6.vbalTreeView tvMembers 
             Height          =   4080
             Left            =   0
-            TabIndex        =   9
+            TabIndex        =   8
             Top             =   0
             Width           =   1695
             _ExtentX        =   2990
@@ -209,25 +226,6 @@ Begin VB.Form frmCommandBrowser
             EndProperty
          End
       End
-      Begin VB.PictureBox picInfo 
-         BeginProperty Font 
-            Name            =   "Tahoma"
-            Size            =   9
-            Charset         =   0
-            Weight          =   400
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         Height          =   1935
-         Left            =   0
-         ScaleHeight     =   125
-         ScaleMode       =   3  'Pixel
-         ScaleWidth      =   229
-         TabIndex        =   1
-         Top             =   3000
-         Width           =   3495
-      End
    End
    Begin sMDIinActiveX.MDIActiveX extender 
       Left            =   0
@@ -249,6 +247,7 @@ Private Const WM_SETREDRAW = &HB
 Private Declare Function InvalidateRect Lib "user32" (ByVal hwnd As Long, lpRect As RECT, ByVal bErase As Long) As Long
 
 Public Plugin As CommandBrowser
+Dim m_miSelectedMember As MemberInfo
 Dim m_tiSelectedObject As TypeInfo
 Dim m_tlbEngine As TypeLibInfo
 Dim m_tlbGraphics As TypeLibInfo
@@ -266,6 +265,15 @@ Public Sub InitToolbars()
         ButtonString("Reset Filter", , "ResetFilter", "RESET"), "-" _
     )
     tbhObjects.Capture tbrObjects
+    
+    tbrMembers.Wrappable = True
+    tbrMembers.CreateToolbar ilMembers.IconSizeX, False, False, True, ilMembers.IconSizeX
+    tbrMembers.Wrappable = True
+    DefineToolbar tbrMembers, ilMembers, Buttons( _
+        ButtonString("Go Back", , "Back", "BACK"), ButtonString("Go Forward", , "Forward", "FORWARD"), "-", _
+        ButtonString("Reset Filter", , "ResetFilter", "RESET"), "-" _
+    )
+    tbhMembers.Capture tbrMembers
 End Sub
 
 Public Function TLIToString(ByRef VT As VarTypeInfo, ByRef Value) As String
@@ -382,27 +390,11 @@ Dim l_booByref As Boolean
     End With
 End Function
 
-Public Function MemberSignature(ByRef Member As MemberInfo, Optional ByVal ParameterTypes As Boolean = False) As String
+Public Function ParameterList(ByRef Member As MemberInfo, Optional ByVal ParameterTypes As Boolean = False, Optional ByVal Parens As Boolean = False) As String
 On Error Resume Next
 Dim l_strParameters As String
 Dim l_lngParameters As Long
-Dim l_strReturnType As String
-Dim l_strInvokeType As String
     With Member
-        Select Case .InvokeKind
-        Case INVOKE_FUNC
-            If .ReturnType.VarType = VT_VOID Then
-                l_strInvokeType = "Sub "
-            Else
-                l_strInvokeType = "Function "
-            End If
-        Case INVOKE_PROPERTYGET
-            l_strInvokeType = "Property Get "
-        Case INVOKE_PROPERTYPUT
-            l_strInvokeType = "Property Let "
-        Case INVOKE_PROPERTYPUTREF
-            l_strInvokeType = "Property Set "
-        End Select
         If .Parameters.Count > 0 Then
             For l_lngParameters = 1 To .Parameters.Count
                 With .Parameters(l_lngParameters)
@@ -427,10 +419,56 @@ Dim l_strInvokeType As String
                 End With
             Next l_lngParameters
         End If
+    End With
+    If Parens And Len(l_strParameters) > 0 Then
+        ParameterList = "(" & l_strParameters & ")"
+    Else
+        ParameterList = l_strParameters
+    End If
+End Function
+
+Public Function MemberSignature(ByRef Member As MemberInfo, Optional ByVal ParameterTypes As Boolean = False, Optional ByVal ShortForm As Boolean) As String
+On Error Resume Next
+Dim l_strParameters As String
+Dim l_lngParameters As Long
+Dim l_strReturnType As String
+Dim l_strInvokeType As String
+Dim l_booProperty As Boolean
+Dim l_booSub As Boolean
+    With Member
+        Select Case .InvokeKind
+        Case INVOKE_FUNC
+            If .ReturnType.VarType = VT_VOID Then
+                l_strInvokeType = "Sub "
+                l_booSub = True
+            Else
+                l_strInvokeType = "Function "
+            End If
+        Case INVOKE_PROPERTYGET
+            l_booProperty = True
+            l_strInvokeType = IIf(ShortForm, "Property ", "Property Get ")
+        Case INVOKE_PROPERTYPUT
+            l_booProperty = True
+            l_strInvokeType = IIf(ShortForm, "Property ", "Property Let ")
+        Case INVOKE_PROPERTYPUTREF
+            l_booProperty = True
+            l_strInvokeType = IIf(ShortForm, "Property ", "Property Set ")
+        End Select
+        l_strParameters = ParameterList(Member, ParameterTypes)
         If .ReturnType.VarType <> VT_VOID Then
             l_strReturnType = " As " & VarTypeSignature(.ReturnType)
         End If
-        MemberSignature = l_strInvokeType & .Name & "(" & l_strParameters & ")" & l_strReturnType
+        If (ShortForm) Then
+            If l_booProperty Then
+                MemberSignature = "Property " & .Name
+            ElseIf l_booSub Then
+                MemberSignature = "Sub " & .Name
+            Else
+                MemberSignature = "Function " & .Name
+            End If
+        Else
+            MemberSignature = l_strInvokeType & .Name & "(" & l_strParameters & ")" & l_strReturnType
+        End If
     End With
 End Function
 
@@ -465,7 +503,7 @@ On Error Resume Next
     End With
     With m_splSplitMembers
         .Orientation = cSPLTOrientationHorizontal
-        .Bind picMembers, picInfo, picObjectMembers
+        .Bind picMembers, txtInfo, picObjectMembers
         .Orientation = cSPLTOrientationHorizontal
         .MinimumSize(cSPLTRightOrBottomPanel) = 50
         .MaximumSize(cSPLTRightOrBottomPanel) = 250
@@ -511,6 +549,7 @@ On Error Resume Next
     EnumObjects m_tlbGraphics, tvObjects
     EnumObjects m_tlbSound, tvObjects
     EnumObjects m_tlbFilesystem, tvObjects
+    tvObjects.Sorted = True
     SendMessage tvObjects.hWndTreeView, WM_SETREDRAW, 1, 0
 End Sub
 
@@ -519,28 +558,76 @@ On Error Resume Next
 Dim l_strOldItem As String
 Dim l_lngMembers As Long
 Dim l_intInterface As InterfaceInfo
-'    SendMessage lstMembers.hwnd, WM_SETREDRAW, 0, 0
-'    l_strOldItem = lstMembers.Text
-'    lstMembers.Clear
-'    With m_tiSelectedObject
-'        Select Case .TypeKind
-'        Case TKIND_ENUM
-'            .Members.GetFilteredMembersDirect lstMembers.hwnd, tliWtListBox, tliIdtMemberID
-'        Case TKIND_COCLASS
-'            With .DefaultInterface.Members
-'                For l_lngMembers = 1 To .Count
-'                    Select Case LCase(Trim(.Item(l_lngMembers).Name))
-'                    Case "addref", "release", "queryinterface", "gettypeinfo", "gettypeinfocount", "getidsofnames", "invoke", "class_tostring"
-'                    Case Else
-'                        lstMembers.AddItem MemberSignature(.Item(l_lngMembers))
-'                    End Select
-'                Next l_lngMembers
-'            End With
-'        Case Else
-'        End Select
-'    End With
-'    lstMembers.Text = l_strOldItem
-'    SendMessage lstMembers.hwnd, WM_SETREDRAW, 1, 0
+Dim l_nodNode As cTreeViewNode
+Dim l_memMember As MemberInfo
+Dim l_booFiltered As Boolean
+    l_booFiltered = Len(Trim(txtFilterMembers.Text)) > 0
+    SendMessage tvMembers.hWndTreeView, WM_SETREDRAW, 0, 0
+    tvMembers.Nodes.Clear
+    With m_tiSelectedObject
+        Select Case .TypeKind
+        Case TKIND_ENUM
+            With .Members
+                For l_lngMembers = 1 To .Count
+                    If (Not l_booFiltered) Or (InStr(1, .Item(l_lngMembers).Name, txtFilterMembers.Text, vbTextCompare)) Then
+                        Set l_nodNode = tvMembers.Nodes.Add(, , .Item(l_lngMembers).Name, .Item(l_lngMembers).Name & " = " & CStr(.Item(l_lngMembers).Value))
+                    End If
+                Next l_lngMembers
+            End With
+        Case TKIND_COCLASS
+            With .DefaultInterface.Members
+                For l_lngMembers = 1 To .Count
+                    Set l_memMember = .Item(l_lngMembers)
+                    With l_memMember
+                        If ((Not l_booFiltered) Or (InStr(1, .Name, txtFilterMembers.Text, vbTextCompare))) Then
+                        
+                        
+                        
+                            Select Case LCase(Trim(.Name))
+                            Case "addref", "release", "queryinterface", "gettypeinfo", "gettypeinfocount", "getidsofnames", "invoke", "class_tostring"
+                            Case Else
+                                If (tvMembers.Nodes.Exists(.Name)) Then
+                                    Set l_nodNode = tvMembers.Nodes(.Name)
+                                Else
+                                    Set l_nodNode = tvMembers.Nodes.Add(, , .Name, MemberSignature(l_memMember, , True))
+                                End If
+                                Select Case .InvokeKind
+                                Case INVOKE_FUNC
+                                    l_nodNode.AddChildNode .Name & ":Call", MemberSignature(l_memMember, True)
+                                Case INVOKE_PROPERTYGET
+                                    l_nodNode.AddChildNode .Name & ":Get", VarTypeSignature(.ReturnType) & " = " & "Object." & .Name & ParameterList(l_memMember, , True)
+                                Case INVOKE_PROPERTYPUT
+                                    l_nodNode.AddChildNode .Name & ":Let", "Object." & .Name & ParameterList(l_memMember, , True) & " = " & VarTypeSignature(.ReturnType)
+                                Case INVOKE_PROPERTYPUTREF
+                                    l_nodNode.AddChildNode .Name & ":Set", "Set " & m_tiSelectedObject.Name & "." & .Name & " = " & VarTypeSignature(.ReturnType)
+                                Case Else
+                                End Select
+                            End Select
+                        End If
+                    End With
+                Next l_lngMembers
+            End With
+        Case Else
+        End Select
+    End With
+    tvMembers.Sorted = True
+    SendMessage tvMembers.hWndTreeView, WM_SETREDRAW, 1, 0
+End Sub
+
+Public Sub RefreshInfo()
+On Error Resume Next
+Dim l_strInfo As String
+    l_strInfo = m_miSelectedMember.HelpString
+    If InStr(l_strInfo, "{") Then
+        l_strInfo = Left(l_strInfo, InStr(l_strInfo, "{") - 1)
+    End If
+    If Left(l_strInfo, 1) = "*" Then
+        l_strInfo = Mid(l_strInfo, 2)
+    End If
+    If Left(l_strInfo, 1) = "~" Then
+        l_strInfo = Mid(l_strInfo, 2)
+    End If
+    txtInfo.Text = l_strInfo
 End Sub
 
 Private Sub Form_Activate()
@@ -572,12 +659,12 @@ On Error Resume Next
     Plugin.Notify_Close
 End Sub
 
-Private Property Get iDocument_Plugin() As ngInterfaces.iFileTypePlugin
+Private Property Get iDocument_Plugin() As ngInterfaces.iPlugin
 On Error Resume Next
     Set iDocument_Plugin = Nothing
 End Property
 
-Private Property Set iDocument_Plugin(RHS As ngInterfaces.iFileTypePlugin)
+Private Property Set iDocument_Plugin(RHS As ngInterfaces.iPlugin)
 On Error Resume Next
 '    Set m_fpgPlugin = RHS
 End Property
@@ -588,6 +675,7 @@ On Error Resume Next
     Case vbKeyF5
         RefreshObjects
         RefreshMembers
+        RefreshInfo
     Case Else
     End Select
 End Sub
@@ -619,6 +707,17 @@ On Error Resume Next
     Set iExtendedForm_Extender = Me.extender
 End Property
 
+Private Sub picMembers_Resize()
+On Error Resume Next
+Dim l_rctArea As RECT
+    tbhMembers.Move 0, 0, tbrMembers.ToolbarWidth, tbrMembers.ToolbarHeight
+    txtFilterMembers.Move tbhMembers.Width, 3, picMembers.ScaleWidth - tbhMembers.Width - 3, tbhMembers.Height - 6
+    tvMembers.Move 0, tbrMembers.ToolbarHeight, picMembers.ScaleWidth, picMembers.ScaleHeight - tbrMembers.ToolbarHeight
+    l_rctArea.Right = tvMembers.Width
+    l_rctArea.Bottom = tvMembers.Height
+    InvalidateRect tvMembers.hWndTreeView, l_rctArea, 0
+End Sub
+
 Private Sub picObjectMembers_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
     m_splSplitMembers.MouseDown Button, Shift, X, Y
 End Sub
@@ -646,6 +745,15 @@ Dim l_rctArea As RECT
     InvalidateRect tvObjects.hWndTreeView, l_rctArea, 0
 End Sub
 
+Private Sub tbrMembers_ButtonClick(ByVal lButton As Long)
+On Error Resume Next
+    Select Case LCase(Trim(tbrObjects.ButtonKey(lButton)))
+    Case "resetfilter"
+        txtFilterMembers.Text = ""
+    Case Else
+    End Select
+End Sub
+
 Private Sub tbrObjects_ButtonClick(ByVal lButton As Long)
 On Error Resume Next
     Select Case LCase(Trim(tbrObjects.ButtonKey(lButton)))
@@ -653,6 +761,17 @@ On Error Resume Next
         txtFilterObjects.Text = ""
     Case Else
     End Select
+End Sub
+
+Private Sub tvMembers_NodeClick(node As vbalTreeViewLib6.cTreeViewNode)
+On Error Resume Next
+Dim l_nodNode As cTreeViewNode
+    Set l_nodNode = node
+    Do Until l_nodNode.Parent Is Nothing
+        Set l_nodNode = l_nodNode.Parent
+    Loop
+    Set m_miSelectedMember = m_tiSelectedObject.DefaultInterface.GetMember(l_nodNode.key)
+    RefreshInfo
 End Sub
 
 Private Sub tvObjects_NodeClick(node As vbalTreeViewLib6.cTreeViewNode)
@@ -663,6 +782,13 @@ On Error Resume Next
         Set m_tiSelectedObject = Nothing
     End If
     RefreshMembers
+    RefreshInfo
+End Sub
+
+Private Sub txtFilterMembers_Change()
+On Error Resume Next
+    RefreshMembers
+    RefreshInfo
 End Sub
 
 Private Sub txtFilterObjects_Change()
@@ -670,4 +796,11 @@ On Error Resume Next
     RefreshObjects
     Set m_tiSelectedObject = Nothing
     RefreshMembers
+    RefreshInfo
 End Sub
+
+Private Property Get iDocument_Modified() As Boolean
+On Error Resume Next
+    iDocument_Modified = False
+End Property
+

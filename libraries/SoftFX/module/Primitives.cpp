@@ -480,7 +480,9 @@ Export int FilterSimple_FilledCircle_SourceAlpha(Image *Image, int X, int Y, int
 
 #undef CircleSetPixel
 
-#define CircleSetPixel(x, y) Image->setPixelFast(x, y, Color);
+#define CircleSetPixel(x, y) if ((x >= Image->ClipRectangle.Left) && (y >= Image->ClipRectangle.Top) && (x < Image->ClipRectangle.right()) && (y < Image->ClipRectangle.bottom())) { \
+  Image->setPixelFast(x, y, Color); \
+}
 
 Export int FilterSimple_Circle(Image *Image, int X, int Y, int Radius, Pixel Color) {
   if (!Image) {
@@ -524,7 +526,7 @@ Export int FilterSimple_Circle(Image *Image, int X, int Y, int Radius, Pixel Col
 
 #undef CircleSetPixel
 
-#define CircleSetPixel(x, y) if ((x > Image->ClipRectangle.Left) && (y > Image->ClipRectangle.Top) && (x < Image->ClipRectangle.right()) && (y < Image->ClipRectangle.bottom())) { \
+#define CircleSetPixel(x, y) if ((x >= Image->ClipRectangle.Left) && (y >= Image->ClipRectangle.Top) && (x < Image->ClipRectangle.right()) && (y < Image->ClipRectangle.bottom())) { \
   pCurrent = Image->fast_pointer(x, y); \
   BLENDPIXEL_ALPHA_OPACITY(pCurrent, pCurrent, pColor, aDest, aSource); \
 }

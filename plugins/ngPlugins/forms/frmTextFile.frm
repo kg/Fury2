@@ -64,12 +64,12 @@ Implements iDocument
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
 
-Private Property Get iDocument_Plugin() As ngInterfaces.iFileTypePlugin
+Private Property Get iDocument_Plugin() As ngInterfaces.iPlugin
 On Error Resume Next
     Set iDocument_Plugin = m_fpgPlugin
 End Property
 
-Private Property Set iDocument_Plugin(RHS As ngInterfaces.iFileTypePlugin)
+Private Property Set iDocument_Plugin(RHS As ngInterfaces.iPlugin)
 On Error Resume Next
     Set m_fpgPlugin = RHS
 End Property
@@ -119,5 +119,10 @@ End Property
 Private Property Get iExtendedForm_Extender() As Object
 On Error Resume Next
     Set iExtendedForm_Extender = Me.extender
+End Property
+
+Private Property Get iDocument_Modified() As Boolean
+On Error Resume Next
+    iDocument_Modified = True
 End Property
 

@@ -48,7 +48,7 @@ Section "-Engine"
 	SetOutPath "$INSTDIR"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayName" "${NAME}"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "UninstallString" "$INSTDIR\Uninstall.exe"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "0.2"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "0.3"
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoModify" 1
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoRepair" 1
 	WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -140,9 +140,9 @@ Section "Editor"
 	SetOutPath "$INSTDIR\"
 SectionEnd
 
-Section "Example Game"
-	SetOutPath "$INSTDIR\Example Game"
-    File /nonfatal /r "Z:\projects\fury2\docs\Test Game\*.*"
+Section "Example Games"
+	SetOutPath "$INSTDIR\Examples\"
+    File /nonfatal /r "Z:\projects\fury2\docs\Examples\*.*"
 SectionEnd
 
 Section "Start Menu Shortcuts"
@@ -151,9 +151,12 @@ Section "Start Menu Shortcuts"
 EditorInstalled:
   CreateShortCut "$SMPROGRAMS\${NAME}\${NAME} Editor.lnk" "$INSTDIR\sys\ngIDE.exe" "" "$INSTDIR\sys\ngIDE.exe"
 EditorNotInstalled:
-  IfFileExists "$INSTDIR\example game\game.f2config" ExampleInstalled ExampleNotInstalled
+  IfFileExists "$INSTDIR\examples\basic\game.f2config" ExampleInstalled ExampleNotInstalled
 ExampleInstalled:
-  CreateShortCut "$SMPROGRAMS\${NAME}\${NAME} Example Game.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\example game" "$INSTDIR\sys\fury².exe"
+  CreateDirectory "$SMPROGRAMS\${NAME}\Examples"
+  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Basic Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\basic" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Rain Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\rain" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Menus Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\menus" "$INSTDIR\sys\fury².exe"
 ExampleNotInstalled:
   CreateShortCut "$SMPROGRAMS\${NAME}\${NAME} Engine.lnk" "$INSTDIR\sys\fury².exe" "" "$INSTDIR\sys\fury².exe"
   CreateShortCut "$SMPROGRAMS\${NAME}\Uninstall ${NAME}.lnk" "$INSTDIR\uninstall.exe"

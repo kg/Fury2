@@ -20,13 +20,24 @@ Private m_lngBackgroundColor As Long
 Private m_lngLightingObstructionColor As Long
 Private m_lngLightingPlaneColor As Long
 Private m_lngBlockingColor As Long
+Private m_lngPathColor As Long
+Private m_lngPathNodeColor As Long
 Private m_lngZoom As Long
 Private m_booAutoScroll As Boolean
+Private m_booAlwaysShowLighting As Boolean
 Private m_booShowGrid As Boolean
 Private m_booSnapToGrid As Boolean
 Private m_booEnableWrapping As Boolean
 Private m_booEnableParallax As Boolean
 Private m_booPreserveTilesetRows As Boolean
+
+Public Property Get AlwaysShowLighting() As Boolean
+    AlwaysShowLighting = m_booAlwaysShowLighting
+End Property
+
+Public Property Let AlwaysShowLighting(ByVal NewValue As Boolean)
+    m_booAlwaysShowLighting = NewValue
+End Property
 
 Public Property Get PreserveTilesetRows() As Boolean
     PreserveTilesetRows = m_booPreserveTilesetRows
@@ -112,6 +123,22 @@ Public Property Let BlockingColor(NewColor As Long)
     m_lngBlockingColor = NewColor
 End Property
 
+Public Property Get PathNodeColor() As Long
+    PathNodeColor = m_lngPathNodeColor
+End Property
+
+Public Property Let PathNodeColor(NewColor As Long)
+    m_lngPathNodeColor = NewColor
+End Property
+
+Public Property Get PathColor() As Long
+    PathColor = m_lngPathColor
+End Property
+
+Public Property Let PathColor(NewColor As Long)
+    m_lngPathColor = NewColor
+End Property
+
 Public Property Get BackgroundColor() As Long
 Attribute BackgroundColor.VB_Description = "The color to draw behind the map view.{Color}"
     BackgroundColor = m_lngBackgroundColor
@@ -128,6 +155,8 @@ On Error Resume Next
     m_lngBlockingColor = F2RGB(255, 0, 127, 220)
     m_lngLightingObstructionColor = F2RGB(63, 220, 63, 220)
     m_lngLightingPlaneColor = F2RGB(63, 63, 220, 220)
+    m_lngPathColor = F2RGB(192, 64, 0, 160)
+    m_lngPathNodeColor = F2RGB(240, 96, 16, 220)
     m_lngBackgroundColor = F2Black
     m_booEnableWrapping = False
     m_booEnableParallax = False
@@ -147,6 +176,9 @@ On Error Resume Next
         .Load m_booEnableWrapping
         .Load m_booEnableParallax
         .Load m_booPreserveTilesetRows
+        .Load m_lngPathColor
+        .Load m_lngPathNodeColor
+        .Load m_booAlwaysShowLighting
     End With
 End Sub
 
@@ -164,5 +196,8 @@ On Error Resume Next
         .Save m_booEnableWrapping
         .Save m_booEnableParallax
         .Save m_booPreserveTilesetRows
+        .Save m_lngPathColor
+        .Save m_lngPathNodeColor
+        .Save m_booAlwaysShowLighting
     End With
 End Sub

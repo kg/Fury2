@@ -94,6 +94,7 @@ Dim l_strKey As String
     Else
         If Form.MDIChild Then Exit Sub
     End If
+    If Form.WindowState = 1 Then Form.WindowState = 0
     If TypeOf Form Is iDocument Then Exit Sub
     With Form
         l_strKey = "Window Positions\" & .Name & ":" & .Caption & "\"

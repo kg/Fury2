@@ -47,18 +47,47 @@ On Error Resume Next
     Set mHook = Obj
 End Sub
 
-Public Function Find(Obj) As Long
+Public Function FindByNames(ByVal Match As String) As Fury2Collection
 On Error Resume Next
-Dim l_objItem As Object, l_lngItems As Long
-    If mCol.Count <= 0 Then Exit Function
-    l_lngItems = 1
-    For Each l_objItem In mCol
-        If l_objItem Is Obj Then
-            Find = l_lngItems
-            Exit Function
+Dim l_colItems As New Fury2Collection
+Dim l_litLight As Fury2LightSource
+    For Each l_litLight In mCol
+        If l_litLight.Name Like Match Then
+            l_colItems.Add l_litLight
         End If
-        l_lngItems = l_lngItems + 1
-    Next l_objItem
+    Next l_litLight
+    Set FindByNames = l_colItems
+End Function
+
+Public Function Find(vntIndexKey As Variant) As Long
+On Error Resume Next
+Dim l_lngLightSources As Long
+Dim l_objObject As Object, l_strKey As String
+Dim l_litLightSource As Fury2LightSource
+    If mCol.Count < 1 Then Exit Function
+    If VarType(vntIndexKey) = vbObject Then
+        Set l_objObject = vntIndexKey
+        l_lngLightSources = 1
+        For Each l_litLightSource In mCol
+            If l_litLightSource Is l_objObject Then
+                Find = l_lngLightSources
+                Exit For
+            End If
+            l_lngLightSources = l_lngLightSources + 1
+        Next l_litLightSource
+    ElseIf VarType(vntIndexKey) = vbString Then
+        l_strKey = CStr(vntIndexKey)
+        l_lngLightSources = 1
+        For Each l_litLightSource In mCol
+            If l_litLightSource.Name Like l_strKey Then
+                Find = l_lngLightSources
+                Exit For
+            End If
+            l_lngLightSources = l_lngLightSources + 1
+        Next l_litLightSource
+    Else
+        Find = CLng(vntIndexKey)
+    End If
 End Function
 
 Friend Sub SetParent(Parent As Fury2Map)

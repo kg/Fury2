@@ -22,11 +22,11 @@ Private Property Get iDocument_Filename() As String
 
 End Property
 
-Private Property Get iDocument_Plugin() As ngInterfaces.iFileTypePlugin
+Private Property Get iDocument_Plugin() As ngInterfaces.iPlugin
 
 End Property
 
-Private Property Set iDocument_Plugin(RHS As ngInterfaces.iFileTypePlugin)
+Private Property Set iDocument_Plugin(RHS As ngInterfaces.iPlugin)
 
 End Property
 
@@ -36,4 +36,9 @@ End Function
 
 Private Property Get iDocument_Typename() As String
 
+End Property
+
+Private Property Get iDocument_Modified() As Boolean
+On Error Resume Next
+    iDocument_Modified = False
 End Property

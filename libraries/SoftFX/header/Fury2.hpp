@@ -91,7 +91,7 @@ struct SpritePosition {
 };
 
 struct SpriteVelocity {
-    float X, Y, Z, V, B, BR, BRT, A, AT;
+    float X, Y, Z, V, B, BR, BRT, A, AT, VM;
 };
 
 struct VisualParameters {
@@ -102,6 +102,10 @@ struct VisualParameters {
     float Scale;
     float Angle;
     Pixel IlluminationLevel;
+    Byte DiffuseLight;
+    Byte Reserved1;
+    Byte Reserved2;
+    Byte Reserved3;
 };
 
 struct PhysicalParameters {
@@ -149,6 +153,7 @@ struct SpriteParam {
     short Index;
     AnimatedGraphicParam *pAttachedGraphic;
     float ZHeight;
+    int Obj;
     SpriteParam *pNext;
     SpriteParam *pSortedNext;
 
@@ -245,8 +250,8 @@ struct WindowSkinParam {
     int Alpha;
     Pixel MaskColor;
     Pixel CornerColors[4];
+    int EdgeOffsets[4];
     Pixel TintColors[9];
-    Byte EdgeOffsets[4];
     Byte BackgroundMode;
     Byte EdgeMode;
     Byte RenderMode;

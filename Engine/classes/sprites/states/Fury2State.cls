@@ -101,6 +101,7 @@ On Error Resume Next
             Else
                 .Load mvarDirectionPoses
             End If
+            .Load mvarMaxVelocity
         .ReadSegment_End
     End With
 End Sub
@@ -112,6 +113,7 @@ On Error Resume Next
             .Save mvarName
             .Save mvarPoseOffset
             .Save mvarDirectionPoses
+            .Save mvarMaxVelocity
         .WriteSegment_End
     End With
 End Sub

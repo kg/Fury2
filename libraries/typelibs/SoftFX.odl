@@ -182,6 +182,10 @@ library SoftFX {
         float ScaleLevel;
         float RotationAngle;
         int IlluminationLevel;
+        byte DiffuseLight;
+        byte Reserved1;
+        byte Reserved2;
+        byte Reserved3;
     } VisualParameters;
 
     typedef struct {
@@ -207,7 +211,7 @@ library SoftFX {
     } SpritePosition;
 
     typedef struct {
-        float X, Y, Z, V, B, BR, BRT, A, AT;
+        float X, Y, Z, V, B, BR, BRT, A, AT, VM;
     } SpriteVelocity;
 
     typedef struct {
@@ -225,6 +229,7 @@ library SoftFX {
         short Index;
         int AttachedGraphic;
         float ZHeight;
+        int Obj;
         int Next;
         int SortedNext;
     } SpriteParam;
@@ -273,8 +278,8 @@ library SoftFX {
         int Alpha;
         int MaskColor;
         int CornerColors[4];
+        int EdgeOffsets[4];
         int TintColors[9];
-        byte EdgeOffsets[4];
         byte BackgroundMode;
         byte EdgeMode;
         byte RenderMode;
@@ -1060,6 +1065,8 @@ library SoftFX {
         int SortSprites(int FirstSprite);
         [entry("_CullSprites@8")]
         int CullSprites(int FirstSprite, CameraParam *Camera);
+        [entry("_IterateSprites@8")]
+        int IterateSprites(int FirstSprite, int IteratorFunction);
 
         [entry("_CollisionCheck@20")]
         int CollisionCheck(int FirstSprite, int CheckSprite, int MustBeSolid, int RequiredType, int ExcludedType);

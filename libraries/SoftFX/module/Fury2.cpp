@@ -483,6 +483,9 @@ float fRadian = 3.14159265358979 / 180.0;
             vSpeed.X = pCurrent->Velocity.X + (sin(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V);
             vSpeed.Y = pCurrent->Velocity.Y + (-cos(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V);
 
+            vSpeed.X *= pCurrent->Velocity.VM;
+            vSpeed.Y *= pCurrent->Velocity.VM;
+
             if (pCurrent->Stats.Solid) {
               bCollided = ResolveCollisions(List, pCurrent, vSpeed, Matrix);
             } else {
@@ -826,10 +829,10 @@ Rectangle old_clip;
     dest = *Area;
     clip = &(Dest->ClipRectangle);
     clipper = *clip;
-    clipper.Left = ClipValue(Area->Left, clip->Left, clip->right());
-    clipper.setRight(ClipValue(Area->right(), clip->Left, clip->right()));
-    clipper.Top = ClipValue(Area->Top, clip->Top, clip->bottom());
-    clipper.setBottom(ClipValue(Area->bottom(), clip->Top, clip->bottom()));
+    clipper.Left = ClipValue(Area->Left - wp->EdgeOffsets[0], clip->Left, clip->right());
+    clipper.setRight(ClipValue(Area->right() + wp->EdgeOffsets[2], clip->Left, clip->right()));
+    clipper.Top = ClipValue(Area->Top - wp->EdgeOffsets[1], clip->Top, clip->bottom());
+    clipper.setBottom(ClipValue(Area->bottom() + wp->EdgeOffsets[3], clip->Top, clip->bottom()));
     Dest->ClipRectangle = clipper;
     xm[0] = _Max(_Max(wp->pImages[wsTopLeft]->Width, wp->pImages[wsLeft]->Width),wp->pImages[wsBottomLeft]->Width);
     xm[1] = _Max(_Max(wp->pImages[wsTopRight]->Width, wp->pImages[wsRight]->Width),wp->pImages[wsBottomRight]->Width);
@@ -2183,7 +2186,7 @@ fuzzyrender:
       Rectangle rctSprite;
       Sprite = Environment->Sprites;
       while (Sprite) {
-        if (Sprite->Visible) {
+        if ((Sprite->Visible) && (Sprite->Params.DiffuseLight)) {
           if (Sprite->Params.Alpha != 0) {
             rctSprite = Sprite->getRectangle();
             y2 = rctSprite.bottom();
@@ -2867,4 +2870,14 @@ bool Lighting::Sector::addPlanes(Lighting::Plane *Planes, int Count, int XOffset
     Pointer++;
   }
   return true;
+}
+
+Export int IterateSprites(SpriteParam *sprites, SpriteIterator *func) {
+  if (!sprites) return Failure;
+  SpriteParam *pCurrent = sprites;
+  while (pCurrent) {
+    func(pCurrent->Obj);
+    pCurrent = pCurrent->pNext;
+  }
+  return Success;
 }

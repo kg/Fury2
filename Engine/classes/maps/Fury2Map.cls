@@ -706,9 +706,7 @@ Dim l_mobObject As Fury2MapObject
         l_lngLayers = 1
         For Each l_lyrLayer In m_lyrLayers
             m_Engine.ContextLevelAdd "Layers(" + CStr(l_lngLayers) + ")"
-            ProfileStart "Map.Sprites.Update"
             l_lyrLayer.Sprites.Update Me, CLng(l_lngLayers), True
-            ProfileStop "Map.Sprites.Update"
             ProfileStart "Map.Lights.Update"
             l_lyrLayer.Lighting.Update
             ProfileStop "Map.Lights.Update"

@@ -92,7 +92,35 @@ Private m_booAreasUpdated As Boolean
 
 Private m_lngWalkState As Long, m_lngIdleState As Long
 
+Public SavedPaths As Fury2Collection
+Attribute SavedPaths.VB_VarDescription = "*"
 Public AttachedGraphic As Fury2Graphic
+Attribute AttachedGraphic.VB_VarDescription = "*"
+Public Tag As String
+Attribute Tag.VB_VarDescription = "An additional piece of data."
+Public AnimationMultiplier As Single
+Public Ignore As Boolean
+
+Public Property Get DiffuseLight() As Boolean
+    DiffuseLight = m_spParam.Params.DiffuseLight <> 0
+End Property
+
+Public Property Let DiffuseLight(ByVal NewValue As Boolean)
+    m_spParam.Params.DiffuseLight = CByte(Abs(CLng(NewValue)))
+End Property
+
+Public Property Get VelocityMultiplier() As Single
+    VelocityMultiplier = m_spParam.Velocity.VM
+End Property
+
+Public Property Let VelocityMultiplier(ByVal NewValue As Single)
+    m_spParam.Velocity.VM = NewValue
+End Property
+
+Public Property Get Map() As Fury2Map
+Attribute Map.VB_Description = "*The map containing the sprite."
+    Set Map = m_mapMap
+End Property
 
 Public Property Get Color() As Long
 Attribute Color.VB_Description = "The sprite's tint color.{Color}"
@@ -109,6 +137,7 @@ On Error Resume Next
 End Function
 
 Public Property Get AIUpdateRate() As Long
+Attribute AIUpdateRate.VB_Description = "The number of frames between each time the AIUpdate event is triggered."
     AIUpdateRate = m_lngAIUpdateRate
 End Property
 
@@ -118,6 +147,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Attached() As Fury2Sprite
+Attribute Attached.VB_Description = "*"
     Set Attached = m_sprAttached
 End Property
 
@@ -155,6 +185,7 @@ On Error Resume Next
 End Sub
 
 Public Property Get WalkState() As Long
+Attribute WalkState.VB_Description = "The state used while the sprite is in motion."
     WalkState = m_lngWalkState
 End Property
 
@@ -163,6 +194,7 @@ Public Property Let WalkState(ByVal NewState As Long)
 End Property
 
 Public Property Get IdleState() As Long
+Attribute IdleState.VB_Description = "The state used when the sprite is not in motion."
     IdleState = m_lngIdleState
 End Property
 
@@ -180,7 +212,7 @@ Attribute CastShadow.VB_Description = "If True, the sprite will cast a shadow wh
     CastShadow = (m_spParam.Params.SpecialFX And 4) = 4
 End Property
 
-Public Property Let CastShadow(NewValue As Boolean)
+Public Property Let CastShadow(ByVal NewValue As Boolean)
     m_spParam.Params.SpecialFX = (m_spParam.Params.SpecialFX And (Not 4)) Or (IIf(NewValue, 4, 0))
 End Property
 
@@ -200,7 +232,7 @@ End Property
 
 Private Sub Dirty()
 On Error Resume Next
-    m_Engine.Cameras.Dirty
+'    m_Engine.Cameras.Dirty
 End Sub
 
 Public Function Class_ToString() As String
@@ -280,7 +312,7 @@ Attribute Alpha.VB_Description = "The opacity of the sprite."
     Alpha = m_spParam.Params.Alpha
 End Property
 
-Public Property Let Alpha(NewValue As Single)
+Public Property Let Alpha(ByVal NewValue As Single)
     m_spParam.Params.Alpha = NewValue
 End Property
 
@@ -289,12 +321,12 @@ Attribute Angle.VB_Description = "The direction the sprite is facing. (Also affe
     Angle = m_spParam.Velocity.B
 End Property
 
-Public Property Let Angle(NewValue As Single)
+Public Property Let Angle(ByVal NewValue As Single)
     m_spParam.Velocity.B = NewValue
     ReselectPose
 End Property
 
-Public Property Let Animate(NewValue As Boolean)
+Public Property Let Animate(ByVal NewValue As Boolean)
 Attribute Animate.VB_Description = "If True, the sprite will animate, both while moving and while stopped."
     m_booAnimateWhileStopped = NewValue
     m_booAnimateWhileMoving = NewValue
@@ -305,7 +337,7 @@ Attribute AnimateWhileMoving.VB_Description = "If True, the sprite will animate 
     AnimateWhileMoving = m_booAnimateWhileMoving
 End Property
 
-Public Property Let AnimateWhileMoving(NewValue As Boolean)
+Public Property Let AnimateWhileMoving(ByVal NewValue As Boolean)
     m_booAnimateWhileMoving = NewValue
 End Property
 
@@ -314,7 +346,7 @@ Attribute AnimateWhileStopped.VB_Description = "If True, the sprite will animate
     AnimateWhileStopped = m_booAnimateWhileStopped
 End Property
 
-Public Property Let AnimateWhileStopped(NewValue As Boolean)
+Public Property Let AnimateWhileStopped(ByVal NewValue As Boolean)
     m_booAnimateWhileStopped = NewValue
 End Property
 
@@ -323,7 +355,7 @@ Attribute AnimationDelay.VB_Description = "*The delay accumulator for animations
     AnimationDelay = m_sngAnimationDelay
 End Property
 
-Public Property Let AnimationDelay(NewValue As Single)
+Public Property Let AnimationDelay(ByVal NewValue As Single)
     m_sngAnimationDelay = NewValue
 End Property
 
@@ -332,22 +364,35 @@ Attribute AnimationDirection.VB_Description = "*The direction animations are cur
     AnimationDirection = m_lngAnimationDirection
 End Property
 
-Public Property Let AnimationDirection(NewValue As Long)
+Public Property Let AnimationDirection(ByVal NewValue As Long)
     If (NewValue = 0) Then Exit Property
     m_lngAnimationDirection = NewValue
 End Property
 
-Public Property Let Class(NewValue As Long)
+Public Property Let Class(ByVal NewValue As Fury2SpriteClasses)
 Attribute Class.VB_Description = "The sprite's class. Used for behaviors."
     m_spParam.Type = NewValue
 End Property
 
-Public Property Get Class() As Long
+Public Property Get Class() As Fury2SpriteClasses
     Class = m_spParam.Type
 End Property
 
+Public Sub PushPath()
+On Error Resume Next
+    SavedPaths.Add m_pthPath
+    Set m_pthPath = New Fury2Path
+End Sub
+
+Public Sub PopPath()
+On Error Resume Next
+    Set m_pthPath = SavedPaths.Item(SavedPaths.Count)
+    SavedPaths.Remove SavedPaths.Count
+End Sub
+
 Private Sub Class_Initialize()
 On Error Resume Next
+    Set SavedPaths = New Fury2Collection
     Set m_posPoses = New Fury2Poses
     Set m_staStates = New Fury2States
     Set m_pthPath = New Fury2Path
@@ -360,6 +405,9 @@ On Error Resume Next
     Visible = True
     Name = "Sprite"
     SpriteType = F2ST_Entity
+    VelocityMultiplier = 1
+    AnimationMultiplier = 1
+    m_spParam.Obj = ObjPtr(Me)
 End Sub
 
 Public Sub CopyTo(ByVal OtherSprite, Optional ByVal AsTemplate As Boolean = False)
@@ -390,12 +438,14 @@ Dim l_spOld As SpriteParam
         .AnimateWhileStopped = Me.AnimateWhileStopped
         .AnimationDelay = Me.AnimationDelay
         .AnimationDirection = Me.AnimationDirection
+        .AnimationMultiplier = Me.AnimationMultiplier
         .Class = Me.Class
         .Effect = Me.Effect
         .FadeTarget = Me.FadeTarget
         .FadeVelocity = Me.FadeVelocity
         .CastShadow = Me.CastShadow
         .Color = Me.Color
+        .DiffuseLight = Me.DiffuseLight
         
         .State = Me.State
         .Pose = Me.Pose
@@ -415,6 +465,7 @@ Dim l_spOld As SpriteParam
         .SpinVelocity = Me.SpinVelocity
         .SpriteType = Me.SpriteType
         .Velocity = Me.Velocity
+        .VelocityMultiplier = Me.VelocityMultiplier
         .Weight = Me.Weight
         .XVelocity = Me.XVelocity
         .YVelocity = Me.YVelocity
@@ -442,7 +493,7 @@ Attribute DecayTime.VB_Description = "The amount of time until the sprite is des
     DecayTime = m_lngDecayTime
 End Property
 
-Public Property Let DecayTime(NewValue As Long)
+Public Property Let DecayTime(ByVal NewValue As Long)
     m_lngDecayTime = NewValue
 End Property
 
@@ -477,7 +528,7 @@ Dim l_sprSprite As Fury2Sprite
     Set Duplicate = l_sprSprite
 End Function
 
-Public Property Let Effect(NewValue As Long)
+Public Property Let Effect(ByVal NewValue As Long)
 Attribute Effect.VB_Description = "The rendering effect used to draw the sprite."
     m_spParam.Params.Effect = NewValue
 End Property
@@ -516,7 +567,7 @@ Attribute FadeTarget.VB_Description = "*The target opacity for a fade."
     FadeTarget = m_spParam.Velocity.AT
 End Property
 
-Public Property Let FadeTarget(NewValue As Single)
+Public Property Let FadeTarget(ByVal NewValue As Single)
     m_spParam.Velocity.AT = NewValue
 End Property
 
@@ -525,7 +576,7 @@ Attribute FadeVelocity.VB_Description = "*The speed at which a fade should occur
     FadeVelocity = m_spParam.Velocity.A
 End Property
 
-Public Property Let FadeVelocity(NewValue As Single)
+Public Property Let FadeVelocity(ByVal NewValue As Single)
     m_spParam.Velocity.A = NewValue
 End Property
 
@@ -585,6 +636,7 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 .RawLoad VarPtr(m_spParam.Position.X), 4 * 3
                 .RawLoad VarPtr(m_spParam.Velocity.B), 4
                 .Load m_strTemplate
+                .Load Tag
             .ReadSegment_End
             .ReadSegment_Begin
                 .RawLoad VarPtr(m_spParam.Velocity.V), 4
@@ -644,6 +696,9 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 CastShadow = l_booValue
                 .Load l_lngValue
                 m_spParam.Params.Color = l_lngValue
+                l_booValue = True
+                If Not .EOS Then .Load l_booValue
+                DiffuseLight = l_booValue
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load m_strScript
@@ -679,6 +734,7 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 .ReadSegment_Begin
                     .Load m_lngAIUpdateRate
                 .ReadSegment_End
+                .Load Ignore
             .ReadSegment_End
             
             ' state mappings
@@ -695,13 +751,9 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
             .ReadSegment_End
             
             .Load m_staStates
-            
-            If l_sngStateVelocity <> 0 Then
-                For Each l_staState In m_staStates
-                    l_staState.MaxVelocity = l_sngStateVelocity
-                Next l_staState
-            End If
         .ReadSegment_End
+        VelocityMultiplier = 1
+        AnimationMultiplier = 1
     End With
 End Sub
 
@@ -714,6 +766,7 @@ On Error Resume Next
                 .RawSave VarPtr(m_spParam.Position.X), 4 * 3
                 .RawSave VarPtr(m_spParam.Velocity.B), 4
                 .Save m_strTemplate
+                .Save Tag
             .WriteSegment_End
             .WriteSegment_Begin
                 .RawSave VarPtr(m_spParam.Velocity.V), 4
@@ -756,6 +809,7 @@ On Error Resume Next
                 .Save m_booPoseOverride
                 .Save CastShadow
                 .Save m_spParam.Params.Color
+                .Save DiffuseLight
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save m_strScript
@@ -777,6 +831,7 @@ On Error Resume Next
                 .WriteSegment_Begin
                     .Save m_lngAIUpdateRate
                 .WriteSegment_End
+                .Save Ignore
             .WriteSegment_End
             
             .WriteSegment_Begin
@@ -920,7 +975,7 @@ Public Property Let PoseOverride(ByVal NewValue As Boolean)
     m_booPoseOverride = NewValue
 End Property
 
-Friend Property Set Poses(NewValue As Fury2Poses)
+Friend Property Set Poses(ByVal NewValue As Fury2Poses)
     Set m_posPoses = NewValue
     UpdatePose True
 End Property
@@ -931,6 +986,7 @@ Attribute Poses.VB_Description = "~The sprite's defined poses."
 End Property
 
 Public Property Let Position(Index, NewValue As Single)
+Attribute Position.VB_Description = "*"
 On Error Resume Next
     If VarType(Index) = vbString Then
         Select Case LCase(Trim(Index))
@@ -1038,7 +1094,7 @@ Attribute RotationAngle.VB_Description = "The angle to rotate the sprite's onscr
     RotationAngle = m_spParam.Params.RotationAngle
 End Property
 
-Public Property Let RotationAngle(NewValue As Single)
+Public Property Let RotationAngle(ByVal NewValue As Single)
     m_spParam.Params.RotationAngle = NewValue
 End Property
 
@@ -1047,7 +1103,7 @@ Attribute ScaleLevel.VB_Description = "The amount to scale the sprite's onscreen
     ScaleLevel = m_spParam.Params.ScaleLevel
 End Property
 
-Public Property Let ScaleLevel(NewValue As Single)
+Public Property Let ScaleLevel(ByVal NewValue As Single)
     m_spParam.Params.ScaleLevel = NewValue
 End Property
 
@@ -1062,29 +1118,46 @@ Dim l_strName As String
         If (m_booScriptLoadFailed = False) Then
             Err.Clear
             m_Engine.SpriteObjectCount = m_Engine.SpriteObjectCount + 1
-            l_strName = m_Engine.VariableName("SS" & m_Engine.SpriteObjectCount)
-            With m_Engine.ScriptEngine.Language
-                l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
-                .GenerateClassVariable("Map") & .LineTerminator & _
-                .GenerateClassMethod("F2OInit", Array("T", "M"), _
-                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
-                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
-                ) & .LineTerminator & m_strScript
-                m_booScript_Update = .ImplementsMethod(l_strScript, "Update")
-                m_booScript_Hit = .ImplementsMethod(l_strScript, "Hit")
-                m_booScript_HitMap = .ImplementsMethod(l_strScript, "HitMap")
-                m_booScript_Decay = .ImplementsMethod(l_strScript, "Decay")
-                m_booScript_AIUpdate = .ImplementsMethod(l_strScript, "AIUpdate")
-                m_booScript_Activate = .ImplementsMethod(l_strScript, "Activate")
-                m_booScript_Touched = .ImplementsMethod(l_strScript, "Touched")
-                m_booScript_Load = .ImplementsMethod(l_strScript, "Load")
-                m_booScript_Died = .ImplementsMethod(l_strScript, "Died")
-                m_booScript_Step = .ImplementsMethod(l_strScript, "Step")
-                m_booScript_FadeOut = .ImplementsMethod(l_strScript, "FadeOut")
-                m_Engine.CacheScript l_strName, .GenerateClass(l_strName, l_strScript)
-                m_Engine.ScriptEngine.AddCode .GenerateAssignment("New" & l_strName, .GenerateInstantiation(l_strName), True)
-                Set m_objScript = m_Engine.ScriptEngine.Eval("New" & l_strName)
-            End With
+            If Left(Trim(m_strScript), 2) = "<@" Then
+                l_strScript = Trim(m_strScript)
+                l_strName = Mid(l_strScript, 3, Len(l_strScript) - 3)
+                Set m_objScript = m_Engine.ScriptEngine.Eval(l_strName)
+                m_booScript_Update = m_objScript.ImplementsMethod("Update")
+                m_booScript_Hit = m_objScript.ImplementsMethod("Hit")
+                m_booScript_HitMap = m_objScript.ImplementsMethod("HitMap")
+                m_booScript_Decay = m_objScript.ImplementsMethod("Decay")
+                m_booScript_AIUpdate = m_objScript.ImplementsMethod("AIUpdate")
+                m_booScript_Activate = m_objScript.ImplementsMethod("Activate")
+                m_booScript_Touched = m_objScript.ImplementsMethod("Touched")
+                m_booScript_Load = m_objScript.ImplementsMethod("Load")
+                m_booScript_Died = m_objScript.ImplementsMethod("Died")
+                m_booScript_Step = m_objScript.ImplementsMethod("Step")
+                m_booScript_FadeOut = m_objScript.ImplementsMethod("FadeOut")
+            Else
+                l_strName = m_Engine.VariableName("SS" & m_Engine.SpriteObjectCount)
+                With m_Engine.ScriptEngine.Language
+                    l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
+                    .GenerateClassVariable("Map") & .LineTerminator & _
+                    .GenerateClassMethod("F2OInit", Array("T", "M"), _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
+                    ) & .LineTerminator & m_strScript
+                    m_booScript_Update = .ImplementsMethod(l_strScript, "Update")
+                    m_booScript_Hit = .ImplementsMethod(l_strScript, "Hit")
+                    m_booScript_HitMap = .ImplementsMethod(l_strScript, "HitMap")
+                    m_booScript_Decay = .ImplementsMethod(l_strScript, "Decay")
+                    m_booScript_AIUpdate = .ImplementsMethod(l_strScript, "AIUpdate")
+                    m_booScript_Activate = .ImplementsMethod(l_strScript, "Activate")
+                    m_booScript_Touched = .ImplementsMethod(l_strScript, "Touched")
+                    m_booScript_Load = .ImplementsMethod(l_strScript, "Load")
+                    m_booScript_Died = .ImplementsMethod(l_strScript, "Died")
+                    m_booScript_Step = .ImplementsMethod(l_strScript, "Step")
+                    m_booScript_FadeOut = .ImplementsMethod(l_strScript, "FadeOut")
+                    m_Engine.CacheScript l_strName, .GenerateClass(l_strName, l_strScript)
+                    m_Engine.ScriptEngine.AddCode .GenerateAssignment("New" & l_strName, .GenerateInstantiation(l_strName), True)
+                    Set m_objScript = m_Engine.ScriptEngine.Eval("New" & l_strName)
+                End With
+            End If
             Set m_Engine.IObjThis = Me
         
             m_objScript.F2OInit Me, m_mapMap
@@ -1170,7 +1243,7 @@ Attribute SpinTarget.VB_Description = "*The target angle for a spin."
     SpinTarget = m_spParam.Velocity.BRT
 End Property
 
-Public Property Let SpinTarget(NewValue As Single)
+Public Property Let SpinTarget(ByVal NewValue As Single)
     m_spParam.Velocity.BRT = NewValue
 End Property
 
@@ -1179,7 +1252,7 @@ Attribute SpinVelocity.VB_Description = "*The speed at which a spin should occur
     SpinVelocity = m_spParam.Velocity.BR
 End Property
 
-Public Property Let SpinVelocity(NewValue As Single)
+Public Property Let SpinVelocity(ByVal NewValue As Single)
     m_spParam.Velocity.BR = NewValue
 End Property
 
@@ -1188,7 +1261,7 @@ Attribute SpriteType.VB_Description = "The sprite's type."
     SpriteType = m_spParam.ProcessType
 End Property
 
-Public Property Let SpriteType(NewValue As Long)
+Public Property Let SpriteType(ByVal NewValue As Long)
     m_spParam.ProcessType = NewValue
 End Property
 
@@ -1204,7 +1277,7 @@ Public Property Get State() As Long
     State = m_lngState
 End Property
 
-Friend Property Set States(NewValue As Fury2States)
+Friend Property Set States(ByVal NewValue As Fury2States)
     Set m_staStates = NewValue
     UpdateState True
 End Property
@@ -1237,16 +1310,13 @@ End Property
 Public Sub Update()
 On Error Resume Next
 Dim l_sprCollided As Fury2Sprite
+    If Ignore Then Exit Sub
     m_lngAIDelay = m_lngAIDelay + 1
     If m_lngAIDelay > m_lngAIUpdateRate Then
         m_lngAIDelay = 0
         If m_booScript_AIUpdate Then
             m_Engine.ContextLevelAdd "Sprite_AIUpdate"
-            Err.Clear
-        
             m_objScript.AIUpdate
-        
-            Err.Clear
             m_Engine.ContextLevelRemove
         End If
     End If
@@ -1325,6 +1395,7 @@ Dim l_sprCollided As Fury2Sprite
     End If
     ProfileStop "Sprite Scripts"
     
+    ProfileStart "Attached Update / State Copy"
     If m_sprAttached Is Nothing Then
     Else
         With m_sprAttached
@@ -1340,14 +1411,15 @@ Dim l_sprCollided As Fury2Sprite
     End If
     
     m_spOldParam = m_spParam
+    ProfileStop "Attached Update / State Copy"
 End Sub
 
 Private Sub UpdatePath()
 On Error Resume Next
 Dim l_sngPathDistance As Single
 Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
-    If m_pthPath.Count = 0 Then Exit Sub
     If m_pthPath.Count > 0 Then
+        If State = IdleState Then State = WalkState
         ProfileStart "Sprite.UpdatePath"
         With m_pthPath(1)
             l_sngPathDistance = m_Engine.DistanceBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
@@ -1359,6 +1431,10 @@ Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
                 m_spParam.Position.X = .X
                 m_spParam.Position.Y = .Y
                 m_pthPath.Completed
+                If m_pthPath.Count = 0 Then
+                    If State = WalkState Then State = IdleState
+                    Velocity = 0
+                End If
             Else
                 If (Abs(l_sngPathDistance) >= (Velocity)) Then
                     Angle = m_Engine.AngleBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
@@ -1370,10 +1446,15 @@ Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
                     m_spParam.Position.X = .X
                     m_spParam.Position.Y = .Y
                     m_pthPath.Completed
+                    If m_pthPath.Count = 0 Then
+                        If State = WalkState Then State = IdleState
+                        Velocity = 0
+                    End If
                 End If
             End If
         End With
         ProfileStop "Sprite.UpdatePath"
+    Else
     End If
 End Sub
 
@@ -1386,7 +1467,10 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
     If m_fraFrame Is Nothing Then
     Else
         If (m_spParam.Events.Moved And m_booAnimateWhileMoving) Or ((Not m_spParam.Events.Moved) And m_booAnimateWhileStopped) Then
-            m_sngAnimationDelay = m_sngAnimationDelay + 1
+            m_sngAnimationDelay = m_sngAnimationDelay + (1 * AnimationMultiplier)
+            If m_posPose.Frames.Count < 2 Then
+                m_sngAnimationDelay = 0
+            End If
             If m_sngAnimationDelay >= m_fraFrame.Delay Then
                 m_sngAnimationDelay = m_sngAnimationDelay - m_fraFrame.Delay
                 l_lngPreFrame = m_lngFrame
@@ -1436,9 +1520,6 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
         End If
     End If
     If m_lngFrame <> l_lngOldFrame Then
-        If (l_lngOldFrame < 5) And (l_lngOldFrame > 2) And (m_lngFrame = 1) Then
-'            Stop
-        End If
         m_Engine.Cameras.Dirty
     End If
     ProfileStop "Sprite.UpdateAnimation"
@@ -1574,7 +1655,7 @@ Attribute Velocity.VB_Description = "*The sprite's current movement speed."
     Velocity = m_spParam.Velocity.V
 End Property
 
-Public Property Let Velocity(NewValue As Single)
+Public Property Let Velocity(ByVal NewValue As Single)
     If m_spParam.Velocity.V > 0 Then
 '    If NewValue < (m_spParam.Velocity.V / 2) Then Stop
     End If
@@ -1586,7 +1667,7 @@ Attribute WalkSpeed.VB_Description = "The maximum speed for the sprite's movemen
     WalkSpeed = m_staState.MaxVelocity
 End Property
 
-Public Property Let WalkSpeed(NewValue As Single)
+Public Property Let WalkSpeed(ByVal NewValue As Single)
     m_staState.MaxVelocity = NewValue
 End Property
 
@@ -1603,7 +1684,7 @@ Public Property Get X() As Single
     X = m_spParam.Position.X
 End Property
 
-Public Property Let X(NewValue As Single)
+Public Property Let X(ByVal NewValue As Single)
     m_spParam.Position.X = NewValue
 End Property
 
@@ -1623,7 +1704,7 @@ Public Property Get XVelocity() As Single
     XVelocity = m_spParam.Velocity.X
 End Property
 
-Public Property Let XVelocity(NewValue As Single)
+Public Property Let XVelocity(ByVal NewValue As Single)
     m_spParam.Velocity.X = NewValue
 End Property
 
@@ -1631,7 +1712,7 @@ Public Property Get Y() As Single
     Y = m_spParam.Position.Y
 End Property
 
-Public Property Let Y(NewValue As Single)
+Public Property Let Y(ByVal NewValue As Single)
     m_spParam.Position.Y = NewValue
 End Property
 
@@ -1647,7 +1728,7 @@ Public Property Get YVelocity() As Single
     YVelocity = m_spParam.Velocity.Y
 End Property
 
-Public Property Let YVelocity(NewValue As Single)
+Public Property Let YVelocity(ByVal NewValue As Single)
     m_spParam.Velocity.Y = NewValue
 End Property
 
@@ -1655,7 +1736,7 @@ Public Property Get Z() As Single
     Z = m_spParam.Position.Z
 End Property
 
-Public Property Let Z(NewValue As Single)
+Public Property Let Z(ByVal NewValue As Single)
     m_spParam.Position.Z = NewValue
 End Property
 
@@ -1663,6 +1744,6 @@ Public Property Get ZVelocity() As Single
     ZVelocity = m_spParam.Velocity.Z
 End Property
 
-Public Property Let ZVelocity(NewValue As Single)
+Public Property Let ZVelocity(ByVal NewValue As Single)
     m_spParam.Velocity.Z = NewValue
 End Property

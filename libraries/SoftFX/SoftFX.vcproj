@@ -691,6 +691,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\module\Pathfind.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\module\Polygon.cpp"
 				>
 			</File>
@@ -910,6 +914,10 @@
 			</File>
 			<File
 				RelativePath=".\header\Particles.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\header\Pathfind.hpp"
 				>
 			</File>
 			<File

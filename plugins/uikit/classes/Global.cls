@@ -7,7 +7,7 @@ BEGIN
   MTSTransactionMode  = 0  'NotAnMTSObject
 END
 Attribute VB_Name = "Global"
-Attribute VB_GlobalNameSpace = True
+Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
@@ -125,6 +125,7 @@ Dim l_strChosenName As String
     Set LoadForm = Engine.ScriptEngine.Eval(Engine.ScriptEngine.Language.GenerateInstantiation(l_strName))
     l_strChosenName = l_strName
     l_strChosenName = CStr(LoadForm.Name)
+    Forms.Remove l_strChosenName
     Forms.Add LoadForm, l_strChosenName
     Set Engine.IObjThis = LoadForm
     Engine.RunCode Engine.ScriptEngine.Language.GenerateAssignment(l_strChosenName, "IObjThis", True)

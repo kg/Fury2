@@ -620,7 +620,7 @@ Dim m_colData As IVirtualFileCollection
             Next m_lngItems
         End If
     Case vbBoolean
-        If (m_lngCursorPos + 1) > (UBound(m_bytData) + 1) Then Data = 0: Exit Sub
+        If (m_lngCursorPos + 1) > (UBound(m_bytData) + 1) Then Data = False: Exit Sub
         If m_booBigEndian Then
             ReverseRead m_lngCursorPos, VarPtr(m_intValue), 2
         Else
@@ -629,12 +629,12 @@ Dim m_colData As IVirtualFileCollection
         m_lngCursorPos = m_lngCursorPos + 2
         Data = CBool(m_intValue)
     Case vbByte
-        If (m_lngCursorPos) > (UBound(m_bytData) + 1) Then Data = 0: Exit Sub
+        If (m_lngCursorPos) > (UBound(m_bytData) + 1) Then Data = CByte(0): Exit Sub
         memcpyvb m_bytValue, m_bytData(m_lngCursorPos - 1), 1
         m_lngCursorPos = m_lngCursorPos + 1
         Data = CByte(m_bytValue)
     Case vbInteger
-        If (m_lngCursorPos + 1) > (UBound(m_bytData) + 1) Then Data = 0: Exit Sub
+        If (m_lngCursorPos + 1) > (UBound(m_bytData) + 1) Then Data = CInt(0): Exit Sub
         If m_booBigEndian Then
             ReverseRead m_lngCursorPos, VarPtr(m_intValue), 2
         Else
@@ -643,7 +643,7 @@ Dim m_colData As IVirtualFileCollection
         m_lngCursorPos = m_lngCursorPos + 2
         Data = CInt(m_intValue)
     Case vbLong
-        If (m_lngCursorPos + 3) > (UBound(m_bytData) + 1) Then Data = 0: Exit Sub
+        If (m_lngCursorPos + 3) > (UBound(m_bytData) + 1) Then Data = CLng(0): Exit Sub
         If m_booBigEndian Then
             ReverseRead m_lngCursorPos, VarPtr(m_lngValue), 4
         Else
@@ -652,17 +652,17 @@ Dim m_colData As IVirtualFileCollection
         m_lngCursorPos = m_lngCursorPos + 4
         Data = CLng(m_lngValue)
     Case vbSingle
-        If (m_lngCursorPos + 3) > (UBound(m_bytData) + 1) Then Data = 0: Exit Sub
+        If (m_lngCursorPos + 3) > (UBound(m_bytData) + 1) Then Data = CSng(0): Exit Sub
         memcpyvb m_sngValue, m_bytData(m_lngCursorPos - 1), 4
         m_lngCursorPos = m_lngCursorPos + 4
         Data = CSng(m_sngValue)
     Case vbDouble
-        If (m_lngCursorPos + 7) > (UBound(m_bytData) + 1) Then Data = 0: Exit Sub
+        If (m_lngCursorPos + 7) > (UBound(m_bytData) + 1) Then Data = CDbl(0): Exit Sub
         memcpyvb m_dblValue, m_bytData(m_lngCursorPos - 1), 8
         m_lngCursorPos = m_lngCursorPos + 8
         Data = CDbl(m_dblValue)
     Case vbCurrency
-        If (m_lngCursorPos + 7) > (UBound(m_bytData) + 1) Then Data = 0: Exit Sub
+        If (m_lngCursorPos + 7) > (UBound(m_bytData) + 1) Then Data = CCur(0): Exit Sub
         memcpyvb m_curValue, m_bytData(m_lngCursorPos - 1), 8
         m_lngCursorPos = m_lngCursorPos + 8
         Data = CCur(m_curValue)

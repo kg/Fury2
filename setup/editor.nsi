@@ -36,7 +36,7 @@ Name "Fury²"
   UninstallIcon "icon.ico"
 
   ;General
-  OutFile "fury2_beta_04.exe"
+  OutFile "fury2_beta_05.exe"
 
   ;Folder-selection page
   InstallDir "$PROGRAMFILES\${NAME}"
@@ -48,7 +48,7 @@ Section "-Engine"
 	SetOutPath "$INSTDIR"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayName" "${NAME}"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "UninstallString" "$INSTDIR\Uninstall.exe"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "0.41"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "0.5"
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoModify" 1
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoRepair" 1
 	WriteUninstaller "$INSTDIR\Uninstall.exe"

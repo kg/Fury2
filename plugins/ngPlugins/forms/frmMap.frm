@@ -1916,6 +1916,7 @@ Private Sub elLayers_ItemSelected(ByVal Item As Long)
 On Error Resume Next
     m_lngSelectedLayer = ClipValue(Item, 1, m_mapMap.Layers.Count)
     Redraw
+    RefreshBrush
     RefreshTiles
     InspectorChanged
 End Sub
@@ -2881,12 +2882,12 @@ Dim l_sngXScale As Single, l_sngYScale As Single
 Dim l_lngW As Long, l_lngH As Long
     If picBrush.Visible = False Then Exit Sub
     If (picBrush.ScaleWidth < m_imgBrush.Width) Then
-        l_sngXScale = m_imgBrush.Width / picBrush.ScaleWidth
+        l_sngXScale = picBrush.ScaleWidth / m_imgBrush.Width
     Else
         l_sngXScale = 1
     End If
     If (picBrush.ScaleHeight < m_imgBrush.Height) Then
-        l_sngYScale = m_imgBrush.Height / picBrush.ScaleHeight
+        l_sngYScale = picBrush.ScaleHeight / m_imgBrush.Height
     Else
         l_sngYScale = 1
     End If

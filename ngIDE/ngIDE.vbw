@@ -1,7 +1,7 @@
 frmMain = 5, 70, 1041, 677, C, 44, 46, 975, 650, C
 mdlToolbars = 66, 69, 1068, 676, C
 cEditor = 88, 92, 1019, 696, C
-mdlEditor = -410, 76, 521, 680, C
+mdlEditor = 10, 105, 941, 709, C
 frmIcons = 176, 184, 1178, 791, C, 176, 184, 1107, 788, C
 frmTerminate = 92, 92, 990, 699, C, 198, 207, 1129, 811, C
 cChildManager = 176, 184, 1107, 788, C

@@ -89,7 +89,7 @@ Dim l_lngLayers As Long
         Load
     End If
     If mvarBuffer.Handle = 0 Then
-        Stop
+        Exit Sub
     End If
     If Handle = 0 Then
         Handle = 0

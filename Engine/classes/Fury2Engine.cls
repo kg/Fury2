@@ -998,11 +998,7 @@ On Error Resume Next
     Set Filesystem.OutputHook = Me
     Filesystem.Root = "."
     Set Configuration = New Fury2ConfigurationFile
-    Configuration.DefineSettings Array(Array("Show Configuration Dialog", "Yes"), Array("Title", "Untitled Game"), Array("Screen Mode", "320x240 @ 32"), Array("Framerate", "60fps"), _
-    Array("Special FX", "Yes"), Array("Output Plugin", "GDI"), "Vertical Sync", Array("Show Framerate", "Yes"), Array("Show Titlebar", "Yes"), _
-    Array("Default Transition", "Crossfade"), Array("Default Transition Length", "1.0"), "Default Map", Array("Default Font", "TTF;Tahoma"), "Default Window Skin", _
-    Array("Default Start Position", "0 @ 0, 0"), Array("Enable Sound", "Yes"), Array("Music Volume", "0.65"), Array("Language", "VBScript"), Array("Icon", "/icon.ico"), _
-    Array("Default Cursor", ""), Array("Screen Scale Ratio", "1.0"), Array("Output Scaling Mode", "Fast"))
+    Configuration.InitDefaultSettings
     Set EventHookStack = New Collection
     Set Timers = New Fury2Collection
     Set MessageQueue = New Fury2Collection

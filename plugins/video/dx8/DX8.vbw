@@ -1,5 +1,5 @@
 frmDX8 = 276, 276, 1197, 879, C, 66, 69, 1012, 580, C
 mdlDX8 = 84, 17, 1003, 621, C
-mdlDX8Override = 69, 69, 988, 672, Z
+mdlDX8Override = 69, 69, 988, 672, 
 DX8Engine = 69, 69, 988, 672, 
 mdlOverride = 115, 115, 1034, 718, C

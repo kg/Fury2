@@ -35,7 +35,7 @@ End Sub
 Private Function iFileTypePlugin_CanOpenFile(Filename As String) As Boolean
 On Error Resume Next
     Select Case LCase(Trim(GetExtension(Filename)))
-    Case "txt", "ini"
+    Case "txt", "ini", "f2config"
         iFileTypePlugin_CanOpenFile = True
     Case Else
         If LCase(Trim(GetTitle(Filename))) = "readme" Then

@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
-Object = "{E142732F-A852-11D4-B06C-00500427A693}#1.16#0"; "vbalTbar6.ocx"
+Object = "{E142732F-A852-11D4-B06C-00500427A693}#2.0#0"; "vbalTbar6.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
 Begin VB.Form frmMap 
    BorderStyle     =   0  'None
@@ -214,9 +214,9 @@ Begin VB.Form frmMap
             End
             Begin ngPlugins.ObjectInspector insInspect 
                Height          =   660
-               Left            =   300
+               Left            =   75
                TabIndex        =   18
-               Top             =   225
+               Top             =   75
                Visible         =   0   'False
                Width           =   660
                _ExtentX        =   1164
@@ -251,6 +251,16 @@ Begin VB.Form frmMap
                EndProperty
                ShowCloseButton =   0   'False
                MoveableTabs    =   0   'False
+            End
+            Begin ngPlugins.Script scObjectScript 
+               Height          =   975
+               Left            =   0
+               TabIndex        =   23
+               Top             =   0
+               Visible         =   0   'False
+               Width           =   810
+               _ExtentX        =   1429
+               _ExtentY        =   1720
             End
          End
          Begin vbalDTab6.vbalDTabControl dtLists 
@@ -422,6 +432,7 @@ Private Enum LightingTools
     LightingTool_Cursor
     LightingTool_Light
     LightingTool_Obstruction
+    LightingTool_ObstructionRectangle
     LightingTool_SelectObstructions
     LightingTool_MoveObstructions
     LightingTool_Plane
@@ -544,7 +555,7 @@ On Error Resume Next
 Dim l_objPlugin As MapEditor
     Set l_objPlugin = m_fpgPlugin
     With l_objPlugin.CustomClipboard
-        .GetCurrentFormats Me.hWnd
+        .GetCurrentFormats Me.hwnd
         ClipboardContainsFormat = .HasCurrentFormat(l_objPlugin.ClipboardFormat(Format))
     End With
 End Function
@@ -717,8 +728,8 @@ On Error Resume Next
     Case View_Lighting
         MapToolButtons = Buttons( _
             ButtonString("Cursor", , "Tool(0)", "CURSOR"), ButtonString("Place Light", , "Tool(1)", "BRIGHTNESS"), "-", _
-            ButtonString("Place Obstruction", , "Tool(2)", "LIGHTING OBSTRUCTION"), ButtonString("Select Obstructions", , "Tool(3)", "SELECTION"), ButtonString("Move Obstructions", , "Tool(4)", "MOVE"), "-", _
-            ButtonString("Place Plane", , "Tool(5)", "LIGHTING PLANE"), ButtonString("Select Planes", , "Tool(6)", "SELECTION"), ButtonString("Move Planes", , "Tool(7)", "MOVE") _
+            ButtonString("Place Obstruction", , "Tool(2)", "LIGHTING OBSTRUCTION"), ButtonString("Place Obstruction Rectangle", , "Tool(3)", "LIGHTING OBSTRUCTION RECTANGLE"), ButtonString("Select Obstructions", , "Tool(4)", "SELECTION"), ButtonString("Move Obstructions", , "Tool(5)", "MOVE"), "-", _
+            ButtonString("Place Plane", , "Tool(6)", "LIGHTING PLANE"), ButtonString("Select Planes", , "Tool(7)", "SELECTION"), ButtonString("Move Planes", , "Tool(8)", "MOVE") _
             )
     Case View_Areas
         MapToolButtons = Buttons( _
@@ -741,7 +752,7 @@ On Error Resume Next
 Dim l_araArea As Fury2Area
     BeginProcess "Performing Copy..."
     Set l_araArea = m_mapMap.Areas(m_lngSelectedArea)
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(CF_Area), l_araArea
     CustomClipboard.ClipboardClose
     EndProcess
@@ -755,7 +766,7 @@ Dim l_araArea As Fury2Area
         AtIndex = m_mapMap.Areas.Count + 1
     End If
     Set l_araArea = New Fury2Area
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_Area), l_araArea) Then
         CustomClipboard.ClipboardClose
         ObjectUndoPush m_mapMap.Areas, l_araArea, AtIndex, OUO_Remove
@@ -782,7 +793,7 @@ Dim l_vfLines As VirtualFile
     BeginProcess "Performing Paste..."
     ReDim l_lnLines(0 To 0)
     Set l_vfLines = New VirtualFile
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_MapObstructions), l_vfLines) Then
         CustomClipboard.ClipboardClose
         l_vfLines.Load l_lngCount
@@ -811,7 +822,7 @@ Dim l_lyrLayer As Fury2MapLayer
         AtIndex = m_mapMap.Layers.Count + 1
     End If
     Set l_lyrLayer = New Fury2MapLayer
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_MapLayer), l_lyrLayer) Then
         CustomClipboard.ClipboardClose
         ObjectUndoPush m_mapMap.Layers, l_lyrLayer, AtIndex, OUO_Remove
@@ -838,7 +849,7 @@ Dim l_sprSprite As Fury2Sprite
             AtIndex = .Count + 1
         End If
         Set l_sprSprite = New Fury2Sprite
-        CustomClipboard.ClipboardOpen Me.hWnd
+        CustomClipboard.ClipboardOpen Me.hwnd
         If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_Sprite), l_sprSprite) Then
             CustomClipboard.ClipboardClose
             l_sprSprite.Initialize
@@ -868,7 +879,7 @@ Dim l_litLight As Fury2LightSource
             AtIndex = .Count + 1
         End If
         Set l_litLight = New Fury2LightSource
-        CustomClipboard.ClipboardOpen Me.hWnd
+        CustomClipboard.ClipboardOpen Me.hwnd
         If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_LightSource), l_litLight) Then
             CustomClipboard.ClipboardClose
             ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights, l_litLight, AtIndex, OUO_Remove
@@ -964,6 +975,8 @@ On Error Resume Next
     Select Case LCase(Trim(Me.ActiveControl.Name))
     Case "scmap"
         ActiveType = "Script"
+    Case "scobject"
+        ActiveType = "Object Script"
     Case "elareas"
         ActiveType = "Areas"
     Case "elsprites"
@@ -982,7 +995,7 @@ On Error Resume Next
             Select Case Tool_Lighting
             Case LightingTool_Cursor, LightingTool_Light
                 ActiveType = "Lights"
-            Case LightingTool_Obstruction, LightingTool_SelectObstructions, LightingTool_MoveObstructions
+            Case LightingTool_Obstruction, LightingTool_ObstructionRectangle, LightingTool_SelectObstructions, LightingTool_MoveObstructions
                 ActiveType = "Lighting Obstructions"
             Case LightingTool_Plane, LightingTool_SelectPlanes, LightingTool_MovePlanes
                 ActiveType = "Lighting Planes"
@@ -1209,7 +1222,7 @@ Dim l_vfLines As VirtualFile
     Set l_vfLines = New VirtualFile
     l_vfLines.Save l_lngCount
     l_vfLines.RawSave ByVal VarPtr(l_lnLines(0)), l_lngCount * Len(l_lnLines(0))
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(CF_MapObstructions), l_vfLines
     CustomClipboard.ClipboardClose
     EndProcess
@@ -1237,7 +1250,7 @@ Dim l_vfLines As VirtualFile
     Set l_vfLines = New VirtualFile
     l_vfLines.Save l_lngCount
     l_vfLines.RawSave ByVal VarPtr(l_obsLines(0)), l_lngCount * Len(l_obsLines(0))
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(CF_LightObstructions), l_vfLines
     CustomClipboard.ClipboardClose
     EndProcess
@@ -1265,7 +1278,7 @@ Dim l_vfPlanes As VirtualFile
     Set l_vfPlanes = New VirtualFile
     l_vfPlanes.Save l_lngCount
     l_vfPlanes.RawSave ByVal VarPtr(l_plnPlanes(0)), l_lngCount * Len(l_plnPlanes(0))
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(CF_LightPlanes), l_vfPlanes
     CustomClipboard.ClipboardClose
     EndProcess
@@ -1276,7 +1289,7 @@ On Error Resume Next
 Dim l_lyrLayer As Fury2MapLayer
     BeginProcess "Performing Copy..."
     Set l_lyrLayer = m_mapMap.Layers(m_lngSelectedLayer)
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(CF_MapLayer), l_lyrLayer
     CustomClipboard.ClipboardClose
     EndProcess
@@ -1287,7 +1300,7 @@ On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
     BeginProcess "Performing Copy..."
     Set l_sprSprite = m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite)
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(CF_Sprite), l_sprSprite
     CustomClipboard.ClipboardClose
     EndProcess
@@ -1298,7 +1311,7 @@ On Error Resume Next
 Dim l_litLight As Fury2LightSource
     BeginProcess "Performing Copy..."
     Set l_litLight = m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights(m_lngSelectedLight)
-    CustomClipboard.ClipboardOpen Me.hWnd
+    CustomClipboard.ClipboardOpen Me.hwnd
     ClipboardSerialize CustomClipboard, ClipboardFormat(CF_LightSource), l_litLight
     CustomClipboard.ClipboardClose
     EndProcess
@@ -1431,6 +1444,7 @@ On Error Resume Next
     ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Sprites, m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite), m_lngSelectedSprite, OUO_Add
     m_mapMap.Layers(m_lngSelectedLayer).Sprites.Remove m_lngSelectedSprite
     RefreshSprites
+    Redraw
     EndProcess
 End Sub
 
@@ -1440,6 +1454,7 @@ On Error Resume Next
     ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights, m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights(m_lngSelectedLight), m_lngSelectedLight, OUO_Add
     m_mapMap.Layers(m_lngSelectedLayer).Lighting.Lights.Remove m_lngSelectedLight
     RefreshLights
+    Redraw
     EndProcess
 End Sub
 
@@ -1992,6 +2007,8 @@ On Error Resume Next
     Select Case ActiveType
     Case "Script"
         NewValue = scMap.Control.CanCopy
+    Case "Object Script"
+        NewValue = scObjectScript.Control.CanCopy
     Case "Layers"
         NewValue = (elLayers.SelectedItem > 0)
     Case "Areas"
@@ -2011,6 +2028,8 @@ On Error Resume Next
     Select Case ActiveType
     Case "Script"
         NewValue = scMap.Control.CanCut
+    Case "Object Script"
+        NewValue = scObjectScript.Control.CanCut
     Case "Layers"
         NewValue = (elLayers.SelectedItem > 0) And (m_mapMap.Layers.Count > 1)
     Case "Areas"
@@ -2030,6 +2049,8 @@ On Error Resume Next
     Select Case ActiveType
     Case "Script"
         NewValue = scMap.Control.CanCut
+    Case "Object Script"
+        NewValue = scObjectScript.Control.CanCut
     Case "Layers"
         NewValue = (elLayers.SelectedItem > 0) And (m_mapMap.Layers.Count > 1)
     Case "Areas"
@@ -2053,6 +2074,8 @@ On Error Resume Next
     Select Case ActiveType
     Case "Script"
         NewValue = scMap.Control.CanPaste
+    Case "Object Script"
+        NewValue = scObjectScript.Control.CanPaste
     Case "Layers"
         NewValue = ClipboardContainsFormat(CF_MapLayer)
     Case "Areas"
@@ -2108,6 +2131,10 @@ End Sub
 Private Sub iEditingCommands_Copy()
 On Error Resume Next
     Select Case ActiveType
+    Case "Script"
+        scMap.Control.Copy
+    Case "Object Script"
+        scObjectScript.Control.Copy
     Case "Layers"
         CopyLayer
     Case "Areas"
@@ -2125,6 +2152,10 @@ End Sub
 Private Sub iEditingCommands_Cut()
 On Error Resume Next
     Select Case ActiveType
+    Case "Script"
+        scMap.Control.Cut
+    Case "Object Script"
+        scObjectScript.Control.Cut
     Case "Layers"
         CutLayer
     Case "Areas"
@@ -2163,6 +2194,10 @@ End Sub
 Private Sub iEditingCommands_Paste()
 On Error Resume Next
     Select Case ActiveType
+    Case "Script"
+        scMap.Control.Paste
+    Case "Object Script"
+        scObjectScript.Control.Paste
     Case "Layers"
         PasteLayer
     Case "Areas"
@@ -2329,6 +2364,13 @@ Dim l_sndObject As Fury2SoundObject
                     .Inspect Nothing
                 End If
             End With
+        Case "script"
+            Set m_ctlCurrentInspector = scObjectScript
+            If m_lngCurrentView = View_Sprites Then
+                scObjectScript.Text = m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).ScriptSource
+            ElseIf m_lngCurrentView = View_Areas Then
+                scObjectScript.Text = m_mapMap.Areas(m_lngSelectedArea).ScriptSource
+            End If
         Case "light"
             Set m_ctlCurrentInspector = insInspect
             With insInspect
@@ -2400,7 +2442,7 @@ Dim l_optOptions As ToolbarOptions
             .YHeight = mdlToolbars.vbal_getVerticalHeight(tbrTools)
             .DefaultPosition = TBP_Left
         End With
-        .AddToolbar "Map Tools", tbrTools.hWnd, l_optOptions
+        .AddToolbar "Map Tools", tbrTools.hwnd, l_optOptions
         ResizeAll
     End With
 End Sub
@@ -2884,14 +2926,30 @@ Dim l_rctSelection As Fury2Rect
                 m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
             End If
             m_imgBackbuffer.FilledEllipse Array(m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 220, 220, 127), 1, 1, RenderMode_SourceAlpha
-        Case LightingTool_Plane
+        Case LightingTool_ObstructionRectangle
             If m_lngPoint > 0 Then
                 m_imgBackbuffer.FilledEllipse Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 255), 1, 1
-                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_fptPoints(0).X - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
+                m_imgBackbuffer.AntiAliasLine Array(m_lngMouseX - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_lngMouseY - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
             End If
+            m_imgBackbuffer.FilledEllipse Array(m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 220, 220, 127), 1, 1, RenderMode_SourceAlpha
+        Case LightingTool_Plane
             If m_lngPoint > 1 Then
+                m_imgBackbuffer.FilledEllipse Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 255), 1, 1
+                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_fptPoints(0).X - hsMap.Value, m_fptPoints(1).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
+                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_fptPoints(1).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
+                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(1).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_fptPoints(1).X - hsMap.Value, m_fptPoints(1).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
+                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(1).Y - vsMap.Value, m_fptPoints(1).X - hsMap.Value, m_fptPoints(1).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
                 m_imgBackbuffer.FilledEllipse Array(m_fptPoints(1).X - hsMap.Value, m_fptPoints(1).Y - vsMap.Value), F2RGB(220, 0, 220, 255), 1, 1
                 m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(1).X - hsMap.Value, m_fptPoints(1).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+            ElseIf m_lngPoint > 0 Then
+                m_imgBackbuffer.FilledEllipse Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 255), 1, 1
+                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_fptPoints(0).X - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
+                m_imgBackbuffer.AntiAliasLine Array(m_lngMouseX - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_lngMouseY - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
             End If
             m_imgBackbuffer.FilledEllipse Array(m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 220, 220, 127), 1, 1, RenderMode_SourceAlpha
         Case LightingTool_SelectObstructions, LightingTool_SelectPlanes
@@ -3245,7 +3303,7 @@ Dim l_optOptions As ToolbarOptions
                 .YHeight = mdlToolbars.vbal_getVerticalHeight(tbrTools)
                 .DefaultPosition = TBP_Left
             End With
-            .ResizeToolbar "Map Tools", tbrTools.hWnd, l_optOptions
+            .ResizeToolbar "Map Tools", tbrTools.hwnd, l_optOptions
         Else
             With l_optOptions
                 .Title = "Map Tools"
@@ -3339,6 +3397,15 @@ Dim l_lngLines As Long
     Next l_lngLines
 End Sub
 
+Public Sub SelectLightingPlanes(Optional ByVal First As Long = 0, Optional ByVal Last As Long = -32767)
+On Error Resume Next
+Dim l_lngPlanes As Long
+    If Last = -32767 Then Last = First
+    For l_lngPlanes = LBound(m_bytSelectedLightingPlanes) To UBound(m_bytSelectedLightingPlanes)
+        m_bytSelectedLightingPlanes(l_lngPlanes) = IIf((l_lngPlanes >= First) And (l_lngPlanes <= Last), 255, 0)
+    Next l_lngPlanes
+End Sub
+
 Friend Sub SetFilename(Name As String)
 On Error Resume Next
     m_strFilename = Name
@@ -3362,6 +3429,15 @@ On Error Resume Next
     SetStretchBltMode picOverlay.hdc, StretchBlt_ColorOnColor
     StretchBlt picOverlay.hdc, 0, 0, picOverlay.ScaleWidth, picOverlay.ScaleHeight, m_lngOverlayDC, 0, 0, m_imgOverlay.Width, m_imgOverlay.Height, vbSrcCopy
     picOverlay.Refresh
+End Sub
+
+Private Sub scObjectScript_Change()
+On Error Resume Next
+    If m_lngCurrentView = View_Sprites Then
+        m_mapMap.Layers(m_lngSelectedLayer).Sprites(m_lngSelectedSprite).ScriptSource = scObjectScript.Text
+    ElseIf m_lngCurrentView = View_Areas Then
+        m_mapMap.Areas(m_lngSelectedArea).ScriptSource = scObjectScript.Text
+    End If
 End Sub
 
 Private Sub tbrTools_ButtonClick(ByVal lButton As Long)
@@ -3702,7 +3778,7 @@ Dim l_litNew As Fury2LightSource
             Select Case Tool_Lighting
             Case LightingTool_Cursor, LightingTool_Light
                 CutLight
-            Case LightingTool_Obstruction, LightingTool_SelectObstructions, LightingTool_MoveObstructions
+            Case LightingTool_Obstruction, LightingTool_ObstructionRectangle, LightingTool_SelectObstructions, LightingTool_MoveObstructions
                 CutLightingObstructions
             Case LightingTool_Plane, LightingTool_SelectPlanes, LightingTool_MovePlanes
                 CutLightingPlanes
@@ -3711,7 +3787,7 @@ Dim l_litNew As Fury2LightSource
             Select Case Tool_Lighting
             Case LightingTool_Cursor, LightingTool_Light
                 CopyLight
-            Case LightingTool_Obstruction, LightingTool_SelectObstructions, LightingTool_MoveObstructions
+            Case LightingTool_Obstruction, LightingTool_ObstructionRectangle, LightingTool_SelectObstructions, LightingTool_MoveObstructions
                 CopyLightingObstructions
             Case LightingTool_Plane, LightingTool_SelectPlanes, LightingTool_MovePlanes
                 CopyLightingPlanes
@@ -3725,14 +3801,14 @@ Dim l_litNew As Fury2LightSource
                 End With
                 RefreshLights
                 Redraw
-            Case LightingTool_Obstruction, LightingTool_SelectObstructions, LightingTool_MoveObstructions
+            Case LightingTool_Obstruction, LightingTool_ObstructionRectangle, LightingTool_SelectObstructions, LightingTool_MoveObstructions
             Case LightingTool_Plane, LightingTool_SelectPlanes, LightingTool_MovePlanes
             End Select
         Case 4
             Select Case Tool_Lighting
             Case LightingTool_Cursor, LightingTool_Light
                 DeleteLight
-            Case LightingTool_Obstruction, LightingTool_SelectObstructions, LightingTool_MoveObstructions
+            Case LightingTool_Obstruction, LightingTool_ObstructionRectangle, LightingTool_SelectObstructions, LightingTool_MoveObstructions
                 DeleteLightingObstructions
             Case LightingTool_Plane, LightingTool_SelectPlanes, LightingTool_MovePlanes
                 DeleteLightingPlanes
@@ -3792,6 +3868,13 @@ Dim l_litNew As Fury2LightSource
                 m_lngPoint = m_lngPoint + 1
                 Redraw
             End If
+        Case LightingTool_ObstructionRectangle
+            If Button = 1 Then
+                m_fptPoints(m_lngPoint).X = m_lngMouseX
+                m_fptPoints(m_lngPoint).Y = m_lngMouseY
+                m_lngPoint = m_lngPoint + 1
+                Redraw
+            End If
         Case LightingTool_Plane
             If Button = 1 Then
                 m_fptPoints(m_lngPoint).X = m_lngMouseX
@@ -3831,7 +3914,7 @@ On Error Resume Next
             End With
             Redraw
         End If
-    Case LightingTool_Plane, LightingTool_Obstruction
+    Case LightingTool_Plane, LightingTool_Obstruction, LightingTool_ObstructionRectangle
         If m_booMouseMoved Then
             Redraw
         End If
@@ -3883,6 +3966,22 @@ Dim l_rctSelection As Fury2Rect
             With m_mapMap.Layers(m_lngSelectedLayer).Lighting
                 m_lngPoint = 0
                 .AddObstruction m_fptPoints(0).X, m_fptPoints(0).Y, m_fptPoints(1).X, m_fptPoints(1).Y
+                ReDim Preserve m_bytSelectedLightingObstructions(0 To .ObstructionCount)
+                SelectLightingObstructions .ObstructionCount
+                .Refresh
+            End With
+            Redraw
+        End If
+    Case LightingTool_ObstructionRectangle
+        If m_lngPoint > 1 Then
+            With m_mapMap.Layers(m_lngSelectedLayer).Lighting
+                m_lngPoint = 0
+                .AddObstruction m_fptPoints(0).X, m_fptPoints(0).Y, m_fptPoints(0).X, m_fptPoints(1).Y
+                .AddObstruction m_fptPoints(0).X, m_fptPoints(0).Y, m_fptPoints(1).X, m_fptPoints(0).Y
+                .AddObstruction m_fptPoints(0).X, m_fptPoints(1).Y, m_fptPoints(1).X, m_fptPoints(1).Y
+                .AddObstruction m_fptPoints(1).X, m_fptPoints(0).Y, m_fptPoints(1).X, m_fptPoints(1).Y
+                ReDim Preserve m_bytSelectedLightingObstructions(0 To .ObstructionCount)
+                SelectLightingObstructions .ObstructionCount - 3, .ObstructionCount
                 .Refresh
             End With
             Redraw
@@ -3892,6 +3991,8 @@ Dim l_rctSelection As Fury2Rect
             m_lngPoint = 0
             With m_mapMap.Layers(m_lngSelectedLayer).Lighting
                 .AddPlane m_fptPoints(0).X, m_fptPoints(0).Y, m_fptPoints(1).X, m_fptPoints(1).Y, IIf(m_fptPoints(1).Y > m_fptPoints(0).Y, m_fptPoints(0).Y, m_fptPoints(1).Y) - m_fptPoints(2).Y
+                ReDim Preserve m_bytSelectedLightingPlanes(0 To .PlaneCount)
+                SelectLightingPlanes .PlaneCount
                 .Refresh
             End With
             Redraw

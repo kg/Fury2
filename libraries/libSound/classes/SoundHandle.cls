@@ -200,6 +200,20 @@ On Error Resume Next
     End If
 End Function
 
+Public Property Get Frequency() As Long
+On Error Resume Next
+    If m_Loaded = False Then Exit Property
+    If m_Channel = -1 Then Exit Property
+    Frequency = FSound_Channel.GetFrequency(m_Channel)
+End Property
+
+Public Property Let Frequency(ByVal NewFrequency As Long)
+On Error Resume Next
+    If m_Loaded = False Then Exit Property
+    If m_Channel = -1 Then Exit Property
+    Call FSound_Channel.SetFrequency(m_Channel, NewFrequency)
+End Property
+
 Public Function PlayPanned(Optional ByVal Pan As Long = -1, Optional ByVal Volume As Long = 255, Optional Channel As Long = -1) As Long
 Dim m_lngHandle As Long
     m_lngHandle = Play(Channel)

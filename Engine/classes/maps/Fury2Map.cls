@@ -41,6 +41,7 @@ Implements Fury2TrackedObject
 Implements IVirtualFileSaveable
 
 Public EditMode As Boolean
+Attribute EditMode.VB_VarDescription = "Indicates whether or not the map is in editing mode. In editing mode, certain automatic behaviors are disabled (for example, AI)"
 Private m_mobObjects As Fury2MapObjects
 Private m_strSettings() As String
 Private m_revRevision As Fury2RevisionData
@@ -56,9 +57,10 @@ Private m_araAreas As Fury2Areas
 Private m_tmrTimerEvents As Fury2TimerEvents
 Private m_lngWidth As Long, m_lngHeight As Long
 Public Paused As Boolean
-Attribute Paused.VB_VarDescription = "This flag pauses the updating of a map."
+Attribute Paused.VB_VarDescription = "*This flag pauses the updating of a map."
 Public Started As Boolean
 Attribute Started.VB_VarMemberFlags = "40"
+Attribute Started.VB_VarDescription = "*"
 
 Private m_booScript_Start As Boolean
 Private m_booScript_Load As Boolean
@@ -308,7 +310,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Script() As Object
-Attribute Script.VB_Description = "The map's script."
+Attribute Script.VB_Description = "*The map's script."
 On Error Resume Next
 Dim MapName As String
 Dim l_strScript As String
@@ -352,7 +354,7 @@ Dim l_strScript As String
 End Property
 
 Public Property Let ScriptSource(vData As String)
-Attribute ScriptSource.VB_Description = "The source code to the map's script."
+Attribute ScriptSource.VB_Description = "*The source code to the map's script."
     m_strScriptSource = vData
 End Property
 
@@ -427,6 +429,7 @@ Dim l_sngProgMul As Single
 End Sub
 
 Public Property Get CollisionType() As Long
+Attribute CollisionType.VB_Description = "The map's collision type."
 Attribute CollisionType.VB_MemberFlags = "40"
     CollisionType = m_lngCollisionType
 End Property

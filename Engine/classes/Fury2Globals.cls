@@ -206,7 +206,7 @@ On Error Resume Next
     DoEvents
     DoEvents
     DoEvents
-    m_Engine.iTerminate
+    If m_Engine Is Nothing Then Else m_Engine.iTerminate
     Set m_Engine = Nothing
     F2Shutdown
 End Sub

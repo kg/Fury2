@@ -14,7 +14,7 @@ Dim l_mgrNew As cMenuManager
     End With
     With l_mnuNew
         .ImageList = Icons.hIml
-        .hWndOwner = Ctl.hWnd
+        .hwndOwner = Ctl.hwnd
         .HeaderStyle = ecnmHeaderSeparator
         .OfficeXpStyle = True
     End With
@@ -40,13 +40,13 @@ Dim l_lngIndex As Long, l_mnuMenu As cPopupMenu
         l_lngIndex = CLng(Index)
     End If
     l_lngIndex = l_lngIndex + 1
-    l_mnuMenu.hWndOwner = Form.hWnd
+    l_mnuMenu.hwndOwner = Form.hwnd
     If Absolute Then
         ShowMenu = l_mnuMenu.ShowPopupAbsolute(X, Y, l_lngIndex)
     Else
         ShowMenu = l_mnuMenu.ShowPopupMenuAtIndex(X, Y, lIndex:=l_lngIndex, bLeftButtonOnly:=True)
     End If
-    l_mnuMenu.hWndOwner = frmIcons.hWnd
+    l_mnuMenu.hwndOwner = frmIcons.hwnd
 End Function
 
 Public Sub CleanupMenus()
@@ -67,7 +67,7 @@ On Error Resume Next
         MenuString("&View", , "ViewMenu"), Menus("-Sidebars", MenuString("&File Sidebar", "F8", "Show:FileSidebar", , , False, True), "-Toolbars", MenuString("&Main", "", "Show:MainToolbar", , , True, True), MenuString("&Game", "", "Show:GameToolbar", , , True, True), MenuString("&Plugins", "", "Show:PluginToolbar", , , True, True), "-"), _
         MenuString("&Document", , "DocumentMenu"), Menus(MenuString("-", , "DocumentEndSeparator"), MenuString("&Close", "Ctrl+F4", "Action:CloseWindow", "CLOSE WINDOW"), MenuString("&Next", "Ctrl+F6", "Action:NextWindow", "NEXT WINDOW"), "-"), _
         MenuString("&Game", , "GameMenu"), Menus(MenuString("&Open...", , "Game:Open", "OPEN GAME"), MenuString("Open &Recent", , "RecentGames"), Menus(MenuString("-", , "RecentGamesEndSeparator")), "-", MenuString("&Play", "F9", "Game:Play", "PLAY"), "-"), _
-        MenuString("&Tools", , "ToolMenu"), Menus(, MenuString("-", , "PluginsEndSeparator"), MenuString("Manage Plugins...", , "Plugins:Manage", "PLUGIN"), MenuString("Options...", , "Show:Options", "PROPERTIES"), MenuString("-", , "PluginsEndSeparator2")), _
+        MenuString("&Tools", , "ToolMenu"), Menus(, MenuString("-", , "PluginsEndSeparator"), MenuString("Manage Plugins...", , "Plugins:Manage", "PLUGIN"), MenuString("Options...", , "Show:Options", "PROPERTIES", , , False), MenuString("-", , "PluginsEndSeparator2")), _
         MenuString("&Window", , "WindowMenu"), Menus(MenuString("-", , "WindowsEndSeparator"), MenuString("Close All", , "Action:CloseAllWindows", "CLOSE ALL WINDOWS", , , False), MenuString("-", , "WindowsEndSeparator2")), _
         MenuString("&Help", , "HelpMenu"), Menus(MenuString("&About...", , "Help:About", "HELP"), "-")), _
         frmIcons.ilIcons
@@ -88,9 +88,9 @@ On Error Resume Next
     Set GetMenuManager = l_colMenus(LCase(Trim(Name)))
 End Function
 
-Public Sub SetMenuOwner(Name As String, hWnd As Long)
+Public Sub SetMenuOwner(Name As String, hwnd As Long)
 On Error Resume Next
-    l_colMenus(LCase(Trim(Name))).Menu.hWndOwner = hWnd
+    l_colMenus(LCase(Trim(Name))).Menu.hwndOwner = hwnd
 End Sub
 
 Public Function DefineMenu(Name As String, Items As Variant, Optional Icons As vbalImageList = Nothing) As cPopupMenu
@@ -105,7 +105,7 @@ Dim l_mgrNew As cMenuManager
     l_colMenus.Add l_mgrNew, LCase(Trim(Name))
     Set DefineMenu = l_mnuNew
     With l_mnuNew
-        .hWndOwner = frmIcons.hWnd
+        .hwndOwner = frmIcons.hwnd
         .HeaderStyle = ecnmHeaderSeparator
         .OfficeXpStyle = True
     End With

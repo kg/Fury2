@@ -62,7 +62,7 @@ On Error Resume Next
         If Enabled Then
             With Engine
             If Obj.Path.Count <= 0 Then
-                If .DisableMovement Then
+                    If .DisableMovement Then
                         Obj.Velocity = Obj.Velocity - .VelocityDecay
                         If Obj.Velocity <= 0.05 Then
                             Obj.Velocity = 0
@@ -102,10 +102,10 @@ On Error Resume Next
                                 If Obj.Velocity > Obj.WalkSpeed Then Obj.Velocity = Obj.WalkSpeed
                             Else
                                 Obj.Velocity = Obj.Velocity - .VelocityDecay
-                            End If
-                            If Obj.Velocity < .VelocityDecay Then
-                                If (Obj.State = Obj.WalkState) Then Obj.State = Obj.IdleState
-                                Obj.Velocity = 0
+                                If Obj.Velocity < .VelocityDecay Then
+                                    If (Obj.State = Obj.WalkState) Then Obj.State = Obj.IdleState
+                                    Obj.Velocity = 0
+                                End If
                             End If
                         Case CS_ResidentEvil
                             If InputState(3) And InputState(1) Then
@@ -181,10 +181,10 @@ On Error Resume Next
                                 If Obj.Velocity > Obj.WalkSpeed Then Obj.Velocity = Obj.WalkSpeed
                             Else
                                 Obj.Velocity = Obj.Velocity - .VelocityDecay
-                            End If
                             If Obj.Velocity < .VelocityDecay Then
                                 Obj.State = Obj.IdleState
                                 Obj.Velocity = 0
+                            End If
                             End If
                         Case Else
                         End Select

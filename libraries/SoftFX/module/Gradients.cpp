@@ -35,13 +35,15 @@ AlphaLevel *aColor[2], *aSource;
         return pTable;
     }
 
+    if (Offset < 0) Offset = 0;
+
     float w = 0, winc = ((float)255 / (float)(Size - 1));
     int weight = 0, ci = 0;
     for (int i = 0; i < Size; i++) {
         ci = i - Offset;
 
         w += winc;
-        if ((ci) >= 0) {
+        if (((ci) >= 0) && (ci < Size)) {
             weight = ClipByte(w);
             // initialize the two lookup pointers
             aColor[0] = AlphaLevelLookup(weight ^ 0xFF);
@@ -61,8 +63,10 @@ AlphaLevel *aColor[2], *aSource;
 
     }
 
-    if (Offset == 0) pTable[0] = Premultiply(StartColor);
-    pTable[Size - (1 + Offset)] = Premultiply(EndColor);
+    pTable[0] = Premultiply(StartColor);
+    pTable[0][::Alpha] = pTable[0][::Alpha] ^ 0xFF;
+    pTable[Size - 1] = Premultiply(EndColor);
+    pTable[Size - 1][::Alpha] = pTable[Size - 1][::Alpha] ^ 0xFF;
 
     return pTable;
     
@@ -85,6 +89,8 @@ AlphaLevel *aColor[2], *aSource;
         pTable[0] = Premultiply(StartColor);
         return pTable;
     }
+  
+    if (Offset < 0) Offset = 0;
 
     float w = 0, winc = ((float)255 / (float)(Size - 1));
     int weight = 0, ci = 0;
@@ -92,7 +98,7 @@ AlphaLevel *aColor[2], *aSource;
         ci = i - Offset;
 
         w += winc;
-        if ((ci) >= 0) {
+        if (((ci) >= 0) && (ci < Size)) {
             weight = ClipByte(w);
             // initialize the two lookup pointers
             aColor[0] = AlphaLevelLookup(weight ^ 0xFF);
@@ -113,7 +119,7 @@ AlphaLevel *aColor[2], *aSource;
     }
 
     if (Offset == 0) pTable[0] = Premultiply(StartColor);
-    pTable[Size - (1 + Offset)] = Premultiply(EndColor);
+    pTable[Size - 1] = Premultiply(EndColor);
 
     return pTable;
     
@@ -137,13 +143,15 @@ AlphaLevel *aColor[2];
         return pTable;
     }
 
+    if (Offset < 0) Offset = 0;
+
     float w = 0, winc = ((float)255 / (float)(Size - 1));
     int weight = 0, ci = 0;
     for (int i = 0; i < Size; i++) {
         ci = i - Offset;
 
         w += winc;
-        if ((ci) >= 0) {
+        if (((ci) >= 0) && (ci < Size)) {
             weight = ClipByte(w);
             // initialize the two lookup pointers
             aColor[0] = AlphaLevelLookup(weight ^ 0xFF);
@@ -159,7 +167,7 @@ AlphaLevel *aColor[2];
     }
 
     if (Offset == 0) pTable[0] = StartColor;
-    pTable[Size - (1 + Offset)] = EndColor;
+    pTable[Size - 1] = EndColor;
 
     return pTable;
     
@@ -184,13 +192,15 @@ AlphaLevel *aColor[2];
         return pTable;
     }
 
+    if (Offset < 0) Offset = 0;
+
     float w = 0, winc = ((float)255 / (float)(Size - 1));
     int weight = 0, ci = 0;
     for (int i = 0; i < Size; i++) {
         ci = i - Offset;
 
         w += winc;
-        if ((ci) >= 0) {
+        if (((ci) >= 0) && (ci < Size)) {
             weight = ClipByte(w);
             // initialize the two lookup pointers
             aColor[0] = AlphaLevelLookup(weight ^ 0xFF);
@@ -206,7 +216,7 @@ AlphaLevel *aColor[2];
     }
 
     if (Offset == 0) pTable[0] = StartColor;
-    pTable[Size - (1 + Offset)] = EndColor;
+    pTable[Size - 1] = EndColor;
 
     return pTable;
     

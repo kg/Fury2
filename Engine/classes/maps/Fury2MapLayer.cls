@@ -66,6 +66,16 @@ Private mvarLighting As Fury2LayerLighting
 Private mvarWrapX As Boolean
 Private mvarWrapY As Boolean
 Private mvarParent As Fury2Map
+Private mvarColor As Long
+
+Public Property Get Color() As Long
+Attribute Color.VB_Description = "The layer's tint color.{Color}"
+    Color = mvarColor
+End Property
+
+Public Property Let Color(ByVal NewColor As Long)
+    mvarColor = NewColor
+End Property
 
 Public Property Set Parent(NewParent As Fury2Map)
 On Error Resume Next
@@ -972,6 +982,7 @@ Dim m_lngLineCount As Long
                 End If
             .ReadSegment_End
             .Load mvarLighting
+            .Load mvarColor
         .ReadSegment_End
     End With
     If mvarDisableBlocking Then ReDim mvarBlocking(0 To 0, 0 To 0)
@@ -1026,6 +1037,7 @@ On Error Resume Next
                 .RawSave VarPtr(mvarBlockingLines(0)), CollisionLineCount * 16
             .WriteSegment_End
             .Save mvarLighting
+            .Save mvarColor
         .WriteSegment_End
     End With
 End Sub

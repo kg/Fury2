@@ -23,9 +23,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
     (*BlendTo)[::Red] = AlphaFromLevel2(TableDest, (*BlendDest)[::Red], TableSource, (*BlendSource)[::Red]);
 
 #define BLENDPIXEL_ALPHA_PREMULTIPLIED_OPACITY(BlendTo, BlendDest, BlendSource, TableDest)    \
-    (*BlendTo)[::Blue] = AlphaFromLevel(TableDest, (*BlendDest)[::Blue]) + (*BlendSource)[::Blue];        \
-    (*BlendTo)[::Green] = AlphaFromLevel(TableDest, (*BlendDest)[::Green]) + (*BlendSource)[::Green];        \
-    (*BlendTo)[::Red] = AlphaFromLevel(TableDest, (*BlendDest)[::Red]) + (*BlendSource)[::Red];
+    (*BlendTo)[::Blue] = (AlphaFromLevel(TableDest, (*BlendDest)[::Blue]) + (*BlendSource)[::Blue]) & 0xFF;        \
+    (*BlendTo)[::Green] = (AlphaFromLevel(TableDest, (*BlendDest)[::Green]) + (*BlendSource)[::Green]) & 0xFF;        \
+    (*BlendTo)[::Red] = (AlphaFromLevel(TableDest, (*BlendDest)[::Red]) + (*BlendSource)[::Red]) & 0xFF;
 
 #define BLENDPIXEL_ADDITIVE_FAST(BlendTo, BlendDest, BlendSource)                \
     (*BlendTo)[::Blue] = ((*BlendDest)[::Blue] + (*BlendSource)[::Blue]);                        \

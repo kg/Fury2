@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <string.h>
 #include "../header/SortLL.hpp"
 #include "../header/Fury2.hpp"
+#include "../header/Blend.hpp"
 #include "../header/Clip.hpp"
 #include "../header/Resample.hpp"
 #include "../header/Polygon.hpp"
@@ -1797,6 +1798,8 @@ int SpriteCount = 0;
 Pixel SavedColor;
 Image* RenderTarget;
 int OffsetX = 0, OffsetY = 0;
+int LightIterations = 0;
+float FuzzyOffset = 0;
   if (!Camera) return Failure;
   if (!Environment) return Failure;
   if (!Camera->OutputBuffer) return Failure;
@@ -1918,24 +1921,32 @@ int OffsetX = 0, OffsetY = 0;
           FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, Light->Color, Null);
         } else {
           // falloff (gradient filled convex polygon extended to FalloffDistance pixels away)
-          GradientShadowPoly.Allocate(3);
+          LightIterations = Light->Fuzziness;
+          FuzzyOffset = 0;
 
+fuzzyrender:
+          GradientShadowPoly.Allocate(3);
           ShadowVertex.X = LightPoint.X;
           ShadowVertex.Y = LightPoint.Y;
-          ShadowVertex.Color = Light->Color.V;
+          if ((Light->Fuzziness > 0) && (FuzzyOffset > 0)) {
+            int fa = (255 / Light->Fuzziness);
+            ShadowVertex.Color = Premultiply(ScaleAlpha<Pixel>(Light->Color, ClipByte(fa))).V;
+          } else {
+            ShadowVertex.Color = Light->Color.V;
+          }
           GradientShadowPoly.Append(ShadowVertex);
 
-          Vector.X = sin((Light->Angle - (Light->Spread / 2)) * Radian);
-          Vector.Y = -cos((Light->Angle - (Light->Spread / 2)) * Radian);
-          Vector.Multiply(Light->FalloffDistance * Camera->OutputScaleRatio);
+          Vector.X = sin((Light->Angle - (Light->Spread / 2) + (FuzzyOffset * 2.5)) * Radian);
+          Vector.Y = -cos((Light->Angle - (Light->Spread / 2) + (FuzzyOffset * 2.5)) * Radian);
+          Vector.Multiply(Light->FalloffDistance * Camera->OutputScaleRatio + FuzzyOffset);
           ShadowVertex.X = LightPoint.X + Vector.X;
           ShadowVertex.Y = LightPoint.Y + Vector.Y;
           ShadowVertex.Color = Pixel(0, 0, 0, Light->Color[::Alpha]).V;
           GradientShadowPoly.Append(ShadowVertex);
 
-          Vector.X = sin((Light->Angle + (Light->Spread / 2)) * Radian);
-          Vector.Y = -cos((Light->Angle + (Light->Spread / 2)) * Radian);
-          Vector.Multiply(Light->FalloffDistance * Camera->OutputScaleRatio);
+          Vector.X = sin((Light->Angle + (Light->Spread / 2) - (FuzzyOffset * 2.5)) * Radian);
+          Vector.Y = -cos((Light->Angle + (Light->Spread / 2) - (FuzzyOffset * 2.5)) * Radian);
+          Vector.Multiply(Light->FalloffDistance * Camera->OutputScaleRatio + FuzzyOffset);
           ShadowVertex.X = LightPoint.X + Vector.X;
           ShadowVertex.Y = LightPoint.Y + Vector.Y;
           ShadowVertex.Color = Pixel(0, 0, 0, Light->Color[::Alpha]).V;
@@ -1943,15 +1954,17 @@ int OffsetX = 0, OffsetY = 0;
 
           GradientShadowPoly.Finalize();
 
-          LightRect.setValuesAbsolute(GradientShadowPoly.MinimumX(), GradientShadowPoly.MinimumY(), GradientShadowPoly.MaximumX(), GradientShadowPoly.MaximumY());
-          LightFRect.X1 = LightRect.Left + OffsetX;
-          LightFRect.Y1 = LightRect.Top + OffsetY;
-          LightFRect.X2 = LightRect.right() + OffsetX;
-          LightFRect.Y2 = LightRect.bottom() + OffsetY;
-          Light_Clipped = !ClipRectangle_Rect(&LightRect, &CameraRect);
+          if (FuzzyOffset == 0) {
+            LightRect.setValuesAbsolute(GradientShadowPoly.MinimumX(), GradientShadowPoly.MinimumY(), GradientShadowPoly.MaximumX(), GradientShadowPoly.MaximumY());
+            LightFRect.X1 = LightRect.Left + OffsetX;
+            LightFRect.Y1 = LightRect.Top + OffsetY;
+            LightFRect.X2 = LightRect.right() + OffsetX;
+            LightFRect.Y2 = LightRect.bottom() + OffsetY;
+            Light_Clipped = !ClipRectangle_Rect(&LightRect, &CameraRect);
+          }
 
           if (!Light_Clipped) {
-            RenderTarget->setClipRectangle(LightRect);
+            if (FuzzyOffset == 0) RenderTarget->setClipRectangle(LightRect);
             if ((Light->CacheValid) && (Light->Cache != Null)) {
               LightRect.setValuesAbsolute(GradientShadowPoly.MinimumX(), GradientShadowPoly.MinimumY(), GradientShadowPoly.MaximumX(), GradientShadowPoly.MaximumY());
               CacheRect = LightRect;
@@ -1959,7 +1972,12 @@ int OffsetX = 0, OffsetY = 0;
               //BlitSimple_Normal(RenderTarget, Light->Cache, &LightRect, 0, 0);
               FilterSimple_Fill(RenderTarget, &LightRect, Pixel(255, 0, 0, 255));
             } else {
-              FilterSimple_ConvexPolygon_Gradient(RenderTarget, &GradientShadowPoly, Null);
+              FilterSimple_ConvexPolygon_Gradient(RenderTarget, &GradientShadowPoly, RenderFunction_Additive);
+              if (LightIterations > 0) {
+                FuzzyOffset += 1;
+                LightIterations--;
+                goto fuzzyrender;
+              }
             }
           }
         }
@@ -2141,7 +2159,7 @@ int OffsetX = 0, OffsetY = 0;
   {
     int y1 = 0, y2 = 0;
     SortBufferCount = Environment->PlaneCount + SpriteCount + 1;
-    SortEntries = StaticAllocate<Lighting::sort_entry>(ListBuffer, SortBufferCount);
+    SortEntries = StaticAllocate<Lighting::sort_entry>(ListBuffer, SortBufferCount + 4) + 2;
 	  _Fill<Byte>(SortEntries, 0, sizeof(Lighting::sort_entry) * SortBufferCount);
     if (Environment->Planes) {
       Rectangle rctWall, rctTop;
@@ -2172,7 +2190,7 @@ int OffsetX = 0, OffsetY = 0;
             rctSprite.translate(-OffsetX, -OffsetY);
             if (ClipRectangle_Rect(&rctSprite, &CameraRect)) {
               SortEntries[SortEntryCount].type = Lighting::sprite;
-              SortEntries[SortEntryCount].y = y2;
+              SortEntries[SortEntryCount].y = y2 + Sprite->Position.Z;
               SortEntries[SortEntryCount].Sprite = Sprite;
               SortEntries[SortEntryCount].pNext = &(SortEntries[SortEntryCount + 1]);
               SortEntryCount++;

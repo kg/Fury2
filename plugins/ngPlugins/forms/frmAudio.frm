@@ -176,8 +176,10 @@ End Sub
 Private Sub cmdPlay_Click()
 On Error Resume Next
     If m_hndHandle.Playing Then
+        cmdPlay.Caption = "&Play"
         m_hndHandle.Kill
     Else
+        cmdPlay.Caption = "&Stop"
         m_hndHandle.Play
     End If
 End Sub

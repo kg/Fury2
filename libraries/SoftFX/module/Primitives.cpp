@@ -680,6 +680,11 @@ FILTERSIMPLE_BEGINPRIMITIVE
 
     DRAWLINE_INIT(Image, Line)
         int iLength = _Max(abs(rCoordinates.Width), abs(rCoordinates.Height)) + 1;
+        if (iLength == 1) {
+          Image->setPixel(Line.Start.X, Line.Start.Y, EndColor);
+          return Success;
+        }
+        if (iLength < 1) return Trivial_Success;
         int iXOffset = (Line.Start.X > rCoordinates.Left) ? Line.Start.X - rCoordinates.Left : 0;
         int iYOffset = (Line.Start.Y > rCoordinates.Top) ? Line.Start.Y - rCoordinates.Top : 0;
         int iOffset = ClipValue(abs(_Distance<int>(iXOffset, iYOffset)), 0, iLength);

@@ -52,6 +52,7 @@ End Function
 Private Function iFileTypePlugin_LoadFromFilename(Filename As String) As iDocument
 On Error Resume Next
     Call ShellExecute(frmMain.hWnd, "Open", Filename, "", "", vbNormalFocus)
+    Set iFileTypePlugin_LoadFromFilename = New cNullDocument
 End Function
 
 Private Property Get iFileTypePlugin_ShowInNewMenu() As Boolean

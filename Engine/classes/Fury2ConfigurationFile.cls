@@ -74,6 +74,18 @@ Dim l_varSetting As Variant
     End If
 End Function
 
+Public Sub Save(Filename As String)
+On Error Resume Next
+Dim l_strSettings As String
+Dim l_lngSettings As Long
+    For l_lngSettings = LBound(m_setSettings) To UBound(m_setSettings)
+        With m_setSettings(l_lngSettings)
+            l_strSettings = l_strSettings & .Name & ":" & .Value & vbCrLf
+        End With
+    Next l_lngSettings
+    m_Engine.Filesystem.File(Filename).Text = l_strSettings
+End Sub
+
 Public Sub DefineSettings(Settings As Variant)
 On Error Resume Next
 Dim l_lngSettings As Long
@@ -134,3 +146,10 @@ Dim l_lngSettings As Long
     Next l_lngSettings
 End Property
 
+Public Sub InitDefaultSettings()
+    DefineSettings Array(Array("Show Configuration Dialog", "Yes"), Array("Title", "Untitled Game"), Array("Screen Mode", "320x240 @ 32"), Array("Framerate", "60fps"), _
+    Array("Special FX", "Yes"), Array("Output Plugin", "GDI"), "Vertical Sync", Array("Show Framerate", "Yes"), Array("Show Titlebar", "Yes"), _
+    Array("Default Transition", "Crossfade"), Array("Default Transition Length", "1.0"), "Default Map", Array("Default Font", "TTF;Tahoma"), "Default Window Skin", _
+    Array("Default Start Position", "0 @ 0, 0"), Array("Enable Sound", "Yes"), Array("Music Volume", "0.65"), Array("Language", "VBScript"), Array("Icon", "/icon.ico"), _
+    Array("Default Cursor", ""), Array("Screen Scale Ratio", "1.0"), Array("Output Scaling Mode", "Fast"))
+End Sub

@@ -94,6 +94,15 @@ Private m_lngWalkState As Long, m_lngIdleState As Long
 
 Public AttachedGraphic As Fury2Graphic
 
+Public Property Get Color() As Long
+Attribute Color.VB_Description = "The sprite's tint color.{Color}"
+    Color = m_spParam.Params.Color
+End Property
+
+Public Property Let Color(ByVal NewColor As Long)
+    m_spParam.Params.Color = NewColor
+End Property
+
 Public Function SightCheck(ByVal X As Single, ByVal Y As Single, Optional ByRef IgnoreSprite = Nothing) As Boolean
 On Error Resume Next
     SightCheck = m_mapMap.Layers(m_lngLayer).Lighting.SightCheck(m_spParam.Position.X, m_spParam.Position.Y, X, Y, Me, IgnoreSprite)
@@ -386,6 +395,7 @@ Dim l_spOld As SpriteParam
         .FadeTarget = Me.FadeTarget
         .FadeVelocity = Me.FadeVelocity
         .CastShadow = Me.CastShadow
+        .Color = Me.Color
         
         .State = Me.State
         .Pose = Me.Pose
@@ -476,8 +486,9 @@ Public Property Get Effect() As Long
     Effect = m_spParam.Params.Effect
 End Property
 
-Public Sub Face(ByVal OtherSprite)
-    m_Engine.TextOut "Sprite::Face"
+Public Sub Face(ByRef OtherSprite)
+On Error Resume Next
+    Angle = m_Engine.AngleBetween(X, Y, OtherSprite.X, OtherSprite.Y)
 End Sub
 
 Public Sub Fade(Optional ByVal FromAlpha = -1, Optional ByVal ToAlpha = -1, Optional ByVal Speed = 1 / 60)
@@ -631,6 +642,8 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 .Load m_booPoseOverride
                 .Load l_booValue
                 CastShadow = l_booValue
+                .Load l_lngValue
+                m_spParam.Params.Color = l_lngValue
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load m_strScript
@@ -742,6 +755,7 @@ On Error Resume Next
                 .Save m_booDepthmapOverride
                 .Save m_booPoseOverride
                 .Save CastShadow
+                .Save m_spParam.Params.Color
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save m_strScript
@@ -1181,6 +1195,7 @@ End Property
 Public Property Let State(ByVal NewValue As Long)
 Attribute State.VB_Description = "The current state."
 On Error Resume Next
+    If NewValue = m_lngState Then Exit Property
     m_lngState = NewValue
     UpdateState
 End Property
@@ -1317,6 +1332,7 @@ Dim l_sprCollided As Fury2Sprite
             m_spParam.Position.Y = .Y + m_sngAttachY
             Me.Angle = .Angle
             Me.State = .State
+            Me.Velocity = .Velocity
             Me.Pose = .Pose
             Me.Frame = .Frame
             Me.Alpha = .Alpha
@@ -1330,6 +1346,7 @@ Private Sub UpdatePath()
 On Error Resume Next
 Dim l_sngPathDistance As Single
 Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
+    If m_pthPath.Count = 0 Then Exit Sub
     If m_pthPath.Count > 0 Then
         ProfileStart "Sprite.UpdatePath"
         With m_pthPath(1)
@@ -1419,6 +1436,9 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
         End If
     End If
     If m_lngFrame <> l_lngOldFrame Then
+        If (l_lngOldFrame < 5) And (l_lngOldFrame > 2) And (m_lngFrame = 1) Then
+'            Stop
+        End If
         m_Engine.Cameras.Dirty
     End If
     ProfileStop "Sprite.UpdateAnimation"
@@ -1520,7 +1540,6 @@ Dim l_posPose As Fury2Pose
     Set l_posPose = m_posPoses(m_staState.PoseOffset + m_lngPose)
     If (l_posPose Is m_posPose) And (Not Force) Then
     Else
-        m_sngAnimationDelay = 0
         Set m_posPose = l_posPose
         UpdateObstruction
         UpdateFrame Force
@@ -1556,6 +1575,9 @@ Attribute Velocity.VB_Description = "*The sprite's current movement speed."
 End Property
 
 Public Property Let Velocity(NewValue As Single)
+    If m_spParam.Velocity.V > 0 Then
+'    If NewValue < (m_spParam.Velocity.V / 2) Then Stop
+    End If
     m_spParam.Velocity.V = NewValue
 End Property
 

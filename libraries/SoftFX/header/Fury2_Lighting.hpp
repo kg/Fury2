@@ -64,6 +64,7 @@ namespace Lighting {
     SpriteParam *Attached;
     Image *Cache;
     Byte CacheValid;
+    Byte Fuzziness;
   };
 
   class Obstruction {

@@ -20,8 +20,8 @@ Attribute VB_Name = "mdlDLL"
 
 Option Explicit
 
-'Private Declare Function DllRegister Lib "f2softfx" Alias "_RegisterServer@4" (ByVal Filename As String) As Long
-'Private Declare Function DllUnregister Lib "f2softfx" Alias "_UnregisterServer@4" (ByVal Filename As String) As Long
+'Private Declare Function DllRegister Lib "softfx" Alias "_RegisterServer@4" (ByVal Filename As String) As Long
+'Private Declare Function DllUnregister Lib "softfx" Alias "_UnregisterServer@4" (ByVal Filename As String) As Long
 '
 'Public Function RegisterServer(DllServerPath As String, bRegister As Boolean) As Boolean
 'On Error Resume Next

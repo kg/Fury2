@@ -6,7 +6,7 @@ BEGIN
   DataSourceBehavior  = 0  'vbNone
   MTSTransactionMode  = 0  'NotAnMTSObject
 END
-Attribute VB_Name = "RM2kXSpriteImporter"
+Attribute VB_Name = "CommandBrowser"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
@@ -16,6 +16,21 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 Implements iPlugin
 Private m_objEditor As Object
+Private m_frmBrowser As frmCommandBrowser
+
+Public Sub Notify_Close()
+    Set m_frmBrowser = Nothing
+End Sub
+
+Private Sub iPlugin_Activate()
+    If m_frmBrowser Is Nothing Then
+        Set m_frmBrowser = New frmCommandBrowser
+        Set m_frmBrowser.Plugin = Me
+        m_objEditor.NewDocument m_frmBrowser
+    Else
+        m_objEditor.ActivateDocument m_frmBrowser
+    End If
+End Sub
 
 Private Sub iPlugin_ShowConfiguration()
 End Sub
@@ -23,19 +38,12 @@ End Sub
 Private Property Get iPlugin_CanConfigure() As Boolean
 End Property
 
-Private Sub iPlugin_Activate()
-On Error Resume Next
-    MsgBox "Uh... this feature doesn't work yet. But in the meanwhile, here's a pretty color selector dialog!", , "8-)"
-    SelectColor
-    Err.Clear
-End Sub
-
 Private Property Set iPlugin_Editor(RHS As Object)
     Set m_objEditor = RHS
 End Property
 
 Private Property Get iPlugin_Icon() As stdole.Picture
-    Set iPlugin_Icon = LoadResPicture("RM2KSPRITE", vbResIcon)
+    Set iPlugin_Icon = LoadResPicture("COMMANDBROWSER", vbResIcon)
 End Property
 
 Private Sub iPlugin_Initialize()
@@ -43,11 +51,12 @@ End Sub
 
 Private Property Get iPlugin_PluginDescription() As String
 On Error Resume Next
-    iPlugin_PluginDescription = "Creates sprites from RPG Maker 200x character sets."
+    iPlugin_PluginDescription = "Allows browsing of command documentation."
 End Property
 
 Private Property Get iPlugin_PluginName() As String
-    iPlugin_PluginName = "RPG Maker 200x Sprite Importer"
+On Error Resume Next
+    iPlugin_PluginName = "Command Browser Plugin"
 End Property
 
 Private Property Get iPlugin_PluginPath() As String
@@ -61,4 +70,3 @@ End Property
 
 Private Sub iPlugin_Shutdown()
 End Sub
-

@@ -73,6 +73,7 @@ Begin VB.Form frmPluginManager
    End
    Begin VB.CommandButton cmdInstallNewPlugin 
       Caption         =   "&Install New..."
+      Enabled         =   0   'False
       BeginProperty Font 
          Name            =   "Tahoma"
          Size            =   9
@@ -336,7 +337,7 @@ Public Sub RefreshPluginProperties()
 On Error Resume Next
 Dim l_plgPlugin As iPlugin
 Dim l_fpgPlugin As iFileTypePlugin
-    cmdRemoveSelected.Enabled = (lstPlugins.ListCount > 0) And (lstPlugins.ListIndex >= 0)
+    'cmdRemoveSelected.Enabled = (lstPlugins.ListCount > 0) And (lstPlugins.ListIndex >= 0)
     Set l_plgPlugin = g_colPlugins(lstPlugins.ItemData(lstPlugins.ListIndex))
     If l_plgPlugin Is Nothing Then
     Else

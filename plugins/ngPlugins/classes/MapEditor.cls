@@ -94,11 +94,14 @@ Private Function iFileTypePlugin_CreateNew() As iDocument
 On Error Resume Next
 Dim l_frmNew As New frmMap
 Dim l_mapMap As Fury2Map
+Dim l_tstTileset As Fury2Tileset
     l_frmNew.SetFilename ""
     l_frmNew.RefreshAll
     Set l_mapMap = New Fury2Map
     l_mapMap.EditMode = True
-    l_mapMap.CreateNew "Untitled Map", 20, 20, 1, New Fury2Tileset
+    Set l_tstTileset = New Fury2Tileset
+    l_mapMap.CreateNew "Untitled Map", 20, 20, 1, l_tstTileset
+    l_mapMap.Resize 20, 20
     l_mapMap.Init
     l_mapMap.Load
     l_frmNew.SetMap l_mapMap
@@ -124,6 +127,7 @@ Dim l_mapMap As Fury2Map
     Set l_mapMap = New Fury2Map
     l_mapMap.EditMode = True
     If Engine.LoadFromFile(l_mapMap, F2File(Filename)) Then
+        l_mapMap.EditMode = True
         l_mapMap.Init
         l_mapMap.Load
         l_frmNew.SetFilename Filename

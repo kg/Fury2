@@ -61,6 +61,7 @@ Private m_strText() As String
 
 Private Sub Form_Load()
 Dim l_vfFile As VirtualFile
+    Screen.MousePointer = 11
     m_lngCreditsY = 160
     F2Init
     Set m_imgBuffer = F2Image(400, 300)
@@ -79,8 +80,8 @@ Dim l_vfFile As VirtualFile
     m_fntFont.ShadowColor = 0
     m_fntFont.Merge = True
     Set m_filShadow = F2GaussianBlurFilter(2)
-    Set l_vfFile = F2File("C:\credits.txt")
-    m_strText = Split(StrConv(l_vfFile.Data, vbUnicode), vbCrLf)
+    m_strText = Split(StrConv(LoadResData("CREDITS", "TEXT"), vbUnicode), vbCrLf)
+    Screen.MousePointer = 0
 End Sub
 
 Private Sub tmrRedraw_Timer()

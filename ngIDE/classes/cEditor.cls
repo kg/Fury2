@@ -91,7 +91,7 @@ End Sub
 
 Friend Sub InitClipboard()
 On Error Resume Next
-    m_clpClipboard.InitClipboardChangeNotification frmMain.hWnd
+    m_clpClipboard.InitClipboardChangeNotification frmMain.hwnd
 End Sub
 
 Private Sub m_clpClipboard_ClipboardChanged()
@@ -130,7 +130,7 @@ Dim l_edcDocument As iEditingCommands, l_ctlControl As Control
                 CanDelete = CanCut
                 CanSelectAll = (Len(l_ctlControl.Text) > 0) And (l_ctlControl.SelLength < Len(l_ctlControl.Text))
                 CanSelectNone = l_ctlControl.SelLength > 0
-                CanUndo = SendMessage(l_ctlControl.hWnd, EM_CANUNDO, 0, 0) <> 0
+                CanUndo = SendMessage(l_ctlControl.hwnd, EM_CANUNDO, 0, 0) <> 0
                 CanRedo = False
             End If
         End If
@@ -486,8 +486,8 @@ Dim l_clpDocument As iEditingCommands, l_ctlControl As Control
     If l_clpDocument Is Nothing Then
         Set l_ctlControl = m_docChild.Form.ActiveControl
         If TypeOf l_ctlControl Is TextBox Then
-            Action_Undo = CBool(SendMessage(l_ctlControl.hWnd, EM_CANUNDO, 0, 0))
-            SendMessage l_ctlControl.hWnd, EM_UNDO, 0, 0
+            Action_Undo = CBool(SendMessage(l_ctlControl.hwnd, EM_CANUNDO, 0, 0))
+            SendMessage l_ctlControl.hwnd, EM_UNDO, 0, 0
             ActionUpdate
         End If
     Else
@@ -520,6 +520,13 @@ Dim l_booResult As Boolean
     SetBusyState False
     Err.Clear
 End Function
+
+Public Sub ActivateDocument(ByRef Document As iDocument)
+On Error Resume Next
+Dim l_lngIndex As Long
+    l_lngIndex = frmMain.Documents.Find(Document)
+    frmMain.ActivateChild l_lngIndex
+End Sub
 
 Public Sub Action_ActivateWindow(ByVal Index)
 On Error Resume Next
@@ -628,6 +635,11 @@ Public Sub Game_Play()
 On Error Resume Next
     Shell App.Path & "\fury².exe " & GamePath
     Err.Clear
+End Sub
+
+Public Sub Game_New()
+On Error Resume Next
+    CreateGame
 End Sub
 
 Public Sub Game_Open(Optional Filename = "")

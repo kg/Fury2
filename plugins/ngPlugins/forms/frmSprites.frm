@@ -383,6 +383,7 @@ End Enum
 Private Const c_lngUndoStackLength As Long = 50
 Private Const c_lngRedoStackLength As Long = 25
 
+Private m_imgFrameDisplay As Fury2Image
 Private m_imgSpriteBuffer As Fury2Image
 
 Private m_lngSelectedSprite As Long
@@ -701,11 +702,13 @@ End Property
 Public Sub AllocateBuffers()
 On Error Resume Next
     Set m_imgSpriteBuffer = F2Image(1, 1)
+    Set m_imgFrameDisplay = F2Image(1, 1)
 End Sub
 
 Public Sub DeallocateBuffers()
 On Error Resume Next
     Set m_imgSpriteBuffer = Nothing
+    Set m_imgFrameDisplay = Nothing
 End Sub
 
 Public Sub RedrawSprites()
@@ -852,7 +855,6 @@ Dim l_lngItems As Long
 End Sub
 
 Public Sub RedrawFrame()
-On Error Resume Next
 End Sub
 
 Public Sub Redraw()
@@ -1233,11 +1235,23 @@ On Error Resume Next
         picFrameDisplay.ZOrder
         txtFrameProperty.Visible = True
         txtFrameProperty.ZOrder
+        RedrawFrameView
     Case Else
     End Select
     Redraw
     RedrawSprites
     Screen.MousePointer = 0
+End Sub
+
+Public Sub RedrawFrameView()
+On Error Resume Next
+    If (m_imgFrameDisplay.Width <> picFrameDisplay.ScaleWidth) Or (m_imgFrameDisplay.Height <> picFrameDisplay.ScaleHeight) Then
+        m_imgFrameDisplay.Resize picFrameDisplay.ScaleWidth, picFrameDisplay.ScaleHeight
+    End If
+    With m_imgFrameDisplay
+        .Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+    End With
+    picFrameDisplay_Paint
 End Sub
 
 Private Function ClipboardContainsFormat(Format As SpriteEditorClipboardFormats) As Boolean
@@ -1367,6 +1381,7 @@ End Sub
 Private Sub Form_Load()
 On Error Resume Next
 '    vsSprites.Width = GetScrollbarSize(vsSprites)
+    Set m_scSprites = New Fury2Sprites
     InitViews
     InitSplitters
     Form_Activate
@@ -1928,6 +1943,15 @@ Dim l_sprSprite As Fury2Sprite
         l_sprSprite.Load
         l_sprSprite.Poses.LoadGraphics
     Next l_sprSprite
+End Sub
+
+Private Sub picFrameDisplay_Paint()
+On Error Resume Next
+    CopyImageToDC picFrameDisplay.hdc, m_imgFrameDisplay.Rectangle, m_imgFrameDisplay
+End Sub
+
+Private Sub picFrameDisplay_Resize()
+On Error Resume Next
 End Sub
 
 Private Sub picFrames_Resize()

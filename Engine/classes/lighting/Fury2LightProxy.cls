@@ -50,6 +50,7 @@ Private mvarName As String
 Private mvarEnableCache As Boolean
 Private mvarCacheValid As Boolean
 Private mvarCache As Fury2Image
+Private mvarFuzziness As Byte
 
 Public Sub UpdateCache()
 On Error Resume Next
@@ -97,6 +98,14 @@ Public Property Let Name(ByRef Value As String)
     mvarName = Value
 End Property
 
+Public Property Get Fuzziness() As Long
+    Fuzziness = mvarFuzziness
+End Property
+
+Public Property Let Fuzziness(ByVal NewValue As Long)
+    mvarFuzziness = ClipByte(NewValue)
+End Property
+
 Public Sub Attach(Sprite)
 On Error Resume Next
     Set mvarAttachedSprite = Sprite
@@ -119,6 +128,7 @@ On Error Resume Next
         .SpinRate = mvarSpinRate
         .Spread = mvarSpread
         .Visible = CByte(Abs(CLng(mvarVisible)))
+        .Fuzziness = mvarFuzziness
         .X = mvarX
         .Y = mvarY
         If mvarEnableCache Then
@@ -263,6 +273,7 @@ On Error Resume Next
             .Load mvarY
             .Load mvarName
             .Load mvarEnableCache
+            .Load mvarFuzziness
             Set mvarCache = Nothing
             UpdateCache
         .ReadSegment_End
@@ -285,6 +296,7 @@ On Error Resume Next
             .Save mvarY
             .Save mvarName
             .Save mvarEnableCache
+            .Save mvarFuzziness
         .WriteSegment_End
     End With
 End Sub

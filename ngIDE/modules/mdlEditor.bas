@@ -6,6 +6,7 @@ Private m_lngBusyCount As Long
 
 Public Sub Main()
 On Error Resume Next
+    
     InitCommonControls
     F2Init
     Set g_edEditor = New cEditor
@@ -29,7 +30,7 @@ On Error Resume Next
     InitFilesystem App.Path
     InitAccelerators
     
-    g_edEditor.AcceleratorManager.Attach frmMain.hWnd
+    g_edEditor.AcceleratorManager.Attach frmMain.hwnd
     g_edEditor.Event_FocusChanged
     
     SetBusyState False

@@ -554,7 +554,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                     If AutoTintLayers Then
                         .TintColor = SelectTintColor(Layers - 1, mvarViewingMap.Layers.Count)
                     Else
-                        .TintColor = 0
+                        .TintColor = mvarViewingMap.Layers(Layers).Color
                     End If
                     .x1 = 0
                     .y1 = 0

@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#1.0#0"; "vbalTreeView6.ocx"
-Object = "{E142732F-A852-11D4-B06C-00500427A693}#1.16#0"; "vbalTbar6.ocx"
+Object = "{E142732F-A852-11D4-B06C-00500427A693}#2.0#0"; "vbalTbar6.ocx"
 Object = "{76A5D4ED-0D69-44AD-835D-B1429EF8E25C}#1.1#0"; "vbalDkTb6.ocx"
 Object = "{4F11FEBA-BBC2-4FB6-A3D3-AA5B5BA087F4}#1.0#0"; "vbalSbar6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
@@ -18,7 +18,7 @@ Begin VB.MDIForm frmMain
    StartUpPosition =   3  'Windows Default
    Begin sMDIinActiveX.MDIActiveX maxContainer 
       Left            =   2970
-      Top             =   420
+      Top             =   405
       _ExtentX        =   847
       _ExtentY        =   794
    End
@@ -45,6 +45,7 @@ Begin VB.MDIForm frmMain
       Visible         =   0   'False
       Width           =   8325
       Begin VB.Timer tmrFocusTracker 
+         Enabled         =   0   'False
          Interval        =   250
          Left            =   2025
          Top             =   885
@@ -56,6 +57,7 @@ Begin VB.MDIForm frmMain
          Top             =   420
       End
       Begin VB.Timer tmrClock 
+         Enabled         =   0   'False
          Interval        =   1000
          Left            =   2025
          Top             =   420
@@ -96,6 +98,7 @@ Begin VB.MDIForm frmMain
             LineColor       =   -2147483632
             LineStyle       =   0
             ScaleMode       =   3
+            OLEDropMode     =   1
             DragAutoExpand  =   -1
             BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
                Name            =   "Tahoma"
@@ -254,7 +257,7 @@ Implements iCustomMenuHandler
 Implements iToolbarHandler
 Private Const WM_MDIGETACTIVE = &H229
 
-Private Declare Function ClientToScreen Lib "user32" (ByVal hWnd As Long, lpPoint As POINTAPI) As Long
+Private Declare Function ClientToScreen Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
 
 Dim WithEvents m_mdiTabs As cMDITabs
 Attribute m_mdiTabs.VB_VarHelpID = -1
@@ -272,16 +275,16 @@ End Sub
 Private Function GetToolbarX(Toolbar As cToolbar, Optional Docked As Boolean = True)
 On Error Resume Next
 Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
-    ClientToScreen Me.hWnd, l_ptWindow
-    ClientToScreen Toolbar.hWnd, l_ptToolbar
+    ClientToScreen Me.hwnd, l_ptWindow
+    ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0)) - 10) * Screen.TwipsPerPixelX
 End Function
 
 Private Function GetToolbarY(Toolbar As cToolbar, Optional Docked As Boolean = True)
 On Error Resume Next
 Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
-    ClientToScreen Me.hWnd, l_ptWindow
-    ClientToScreen Toolbar.hWnd, l_ptToolbar
+    ClientToScreen Me.hwnd, l_ptWindow
+    ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0)) - 23) * Screen.TwipsPerPixelY
 End Function
 
@@ -300,9 +303,9 @@ Dim l_lnghWnd As Long
 Dim l_mgrForm As cChildManager
     l_lnghWnd = maxContainer.ActiveWindow
     For Each l_mgrForm In m_colChildWindows
-        If (l_mgrForm.Form.hWnd = l_lnghWnd) Then
+        If (l_mgrForm.Form.hwnd = l_lnghWnd) Then
             l_mgrForm.Visible = True
-        ElseIf (l_mgrForm.Form.Extender.hWnd = l_lnghWnd) Then
+        ElseIf (l_mgrForm.Form.Extender.hwnd = l_lnghWnd) Then
             l_mgrForm.Visible = True
         Else
             l_mgrForm.Visible = False
@@ -321,10 +324,10 @@ Dim l_lnghWnd As Long
 Dim l_mgrForm As cChildManager
     l_lnghWnd = maxContainer.ActiveWindow
     For Each l_mgrForm In m_colChildWindows
-        If (l_mgrForm.Form.hWnd = l_lnghWnd) Then
+        If (l_mgrForm.Form.hwnd = l_lnghWnd) Then
             Set ActiveChild = l_mgrForm
             Exit For
-        ElseIf (l_mgrForm.Form.Extender.hWnd = l_lnghWnd) Then
+        ElseIf (l_mgrForm.Form.Extender.hwnd = l_lnghWnd) Then
             Set ActiveChild = l_mgrForm
             Exit For
         End If
@@ -395,6 +398,7 @@ End Sub
 Public Sub ShowChild(ByRef Child As Object)
 On Error Resume Next
 Dim l_mgrManager As cChildManager
+    If TypeOf Child Is cNullDocument Then Exit Sub
     Load Child
     Set l_mgrManager = New cChildManager
     l_mgrManager.Attach Child
@@ -403,6 +407,7 @@ Dim l_mgrManager As cChildManager
     Child.Extender.WindowState = 2
     Child.Show
     m_mdiTabs.ForceRefresh
+    g_edEditor.Event_DocumentActivate l_mgrManager
     Err.Clear
 End Sub
 
@@ -431,8 +436,11 @@ Public Sub RefreshMenus()
 On Error Resume Next
 Dim l_lngButtons As Long
 Dim l_strAccel As String, l_strCaption As String
-    m_aclMenus.Detach
-    Set m_aclMenus = Nothing
+    If m_aclMenus Is Nothing Then
+    Else
+        m_aclMenus.Detach
+        Set m_aclMenus = Nothing
+    End If
     tbrMenus.DestroyToolBar
     tbrMenus.CreateFromMenu GetMenu("Main Menu")
     tbrMenus.Wrappable = True
@@ -441,7 +449,7 @@ Dim l_strAccel As String, l_strCaption As String
         .BandSizeChange "Menu Bar", tbrMenus.ToolbarWidth, tbrMenus.ToolbarHeight, 0, 0
     End With
     Set m_aclMenus = New cAcceleratorManager
-    m_aclMenus.Attach Me.hWnd
+    m_aclMenus.Attach Me.hwnd
     For l_lngButtons = 0 To tbrMenus.ButtonCount - 1
         l_strCaption = tbrMenus.ButtonCaption(l_lngButtons)
         tbrMenus.ButtonStyle(l_lngButtons) = CTBDropDownArrow Or CTBAutoSize
@@ -546,7 +554,7 @@ Dim l_lngRow As Long
                 Exit Do
             End If
         Loop
-        .Capture Title, Toolbar.hWnd
+        .Capture Title, Toolbar.hwnd
     End With
 End Sub
 
@@ -557,7 +565,7 @@ On Error Resume Next
         Case "file sidebar"
             picFileSidebar.Tag = ""
             dockRight.Add "File Sidebar", 150, 350, Screen.Height, 150, "Filesystem", , , , True, False, True, True, False, True
-            dockRight.Capture "File Sidebar", picFileSidebar.hWnd
+            dockRight.Capture "File Sidebar", picFileSidebar.hwnd
             RefreshFileSidebar
         Case "main toolbar"
             DockShowToolbar dockTop, tbrMain, "Main Toolbar", True, True, True, True, False, 1
@@ -655,12 +663,14 @@ End Sub
 
 Private Sub docks_GotFocusHandler()
 On Error Resume Next
+    Exit Sub
     m_booNonClientFocus = True
     g_edEditor.ActionUpdate
 End Sub
 
 Private Sub docks_LostFocusHandler()
 On Error Resume Next
+    Exit Sub
     m_booNonClientFocus = False
     g_edEditor.ActionUpdate
 End Sub
@@ -854,7 +864,7 @@ End Sub
 Public Sub InitMDITabs()
 On Error Resume Next
     Set m_mdiTabs = New cMDITabs
-    m_mdiTabs.Attach Me.hWnd
+    m_mdiTabs.Attach Me.hwnd
 End Sub
 
 Private Sub dockTop_Docked(ByVal key As String)
@@ -981,7 +991,7 @@ Dim l_dckContainer As vbalDockContainer
     m_mdiTabs.ForceRefresh
 End Sub
 
-Private Sub m_mdiTabs_BeforeWindowSwitch(ByVal hWnd As Long, Cancel As Boolean)
+Private Sub m_mdiTabs_BeforeWindowSwitch(ByVal hwnd As Long, Cancel As Boolean)
 On Error Resume Next
 Dim l_booFound As Boolean
 Dim l_mgrForm As cChildManager
@@ -990,12 +1000,12 @@ Dim l_mgrForm As cChildManager
     Else
         For Each l_mgrForm In m_colChildWindows
             Err.Clear
-            If (l_mgrForm.Form.hWnd = hWnd) Then
+            If (l_mgrForm.Form.hwnd = hwnd) Then
                 l_booFound = True
                 Exit For
             ElseIf l_mgrForm.Extender Is Nothing Then
             Else
-                If l_mgrForm.Extender.hWnd = hWnd Then
+                If l_mgrForm.Extender.hwnd = hwnd Then
                     l_booFound = True
                     Exit For
                 End If
@@ -1008,7 +1018,7 @@ Dim l_mgrForm As cChildManager
     End If
 End Sub
 
-Private Sub m_mdiTabs_CloseWindow(ByVal hWnd As Long)
+Private Sub m_mdiTabs_CloseWindow(ByVal hwnd As Long)
 On Error Resume Next
     If Not Me.Enabled Then Exit Sub
     SetBusyState True
@@ -1016,18 +1026,18 @@ On Error Resume Next
     SetBusyState False
 End Sub
 
-Private Sub m_mdiTabs_TabClick(ByVal iButton As MouseButtonConstants, ByVal hWnd As Long, ByVal screenX As Long, ByVal screenY As Long)
+Private Sub m_mdiTabs_TabClick(ByVal iButton As MouseButtonConstants, ByVal hwnd As Long, ByVal screenX As Long, ByVal screenY As Long)
 On Error Resume Next
 Dim l_mgrForm As cChildManager
     If Not Me.Enabled Then Exit Sub
     For Each l_mgrForm In m_colChildWindows
         Err.Clear
-        If (l_mgrForm.Form.hWnd = hWnd) Then
+        If (l_mgrForm.Form.hwnd = hwnd) Then
             l_mgrForm.Activate
             Exit For
         ElseIf l_mgrForm.Extender Is Nothing Then
         Else
-            If l_mgrForm.Extender.hWnd = hWnd Then
+            If l_mgrForm.Extender.hwnd = hwnd Then
                 l_mgrForm.Activate
                 Exit For
             End If
@@ -1035,7 +1045,7 @@ Dim l_mgrForm As cChildManager
     Next l_mgrForm
 End Sub
 
-Private Sub m_mdiTabs_WindowChanged(ByVal hWnd As Long)
+Private Sub m_mdiTabs_WindowChanged(ByVal hwnd As Long)
 On Error Resume Next
 Dim l_mgrChild As cChildManager
     Set l_mgrChild = Me.ActiveChild
@@ -1044,6 +1054,8 @@ End Sub
 
 Private Sub MDIForm_Activate()
 On Error Resume Next
+    tmrClock.Enabled = True
+    tmrFocusTracker.Enabled = True
 End Sub
 
 Private Sub MDIForm_Deactivate()
@@ -1163,7 +1175,7 @@ Dim l_ptPosition As POINTAPI
     l_lngX = l_lngX + GetToolbarX(tbrGame)
     l_lngY = l_lngY + GetToolbarY(tbrGame)
     ReleaseCapture
-    SetForegroundWindow Me.hWnd
+    SetForegroundWindow Me.hwnd
     Select Case LCase(Trim(tbrGame.ButtonKey(lButton)))
     Case "game:open"
         ShowMenu Me, l_lngX, l_lngY + (tbrGame.ButtonHeight(lButton) * Screen.TwipsPerPixelY), "Main Menu", "RecentGames"
@@ -1192,7 +1204,7 @@ Dim l_lngX As Long, l_lngY As Long
     l_lngX = l_lngX + GetToolbarX(tbrMain)
     l_lngY = l_lngY + GetToolbarY(tbrMain)
     ReleaseCapture
-    SetForegroundWindow Me.hWnd
+    SetForegroundWindow Me.hwnd
     Select Case LCase(Trim(tbrMain.ButtonKey(lButton)))
     Case "file:new"
         ShowMenu Me, l_lngX, l_lngY + (tbrMain.ButtonHeight(lButton) * Screen.TwipsPerPixelY), "Main Menu", "NewMenu"
@@ -1503,5 +1515,27 @@ Dim l_filFile As Fury2File
             l_strFilename = g_fsFilesystem.TranslateFilename(tvFileTree.SelectedItem.key)
             g_edEditor.File_Open l_strFilename
         End If
+    End If
+End Sub
+
+Private Sub tvFileTree_DragDropRequest(Data As DataObject, nodeOver As vbalTreeViewLib6.cTreeViewNode, ByVal bAbove As Boolean, ByVal hitTest As Long)
+On Error Resume Next
+Dim l_lngFiles As Long
+    If Data.Files.Count > 0 Then
+        For l_lngFiles = 1 To Data.Files.Count
+            If Right(Trim(nodeOver.key), 1) = "/" Then
+                FileCopy Data.Files(l_lngFiles), g_edEditor.GamePath & "\" & Replace(nodeOver.key, "/", "\") & GetTitle(Data.Files(l_lngFiles))
+            Else
+                FileCopy Data.Files(l_lngFiles), g_edEditor.GamePath & "\" & GetTitle(Data.Files(l_lngFiles))
+            End If
+        Next l_lngFiles
+        RefreshFileSidebar
+    End If
+End Sub
+
+Private Sub tvFileTree_OLEDragOver(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single, State As Integer)
+On Error Resume Next
+    If Data.Files.Count > 0 Then
+        Effect = vbDropEffectCopy
     End If
 End Sub

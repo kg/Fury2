@@ -36,11 +36,11 @@ Begin VB.Form frmIcons
       IconSizeX       =   20
       IconSizeY       =   20
       ColourDepth     =   32
-      Size            =   93960
+      Size            =   95700
       Images          =   "frmIcons.frx":287C
       Version         =   131072
-      KeyCount        =   54
-      Keys            =   $"frmIcons.frx":197A4
+      KeyCount        =   55
+      Keys            =   $"frmIcons.frx":19E70
    End
    Begin vbalIml6.vbalImageList ilContextMenus 
       Left            =   1080
@@ -49,10 +49,10 @@ Begin VB.Form frmIcons
       _ExtentY        =   953
       ColourDepth     =   24
       Size            =   43624
-      Images          =   "frmIcons.frx":1998C
+      Images          =   "frmIcons.frx":1A077
       Version         =   131072
       KeyCount        =   38
-      Keys            =   $"frmIcons.frx":24414
+      Keys            =   $"frmIcons.frx":24AFF
    End
    Begin vbalIml6.vbalImageList ilEntityIcons 
       Left            =   1620
@@ -63,7 +63,7 @@ Begin VB.Form frmIcons
       IconSizeY       =   20
       ColourDepth     =   32
       Size            =   10440
-      Images          =   "frmIcons.frx":2451A
+      Images          =   "frmIcons.frx":24C05
       Version         =   131072
       KeyCount        =   6
       Keys            =   "HIDDENÿVISIBLEÿLIGHT OFFÿLIGHT ONÿLAYER HIDDENÿLAYER VISIBLE"

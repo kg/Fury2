@@ -392,6 +392,9 @@ library FMod {
 		[helpstring("Sets the volume of a channel (affected by master volume). 0 - 255."), entry("_FSOUND_SetVolume@8")]
 		int _stdcall SetVolume([in] int Channel, [in] int Volume);
 
+		[helpstring("Sets the sample rate of a channel."), entry("_FSOUND_SetFrequency@8")]
+		int _stdcall SetFrequency([in] int Channel, [in] int Frequency);
+
 		[helpstring("Sets the volume of a channel (NOT affected by master volume). 0 - 255."), entry("_FSOUND_SetVolumeAbsolute@8")]
 		int _stdcall SetVolumeAbsolute([in] int Channel, [in] int Volume);
 
@@ -409,6 +412,9 @@ library FMod {
 
 		[helpstring("Retrieves the volume level of a channel. 0 - 255."), entry("_FSOUND_GetVolume@4")]
 		int _stdcall GetVolume([in] int Channel);
+
+		[helpstring("Retrieves the sample rate of a channel."), entry("_FSOUND_GetFrequency@4")]
+		int _stdcall GetFrequency([in] int Channel);
 
 		[helpstring("Retrieves the mute status of a channel."), entry("_FSOUND_GetMute@4")]
 		int _stdcall GetMute([in] int Channel);

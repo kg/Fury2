@@ -3,6 +3,35 @@ Option Explicit
 Global g_colPlugins As Engine.Fury2Collection
 Global g_colFileTypePlugins As Engine.Fury2Collection
 
+Public Function IsPluginInstalled(ByRef ClassName As String) As Boolean
+On Error Resume Next
+On Error Resume Next
+Dim l_lngCount As Long, l_lngPlugins As Long
+Dim l_strName As String, l_lngEnabled As Long, l_strFilename As String
+    l_lngCount = ReadRegSetting("Plugins\Count", 0)
+    If l_lngCount > 0 Then
+        For l_lngPlugins = 1 To l_lngCount
+            l_strName = ReadRegSetting("Plugins\" & l_lngPlugins & "::Name")
+            Err.Clear
+            If Trim(LCase(l_strName)) = Trim(LCase(ClassName)) Then
+                IsPluginInstalled = True
+                Exit Function
+            End If
+        Next l_lngPlugins
+    End If
+End Function
+
+Public Sub InstallPlugin(ByRef ClassName As String, ByRef Filename As String)
+On Error Resume Next
+Dim l_lngCount As Long
+    If IsPluginInstalled(ClassName) Then Exit Sub
+    l_lngCount = ReadRegSetting("Plugins\Count", 0)
+    l_lngCount = l_lngCount + 1
+    WriteRegSetting "Plugins\Count", l_lngCount
+    WriteRegSetting "Plugins\" & l_lngCount & "::Name", ClassName
+    WriteRegSetting "Plugins\" & l_lngCount & "::Filename", Filename
+End Sub
+
 Public Function XCreateObject(ByRef Name As String, Optional ByRef Filename As String = "") As Object
 On Error Resume Next
 Dim l_strLibrary As String, l_strClass As String
@@ -83,7 +112,24 @@ Dim l_strName As String, l_lngEnabled As Long, l_strFilename As String
 Dim l_plgPlugin As iPlugin
     SetStatus "Loading Plugins"
     frmMain.SetProgress 0
-    l_lngCount = ReadRegSetting("Plugins\Count")
+    l_lngCount = ReadRegSetting("Plugins\Count", 0)
+    If l_lngCount = 0 Then
+        SetStatus "Installing Standard Plugins"
+        InstallPlugin "internal.cUnknownFileType", App.Path
+        InstallPlugin "ngPlugins.RM2kXSpriteImporter", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.TextFile", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.HTMLFile", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.ImageFile", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.TilesetAssembler", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.ImageGridRemover", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.SpriteImporter", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.AudioFile", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.MapEditor", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.ScriptFile", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.SpriteEditor", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.CommandBrowser", GetPath(App.Path) & "\ng.dll"
+        l_lngCount = ReadRegSetting("Plugins\Count", 0)
+    End If
     If l_lngCount > 0 Then
         For l_lngPlugins = 1 To l_lngCount
             l_strName = ReadRegSetting("Plugins\" & l_lngPlugins & "::Name")

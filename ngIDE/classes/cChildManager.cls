@@ -36,6 +36,7 @@ Dim l_objForm As Object
         .SetFocus
     End With
     m_frmForm.Form_Activate
+    g_edEditor.Event_DocumentActivate Me
     If g_booMainWindowLoaded Then frmMain.RefreshWindows
     SetBusyState False
 End Sub

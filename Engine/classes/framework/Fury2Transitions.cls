@@ -45,7 +45,7 @@ Public Property Get Engine() As Fury2Engine
     Set Engine = m_engEngine
 End Property
 
-Sub FadeOut(Optional ByVal Length As Single = 1, Optional BackColor = 0, Optional WithMusic As Boolean = False)
+Sub FadeOut(Optional ByVal Length As Double = 1, Optional ByVal BackColor As Long = 0)
 On Error Resume Next
 Dim m_lngFade As Long
 Dim m_sngAlpha As Single
@@ -55,7 +55,6 @@ Dim m_sngVolume As Single
     If Length = -1 Then Length = 1
     If Length <= 0 Then Exit Sub
     If Engine.SpecialFX = False Then
-        If WithMusic Then Engine.BGMVolume = 0
         Exit Sub
     End If
     If m_booTransitioning Then Exit Sub
@@ -65,7 +64,6 @@ Dim m_sngVolume As Single
     Engine.ContextLevelAdd "Transitions.FadeOut"
     m_lngBackColor = CLng(BackColor)
     Call F2SetAlpha(m_lngBackColor, 255)
-    If WithMusic Then m_sngVolume = Engine.BGMVolume
     m_dblStart = HiResTimer
     m_dblLength = CDbl(Length)
     m_dblEnd = m_dblStart + m_dblLength
@@ -75,16 +73,14 @@ Dim m_sngVolume As Single
         m_sngAlpha = (m_dblNow - m_dblStart) / m_dblLength
         Engine.UpdateBackbuffer
         Call F2SetAlpha(m_lngBackColor, m_sngAlpha * 255)
-        If WithMusic Then Engine.BGMVolume = (1 - m_sngAlpha) * m_sngVolume
         Engine.Backbuffer.Fill Engine.Backbuffer.Rectangle, m_lngBackColor, RenderMode_SourceAlpha
         Engine.FlipScreen
-        Engine.Yield False
+        Engine.Yield True
     Loop
-    If WithMusic Then Engine.BGMVolume = 0
     Call F2SetAlpha(m_lngBackColor, 0)
     Engine.Backbuffer.Clear m_lngBackColor
     Engine.FlipScreen
-    Engine.Yield False
+    Engine.Yield True
     Engine.ContextLevelRemove
     Engine.ResetTiming
     m_booTransitioning = False
@@ -92,7 +88,7 @@ Dim m_sngVolume As Single
     ProfileStop "Transitions.FadeOut"
 End Sub
 
-Sub FadeIn(Optional ByVal Length As Single = 1, Optional BackColor = 0, Optional WithMusic As Boolean = False)
+Sub FadeIn(Optional ByVal Length As Double = 1, Optional ByVal BackColor As Long = 0)
 On Error Resume Next
 Dim m_lngFade As Long
 Dim m_sngAlpha As Single
@@ -101,7 +97,6 @@ Dim m_lngBackColor As Long
     If Length = -1 Then Length = 1
     If Length <= 0 Then Exit Sub
     If Engine.SpecialFX = False Then
-        If WithMusic Then Engine.BGMVolume = Engine.DefaultBGMVolume
         Exit Sub
     End If
     If m_booTransitioning Then Exit Sub
@@ -113,7 +108,7 @@ Dim m_lngBackColor As Long
     Call F2SetAlpha(m_lngBackColor, 0)
     Engine.Backbuffer.Clear m_lngBackColor
     Engine.FlipScreen
-    Engine.Yield False
+    Engine.Yield True
     m_dblStart = HiResTimer
     m_dblLength = CDbl(Length)
     m_dblEnd = m_dblStart + m_dblLength
@@ -123,13 +118,11 @@ Dim m_lngBackColor As Long
         m_sngAlpha = 1 - ((m_dblNow - m_dblStart) / m_dblLength)
         Engine.UpdateBackbuffer
         Call F2SetAlpha(m_lngBackColor, m_sngAlpha * 255)
-        If WithMusic Then Engine.BGMVolume = (1 - m_sngAlpha) * Engine.DefaultBGMVolume
         Engine.Backbuffer.Fill Engine.Backbuffer.Rectangle, m_lngBackColor, RenderMode_SourceAlpha
         Engine.FlipScreen
-        Engine.Yield False
+        Engine.Yield True
     Loop
     Call F2SetAlpha(m_lngBackColor, 255)
-    If WithMusic Then Engine.BGMVolume = Engine.DefaultBGMVolume
     Engine.ContextLevelRemove
     Engine.ResetTiming
     m_booTransitioning = False
@@ -137,7 +130,7 @@ Dim m_lngBackColor As Long
     ProfileStop "Transitions.FadeIn"
 End Sub
 
-Sub Crossfade(Optional ByVal Length As Single = 1, Optional OldImage = Nothing)
+Sub Crossfade(Optional ByVal Length As Double = 1, Optional OldImage = Nothing)
 On Error Resume Next
 Dim m_lngFade As Long
 Dim m_sngAlpha As Single

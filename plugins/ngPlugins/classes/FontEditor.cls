@@ -144,7 +144,13 @@ Dim l_fntFont As Fury2Font
         Set iFileTypePlugin_LoadFromFilename = l_frmNew
         Set iFileTypePlugin_LoadFromFilename.Plugin = Me
     Else
-'        m_objEditor.ShowNotice "Error", "Unable to load font: """ & Filename & """.", m_objEditor.NoticeIcon("error")
+        l_fntFont.ImportRFN F2File(Filename)
+        If l_fntFont.CharacterCount > 0 Then
+            l_frmNew.SetFilename Filename
+            l_frmNew.SetFont l_fntFont
+            Set iFileTypePlugin_LoadFromFilename = l_frmNew
+            Set iFileTypePlugin_LoadFromFilename.Plugin = Me
+        End If
     End If
 End Function
 

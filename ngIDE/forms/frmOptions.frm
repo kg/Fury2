@@ -223,6 +223,7 @@ On Error Resume Next
     Case "associations"
         lstFileTypes.Visible = True
         RefreshFileTypes
+    Case "editor scripts"
     Case Else
     End Select
 End Sub
@@ -237,6 +238,7 @@ On Error Resume Next
     Set m_optOptions = g_edEditor.Options.Duplicate
     dtSelected.Tabs.Add "General", , "General"
     dtSelected.Tabs.Add "Associations", , "File Associations"
+    dtSelected.Tabs.Add "Editor Scripts", , "Editor Scripts"
     insOptions.ShowHierarchy = False
 End Sub
 

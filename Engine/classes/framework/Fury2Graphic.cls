@@ -42,7 +42,7 @@ Public XCenter As Single, YCenter As Single
 Public LoopMode As Fury2LoopModes
 Public BlitMode As SFXBlitModes
 Public Alpha As Single
-Public FadeSpeed As Single
+Public FadeSpeed As Double
 Public AnimationDelay As Long
 Public AnimationFrame As Long
 Public AnimationDirection As Long

@@ -2739,3 +2739,74 @@ signed char *cxo, *cyo;
 
     return Success;
 }
+
+
+Export int BlitDeform_Normal(Image *Dest, Image *Source, MeshParam *Mesh,
+                          Rectangle *Rect, Coordinate SX, Coordinate SY)
+{
+  /*
+    if (!Dest || !Source || !Mesh) {
+      return Failure;
+    }
+    if (!Dest->initialized()) {
+      return Failure;
+    }
+    if (!Source->initialized()) {
+      return Failure;
+    }
+    if (Mesh->Width < 2) return Failure;
+    if (Mesh->Height < 2) return Failure;
+
+    int DSX = SX, DSY = SY;
+
+    Rectangle rCoordinates;
+    if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
+         Rect, DSX, DSY)) return Trivial_Success;
+
+    Pixel *pDest = Dest->pointer(
+        rCoordinates.Left, rCoordinates.Top);
+    Pixel pSource;
+    if ((!pDest)) return Failure;
+
+    Dest->dirty();
+
+    SX = DSX; SY = DSY;
+    
+    DoubleWord iCX = 0, iCY = rCoordinates.Height;
+    
+    DoubleWord iDestRowOffset =
+        (Dest->Width - rCoordinates.Width) + Dest->Pitch;
+    
+    int cx = 0, cy = 0;
+    FixedPoint cxw = 0, cyw = 0;
+    FixedPoint cxi = (1 / (rCoordinates.Width / (float)Mesh->Width)), cyi = (1 / (rCoordinates.Width / (float)Mesh->Height));
+
+    while (iCY--) {
+      iCX = (DoubleWord)rCoordinates.Width;
+      cxw.setI(0);
+      cx = 0;
+      while (iCX--) {
+        pDest++;
+        cxw += cxi;
+        if (cxw.H >= 1) {
+          cxw.setI(0);
+          cx++;
+        }
+      }
+      pDest += iDestRowOffset;
+      cyw += cyi;
+      if (cyw.H >= 1) {
+        cyw.setI(0);
+        cy++;
+      }
+    }
+
+    for (DoubleWord i = 0; i < cells; i++) {
+      LookupDeallocate(cellTables[i]);
+    }
+    LookupDeallocate(cellTables);
+    LookupDeallocate(cxo);
+    LookupDeallocate(cyo);
+  */
+    return Success;
+}

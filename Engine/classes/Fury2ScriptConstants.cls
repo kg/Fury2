@@ -248,6 +248,9 @@ End Property
 Public Property Get RenderMode_Merge() As Long
     RenderMode_Merge = 4
 End Property
+Public Property Get RenderMode_Shadow() As Long
+    RenderMode_Shadow = 5
+End Property
 
 Public Property Get CallType_Set() As Long
     CallType_Set = 8

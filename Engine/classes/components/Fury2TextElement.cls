@@ -42,7 +42,7 @@ Private m_strText As String
 Public Font As Fury2Font
 Public Alpha As Single
 Public ShadowColor As Long
-Public FadeSpeed As Single
+Public FadeSpeed As Double
 Public Rectangle As Fury2Rect
 Public Color As Long
 Public Realtime As Boolean
@@ -93,7 +93,7 @@ Dim m_lngXOffset As Long, m_lngYOffset As Long
         If Center Then
             m_lngXOffset = (Rectangle.Width - Font.TextWidth(m_strText2)) \ 2
             m_lngYOffset = (Rectangle.Height - Font.TextHeight(m_strText2)) \ 2
-            Set m_rctText = F2Rect(Rectangle.Left + m_lngXOffset, Rectangle.Top + m_lngYOffset, Rectangle.Right, Rectangle.Bottom, True)
+            Set m_rctText = F2Rect(Rectangle.left + m_lngXOffset, Rectangle.top + m_lngYOffset, Rectangle.right, Rectangle.bottom, True)
         End If
         Font.Draw Engine.Backbuffer, m_strText2, m_rctText
     End With

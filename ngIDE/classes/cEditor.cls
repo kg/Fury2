@@ -49,6 +49,16 @@ Private m_resResources As ngResourceFile
 Private m_optOptions As EditorOptions
 Private m_sngPauseClicked As Single
 
+Public Property Get Document() As Object
+On Error Resume Next
+    Set Document = frmMain.ActiveChild.Form
+End Property
+
+Public Property Get Documents() As Engine.Fury2Collection
+On Error Resume Next
+    Set Documents = frmMain.Documents
+End Property
+
 Public Sub RefreshFileSidebar()
 On Error Resume Next
     frmMain.RefreshFileSidebar
@@ -462,6 +472,8 @@ On Error Resume Next
         If m_docChild.Toolbar Is Nothing Then Else m_docChild.Toolbar.ShowToolbar frmMain.tbrLeft
         If m_docChild.Accelerators Is Nothing Then Else m_docChild.Accelerators.DefineAccelerators m_amgAccelerators
     End If
+    SetLocation
+    SetStatus
     Event_FocusChanged
 End Function
 
@@ -615,6 +627,7 @@ On Error Resume Next
     AcceleratorManager.RemoveAccelerator m_aclPause
     Set m_aclPause = Nothing
     frmMain.RefreshGameState
+    LogOutput "Game ended"
 End Sub
 
 Private Sub Fury2Debugger_DebugGameStart()
@@ -622,6 +635,7 @@ On Error Resume Next
     GameIsRunning = True
     Set m_aclPause = AcceleratorManager.AddAccelerator(vbKeyPause, BindEvent(Me, "Game_Pause"), True)
     frmMain.RefreshGameState
+    LogOutput "Game started"
 End Sub
 
 Private Sub Fury2Debugger_DebugHalted()
@@ -629,6 +643,7 @@ On Error Resume Next
     GameIsPaused = True
     frmMain.RefreshGameState
     m_dbgDebugger.RefreshView
+    LogOutput "Game paused"
 End Sub
 
 Private Sub Fury2Debugger_DebugOut(Text As String)
@@ -660,6 +675,7 @@ On Error Resume Next
     GameIsPaused = False
     frmMain.RefreshGameState
     m_dbgDebugger.RefreshView
+    LogOutput "Game unpaused"
 End Sub
 
 Private Sub Fury2Debugger_Error(Error As String, Details As String)
@@ -677,6 +693,7 @@ On Error Resume Next
         If (HiResTimer - m_sngPauseClicked) >= Options.ScriptTimeout Then
             ShowNotice "Warning", "Your game failed to pause within " & Options.ScriptTimeout & " second(s), so the currently executing script was interrupted.", NoticeIcon("warning")
             Interrupt = True
+            LogOutput "Game interrupted"
         End If
     End If
 End Sub
@@ -702,6 +719,29 @@ Dim l_strFilename As String
     If Trim(l_strFilename) = "" Then
     Else
         OpenGame l_strFilename
+    End If
+End Sub
+
+Public Sub Game_Reload()
+On Error Resume Next
+Dim l_varDocs As Variant
+Dim l_strDocs As String
+Dim l_docDocument As cChildManager
+    For Each l_docDocument In frmMain.Documents
+        If (Trim(l_docDocument.Document.Filename) <> "") Then
+            If Not (l_docDocument.Document.Plugin Is Nothing) Then
+                If (TypeOf l_docDocument.Document.Plugin Is iFileTypePlugin) Then
+                    If Len(l_strDocs) > 0 Then l_strDocs = l_strDocs & " "
+                    l_strDocs = l_strDocs & """" & l_docDocument.Document.Filename & """"
+                End If
+            End If
+        End If
+    Next l_docDocument
+    Action_CloseAllWindows
+    OpenGame GamePath
+    If (g_edEditor.Options.OpenPreviousDocumentsAtStartup) Then
+        l_varDocs = ParseFileList(l_strDocs)
+        g_edEditor.OpenFiles l_varDocs
     End If
 End Sub
 
@@ -828,7 +868,8 @@ End Sub
 
 Public Sub LogOutput(Text)
 On Error Resume Next
-    Debug.Print "Engine: " & Text
+    frmMain.LogAppend CStr(Text)
+    Debug.Print "> " & Text
 End Sub
 
 Private Sub m_clpClipboard_ClipboardChanged()
@@ -1034,6 +1075,12 @@ On Error Resume Next
     Err.Clear
 End Sub
 
+Public Sub Show_Log()
+On Error Resume Next
+    frmMain.picLog.Visible = Not frmMain.picLog.Visible
+    Err.Clear
+End Sub
+
 Public Sub Show_GameToolbar()
 On Error Resume Next
     frmMain.tbrGame.Visible = Not frmMain.tbrGame.Visible
@@ -1076,10 +1123,75 @@ End Sub
 
 Public Sub Trace(Text)
 On Error Resume Next
-    Debug.Print "Plugin: " & Text
+    Debug.Print "> " & Text
 End Sub
 
 Public Function SelectFile(Optional Filter As String = "", Optional Title As String = "Open...") As String
 On Error Resume Next
     SelectFile = SelectLocalFile(Filter, Title)
+End Function
+
+Public Sub Macro_Run(Optional ByVal Filename As String = "")
+On Error Resume Next
+    If Filename = "" Then Filename = SelectFile("Macros|*.f2script;*.f2macro", "Select Macro")
+    If Len(Trim(Filename)) < 1 Then Exit Sub
+    RunMacroFromFile Filename
+End Sub
+
+Public Sub Macro_RunCustom()
+On Error Resume Next
+    RunMacro PromptForScript
+End Sub
+
+Public Property Get Version() As String
+On Error Resume Next
+    Version = "ngIDE " + Choose(App.Major + 1, "Alpha", "Beta", "Release") + " " + CStr(App.Minor) + " Build " + CStr(App.Revision)
+End Property
+
+Public Sub RunMacroFromFile(ByVal Filename As String)
+On Error Resume Next
+    RunMacro ReadTextFile(Filename)
+End Sub
+
+Public Sub RunMacro(ByRef Text As String)
+On Error Resume Next
+    LogOutput "Running macro"
+    Engine.ScriptEngine.AddCode Text
+End Sub
+
+Public Function PromptForScript(Optional ByVal Title As String = "Enter Script", Optional ByRef Default As String = "") As String
+On Error Resume Next
+    Load frmScriptInput
+    frmScriptInput.Caption = Title
+    frmScriptInput.scScript.Text = Default
+    frmScriptInput.Show vbModal, frmMain
+    If frmScriptInput.Cancelled Then
+    Else
+        PromptForScript = frmScriptInput.Text
+    End If
+    Unload frmScriptInput
+End Function
+
+Public Function InspectObject(ByVal Obj As Object) As String
+On Error Resume Next
+Dim l_strResult As String
+Dim l_iifObject As InterfaceInfo
+Dim l_lngItems As Long
+Dim l_lngItemCount As Long
+Dim l_booAddNew As Boolean
+Dim l_lngStack As Long, l_booFound As Boolean
+Dim l_strInfo As String
+    Set l_iifObject = InterfaceInfoFromObject(Obj)
+    If l_iifObject Is Nothing Then
+        Exit Function
+    End If
+    l_strResult = l_iifObject.Name & vbCrLf
+    With l_iifObject.Members
+        For l_lngItems = 1 To .Count
+            With .Item(l_lngItems)
+                l_strResult = l_strResult & .Name & vbCrLf
+            End With
+        Next l_lngItems
+    End With
+    InspectObject = l_strResult
 End Function

@@ -54,6 +54,6 @@ Picture = 66, 87, 931, 595, C
 mdlMenus = 154, 175, 935, 693, C
 TextFile = 110, 125, 981, 639, C
 frmFont = 114, 121, 914, 634, C, 22, 25, 822, 538, C
-FontEditor = 0, 0, 0, 0, C
+FontEditor = 88, 100, 959, 614, C
 CharacterProxy = 44, 50, 844, 563, C
 mdlText = 0, 0, 0, 0, C

@@ -34,9 +34,6 @@ Option Explicit
 '
 Implements IVirtualFileSaveable
 
-Private Const c_Low = 19660
-Private Const c_High = 45874
-
 Public Parent As Fury2Joystick
 
 Private mvarPressed As Boolean
@@ -90,10 +87,10 @@ Dim m_lngValue As Long
             If m_lngValue > 0 Then LastValue = True
         Case BT_AxisPositive
             m_lngValue = .OldAxes(mvarBindIndex)
-            If m_lngValue >= 0 And m_lngValue >= c_High Then LastValue = True
+            If m_lngValue >= 0 And m_lngValue >= Parent.AxisHigh Then LastValue = True
         Case BT_AxisNegative
             m_lngValue = .OldAxes(mvarBindIndex)
-            If m_lngValue >= 0 And m_lngValue <= c_Low Then LastValue = True
+            If m_lngValue >= 0 And m_lngValue <= Parent.AxisLow Then LastValue = True
         Case BT_POVHat
             m_lngValue = .OldPOVs(mvarBindIndex)
             If m_lngValue >= 0 Then
@@ -121,12 +118,12 @@ Dim m_lngValue As Long
             End If
         Case BT_AxisPositive
             m_lngValue = .Axes(mvarBindIndex)
-            If m_lngValue >= 0 And m_lngValue >= c_High Then
+            If m_lngValue >= 0 And m_lngValue >= Parent.AxisHigh Then
                 Value = True
             End If
         Case BT_AxisNegative
             m_lngValue = .Axes(mvarBindIndex)
-            If m_lngValue >= 0 And m_lngValue <= c_Low Then
+            If m_lngValue >= 0 And m_lngValue <= Parent.AxisLow Then
                 Value = True
             End If
         Case BT_POVHat

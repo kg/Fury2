@@ -59,6 +59,7 @@ Dim l_booOldState As Boolean
     l_strFolder = l_bffFolder.BrowseForFolder()
     g_edEditor.AcceleratorManager.Enabled = l_booOldState
     If Trim(l_strFolder) <> "" Then
+        g_edEditor.LogOutput "Creating game"
         OpenGame l_strFolder
         Set l_cfgConfig = DefaultEngine.Configuration
         l_cfgConfig.InitDefaultSettings
@@ -70,6 +71,14 @@ End Sub
 Public Sub OpenGame(ByVal Path As String)
 On Error Resume Next
     If Trim(Path) = "" Then Exit Sub
+    If GameIsRunning Then
+        If GameIsPaused Then
+            g_dbgDebugger.GameEngine.Halted = False
+        End If
+        g_dbgDebugger.GameEngine.Quit
+        DoEvents
+    End If
+    g_edEditor.LogOutput "Loading game """ & Path & """"
     frmMain.CloseAllChildren g_edEditor.Options.PromptWhenSwitchingGames
     SetBusyState True
     ShutdownEngine
@@ -85,6 +94,7 @@ End Sub
 
 Public Sub PlayGame()
 On Error Resume Next
+    g_edEditor.LogOutput "Debugging game"
     Set g_dbgDebugger = New GameDebugger
     Set g_dbgDebugger.Hook = g_edEditor
     g_edEditor.ShowDebugger

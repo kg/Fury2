@@ -3,7 +3,8 @@ Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
 Object = "{4F11FEBA-BBC2-4FB6-A3D3-AA5B5BA087F4}#1.0#0"; "vbalSbar6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.6#0"; "ngUI.ocx"
+Object = "{EF59A10B-9BC4-11D3-8E24-44910FC10000}#11.0#0"; "vbalEdit.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.7#0"; "ngUI.ocx"
 Begin VB.MDIForm frmMain 
    AutoShowChildren=   0   'False
    BackColor       =   &H8000000C&
@@ -17,15 +18,64 @@ Begin VB.MDIForm frmMain
    LinkTopic       =   "Main"
    OLEDropMode     =   1  'Manual
    StartUpPosition =   3  'Windows Default
+   Begin VB.PictureBox picLog 
+      Align           =   2  'Align Bottom
+      BorderStyle     =   0  'None
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   6.75
+         Charset         =   0
+         Weight          =   700
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      ForeColor       =   &H80000013&
+      Height          =   1200
+      Left            =   0
+      ScaleHeight     =   80
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   555
+      TabIndex        =   13
+      Top             =   5100
+      Visible         =   0   'False
+      Width           =   8325
+      Begin vbalEdit.vbalRichEdit reLog 
+         Height          =   945
+         Left            =   0
+         TabIndex        =   14
+         Top             =   255
+         Width           =   8325
+         _ExtentX        =   14684
+         _ExtentY        =   1667
+         Version         =   1
+         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+            Name            =   "Courier New"
+            Size            =   11.25
+            Charset         =   0
+            Weight          =   400
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
+         BackColor       =   -2147483633
+         ForeColor       =   -2147483630
+         ViewMode        =   1
+         Border          =   0   'False
+         TextLimit       =   16777216
+         AutoURLDetect   =   0   'False
+         ScrollBars      =   3
+      End
+   End
    Begin ngUI.ngToolbar tbrLeft 
       Align           =   3  'Align Left
-      Height          =   4635
+      Height          =   3435
       Left            =   0
       TabIndex        =   10
       Top             =   1665
       Width           =   720
       _ExtentX        =   1270
-      _ExtentY        =   8176
+      _ExtentY        =   6059
    End
    Begin VB.PictureBox picFileSidebar 
       Align           =   4  'Align Right
@@ -40,9 +90,9 @@ Begin VB.MDIForm frmMain
          Strikethrough   =   0   'False
       EndProperty
       ForeColor       =   &H80000013&
-      Height          =   4635
+      Height          =   3435
       Left            =   6330
-      ScaleHeight     =   309
+      ScaleHeight     =   229
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   133
       TabIndex        =   7
@@ -109,7 +159,6 @@ Begin VB.MDIForm frmMain
    End
    Begin VB.PictureBox picToolbarsTop 
       Align           =   1  'Align Top
-      BackColor       =   &H80000010&
       BorderStyle     =   0  'None
       BeginProperty Font 
          Name            =   "Tahoma"
@@ -318,6 +367,19 @@ Private m_booNonClientFocus As Boolean
 Private m_colChildWindows As Engine.Fury2Collection
 Private m_sngProgress As Single
 Private m_cmnLastDocument As iCustomMenus
+
+Public Sub LogAppend(ByRef Text As String, Optional ByVal Color As Long = vbButtonText)
+On Error Resume Next
+Dim l_lngOldLength As Long, l_lngLength As Long
+    reLog.Redraw = False
+    l_lngLength = Len(reLog.Contents(SF_TEXT))
+    reLog.SetSelection l_lngOldLength - 1, l_lngOldLength - 1
+    reLog.SetFont reLog.Font, Color, ercTextNormal, False, ercSetFormatSelection
+    reLog.InsertContents SF_TEXT, Text & vbCrLf
+    l_lngLength = Len(reLog.Contents(SF_TEXT))
+    reLog.Redraw = True
+    reLog.SetSelection l_lngLength, l_lngLength
+End Sub
 
 Public Sub RefreshGameState()
 On Error Resume Next
@@ -543,6 +605,7 @@ Dim l_strAccel As String, l_strCaption As String
         .AddNew " &Document ", "DocumentMenu"
         .AddNew " &Game ", "GameMenu"
         .AddNew " &Tools ", "ToolMenu"
+        .AddNew " &Macros ", "MacroMenu"
         .AddNew " &Window ", "WindowMenu"
         .AddNew " &Help ", "HelpMenu"
     End With
@@ -679,6 +742,7 @@ Dim l_fntMarlett As StdFont
     With tbrGame.Buttons
         .AddNew , "Game:Open", "open game", "Open Game"
         Set .AddNew("6", "Game:OpenMenu", , "Open Recent Game").Font = l_fntMarlett
+        .AddNew , "Game:Reload", "reload game", "Reload Game"
         .AddNew "-"
         .AddNew , "Game:Run", "run", "Run Game"
         .AddNew , "Game:Debug", "debug", "Debug Game"
@@ -928,6 +992,21 @@ Private Sub picFileSidebar_Resize()
 On Error Resume Next
     tsFileTabs.Move 0, picFileSidebar.ScaleHeight - tsFileTabs.Height, picFileSidebar.ScaleWidth, tsFileTabs.Height
     tvFileTree.Move 2, 16, picFileSidebar.ScaleWidth - 4, picFileSidebar.ScaleHeight - (tsFileTabs.Height + 16)
+End Sub
+
+Private Sub picLog_Paint()
+On Error Resume Next
+    picLog.Cls
+    picLog.Line (0, 0)-(picLog.ScaleWidth - 1, picLog.ScaleHeight - 1), SystemColorConstants.vb3DShadow, B
+    picLog.Line (2, 2)-(picLog.ScaleWidth - 3, 14), SystemColorConstants.vbInactiveTitleBar, BF
+    picLog.CurrentX = 3
+    picLog.CurrentY = 2
+    picLog.Print "Log"
+End Sub
+
+Private Sub picLog_Resize()
+On Error Resume Next
+    reLog.Move 2, 16, picLog.ScaleWidth - 4, picLog.ScaleHeight - 16
 End Sub
 
 Private Sub picNotice_Click()
@@ -1256,6 +1335,7 @@ Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l
         Next l_plgPlugin
     Case "view"
         Menu.Checked(Menu.IndexForKey("Show:FileSidebar")) = picFileSidebar.Visible
+        Menu.Checked(Menu.IndexForKey("Show:Log")) = picLog.Visible
         Menu.Checked(Menu.IndexForKey("Show:MainToolbar")) = tbrMain.Visible
         Menu.Checked(Menu.IndexForKey("Show:GameToolbar")) = tbrGame.Visible
         Menu.Checked(Menu.IndexForKey("Show:PluginToolbar")) = tbrPlugins.Visible

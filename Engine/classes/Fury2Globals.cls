@@ -166,6 +166,7 @@ Public Enum Fury2WrapModes
     F2WM_None = 1
 End Enum
 Private l_lngF2State As Long
+Public LoadError As String
 
 'Public Function Engine() As Fury2Engine
 '    Set Engine = m_Engine
@@ -216,30 +217,39 @@ End Function
 Function Fury2Load(Optional ByVal Parameters As String = "", Optional Mode As Fury2EngineModes = EM_Normal, Optional Notify As Object = Nothing, Optional ByRef Debugger As Fury2Debugger = Nothing, Optional ByRef EngineOut As Fury2Engine = Nothing) As Fury2Engine
 On Error Resume Next
 Dim l_engNew As Fury2Engine
-    Set l_engNew = CreateEngine
-    Set Fury2Load = l_engNew
-    Set EngineOut = l_engNew
-    Set DefaultEngine = l_engNew
+    LoadError = ""
+    Set l_engNew = CreateEngine()
+    If l_engNew Is Nothing Then
+        LoadError = "Unable to create engine: " & Err.Description & "(" & Err.Number & ")"
+        Exit Function
+    End If
     m_booIDE = InIDE
     If Not (Trim(Parameters) = "") Then
-        If Left(Parameters, 1) = """" Then Parameters = Mid(Parameters, 2)
-        If Right(Parameters, 1) = """" Then Parameters = Left(Parameters, Len(Parameters) - 1)
+        If left(Parameters, 1) = """" Then Parameters = Mid(Parameters, 2)
+        If right(Parameters, 1) = """" Then Parameters = left(Parameters, Len(Parameters) - 1)
     End If
-    Select Case Mode
-    Case EM_Library
-        l_engNew.EditMode = True
-        l_engNew.SetNotify Notify
-        Fury2Initialize
-        l_engNew.HideLog = True
-        l_engNew.Init Parameters
-    Case Else
-        l_engNew.EditMode = False
-        l_engNew.SetNotify Notify
-        Set l_engNew.Debugger = Debugger
-        Fury2Initialize
-        l_engNew.Init Parameters
-    End Select
-    Err.Clear
+    If (Len(Trim(Dir(Parameters, vbDirectory))) > 0) Or (Len(Trim(Parameters)) <= 0) Then
+        Set Fury2Load = l_engNew
+        Set EngineOut = l_engNew
+        Set DefaultEngine = l_engNew
+        Select Case Mode
+        Case EM_Library
+            l_engNew.EditMode = True
+            l_engNew.SetNotify Notify
+            Fury2Initialize
+            l_engNew.HideLog = True
+            l_engNew.Init Parameters
+        Case Else
+            l_engNew.EditMode = False
+            l_engNew.SetNotify Notify
+            Set l_engNew.Debugger = Debugger
+            Fury2Initialize
+            l_engNew.Init Parameters
+        End Select
+    Else
+        LoadError = "Game not found"
+        Err.Clear
+    End If
 End Function
 
 'Sub Fury2Shutdown()

@@ -767,7 +767,7 @@ End Property
 
 Public Property Get Initialized() As Boolean
 On Error Resume Next
-    Initialized = (SoftFX.GetInitialized() And (Handle <> 0))
+    Initialized = (SoftFX.GetInitialized())
 End Property
 
 Public Sub Invert(Optional ByVal Area As Fury2Rect = Nothing)

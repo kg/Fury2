@@ -25,14 +25,13 @@ Public Property Get Width() As Long
     End If
 End Property
 
-Public Property Get Height() As Long
+Public Property Get Height(Optional ByVal Width As Long = -1) As Long
+On Error Resume Next
+    Height = Font.TextHeight(Text, Width) - Font.Height + Font.FullHeight
     If Image Is Nothing Then
-        Height = Font.FullHeight
     Else
-        If (Image.Height > Font.FullHeight) Then
+        If (Image.Height > Height) Then
             Height = Image.Height
-        Else
-            Height = Font.FullHeight
         End If
     End If
 End Property

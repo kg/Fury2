@@ -36,21 +36,61 @@ Implements Fury2Object
 Public StartTime As Double
 Public EndTime As Double
 Public Engine As Fury2Engine
+Private m_booPaused As Boolean
+Private m_dblPausedSince As Double
+
+Public Property Get Paused() As Boolean
+On Error Resume Next
+    Paused = m_booPaused
+End Property
+
+Public Property Let Paused(ByVal NewValue As Boolean)
+On Error Resume Next
+Dim l_dblPausedTime As Double
+    If NewValue = m_booPaused Then Exit Property
+    If NewValue = True Then
+        m_dblPausedSince = Engine.HiTimer
+    Else
+        l_dblPausedTime = Engine.HiTimer - m_dblPausedSince
+        StartTime = StartTime + l_dblPausedTime
+        EndTime = EndTime + l_dblPausedTime
+    End If
+    m_booPaused = NewValue
+End Property
+
+Public Property Get TimeLeft() As Double
+On Error Resume Next
+    If m_booPaused Then
+        TimeLeft = EndTime - m_dblPausedSince
+    Else
+        TimeLeft = EndTime - Engine.HiTimer
+    End If
+    If TimeLeft < 0 Then TimeLeft = 0
+End Property
 
 Public Property Get Finished() As Boolean
 On Error Resume Next
-    Finished = Engine.HiTimer >= EndTime
+    If m_booPaused Then
+        Finished = False
+    Else
+        Finished = Engine.HiTimer >= EndTime
+    End If
 End Property
 
 Public Property Get Progress() As Double
 On Error Resume Next
-    Progress = (Engine.HiTimer - StartTime) / (EndTime - StartTime)
+    If m_booPaused Then
+        Progress = (m_dblPausedSince - StartTime) / (EndTime - StartTime)
+    Else
+        Progress = (Engine.HiTimer - StartTime) / (EndTime - StartTime)
+    End If
     If Progress < 0 Then Progress = 0
     If Progress > 1 Then Progress = 1
 End Property
 
-Public Sub Start(Length)
+Public Sub Start(ByVal Length As Double)
 On Error Resume Next
+    m_booPaused = False
     StartTime = Engine.HiTimer
-    EndTime = StartTime + CDbl(Length)
+    EndTime = StartTime + Length
 End Sub

@@ -35,9 +35,6 @@ Option Explicit
 Implements Fury2Object
 Implements Fury2Plugin
 
-Private Const c_Low = 19660
-Private Const c_High = 45874
-
 Public Enum BindTypes
     BT_Null
     BT_Button
@@ -79,20 +76,19 @@ Public Enum Axes
     AX_Max
 End Enum
 
-Dim m_Caps As DIDEVCAPS
-Dim m_DX8 As DirectX8
-Dim m_DI8 As DirectInput8
-Dim m_DID As DirectInputDevice8
-Dim m_DIE As DirectInputEnumDevices8
-Dim m_DS As DIJOYSTATE2, m_OldDS As DIJOYSTATE2
-Dim m_lngCallback As Long
-Dim m_lngBindIndex As Long
+Public Engine As Fury2Engine
+Public Bindings As Fury2JoystickBindings
+Private m_ddcCaps As DIDEVCAPS
+Private m_devDevice As DirectInputDevice8
+Private m_djsState As DIJOYSTATE2, m_djsOldState As DIJOYSTATE2
+Private m_lngCallback As Long
+Private m_lngBindIndex As Long
 Private m_mnuBindings As Fury2Menu
 Private m_msgText As Fury2MessageWindow
 Private m_msgPrompt As Fury2MessageWindow
-Public Engine As Fury2Engine
-Public Bindings As Fury2JoystickBindings
 Private m_booEnabled As Boolean
+Private m_lngLow As Long
+Private m_lngHigh As Long
 
 Implements DirectXEvent8
 
@@ -120,9 +116,9 @@ End Function
 
 Public Function Axes(ByVal Index As Long) As Long
 On Error Resume Next
-    If m_DID Is Nothing Then Axes = -1: Exit Function
-    If Index >= m_Caps.lAxes Then Axes = -1: Exit Function
-    With m_DS
+    If m_devDevice Is Nothing Then Axes = -1: Exit Function
+    If Index >= m_ddcCaps.lAxes Then Axes = -1: Exit Function
+    With m_djsState
         Axes = CLng(Choose(CLng(Index), .X, .Y, .Z, .Slider, .ax, .ay, .az, .aslider, .arx, .ary, .arz, _
         .fx, .fy, .fz, .fslider, .frx, .fry, .frz, .Rx, .Ry, .rz, .vrx, .vry, .vrz, .vx, .vy, .vz, .vslider))
     End With
@@ -166,9 +162,9 @@ End Function
 
 Public Function Buttons(ByVal Button As Long) As Long
 On Error Resume Next
-    If m_DID Is Nothing Then Buttons = -1: Exit Function
-    If Button >= m_Caps.lButtons Then Buttons = -1: Exit Function
-    With m_DS
+    If m_devDevice Is Nothing Then Buttons = -1: Exit Function
+    If Button >= m_ddcCaps.lButtons Then Buttons = -1: Exit Function
+    With m_djsState
         Buttons = .Buttons(CLng(Button))
     End With
 End Function
@@ -187,7 +183,7 @@ On Error Resume Next
     m_mnuBindings.Active = True
 End Sub
 
-Public Sub ChangeConfig(Index)
+Public Sub ChangeConfig(ByVal Index As Long)
 On Error Resume Next
 Dim m_lngIndex As Long
     m_lngIndex = CLng(Index)
@@ -214,22 +210,21 @@ On Error Resume Next
     m_booEnabled = True
     Set Bindings = New Fury2JoystickBindings
     Set Bindings.Parent = Me
+    m_lngLow = 3000
+    m_lngHigh = 7000
 End Sub
 
 Private Sub Class_Terminate()
 On Error Resume Next
     Set Bindings = Nothing
     If m_lngCallback <> 0 Then
-        m_DX8.DestroyEvent m_lngCallback
+        Engine.DirectX.DestroyEvent m_lngCallback
     End If
-    If m_DID Is Nothing Then
+    If m_devDevice Is Nothing Then
     Else
-        m_DID.Unacquire
-        'm_DID.SetEventNotification 0
+        m_devDevice.Unacquire
     End If
-    Set m_DID = Nothing
-    Set m_DI8 = Nothing
-    Set m_DX8 = Nothing
+    Set m_devDevice = Nothing
 End Sub
 
 Public Property Get DescriptionWindow() As Fury2MessageWindow
@@ -289,7 +284,6 @@ Private Sub Fury2Plugin_Shutdown()
 End Sub
 
 Private Sub Fury2Plugin_Startup()
-    Startup
 End Sub
 
 Private Sub Fury2Plugin_SyncUpdate()
@@ -330,9 +324,9 @@ End Sub
 
 Public Function OldAxes(ByVal Index As Long) As Long
 On Error Resume Next
-    If m_DID Is Nothing Then OldAxes = -1: Exit Function
-    If Index >= m_Caps.lAxes Then OldAxes = -1: Exit Function
-    With m_OldDS
+    If m_devDevice Is Nothing Then OldAxes = -1: Exit Function
+    If Index >= m_ddcCaps.lAxes Then OldAxes = -1: Exit Function
+    With m_djsOldState
         OldAxes = CLng(Choose(CLng(Index), .X, .Y, .Z, .Slider, .ax, .ay, .az, .aslider, .arx, .ary, .arz, _
         .fx, .fy, .fz, .fslider, .frx, .fry, .frz, .Rx, .Ry, .rz, .vrx, .vry, .vrz, .vx, .vy, .vz, .vslider))
     End With
@@ -341,24 +335,24 @@ End Function
 
 Public Function OldButtons(ByVal Button As Long) As Long
 On Error Resume Next
-    If m_DID Is Nothing Then OldButtons = -1: Exit Function
-    If Button >= m_Caps.lButtons Then OldButtons = -1: Exit Function
-    With m_OldDS
+    If m_devDevice Is Nothing Then OldButtons = -1: Exit Function
+    If Button >= m_ddcCaps.lButtons Then OldButtons = -1: Exit Function
+    With m_djsOldState
         OldButtons = .Buttons(CLng(Button))
     End With
 End Function
 
 Public Function OldPOVs(ByVal Index As Long) As Long
 On Error Resume Next
-    If m_DID Is Nothing Then OldPOVs = -1: Exit Function
-    If Index >= m_Caps.lPOVs Then OldPOVs = -1: Exit Function
-    With m_OldDS
+    If m_devDevice Is Nothing Then OldPOVs = -1: Exit Function
+    If Index >= m_ddcCaps.lPOVs Then OldPOVs = -1: Exit Function
+    With m_djsOldState
         OldPOVs = .POV(Index)
     End With
 End Function
 
 Friend Function OldState() As DIJOYSTATE2
-    OldState = m_OldDS
+    OldState = m_djsOldState
 End Function
 
 Sub Poll()
@@ -366,14 +360,14 @@ On Error Resume Next
 Dim m_lngItem As Long
 Dim m_booDone As Boolean
     ProfileStart "Joystick Update"
-    m_DID.Poll
-    m_DID.GetDeviceStateJoystick2 m_DS
+    m_devDevice.Poll
+    m_devDevice.GetDeviceStateJoystick2 m_djsState
     If m_lngBindIndex = 0 Then
         ' Normal polling mode
         Bindings.Update
     Else
         ' Binding change mode
-        For m_lngItem = 0 To m_Caps.lButtons - 1
+        For m_lngItem = 0 To m_ddcCaps.lButtons - 1
             If Bound(BT_Button, m_lngItem) Then
             Else
                 If Buttons(m_lngItem) > 0 Then
@@ -386,14 +380,14 @@ Dim m_booDone As Boolean
         For m_lngItem = 1 To AX_Max - 1
             Select Case Axes(m_lngItem)
             Case -1
-            Case Is >= c_High
+            Case Is >= m_lngHigh
                 If Bound(BT_AxisPositive, m_lngItem) Then
                 Else
                     Bindings(m_lngBindIndex).BindType = BT_AxisPositive
                     Bindings(m_lngBindIndex).BindIndex = m_lngItem
                     m_booDone = True
                 End If
-            Case Is <= c_Low
+            Case Is <= m_lngLow
                 If Bound(BT_AxisNegative, m_lngItem) Then
                 Else
                     Bindings(m_lngBindIndex).BindType = BT_AxisNegative
@@ -424,9 +418,9 @@ End Function
 
 Public Function POVs(ByVal Index As Long) As Long
 On Error Resume Next
-    If m_DID Is Nothing Then POVs = -1: Exit Function
-    If Index >= m_Caps.lPOVs Then POVs = -1: Exit Function
-    With m_DS
+    If m_devDevice Is Nothing Then POVs = -1: Exit Function
+    If Index >= m_ddcCaps.lPOVs Then POVs = -1: Exit Function
+    With m_djsState
         POVs = .POV(Index)
     End With
 End Function
@@ -449,60 +443,49 @@ On Error Resume Next
     End With
 End Sub
 
-Sub Startup()
+Friend Sub Acquire(ByVal Joystick As DirectInputDevice8)
 On Error Resume Next
 Dim DIJoyPropRange As DIPROPRANGE
 Dim DIJoyPropDead As DIPROPLONG
 Dim DIJoyPropSaturation As DIPROPLONG
-    Set m_DX8 = New DirectX8
-    Set m_DI8 = m_DX8.DirectInputCreate
-    Set m_DIE = m_DI8.GetDIDevices(DI8DEVTYPE_JOYSTICK, DIEDFL_ATTACHEDONLY)
-    If m_DIE.GetCount = 0 Then
-        Engine.DebugOut "No joysticks installed. Joystick plugin inactive."
-        Exit Sub
-    Else
-        Engine.DebugOut "Using joystick 1: " + m_DIE.GetItem(1).GetProductName
-    End If
-    Set m_DID = m_DI8.CreateDevice(m_DIE.GetItem(1).GetGuidInstance)
-    m_DID.SetCommonDataFormat DIFORMAT_JOYSTICK2
-    m_DID.SetCooperativeLevel 0, DISCL_BACKGROUND Or DISCL_NONEXCLUSIVE
-'    m_lngCallback = m_DX7.CreateEvent(Me)
-'    m_DID.SetEventNotification m_lngCallback
-    m_DID.Acquire
+    Set m_devDevice = Joystick
+    m_devDevice.SetCommonDataFormat DIFORMAT_JOYSTICK2
+    m_devDevice.SetCooperativeLevel 0, DISCL_BACKGROUND Or DISCL_NONEXCLUSIVE
+    m_devDevice.Acquire
     With DIJoyPropDead
         .lData = 1000
         .lHow = DIPH_BYOFFSET
         .lObj = DIJOFS_X
-        m_DID.SetProperty "DIPROP_DEADZONE", DIJoyPropDead
+        m_devDevice.SetProperty "DIPROP_DEADZONE", DIJoyPropDead
         .lObj = DIJOFS_Y
-        m_DID.SetProperty "DIPROP_DEADZONE", DIJoyPropDead
+        m_devDevice.SetProperty "DIPROP_DEADZONE", DIJoyPropDead
     End With
     With DIJoyPropSaturation
         .lData = 9500
         .lHow = DIPH_BYOFFSET
         .lObj = DIJOFS_X
-        m_DID.SetProperty "DIPROP_SATURATION", DIJoyPropSaturation
+        m_devDevice.SetProperty "DIPROP_SATURATION", DIJoyPropSaturation
         .lObj = DIJOFS_Y
-        m_DID.SetProperty "DIPROP_SATURATION", DIJoyPropSaturation
+        m_devDevice.SetProperty "DIPROP_SATURATION", DIJoyPropSaturation
     End With
     With DIJoyPropRange
         .lHow = DIPH_DEVICE
         .lMin = 0
         .lMax = 10000
-        m_DID.SetProperty "DIPROP_RANGE", DIJoyPropRange
+        m_devDevice.SetProperty "DIPROP_RANGE", DIJoyPropRange
     End With
-    m_DID.GetCapabilities m_Caps
-    m_DID.GetDeviceStateJoystick2 m_DS
-    m_OldDS = m_DS
+    m_devDevice.GetCapabilities m_ddcCaps
+    m_devDevice.GetDeviceStateJoystick2 m_djsState
+    m_djsOldState = m_djsState
 End Sub
 
 Friend Function State() As DIJOYSTATE2
-    State = m_DS
+    State = m_djsState
 End Function
 
 Sub SyncUpdate()
 On Error Resume Next
-    m_OldDS = m_DS
+    m_djsOldState = m_djsState
     Poll
 End Sub
 
@@ -525,3 +508,10 @@ End Sub
 Private Sub Fury2Plugin_OutputPluginChanged()
 End Sub
 
+Public Property Get AxisLow() As Long
+    AxisLow = m_lngLow
+End Property
+
+Public Property Get AxisHigh() As Long
+    AxisHigh = m_lngHigh
+End Property

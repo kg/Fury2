@@ -522,6 +522,9 @@ Dim m_lngLineCount As Long
             mvarTileset.SetParent Me
             mvarTileset.SetEngine Me.Parent.Engine
             .Load mvarTileset
+            If mvarPreRendered Then
+                mvarTileset.DeallocateTileset
+            End If
             If mvarBlockGridWidth <= 0 Then
                 mvarBlockGridWidth = mvarTileset.TileWidth
             End If
@@ -782,6 +785,11 @@ End Property
 Public Property Let Prerendered(ByVal NewPrerendered As Boolean)
 On Error Resume Next
     mvarPreRendered = NewPrerendered
+    If mvarPreRendered Then
+        mvarTileset.DeallocateTileset
+    Else
+        mvarTileset.AllocateTileset
+    End If
 End Property
 
 Public Sub RandomReplace(ByVal Tile As Integer, ParamArray Replacements())
@@ -1069,7 +1077,6 @@ Public Property Get Width() As Long
 End Property
 
 Public Property Get WrapX() As Boolean
-Attribute WrapX.VB_MemberFlags = "40"
     WrapX = mvarWrapX
 End Property
 
@@ -1078,7 +1085,6 @@ Public Property Let WrapX(ByVal NewWrapX As Boolean)
 End Property
 
 Public Property Get WrapY() As Boolean
-Attribute WrapY.VB_MemberFlags = "40"
     WrapY = mvarWrapY
 End Property
 

@@ -36,18 +36,31 @@ End Function
 
 Sub Main()
 On Error Resume Next
+Dim l_strFolder As String
+Dim l_bfBrowse As cBrowseForFolder
     ChDrive Left(App.Path, 2)
     ChDir App.Path
     DoEvents
     Load frmNull
     Err.Clear
     If Trim(Command$) = "" Then
-        Fury2Load App.Path, EM_Normal, frmNull
+        l_strFolder = App.Path
+        Set l_bfBrowse = New cBrowseForFolder
+        l_bfBrowse.EditBox = True
+        l_bfBrowse.FileSystemOnly = True
+        l_bfBrowse.InitialDir = App.Path
+        l_bfBrowse.UseNewUI = True
+        l_bfBrowse.Title = "Select Game"
+        l_strFolder = l_bfBrowse.BrowseForFolder
+        If Len(Trim(l_strFolder)) <= 0 Then
+            End
+        End If
+        Fury2Load l_strFolder, EM_Normal, frmNull
     Else
         Fury2Load Command$, EM_Normal, frmNull
     End If
-    If Err <> 0 Then
-        MsgBox "Unable to load Fury².", vbCritical, "Error"
+    If (Err <> 0) Or (frmNull.Loaded = False) Then
+        MsgBox "Unable to load Fury²." & vbCrLf & Engine.LoadError, vbCritical, "Error"
         Unload frmNull
         End
     End If

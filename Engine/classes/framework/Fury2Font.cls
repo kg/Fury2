@@ -753,7 +753,7 @@ Dim l_varAttr As Variant, l_lngBaseline As Long
     Err.Clear
 End Function
 
-Function ImportImage(ByVal Filename, ByVal Width As Long, ByVal Height As Long, Optional ByVal FirstCharacter As Long = 1) As Boolean
+Function ImportImage(ByVal Filename As String, ByVal Width As Long, ByVal Height As Long, Optional ByVal FirstCharacter As Long = 1) As Boolean
 On Error Resume Next
 Dim l_imgFile As Fury2Image
 Dim l_lngX As Long, l_lngY As Long, l_imgChar As Fury2Image
@@ -801,7 +801,7 @@ Dim l_lngX As Long, l_lngY As Long, l_imgChar As Fury2Image
     ImportImage = True
 End Function
 
-Function SaveRFN(ByVal Filename) As Boolean
+Function SaveRFN(ByVal Filename As String) As Boolean
 On Error Resume Next
 Dim l_vfFont As VirtualFile
 Dim l_imgChar As Fury2Image
@@ -852,6 +852,7 @@ Dim l_intVersion As Integer
 Dim l_intCount As Integer
 Dim l_lngChars As Long
 Dim l_intWidth As Integer, l_intHeight As Integer
+Dim l_lngHeight As Long
 Dim l_imgCharacter As Fury2Image
 Dim l_bytValues() As Byte
     ReDim m_lngTabStops(0 To 0)
@@ -907,6 +908,7 @@ Dim l_bytValues() As Byte
             Case 2
                 ' RGBA
                 .RawLoad l_imgCharacter.Pointer(0, 0), (CLng(l_intWidth) * CLng(l_intHeight) * 4&)
+                If l_intHeight > l_lngHeight Then l_lngHeight = l_intHeight
                 l_imgCharacter.SwapChannels Red, Blue
                 l_imgCharacter.AlphaChannel = True
             Case Else
@@ -925,6 +927,8 @@ Dim l_bytValues() As Byte
             Set l_imgCharacter = Nothing
         Next l_lngChars
     End With
+    m_fpmFontParam.BaseHeight = l_lngHeight
+    m_lngFullHeight = l_lngHeight
     If l_intVersion = 1 Then
         m_fpmFontParam.EffectMode = 4
     ElseIf l_intVersion = 2 Then

@@ -44,12 +44,18 @@ Dim l_itmItem As Item
 Dim l_lngItem As Long
 Dim l_lngItemHeight As Long
 Dim l_lngY As Long
+Dim l_lngWidth As Long
+    l_lngWidth = Rectangle.Width
     l_lngItem = 1
     For Each l_itmItem In m_colItems
         If (Item = l_lngItem) Then Exit For
         l_lngItemHeight = 0
         Err.Clear
-        l_lngItemHeight = l_itmItem.Height
+        l_lngItemHeight = l_itmItem.Height(l_lngWidth)
+        If Err <> 0 Then
+            l_lngItemHeight = l_itmItem.Height
+            Err.Clear
+        End If
         l_lngY = l_lngY + l_lngItemHeight
         l_lngItem = l_lngItem + 1
     Next l_itmItem
@@ -240,7 +246,12 @@ Dim l_lngHeight As Long, l_itmItem As Item, l_lngItem As Long, l_lngY As Long, l
     For Each l_itmItem In m_colItems
         l_lngItemHeight = 0
         Err.Clear
-        l_lngItemHeight = l_itmItem.Height
+        Err.Clear
+        l_lngItemHeight = l_itmItem.Height(Me.Rectangle.Width)
+        If Err <> 0 Then
+            l_lngItemHeight = l_itmItem.Height
+            Err.Clear
+        End If
         If (Y >= l_lngY) And (Y < (l_lngY + l_lngItemHeight)) Then
             Me.SelectedItem = l_lngItem
             Exit For
@@ -287,7 +298,12 @@ Dim l_rctSize As Fury2Rect
             l_lngItemHeight = 0
             Err.Clear
             l_lngItemWidth = l_itmItem.Width
-            l_lngItemHeight = l_itmItem.Height
+            Err.Clear
+            l_lngItemHeight = l_itmItem.Height(Me.Rectangle.Width)
+            If Err <> 0 Then
+                l_lngItemHeight = l_itmItem.Height
+                Err.Clear
+            End If
             If ((l_rctItem.Top <= l_rctNew.Bottom) And ((l_rctItem.Top + l_lngItemHeight) > l_rctNew.Top)) Then
                 If l_lngItem = SelectedItem Then
                     Surface.Fill F2Rect(l_rctItem.Left, l_rctItem.Top, l_rctItem.Width, l_lngItemHeight, False), SetAlpha(m_staState.HighlightColor, GetAlpha(m_staState.HighlightColor) * Opacity), RenderMode_SourceAlpha

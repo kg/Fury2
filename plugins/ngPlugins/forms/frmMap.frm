@@ -429,7 +429,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As PointAPI) As Long
 Implements iExtendedForm
 Implements iEditingCommands
 Implements iCustomMenus
@@ -595,9 +595,10 @@ End Property
 Public Sub RunMacro()
 On Error Resume Next
 Dim l_strFilename As String
-    l_strFilename = Editor.SelectFile("*.f2macro;*.f2script", "Select Macro")
+    l_strFilename = Editor.SelectFile("Macros|*.f2macro;*.f2script", "Select Macro")
     If Len(Trim(l_strFilename)) > 0 Then
         Engine.ScriptEngine.AddObject "Document", Me, True, True, True
+        Editor.LogOutput "Running macro """ & l_strFilename & """"
         Engine.ScriptEngine.AddCode ReadTextFile(l_strFilename)
     End If
 End Sub
@@ -692,7 +693,7 @@ Public Sub AutoScroll(Optional ByVal X As Long = -32767, Optional ByVal Y As Lon
 On Error Resume Next
 Dim l_lngX1 As Long, l_lngY1 As Long, l_lngX2 As Long, l_lngY2 As Long
 Dim l_lngScrollX As Long, l_lngScrollY As Long
-Dim l_ptCursor As POINTAPI
+Dim l_ptCursor As PointAPI
 Dim l_lngCapture As Long
     If Not m_voViewOptions.AutoScroll Then Exit Sub
     hsMap.Tag = "lock"
@@ -2698,7 +2699,7 @@ End Sub
 Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     With m_mapMap.Layers(m_lngSelectedLayer).Sprites
         BeginProcess "Performing Paste..."
         If AtIndex < 1 Then

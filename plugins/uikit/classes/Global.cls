@@ -88,6 +88,7 @@ End Sub
 
 Sub ShowContextMenu(Menu, Optional ByVal X As Long = -32767, Optional ByVal Y As Long = -32767)
 On Error Resume Next
+    Desktop.Children.Remove Desktop.Children.Find(Menu)
     Desktop.Children.Add Menu, , 1
     Menu.Popup = True
     If (X = -32767) Then

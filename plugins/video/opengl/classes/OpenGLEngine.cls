@@ -16,13 +16,21 @@ Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
 Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Attribute VB_Ext_KEY = "Member0" ,"GFXSurface"
 Option Explicit
+Private Declare Function SetWindowPos Lib "user32" (ByVal HWND As Long, ByVal hWndInsertAfter As Long, ByVal x As Long, ByVal y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
+Private Declare Function ShowCursor Lib "user32" (ByVal bShow As Long) As Long
+Private Const SWP_NOMOVE As Long = 2
+Private Const SWP_NOSIZE As Long = 1
+Private Const HWND_TOPMOST As Long = -1
+Private Const HWND_NOTOPMOST As Long = -2
 Dim WithEvents m_OutForm As Form
 Attribute m_OutForm.VB_VarHelpID = -1
 Dim m_Closed As Boolean
+Dim m_DX7 As DirectX7
+Dim m_DD7 As DirectDraw7
 Public Event DblClick()
-Public Event MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
-Public Event MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
-Public Event MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Public Event MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
+Public Event MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
+Public Event MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
 Public Event KeyDown(KeyCode As Integer, Shift As Integer)
 Public Event KeyUp(KeyCode As Integer, Shift As Integer)
 Public Event Closed()
@@ -30,12 +38,13 @@ Public Event Resize()
 Public Event Paint()
 Private m_booError As Boolean
 Private m_booEnabled As Boolean
+Private m_booFullscreen As Boolean
 Private m_Hooked As Object
-Private m_lngWidth As Long, m_lngHeight As Long
+Private m_lngWidth As Long, m_lngHeight As Long, m_lngBPP As Long
 Public ScaleRatio As Single
 Public Backbuffer As Fury2Image
 
-Private Sub SetFormSize(ByRef Frm As Form, X As Long, Y As Long, Optional ByVal Center As Boolean = False)
+Private Sub SetFormSize(ByRef Frm As Form, x As Long, y As Long, Optional ByVal Center As Boolean = False)
 On Error Resume Next
 Dim BW As Long, TH As Long, OldMode As Long
     OldMode = Frm.ScaleMode
@@ -43,9 +52,9 @@ Dim BW As Long, TH As Long, OldMode As Long
     BW = (Frm.Width - Frm.ScaleWidth) \ 2
     TH = (Frm.Height - Frm.ScaleHeight) - (BW * 2)
     If Center Then
-        Frm.Move (Screen.Width - (CLng(X * Screen.TwipsPerPixelX) + (BW * 2))) \ 2, (Screen.Height - (CLng(Y * Screen.TwipsPerPixelY) + TH + (BW * 2))) \ 2, CLng(X * Screen.TwipsPerPixelX) + (BW * 2), CLng(Y * Screen.TwipsPerPixelY) + TH + (BW * 2)
+        Frm.Move (Screen.Width - (CLng(x * Screen.TwipsPerPixelX) + (BW * 2))) \ 2, (Screen.Height - (CLng(y * Screen.TwipsPerPixelY) + TH + (BW * 2))) \ 2, CLng(x * Screen.TwipsPerPixelX) + (BW * 2), CLng(y * Screen.TwipsPerPixelY) + TH + (BW * 2)
     Else
-        Frm.Move Frm.Left, Frm.Top, CLng(X * Screen.TwipsPerPixelX) + (BW * 2), CLng(Y * Screen.TwipsPerPixelY) + TH + (BW * 2)
+        Frm.Move Frm.Left, Frm.Top, CLng(x * Screen.TwipsPerPixelX) + (BW * 2), CLng(y * Screen.TwipsPerPixelY) + TH + (BW * 2)
     End If
     Frm.ScaleMode = OldMode
 End Sub
@@ -95,9 +104,44 @@ Public Property Get SupportsGamma() As Boolean
 End Property
 
 Public Property Let Fullscreen(NewValue As Boolean)
+On Error Resume Next
+    If NewValue = m_booFullscreen Then
+    Else
+        m_booFullscreen = NewValue
+        If NewValue Then
+            m_OutForm.Caption = ""
+            m_DD7.SetCooperativeLevel m_OutForm.HWND, DDSCL_FULLSCREEN Or DDSCL_EXCLUSIVE
+            Err.Clear
+            m_DD7.SetDisplayMode m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, 32, 0, DDSDM_DEFAULT
+            If Err.Number = DDERR_INVALIDMODE Then
+                Err.Clear
+                m_DD7.SetDisplayMode m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, 24, 0, DDSDM_DEFAULT
+                If Err.Number = DDERR_INVALIDMODE Then
+                    Err.Clear
+                    m_DD7.SetDisplayMode m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, 16, 0, DDSDM_DEFAULT
+                    If Err.Number = DDERR_INVALIDMODE Then
+                        Err.Clear
+                        m_booFullscreen = False
+                        m_DD7.RestoreDisplayMode
+                        m_DD7.SetCooperativeLevel m_OutForm.HWND, DDSCL_NORMAL
+                        Exit Property
+                    End If
+                End If
+            End If
+            SetWindowPos m_OutForm.HWND, HWND_TOPMOST, 0, 0, m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, 0
+            Reallocate
+        Else
+            SetWindowPos m_OutForm.HWND, HWND_NOTOPMOST, 0, 0, m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, 0
+            m_DD7.RestoreDisplayMode
+            m_DD7.SetCooperativeLevel m_OutForm.HWND, DDSCL_NORMAL
+            SetFormSize m_OutForm, m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, True
+            Reallocate
+        End If
+    End If
 End Property
 
 Public Property Get Fullscreen() As Boolean
+    Fullscreen = m_booFullscreen
 End Property
 
 Public Sub HookEvents(Obj As Object)
@@ -136,11 +180,6 @@ On Error Resume Next
     Set m_OutForm = New frmOpenGL
     Load m_OutForm
     m_OutForm.Caption = Caption
-    #If UseWindowBuffer Then
-        m_OutForm.AutoRedraw = True
-    #Else
-        m_OutForm.AutoRedraw = False
-    #End If
     m_lngWidth = XRes
     m_lngHeight = YRes
     SetFormSize m_OutForm, XRes * ScaleRatio, YRes * ScaleRatio
@@ -154,6 +193,7 @@ On Error Resume Next
     End If
     m_booEnabled = True
     Reallocate
+    Fullscreen = Not Windowed
 End Sub
 
 Public Sub Flip()
@@ -165,10 +205,12 @@ End Sub
 
 Public Sub GoFullscreen()
 On Error Resume Next
+    Fullscreen = True
 End Sub
 
 Public Sub GoWindowed()
 On Error Resume Next
+    Fullscreen = False
 End Sub
 
 Public Sub Free()
@@ -182,6 +224,8 @@ End Sub
 Private Sub Class_Initialize()
 On Error Resume Next
     SetImageTag 0, 0, 0
+    Set m_DX7 = New DirectX7
+    Set m_DD7 = m_DX7.DirectDrawCreate("")
     F2Init
     ScaleRatio = 1
     'InitOpenGLOverride
@@ -202,6 +246,8 @@ On Error Resume Next
     If KeyCode = vbKeyF4 And Shift = vbAltMask Then
         m_OutForm.Hide
         m_Closed = True
+    ElseIf KeyCode = vbKeyReturn And Shift = vbAltMask Then
+        Fullscreen = Not Fullscreen
     Else
         m_Hooked.GFXEngine_KeyDown KeyCode, Shift
     End If
@@ -217,19 +263,19 @@ On Error Resume Next
     m_Hooked.GFXEngine_KeyUp KeyCode, Shift
 End Sub
 
-Private Sub m_OutForm_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub m_OutForm_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    m_Hooked.GFXEngine_MouseDown Button, Shift, X, Y
+    m_Hooked.GFXEngine_MouseDown Button, Shift, x, y
 End Sub
 
-Private Sub m_OutForm_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub m_OutForm_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    m_Hooked.GFXEngine_MouseMove Button, Shift, X, Y
+    m_Hooked.GFXEngine_MouseMove Button, Shift, x, y
 End Sub
 
-Private Sub m_OutForm_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub m_OutForm_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    m_Hooked.GFXEngine_MouseUp Button, Shift, X, Y
+    m_Hooked.GFXEngine_MouseUp Button, Shift, x, y
 End Sub
 
 Private Sub m_OutForm_Paint()
@@ -266,6 +312,11 @@ End Property
 
 Public Property Let MouseVisible(ByVal NewValue As Boolean)
 On Error Resume Next
+    If Fullscreen Then
+        If m_OutForm.MousePointer <> IIf(NewValue, 0, 99) Then
+            ShowCursor Abs(NewValue)
+        End If
+    End If
     m_OutForm.MousePointer = IIf(NewValue, 0, 99)
 End Property
 

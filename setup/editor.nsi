@@ -4,9 +4,10 @@ SetDatablockOptimize on
 SetDateSave on
 XPStyle on
 
-Name "Fury²"
+Name "Fury² Editor"
 Var ALREADY_INSTALLED
-!define NAME "Fury²"
+!define NAME "Fury² Editor"
+!define VERSION "0.8"
 
 !include Library.nsh
 !include "MUI.nsh"
@@ -33,29 +34,32 @@ Var ALREADY_INSTALLED
   Icon "res\icon.ico"
   UninstallIcon "res\icon.ico"
 
-  OutFile "fury2_beta_08.exe"
+  OutFile "..\..\binary\setup\fury2_editor_beta_${VERSION}.exe"
 
-  InstallDir "$PROGRAMFILES\${NAME}"
+  InstallDir "$PROGRAMFILES\Fury²"
 
 ;--------------------------------
 ;Installer Sections
 
-Section "-Engine"
+Section "-Editor"
 	SetOutPath "$INSTDIR"
-    IfFileExists "$INSTDIR\Uninstall.exe" 0 new_installation
+    StrCpy $ALREADY_INSTALLED 0
+    IfFileExists "$INSTDIR\Uninstall_Editor.exe" old_installation new_installation
      StrCpy $ALREADY_INSTALLED 1
     new_installation:
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayName" "${NAME}"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "UninstallString" "$INSTDIR\Uninstall.exe"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "0.8"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "${VERSION}"
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoModify" 1
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoRepair" 1
-	WriteUninstaller "$INSTDIR\Uninstall.exe"
+	WriteUninstaller "$INSTDIR\Uninstall_Editor.exe"
+    old_installation:
+    DeleteRegKey HKLM "Software\Squared Interactive\ngIDE"
 
-    IfFileExists $SYSDIR\msvbvm60.dll VBVMFound
+    IfFileExists $INSTDIR\sys\engine.dll EngineFound
         Call ConnectInternet
-        StrCpy $2 "$TEMP\vbrun60sp5.exe"
-        NSISdl::download http://fury2.luminance.org/downloads/vbrun60sp5.exe $2
+        StrCpy $2 "$TEMP\fury2_editor_installer.exe"
+        NSISdl::download http://fury2.luminance.org/downloads/fury2_beta_${VERSION}.exe $2
         Pop $0
         StrCmp $0 success success
             DetailPrint "download failed: $0"
@@ -63,50 +67,9 @@ Section "-Engine"
         success:
             ExecWait '"$2"'
             Delete $2
-    VBVMFound:
+    EngineFound:
 
-	SetOutPath "$INSTDIR\sys"
-	File "J:\development\binary\sys\compressed\fury².exe"
-	File "J:\development\binary\sys\compressed\engine.dll"
-	File "J:\development\binary\sys\compressed\graphics.dll"
-	File "J:\development\binary\sys\compressed\sound.dll"
-	File "J:\development\binary\sys\compressed\packages2.dll"
-	File "J:\development\binary\sys\compressed\filesystem.dll"
-	File "J:\development\binary\sys\compressed\script2.dll"
-	File "J:\development\binary\sys\compressed\scriptengine.dll"
-	File "J:\development\binary\sys\compressed\corona.dll"
-	File "J:\development\binary\sys\compressed\softfx.dll"
-	File "J:\development\binary\sys\compressed\glfx.dll"
-	File "J:\development\binary\sys\compressed\fmod.dll"
-	File "J:\development\binary\sys\compressed\Video_GDI.dll"
-	File "J:\development\binary\sys\compressed\Video_DirectDraw.dll"
-	File "J:\development\binary\sys\compressed\Video_OpenGL.dll"
-	File "J:\development\binary\sys\compressed\uikit.dll"
-	File "J:\development\binary\sys\compressed\http.dll"
-
-   !insertmacro InstallLib REGDLL $ALREADY_INSTALLED REBOOT_PROTECTED    "J:\development\binary\sys\win32\vbscript.dll" "$SYSDIR\vbscript.dll" "$SYSDIR"
-
-    SetOutPath "$INSTDIR\sys\"
-	RegDLL "$INSTDIR\sys\graphics.dll"
-	RegDLL "$INSTDIR\sys\engine.dll"
-	RegDLL "$INSTDIR\sys\sound.dll"
-	RegDLL "$INSTDIR\sys\packages2.dll"
-	RegDLL "$INSTDIR\sys\script2.dll"
-	RegDLL "$INSTDIR\sys\scriptengine.dll"
-	RegDLL "$INSTDIR\sys\filesystem.dll"
-	RegDLL "$INSTDIR\sys\Video_GDI.dll"
-	RegDLL "$INSTDIR\sys\Video_DirectDraw.dll"
-	RegDLL "$INSTDIR\sys\Video_OpenGL.dll"
-	RegDLL "$INSTDIR\sys\uikit.dll"
-	RegDLL "$INSTDIR\sys\http.dll"
-
-	SetOutPath "$INSTDIR\"
-SectionEnd
-
-Section "Editor"
-  DeleteRegKey HKLM "Software\Squared Interactive\ngIDE"
-
-	SetOutPath "$INSTDIR\sys"
+    SetOutPath "$INSTDIR\sys"
 	File "J:\development\binary\sys\compressed\ngIDE.exe"
 	File "J:\development\binary\sys\ngIDE.exe.manifest"
 	File "J:\development\binary\sys\compressed\ngInterfaces.dll"
@@ -153,32 +116,10 @@ Section "Editor"
 	SetOutPath "$INSTDIR\"
 SectionEnd
 
-Section "Example Games"
-	SetOutPath "$INSTDIR\Examples\"
-    File /nonfatal /r "C:\Documents and Settings\Kevin\My Documents\Projects\fury2\docs\Examples\*.*"
-SectionEnd
-
 Section "Start Menu Shortcuts"
-  CreateDirectory "$SMPROGRAMS\${NAME}"
-  IfFileExists "$INSTDIR\sys\ngIDE.exe" EditorInstalled EditorNotInstalled
-EditorInstalled:
-  CreateShortCut "$SMPROGRAMS\${NAME}\${NAME} Editor.lnk" "$INSTDIR\sys\ngIDE.exe" "" "$INSTDIR\sys\ngIDE.exe"
-EditorNotInstalled:
-  IfFileExists "$INSTDIR\examples\basic\game.f2config" ExampleInstalled ExampleNotInstalled
-ExampleInstalled:
-  CreateDirectory "$SMPROGRAMS\${NAME}\Examples"
-  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Fury² Intro.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\intro" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Basic Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\basic" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Rain Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\rain" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Menus Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\menus" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\HTTP Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\http" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Paint Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\paint" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Explosion Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\explosion" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Reveal Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\reveal" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\${NAME}\Examples\Reflect Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\reflect" "$INSTDIR\sys\fury².exe"
-ExampleNotInstalled:
-  CreateShortCut "$SMPROGRAMS\${NAME}\${NAME} Engine.lnk" "$INSTDIR\sys\fury².exe" "" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\${NAME}\Uninstall ${NAME}.lnk" "$INSTDIR\uninstall.exe"
+  CreateDirectory "$SMPROGRAMS\Fury²"
+  CreateShortCut "$SMPROGRAMS\Fury²\Fury² Editor.lnk" "$INSTDIR\sys\ngIDE.exe" "" "$INSTDIR\sys\ngIDE.exe"
+  CreateShortCut "$SMPROGRAMS\Fury²\Uninstall ${NAME}.lnk" "$INSTDIR\uninstall_editor.exe"
 SectionEnd
 
 Function ConnectInternet
@@ -207,26 +148,9 @@ FunctionEnd
 
 Section "Uninstall"
 
-  RmDir /r "$SMPROGRAMS\${NAME}"
-
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}"
   DeleteRegKey HKLM "Software\Squared Interactive\ngIDE"
 
-	UnRegDLL "$INSTDIR\sys\http.dll"
-	UnRegDLL "$INSTDIR\sys\uikit.dll"
-	UnRegDLL "$INSTDIR\sys\graphics.dll"
-	UnRegDLL "$INSTDIR\sys\sound.dll"
-	UnRegDLL "$INSTDIR\sys\packages2.dll"
-	UnRegDLL "$INSTDIR\sys\script.dll"
-	UnRegDLL "$INSTDIR\sys\scriptengine.dll"
-	UnRegDLL "$INSTDIR\sys\filesystem.dll"
-	UnRegDLL "$INSTDIR\sys\video_gdi.dll"
-	UnRegDLL "$INSTDIR\sys\video_directdraw.dll"
-	UnRegDLL "$INSTDIR\sys\video_opengl.dll"
-	UnRegDLL "$INSTDIR\sys\engine.dll"
-
-    IfFileExists "$INSTDIR\sys\ngIDE.exe" UninstallEditor SkipEditor
-UninstallEditor:
 	UnRegDLL "$INSTDIR\sys\debugger.dll"
 	UnRegDLL "$INSTDIR\sys\tk.dll"
 	UnRegDLL "$INSTDIR\sys\ng.dll"
@@ -251,7 +175,6 @@ UninstallEditor:
     UnRegDLL "$INSTDIR\sys\editor\tlbinf32.dll"
     RmDir /r "$INSTDIR\sys\resources"
     RmDir /r "$INSTDIR\sys\editor"
-SkipEditor:
 
     RmDir /r "$INSTDIR\sys"
     RmDir /r "$INSTDIR"

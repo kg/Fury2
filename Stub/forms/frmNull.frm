@@ -41,9 +41,16 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
+Public Loaded As Boolean
+
+Public Sub Start()
+On Error Resume Next
+    Loaded = True
+End Sub
 
 Public Sub Quit()
 On Error Resume Next
+    Loaded = True
     DoEvents
     Unload Me
     If InIDE Then
@@ -51,4 +58,8 @@ On Error Resume Next
     Else
         Fury2Terminate
     End If
+End Sub
+
+Private Sub Form_Load()
+    Loaded = False
 End Sub

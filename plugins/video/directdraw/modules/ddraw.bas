@@ -78,9 +78,9 @@ Dim l_sdDesc As DDSURFACEDESC2
     Set DDCreateSurface = l_ddsSurface
 End Function
 
-Public Sub DDInit(ByVal hWnd As Long)
+Public Sub DDInit(ByVal hwnd As Long)
 On Error Resume Next
-    m_lngHWnd = hWnd
+    m_lngHWnd = hwnd
     Set m_DX7 = New DirectX7
     Set m_DD7 = m_DX7.DirectDrawCreate("")
     m_DD7.GetDisplayMode m_sdScreen

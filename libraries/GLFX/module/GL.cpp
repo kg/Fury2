@@ -227,9 +227,8 @@ namespace GL {
 
   void setFogOpacity(float opacity) {
     endDraw();
-    opacity = 1 - opacity;
-    glFogf(GL_FOG_END, opacity);
-    glFogf(GL_FOG_START, opacity - 1);
+    glFogf(GL_FOG_END, 1 - opacity);
+    glFogf(GL_FOG_START, -opacity);
   }
 
   void setBlendColor(Pixel color) {

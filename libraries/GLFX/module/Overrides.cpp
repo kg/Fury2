@@ -373,6 +373,52 @@ defOverride(BlitSimple_Additive_Opacity) {
   return Success;
 }
 
+defOverride(BlitSimple_Subtractive_SourceAlpha) {
+  readParam(int, Dest, 0);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<Subtractive_SourceAlpha>();
+  setVertexColor(White);
+  BlitSimple_Core(Parameters);
+  return Success;
+}
+
+defOverride(BlitSimple_Subtractive_SourceAlpha_Opacity) {
+  readParam(int, Dest, 0);
+  readParam(int, Opacity, 5);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<Subtractive_SourceAlpha>();
+  setVertexColor(Pixel(255, 255, 255, Opacity));
+  BlitSimple_Core(Parameters);
+  return Success;
+}
+
+defOverride(BlitSimple_Additive_SourceAlpha) {
+  readParam(int, Dest, 0);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<Additive_SourceAlpha>();
+  setVertexColor(White);
+  BlitSimple_Core(Parameters);
+  return Success;
+}
+
+defOverride(BlitSimple_Additive_SourceAlpha_Opacity) {
+  readParam(int, Dest, 0);
+  readParam(int, Opacity, 5);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<Additive_SourceAlpha>();
+  setVertexColor(Pixel(255, 255, 255, Opacity));
+  BlitSimple_Core(Parameters);
+  return Success;
+}
+
 defOverride(BlitSimple_Multiply) {
   readParam(int, Dest, 0);
   contextCheck(Dest);
@@ -652,6 +698,56 @@ defOverride(BlitResample_SourceAlpha_Opacity) {
   selectContext(Dest);
   setBlendMode<SourceAlpha>();
   setVertexColor(Pixel(255, 255, 255, Opacity));
+  BlitResample_Core(Parameters);
+  return Success;
+}
+
+defOverride(BlitResample_Additive) {
+  readParam(int, Dest, 0);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<Additive>();
+  setVertexColor(White);
+  setBlendColor(White);
+  BlitResample_Core(Parameters);
+  return Success;
+}
+
+defOverride(BlitResample_Additive_Opacity) {
+  readParam(int, Dest, 0);
+  readParam(int, Opacity, 5);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<Additive>();
+  setVertexColor(White);
+  setBlendColor(Pixel(255, 255, 255, Opacity));
+  BlitResample_Core(Parameters);
+  return Success;
+}
+
+defOverride(BlitResample_Subtractive) {
+  readParam(int, Dest, 0);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<Subtractive>();
+  setVertexColor(White);
+  setBlendColor(White);
+  BlitResample_Core(Parameters);
+  return Success;
+}
+
+defOverride(BlitResample_Subtractive_Opacity) {
+  readParam(int, Dest, 0);
+  readParam(int, Opacity, 5);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<Subtractive>();
+  setVertexColor(White);
+  setBlendColor(Pixel(255, 255, 255, Opacity));
   BlitResample_Core(Parameters);
   return Success;
 }
@@ -1384,6 +1480,10 @@ void InstallOverrides() {
   addOverride(BlitSimple_Lightmap_RGB_Opacity);
   addOverride(BlitSimple_Subtractive);
   addOverride(BlitSimple_Subtractive_Opacity);
+  addOverride(BlitSimple_Additive_SourceAlpha);
+  addOverride(BlitSimple_Additive_SourceAlpha_Opacity);
+  addOverride(BlitSimple_Subtractive_SourceAlpha);
+  addOverride(BlitSimple_Subtractive_SourceAlpha_Opacity);
   addOverride(BlitSimple_Merge);
   addOverride(BlitSimple_Merge_Opacity);
   addOverride(BlitSimple_Font_Merge_RGB);
@@ -1392,6 +1492,10 @@ void InstallOverrides() {
   addOverride(BlitResample_Normal_Opacity);
   addOverride(BlitResample_SourceAlpha);
   addOverride(BlitResample_SourceAlpha_Opacity);
+  addOverride(BlitResample_Additive);
+  addOverride(BlitResample_Additive_Opacity);
+  addOverride(BlitResample_Subtractive);
+  addOverride(BlitResample_Subtractive_Opacity);
   addOverride(BlitMask_Normal_Opacity);
   addOverride(BlitMask_SourceAlpha_Opacity);
   addOverride(BlitMask_Merge_Opacity);
@@ -1460,6 +1564,10 @@ void UninstallOverrides() {
   removeOverride(BlitSimple_Lightmap_RGB_Opacity);
   removeOverride(BlitSimple_Subtractive);
   removeOverride(BlitSimple_Subtractive_Opacity);
+  removeOverride(BlitSimple_Additive_SourceAlpha);
+  removeOverride(BlitSimple_Additive_SourceAlpha_Opacity);
+  removeOverride(BlitSimple_Subtractive_SourceAlpha);
+  removeOverride(BlitSimple_Subtractive_SourceAlpha_Opacity);
   removeOverride(BlitSimple_Merge);
   removeOverride(BlitSimple_Merge_Opacity);
   removeOverride(BlitSimple_Font_Merge_RGB);
@@ -1468,6 +1576,10 @@ void UninstallOverrides() {
   removeOverride(BlitResample_Normal_Opacity);
   removeOverride(BlitResample_SourceAlpha);
   removeOverride(BlitResample_SourceAlpha_Opacity);
+  removeOverride(BlitResample_Additive);
+  removeOverride(BlitResample_Additive_Opacity);
+  removeOverride(BlitResample_Subtractive);
+  removeOverride(BlitResample_Subtractive_Opacity);
   removeOverride(BlitMask_Normal_Opacity);
   removeOverride(BlitMask_SourceAlpha_Opacity);
   removeOverride(BlitMask_Merge_Opacity);

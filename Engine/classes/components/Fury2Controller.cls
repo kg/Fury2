@@ -44,7 +44,7 @@ Public MoveCamera As Boolean
 Public CameraXOffset As Long, CameraYOffset As Long
 Public Enabled As Boolean
 Public Style As Long
-Public TurnSpeed As Single
+Public TurnSpeed As Double
 
 Private InputState(0 To 3) As Boolean
 

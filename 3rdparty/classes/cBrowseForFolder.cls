@@ -351,7 +351,7 @@ Dim sRet As String
       ApiRaise Err.LastDllError
    Else
       ' debug.Assert c <= cMaxPath
-      sPath = left$(sRet, lR)
+      sPath = Left$(sRet, lR)
    
       ' Convert the path name into a pointer to an item ID list (pidl)
       Set folder = GetDesktopFolder
@@ -372,7 +372,7 @@ Dim s As String, c As Long
    c = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM Or _
                      FORMAT_MESSAGE_IGNORE_INSERTS, _
                      0&, e, 0&, s, Len(s), ByVal 0&)
-   If c Then ApiError = left$(s, c)
+   If c Then ApiError = Left$(s, c)
 End Function
 
 Private Sub Class_Initialize()

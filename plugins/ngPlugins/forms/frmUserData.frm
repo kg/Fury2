@@ -158,6 +158,7 @@ On Error Resume Next
         Set m_objUI = Engine.ScriptEngine.Namespace.CreateEditorUI(m_objData)
     End If
     Set m_cntUI = m_objUI.This
+    Me.Caption = IIf(Trim(m_strFilename) = "", "Untitled.f2data (Object)", GetTitle(m_strFilename) & " (" & TypeName(m_objData) & ")")
     Err.Clear
     Redraw
 End Property
@@ -688,7 +689,7 @@ End Sub
 Friend Sub SetFilename(Name As String)
 On Error Resume Next
     m_strFilename = Name
-    Me.Caption = IIf(Trim(Name) = "", "Untitled.f2font", GetTitle(Name))
+    Me.Caption = IIf(Trim(Name) = "", "Untitled.f2data (Object)", GetTitle(Name) & " (" & TypeName(m_objData) & ")")
 End Sub
 
 Private Sub picUI_KeyDown(KeyCode As Integer, Shift As Integer)

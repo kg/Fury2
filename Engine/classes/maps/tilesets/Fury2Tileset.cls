@@ -275,24 +275,24 @@ Dim l_imgHandle As Fury2Image
     If Handle = 0 Then Exit Sub
     If Surface Is Nothing Then Exit Sub
     If Area Is Nothing Then Set Area = Surface.Rectangle
-    l_lngX = Area.Left - XOffset
-    l_lngY = Area.Top - YOffset
+    l_lngX = Area.left - XOffset
+    l_lngY = Area.top - YOffset
     Set l_rctDest = New Fury2Rect
     Set l_rctSource = F2Rect(0, 0, mvarTileWidth, mvarTileHeight, False)
     For l_lngTile = 0 To mvarTileCount - 1
-        If (l_lngY + mvarTileHeight) >= Area.Top Then
-            If (l_lngY < Area.Bottom) Then
+        If (l_lngY + mvarTileHeight) >= Area.top Then
+            If (l_lngY < Area.bottom) Then
                 l_rctDest.SetValues l_lngX, l_lngY, l_lngX + mvarTileWidth, l_lngY + mvarTileHeight
                 l_imgHandle.SetHandle SoftFX.GetTile(Handle, l_lngTile)
                 Surface.Blit l_rctDest, l_rctSource, l_imgHandle, Alpha, BlitMode_Normal
             End If
         End If
         l_lngX = l_lngX + mvarTileWidth
-        If (l_lngX + mvarTileWidth) > Area.Right Then
-            l_lngX = Area.Left - XOffset
+        If (l_lngX + mvarTileWidth) > Area.right Then
+            l_lngX = Area.left - XOffset
             l_lngY = l_lngY + mvarTileHeight
         End If
-        If l_lngY > Area.Bottom Then
+        If l_lngY > Area.bottom Then
             Exit For
         End If
     Next l_lngTile
@@ -314,10 +314,8 @@ Static m_lngRecurse As Long
     If Engine.EditMode Then
         Set mvarBuffer = Engine.LoadImage(mvarFilename)
     Else
-        l_lngIndex = Engine.iLoadImage(mvarFilename)
-        If l_lngIndex = Engine.Images.Count Then
-            l_booNew = True
-        End If
+        l_booNew = False
+        l_lngIndex = Engine.iLoadImage(mvarFilename, , l_booNew)
         Set mvarBuffer = Engine.Images(l_lngIndex)
     End If
     If mvarBuffer Is Nothing Then

@@ -781,10 +781,12 @@ Dim l_booCancel As Boolean
             If Not l_booCancel Then
                 m_btnPressed.MouseDown
             Else
+                m_btnHover.MouseLeave
                 Set m_btnHover = Nothing
                 m_btnPressed.MouseLeave
                 Set m_btnPressed = Nothing
                 UpdateMouse
+                Redraw
             End If
             Redraw m_btnPressed.Rectangle
         Else

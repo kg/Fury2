@@ -315,7 +315,7 @@ Dim m_sngNewX As Single, m_sngNewY As Single
     Move m_sngNewX - mvarViewportX, m_sngNewY - mvarViewportY
 End Sub
 
-Public Sub ScrollTo(ByVal NewX As Single, ByVal NewY As Single, Optional ByVal Speed As Single = 1)
+Public Sub ScrollTo(ByVal NewX As Single, ByVal NewY As Single, Optional ByVal Speed As Double = 1)
 On Error Resume Next
     mvarViewportXVelocity = Speed
     mvarViewportYVelocity = Speed
@@ -476,10 +476,10 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
     End If
     If Area.Width <= 0 Then Exit Sub
     If Area.Height <= 0 Then Exit Sub
-    If Area.Right <= 0 Then Exit Sub
-    If Area.Bottom <= 0 Then Exit Sub
-    If Area.Left >= l_imgBuffer.Width Then Exit Sub
-    If Area.Top >= l_imgBuffer.Height Then Exit Sub
+    If Area.right <= 0 Then Exit Sub
+    If Area.bottom <= 0 Then Exit Sub
+    If Area.left >= l_imgBuffer.Width Then Exit Sub
+    If Area.top >= l_imgBuffer.Height Then Exit Sub
     l_imgBuffer.ClipRect Area
     Set l_imgBuffer.ClipRectangle = Area
     End With
@@ -522,7 +522,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                     Set DestTileRect = F2Rect((m_lngXOff), (m_lngYOff), m_lngViewX, m_lngViewY, False)
                     Set SourceTileRect = F2Rect(m_lngVPX, m_lngVPY, m_lngViewX + m_lngBGX, m_lngViewY + m_lngBGY, False)
                     If ShowTiles Then
-                        If .RenderTarget = 0 Then
+                        If .RenderTarget = 1 Then
                             Set l_imgTarget = l_imgBuffer
                         Else
                             Set l_imgTarget = RenderTargets(.RenderTarget)
@@ -551,11 +551,11 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                 EndY = 0
                 With .Layers(Layers)
                     If EnableParallax Then
-                        m_lngVPX = (mvarViewportX * .ParallaxX) + Area.Left
-                        m_lngVPY = (mvarViewportY * .ParallaxY) + Area.Top
+                        m_lngVPX = (mvarViewportX * .ParallaxX) + Area.left
+                        m_lngVPY = (mvarViewportY * .ParallaxY) + Area.top
                     Else
-                        m_lngVPX = (mvarViewportX) + Area.Left
-                        m_lngVPY = (mvarViewportY) + Area.Top
+                        m_lngVPX = (mvarViewportX) + Area.left
+                        m_lngVPY = (mvarViewportY) + Area.top
                     End If
                     With CameraParam
                         .ViewportX = m_lngVPX
@@ -651,7 +651,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
     For Each l_sprSprite In mvarViewingMap.Sprites
         If l_sprSprite.AttachedGraphic Is Nothing Then
         Else
-            l_sprSprite.AttachedGraphic.Draw l_imgBuffer, l_sprSprite.X - ViewportX + Area.Left, l_sprSprite.YTop - ViewportY + Area.Top
+            l_sprSprite.AttachedGraphic.Draw l_imgBuffer, l_sprSprite.X - ViewportX + Area.left, l_sprSprite.yTop - ViewportY + Area.top
         End If
     Next l_sprSprite
     End With

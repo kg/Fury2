@@ -26,3 +26,9 @@ namespace Convolution {
     unsigned char AlphaSmart;
   };
 };
+
+struct MeshParam {
+  int Width;
+  int Height;
+  float *pData;
+};

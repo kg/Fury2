@@ -323,6 +323,7 @@ Dim l_rctCharacter As Fury2Rect
         If m_lngSelectedCharacter = l_lngCharacter Then
             m_imgCharacterList.Fill F2Rect(l_lngX, 0, ClipValue(l_imgCharacter.Width, 6, 999), picCharacterList.ScaleHeight, False), SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue)
         End If
+'        m_imgCharacterList.Blit F2Rect(l_lngX, m_fntFont.CharacterYOffset(l_lngCharacter) + (m_fntFont.Height - l_imgCharacter.Height), l_imgCharacter.Width, l_imgCharacter.Height, False), , l_imgCharacter, , BlitMode_Normal, SetAlpha(SwapChannels(IIf(m_lngSelectedCharacter = l_lngCharacter, GetSystemColor(SystemColor_Highlight_Text), GetSystemColor(SystemColor_Button_Text)), Red, Blue), 255)
         m_imgCharacterList.Blit F2Rect(l_lngX, m_fntFont.CharacterYOffset(l_lngCharacter) + (m_fntFont.Height - l_imgCharacter.Height), l_imgCharacter.Width, l_imgCharacter.Height, False), , l_imgCharacter, , BlitMode_Font_SourceAlpha, SetAlpha(SwapChannels(IIf(m_lngSelectedCharacter = l_lngCharacter, GetSystemColor(SystemColor_Highlight_Text), GetSystemColor(SystemColor_Button_Text)), Red, Blue), 255)
         l_lngX = l_lngX + ClipValue(l_imgCharacter.Width, 6, 999) + 1
         l_lngWidth = l_lngWidth + ClipValue(l_imgCharacter.Width, 6, 999) + 1

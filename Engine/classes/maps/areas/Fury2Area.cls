@@ -46,6 +46,7 @@ Private mvarY As Long
 Private mvarWidth As Long
 Private mvarHeight As Long
 Private mvarMap As Fury2Map
+Private mvarMoveInterval As Long
 Private mvarRandomChance As Single
 Private mvarName As String
 Private mvarScript_Activate As Boolean
@@ -222,6 +223,14 @@ Public Property Set Rectangle(vData As Fury2Rect)
     End With
 End Property
 
+Public Property Get MoveInterval() As Long
+    MoveInterval = mvarMoveInterval
+End Property
+
+Public Property Let MoveInterval(ByVal NewInterval As Long)
+    mvarMoveInterval = NewInterval
+End Property
+
 Public Property Get RandomChance() As Single
     RandomChance = mvarRandomChance
 End Property
@@ -322,6 +331,7 @@ On Error Resume Next
                 mvarY = mvarY + mvarHeight
                 mvarHeight = -mvarHeight
             End If
+            .Load mvarMoveInterval
         .ReadSegment_End
     End With
 End Sub
@@ -337,6 +347,7 @@ On Error Resume Next
             .Save ScriptSource
             .Save mvarRandomChance
             .Save mvarName
+            .Save mvarMoveInterval
         .WriteSegment_End
     End With
 End Sub

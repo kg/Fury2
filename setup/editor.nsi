@@ -18,7 +18,7 @@ Name "Fury²"
   !define MUI_LICENSEPAGE_TEXT_TOP "Please read over the changelog and license information before continuing."
   !define MUI_LICENSEPAGE_TEXT_BOTTOM "Click Next to continue."
   !define MUI_LICENSEPAGE_BUTTON "&Next >"
-  !insertmacro MUI_PAGE_LICENSE "Z:\projects\fury2\docs\changelog.txt"
+  !insertmacro MUI_PAGE_LICENSE "C:\Documents and Settings\Kevin\My Documents\Projects\fury2\docs\changelog.txt"
   !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_INSTFILES
@@ -36,7 +36,7 @@ Name "Fury²"
   UninstallIcon "icon.ico"
 
   ;General
-  OutFile "fury2_beta_03.exe"
+  OutFile "fury2_beta_04.exe"
 
   ;Folder-selection page
   InstallDir "$PROGRAMFILES\${NAME}"
@@ -48,7 +48,7 @@ Section "-Engine"
 	SetOutPath "$INSTDIR"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayName" "${NAME}"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "UninstallString" "$INSTDIR\Uninstall.exe"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "0.3"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "0.4"
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoModify" 1
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoRepair" 1
 	WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -142,7 +142,7 @@ SectionEnd
 
 Section "Example Games"
 	SetOutPath "$INSTDIR\Examples\"
-    File /nonfatal /r "Z:\projects\fury2\docs\Examples\*.*"
+    File /nonfatal /r "C:\Documents and Settings\Kevin\My Documents\Projects\fury2\docs\Examples\*.*"
 SectionEnd
 
 Section "Start Menu Shortcuts"

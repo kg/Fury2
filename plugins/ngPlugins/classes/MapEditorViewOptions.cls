@@ -124,6 +124,7 @@ Public Property Let BlockingColor(NewColor As Long)
 End Property
 
 Public Property Get PathNodeColor() As Long
+Attribute PathNodeColor.VB_Description = "{Color}"
     PathNodeColor = m_lngPathNodeColor
 End Property
 
@@ -132,6 +133,7 @@ Public Property Let PathNodeColor(NewColor As Long)
 End Property
 
 Public Property Get PathColor() As Long
+Attribute PathColor.VB_Description = "{Color}"
     PathColor = m_lngPathColor
 End Property
 

@@ -12,6 +12,7 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Description = "A virtual filesystem."
+
 '
 '    libFilesystem (Fury² Virtual Filesystem Library)
 '    Copyright (C) 2003 Kevin Gadd
@@ -103,7 +104,11 @@ On Error Resume Next
     If (Right(Pattern, 1) <> "/") And (Right(Pattern, 1) <> "*") Then Pattern = Pattern + "/"
     If Recursive Then
         ' If recursive, only compare the beginning
-        PathMatch = Left(Match, InStr(2, Match, "/") - 1) Like Pattern
+        If InStr(Match, "/") <> InStrRev(Match, "/") Then
+            PathMatch = Left(Match, InStr(2, Match, "/") - 1) Like Pattern
+        Else
+            PathMatch = Match Like Pattern
+        End If
     Else
         ' Otherwise compare the whole strings
         PathMatch = (Match Like Pattern) And (UBound(Split(Match, "/")) <= UBound(Split(Pattern, "/")))

@@ -872,7 +872,7 @@ Dim l_vfLines As VirtualFile
             ReDim Preserve m_bytSelectedCollisionLines(0 To .CollisionLineCount)
             SelectCollisionLines .CollisionLineCount - l_lngCount, .CollisionLineCount
         End With
-        RefreshAll
+        Redraw
         Editor.ToolbarUpdate
     Else
         CustomClipboard.ClipboardClose
@@ -893,6 +893,7 @@ Dim l_lyrLayer As Fury2MapLayer
         CustomClipboard.ClipboardClose
         ObjectUndoPush m_mapMap.Layers, l_lyrLayer, AtIndex, OUO_Remove
         m_mapMap.Layers.Add l_lyrLayer, , AtIndex
+        l_lyrLayer.Tileset.Reload
         m_lngSelectedLayer = AtIndex
         If DoRedraw Then
             RefreshLayers
@@ -1248,6 +1249,7 @@ On Error Resume Next
     DeallocateBackbuffer
     Set m_imgOverlay = Nothing
     DeleteDC m_lngOverlayDC
+    m_mapMap.Free
     Set m_fpgPlugin = Nothing
     Set m_camCamera = Nothing
     Set m_mapMap = Nothing
@@ -1512,7 +1514,7 @@ Dim l_lngPlane As Long
         ReDim m_bytSelectedLightingPlanes(0 To .PlaneCount)
         .Refresh
     End With
-    RefreshAll
+    Redraw
     EndProcess
 End Sub
 
@@ -1529,7 +1531,7 @@ Dim l_lngLine As Long
         ReDim m_bytSelectedLightingObstructions(0 To .ObstructionCount)
         .Refresh
     End With
-    RefreshAll
+    Redraw
     EndProcess
 End Sub
 
@@ -1545,7 +1547,7 @@ Dim l_lngLine As Long
         Next l_lngLine
         ReDim m_bytSelectedCollisionLines(0 To .CollisionLineCount)
     End With
-    RefreshAll
+    Redraw
     EndProcess
 End Sub
 
@@ -1746,6 +1748,7 @@ Dim l_lyrLayer As Fury2MapLayer
     End If
     Set l_lyrLayer = m_mapMap.Layers(Index).Duplicate
     l_lyrLayer.Name = "Copy Of " & l_lyrLayer.Name
+    l_lyrLayer.Tileset.Reload
     m_mapMap.Layers.Add l_lyrLayer, , Index + 1
     ObjectUndoPush m_mapMap.Layers, l_lyrLayer, Index + 1, OUO_Remove
     m_lngSelectedLayer = Index + 1
@@ -1999,12 +2002,14 @@ On Error Resume Next
     Form_Resize
     Redraw
     RefreshOverlay
+    Editor.SetLocation ""
 End Sub
 
 Private Sub Form_Deactivate()
 On Error Resume Next
     picMapViewport.AutoRedraw = False
     picOverlay.AutoRedraw = False
+    Editor.SetLocation
 End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
@@ -2387,7 +2392,7 @@ On Error Resume Next
         .Bind dtViews, picSidebar
         .Orientation = cSPLTOrientationVertical
         .MinimumSize(cSPLTRightOrBottomPanel) = 125
-        .MaximumSize(cSPLTRightOrBottomPanel) = 250
+        .MaximumSize(cSPLTRightOrBottomPanel) = 450
         .KeepProportion = True
         .Position = picContainer.ScaleWidth - 150
     End With
@@ -2396,7 +2401,7 @@ On Error Resume Next
         .Bind dtLists, picInspectors
         .Orientation = cSPLTOrientationHorizontal
         .MinimumSize(cSPLTLeftOrTopPanel) = 75
-        .MaximumSize(cSPLTLeftOrTopPanel) = 350
+        .MaximumSize(cSPLTLeftOrTopPanel) = 400
         .KeepProportion = True
         .Position = 75
     End With
@@ -2405,7 +2410,7 @@ On Error Resume Next
         .Bind dtInspector, dtTool
         .Orientation = cSPLTOrientationHorizontal
         .MinimumSize(cSPLTRightOrBottomPanel) = 75
-        .MaximumSize(cSPLTRightOrBottomPanel) = 350
+        .MaximumSize(cSPLTRightOrBottomPanel) = 500
         .KeepProportion = True
         .Position = 100000
     End With
@@ -2710,6 +2715,7 @@ Dim l_lyrLayer As Fury2MapLayer
     Set l_lyrLayer = m_mapMap.Layers(1).Duplicate
     l_lyrLayer.Name = "New Layer"
     l_lyrLayer.Clear l_lyrLayer.Tileset.TransparentTile
+    l_lyrLayer.Tileset.Reload
     m_mapMap.Layers.Add l_lyrLayer
     ObjectUndoPush m_mapMap.Layers, l_lyrLayer, m_mapMap.Layers.Count, OUO_Remove
     m_lngSelectedLayer = m_mapMap.Layers.Count
@@ -3412,6 +3418,7 @@ On Error Resume Next
     End If
     m_booMouseMoved = (m_lngMouseX <> m_lngLastMouseX) Or (m_lngMouseY <> m_lngLastMouseY)
     m_booMouseMovedTile = (m_lngMouseTileX <> m_lngLastMouseTileX) Or (m_lngMouseTileY <> m_lngLastMouseTileY)
+    Editor.SetLocation CStr(m_lngMouseX) & ", " & CStr(m_lngMouseY) & " (Tile " & CStr(m_lngMouseTileX) & ", " & CStr(m_lngMouseTileY) & ")"
 End Sub
 
 Public Sub RefreshOverlay()
@@ -3791,6 +3798,7 @@ End Sub
 
 Public Sub Tool_Areas_Up(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
+Dim l_araNew As Fury2Area
     Select Case Tool_Areas
     Case AreaTool_Cursor
         If (m_booDraggingArea) Then
@@ -3803,6 +3811,19 @@ On Error Resume Next
             Redraw
         End If
     Case AreaTool_Draw
+        If Button = 1 Then
+            Set l_araNew = New Fury2Area
+            With l_araNew
+                Set .Rectangle = F2Rect(m_lngStartMouseX, m_lngStartMouseY, m_lngMouseX, m_lngMouseY)
+                .Name = "New Area"
+            End With
+            m_mapMap.Areas.Add l_araNew
+            m_lngSelectedArea = m_mapMap.Areas.Count
+            RefreshAreas
+            insInspect.RefreshValues
+            insInspect.Redraw
+            Redraw
+        End If
     Case Else
     End Select
     m_booDraggingArea = False
@@ -4440,6 +4461,9 @@ Dim l_rctArea As Fury2Rect
             .Path.Add CSng(m_lngMouseX), CSng(m_lngMouseY)
             ReDim Preserve m_bytSelectedPathNodes(0 To .Path.Count)
             SelectPathNodes .Path.Count
+            insInspect.RefreshValues
+            insInspect.Redraw
+            Redraw
         End With
         Redraw
     Case Else

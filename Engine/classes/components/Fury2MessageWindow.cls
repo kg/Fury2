@@ -44,8 +44,8 @@ Public AnimationDelay As Long
 #If EnableBehaviors = 1 Then
 Public Behaviors As Fury2Behaviors
 #End If
-Public ClickEvent As String
-Public CloseEvent As String
+Public ClickEvent As Fury2Event
+Public CloseEvent As Fury2Event
 Public DrawBehind As Boolean
 Public DisableClose As Boolean
 Public Engine As Fury2Engine
@@ -69,7 +69,7 @@ Private mvarOldDisable As Boolean
 
 Public Sub CloseWindow()
 On Error Resume Next
-    m_Engine.ScriptEngine.Exec CloseEvent
+    CloseEvent.Invoke
     Err.Clear
     If DisableClose Then Exit Sub
     If ((Queued = False) Or (Queued And Last)) And m_Engine.EnableObjectEvents Then m_Engine.ScriptEngine.Exec "MessageWindow_Destroy", Me
@@ -188,7 +188,7 @@ On Error Resume Next
                 ScrollEnd = ScrollY - (Rectangle.Height - 4)
                 ScrollSpeed = -1
             Else
-                m_Engine.ScriptEngine.Exec ClickEvent
+                ClickEvent.Invoke
                 Err.Clear
                 If Not DisableClose Then
                     CloseWindow
@@ -285,7 +285,7 @@ On Error Resume Next
             ScrollEnd = ScrollY - (Rectangle.Height)
             ScrollSpeed = -1
         Else
-            m_Engine.ScriptEngine.Exec ClickEvent
+            ClickEvent.Invoke
             Err.Clear
             If Not DisableClose Then
                 CloseWindow

@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define END_SIGNATURE );
 
 SIGNATURE(Normal) END_SIGNATURE
+SIGNATURE(Normal_Gamma) , int Gamma END_SIGNATURE
 SIGNATURE(Normal_Opacity) , int Opacity END_SIGNATURE
 SIGNATURE(Normal_Tint) , Pixel Tint END_SIGNATURE
 SIGNATURE(Normal_Tint_Opacity) , Pixel Tint, int Opacity END_SIGNATURE

@@ -27,9 +27,32 @@ Public Image As Object, PressedImage As Object
 Public BlitMode As SFXBlitModes
 Public Alpha As Single, HoverAlpha As Single, PressedAlpha As Single
 Public ImageOnly As Boolean
-Public ToggleButton As Boolean
+Public ToggleButton As Boolean, ToggleGroup As Long
 Public Value As Boolean
 Private m_staState As SkinState
+
+Friend Sub GroupSync()
+On Error Resume Next
+Dim l_cntContainer As iContainer
+Dim l_objButton As Object
+Dim l_btnButton As Button
+    If ToggleGroup = 0 Then Exit Sub
+    Set l_cntContainer = Parent
+    For Each l_objButton In l_cntContainer.Children
+        Set l_btnButton = Nothing
+        Set l_btnButton = l_objButton
+        If l_btnButton Is Nothing Then
+        Else
+            If l_btnButton Is Me Then
+            Else
+                If l_btnButton.ToggleGroup = ToggleGroup Then
+                    l_btnButton.Value = Not Value
+                    l_btnButton.RefreshState
+                End If
+            End If
+        End If
+    Next l_objButton
+End Sub
 
 Public Property Get iWidget_CanGetFocus() As Boolean
     iWidget_CanGetFocus = True
@@ -39,7 +62,7 @@ Public Function Class_ToString() As String
     Class_ToString = "Button " + Name
 End Function
 
-Private Sub RefreshState()
+Friend Sub RefreshState()
 On Error Resume Next
 Dim l_strState As String
 Dim l_booCaptured As Boolean
@@ -157,7 +180,14 @@ On Error Resume Next
     If KeyboardPressed Then
         DispatchEvent "Release"
         DispatchEvent "Click"
-        If ToggleButton Then Value = Not Value
+        If ToggleButton Then
+            If ToggleGroup <> 0 Then
+                Value = True
+                GroupSync
+            Else
+                Value = Not Value
+            End If
+        End If
     End If
     KeyboardPressed = False
     KeyboardDisabled = False
@@ -224,7 +254,14 @@ On Error Resume Next
     End If
     Parent.ReleaseCapture Me
     MousePressed = False
-    If ToggleButton Then Value = Not Value
+    If ToggleButton Then
+        If ToggleGroup <> 0 Then
+            Value = True
+            GroupSync
+        Else
+            Value = Not Value
+        End If
+    End If
     RefreshState
     DispatchEvent "MouseUp", Button, Shift, X, Y
 End Sub

@@ -528,12 +528,12 @@ Dim l_sprSprite As Fury2Sprite
     Set Duplicate = l_sprSprite
 End Function
 
-Public Property Let Effect(ByVal NewValue As Long)
+Public Property Let Effect(ByVal NewValue As Fury2SpriteEffects)
 Attribute Effect.VB_Description = "The rendering effect used to draw the sprite."
     m_spParam.Params.Effect = NewValue
 End Property
 
-Public Property Get Effect() As Long
+Public Property Get Effect() As Fury2SpriteEffects
     Effect = m_spParam.Params.Effect
 End Property
 
@@ -593,9 +593,24 @@ End Property
 Public Sub Free()
 On Error Resume Next
 Dim l_posPose As Fury2Pose
+    Set m_staState = Nothing
+    Set m_posPose = Nothing
+    Set m_fraFrame = Nothing
     For Each l_posPose In m_posPoses
         l_posPose.Free
     Next l_posPose
+    m_pthPath.Clear
+    m_posPoses.Clear
+    m_staStates.Clear
+    Set SavedPaths = Nothing
+    Set AttachedGraphic = Nothing
+    Set m_posPoses = Nothing
+    Set m_staStates = Nothing
+    Set m_pthPath = Nothing
+    Set m_objScript = Nothing
+    Set m_sprAttached = Nothing
+    Set m_sprSprites = Nothing
+    Set m_mapMap = Nothing
 End Sub
 
 Friend Property Let Index(ByVal NewValue As Long)
@@ -615,7 +630,6 @@ Dim l_posPose As Fury2Pose
     Set l_objScript = Script
 
     l_objScript.Init
-
 
     l_objScript.Initialize
 
@@ -868,6 +882,8 @@ On Error Resume Next
     If m_booDestroyed Then Exit Sub
     m_posPoses.LoadGraphics
     UpdateState True
+    
+    InitAreas
 '    UpdatePose True
 '    UpdateFrame True
 End Sub
@@ -954,6 +970,10 @@ End Property
 Public Property Get Path() As Fury2Path
 Attribute Path.VB_Description = "The sprite's path."
     Set Path = m_pthPath
+End Property
+
+Public Property Set Path(ByVal NewPath As Fury2Path)
+    Set m_pthPath = NewPath
 End Property
 
 Public Property Let Pose(ByVal NewValue As Long)
@@ -1568,6 +1588,31 @@ Dim l_araArea As Fury2Area, l_booWasIn As Boolean, l_booIsIn As Boolean
     Next l_araArea
     m_booAreasUpdated = False
     ProfileStop "Sprite.UpdateAreas"
+End Sub
+
+Private Sub InitAreas()
+On Error Resume Next
+Dim l_rctCurrent As Rectangle
+Dim l_araArea As Fury2Area
+Dim l_booInside As Boolean
+    With l_rctCurrent
+        .Left = CLng(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2))
+        .Top = CLng(m_spParam.Position.Y - (m_spParam.Obstruction.Height))
+        .Width = m_spParam.Obstruction.Width
+        .Height = m_spParam.Obstruction.Height
+    End With
+    For Each l_araArea In m_mapMap.Areas
+        l_araArea.DualIntersect l_rctCurrent, l_rctCurrent, l_booInside, l_booInside
+        
+        If (l_booInside) Then
+            ' Enter
+            ProfileStart "Area Scripts"
+            l_araArea.Action Me, "Enter"
+            ProfileStop "Area Scripts"
+        End If
+        
+        Err.Clear
+    Next l_araArea
 End Sub
 
 Private Sub UpdateFrame(Optional ByVal Force As Boolean = False)

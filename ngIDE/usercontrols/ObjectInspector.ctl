@@ -140,6 +140,7 @@ Private Enum ObjectItemTypes
     OIT_SpriteFilename
     OIT_Hex
     OIT_Color
+    OIT_Enum
 End Enum
 
 Private Type ObjectItem
@@ -153,6 +154,8 @@ Private Type ObjectItem
     ShowDropdown As Boolean
     DataType As TliVarType
     SpecialType As ObjectItemTypes
+    DropdownValues() As Variant
+    DropdownText() As String
 End Type
 
 Private m_booVisible As Boolean
@@ -246,9 +249,9 @@ On Error Resume Next
     m_colNameStack.Add Title
 End Sub
 
-Public Property Get hWnd() As Long
+Public Property Get hwnd() As Long
 On Error Resume Next
-    hWnd = UserControl.hWnd
+    hwnd = UserControl.hwnd
 End Property
 
 Public Sub RefreshEditBox(Optional SelectText As Boolean = True)
@@ -281,6 +284,8 @@ Dim l_lngItems As Long, l_lngY As Long
             l_lngNameWidth = ((picItems.ScaleWidth - vsScroll.Width) \ 2)
         End If
         If (VarType(.Value) = vbBoolean) And ((.CallTypes And VbLet) = VbLet) Then
+            .ShowDropdown = True
+        ElseIf .SpecialType = OIT_Enum Then
             .ShowDropdown = True
         ElseIf VarType(.Value) = vbObject Then
             If .Value Is Nothing Then
@@ -414,9 +419,24 @@ Dim m_itValue As IInspectorType
                         If Len(.ValueText) < 8 Then
                             .ValueText = String(8 - Len(.ValueText), "0") + .ValueText
                         End If
+                    Case OIT_Enum
+                        Dim l_lngEnumItems As Long
+                        For l_lngEnumItems = 0 To UBound(.DropdownValues)
+                            If .Value = .DropdownValues(l_lngEnumItems) Then
+                                .ValueText = .DropdownText(l_lngEnumItems)
+                            End If
+                        Next l_lngEnumItems
                     Case Else
                         .ValueText = Fury2Globals.ToString(.Value)
                     End Select
+                End If
+                If (.DataType And VT_BOOL) = VT_BOOL Then
+                    ReDim .DropdownValues(0 To 1)
+                    .DropdownValues(0) = False
+                    .DropdownValues(1) = True
+                    ReDim .DropdownText(0 To 1)
+                    .DropdownText(0) = "False"
+                    .DropdownText(1) = "True"
                 End If
             End If
         End With
@@ -585,8 +605,23 @@ Dim l_strSelectedItem As String
                                 If UBound(m_oiItems) < (l_lngItemCount - 1) Then
                                     ReDim Preserve m_oiItems(0 To l_lngItemCount - 1)
                                 End If
+                                Erase m_oiItems(l_lngItemCount).DropdownValues
+                                Erase m_oiItems(l_lngItemCount).DropdownText
                                 m_oiItems(l_lngItemCount - 1).Name = .Name
                                 m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Normal
+                                m_oiItems(l_lngItemCount - 1).DataType = .ReturnType.VarType
+                                If (.ReturnType.TypeInfo Is Nothing) Then
+                                ElseIf .ReturnType.TypeInfo.TypeKind = TKIND_ENUM Then
+                                    m_oiItems(l_lngItemCount - 1).SpecialType = OIT_Enum
+                                    ReDim m_oiItems(l_lngItemCount - 1).DropdownValues(0 To .ReturnType.TypeInfo.Members.Count - 1)
+                                    ReDim m_oiItems(l_lngItemCount - 1).DropdownText(0 To .ReturnType.TypeInfo.Members.Count - 1)
+                                    Dim l_memMember As MemberInfo, l_lngValue As Long
+                                    For Each l_memMember In .ReturnType.TypeInfo.Members
+                                        m_oiItems(l_lngItemCount - 1).DropdownText(l_lngValue) = l_memMember.Name
+                                        m_oiItems(l_lngItemCount - 1).DropdownValues(l_lngValue) = l_memMember.Value
+                                        l_lngValue = l_lngValue + 1
+                                    Next l_memMember
+                                End If
                                 If Left(l_strInfo, 1) = "~" Then
                                     l_strInfo = Mid(l_strInfo, 2)
                                     m_oiItems(l_lngItemCount - 1).ShowElipsis = True
@@ -629,9 +664,9 @@ On Error Resume Next
 Dim l_lngSelection As Long
 Dim l_varItems As Variant
     ReleaseCapture
-    l_varItems = Menus(MenuString("False"), MenuString("True"))
+    l_varItems = MenusFromStringArray(m_oiItems(m_lngSelectedItem).DropdownText)
     l_lngSelection = QuickShowMenu(picItems, cmdDropDown.Left * Screen.TwipsPerPixelX, (cmdDropDown.Top + cmdDropDown.Height) * Screen.TwipsPerPixelY, l_varItems, LeftButtonOnly:=True)
-    txtEdit.Text = CStr(Split(l_varItems(l_lngSelection - 1), "·")(0))
+    txtEdit.Text = CStr(m_oiItems(m_lngSelectedItem).DropdownValues(l_lngSelection - 1))
     txtEdit_LostFocus
 End Sub
 
@@ -1005,12 +1040,19 @@ Dim l_booValue As Boolean
 Dim l_itValue As IInspectorType
 Dim l_vtType As VbVarType
 Dim l_strText As String
+Dim l_lngValues As Long
     If txtEdit.Locked Then Exit Sub
     l_strText = txtEdit.Text
     If l_strText = m_oiItems(m_lngSelectedItem).ValueText Then Exit Sub
     Select Case m_oiItems(m_lngSelectedItem).SpecialType
     Case OIT_Color, OIT_Hex
         l_strText = "&H" & l_strText
+    Case OIT_Enum
+        For l_lngValues = LBound(m_oiItems(m_lngSelectedItem).DropdownText) To UBound(m_oiItems(m_lngSelectedItem).DropdownText)
+            If Trim(LCase(l_strText)) = Trim(LCase(m_oiItems(m_lngSelectedItem).DropdownText(l_lngValues))) Then
+                l_strText = CStr(m_oiItems(m_lngSelectedItem).DropdownValues(l_lngValues))
+            End If
+        Next l_lngValues
     Case Else
     End Select
     RaiseEvent BeforeItemChange(l_booCancel)

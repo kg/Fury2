@@ -37,6 +37,12 @@ Implements IVirtualFileSaveable
 Private mCol As Collection
 Private mvarParent As Fury2Map
 
+Public Sub Free()
+On Error Resume Next
+    Set mvarParent = Nothing
+    Set mCol = Nothing
+End Sub
+
 Public Function Find(Obj) As Long
 On Error Resume Next
 Dim l_objItem As Object, l_lngItems As Long

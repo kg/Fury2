@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
-Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#1.2#0"; "vbalTreeView6.ocx"
+Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
 Object = "{E142732F-A852-11D4-B06C-00500427A693}#2.0#0"; "vbalTbar6.ocx"
 Object = "{76A5D4ED-0D69-44AD-835D-B1429EF8E25C}#1.1#0"; "vbalDkTb6.ocx"
 Object = "{4F11FEBA-BBC2-4FB6-A3D3-AA5B5BA087F4}#1.0#0"; "vbalSbar6.ocx"
@@ -392,9 +392,21 @@ On Error Resume Next
     'DoEvents
 End Sub
 
+Public Sub SetLocation(Optional ByRef Value As String = "")
+On Error Resume Next
+    sbStatus.PanelText("Progress") = Value
+    sbStatus.RedrawPanel "Progress"
+    'DoEvents
+End Sub
+
 Public Sub SetProgress(Optional ByVal Progress As Single = 0)
 On Error Resume Next
     m_sngProgress = Progress
+    If Progress = 0 Then
+        sbStatus.PanelStyle("Progress") = estbrStandard Or estbrNoBorders
+    Else
+        sbStatus.PanelStyle("Progress") = estbrOwnerDraw
+    End If
     sbStatus.RedrawPanel "Progress"
     'DoEvents
 End Sub
@@ -832,7 +844,7 @@ End Sub
 Public Sub InitStatus()
 On Error Resume Next
     sbStatus.AddPanel estbrStandard Or estbrNoBorders, "Ready", , , 4, True, False, , "Status"
-    sbStatus.AddPanel estbrOwnerDraw, , "Progress", , 115, False, False, , "Progress"
+    sbStatus.AddPanel estbrStandard Or estbrNoBorders, , "Progress", , 150, False, False, , "Progress"
     sbStatus.AddPanel estbrStandard Or estbrNoBorders, CStr(Now), , , 4, False, True, , "Time"
 End Sub
 

@@ -41,6 +41,16 @@ Implements IVirtualFileCollection
 Private mCol As Collection
 Private mvarParent As Fury2Map
 
+Public Sub Free()
+On Error Resume Next
+Dim l_evtEvent As Fury2TimerEvent
+    Set mvarParent = Nothing
+    For Each l_evtEvent In mCol
+        l_evtEvent.Free
+    Next l_evtEvent
+    Set mCol = New Collection
+End Sub
+
 Public Function Update()
 On Error Resume Next
 Dim l_objItem As Fury2TimerEvent

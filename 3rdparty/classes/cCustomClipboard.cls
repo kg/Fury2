@@ -48,7 +48,7 @@ Option Explicit
 
 ' Clipboard functions:
 Private Declare Function OpenClipboard Lib "user32" _
-    (ByVal hWnd As Long) As Long
+    (ByVal hwnd As Long) As Long
 Private Declare Function CloseClipboard Lib "user32" _
     () As Long
 Private Declare Function GetClipboardData Lib "user32" _

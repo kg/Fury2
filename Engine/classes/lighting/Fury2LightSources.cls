@@ -42,6 +42,12 @@ Private mHook As Object
 Private mCol As Collection
 Private mvarParent As Fury2Map
 
+Public Sub Free()
+On Error Resume Next
+    Set mvarParent = Nothing
+    Set mCol = Nothing
+End Sub
+
 Public Sub Hook(Obj As Object)
 On Error Resume Next
     Set mHook = Obj

@@ -278,14 +278,15 @@ Public Function CreatePicture(ByVal Width As Long, ByVal Height As Long) As IPic
     ReleaseDC deskWnd, deskDC
 End Function
 
+#If fury2 = 1 Then
 Public Function LoadLargeIcon(Filename As String) As IPictureDisp
 On Error Resume Next
-    Set LoadLargeIcon = LoadIconObject(Filename, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON))
+    Set LoadLargeIcon = LoadIconObject(m_Engine.FileSystem.File(Filename).GetRealFilename, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON))
 End Function
 
 Public Function LoadSmallIcon(Filename As String) As IPictureDisp
 On Error Resume Next
-    Set LoadSmallIcon = LoadIconObject(Filename, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON))
+    Set LoadSmallIcon = LoadIconObject(m_Engine.FileSystem.File(Filename).GetRealFilename, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON))
 End Function
 
 Public Function LoadIconObject(Filename As String, Optional SizeX As Long = 16, Optional SizeY As Long = 16) As IPictureDisp
@@ -350,6 +351,7 @@ On Error Resume Next
     m_colIcons.Add LoadSmallIcon(Icon)
     SetFormIcon Form, m_colIcons.Item(m_colIcons.Count), ICON_SMALL, SetGlobalIcon
 End Sub
+#End If
 
 Sub PaintPictureEx(ByVal Target As Object, ByVal Picture As Object, ByVal X As Long, ByVal Y As Long, ByVal W As Long, H As Long)
 On Error Resume Next

@@ -58,6 +58,12 @@ Private Type StringUDT
     Text As String
 End Type
 
+Public Sub Free()
+On Error Resume Next
+    Set mvarMap = Nothing
+    Set mvarScript = Nothing
+End Sub
+
 Public Function PointInside(ByVal X As Long, ByVal Y As Long) As Boolean
 On Error Resume Next
     If X < mvarX Then Exit Function

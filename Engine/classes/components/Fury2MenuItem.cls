@@ -42,8 +42,8 @@ Public Color As Long
 Public Alpha As Single
 Public Caption As String
 Public Icon As Fury2Graphic
-Public EventName As String
-Public EventIndex As Long
+Public SelectEvent As Fury2Event
+Public Index As Long
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next

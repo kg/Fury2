@@ -457,7 +457,7 @@ End Sub
 Sub Refresh(Optional ResetMappings As Boolean = False)
 On Error Resume Next
 Dim l_lngChars As Long, l_lngMaxHeight As Long, l_lngMinHeight As Long
-    m_lngFullHeight = 0
+    'm_lngFullHeight = 0
     Err.Clear
     l_lngChars = UBound(m_cpmCharParams)
     If l_lngChars <= 0 Or Err <> 0 Then m_lngCharCount = 0: Exit Sub
@@ -831,6 +831,7 @@ Dim l_lngVersion As Long
         .ReadSegment_End
         .ReadSegment_Begin
             .RawLoad VarPtr(m_fpmFontParam), Len(m_fpmFontParam)
+            .Load m_lngFullHeight
         .ReadSegment_End
         ReDim m_cpmCharParams(1 To m_lngCharCount)
         .ReadSegment_Begin
@@ -877,6 +878,7 @@ Dim l_lngChars As Long
         .WriteSegment_End
         .WriteSegment_Begin
             .RawSave VarPtr(m_fpmFontParam), Len(m_fpmFontParam)
+            .Save m_lngFullHeight
         .WriteSegment_End
         .WriteSegment_Begin
             If m_colCharImages.Count > 0 Then

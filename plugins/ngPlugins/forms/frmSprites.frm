@@ -431,6 +431,8 @@ Dim l_sprSprite As Fury2Sprite
     If ClipboardDeserialize(CustomClipboard, ClipboardFormat(SCF_Sprite), l_sprSprite) Then
         CustomClipboard.ClipboardClose
         m_scSprites.Add l_sprSprite
+        l_sprSprite.Initialize
+        l_sprSprite.Load
         m_lngSelectedSprite = AtIndex
         ViewChanged
         RedrawSprites
@@ -446,6 +448,8 @@ On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
     If Index = -1 Then Index = m_scSprites.Count + 1
     Set l_sprSprite = New Fury2Sprite
+    l_sprSprite.Initialize
+    l_sprSprite.Load
     l_sprSprite.Name = "New Sprite"
     m_scSprites.Add l_sprSprite, , Index
     m_lngSelectedSprite = Index
@@ -1191,7 +1195,6 @@ End Sub
 Public Sub PosesViewChanged()
 On Error Resume Next
     Screen.MousePointer = 11
-    SelectedSprite.Pose = m_lngSelectedPose
     insPoseOptions.Visible = False
     picFrames.Visible = False
     dtPoses_Resize
@@ -1214,7 +1217,6 @@ End Sub
 
 Public Sub FramesViewChanged()
 On Error Resume Next
-    SelectedSprite.Frame = m_lngSelectedFrame
     Screen.MousePointer = 11
     insFrameOptions.Visible = False
     scFrame.Visible = False
@@ -1251,6 +1253,21 @@ On Error Resume Next
     End If
     With m_imgFrameDisplay
         .Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+        SelectedFrame.Image.MatteColor = SelectedFrame.MatteColor
+        Select Case dtFrames.SelectedTab.key
+        Case "Rectangle"
+            .Blit , , SelectedFrame.Image, 0.5, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
+            .Fill SelectedFrame.Rectangle, SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+            .Fill SelectedFrame.Rectangle, SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), RenderMode_SourceAlpha
+            .Blit SelectedFrame.Rectangle, SelectedFrame.Rectangle, SelectedFrame.Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
+            txtFrameProperty.Text = SelectedFrame.Rectangle.Class_ToString()
+        Case "Alignment"
+            .Blit F2Rect(0, 0, SelectedFrame.Rectangle.Width, SelectedFrame.Rectangle.Height, False), SelectedFrame.Rectangle, SelectedFrame.Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
+            .AntiAliasLine Array(SelectedFrame.XCenter, 0, SelectedFrame.XCenter, SelectedFrame.Rectangle.Height - 1), F2RGB(255, 0, 0, 255)
+            .AntiAliasLine Array(0, SelectedFrame.YCenter, SelectedFrame.Rectangle.Width - 1, SelectedFrame.YCenter), F2RGB(255, 0, 0, 255)
+            txtFrameProperty.Text = SelectedFrame.XCenter & ", " & SelectedFrame.YCenter
+        Case Else
+        End Select
     End With
     picFrameDisplay_Paint
 End Sub
@@ -1957,6 +1974,7 @@ End Sub
 
 Private Sub picFrameDisplay_Resize()
 On Error Resume Next
+    RedrawFrameView
 End Sub
 
 Private Sub picFrames_Resize()

@@ -1,6 +1,6 @@
 HTMLFile = 132, 138, 1063, 742, C
 frmScriptFile = 88, 92, 1019, 696, C, 88, 92, 1019, 696, C
-frmSprites = 1, 1, 635, 445, C, 1, 0, 875, 661, C
+frmSprites = 1, 1, 635, 445, Z, 1, 0, 875, 661, C
 SpriteEditor = 0, 0, 927, 604, C
 frmHTMLFile = 0, 0, 0, 0, C, 22, 23, 949, 627, C
 CommandBrowser = 44, 58, 666, 388, C
@@ -42,5 +42,7 @@ frmTilesetAssembler = 66, 87, 595, 391, C, 44, 58, 573, 362, C
 frmGridRemover = 0, 0, 525, 304, C, 66, 87, 591, 391, C
 ImageGridRemover = 44, 58, 569, 362, C
 ImageGridRemoverOptions = 22, 29, 547, 333, C
-mdlMenus = 0, 0, 0, 0, C
+mdlMenus = 22, 29, 879, 582, C
 frmAudio = 22, 29, 551, 333, C, 44, 58, 573, 362, C
+frmNewMap = 0, 0, 0, 0, C, 154, 203, 995, 756, C
+CreateMapOptions = 0, 0, 0, 0, C

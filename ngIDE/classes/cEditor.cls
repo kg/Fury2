@@ -55,6 +55,11 @@ On Error Resume Next
     frmMain.SetStatus Value
 End Sub
 
+Public Sub SetLocation(Optional ByRef Value As String = "")
+On Error Resume Next
+    frmMain.SetLocation Value
+End Sub
+
 Public Sub SetProgress(Optional ByVal Value As Single = 0)
 On Error Resume Next
     frmMain.SetProgress Value

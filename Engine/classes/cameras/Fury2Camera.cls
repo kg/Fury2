@@ -104,7 +104,7 @@ End Property
 
 Public Property Let Gamma(NewGamma As Long)
 On Error Resume Next
-    mvarGamma = ClipValue(NewGamma, -255, 255)
+    mvarGamma = ClipValue(NewGamma, 0, 1024)
 End Property
 
 Public Property Get ConstrainToMap() As Boolean
@@ -601,6 +601,9 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
             End If
             If EnableLighting And .Layers(Layers).Lighting.RenderLight Then
 '                l_imgBuffer.Blit Area, , mvarLightmap, 1, BlitMode_Normal
+                If Gamma <> 255 Then
+                    mvarLightmap.AdjustGamma mvarGamma
+                End If
                 l_imgBuffer.Blit Area, , mvarLightmap, 1, BlitMode_Lightmap_RGB
             End If
             If ShowSprites Then
@@ -723,6 +726,7 @@ On Error Resume Next
     EnableParallax = True
     EnableWrapping = True
     LightingScaleRatio = 1
+    Gamma = 255
 End Sub
 
 Private Sub Class_Terminate()

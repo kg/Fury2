@@ -53,6 +53,9 @@ Dim Doc As frmSprites
             l_posPose.Name = "Imported Pose #" & l_lngCellsY
             Doc.SelectedSprite.Poses.Add l_posPose, , l_lngInsertionPoint + l_lngY + 1
         Next l_lngY
+        Doc.SelectedSprite.Initialize
+        Doc.SelectedSprite.Load
+        Doc.SelectedSprite.Poses.LoadGraphics
         Doc.PosesViewChanged
         Doc.FramesViewChanged
         Doc.Redraw

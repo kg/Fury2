@@ -62,9 +62,9 @@ Private Type Fury2Hotspot
     y1 As Long
     x2 As Long
     y2 As Long
-    ClickEvent As String
-    EnterEvent As String
-    LeaveEvent As String
+    ClickEvent As Fury2Event
+    EnterEvent As Fury2Event
+    LeaveEvent As Fury2Event
     Hovering As Boolean
 End Type
 
@@ -117,6 +117,8 @@ Public DefaultFont As String, DefaultWindowSkin As String, DefaultCursor As Stri
 
 Public RangedProjectileChecks As Boolean
 Attribute RangedProjectileChecks.VB_VarMemberFlags = "40"
+
+Private AppIcon As IPictureDisp, LargeIcon As IPictureDisp
 
 Private SavedPictures() As Fury2Picture, SavedActivePictureSlots As Long
 Private SavedHotspots() As Fury2Hotspot
@@ -266,7 +268,7 @@ Public FPS As Long, MaxFrameskip As Long
 Attribute FPS.VB_VarDescription = "Returns the current actual rendering framerate."
 Public LogToClipboard As Boolean
 
-Public Terminating As Boolean
+Public Terminating As Boolean, TerminateEngine As Boolean
 
 Private m_KeyState(0 To 255) As Boolean
 Private m_KeyMap(0 To 255) As Byte
@@ -888,6 +890,25 @@ Dim l_ctlControl As Fury2InputControl
     Err.Clear
 End Sub
 
+Public Function BindEvent(ByVal Method, Optional Object As Object = Nothing) As Fury2Event
+On Error Resume Next
+    If VarType(Method) = vbString Then
+        If Len(Trim(CStr(Method))) = 0 Then Exit Function
+        Method = CStr(Method)
+        If Object Is Nothing Then
+            Set Object = m_ScriptEngine.Namespace
+        End If
+        Set BindEvent = New Fury2Event
+        BindEvent.Bind CStr(Method), Object
+    Else
+        If Method Is Nothing Then Exit Function
+        If TypeOf Method Is Fury2Event Then
+            Set BindEvent = Method
+        End If
+        Exit Function
+    End If
+End Function
+
 Public Sub Break()
 On Error Resume Next
     m_booBreak = True
@@ -1212,7 +1233,7 @@ Dim m_colObjects As New Collection
     ContextLevelRemove
 End Sub
 
-Public Function CreateMenu(Items, Optional Area = Nothing, Optional SelectEvent As String = "", Optional CloseEvent As String = "", Optional MoveEvent As String = "", Optional Cursor = Nothing, Optional WindowSkin = Nothing) As Fury2Menu
+Public Function CreateMenu(Items, Optional Area = Nothing, Optional SelectEvent = Nothing, Optional CloseEvent = Nothing, Optional MoveEvent = "", Optional Cursor = Nothing, Optional WindowSkin = Nothing) As Fury2Menu
 On Error Resume Next
 Dim NewMenu As Fury2Menu
 Dim m_lngItems As Long
@@ -1227,7 +1248,7 @@ Dim m_lngItems As Long
         Set .Font = m_Engine.Font
         If UBound(Items) >= 0 Then
             For m_lngItems = LBound(Items) To UBound(Items)
-                .Add ToString(Items(m_lngItems)), , SelectEvent
+                .Add ToString(Items(m_lngItems)), , BindEvent(SelectEvent)
             Next m_lngItems
         End If
         If Cursor Is Nothing Then
@@ -1242,8 +1263,8 @@ Dim m_lngItems As Long
         End If
         .Alpha = 1
         .WindowSkin.AdjustRectangle .Rectangle
-        .CloseEvent = CloseEvent
-        .MoveEvent = MoveEvent
+        Set .CloseEvent = BindEvent(CloseEvent)
+        Set .MoveEvent = BindEvent(MoveEvent)
     End With
     Set CreateMenu = NewMenu
 End Function
@@ -1551,6 +1572,7 @@ On Error Resume Next
 Dim Obj As Object
 Dim m_lngX As Long, m_lngY As Long
 Dim m_colObjects As New Collection, m_lngObjects As Long
+Dim l_lngHotspots As Long, l_booInside As Boolean
     ContextLevelAdd "MouseDown"
     m_lngX = Evt.LParam3
     m_lngY = Evt.LParam4
@@ -1571,6 +1593,27 @@ Dim m_colObjects As New Collection, m_lngObjects As Long
         End If
         If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
     Next Obj
+    For l_lngHotspots = LBound(Hotspots) To UBound(Hotspots)
+        With Hotspots(l_lngHotspots)
+            If .Enabled Then
+                l_booInside = m_lngX >= .x1 And m_lngX < .x2 And m_lngY >= .y1 And m_lngY < .y2
+                If .Hovering Then
+                    If l_booInside Then
+                        .ClickEvent.Invoke
+                    Else
+                        .Hovering = False
+                        .LeaveEvent.Invoke
+                    End If
+                Else
+                    If l_booInside Then
+                        .EnterEvent.Invoke
+                        .Hovering = True
+                        .ClickEvent.Invoke
+                    End If
+                End If
+            End If
+        End With
+    Next l_lngHotspots
     If MouseDownHook <> "" Then ContextLevelAdd CStr(MouseDownHook): m_ScriptEngine.Exec MouseDownHook, Evt.LParam1, Evt.LParam2, m_lngX, m_lngY: ContextLevelRemove
     ContextLevelRemove
 End Sub
@@ -1580,7 +1623,7 @@ On Error Resume Next
 Dim Obj As Object
 Dim m_lngX As Long, m_lngY As Long
 Dim m_colObjects As New Collection
-Dim m_lngHotspots As Long
+Dim l_lngHotspots As Long, l_booInside As Boolean
     ContextLevelAdd "MouseMove"
     m_lngX = Evt.LParam3
     m_lngY = Evt.LParam4
@@ -1598,40 +1641,25 @@ Dim m_lngHotspots As Long
         End If
         If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
     Next Obj
-    For m_lngHotspots = 0 To c_lngMaxHotspot
-        With Hotspots(m_lngHotspots)
+    For l_lngHotspots = LBound(Hotspots) To UBound(Hotspots)
+        With Hotspots(l_lngHotspots)
             If .Enabled Then
-                If Trim(.EnterEvent) <> "" Or Trim(.LeaveEvent) <> "" Then
-                    If (m_lngX >= .x1) And (m_lngY >= .y1) And (m_lngX < .x2) And (m_lngY < .y2) Then
-                        If .Hovering Then
-                        Else
-                            .Hovering = True
-                            Err.Clear
-                            m_ScriptEngine.Exec .EnterEvent, m_lngHotspots
-                            If Err.Number <> 0 Then
-                                Err.Clear
-                                m_ScriptEngine.Exec .EnterEvent
-                                Err.Clear
-                            End If
-                        End If
+                l_booInside = m_lngX >= .x1 And m_lngX < .x2 And m_lngY >= .y1 And m_lngY < .y2
+                If .Hovering Then
+                    If l_booInside Then
                     Else
-                        If .Hovering Then
-                            .Hovering = False
-                            Err.Clear
-                            m_ScriptEngine.Exec .LeaveEvent, m_lngHotspots
-                            If Err.Number <> 0 Then
-                                Err.Clear
-                                m_ScriptEngine.Exec .LeaveEvent
-                                Err.Clear
-                            End If
-                        Else
-                        End If
+                        .Hovering = False
+                        .LeaveEvent.Invoke
+                    End If
+                Else
+                    If l_booInside Then
+                        .EnterEvent.Invoke
+                        .Hovering = True
                     End If
                 End If
             End If
         End With
-        If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
-    Next m_lngHotspots
+    Next l_lngHotspots
     If MouseMoveHook <> "" Then ContextLevelAdd CStr(MouseMoveHook): m_ScriptEngine.Exec MouseMoveHook, Evt.LParam1, Evt.LParam2, m_lngX, m_lngY: ContextLevelRemove
     ContextLevelRemove
 End Sub
@@ -1662,24 +1690,6 @@ Dim m_lngHotspots As Long
         End If
         If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
     Next Obj
-    For m_lngHotspots = 0 To c_lngMaxHotspot
-        With Hotspots(m_lngHotspots)
-            If .Enabled Then
-                If Trim(.ClickEvent) <> "" Then
-                    If (m_lngX >= .x1) And (m_lngY >= .y1) And (m_lngX < .x2) And (m_lngY < .y2) Then
-                        Err.Clear
-                        m_ScriptEngine.Exec .ClickEvent, m_lngHotspots
-                        If Err.Number <> 0 Then
-                            Err.Clear
-                            m_ScriptEngine.Exec .ClickEvent
-                            Err.Clear
-                        End If
-                    End If
-                End If
-            End If
-        End With
-        If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
-    Next m_lngHotspots
     If MouseUpHook <> "" Then ContextLevelAdd CStr(MouseUpHook): m_ScriptEngine.Exec MouseUpHook, Evt.LParam1, Evt.LParam2, m_lngX, m_lngY: ContextLevelRemove
     ContextLevelRemove
 End Sub
@@ -2354,6 +2364,8 @@ Attribute GFXEngine_Closed.VB_MemberFlags = "40"
     If Running = True Then
         Running = False
     End If
+    Terminating = True
+    TerminateEngine = True
 End Sub
 
 Public Sub GFXEngine_DblClick()
@@ -2571,6 +2583,7 @@ End Sub
 
 Public Sub GFXEngine_Paint()
 Attribute GFXEngine_Paint.VB_MemberFlags = "40"
+On Error Resume Next
     If m_Backbuffer Is Nothing Then
         m_GFX.ClearScreen 0
     Else
@@ -2709,7 +2722,9 @@ Public Property Let Icon(NewIcon As String)
 On Error Resume Next
     m_Icon = NewIcon
     Set AppIcon = LoadSmallIcon(NewIcon)
-    SetFormIcon m_GFX.Window, AppIcon
+    SetFormIcon m_GFX.Window, AppIcon, 0, False
+    Set LargeIcon = LoadLargeIcon(NewIcon)
+    SetFormIcon m_GFX.Window, LargeIcon, 1, True
 End Property
 
 Function IIf(Expression, TruePart, Optional FalsePart = 0)
@@ -3138,7 +3153,6 @@ Dim l_objObject As Object
             Set Map = Maps(1)
         End If
         Cameras(1).Redraw
-        UpdateIcons
         LoadProgress "Game", 90
         FlushImageCache
         LoadProgress "Game", 100
@@ -3254,8 +3268,10 @@ Dim m_strOldFn As String
     End If
     Cameras.Dirty
     Set Map = Maps(Index)
+    TextOut "Pre-Flush Refcount: " & GetReferenceCount(l_mapOld)
     l_mapOld.Unload
     l_mapOld.Free
+    TextOut "Post-Flush Refcount: " & GetReferenceCount(l_mapOld)
     FlushImageCache
     ContextLevelRemove
     m_booTrace = False
@@ -3402,7 +3418,7 @@ On Error Resume Next
     Set m_objMenuCursor = NewCursor
 End Property
 
-Public Function MessageBox(Text, Optional Area = Nothing, Optional Portrait = Nothing, Optional CloseEvent = "", Optional TextColor, Optional Alpha = 1, Optional Queue As Boolean = False, Optional Hook As Boolean = True) As Fury2MessageWindow
+Public Function MessageBox(Text, Optional Area = Nothing, Optional Portrait = Nothing, Optional CloseEvent = Nothing, Optional TextColor, Optional Alpha = 1, Optional Queue As Boolean = False, Optional Hook As Boolean = True) As Fury2MessageWindow
 Attribute MessageBox.VB_Description = "Opens a message box."
 On Error Resume Next
 Dim NewMessage As Fury2MessageWindow
@@ -3433,7 +3449,7 @@ Dim NewMessage As Fury2MessageWindow
         If IsMissing(TextColor) Then TextColor = CLng(&HFFFFFFFF)
         Set .Font = m_Engine.Font
         .TextColor = CLng(TextColor)
-        .CloseEvent = CStr(CloseEvent)
+        Set .CloseEvent = BindEvent(CloseEvent)
         If WindowSkin Is Nothing Then
             Set .WindowSkin = m_Engine.WindowSkin
         Else
@@ -3565,6 +3581,7 @@ Dim l_varValues, l_strSetting As String
         ScreenHeight = CLng(l_varValues(1))
         ScreenScaleRatio = CSng(.Settings("Screen Scale Ratio"))
         
+        Icon = .Settings("Icon")
         GameName = .Settings("Title")
         WindowCaption = .Settings("Title")
         
@@ -3979,6 +3996,11 @@ End Sub
 Sub ResetHotspots()
 Attribute ResetHotspots.VB_Description = "Resets all hotspots."
 On Error Resume Next
+Dim l_lngHotspot As Long
+    For l_lngHotspot = 0 To c_lngMaxHotspot
+        Hotspots(l_lngHotspot).Enabled = False
+    Next l_lngHotspot
+    Erase Hotspots
     ReDim Hotspots(0 To c_lngMaxHotspot)
 End Sub
 
@@ -4001,6 +4023,7 @@ End Sub
 Sub ResetPictures()
 Attribute ResetPictures.VB_Description = "Resets all picture slots."
 On Error Resume Next
+    Erase OnscreenPictures
     ReDim OnscreenPictures(0 To c_lngMaxPictureSlot)
 End Sub
 
@@ -4228,18 +4251,18 @@ On Error Resume Next
     Set ScriptEngine = m_ScriptEngine
 End Property
 
-Public Sub SetHotspot(Index, Optional x1 = 0, Optional y1 = 0, Optional x2, Optional y2 = 0, Optional ClickEvent = "", Optional EnterEvent = "", Optional LeaveEvent = "")
+Public Sub SetHotspot(ByVal Index As Long, Optional ByVal Left As Long = 0, Optional ByVal Top As Long = 0, Optional ByVal Width As Long = 0, Optional ByVal Height As Long = 0, Optional ByRef ClickEvent = Nothing, Optional ByRef EnterEvent = Nothing, Optional ByRef LeaveEvent = Nothing)
 Attribute SetHotspot.VB_Description = "Creates a hotspot."
 On Error Resume Next
     With Hotspots(CLng(Index))
         .Enabled = True
-        .x1 = CLng(x1)
-        .y1 = CLng(y1)
-        .x2 = CLng(x2) + CLng(x1)
-        .y2 = CLng(y2) + CLng(y1)
-        .ClickEvent = CStr(ClickEvent)
-        .EnterEvent = CStr(EnterEvent)
-        .LeaveEvent = CStr(LeaveEvent)
+        .x1 = Left
+        .y1 = Top
+        .x2 = Left + Width
+        .y2 = Top + Height
+        Set .ClickEvent = BindEvent(ClickEvent)
+        Set .EnterEvent = BindEvent(EnterEvent)
+        Set .LeaveEvent = BindEvent(LeaveEvent)
     End With
     Err.Clear
 End Sub
@@ -4414,6 +4437,7 @@ Dim m_camCamera As Fury2Camera
     Paused = False
     Cameras.Init
     Cameras.Dirty
+    Camera.Refresh
     Update
     Paused = m_booPaused
 End Sub
@@ -4745,6 +4769,14 @@ Dim m_lngMaps As Long
 Dim m_lngCameras As Long
     If Maps.Count > 0 Then
         For m_lngMaps = 1 To Maps.Count
+            Set Map = Maps(m_lngMaps)
+            TextOut "Pre-Flush Refcount: " & GetReferenceCount(Map)
+            With Map
+                .Unload
+                .Free
+            End With
+            TextOut "Post-Flush Refcount: " & GetReferenceCount(Map)
+            FlushImageCache
             If Cameras.Count > 0 Then
                 For m_lngCameras = 1 To Cameras.Count
                     If Cameras(m_lngCameras).ViewingMap Is Maps(m_lngMaps) Then
@@ -4923,13 +4955,6 @@ Dim m_ctlControl As Fury2InputControl
     ContextLevelRemove
     Err.Clear
     ProfileStop "Process Input"
-End Sub
-
-Sub UpdateIcons()
-Attribute UpdateIcons.VB_MemberFlags = "40"
-On Error Resume Next
-    Set AppIcon = LoadSmallIcon(m_Icon)
-    SetFormIcon m_GFX.Window, AppIcon
 End Sub
 
 Public Sub UpdatePictures()

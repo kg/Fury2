@@ -40,6 +40,10 @@ Implements IVirtualFileCollection
 
 Private mCol As Collection
 
+Public Sub Clear()
+    Set mCol = New Collection
+End Sub
+
 Public Function Duplicate() As Fury2States
 On Error Resume Next
 Dim m_lngStates As Long

@@ -103,10 +103,15 @@ Private Function iFileTypePlugin_LoadFromFilename(Filename As String) As iDocume
 On Error Resume Next
 Dim l_frmNew As New frmSprites
 Dim l_scSprites As Fury2Sprites
+Dim l_sprSprite As Fury2Sprite
     Set l_scSprites = New Fury2Sprites
     If LoadFromFile(l_scSprites, F2File(Filename)) Then
         l_frmNew.SetFilename Filename
         l_frmNew.SetSprites l_scSprites
+        For Each l_sprSprite In l_scSprites
+            l_sprSprite.Initialize
+            l_sprSprite.Load
+        Next l_sprSprite
         Set iFileTypePlugin_LoadFromFilename = l_frmNew
         Set iFileTypePlugin_LoadFromFilename.Plugin = Me
     Else

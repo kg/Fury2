@@ -14,7 +14,7 @@ Dim l_mgrNew As cMenuManager
     End With
     With l_mnuNew
         .ImageList = Icons.hIml
-        .hwndOwner = Ctl.hwnd
+        .hWndOwner = Ctl.hwnd
         .HeaderStyle = ecnmHeaderSeparator
         .OfficeXpStyle = True
     End With
@@ -40,13 +40,13 @@ Dim l_lngIndex As Long, l_mnuMenu As cPopupMenu
         l_lngIndex = CLng(Index)
     End If
     l_lngIndex = l_lngIndex + 1
-    l_mnuMenu.hwndOwner = Form.hwnd
+    l_mnuMenu.hWndOwner = Form.hwnd
     If Absolute Then
         ShowMenu = l_mnuMenu.ShowPopupAbsolute(X, Y, l_lngIndex)
     Else
         ShowMenu = l_mnuMenu.ShowPopupMenuAtIndex(X, Y, lIndex:=l_lngIndex, bLeftButtonOnly:=True)
     End If
-    l_mnuMenu.hwndOwner = frmIcons.hwnd
+    l_mnuMenu.hWndOwner = frmIcons.hwnd
 End Function
 
 Public Sub CleanupMenus()
@@ -90,7 +90,7 @@ End Function
 
 Public Sub SetMenuOwner(Name As String, hwnd As Long)
 On Error Resume Next
-    l_colMenus(LCase(Trim(Name))).Menu.hwndOwner = hwnd
+    l_colMenus(LCase(Trim(Name))).Menu.hWndOwner = hwnd
 End Sub
 
 Public Function DefineMenu(Name As String, Items As Variant, Optional Icons As vbalImageList = Nothing) As cPopupMenu
@@ -105,7 +105,7 @@ Dim l_mgrNew As cMenuManager
     l_colMenus.Add l_mgrNew, LCase(Trim(Name))
     Set DefineMenu = l_mnuNew
     With l_mnuNew
-        .hwndOwner = frmIcons.hwnd
+        .hWndOwner = frmIcons.hwnd
         .HeaderStyle = ecnmHeaderSeparator
         .OfficeXpStyle = True
     End With
@@ -121,6 +121,17 @@ Dim l_varValue As Variant
         l_varValue(l_lngItems) = Values(l_lngItems)
     Next l_lngItems
     Menus = l_varValue
+End Function
+
+Public Function MenusFromStringArray(ByRef Values() As String) As Variant
+On Error Resume Next
+Dim l_lngItems As Long
+Dim l_varValue As Variant
+    ReDim l_varValue(LBound(Values) To UBound(Values))
+    For l_lngItems = LBound(Values) To UBound(Values)
+        l_varValue(l_lngItems) = Values(l_lngItems)
+    Next l_lngItems
+    MenusFromStringArray = l_varValue
 End Function
 
 Public Function MenuString(ByRef Name As String, Optional ByRef Accelerator As String = "", Optional ByRef key As String = "", Optional ByVal Icon = "", Optional ByRef HelpText As String = "", Optional ByVal Checked As Boolean = False, Optional ByVal Enabled As Boolean = True, Optional ByVal ItemData As Long = -1) As String

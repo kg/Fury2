@@ -1182,6 +1182,8 @@ Dim l_rctClip As Fury2Rect
         SoftFX.Blit_Tile_Additive_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_lngAlpha
     Case SFXBlitModes.BlitMode_Subtractive
         SoftFX.Blit_Tile_Subtractive_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_lngAlpha
+    Case SFXBlitModes.BlitMode_Multiply
+        SoftFX.Blit_Tile_Multiply_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_lngAlpha
     Case SFXBlitModes.BlitMode_Matte_Tint
         SoftFX.Blit_Tile_Matte_Tint_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_lngColor, l_lngAlpha
     Case SFXBlitModes.BlitMode_SourceAlpha_Tint

@@ -149,6 +149,7 @@ Dim m_imgOld As Fury2Image
     Else
         Set m_imgOld = OldImage
     End If
+    m_Engine.Sync
     Do Until m_dblNow >= m_dblEnd
         m_dblNow = HiResTimer
         m_sngAlpha = 1 - ((m_dblNow - m_dblStart) / m_dblLength)

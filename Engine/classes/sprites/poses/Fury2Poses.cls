@@ -237,15 +237,15 @@ On Error Resume Next
     Set NewEnum = mCol.[_NewEnum]
 End Property
 
-
-Private Sub Class_Initialize()
-    'creates the collection when this class is created
+Public Sub Clear()
     Set mCol = New Collection
 End Sub
 
+Private Sub Class_Initialize()
+    Set mCol = New Collection
+End Sub
 
 Private Sub Class_Terminate()
-    'destroys collection when this class is terminated
     Set mCol = Nothing
 End Sub
 

@@ -138,8 +138,8 @@ Dim l_booSelected As Boolean
     End If
 End Function
 
-Public Property Get hWnd() As Long
-    hWnd = UserControl.hWnd
+Public Property Get hwnd() As Long
+    hwnd = UserControl.hwnd
 End Property
 
 Public Property Get PreserveRows() As Boolean
@@ -258,7 +258,7 @@ Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
     
     l_lngMaxY = l_lngY
     If l_lngHeight > m_lngHeight Then
-        l_lngMax = (l_lngHeight - m_lngHeight)
+        l_lngMax = (l_lngHeight - m_lngHeight - (IIf(hsScrollbar.Visible, hsScrollbar.Height, 0)))
         If l_lngMax > 0 Then
             If (vsScrollbar.Enabled) Then Else vsScrollbar.Enabled = True
             If vsScrollbar.LargeChange <> m_tstTileset.TileHeight * 4 Then vsScrollbar.LargeChange = m_tstTileset.TileHeight * 4
@@ -270,7 +270,7 @@ Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
         vsScrollbar.Enabled = False
     End If
     If l_lngWidth > m_lngWidth Then
-        l_lngMax = (l_lngWidth - m_lngWidth)
+        l_lngMax = (l_lngWidth - m_lngWidth - (IIf(vsScrollbar.Visible, vsScrollbar.Width, 0)))
         If l_lngMax > 0 Then
             If (hsScrollbar.Enabled) Then Else hsScrollbar.Enabled = True
             If hsScrollbar.LargeChange <> m_tstTileset.TileWidth * 4 Then hsScrollbar.LargeChange = m_tstTileset.TileWidth * 4

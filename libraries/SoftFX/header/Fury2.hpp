@@ -175,9 +175,9 @@ struct SpriteParam {
 };
 
 inline bool operator<= (const SpriteParam& lhs, const SpriteParam& rhs) {
-    if (lhs.Position.Y <= rhs.Position.Y) {
+    if (lhs.Position.Y - lhs.Position.Z <= rhs.Position.Y - rhs.Position.Z) {
         return true;
-    } else if (lhs.Position.Y == rhs.Position.Y) {
+    } else if (lhs.Position.Y - lhs.Position.Z == rhs.Position.Y - rhs.Position.Z) {
         if (lhs.Position.X < rhs.Position.X) {
             return true;
         } else if (lhs.Position.X == rhs.Position.X) {

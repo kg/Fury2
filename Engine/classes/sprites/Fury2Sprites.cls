@@ -63,6 +63,7 @@ End Sub
 Sub Free()
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
+    Set mvarParent = Nothing
     If mCol.Count = 0 Then Exit Sub
     For Each l_sprSprite In mCol
         l_sprSprite.Free

@@ -73,12 +73,12 @@ Dim l_fraFrame As Fury2PoseFrame
     End If
 End Sub
 
-Public Property Get LoopMode() As Long
+Public Property Get LoopMode() As Fury2LoopModes
 Attribute LoopMode.VB_Description = "The looping mode for the pose. Valid poses are One-shot, Normal, and Bi-directional (aka Ping-Pong)."
     LoopMode = mvarLoopMode
 End Property
 
-Public Property Let LoopMode(NewMode As Long)
+Public Property Let LoopMode(ByVal NewMode As Fury2LoopModes)
     mvarLoopMode = NewMode
 End Property
 

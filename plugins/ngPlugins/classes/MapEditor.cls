@@ -97,20 +97,40 @@ On Error Resume Next
 Dim l_frmNew As New frmMap
 Dim l_mapMap As Fury2Map
 Dim l_tstTileset As Fury2Tileset
-    l_frmNew.SetFilename ""
-    l_frmNew.RefreshAll
-    Set l_mapMap = New Fury2Map
-    l_mapMap.EditMode = True
-    Set l_tstTileset = New Fury2Tileset
-    l_mapMap.CreateNew "Untitled Map", 20, 20, 1, l_tstTileset
-    l_mapMap.Resize 20, 20
-    l_mapMap.Init
-    l_mapMap.Load
-    l_frmNew.SetMap l_mapMap
-    m_objEditor.LoadSettings "MapEditor\View", l_frmNew.ViewOptions
-    l_frmNew.ViewChanged
-    Set iFileTypePlugin_CreateNew = l_frmNew
-    Set iFileTypePlugin_CreateNew.Plugin = Me
+Dim l_lyrLayer As Fury2MapLayer
+    Load frmNewMap
+    m_objEditor.LoadSettings "MapEditor\DefaultSettings", frmNewMap.Options
+    frmNewMap.RefreshSettings
+    frmNewMap.Show vbModal
+    If Not (frmNewMap.Options Is Nothing) Then
+        m_objEditor.SaveSettings "MapEditor\DefaultSettings", frmNewMap.Options
+        With frmNewMap.Options
+            l_frmNew.SetFilename ""
+            l_frmNew.RefreshAll
+            Set l_mapMap = New Fury2Map
+            l_mapMap.EditMode = True
+            Set l_tstTileset = New Fury2Tileset
+            l_tstTileset.TileWidth = .TileWidth
+            l_tstTileset.TileHeight = .TileHeight
+            l_tstTileset.Filename = .Tileset
+            l_tstTileset.Load
+            l_mapMap.CreateNew .Name, .Width, .Height, .Layers, l_tstTileset
+            l_mapMap.CollisionType = .CollisionType
+            l_mapMap.Resize .Width, .Height
+            l_mapMap.Init
+            l_mapMap.Load
+            For Each l_lyrLayer In l_mapMap.Layers
+                l_lyrLayer.Effect = .LayerEffect
+            Next l_lyrLayer
+            l_frmNew.SetMap l_mapMap
+            m_objEditor.LoadSettings "MapEditor\View", l_frmNew.ViewOptions
+            l_frmNew.ViewChanged
+            Set iFileTypePlugin_CreateNew = l_frmNew
+            Set iFileTypePlugin_CreateNew.Plugin = Me
+        End With
+    End If
+    Unload frmNewMap
+    Err.Clear
 End Function
 
 Private Property Get iFileTypePlugin_FileTypeName() As String

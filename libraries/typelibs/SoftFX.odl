@@ -865,6 +865,10 @@ library SoftFX {
         int Blit_Tile_Subtractive(int Dest, int Source, Rectangle *Rect);
         [entry("_BlitTile_Subtractive_Opacity@16")]
         int Blit_Tile_Subtractive_Opacity(int Dest, int Source, Rectangle *Rect, int Opacity);
+        [entry("_BlitTile_Multiply@12")]
+        int Blit_Tile_Multiply(int Dest, int Source, Rectangle *Rect);
+        [entry("_BlitTile_Multiply_Opacity@16")]
+        int Blit_Tile_Multiply_Opacity(int Dest, int Source, Rectangle *Rect, int Opacity);
         
         [entry("_BlitResample_Normal@20")]
         int Blit_Resample_Normal(int Dest, int Source, Rectangle *Rect, Rectangle *SourceRect, int Scaler);

@@ -74,6 +74,12 @@ On Error Resume Next
     Engine.RunCode Engine.ScriptEngine.Language.GenerateAssignment(CStr(Name), "IObjThis", True)
 End Sub
 
+Sub UnloadAllForms()
+On Error Resume Next
+    Forms.Clear
+    Desktop.Children.Clear
+End Sub
+
 Sub HideForm(Name)
 On Error Resume Next
     Desktop.Children.Remove Name

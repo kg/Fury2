@@ -41,6 +41,16 @@ Implements IVirtualFileCollection
 Private mCol As Collection
 Private mvarParent As Fury2Map
 
+Sub Free()
+On Error Resume Next
+Dim l_araArea As Fury2Area
+    Set mvarParent = Nothing
+    If mCol.Count = 0 Then Exit Sub
+    For Each l_araArea In mCol
+        l_araArea.Free
+    Next l_araArea
+End Sub
+
 Public Function Find(Obj) As Long
 On Error Resume Next
 Dim l_objItem As Object, l_lngItems As Long

@@ -93,7 +93,7 @@ On Error Resume Next
     mvarLooping = NewLooping
 End Property
 
-Public Function Add(X As Single, Y As Single, Optional ReachedEvent As String = "", Optional FailEvent As String = "", Optional WaitOverride As Long = -1, Optional sKey As String) As Fury2Waypoint
+Public Function Add(X As Single, Y As Single, Optional ReachedEvent As String = "", Optional FailEvent As String = "", Optional WaitOverride As Long = -1, Optional ByVal AtIndex) As Fury2Waypoint
 On Error Resume Next
     If mCol.Count >= c_lngMaxWaypoints Then Exit Function
     Dim objNewMember As Fury2Waypoint
@@ -104,20 +104,40 @@ On Error Resume Next
     objNewMember.WaitOverride = CLng(WaitOverride)
     objNewMember.ReachedEvent = ReachedEvent
     objNewMember.FailEvent = FailEvent
-    If Len(sKey) = 0 Then
+    If IsMissing(AtIndex) Then
         mCol.Add objNewMember
     Else
-        mCol.Add objNewMember, sKey
+        If mCol.Count = 0 Then
+            mCol.Add objNewMember
+        ElseIf AtIndex <= 1 Then
+            mCol.Add objNewMember, , 1
+        ElseIf mCol.Count > AtIndex Then
+            mCol.Add objNewMember, , AtIndex
+        Else
+            mCol.Add objNewMember, , , AtIndex - 1
+        End If
     End If
     
     Set Add = objNewMember
     Set objNewMember = Nothing
 End Function
 
-Public Sub AddObject(ByVal Obj As Fury2Waypoint)
+Public Sub AddObject(ByVal Obj As Fury2Waypoint, Optional ByVal AtIndex)
 On Error Resume Next
     If mCol.Count >= c_lngMaxWaypoints Then Exit Sub
-    mCol.Add Obj
+    If IsMissing(AtIndex) Then
+        mCol.Add Obj
+    Else
+        If mCol.Count = 0 Then
+            mCol.Add Obj
+        ElseIf AtIndex <= 1 Then
+            mCol.Add Obj, , 1
+        ElseIf mCol.Count > AtIndex Then
+            mCol.Add Obj, , AtIndex
+        Else
+            mCol.Add Obj, , , AtIndex - 1
+        End If
+    End If
 End Sub
 
 Public Property Get Item(vntIndexKey As Variant) As Fury2Waypoint

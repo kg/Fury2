@@ -194,7 +194,9 @@ On Error Resume Next
     m_Notify.Begin
     Do
         m_Engine.Game
-        If m_Engine.Terminating Then
+        If m_Engine.TerminateEngine Then
+            Exit Do
+        ElseIf m_Engine.Terminating Then
             m_Engine.Terminating = False
             m_Engine.TextOut "Reloading Game"
             m_Engine.LoadGame m_Engine.CurrentGame

@@ -44,6 +44,14 @@ Private m_litLights() As LightSource
 Private m_obsObstructions() As LightingObstruction
 Private m_plnPlanes() As LightingPlane2
 
+Public Sub Free()
+On Error Resume Next
+    m_colLights.Free
+    Erase m_litLights
+    Erase m_obsObstructions
+    Erase m_plnPlanes
+End Sub
+
 Public Sub Init(W As Long, H As Long)
 On Error Resume Next
     CreateLightingMatrix W, H

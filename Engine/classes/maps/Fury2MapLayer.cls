@@ -262,6 +262,9 @@ On Error Resume Next
     Set mvarSprites = New Fury2Sprites
     mvarTileset.Free
     Set mvarTileset = New Fury2Tileset
+    mvarLighting.Free
+    Set mvarLighting = New Fury2LayerLighting
+    Set mvarParent = Nothing
 End Sub
 
 Public Property Get DisableBlocking() As Boolean
@@ -846,15 +849,11 @@ Attribute Lit.VB_MemberFlags = "40"
 End Property
 
 Public Property Let Effect(ByVal vData As SFXBlitModes)
-'used when assigning an Object to the property, on the left side of a Set statement.
-'Syntax: Set X.Effect = Form1
     mvarEffect = vData + 1
     m_Engine.Cameras.Dirty
 End Property
 
 Public Property Get Effect() As SFXBlitModes
-'used when retrieving value of a property, on the right side of an assignment.
-'Syntax: Debug.Print X.Effect
     Effect = mvarEffect - 1 ' Hack to make a value of 0 (the default) actually be -1
 End Property
 

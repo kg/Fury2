@@ -39,6 +39,12 @@ Private m_lngBeginTime As Long, m_lngEndTime As Long
 Private m_booRepeats As Boolean, m_lngRepeatTiming As Long
 Private m_booTriggered As Boolean, m_booEnded As Boolean
 
+Public Sub Free()
+On Error Resume Next
+    Set m_mapMap = Nothing
+    Set m_objScript = Nothing
+End Sub
+
 Public Property Get ScriptSource() As String
     ScriptSource = m_strScript
 End Property

@@ -52,8 +52,8 @@ Public ScrollOffset As Long
 Public Cursor As Object
 Public WindowSkin As Object
 Public Font As Fury2Font
-Public MoveEvent As String
-Public CloseEvent As String
+Public MoveEvent As Fury2Event
+Public CloseEvent As Fury2Event
 #If EnableBehaviors = 1 Then
 Public Behaviors As Fury2Behaviors
 #End If
@@ -82,38 +82,21 @@ End Sub
 
 Private Sub SelectionChanged()
 On Error Resume Next
-    If InStr(MoveEvent, ".") Or InStr(MoveEvent, vbCrLf) Then
-        m_Engine.ScriptEngine.AddCode MoveEvent
-    Else
-        m_Engine.ScriptEngine.Exec MoveEvent
-    End If
+    MoveEvent.Invoke
     Err.Clear
 End Sub
 
 Private Sub ItemSelect(Index)
 On Error Resume Next
     If mCol.Item(Index).Enabled = False Then Exit Sub
-    If InStr(mCol.Item(Index).EventName, vbCrLf) Then
-        m_Engine.ScriptEngine.AddCode mCol.Item(Index).EventName
-    ElseIf InStr(mCol.Item(Index).EventName, ".") Then
-        m_Engine.ScriptEngine.AddCode mCol.Item(Index).EventName + " " + CStr(mCol.Item(Index).EventIndex)
-    Else
-        Err.Clear
-        m_Engine.ScriptEngine.Exec mCol.Item(Index).EventName, mCol.Item(Index).EventIndex
-        If Err.Number <> 0 Then
-            Err.Clear
-            m_Engine.ScriptEngine.Exec mCol.Item(Index).EventName
-        End If
-    End If
+    mCol.Item(Index).SelectEvent.Invoke mCol.Item(Index).Index
+    mCol.Item(Index).SelectEvent.Invoke
+    Err.Clear
 End Sub
 
 Private Sub CloseMenu()
 On Error Resume Next
-    If InStr(CloseEvent, ".") Or InStr(CloseEvent, vbCrLf) Then
-        m_Engine.ScriptEngine.AddCode CloseEvent
-    Else
-        m_Engine.ScriptEngine.Exec CloseEvent
-    End If
+    CloseEvent.Invoke
 End Sub
 
 Public Sub MouseUp(ByVal Button As Long, ByVal Shift As Long, ByRef X As Long, ByRef Y As Long)
@@ -293,7 +276,7 @@ On Error Resume Next
     Err.Clear
 End Sub
 
-Public Function Add(Caption As String, Optional Icon = Nothing, Optional EventName As String = "Menu_Select", Optional EventIndex As Long = -1, Optional Color = &HFFFFFFFF) As Fury2MenuItem
+Public Function Add(Caption As String, Optional Icon = Nothing, Optional SelectEvent = Nothing, Optional Index As Long = -1, Optional Color = &HFFFFFFFF) As Fury2MenuItem
 On Error Resume Next
     Dim objNewMember As Fury2MenuItem
     Set objNewMember = New Fury2MenuItem
@@ -306,11 +289,15 @@ On Error Resume Next
         Set objNewMember.Icon = m_Engine.F2Graphic(Icon, Icon.Width / 4, Icon.Height / 4)
     End If
     objNewMember.Color = CLng(Color)
-    objNewMember.EventName = EventName
+    If VarType(SelectEvent) = vbString Then
+        Set objNewMember.SelectEvent = m_Engine.BindEvent(SelectEvent)
+    Else
+        Set objNewMember.SelectEvent = SelectEvent
+    End If
     objNewMember.Alpha = 1
     objNewMember.Enabled = True
-    If EventIndex = -1 Then EventIndex = mCol.Count + 1
-    objNewMember.EventIndex = EventIndex
+    If Index = -1 Then Index = mCol.Count + 1
+    objNewMember.Index = Index
     mCol.Add objNewMember
 
     Set Add = objNewMember

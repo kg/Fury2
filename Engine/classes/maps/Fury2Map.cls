@@ -227,10 +227,20 @@ Sub Free()
 Attribute Free.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_lyrLayer As Fury2MapLayer
+    m_araAreas.Free
+    m_tmrTimerEvents.Free
+    m_mobObjects.Free
+    Set m_lyrLayers.Parent = Nothing
     For Each m_lyrLayer In m_lyrLayers
         m_lyrLayer.Free
     Next m_lyrLayer
+    m_sprSprites.Free
     Set m_objScript = Nothing
+    Set m_araAreas = Nothing
+    Set m_tmrTimerEvents = Nothing
+    Set m_lyrLayers = Nothing
+    Set m_mobObjects = Nothing
+    Set m_sprSprites = Nothing
     Class_Initialize
 End Sub
 
@@ -428,13 +438,13 @@ Dim l_sngProgMul As Single
     m_Engine.ContextLevelRemove
 End Sub
 
-Public Property Get CollisionType() As Long
+Public Property Get CollisionType() As Fury2CollisionTypes
 Attribute CollisionType.VB_Description = "The map's collision type."
 Attribute CollisionType.VB_MemberFlags = "40"
     CollisionType = m_lngCollisionType
 End Property
 
-Public Property Let CollisionType(NewType As Long)
+Public Property Let CollisionType(ByVal NewType As Fury2CollisionTypes)
 On Error Resume Next
     m_lngCollisionType = NewType
 End Property
@@ -577,10 +587,14 @@ Dim m_CreateLayers As Long, m_NewLayer As Fury2MapLayer, cX As Long, cY As Long
         For m_CreateLayers = 1 To ClipValue(LayerCount, c_lngMinimumMapLayers, c_lngMaximumMapLayers)
             Err.Clear
             Set m_NewLayer = New Fury2MapLayer
-            If Tileset Is Nothing Then
-                Set m_NewLayer.Tileset = New Fury2Tileset
+            If m_CreateLayers > 1 Then
+                If Tileset Is Nothing Then
+                    Set m_NewLayer.Tileset = New Fury2Tileset
+                Else
+                    Set m_NewLayer.Tileset = Tileset.Duplicate
+                End If
             Else
-                Set m_NewLayer.Tileset = Tileset.Duplicate
+                Set m_NewLayer.Tileset = Tileset
             End If
             m_NewLayer.Resize Width, Height
             m_NewLayer.Alpha = 1
@@ -673,10 +687,7 @@ End Sub
 
 Private Sub Class_Terminate()
 On Error Resume Next
-    If Script Is Nothing Then
-    Else
-        If m_booScript_Unload Then Script.Unload
-    End If
+    m_Engine.TextOut "Map_Terminate()"
 End Sub
 
 Sub Update()

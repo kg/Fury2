@@ -92,11 +92,11 @@ On Error Resume Next
     If NewVolume < 0 Then NewVolume = 0
     If NewVolume > 1 Then NewVolume = 1
     If m_HandleType = SoundType_Sample Then
-        FSound_Channel.SetVolume m_Channel, NewVolume * 255
+        FSound_Channel.SetVolume m_Channel, NewVolume * 255 * m_Engine.Volume
     ElseIf m_HandleType = SoundType_Stream Then
-        FSound_Channel.SetVolume m_Channel, NewVolume * 255
+        FSound_Channel.SetVolume m_Channel, NewVolume * 255 * m_Engine.Volume
     ElseIf m_HandleType = SoundType_Music Then
-        FMusic.SetMasterVolume m_Handle, NewVolume * 255
+        FMusic.SetMasterVolume m_Handle, NewVolume * 255 * m_Engine.Volume
     End If
 End Property
 

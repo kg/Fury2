@@ -1,4 +1,4 @@
-SoundEngine = 12, 66, 936, 673, C
-SoundHandle = 17, 82, 941, 689, C
+SoundEngine = 12, 66, 936, 673, 
+SoundHandle = 17, 82, 941, 689, Z
 mdlLibraries = 236, 289, 1160, 896, C
 Fury2SEGlobals = 0, 0, 529, 304, C

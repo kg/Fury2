@@ -1,0 +1,599 @@
+[
+	uuid(A17C15BF-1F8F-4789-93C4-A4A642A3F18D),
+	helpstring("FMod 3.7 Type Library, 0.3a - janusfury@citlink.net"),
+	version(3.70),
+	lcid(0x0409)
+]
+library FMod {
+
+	[helpstring("On failure of commands in FMod, use FSound.GetError to attain what happened.")]
+	typedef enum {
+		[helpstring("No error.")]
+		FMod_Error_None,
+		[helpstring("Cannot call this command after FSound.Init. Call FSound.Close first.")]
+		FMod_Error_Busy,
+		[helpstring("This command failed because FSound.Init was not called.")]
+		FMod_Error_Uninitialized,
+		[helpstring("Error initializing output device.")]
+		FMod_Error_Init,
+		[helpstring("Error initializing output device, but more specifically, the output device is already in use and cannot be reused.")]
+		FMod_Error_Allocated,
+		[helpstring("Playing the sound failed.")]
+		FMod_Error_Play,
+		[helpstring("Soundcard does not support the features needed for this soundsystem (16-bit stereo output).")]
+		FMod_Error_Output_Format,
+		[helpstring("Error setting cooperative level for hardware.")]
+		FMod_Error_CooperativeLevel,
+		[helpstring("Error creating hardware sound buffer.")]
+		FMod_Error_CreateBuffer,
+		[helpstring("File not found.")]
+		FMod_Error_File_NotFound,
+		[helpstring("Unknown file format.")]
+		FMod_Error_File_Format,
+		[helpstring("Error loading file.")]
+		FMod_Error_File_Bad,
+		[helpstring("Not enough memory.")]
+		FMod_Error_Memory,
+		[helpstring("The version number of this file format is not supported.")]
+		FMod_Error_Version,
+		[helpstring("An invalid parameter was passed to this function.")]
+		FMod_Error_Invalid_Param,
+		[helpstring("Tried to use an EAX command on a non EAX enabled channel or output.")]
+		FMod_Error_No_EAX,
+		[helpstring("Tried to use an advanced EAX2 command on a non EAX2 enabled channel or output.")]
+		FMod_Error_No_EAX2,
+		[helpstring("Failed to allocate a new channel.")]
+		FMod_Error_Channel_Alloc,
+		[helpstring("Recording is not supported on this machine.")]
+		FMod_Error_Record,
+		[helpstring("Windows Media Player not installed so can't play wma or use internet streaming.")]
+		FMod_Error_MediaPlayer
+	} FMod_Errors;
+
+	[helpstring("Driver description bitfields. Use FSOUND_Driver.GetCaps to determine if a driver enumerated has the settings you are after. The enumerated drivers depend on the output mode, see FSound_Output_Types.")]
+
+	typedef enum {
+		[helpstring("This driver supports hardware accelerated 3d sound.")]
+		FSound_Caps_Hardware = 0x1,
+		[helpstring("This driver supports EAX reverb.")]
+		FSound_Caps_EAX = 0x2,
+		[helpstring("This driver supports (A3D) geometry occlusions.")]
+		FSound_Caps_Geometry_Occlusions = 0x4,
+		[helpstring("This driver supports (A3D) geometry reflections.")]
+		FSound_Caps_Geometry_Reflections = 0x8,
+		[helpstring("This driver supports EAX2/A3D3 reverb.")]
+		FSound_Caps_EAX2 = 0x10
+	} FSound_Caps_Flags;
+
+	typedef enum {
+		[helpstring("For non looping samples.")]
+		FSound_Sample_Loop_Off = 0x00000001,
+		[helpstring("For forward looping samples.")]
+		FSound_Sample_Loop_Normal = 0x00000002,
+		[helpstring("For bi-directional looping samples. (no effect if in hardware).")]
+		FSound_Sample_Loop_BiDi = 0x00000004,
+		[helpstring("For 8 bit samples.")]
+		FSound_Sample_8Bits = 0x00000008,
+		[helpstring("For 16 bit samples.")]
+		FSound_Sample_16Bits = 0x00000010,
+		[helpstring("For mono samples.")]
+		FSound_Sample_Mono = 0x00000020,
+		[helpstring("For stereo samples.")]
+		FSound_Sample_Stereo = 0x00000040,
+		[helpstring("For source data containing unsigned samples.")]
+		FSound_Sample_UnSigned = 0x00000080,
+		[helpstring("For source data containing signed data.")]
+		FSound_Sample_Signed = 0x00000100,
+		[helpstring("For source data stored as delta values.")]
+		FSound_Sample_Delta = 0x00000200,
+		[helpstring("For source data stored using IT214 compression.")]
+		FSound_Sample_IT214 = 0x00000400,
+		[helpstring("For source data stored using IT215 compression.")]
+		FSound_Sample_IT215 = 0x00000800,
+		[helpstring("Attempts to make samples use 3d hardware acceleration (if the card supports it).")]
+		FSound_Sample_Hw3D = 0x00001000,
+		[helpstring("Ignores any 3d processing.  overrides FSound_Sample_Hw3D.  Located in software.")]
+		FSound_Sample_2D = 0x00002000,
+		[helpstring("For a streamable sound where you feed the data to it.")]
+		FSound_Sample_Streamable = 0x00004000,
+		[helpstring("'name' will be interpreted as a pointer to data for streaming and samples.")]
+		FSound_Sample_LoadMemory = 0x00008000,
+		[helpstring("For FSound_Sample_Load - will ignore file format and treat as raw PCM.")]
+		FSound_Sample_LoadRaw = 0x00010000,
+		[helpstring("For FSound_Stream_OpenFile - for accurate FSound_Stream_GetLengthMs/FSound_Stream_SetTime. ")]
+		FSound_Sample_MPEGAccurate = 0x00020000,
+		[helpstring("The default flags for a sample. Loop off, 8-bit mono, not hardware accelerated.")]
+		FSound_Sample_Normal = (FSound_Sample_Loop_Off | FSound_Sample_8Bits | FSound_Sample_Mono)
+	} FSound_Sample_Flags;
+
+	[helpstring("These are environment types defined for use with the FSound_Reverb API.")]
+	typedef enum {
+		FSound_Environment_Generic,
+		FSound_Environment_PaddedCell,
+		FSound_Environment_Room,
+		FSound_Environment_Bathroom,
+		FSound_Environment_LivingRoom,
+		FSound_Environment_StoneRoom,
+		FSound_Environment_Auditorium,
+		FSound_Environment_ConcertHall,
+		FSound_Environment_Cave,
+		FSound_Environment_Arena,
+		FSound_Environment_Hangar,
+		FSound_Environment_CarpetedHallway,
+		FSound_Environment_Hallway,
+		FSound_Environment_StoneCorridor,
+		FSound_Environment_Alley,
+		FSound_Environment_Forest,
+		FSound_Environment_City,
+		FSound_Environment_Mountains,
+		FSound_Environment_Quarry,
+		FSound_Environment_Plain,
+		FSound_Environment_ParkingLot,
+		FSound_Environment_SewerPipe,
+		FSound_Environment_Underwater,
+		FSound_Environment_Drugged,
+		FSound_Environment_Dizzy,
+		FSound_Environment_Psychotic,
+		FSound_Environment_Count
+	} FSound_Reverb_Environments;
+
+	typedef enum {
+		[helpstring("NoSound driver, all calls to this succeed but do nothing.")]
+		FSound_Output_NoSound,
+		[helpstring("Windows Multimedia driver.")]
+		FSound_Output_WinMM,
+		[helpstring("DirectSound driver. You need this to get EAX or EAX2 support.")]
+		FSound_Output_DSound,
+		[helpstring("A3D driver. You need this to get geometry support.")]
+		FSound_Output_A3D,
+		[helpstring("Linux/Unix OSS (Open Sound System) driver, i.e. the kernel sound drivers.")]
+		FSound_Output_OSS,
+		[helpstring("Linux/Unix ESD (Enlightment Sound Daemon) driver.")]
+		FSound_Output_ESD,
+		[helpstring("Linux Alsa driver.")]
+		FSound_Output_Alsa
+	} FSound_Output_Types;
+
+	typedef enum {
+		[helpstring("Enables autodetection of the fastest mixer based on your cpu.")]
+		FSound_Mixer_AutoDetect,
+		[helpstring(" Enables the standard non mmx, blendmode mixer.")]
+		FSound_Mixer_BlendMode,
+		[helpstring("Enables the mmx, pentium optimized blendmode mixer.")]
+		FSound_Mixer_MMXP5,
+		[helpstring("Enables the mmx+, pentium pro/pentium 2/pentium 3/pentium 4 optimized mixer.")]
+		FSound_Mixer_MMXP6,
+		[helpstring("Enables autodetection of the fastest quality mixer based on your cpu.")]
+		FSound_Mixer_Quality_AutoDetect,
+		[helpstring("Enables the interpolating/volume ramping FPU mixer.")]
+		FSound_Mixer_Quality_FPU,
+		[helpstring("Enables the interpolating/volume ramping pentium MMX mixer.")]
+		FSound_Mixer_Quality_MMXP5,
+		[helpstring("Enables the interpolating/volume ramping pentium pro/pentium 2/pentium 3/pentium 4 MMX+ mixer.")]
+		FSound_Mixer_Quality_MMXP6
+	} FSound_Mixer_Types;
+	
+	[helpstring("These definitions describe the type of song being played.")]
+	typedef enum {
+		[helpstring("None.")]
+		FMusic_Type_None,
+		[helpstring("Protracker / Fasttracker.")]
+		FMusic_Type_MOD,
+		[helpstring("ScreamTracker 3.")]
+		FMusic_Type_S3M,
+		[helpstring("FastTracker 2.")]
+		FMusic_Type_XM,
+		[helpstring("Impulse Tracker.")]
+		FMusic_Type_IT,
+		[helpstring("MIDI.")]
+		FMusic_Type_MIDI
+	} FMusic_Types;
+	
+	[helpstring("These are the default priorities.")]
+	typedef enum {
+		[helpstring("DSP CLEAR unit - done first.")]
+		FSound_DSP_DefaultPriority_ClearUnit = 0,
+		[helpstring("DSP SFX unit - done second.")]
+		FSound_DSP_DefaultPriority_SFXUnit = 100,
+		[helpstring("DSP MUSIC unit - done third.")]
+		FSound_DSP_DefaultPriority_MusicUnit = 200,
+		[helpstring("User priority, use this as reference.")]
+		FSound_DSP_DefaultPriority_User = 300,
+		[helpstring("DSP CLIP AND COPY unit - done last.")]
+		FSound_DSP_DefaultPriority_ClipAndCopyUnit = 1000
+	} FSound_DSP_Priorities;
+
+	[helpstring("Playback method for a CD Audio track, using FSound_CD.Play.")]
+	typedef enum {
+		[helpstring("Starts from the current track and plays to end of CD.")]
+		FSound_CD_PlayContinuous = 0,
+		[helpstring("Plays the specified track then stops.")]
+		FSound_CD_PlayOnce = 1,
+		[helpstring("Plays the specified track looped, forever until stopped manually.")]
+		FSound_CD_PlayLooped = 2,
+		[helpstring("Plays tracks in random order.")]
+		FSound_CD_PlayRandom = 3
+	} FSound_CD_PlayModes;
+
+	[helpstring("Miscellaneous values for FMod functions.")]
+	typedef enum {
+		FSound_Free = -1,
+		FSound_UnManaged = -2,
+		FSound_All = -3,
+		FSound_StereoPan = -1,
+		FSound_SystemChannel = -1000
+	} FSound_Misc_Values;
+
+	typedef enum {
+		[helpstring("Causes MIDI playback to force software decoding.")]
+		FSound_Init_UseDefaultMIDISynth = 0x01,
+		[helpstring("For DirectSound output - sound is not muted when window is out of focus.")]
+		FSOUND_Init_GlobalFocus = 0x02,
+		[helpstring("For DirectSound output - Allows FSound_FX api to be used on global software mixer output!")]
+		FSOUND_Init_EnableOutputFX = 0x04
+	} FSound_Init_Flags;
+
+	[helpstring("Geometry flags, used as the mode flag in FSOUND_Geometry.AddPolygon.")]
+	typedef enum {
+		[helpstring("Default geometry type. Occluding polygon.")]
+		FSound_Geometry_Normal = 0x00,
+		[helpstring("This polygon is reflective.")]
+		FSound_Geometry_Reflective = 0x01,
+		[helpstring("Overlays a transparency over the previous polygon.  The openingfactor value supplied is copied internally.")]
+		FSound_Geometry_Opening = 0x02,
+		[helpstring("Overlays a transparency over the previous polygon.  The openingfactor supplied is pointed to (for access when building a list).")]
+		FSound_Geometry_Opening_Reference = 0x04	
+	} FSound_Geometry_Modes;
+
+	[helpstring("Flags for use with the various loop-related functions.")]
+	typedef enum {
+		[helpstring("For non looping samples.")]
+		FSound_Loop_Off = 0x00000001,
+		[helpstring("For forward looping samples.")]
+		FSound_Loop_Normal = 0x00000002,
+		[helpstring("For bi-directional looping samples. (no effect if in hardware)")]
+		FSound_Loop_BiDi = 0x00000004
+	} FSound_Loop_Modes;
+
+	typedef enum {
+		[helpstring("Selects the first available channel, and returns it.")]
+		FSound_Channel_Free = -1,
+		[helpstring("Plays on all channels (not supported by all functions).")]
+		FSound_Channel_All = -3
+	} FSound_Channels;
+
+	typedef enum {
+		[helpstring("48khz. Not supported by all sound cards.")]
+		FSound_Sampling_Rate_48k = 48000,
+		[helpstring("44.1khz. Normally the standard.")]
+		FSound_Sampling_Rate_44k = 44100,
+		[helpstring("32khz. Not supported by all sound cards.")]
+		FSound_Sampling_Rate_32k = 32000,
+		[helpstring("22khz. The substandard normally chosen if 44khz isn't available.")]
+		FSound_Sampling_Rate_22k = 22050,
+		[helpstring("11khz. The really low quality sampling rate normally used for files meant to be small.")]
+		FSound_Sampling_Rate_11k = 11025,
+		[helpstring("8khz. Not supported by all sound cards.")]
+		FSound_Sampling_Rate_8k = 8000,
+	} FSound_Sampling_Rates;
+	
+	typedef enum {
+		[helpstring("The audio is played through a speaker arrangement of surround speakers with a subwoofer.")]
+		FSound_SpeakerMode_5Point1,
+		[helpstring("The speakers are headphones.")]
+		FSound_SpeakerMode_HeadPhone,
+		[helpstring("The speakers are monaural.")]
+		FSound_SpeakerMode_Mono,
+		[helpstring("The speakers are quadraphonic.")]
+		FSound_SpeakerMode_Quad,
+		[helpstring("The speakers are stereo (default value).")]
+		FSound_SpeakerMode_Stereo,
+		[helpstring("The speakers are surround sound.")]
+		FSound_SpeakerMode_Surround
+	} FSound_Speaker_Modes;
+
+	[dllname("FMod.DLL"), helpstring("FSound Driver Functions")]
+	module FSound_Driver {
+		[helpstring("Retrieves the number of drivers available on the system."), entry("_FSOUND_GetNumDrivers@0")]
+		int _stdcall GetCount(void);
+
+		[helpstring("Retrieves the name of one of the drivers available on the system."), entry("_FSOUND_GetDriverName@4")]
+		[string] char * _stdcall GetName([in] int ID);
+
+		[helpstring("Retrieves the capabilities of one of the drivers available on the system."), entry("_FSOUND_GetDriverCaps@8")]
+		int _stdcall GetCaps([in] int ID, [out] int *Caps);
+	};
+
+	[dllname("FMod.DLL"), helpstring("FSound DirectX 8 Special FX Functions")]
+	module FSound_FX {
+		
+		[helpstring("Enables or disables special effects on a channel."), entry("_FSOUND_FX_Enable@8")]
+		int _stdcall Enable([in] int Channel, [in] int FX);
+
+	}
+
+	[dllname("FMod.DLL"), helpstring("FSound Functions")]
+	module FSound {
+
+		[helpstring("Sets the driver to use. Only call before FSound.Init."), entry("_FSOUND_SetDriver@4")]
+		int _stdcall SetDriver([in] int Driver);
+
+		[helpstring("Sets the output type to use. Only call before FSound.Init."), entry("_FSOUND_SetOutput@4")]
+		int _stdcall SetOutput([in] FSound_Output_Types OutputType);
+
+		[helpstring("Sets the mixer to use. Only call before FSound.Init."), entry("_FSOUND_SetOutput@4")]
+		int _stdcall SetMixer([in] FSound_Mixer_Types MixerType);
+
+		[helpstring("Initializes FMod."), entry("_FSOUND_Init@12")]
+		int _stdcall Init(FSound_Sampling_Rates MixRate, int MaxSoftwareChannels, FSound_Init_Flags Flags);
+
+		[helpstring("Shuts down FMod and releases all callback hooks."), entry("_FSOUND_Close@0")]
+		void _stdcall Close(void);
+
+		[helpstring("Retrieves the version of FMod you are using."), entry("_FSOUND_GetVersion@0")]
+		float _stdcall GetVersion(void);
+
+		[helpstring("Retrieves the last error code."), entry("_FSOUND_GetError@0")]
+		FMod_Errors _stdcall GetError(void);
+
+		[helpstring("Retrieves the current output type."), entry("_FSOUND_GetOutput@0")]
+		FSound_Output_Types _stdcall GetOutput(void);
+
+		[helpstring("Retrieves the current mixer."), entry("_FSOUND_GetMixer@0")]
+		FSound_Mixer_Types _stdcall GetMixer(void);
+
+		[helpstring("Selects a speaker mode (DirectSound only)."), entry("_FSOUND_SetSpeakerMode@4")]
+		void _stdcall SetSpeakerMode([in] FSound_Speaker_Modes SpeakerMode);
+
+		[helpstring("Retrieves the current driver."), entry("_FSOUND_GetDriver@0")]
+		int _stdcall GetDriver(void);
+
+		[helpstring("Sets the master volume for samples and streams."), entry("_FSOUND_SetSFXMasterVolume@4")]
+		void _stdcall SetSFXMasterVolume([in] int Volume);
+
+		[helpstring("Retrieves the mixing rate (sampling rate)."), entry("_FSOUND_GetOutputRate@0")]
+		FSound_Sampling_Rates _stdcall GetOutputRate(void);
+
+		[helpstring("Retrieves the maximum number of channels."), entry("_FSOUND_GetMaxChannels@0")]
+		int _stdcall GetMaxChannels(void);
+
+		[helpstring("Retrieves the maximum number of samples."), entry("_FSOUND_GetMaxSamples@0")]
+		int _stdcall GetMaxSamples(void);
+
+		[helpstring("Retrieves the master volume for samples and streams."), entry("_FSOUND_GetSFXMasterVolume@0")]
+		int _stdcall GetSFXMasterVolume(void);
+
+		[helpstring("Retrieves the number of hardware channels supported by the system."), entry("_FSOUND_GetNumHardwareChannels@0")]
+		int _stdcall GetNumHardwareChannels(void);
+
+		[helpstring("Retrieves the number of channels currently playing."), entry("_FSOUND_GetChannelsPlaying@0")]
+		int _stdcall GetChannelsPlaying(void);
+
+		[helpstring("Retrieves the current CPU usage."), entry("_FSOUND_GetCPUUsage@0")]
+		float _stdcall GetCPUUsage(void);
+
+	};
+
+	[dllname("FMod.DLL"), helpstring("FSound Channel Functions")]
+	module FSound_Channel {
+
+		[helpstring("Plays a sample, and returns the channel it was played on."), entry("_FSOUND_PlaySound@8")]
+		int _stdcall PlaySound([in] int Channel, [in] int Sample);
+
+		[helpstring("Stops the sample playing on the specified channel (if any)."), entry("_FSOUND_StopSound@4")]
+		int _stdcall StopSound([in] int Channel);
+
+		[helpstring("Mutes or unmutes a channel."), entry("_FSOUND_SetMute@8")]
+		int _stdcall SetMute([in] int Channel, [in] int Mute);
+
+		[helpstring("Sets the volume of a channel (affected by master volume). 0 - 255."), entry("_FSOUND_SetVolume@8")]
+		int _stdcall SetVolume([in] int Channel, [in] int Volume);
+
+		[helpstring("Sets the volume of a channel (NOT affected by master volume). 0 - 255."), entry("_FSOUND_SetVolumeAbsolute@8")]
+		int _stdcall SetVolumeAbsolute([in] int Channel, [in] int Volume);
+
+		[helpstring("Sets the state of a channel to paused or unpaused."), entry("_FSOUND_SetPaused@8")]
+		int _stdcall SetPaused([in] int Channel, [in] int Paused);
+
+		[helpstring("Sets the panning value of a channel."), entry("_FSOUND_SetPan@8")]
+		int _stdcall SetPan([in] int Channel, [in] int Pan);
+
+		[helpstring("Retrieves the play state of a channel."), entry("_FSOUND_IsPlaying@4")]
+		int _stdcall IsPlaying([in] int Channel);
+
+		[helpstring("Retrieves the panning value of a channel."), entry("_FSOUND_GetPan@4")]
+		int _stdcall GetPan([in] int Channel);
+
+		[helpstring("Retrieves the volume level of a channel. 0 - 255."), entry("_FSOUND_GetVolume@4")]
+		int _stdcall GetVolume([in] int Channel);
+
+		[helpstring("Retrieves the mute status of a channel."), entry("_FSOUND_GetMute@4")]
+		int _stdcall GetMute([in] int Channel);
+
+		[helpstring("Retrieves the priority of a channel."), entry("_FSOUND_GetPriority@4")]
+		int _stdcall GetPriority([in] int Channel);
+
+		[helpstring("Retrieves the pause status of a channel."), entry("_FSOUND_GetPaused@4")]
+		int _stdcall GetPaused([in] int Channel);
+
+		[helpstring("Retrieves the current position (time) of a channel."), entry("_FSOUND_GetCurrentPosition@4")]
+		int _stdcall GetCurrentPosition([in] int Channel);
+
+		[helpstring("Retrieves the handle of the sample currently playing in a channel (if any)."), entry("_FSOUND_GetCurrentSample@4")]
+		int _stdcall GetCurrentSample([in] int Channel);
+
+		[helpstring("Retrieves the current VU level of a channel."), entry("_FSOUND_GetCurrentVU@4")]
+		float _stdcall GetCurrentVU([in] int Channel);
+
+	};
+
+	[dllname("FMod.DLL"), helpstring("FSound DSP Functions")]
+	module FSound_DSP {
+		[helpstring("Retrieves a pointer to a 512-element float array containing the spectrum analyzer values from 0 to nyquist."), entry("_FSOUND_DSP_GetSpectrum@0")]
+		int _stdcall GetSpectrum(void);
+	};
+
+	[dllname("FMod.DLL"), helpstring("FSound Sample Functions")]
+	module FSound_Sample {
+
+		[helpstring("Deletes a sample from memory. Do NOT do this more than once for each sample!"), entry("_FSOUND_Sample_Free@4")]
+		void _stdcall Free([in] int Sample);
+
+		[helpstring("Loads a sample."), entry("_FSOUND_Sample_Load@20")]
+		int _stdcall Load([in] int Index, [in] [string] const char * Filename, [in] FSound_Sample_Flags Mode, [in] int Offset, [in] int MemoryLength);
+
+		[helpstring("Sets the loop mode of a sample."), entry("_FSOUND_Sample_SetLoopMode@8")]
+		int _stdcall SetLoopMode([in] int Sample, [in] FSound_Loop_Modes LoopMode);
+
+		[helpstring("Sets the loop points (start and end) of a sample."), entry("_FSOUND_Sample_SetLoopPoints@12")]
+		int _stdcall SetLoopPoints([in] int Sample, [in] int LoopStart, [in] int LoopEnd);
+
+		[helpstring("Sets the default parameters of a sample."), entry("_FSOUND_Sample_SetDefaults@20")]
+		int _stdcall SetDefaults([in] int Sample, [in] int DefaultFrequency, [in] int DefaultVolume, [in] int DefaultPan, [in] int DefaultPriority);
+
+		[helpstring("Sets the minimum and maximum distance of a sample."), entry("_FSOUND_Sample_SetMinMaxDistance@12")]
+		int _stdcall SetMinMaxDistance([in] int Sample, [in] float MinimumDistance, [in] float MaximumDistance);
+
+		[helpstring("Allocates a sample."), entry("_FSOUND_Sample_Alloc@28")]
+		int _stdcall Alloc([in] int Index, [in] int length, [in] FSound_Sample_Flags Mode, [in] int DefaultFrequency, [in] int DefaultVolume, [in] int DefaultPan, [in] int DefaultPriority);
+
+		[helpstring("Locks a sample."), entry("_FSOUND_Sample_Lock@28")]
+		int _stdcall Lock([in] int Sample, [in] int Offset, [in] int Length, [in, out] int * Pointer1, [in, out] int * Pointer2, [out] int * Length1, [out] int * Length2);
+
+		[helpstring("Unlocks a sample."), entry("_FSOUND_Sample_Unlock@20")]
+		int _stdcall Unlock([in] int Sample, [in, out] int * Pointer1, [in, out] int * Pointer2, [out] int * Length1, [out] int * Length2);
+
+		[helpstring("Retrieves the length of a sample in samples."), entry("_FSOUND_Sample_GetLength@4")]
+		int _stdcall GetLength([in] int Sample);
+	};
+
+	[dllname("FMod.DLL"), helpstring("FSound 3D Functions")]
+	module FSound_3D {
+
+		[helpstring("Call this once per frame to update 3D."), entry("_FSOUND_3D_Update@0")]
+		void _stdcall Update(void);
+
+		[helpstring("Sets the 3D attributes of a channel."), entry("_FSOUND_3D_SetAttributes@12")]
+		int _stdcall SetAttributes([in] int Channel, [in] float *Pos1, [in] float *Vel1);
+
+		[helpstring("Retrieves the 3D attributes of a channel."), entry("_FSOUND_3D_GetAttributes@12")]
+		int _stdcall GetAttributes([in] int Channel, [out] float *Pos1, [out] float *Vel1);
+
+	};
+
+	[dllname("FMod.DLL"), helpstring("FSound Stream Functions")]
+	module FSound_Stream {
+		
+		[helpstring("Opens a stream."), entry("_FSOUND_Stream_Open@16")]
+		int _stdcall Open([in] [string] const char * Filename, [in] int Mode, [in] int Offset, [in] int MemoryLength);
+
+		[helpstring("Plays a stream, and returns the channel it was played on."), entry("_FSOUND_Stream_Play@8")]
+		int _stdcall Play([in] int Channel, [in] int Stream);
+
+		[helpstring("Stops the playback of a stream."), entry("_FSOUND_Stream_Stop@4")]
+		int _stdcall Stop([in] int Stream);
+
+		[helpstring("Returns the size of the stream in MILLISECONDS."), entry("_FSOUND_Stream_GetLengthMs@4")]
+		int _stdcall GetLengthMs([in] int Stream);
+
+		[helpstring("Returns the size of the stream in BYTES."), entry("_FSOUND_Stream_GetLength@4")]
+		int _stdcall GetLength([in] int Stream);
+
+		[helpstring("Returns the current time offset in stream in milliseconds."), entry("_FSOUND_Stream_GetTime@4")]
+		int _stdcall GetTime([in] int Stream);
+
+		[helpstring("Closes a stream. Do NOT do this more than once for each stream!"), entry("_FSOUND_Stream_Close@4")]
+		int _stdcall Close([in] int Stream);
+
+	};
+
+	[dllname("FMod.DLL"), helpstring("FSound CD Functions")]
+	module FSound_CD {
+
+		[helpstring("Plays the specified track of the CD."), entry("_FSOUND_CD_Play@4")]
+		int _stdcall Play([in] int Track);
+
+		[helpstring("Stops the CD, if playing."), entry("_FSOUND_CD_Stop@0")]
+		int _stdcall Stop(void);
+
+		[helpstring("Ejects the CD, if any."), entry("_FSOUND_CD_Eject@0")]
+		int _stdcall Eject(void);
+
+	};
+
+	[dllname("FMod.DLL"), helpstring("FSound Geometry Functions")]
+	module FSound_Geometry {
+	};
+
+	[dllname("FMod.DLL"), helpstring("FSound Reverb Functions")]
+	module FSound_Reverb {
+	};
+
+	[dllname("FMod.DLL"), helpstring("FSound Record Functions")]
+	module FSound_Record {
+	};
+
+	[dllname("FMod.DLL"), helpstring("FSound File Callback Functions")]
+	module FSound_File {
+	};
+
+	[dllname("FMod.DLL"), helpstring("FMusic Functions")]
+	module FMusic {
+		
+		[helpstring("Loads a song from disk."), entry("_FMUSIC_LoadSong@4")]
+		int _stdcall LoadSong([in] [string] const char * Name);
+
+		[helpstring("Loads a song from memory."), entry("_FMUSIC_LoadSongMemory@8")]
+		int _stdcall LoadSongMemory([in] int DataPointer, [in] int Length);
+
+		[helpstring("Frees a song from memory. Do NOT do this more than once for each song!"), entry("_FMUSIC_FreeSong@4")]
+		int _stdcall FreeSong([in] int Song);
+
+		[helpstring("Plays a song."), entry("_FMUSIC_PlaySong@4")]
+		int _stdcall PlaySong([in] int Song);
+
+		[helpstring("Stops a song."), entry("_FMUSIC_StopSong@4")]
+		int _stdcall StopSong([in] int Song);
+
+		[helpstring("Stops all songs."), entry("_FMUSIC_StopAllSongs@0")]
+		void _stdcall StopAllSongs(void);
+
+		[helpstring("Sets the volume of a song. 0 - 255."), entry("_FMUSIC_SetMasterVolume@8")]
+		int _stdcall SetMasterVolume([in] int Song, [in] int Volume);
+
+		[helpstring("Retrieves the volume of a song. 0 - 255."), entry("_FMUSIC_GetMasterVolume@4")]
+		int _stdcall GetMasterVolume([in] int Song);
+
+		[helpstring("Retrieves the name of a song. (Filename for MIDI files.)"), entry("_FMUSIC_GetName@4")]
+		[string] char * _stdcall GetName([in] int Song);
+
+		[helpstring("Retrieves the type of a song."), entry("_FMUSIC_GetType@4")]
+		FMusic_Types _stdcall GetType([in] int Song);
+
+		[helpstring("Retrieves the finished state of a song."), entry("_FMUSIC_IsFinished@4")]
+		int _stdcall IsFinished([in] int Song);
+
+		[helpstring("Retrieves the play state of a song."), entry("_FMUSIC_IsPlaying@4")]
+		int _stdcall IsPlaying([in] int Song);
+
+		[helpstring("Sets the paused state of a song."), entry("_FMUSIC_SetPaused@8")]
+		int _stdcall SetPaused([in] int Song, [in] int Paused);
+
+		[helpstring("Retrieves the paused state of a song."), entry("_FMUSIC_GetPaused@4")]
+		int _stdcall GetPaused([in] int Song);
+
+
+	};
+
+	[dllname("Kernel32.DLL"), helpstring("Functions for loading and unloading FMod from memory.")]
+	module FMod_Utils {
+		
+		[helpstring("Loads a DLL into memory and returns a handle."), entry("LoadLibraryA")]
+		int _stdcall Load([string] const char * Filename);
+
+		[helpstring("Unloads a DLL from memory."), entry("FreeLibrary")]
+		int _stdcall Unload(int Handle);
+
+	};
+
+};

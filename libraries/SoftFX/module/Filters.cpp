@@ -1,0 +1,845 @@
+/*
+SoftFX (Software graphics manipulation library)
+Copyright (C) 2003 Kevin Gadd
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include "../header/SoftFX Main.hpp"
+#include "../header/Blend.hpp"
+#include "../header/Clip.hpp"
+#include "../header/2D Filter.hpp"
+#include "../header/Mersenne.hpp"
+#include "../header/Blitters.hpp"
+#include <sys/timeb.h>
+
+FILTERSIMPLE_SIGNATURE(Invert)
+    ) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Invert, 0) _FOE
+FILTERSIMPLE_BEGIN
+FILTERSIMPLE_LOOPBEGIN
+    BLENDPIXEL_INVERT(pCurrent)
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Invert_Color)
+    ) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Invert_Color, 0) _FOE
+FILTERSIMPLE_BEGIN
+FILTERSIMPLE_LOOPBEGIN
+    BLENDPIXEL_INVERT_COLOR(pCurrent)
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Invert_Channel)
+    , int Channel) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Invert_Channel, 1) , Channel _FOE
+FILTERSIMPLE_BEGIN
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[Channel] = ~(*pCurrent)[Channel];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Replace)
+    , Pixel Find, Pixel Replace) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Replace, 2) , Find, Replace _FOE
+FILTERSIMPLE_BEGIN
+FILTERSIMPLE_LOOPBEGIN
+    if (pCurrent->V == Find.V) {
+        pCurrent->V = Replace.V;
+    }
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Fill_Channel)
+    , int Channel, int Value) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Fill_Channel, 2) , Channel, Value _FOE
+FILTERSIMPLE_BEGIN
+    Byte value = ClipByte(Value);
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[Channel] = value;
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Fill)
+    , Pixel Value) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Fill, 1) , Value _FOE
+FILTERSIMPLE_BEGIN
+    iCX = iCX;
+    if ((rCoordinates.Left == 0) && (rCoordinates.Top == 0) && (rCoordinates.Width == Image->Width) && (rCoordinates.Height == Image->Height)) {
+        // muahahaha
+        _Fill<Pixel>(Image->fast_pointer(0, 0), Value, Image->Width * Image->Height);
+        return Success;
+    }
+    while (iCY--) {
+        _Fill<Pixel>(pCurrent, Value, rCoordinates.Width);
+        pCurrent += iRowOffset + rCoordinates.Width;
+    }
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Fill_Opacity)
+    , Pixel Value, int Opacity) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Fill_Opacity, 2) , Value, Opacity _FOE
+FILTERSIMPLE_BEGIN
+    Byte redTable[256], greenTable[256], blueTable[256];
+    {
+      AlphaLevel *aSource, *aDest;
+      Byte r, g, b;
+      aSource = AlphaLevelLookup( Opacity );
+      aDest = AlphaLevelLookup( Opacity ^ 0xFF );
+      r = AlphaFromLevel(aSource, Value[::Red]);
+      g = AlphaFromLevel(aSource, Value[::Green]);
+      b = AlphaFromLevel(aSource, Value[::Blue]);
+      for (int i = 0; i < 256; i++) {
+        redTable[i] = ClipByteHigh(AlphaFromLevel(aDest, i) + r);
+        greenTable[i] = ClipByteHigh(AlphaFromLevel(aDest, i) + g);
+        blueTable[i] = ClipByteHigh(AlphaFromLevel(aDest, i) + b);
+      }
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Fill_SourceAlpha)
+    , Pixel Value) {
+FILTERSIMPLE_INIT
+    if (Value[::Alpha] == 0) return Trivial_Success;
+//    if (Value[::Alpha] == 255) return FilterSimple_Fill(Image, Area, Value);
+    _FOS(FilterSimple_Fill_SourceAlpha, 1) , Value _FOE
+FILTERSIMPLE_BEGIN
+    Byte redTable[256], greenTable[256], blueTable[256];
+    {
+      AlphaLevel *aSource, *aDest;
+      Byte r, g, b;
+      aSource = AlphaLevelLookup( Value[::Alpha] );
+      aDest = AlphaLevelLookup( Value[::Alpha] ^ 0xFF );
+      r = AlphaFromLevel(aSource, Value[::Red]);
+      g = AlphaFromLevel(aSource, Value[::Green]);
+      b = AlphaFromLevel(aSource, Value[::Blue]);
+      for (int i = 0; i < 256; i++) {
+        redTable[i] = ClipByteHigh(AlphaFromLevel(aDest, i) + r);
+        greenTable[i] = ClipByteHigh(AlphaFromLevel(aDest, i) + g);
+        blueTable[i] = ClipByteHigh(AlphaFromLevel(aDest, i) + b);
+      }
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Fill_SourceAlpha_Opacity)
+    , Pixel Value, int Opacity) {
+FILTERSIMPLE_INIT
+    if (Opacity == 0) return Trivial_Success;
+    if (Opacity == 255) return FilterSimple_Fill_SourceAlpha(Image, Area, Value);
+    _FOS(FilterSimple_Fill_SourceAlpha_Opacity, 2) , Value, Opacity _FOE
+FILTERSIMPLE_BEGIN
+    Byte redTable[256], greenTable[256], blueTable[256];
+    {
+      AlphaLevel *aSource, *aDest, *aScale;
+      Byte r, g, b;
+      aScale = AlphaLevelLookup( ClipByte(Opacity) );
+      aSource = AlphaLevelLookup( AlphaFromLevel(aScale, Value[::Alpha]) );
+      aDest = AlphaLevelLookup( AlphaFromLevel(aScale, Value[::Alpha]) ^ 0xFF );
+      r = AlphaFromLevel(aSource, Value[::Red]);
+      g = AlphaFromLevel(aSource, Value[::Green]);
+      b = AlphaFromLevel(aSource, Value[::Blue]);
+      for (int i = 0; i < 256; i++) {
+        redTable[i] = ClipByteHigh(AlphaFromLevel(aDest, i) + r);
+        greenTable[i] = ClipByteHigh(AlphaFromLevel(aDest, i) + g);
+        blueTable[i] = ClipByteHigh(AlphaFromLevel(aDest, i) + b);
+      }
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Fill_Additive)
+    , Pixel Value) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Fill_Additive, 1) , Value _FOE
+FILTERSIMPLE_BEGIN
+    Byte redTable[256], greenTable[256], blueTable[256];
+    {
+      Byte r, g, b;
+      r = Value[::Red];
+      g = Value[::Green];
+      b = Value[::Blue];
+      for (int i = 0; i < 256; i++) {
+        redTable[i] = ClipByteHigh(i + r);
+        greenTable[i] = ClipByteHigh(i + g);
+        blueTable[i] = ClipByteHigh(i + b);
+      }
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Fill_Additive_Opacity)
+    , Pixel Value, int Opacity) {
+FILTERSIMPLE_INIT
+    if (Opacity == 0) return Trivial_Success;
+    if (Opacity == 255) return FilterSimple_Fill_Additive(Image, Area, Value);
+    _FOS(FilterSimple_Fill_Additive_Opacity, 2) , Value, Opacity _FOE
+FILTERSIMPLE_BEGIN
+    Byte redTable[256], greenTable[256], blueTable[256];
+    {
+      AlphaLevel *aScale;
+      Byte r, g, b;
+      aScale = AlphaLevelLookup( ClipByte(Opacity) );
+      r = AlphaFromLevel(aScale, Value[::Red]);
+      g = AlphaFromLevel(aScale, Value[::Green]);
+      b = AlphaFromLevel(aScale, Value[::Blue]);
+      for (int i = 0; i < 256; i++) {
+        redTable[i] = ClipByteHigh(i + r);
+        greenTable[i] = ClipByteHigh(i + g);
+        blueTable[i] = ClipByteHigh(i + b);
+      }
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Fill_Subtractive)
+    , Pixel Value) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Fill_Subtractive, 1) , Value _FOE
+FILTERSIMPLE_BEGIN
+    Byte redTable[256], greenTable[256], blueTable[256];
+    {
+      Byte r, g, b;
+      r = Value[::Red];
+      g = Value[::Green];
+      b = Value[::Blue];
+      for (int i = 0; i < 256; i++) {
+        redTable[i] = ClipByteLow(i - r);
+        greenTable[i] = ClipByteLow(i - g);
+        blueTable[i] = ClipByteLow(i - b);
+      }
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Fill_Subtractive_Opacity)
+    , Pixel Value, int Opacity) {
+FILTERSIMPLE_INIT
+    if (Opacity == 0) return Trivial_Success;
+    if (Opacity == 255) return FilterSimple_Fill_Subtractive(Image, Area, Value);
+    _FOS(FilterSimple_Fill_Subtractive_Opacity, 2) , Value, Opacity _FOE
+FILTERSIMPLE_BEGIN
+    Byte redTable[256], greenTable[256], blueTable[256];
+    {
+      AlphaLevel *aScale;
+      Byte r, g, b;
+      aScale = AlphaLevelLookup( ClipByte(Opacity) );
+      r = AlphaFromLevel(aScale, Value[::Red]);
+      g = AlphaFromLevel(aScale, Value[::Green]);
+      b = AlphaFromLevel(aScale, Value[::Blue]);
+      for (int i = 0; i < 256; i++) {
+        redTable[i] = ClipByteLow(i - r);
+        greenTable[i] = ClipByteLow(i - g);
+        blueTable[i] = ClipByteLow(i - b);
+      }
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Swap_Channels)
+    , int Channel1, int Channel2) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Swap_Channels, 2) , Channel1, Channel2 _FOE
+FILTERSIMPLE_BEGIN
+FILTERSIMPLE_LOOPBEGIN
+    _Swap<Byte>((*pCurrent)[Channel1], (*pCurrent)[Channel2]);
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Composite)
+    , Pixel Value) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Composite, 1) , Value _FOE
+FILTERSIMPLE_BEGIN
+    AlphaLevel *aSource, *aDest;
+FILTERSIMPLE_LOOPBEGIN
+    aSource = AlphaLevelLookup( (*pCurrent)[::Alpha] );
+    aDest = AlphaLevelLookup( (*pCurrent)[::Alpha] ^ 0xFF );
+    (*pCurrent)[::Blue] = AlphaFromLevel2(aSource, (*pCurrent)[::Blue], aDest, Value[::Blue]);
+    (*pCurrent)[::Green] = AlphaFromLevel2(aSource, (*pCurrent)[::Green], aDest, Value[::Green]);
+    (*pCurrent)[::Red] = AlphaFromLevel2(aSource, (*pCurrent)[::Red], aDest, Value[::Red]);
+    (*pCurrent)[::Alpha] = 255;
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Grid_SourceAlpha)
+    , Pixel Value, int Width, int Height, int XOffset, int YOffset) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Grid_SourceAlpha, 5) , Value, Width, Height, XOffset, YOffset _FOE
+FILTERSIMPLE_BEGIN
+AlphaLevel *aSource, *aDest;
+Pixel *pRow = Image->pointer(0,0);
+Pixel *pCol = pRow;
+Pixel *pValue = &Value;
+    iRowOffset = Image->pointer(0,1) - Image->pointer(0,0);
+    aSource = AlphaLevelLookup( Value[::Alpha] );
+    aDest = AlphaLevelLookup( Value[::Alpha] ^ 0xFF );
+
+    iCY = YOffset + rCoordinates.Top;
+    while (iCY < rCoordinates.bottom()) {
+      if (iCY >= rCoordinates.Top) {
+        // row
+        pRow = Image->pointer(rCoordinates.Left, iCY);
+        pCol = pRow;
+        iCX = rCoordinates.Left;
+        while(iCX < rCoordinates.right()) {
+          if (iCX >= rCoordinates.Left) {
+            BLENDPIXEL_ALPHA_OPACITY(pCol, pCol, pValue, aDest, aSource)
+            pCol++;
+          }
+          iCX++;
+        }
+      }
+      iCY += Height;
+    }
+
+    iCX = XOffset + rCoordinates.Left;
+    while(iCX < rCoordinates.right()) {
+      if (iCX >= rCoordinates.Left) {
+        // column
+        pCol = Image->pointer(iCX, rCoordinates.Top);
+        pRow = pCol;
+        iCY = rCoordinates.Top;
+        while(iCY < rCoordinates.bottom()) {
+          if (iCY >= rCoordinates.Top) {
+            BLENDPIXEL_ALPHA_OPACITY(pRow, pRow, pValue, aDest, aSource)
+            pRow += iRowOffset;
+          }
+          iCY++;
+        }
+      }
+      iCX += Width;
+    }
+
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Mirror)
+    ) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Mirror, 0) _FOE
+    if (!Image->Unlocked) {
+        return Failure;
+    }
+                                                                
+    Rectangle rCoordinates;                                     
+        if (!Area) {                                            
+            rCoordinates = Image->ClipRectangle;               
+        } else {                                                
+            rCoordinates = *Area;                               
+        }                                                       
+        Image->clipRectangle(&rCoordinates);                    
+                                                                
+    if (rCoordinates.empty()) {                                 
+        return Trivial_Success;                                 
+    }                                                           
+                                                                
+    Pixel *pRow, *pCol, *pCol2;
+    Pixel temp;
+                                                                
+    unsigned int iCX = 0 , iCY = rCoordinates.Height;
+    // We are only going to loop through the first half of each scanline
+    unsigned int iWidth = rCoordinates.Width / 2;
+
+    while (iCY--) {                                             
+
+        iCX = iWidth;
+        pRow = Image->pointer(rCoordinates.Left, (rCoordinates.Height-1) - iCY + rCoordinates.Top);
+                                                                
+        while (iCX--) {
+            
+            // I'd do iteration here but I'm too lazy to get the math right
+            pCol = pRow + (iCX);
+            pCol2 = pRow + ((rCoordinates.Width-1) - iCX);
+            // For every pixel in the first half of the scanline, swap it with its counterpart in the other half
+            temp = *pCol;
+            *pCol = *pCol2;
+            *pCol2 = temp;
+                                                                
+        }                                                       
+                                                                
+    }
+
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Flip)
+    ) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Flip, 0) _FOE
+    if (!Image->Unlocked) {
+        return Failure;
+    }
+                                                                
+    Rectangle rCoordinates;                                     
+        if (!Area) {                                            
+            rCoordinates = Image->ClipRectangle;               
+        } else {                                                
+            rCoordinates = *Area;                               
+        }                                                       
+        Image->clipRectangle(&rCoordinates);                    
+                                                                
+    if (rCoordinates.empty()) {                                 
+        return Trivial_Success;                                 
+    }  
+    
+    // Instead of using a temporary buffer for the swapping, I do in-place swapping.
+    // In-place swapping is a bit faster in my tests, but I'm not sure if it's faster in general, so...
+    // To enable using a temporary buffer just uncomment the necessary lines.
+                                                                
+    Pixel *pRow, *pRow2;
+//    Pixel *pTemp;
+
+    // Allocate a temporary buffer for swapping the scanlines
+//    pTemp = AllocateArray(Pixel, rCoordinates.Width);
+                                                                
+    unsigned int iCY = rCoordinates.Height / 2;           
+
+    while (iCY--) {                                             
+                
+        // I could probably use iteration here but I'm too lazy to get the math right
+        pRow = Image->pointer(rCoordinates.Left, (rCoordinates.Height-1) - iCY + rCoordinates.Top);
+        pRow2 = Image->pointer(rCoordinates.Left, iCY + rCoordinates.Top);
+        // Swap the rows
+        _Swap<Pixel>(pRow, pRow2, rCoordinates.Width);
+
+//        _Copy<Pixel>(pTemp, pRow, rCoordinates.Width);
+//        _Copy<Pixel>(pRow, pRow2, rCoordinates.Width);
+//        _Copy<Pixel>(pRow2, pTemp, rCoordinates.Width);
+
+                                                                
+    }
+
+//    DeleteArray(pTemp);
+
+FILTERSIMPLE_END
+
+Export int FilterSimple_Rotate90(Image *Image) {
+    if (!Image) {
+        return Failure;
+    }
+    if (!Image->initialized()) { 
+        return Failure;
+    }                                                           
+
+    {
+        int overrideresult = Override::EnumOverrides(Override::FilterSimple_Rotate90, 1, Image);
+#ifdef OVERRIDES
+        if (overrideresult != 0) return overrideresult;
+#endif
+    }
+    
+    ImageLockManager ilImage(lockingMode, Image);
+    if (!ilImage.performUnlock()) {
+        return Failure;
+    }
+                                                                                                                                                                                           
+    int iCX = 0, iCY = 0;
+    class Image *OldImage = new class Image(Image);
+    Image->resize(Image->Height, Image->Width);
+
+    Rectangle rCoordinates;                                     
+    rCoordinates = Image->ClipRectangle;               
+                                                                
+    if (rCoordinates.empty()) {                                 
+        return Trivial_Success;                                 
+    }
+
+    while (iCY < rCoordinates.Height) {
+
+        iCX = 0;
+                                                                
+        while (iCX < rCoordinates.Width) {
+
+            Image->setPixel(iCX, iCY, OldImage->getPixel(iCY, iCX));
+            
+            iCX++;
+                                                                
+        }                                                       
+                                                                
+        iCY++;
+
+    }
+
+    delete OldImage;
+    return Success;
+
+}
+
+FILTERSIMPLE_SIGNATURE(Grayscale)
+    ) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Grayscale, 0) _FOE
+FILTERSIMPLE_BEGIN
+    int g;
+    Word bt[256], gt[256], rt[256];
+    for (int i = 0; i < 256; i++) {
+        // These three multipliers are used to calculate the luminance of each pixel.
+        // Since the multipliers are constant, generating a lookup table beforehand results in better speed
+        rt[i] = i * 30;
+        gt[i] = i * 59;
+        bt[i] = i * 11;
+    }
+FILTERSIMPLE_LOOPBEGIN
+    // Feed the three color channels through the multiplier tables, and then divide by 100 to get a single value
+    g = (bt[(*pCurrent)[::Blue]] + gt[(*pCurrent)[::Green]] + rt[(*pCurrent)[::Red]]) / 100; 
+    (*pCurrent)[::Blue] = (*pCurrent)[::Green] = (*pCurrent)[::Red] = g;
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(ColorFilter)
+    , ColorFilter *Filter) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_ColorFilter, 1) , Filter _FOE
+FILTERSIMPLE_BEGIN
+    if (!Filter) return Failure;
+    if (Filter->Length < 768) return Failure;
+FILTERSIMPLE_LOOPBEGIN
+    // Apply the color filter to every pixel
+    (*pCurrent)[::Blue] = Filter->Blue[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = Filter->Green[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = Filter->Red[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Noise)
+    ) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Noise, 0) _FOE
+FILTERSIMPLE_BEGIN
+    // Seed the random number generator using the current time
+    _timeb tstruct;
+    _ftime(&tstruct);
+    seedMT(tstruct.time + tstruct.millitm);
+FILTERSIMPLE_LOOPBEGIN
+    pCurrent->V = randomMT();
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Noise_Grayscale)
+    ) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Noise_Grayscale, 0) _FOE
+FILTERSIMPLE_BEGIN
+    // Use a lookup table to create a simple repeating sequence without branching
+    Byte iteratorTable[4] = {1, 2, 3, 0}, i = 0;
+    Pixel v;
+    // Seed the random number generator using the current time
+    _timeb tstruct;
+    _ftime(&tstruct);
+    seedMT(tstruct.time + tstruct.millitm);
+FILTERSIMPLE_LOOPBEGIN
+    // Since we're only generating grayscale, we can use each byte of the random numbers we get
+    // This means we should only generate a new number every 4 pixels
+    if (i == 0) v.V = randomMT();
+    (*pCurrent)[::Blue] = (*pCurrent)[::Green] = (*pCurrent)[::Red] = v[i];
+    i = iteratorTable[i];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Noise_Grayscale_Opacity)
+    , int Opacity) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Noise_Grayscale_Opacity, 1) , Opacity _FOE
+FILTERSIMPLE_BEGIN
+    if (Opacity <= 0) return Trivial_Success;
+    if (Opacity >= 255) return FilterSimple_Noise_Grayscale(Image, Area);
+    // Use a lookup table to create a simple repeating sequence without branching
+    AlphaLevel *aSource = AlphaLevelLookup(ClipByte(Opacity)), *aDest = AlphaLevelLookup(ClipByte(Opacity) ^ 0xFF);
+    Byte iteratorTable[4] = {1, 2, 3, 0}, i = 0, cv = 0;
+    Pixel v;
+    // Seed the random number generator using the current time
+    _timeb tstruct;
+    _ftime(&tstruct);
+    seedMT(tstruct.time + tstruct.millitm);
+FILTERSIMPLE_LOOPBEGIN
+    // Since we're only generating grayscale, we can use each byte of the random numbers we get
+    // This means we should only generate a new number every 4 pixels
+    if (i == 0) v.V = randomMT();
+    cv = AlphaFromLevel(aSource, v[i]);
+    (*pCurrent)[::Blue] = AlphaFromLevel(aDest, (*pCurrent)[::Blue]) + cv;
+    (*pCurrent)[::Green] = AlphaFromLevel(aDest, (*pCurrent)[::Green]) + cv;
+    (*pCurrent)[::Red] = AlphaFromLevel(aDest, (*pCurrent)[::Red]) + cv;
+    i = iteratorTable[i];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+
+FILTERSIMPLE_SIGNATURE(Noise_Grayscale_Subtractive)
+    ) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Noise_Grayscale_Subtractive, 0) _FOE
+FILTERSIMPLE_BEGIN
+    // Use a lookup table to create a simple repeating sequence without branching
+    Byte iteratorTable[4] = {1, 2, 3, 0}, i = 0;
+    Pixel v;
+    // Seed the random number generator using the current time
+    _timeb tstruct;
+    _ftime(&tstruct);
+    seedMT(tstruct.time + tstruct.millitm);
+FILTERSIMPLE_LOOPBEGIN
+    // Since we're only generating grayscale, we can use each byte of the random numbers we get
+    // This means we should only generate a new number every 4 pixels
+    if (i == 0) v.V = randomMT();
+    (*pCurrent)[::Blue] = ClipByteLow((*pCurrent)[::Blue] - v[i]);
+    (*pCurrent)[::Green] = ClipByteLow((*pCurrent)[::Green] - v[i]);
+    (*pCurrent)[::Red] = ClipByteLow((*pCurrent)[::Red] - v[i]);
+    i = iteratorTable[i];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Noise_Grayscale_Subtractive_Opacity)
+    , int Opacity) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Noise_Grayscale_Subtractive_Opacity, 1) , Opacity _FOE
+FILTERSIMPLE_BEGIN
+    if (Opacity <= 0) return Trivial_Success;
+    if (Opacity >= 255) return FilterSimple_Noise_Grayscale_Subtractive(Image, Area);
+    // Use a lookup table to create a simple repeating sequence without branching
+    AlphaLevel *aSource = AlphaLevelLookup(ClipByte(Opacity));
+    Byte iteratorTable[4] = {1, 2, 3, 0}, i = 0, cv = 0;
+    Pixel v;
+    // Seed the random number generator using the current time
+    _timeb tstruct;
+    _ftime(&tstruct);
+    seedMT(tstruct.time + tstruct.millitm);
+FILTERSIMPLE_LOOPBEGIN
+    // Since we're only generating grayscale, we can use each byte of the random numbers we get
+    // This means we should only generate a new number every 4 pixels
+    if (i == 0) v.V = randomMT();
+    cv = AlphaFromLevel(aSource, v[i]);
+    (*pCurrent)[::Blue] = ClipByteLow((*pCurrent)[::Blue] - cv);
+    (*pCurrent)[::Green] = ClipByteLow((*pCurrent)[::Green] - cv);
+    (*pCurrent)[::Red] = ClipByteLow((*pCurrent)[::Red] - cv);
+    i = iteratorTable[i];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Noise_Channel)
+    , int Channel) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Noise_Channel, 1) , Channel _FOE
+FILTERSIMPLE_BEGIN
+    // Use a lookup table to create a simple repeating sequence without branching
+    Byte iteratorTable[4] = {1, 2, 3, 0}, i = 0;
+    Pixel v;
+    // Seed the random number generator using the current time
+    _timeb tstruct;
+    _ftime(&tstruct);
+    seedMT(tstruct.time + tstruct.millitm);
+FILTERSIMPLE_LOOPBEGIN
+    // Since we're only generating grayscale, we can use each byte of the random numbers we get
+    // This means we should only generate a new number every 4 pixels
+    if (i == 0) v.V = randomMT();
+    (*pCurrent)[Channel] = v[i];
+    i = iteratorTable[i];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Decay)
+    , int Strength) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Decay, 1) , Strength _FOE
+FILTERSIMPLE_BEGIN
+    // Use a lookup table to create a simple repeating sequence without branching
+    Byte iteratorTable[4] = {1, 2, 3, 0}, i = 0;
+    Byte scaleTable[256];
+    Pixel v;
+    DoubleWord d;
+    // Seed the random number generator using the current time
+    _timeb tstruct;
+    _ftime(&tstruct);
+    seedMT(tstruct.time + tstruct.millitm);
+    for (int s = 0; s < 256; ++s) {
+      scaleTable[s] = ClipByteHigh((s * Strength) / 255);
+    }
+FILTERSIMPLE_LOOPBEGIN
+    // Since we're only generating grayscale, we can use each byte of the random numbers we get
+    // This means we should only generate a new number every 4 pixels
+    if (i == 0) v.V = randomMT();
+    d = scaleTable[v[i]];
+    if (d) {
+      (*pCurrent)[::Blue] = ((*pCurrent)[::Blue] / d) * d;
+      (*pCurrent)[::Green] = ((*pCurrent)[::Green] / d) * d;
+      (*pCurrent)[::Red] = ((*pCurrent)[::Red] / d) * d;
+    }
+    i = iteratorTable[i];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Solarize)
+    , int Strength) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Solarize, 1) , Strength _FOE
+FILTERSIMPLE_BEGIN
+    Byte lookupTable[256];
+    for (int i = 0; i < 256; i++) {
+      lookupTable[i] = ClipByteHigh((i / Strength) * Strength);
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = lookupTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = lookupTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = lookupTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Adjust)
+    , int Amount) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Adjust, 1) , Amount _FOE
+FILTERSIMPLE_BEGIN
+    Byte lookupTable[256];
+    for (int i = 0; i < 256; i++) {
+        lookupTable[i] = ClipByte(i + Amount);
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = lookupTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = lookupTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = lookupTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Adjust_RGB)
+    , int RedAmount, int GreenAmount, int BlueAmount) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Adjust_RGB, 3) , RedAmount, GreenAmount, BlueAmount _FOE
+FILTERSIMPLE_BEGIN
+    Byte redTable[256], greenTable[256], blueTable[256];
+    for (int i = 0; i < 256; i++) {
+        redTable[i] = ClipByte(i + RedAmount);
+        greenTable[i] = ClipByte(i + GreenAmount);
+        blueTable[i] = ClipByte(i + BlueAmount);
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Adjust_Channel)
+    , int Channel, int Amount) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Adjust_Channel, 2) , Channel, Amount _FOE
+FILTERSIMPLE_BEGIN
+    Byte lookupTable[256];
+    for (int i = 0; i < 256; i++) {
+        lookupTable[i] = ClipByte(i + Amount);
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[Channel] = lookupTable[(*pCurrent)[Channel]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Gamma)
+    , int Gamma) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Gamma, 1) , Gamma _FOE
+FILTERSIMPLE_BEGIN
+    Byte lookupTable[256];
+    for (int i = 0; i < 256; i++) {
+        lookupTable[i] = ClipByte((i * Gamma) / 255);
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = lookupTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = lookupTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = lookupTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Gamma_RGB)
+    , int RedGamma, int GreenGamma, int BlueGamma) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Gamma_RGB, 3) , RedGamma, GreenGamma, BlueGamma _FOE
+FILTERSIMPLE_BEGIN
+    Byte redTable[256], greenTable[256], blueTable[256];
+    for (int i = 0; i < 256; i++) {
+        redTable[i] = ClipByte((i * RedGamma) / 255);
+        greenTable[i] = ClipByte((i * GreenGamma) / 255);
+        blueTable[i] = ClipByte((i * BlueGamma) / 255);
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Gamma_Channel)
+    , int Channel, int Gamma) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Gamma_Channel, 2) , Channel, Gamma _FOE
+FILTERSIMPLE_BEGIN
+    Byte lookupTable[256];
+    for (int i = 0; i < 256; i++) {
+        lookupTable[i] = ClipByte((i * Gamma) / 255);
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[Channel] = lookupTable[(*pCurrent)[Channel]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Depalettize)
+    , Byte *Data, Pixel *Palette, int Length) {
+FILTERSIMPLE_INIT
+    if (!Data) return Failure;
+    if (!Palette) return Failure;
+    if (Length < 1) return Trivial_Success;
+    _FOS(FilterSimple_Depalettize, 3) , Data, Palette, Length _FOE
+FILTERSIMPLE_BEGIN
+    int i = 0;
+FILTERSIMPLE_LOOPBEGIN
+    pCurrent->V = Palette[*Data].V;
+    Data++;
+    i++;
+    if (i >= Length) return Success;
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+

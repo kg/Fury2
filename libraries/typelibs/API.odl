@@ -1,0 +1,607 @@
+[
+	uuid(64651516-73E5-402B-B989-94EAE4C6A049),
+	helpstring("Win32 API"),
+	version(1.0),
+	lcid(0x0409)
+]
+library Win32 {
+
+    // TLib : OLE Automation : {00020430-0000-0000-C000-000000000046}
+    importlib("stdole2.tlb");
+
+    typedef enum {
+        Maximum_Path_Length = 260
+    } Win32APIConstants;
+
+    typedef enum {
+        TopMost = -1,
+        NotTopMost = -2
+    } WindowFlags;
+
+    typedef enum {
+        NoMove = 2,
+        NoSize = 1
+    } WindowStateFlags;
+
+    typedef enum {
+        PicType_Uninitialized = -1,
+        PicType_None = 0,
+        PicType_Bitmap = 1,
+        PicType_Metafile = 2,
+        PicType_Icon = 3,
+        PicType_EnhancedMetafile = 4
+    } PicTypes;
+
+    typedef enum {
+        Image_Bitmap = 0,
+        Image_Icon = 1,
+        Image_Cursor = 2,
+        Image_EnhancedMetafile = 3
+    } LoadImageTypes;
+
+    typedef enum {
+        LoadImage_DefaultColor = 0x0,
+        LoadImage_Monochrome = 0x1,
+        LoadImage_Color = 0x2,
+        LoadImage_CopyReturnOriginal = 0x4,
+        LoadImage_CopyDeleteOriginal = 0x8,
+        LoadImage_LoadFromFile = 0x10,
+        LoadImage_LoadTransparent = 0x20,
+        LoadImage_DefaultSize = 0x40,
+        LoadImage_LoadMap3DColors = 0x1000,
+        LoadImage_CreateDIBHeader = 0x2000,
+        LoadImage_CopyFromResource = 0x4000,
+        LoadImage_Shared = 0x8000
+    } LoadImageFlags;
+
+    typedef enum {
+        GGO_Metrics = 0,
+        GGO_Bitmap = 1,
+        GGO_Native = 2,
+        GGO_Gray2_Bitmap = 4,
+        GGO_Gray4_Bitmap = 5,
+        GGO_Gray8_Bitmap = 6,
+        GGO_Glyph_Index = 0x80
+    } GetGlyphOutlineFlags;
+
+    typedef enum {
+        Quality_NonAntialiased = 3,
+        Quality_Antialiased = 4
+    } LogicalFontQuality;
+
+    typedef enum {
+        WM_GetIcon = 0x7F,
+        WM_SetIcon = 0x80,
+        WM_SetRedraw = 0x000B,
+        LB_AddString = 0x0180,
+        LB_InsertString = 0x0181,
+        LB_DeleteString = 0x0182,
+        LB_SelItemRangeEx = 0x0183,
+        LB_ResetContent = 0x0184,
+        LB_SetSel = 0x0185,
+        LB_SetCurSel = 0x0186,
+        LB_GetSel = 0x0187,
+        LB_GetCurSel = 0x0188,
+        LB_GetText = 0x0189,
+        LB_GetTextLen = 0x018A,
+        LB_GetCount = 0x018B,
+        LB_SelectString = 0x018C,
+        LB_Dir = 0x018D,
+        LB_GetTopIndex = 0x018E,
+        LB_FindString = 0x018F,
+        LB_GetSelCount = 0x0190,
+        LB_GetSelItems = 0x0191,
+        LB_SetTabStops = 0x0192,
+        LB_GetHorizontalExtent = 0x0193,
+        LB_SetHorizontalExtent = 0x0194,
+        LB_SetColumnWidth = 0x0195,
+        LB_AddFile = 0x0196,
+        LB_SetTopIndex = 0x0197,
+        LB_GetItemRect = 0x0198,
+        LB_GetItemData = 0x0199,
+        LB_SetItemData = 0x019A,
+        LB_SelItemRange = 0x019B,
+        LB_SetAnchorIndex = 0x019C,
+        LB_GetAnchorIndex = 0x019D,
+        LB_SetCaretIndex = 0x019E,
+        LB_GetCaretIndex = 0x019F,
+        LB_SetItemHeight = 0x01A0,
+        LB_GetItemHeight = 0x01A1,
+        LB_FindStringExact = 0x01A2,
+        LB_SetLocale = 0x01A5,
+        LB_GetLocale = 0x01A6,
+        LB_SetCount = 0x01A7,
+        LB_InitStorage = 0x01A8,
+        LB_ItemFromPoint = 0x01A9,
+        LB_MultipleAddString = 0x01B1
+    } WindowMessages;
+
+    typedef enum {
+        SystemColor_Scrollbar = 0,
+        SystemColor_Background = 1,
+        SystemColor_Caption_Active = 2,
+        SystemColor_Caption_Inactive = 3,
+        SystemColor_Menu = 4,
+        SystemColor_Window = 5,
+        SystemColor_Window_Frame = 6,
+        SystemColor_Menu_Text = 7,
+        SystemColor_Window_Text = 8,
+        SystemColor_Caption_Active_Text = 9,
+        SystemColor_Border_Active = 10,
+        SystemColor_Border_Inactive = 11,
+        SystemColor_Window_Background = 12,
+        SystemColor_Highlight = 13,
+        SystemColor_Highlight_Text = 14,
+        SystemColor_Button_Face = 15,
+        SystemColor_Button_Shadow = 16,
+        SystemColor_Button_Text_Disabled = 17,
+        SystemColor_Button_Text = 18,
+        SystemColor_Caption_Inactive_Text = 19,
+        SystemColor_Button_Highlight = 20
+    } SystemColors;
+
+    typedef enum {
+        DIBMode_RGB = 0,
+        DIBMode_Palette = 1
+    } DIBModes;
+
+    typedef enum {
+        DIBCompression_RGB = 0
+    } DIBCompressionModes;
+
+    typedef enum {
+        MouseEvent_Move = 0x1,
+        MouseEvent_Press_Left = 0x2,
+        MouseEvent_Release_Left = 0x4,
+        MouseEvent_Press_Right = 0x8,
+        MouseEvent_Release_Right = 0x10,
+        MouseEvent_Press_Middle = 0x20,
+        MouseEvent_Release_Middle = 0x40,
+        MouseEvent_Absolute = 0x8000
+    } MouseEvents;
+
+    typedef enum {
+        Object_Brush = 2,
+        Object_DC = 3,
+        Object_Palette = 5,
+        Object_Bitmap = 7
+    } ObjectTypes;
+
+    typedef enum {
+        StockObject_Brush_Black = 4
+    } StockObjectTypes;
+
+    typedef enum {
+        DrawText_Align_Top = 0x0,
+        DrawText_Align_Left = 0x0,
+        DrawText_Align_Center_Horizontal = 0x1,
+        DrawText_Align_Right = 0x2,
+        DrawText_Align_Center_Vertical = 0x4,
+        DrawText_Align_Bottom = 0x8,
+        DrawText_Wrap_WordBreak = 0x10,
+        DrawText_Wrap_None = 0x20,
+        DrawText_Tabs_Expand = 0x40,
+        DrawText_Tabs_TabStops = 0x80,
+        DrawText_Clip_None = 0x100,
+        DrawText_Leading_External = 0x200,
+        DrawText_CalculateRect = 0x400,
+        DrawText_NoPrefix = 0x800,
+        DrawText_Internal = 0x1000
+    } DrawTextFlags;
+
+    typedef enum {
+        StretchBlt_ColorOnColor = 3
+    } StretchBltModes;
+
+    typedef enum {
+        GlobalAlloc_Fixed = 0x0,
+        GlobalAlloc_Invalid_Handle = 0x8000,
+        GlobalAlloc_LockCount = 0xFF,
+        GlobalAlloc_Lower = 0x1000,
+        GlobalAlloc_Modify = 0x80,
+        GlobalAlloc_Moveable = 0x2,
+        GlobalAlloc_No_Compact = 0x10,
+        GlobalAlloc_No_Discard = 0x20,
+        GlobalAlloc_Not_Banked = 0x1000,
+        GlobalAlloc_Notify = 0x4000,
+        GlobalAlloc_Share = 0x2000,
+        GlobalAlloc_Valid_Flags = 0x7F72,
+        GlobalAlloc_ZeroInitialize = 0x40
+    } GlobalAllocFlags;
+
+    typedef enum {
+        ROP_Black = 1,
+        ROP_NOT = 6,
+        ROP_XOR = 7,
+        ROP_AND = 9,
+        ROP_None = 11,
+        ROP_Copy = 13,
+        ROP_OR = 15,
+        ROP_White = 16
+    } GDIROPs;
+
+    typedef enum {
+        GradientFill_Rect_Horizontal = 0,
+        GradientFill_Rect_Vertical = 1,
+        GradientFill_Triangle = 2
+    } GradientFillFlags;
+
+    typedef enum {
+        AlphaBlend_Source_Over = 0
+    } AlphaBlendModes;
+
+    typedef enum {
+        AlphaBlend_Source_No_Premultiplied_Alpha = 0x01,
+        AlphaBlend_Source_No_Alpha = 0x02,
+        AlphaBlend_Dest_No_Premultiplied_Alpha = 0x10,
+        AlphaBlend_Dest_No_Alpha = 0x20
+    } AlphaBlendFlags;
+
+
+    typedef struct {
+	int Low, High;
+    } LargeInt;
+
+    typedef struct {
+        int X, Y;
+    } PointAPI;
+
+    typedef struct {
+        int Width, Height;
+    } Size;
+
+    typedef struct {
+        int Left, Top, Right, Bottom;
+    } Rect;
+
+    typedef struct {
+        short L11, H11, L12, H12, L21, H21, L22, H22;
+    } Mat2;
+
+    typedef struct {
+        int BlackBoxX, BlackBoxY;
+        PointAPI GlyphOrigin;
+        short CellIncX, CellIncY;
+    } GlyphMetrics;
+
+    typedef struct {
+        byte B, G, R, A;
+    } RGBQuad;
+
+    typedef struct {
+        byte B, G, R;
+    } RGBTriplet;
+
+    typedef struct {
+        int Size, Width, Height;
+        short Planes, BitCount;
+        int Compression, SizeImage, XPixelsPerMeter, YPixelsPerMeter, ColorUsed, ColorImportant;
+    } BitmapInfoHeader;
+
+    typedef struct {
+        BitmapInfoHeader Header;
+        int Reserved;
+    } BitmapInfo;
+
+    typedef struct {
+        int Size;
+        PicTypes Type;
+        int Bitmap;
+        int Palette;
+    } PictureDescriptor;
+
+    typedef struct {
+        int Icon, XHotspot, YHotspot, MaskBitmap, ColorBitmap;
+    } IconInfo;
+
+    typedef struct {
+        int X;
+        short S1, S2;
+        byte C[8];
+    } IId;
+
+    typedef struct {
+        int LowDateTime;
+        int HighDateTime;
+    } FileTime;
+
+    typedef struct {
+        int X, Y;
+        short R, G, B, A;
+    } Gradient_Vertex;
+
+    typedef struct {
+        int UpperLeft;
+        int LowerRight;
+    } Gradient_Rect;
+
+    typedef struct {
+        byte BlendOperation;
+        byte BlendFlags;
+        byte SourceConstantAlpha;
+        byte AlphaFormat;
+    } BlendFunction;
+
+    typedef struct {
+        int Vertex1, Vertex2, Vertex3;
+    } Gradient_Triangle;
+
+    [dllname("user32")]
+    module User32 {
+
+        [entry("SendMessageA")]
+        int SendMessage(int Window, WindowMessages Message, int wParam, int lParam);
+        [entry("SendMessageW")]
+        int SendMessage_Unicode(int Window, WindowMessages Message, int wParam, int lParam);
+
+        [entry("LoadIconA")]
+        int LoadIcon(int Instance, [in, string] char* Filename);
+        [entry("LoadIconW")]
+        int LoadIcon_Unicode(int Instance, [string] wchar_t* Filename);
+        [entry("DestroyIcon")]
+        int DestroyIcon(int Icon);
+        [entry("GetIconInfo")]
+        int GetIconInfo(int Icon, [out] IconInfo* IconInfo);
+        [entry("DrawIcon")]
+        int DrawIcon(int DC, int X, int Y, int Icon);
+        [entry("DrawIconEx")]
+        int DrawIconEx(int DC, int X, int Y, int Icon, int Width, int Height, int Frame, int FlickerFreeBrush, int Flags);
+
+        [entry("LoadImageA")]
+        int LoadImage(int Instance, [in, string] char* Filename, int Type, int Width, int Height, LoadImageFlags Flags);
+        [entry("LoadImageW")]
+        int LoadImage_Unicode(int Instance, [in, string] wchar_t* Filename, int Type, int Width, int Height, LoadImageFlags Flags);
+
+        [entry("SetWindowTextA")]
+        int SetWindowText(int Window, [in, string] char* Text);
+        [entry("SetWindowTextW")]
+        int SetWindowText_Unicode(int Window, [in, string] wchar_t* Text);
+
+        [entry("GetWindowTextA")]
+        int GetWindowText(int Window, [in, out, string] char* Buffer, int Length);
+        [entry("GetWindowTextW")]
+        int GetWindowText_Unicode(int Window, [in, out, string] wchar_t* Buffer, int Length);
+        [entry("GetWindowTextLengthA")]
+        int GetWindowTextLength(int Window);
+        [entry("GetWindowTextLengthW")]
+        int GetWindowTextLength_Unicode(int Window);
+        
+        [entry("GetSysColor")]
+        int GetSystemColor(SystemColors Color);
+
+        [entry("LockWindowUpdate")]
+        int LockWindowUpdate(int Window);
+
+        [entry("SetCapture")]
+        int SetCapture(int Window);
+        [entry("GetCapture")]
+        int GetCapture();
+        [entry("ReleaseCapture")]
+        int ReleaseCapture();
+
+        [entry("ShowCursor")]
+        int ShowCursor(int Show);
+        [entry("SetCursorPos")]
+        int SetCursorPos(int X, int Y);
+        [entry("GetCursorPos")]
+        int GetCursorPos(PointAPI *Point);
+
+        [entry("mouse_event")]
+        int MouseEvent(MouseEvents Event, int X, int Y, int Buttons, int ExtraInfo);
+
+        [entry("GetActiveWindow")]
+        int GetActiveWindow();
+        [entry("GetDesktopWindow")]
+        int GetDesktopWindow();
+
+        [entry("GetParent")]
+        int GetParent(int Window);
+        [entry("SetParent")]
+        int SetParent(int Window, int Parent);
+
+        [entry("SetForegroundWindow")]
+        int SetForegroundWindow(int Window);
+
+        [entry("GetClientRect")]
+        int GetClientRect(int Window, [out] Rect* Rect);
+
+        [entry("InflateRect")]
+        int InflateRect([in, out] Rect* Rect, int X, int Y);
+        [entry("OffsetRect")]
+        int OffsetRect([in, out] Rect* Rect, int X, int Y);
+        [entry("IntersectRect")]
+        int IntersectRect([out] Rect* Dest, [in] Rect* Source1, [in] Rect* Source2);
+
+        [entry("DrawEdge")]
+        int DrawEdge(int DC, Rect* Rect, int EdgeStyle, int Flags);
+        [entry("DrawFocusRect")]
+        int DrawFocusRect(int DC, Rect* Rect);
+        [entry("FillRect")]
+        int FillRect(int DC, Rect* Rectangle, int Brush);
+
+        [entry("GetDC")]
+        int GetDC(int Window);
+        [entry("ReleaseDC")]
+        int ReleaseDC(int Window, int DC);
+
+        [entry("DrawTextA")]
+        int DrawText(int DC, [string] char* String, int Length, Rect *Rectangle, DrawTextFlags Flags);
+        [entry("DrawTextW")]
+        int DrawText_Unicode(int DC, [string] wchar_t* String, int Length, Rect *Rectangle, DrawTextFlags Flags);
+        
+        [entry("PostQuitMessage")]
+        void PostQuitMessage(int ExitCode);
+
+        [entry("SetWindowPos")]
+        int SetWindowPos(int Window, int WindowInsertAfter, int X, int Y, int Width, int Height, int Flags);
+
+    }
+
+    [dllname("gdi32")]
+    module GDI32 {
+
+        [entry("CreateRectRgnIndirect")]
+        int CreateRectRegion(Rect* Rectangle);
+
+        [entry("FillRgn")]
+        int FillRegion(int DC, int Region, int Brush);
+        
+        [entry("GetPixel")]
+        int GetPixel(int DC, int X, int Y);
+        [entry("SetPixelV")]
+        int SetPixelV(int DC, int X, int Y, int Color);
+
+        [entry("GetTextColor")]
+        int GetTextColor(int DC);
+        [entry("GetBkColor")]
+        int GetBackgroundColor(int DC);
+        [entry("SetTextColor")]
+        int SetTextColor(int DC, int Color);
+        [entry("SetBkColor")]
+        int SetBackgroundColor(int DC, int Color);
+
+        [entry("MoveToEx")]
+        int MoveToEx(int DC, int X, int Y, void* OldPosition);
+        [entry("LineTo")]
+        int LineTo(int DC, int X, int Y);
+        [entry("CreatePen")]
+        int CreatePen(int Style, int Width, int Color);
+
+        [entry("SetROP2")]
+        int SetROP2(int DC, int ROP);
+        
+        [entry("StretchDIBits")]
+        int StretchDIBits(int DC, int X, int Y, int Width, int Height, int SourceX, int SourceY, int SourceWidth, int SourceHeight, int Pointer, BitmapInfo *Info, DIBModes Flags, int RasterOperation);
+        [entry("SetDIBits")]
+        int SetDIBits(int DC, int Bitmap, int StartScan, int ScanCount, [out] void* Pointer, BitmapInfo *BitmapInfo, DIBModes Flags);
+        [entry("GetDIBits")]
+        int GetDIBits(int DC, int Bitmap, int StartScan, int ScanCount, [in] void* Pointer, [in, out] BitmapInfo *BitmapInfo, DIBModes Flags);
+
+	[entry("CreateDIBSection")]
+	int CreateDIBSection(int DC, BitmapInfo *BitmapInfo, int Flags, [in, out] int* Pointer, int FileMappingObject, int Offset);
+
+        [entry("FloodFill")]
+        int FloodFill(int DC, int X, int Y, int Color);
+        [entry("ExtFloodFill")]
+        int ExtFloodFill(int DC, int X, int Y, int Color, int Mode);
+
+        [entry("BitBlt")]
+        int BitBlt(int DC, int X, int Y, int Width, int Height, int SourceDC, int SourceX, int SourceY, int RasterOperation);
+        [entry("StretchBlt")]
+        int StretchBlt(int DC, int X, int Y, int Width, int Height, int SourceDC, int SourceX, int SourceY, int SourceWidth, int SourceHeight, int RasterOperation);
+        [entry("SetStretchBltMode")]
+        int SetStretchBltMode(int DC, StretchBltModes Mode);
+        
+        [entry("GetStockObject")]
+        int GetStockObject(StockObjectTypes StockObject);
+        [entry("CreateSolidBrush")]
+        int CreateSolidBrush(int Color);
+        [entry("GetCurrentObject")]
+        int GetCurrentObject(int DC, ObjectTypes Type);
+        [entry("SelectObject")]
+        int SelectObject(int DC, int Object);
+        [entry("DeleteObject")]
+        int DeleteObject(int Object);
+
+        [entry("CreateCompatibleDC")]
+        int CreateCompatibleDC(int DC);
+        [entry("DeleteDC")]
+        int DeleteDC(int DC);
+
+        [entry("CreateCompatibleBitmap")]
+        int CreateCompatibleBitmap(int DC, int Width, int Height);
+
+        [entry("GdiGetBatchLimit")]
+        int GetBatchLimit();
+        [entry("GdiSetBatchLimit")]
+        int SetBatchLimit(int Limit);
+        [entry("GdiFlush")]
+        int Flush();
+
+        [entry("GetTextExtentPoint32A")]
+        int GetTextExtent(int DC, [string] char* String, int Length, [out] Size *Size);
+        [entry("GetTextExtentPoint32A")]
+        int GetTextExtentPtr(int DC, int String, int Length, [out] Size *Size);
+
+        [entry("GetGlyphOutline")]
+        int GetGlyphOutline(int DC, int Character, int Format, GlyphMetrics *Metrics, int BufferLength, int Buffer, int Transform);
+
+    }
+
+    [dllname("kernel32")]
+    module Kernel32 {
+
+        [entry("QueryPerformanceCounter")]
+        int QueryPerformanceCounter([out] CURRENCY* Value);
+        [entry("QueryPerformanceFrequency")]
+        int QueryPerformanceFrequency([out] CURRENCY* Value);
+        [entry("GetTickCount")]
+        int GetTickCount();
+
+        [entry("GetCurrentProcess")]
+        int GetCurrentProcess();
+        [entry("TerminateProcess")]
+        int TerminateProcess(int Process, int ExitCode);
+
+        [entry("GlobalAlloc")]
+        int GlobalAlloc(GlobalAllocFlags Flags, int Size);
+        [entry("GlobalFree")]
+        int GlobalFree(int Pointer);
+        [entry("GlobalReAlloc")]
+        int GlobalReAlloc(int Pointer, int Size, GlobalAllocFlags Flags);
+        [entry("GlobalSize")]
+        int GlobalGetSize(int Pointer);
+        [entry("GlobalFlags")]
+        GlobalAllocFlags GlobalGetFlags(int Pointer);
+        [entry("GlobalLock")]
+        int GlobalLock(int Pointer);
+        [entry("GlobalUnlock")]
+        int GlobalUnlock(int Pointer);
+
+        [entry("Sleep")]
+        int Sleep(int Time);
+        [entry("SleepEx")]
+        int SleepEx(int Time, int Alertable);
+
+        [entry("GetLastError")]
+        int GetLastError();
+        
+        [entry("RtlMoveMemory")]
+        void CopyMemory([out] void* Destination, [in] void* Source, int Length);
+        [entry("RtlMoveMemory")]
+        void CopyMemoryByVal(int Destination, int Source, int Length);
+
+        [entry("lstrlenA")]
+        int StringLength([string] char* String);
+        [entry("lstrlenW")]
+        int StringLength_Unicode([string] wchar_t* String);
+
+    }
+
+    [dllname("shlwapi")]
+    module ShLWAPI {
+
+        [entry("PathMatchSpecA")]
+        int PathMatchSpec([string] char* File, [string] char* Spec);
+        [entry("PathMatchSpecW")]
+        int PathMatchSpec_Unicode([string] wchar_t* File, [string] wchar_t* Spec);
+
+    }
+
+    [dllname("olepro32")]
+    module OLEPro32 {
+        [entry("OleCreatePictureIndirect")]
+        int CreatePictureIndirect([in] PictureDescriptor *PictureDescriptor, [in] IId *IId, [in] int TakeOwnership, [out] Picture** Pointer); 
+    }
+
+    [dllname("msimg32")]
+    module MSImg32 {
+        [entry("TransparentBlt")]
+        int TransparentBlt(int DestDC, int X, int Y, int Width, int Height, int SourceDC, int SourceX, int SourceY, int SourceWidth, int SourceHeight, int TransparentColor);
+        [entry("GradientFill")]
+        int GradientFill(int DC, void *Vertexes, int VertexCount, void *Mesh, int MeshCount, int Mode);
+        [entry("AlphaBlend")]
+        int AlphaBlend(int DestDC, int X, int Y, int Width, int Height, int SourceDC, int SourceX, int SourceY, int SourceWidth, int SourceHeight, int BlendFunction);
+    }
+}
+

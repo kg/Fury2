@@ -70,12 +70,12 @@ On Error Resume Next
     Height = (UBound(m_intTiles, 2) - LBound(m_intTiles, 2)) + 1
 End Property
 
-Public Property Get Tile(X, Y) As Integer
+Public Property Get Tile(ByVal X As Long, ByVal Y As Long) As Integer
 On Error Resume Next
     Tile = m_intTiles(ClipValue(X, LBound(m_intTiles, 1), UBound(m_intTiles, 1)), ClipValue(Y, LBound(m_intTiles, 1), UBound(m_intTiles, 1)))
 End Property
 
-Public Property Let Tile(X, Y, Value As Integer)
+Public Property Let Tile(ByVal X As Long, ByVal Y As Long, ByVal Value As Integer)
 On Error Resume Next
     If X < LBound(m_intTiles, 1) Then Exit Property
     If Y < LBound(m_intTiles, 2) Then Exit Property
@@ -99,7 +99,7 @@ On Error Resume Next
     ReDim m_intTiles(0 To Width - 1, 0 To Height - 1)
 End Sub
 
-Public Sub Fill(Value As Integer)
+Public Sub Fill(ByVal Value As Integer)
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long
     For l_lngY = LBound(m_intTiles, 2) To UBound(m_intTiles, 2)
@@ -109,7 +109,7 @@ Dim l_lngX As Long, l_lngY As Long
     Next l_lngY
 End Sub
 
-Public Sub Draw(ByVal Map As Fury2Map, Layer As Long, Optional ByVal X As Long = 0, Optional ByVal Y As Long = 0, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal SourceX As Long = 0, Optional ByVal SourceY As Long = 0, Optional ByVal ScrollX As Long = 0, Optional ByVal ScrollY As Long = 0, Optional ByVal DrawTransparentValues As Boolean = True)
+Public Sub Draw(ByVal Map As Fury2Map, ByVal Layer As Long, Optional ByVal X As Long = 0, Optional ByVal Y As Long = 0, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal SourceX As Long = 0, Optional ByVal SourceY As Long = 0, Optional ByVal ScrollX As Long = 0, Optional ByVal ScrollY As Long = 0, Optional ByVal DrawTransparentValues As Boolean = True)
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long
 Dim l_intValue As Integer
@@ -155,7 +155,7 @@ Dim l_intValue As Integer
     End With
 End Sub
 
-Public Sub Grab(ByVal Map As Fury2Map, Layer As Long, Optional ByVal X As Long = 0, Optional ByVal Y As Long = 0, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal SourceX As Long = 0, Optional ByVal SourceY As Long = 0, Optional SizeToFit As Boolean = False)
+Public Sub Grab(ByVal Map As Fury2Map, ByVal Layer As Long, Optional ByVal X As Long = 0, Optional ByVal Y As Long = 0, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal SourceX As Long = 0, Optional ByVal SourceY As Long = 0, Optional SizeToFit As Boolean = False)
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long
     If Map Is Nothing Then Exit Sub

@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
-Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.10#0"; "ngUI.ocx"
 Begin VB.Form frmMap 
    BorderStyle     =   0  'None
    ClientHeight    =   5580
@@ -52,7 +52,7 @@ Begin VB.Form frmMap
          ScaleHeight     =   1
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   1
-         TabIndex        =   25
+         TabIndex        =   21
          Top             =   0
          Width           =   15
       End
@@ -76,7 +76,7 @@ Begin VB.Form frmMap
       Begin ngPlugins.Script scMap 
          Height          =   210
          Left            =   345
-         TabIndex        =   21
+         TabIndex        =   17
          Top             =   4950
          Visible         =   0   'False
          Width           =   795
@@ -90,14 +90,14 @@ Begin VB.Form frmMap
          ScaleHeight     =   301
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   438
-         TabIndex        =   4
+         TabIndex        =   3
          Top             =   300
          Visible         =   0   'False
          Width           =   6570
          Begin cFScroll.FlatScrollBar vsMap 
             Height          =   6315
             Left            =   0
-            TabIndex        =   7
+            TabIndex        =   6
             Top             =   0
             Width           =   270
             _ExtentX        =   476
@@ -114,7 +114,7 @@ Begin VB.Form frmMap
             ScaleHeight     =   285
             ScaleMode       =   3  'Pixel
             ScaleWidth      =   422
-            TabIndex        =   5
+            TabIndex        =   4
             Top             =   -15
             Width           =   6330
             Begin VB.PictureBox picOverlay 
@@ -126,7 +126,7 @@ Begin VB.Form frmMap
                ScaleHeight     =   29
                ScaleMode       =   3  'Pixel
                ScaleWidth      =   36
-               TabIndex        =   6
+               TabIndex        =   5
                Top             =   825
                Visible         =   0   'False
                Width           =   540
@@ -135,7 +135,7 @@ Begin VB.Form frmMap
          Begin cFScroll.FlatScrollBar hsMap 
             Height          =   270
             Left            =   0
-            TabIndex        =   8
+            TabIndex        =   7
             Top             =   0
             Width           =   6315
             _ExtentX        =   11139
@@ -151,9 +151,18 @@ Begin VB.Form frmMap
          ScaleHeight     =   328
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   180
-         TabIndex        =   9
+         TabIndex        =   8
          Top             =   15
          Width           =   2700
+         Begin ngUI.ngTabStrip tsLists 
+            Height          =   570
+            Left            =   180
+            TabIndex        =   23
+            Top             =   465
+            Width           =   795
+            _ExtentX        =   1402
+            _ExtentY        =   1005
+         End
          Begin VB.PictureBox picInspectors 
             BorderStyle     =   0  'None
             Height          =   3030
@@ -161,17 +170,18 @@ Begin VB.Form frmMap
             ScaleHeight     =   202
             ScaleMode       =   3  'Pixel
             ScaleWidth      =   139
-            TabIndex        =   15
-            Top             =   1845
+            TabIndex        =   13
+            Top             =   1860
             Width           =   2085
             Begin VB.PictureBox picBrush 
+               BackColor       =   &H80000014&
                BorderStyle     =   0  'None
                Height          =   615
                Left            =   900
                ScaleHeight     =   41
                ScaleMode       =   3  'Pixel
                ScaleWidth      =   42
-               TabIndex        =   24
+               TabIndex        =   20
                Top             =   1830
                Visible         =   0   'False
                Width           =   630
@@ -179,7 +189,7 @@ Begin VB.Form frmMap
             Begin ngPlugins.ObjectInspector insTool 
                Height          =   660
                Left            =   90
-               TabIndex        =   20
+               TabIndex        =   16
                Top             =   1890
                Visible         =   0   'False
                Width           =   660
@@ -189,127 +199,55 @@ Begin VB.Form frmMap
             Begin ngPlugins.TilePicker tpkTiles 
                Height          =   300
                Left            =   1140
-               TabIndex        =   17
+               TabIndex        =   14
                Top             =   120
                Width           =   420
                _ExtentX        =   741
                _ExtentY        =   529
             End
-            Begin vbalDTab6.vbalDTabControl dtTool 
-               Height          =   1545
-               Left            =   270
-               TabIndex        =   19
-               Top             =   1770
-               Width           =   1515
-               _ExtentX        =   2672
-               _ExtentY        =   2725
-               TabAlign        =   0
-               BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-                  Name            =   "Tahoma"
-                  Size            =   8.25
-                  Charset         =   0
-                  Weight          =   400
-                  Underline       =   0   'False
-                  Italic          =   0   'False
-                  Strikethrough   =   0   'False
-               EndProperty
-               BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-                  Name            =   "Tahoma"
-                  Size            =   8.25
-                  Charset         =   0
-                  Weight          =   700
-                  Underline       =   0   'False
-                  Italic          =   0   'False
-                  Strikethrough   =   0   'False
-               EndProperty
-               ShowCloseButton =   0   'False
-               MoveableTabs    =   0   'False
-            End
             Begin ngPlugins.ObjectInspector insInspect 
                Height          =   660
                Left            =   75
-               TabIndex        =   18
+               TabIndex        =   15
                Top             =   75
                Visible         =   0   'False
                Width           =   660
                _ExtentX        =   1164
                _ExtentY        =   1164
             End
-            Begin vbalDTab6.vbalDTabControl dtInspector 
-               Height          =   1545
-               Left            =   120
-               TabIndex        =   16
-               Top             =   45
-               Width           =   1710
-               _ExtentX        =   3016
-               _ExtentY        =   2725
-               TabAlign        =   0
-               BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-                  Name            =   "Tahoma"
-                  Size            =   8.25
-                  Charset         =   0
-                  Weight          =   400
-                  Underline       =   0   'False
-                  Italic          =   0   'False
-                  Strikethrough   =   0   'False
-               EndProperty
-               BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-                  Name            =   "Tahoma"
-                  Size            =   8.25
-                  Charset         =   0
-                  Weight          =   700
-                  Underline       =   0   'False
-                  Italic          =   0   'False
-                  Strikethrough   =   0   'False
-               EndProperty
-               ShowCloseButton =   0   'False
-               MoveableTabs    =   0   'False
-            End
             Begin ngPlugins.Script scObject 
                Height          =   975
                Left            =   0
-               TabIndex        =   23
+               TabIndex        =   19
                Top             =   0
                Visible         =   0   'False
                Width           =   810
                _ExtentX        =   1429
                _ExtentY        =   1720
             End
-         End
-         Begin vbalDTab6.vbalDTabControl dtLists 
-            Height          =   1665
-            Left            =   165
-            TabIndex        =   14
-            Top             =   180
-            Width           =   1335
-            _ExtentX        =   2355
-            _ExtentY        =   2937
-            TabAlign        =   0
-            BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-               Name            =   "Tahoma"
-               Size            =   8.25
-               Charset         =   0
-               Weight          =   400
-               Underline       =   0   'False
-               Italic          =   0   'False
-               Strikethrough   =   0   'False
-            EndProperty
-            BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-               Name            =   "Tahoma"
-               Size            =   8.25
-               Charset         =   0
-               Weight          =   700
-               Underline       =   0   'False
-               Italic          =   0   'False
-               Strikethrough   =   0   'False
-            EndProperty
-            ShowCloseButton =   0   'False
-            MoveableTabs    =   0   'False
+            Begin ngUI.ngTabStrip tsInspector 
+               Height          =   1110
+               Left            =   345
+               TabIndex        =   24
+               Top             =   180
+               Width           =   1380
+               _ExtentX        =   2434
+               _ExtentY        =   1958
+            End
+            Begin ngUI.ngTabStrip tsTool 
+               Height          =   1425
+               Left            =   285
+               TabIndex        =   25
+               Top             =   1590
+               Width           =   1425
+               _ExtentX        =   2514
+               _ExtentY        =   2514
+            End
          End
          Begin ngPlugins.EntityList elLayers 
             Height          =   1680
             Left            =   -540
-            TabIndex        =   10
+            TabIndex        =   9
             Top             =   15
             Visible         =   0   'False
             Width           =   1020
@@ -320,7 +258,7 @@ Begin VB.Form frmMap
          Begin ngPlugins.EntityList elAreas 
             Height          =   1770
             Left            =   -195
-            TabIndex        =   11
+            TabIndex        =   10
             Top             =   15
             Visible         =   0   'False
             Width           =   1020
@@ -331,7 +269,7 @@ Begin VB.Form frmMap
          Begin ngPlugins.EntityList elSprites 
             Height          =   1770
             Left            =   150
-            TabIndex        =   13
+            TabIndex        =   12
             Top             =   15
             Visible         =   0   'False
             Width           =   1020
@@ -342,7 +280,7 @@ Begin VB.Form frmMap
          Begin ngPlugins.EntityList elLights 
             Height          =   1770
             Left            =   465
-            TabIndex        =   12
+            TabIndex        =   11
             Top             =   15
             Visible         =   0   'False
             Width           =   1020
@@ -353,7 +291,7 @@ Begin VB.Form frmMap
          Begin ngPlugins.EntityList elObjects 
             Height          =   1770
             Left            =   765
-            TabIndex        =   22
+            TabIndex        =   18
             Top             =   45
             Visible         =   0   'False
             Width           =   1020
@@ -361,36 +299,6 @@ Begin VB.Form frmMap
             _ExtentY        =   3122
             EnableDragging  =   -1  'True
          End
-      End
-      Begin vbalDTab6.vbalDTabControl dtViews 
-         Height          =   4920
-         Left            =   0
-         TabIndex        =   3
-         Top             =   0
-         Width           =   6585
-         _ExtentX        =   11615
-         _ExtentY        =   8678
-         TabAlign        =   0
-         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-            Name            =   "Tahoma"
-            Size            =   8.25
-            Charset         =   0
-            Weight          =   400
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-            Name            =   "Tahoma"
-            Size            =   8.25
-            Charset         =   0
-            Weight          =   700
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         ShowCloseButton =   0   'False
-         MoveableTabs    =   0   'False
       End
       Begin ngPlugins.ObjectInspector insMap 
          Height          =   660
@@ -401,6 +309,15 @@ Begin VB.Form frmMap
          Width           =   660
          _ExtentX        =   1164
          _ExtentY        =   1164
+      End
+      Begin ngUI.ngTabStrip tsViews 
+         Height          =   1890
+         Left            =   3390
+         TabIndex        =   22
+         Top             =   105
+         Width           =   3075
+         _ExtentX        =   5424
+         _ExtentY        =   3334
       End
    End
 End
@@ -429,7 +346,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As PointAPI) As Long
+Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
 Implements iExtendedForm
 Implements iEditingCommands
 Implements iCustomMenus
@@ -582,6 +499,11 @@ Private m_intLayerCache() As Integer
 Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
 
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+On Error Resume Next
+    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\map.png")
+End Property
+
 Private Function Engine() As Fury2Engine
 On Error Resume Next
     Set Engine = Editor.Engine
@@ -620,7 +542,7 @@ On Error Resume Next
         ActiveType = "Layers"
     Case "picbrush", "tpktiles"
         ActiveType = "Brush"
-    Case "picoverlay", "picmapview", "picmapviewport", "hsmap", "vsmap", "dtviews"
+    Case "picoverlay", "picmapview", "picmapviewport", "hsmap", "vsmap", "tsViews"
         Select Case m_lngCurrentView
         Case View_Tiles
             ActiveType = "Tiles"
@@ -693,7 +615,7 @@ Public Sub AutoScroll(Optional ByVal X As Long = -32767, Optional ByVal Y As Lon
 On Error Resume Next
 Dim l_lngX1 As Long, l_lngY1 As Long, l_lngX2 As Long, l_lngY2 As Long
 Dim l_lngScrollX As Long, l_lngScrollY As Long
-Dim l_ptCursor As PointAPI
+Dim l_ptCursor As POINTAPI
 Dim l_lngCapture As Long
     If Not m_voViewOptions.AutoScroll Then Exit Sub
     hsMap.Tag = "lock"
@@ -1292,51 +1214,51 @@ Dim l_lngTemp As Long
     Next l_lngY
 End Sub
 
-Private Sub dtInspector_Resize()
+Private Sub tsInspector_Resize()
 On Error Resume Next
     If m_ctlCurrentInspector Is Nothing Then
     Else
-        m_ctlCurrentInspector.Move 2, 24 + dtInspector.Top, dtInspector.Width - 4, dtInspector.Height - 26
+        m_ctlCurrentInspector.Move 2, tsInspector.Top + tsInspector.IdealHeight + 1, tsInspector.Width - 4, tsInspector.Height - tsInspector.IdealHeight - 3
         m_ctlCurrentInspector.ZOrder
     End If
 End Sub
 
-Private Sub dtInspector_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsInspector_TabSelected(theTab As ngTab)
 On Error Resume Next
     InspectorChanged
 End Sub
 
-Private Sub dtLists_Resize()
+Private Sub tsLists_Resize()
 On Error Resume Next
     If m_ctlCurrentList Is Nothing Then
     Else
-        m_ctlCurrentList.Move 2, 24 + dtLists.Top, dtLists.Width - 4, dtLists.Height - 26
+        m_ctlCurrentList.Move 2, tsLists.Top + tsLists.IdealHeight + 1, tsLists.Width - 4, tsLists.Height - tsLists.IdealHeight - 3
         m_ctlCurrentList.ZOrder
     End If
 End Sub
 
-Private Sub dtLists_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsLists_TabSelected(theTab As ngTab)
 On Error Resume Next
     ListChanged
 End Sub
 
-Private Sub dtTool_Resize()
+Private Sub tsTool_Resize()
 On Error Resume Next
     If m_ctlCurrentTool Is Nothing Then
     Else
-        m_ctlCurrentTool.Move 2, 24 + dtTool.Top, dtTool.Width - 4, dtTool.Height - 26
+        m_ctlCurrentTool.Move 2, tsTool.Top + tsTool.IdealHeight + 1, tsTool.Width - 4, tsTool.Height - tsLists.IdealHeight - 3
         m_ctlCurrentTool.ZOrder
     End If
 End Sub
 
-Private Sub dtTool_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsTool_TabSelected(theTab As ngTab)
 On Error Resume Next
     ToolInspectorChanged
 End Sub
 
-Private Sub dtViews_Resize()
+Private Sub tsViews_Resize()
 On Error Resume Next
-    picMapView.Move (2) + dtViews.Left, 24, dtViews.Width - 4, dtViews.Height - 26
+    picMapView.Move (2) + tsViews.Left, tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - (tsViews.IdealHeight + 3)
     If picMapView.Visible Then picMapView.ZOrder
     insMap.Move picMapView.Left, picMapView.Top, picMapView.Width, picMapView.Height
     If insMap.Visible Then insMap.ZOrder
@@ -1344,7 +1266,7 @@ On Error Resume Next
     If scMap.Visible Then scMap.ZOrder
 End Sub
 
-Private Sub dtViews_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsViews_TabSelected(theTab As ngTab)
 On Error Resume Next
     m_lngCurrentView = CLng(Mid(theTab.key, 2))
     ViewChanged
@@ -2143,7 +2065,7 @@ Public Sub InitSplitters()
 On Error Resume Next
     With m_splSidebar
         .Orientation = cSPLTOrientationVertical
-        .Bind dtViews, picSidebar
+        .Bind tsViews, picSidebar
         .Orientation = cSPLTOrientationVertical
         .MinimumSize(cSPLTRightOrBottomPanel) = 125
         .MaximumSize(cSPLTRightOrBottomPanel) = 450
@@ -2152,7 +2074,7 @@ On Error Resume Next
     End With
     With m_splSidebarPanels
         .Orientation = cSPLTOrientationHorizontal
-        .Bind dtLists, picInspectors
+        .Bind tsLists, picInspectors
         .Orientation = cSPLTOrientationHorizontal
         .MinimumSize(cSPLTLeftOrTopPanel) = 75
         .MaximumSize(cSPLTLeftOrTopPanel) = 400
@@ -2161,7 +2083,7 @@ On Error Resume Next
     End With
     With m_splSidebarInspectors
         .Orientation = cSPLTOrientationHorizontal
-        .Bind dtInspector, dtTool
+        .Bind tsInspector, tsTool
         .Orientation = cSPLTOrientationHorizontal
         .MinimumSize(cSPLTRightOrBottomPanel) = 75
         .MaximumSize(cSPLTRightOrBottomPanel) = 500
@@ -2172,14 +2094,14 @@ End Sub
 
 Public Sub InitViews()
 On Error Resume Next
-    dtViews.Tabs.Add "t" & CStr(View_Tiles), , "Tiles"
-    dtViews.Tabs.Add "t" & CStr(View_Blocking), , "Blocking"
-    dtViews.Tabs.Add "t" & CStr(View_Lighting), , "Lighting"
-    dtViews.Tabs.Add "t" & CStr(View_Areas), , "Areas"
-    dtViews.Tabs.Add "t" & CStr(View_Sprites), , "Sprites"
-    dtViews.Tabs.Add "t" & CStr(View_Objects), , "Objects"
-    dtViews.Tabs.Add "t" & CStr(View_Script), , "Script"
-    dtViews.Tabs.Add "t" & CStr(View_Properties), , "Properties"
+    tsViews.Tabs.AddNew "Tiles", "t" & CStr(View_Tiles)
+    tsViews.Tabs.AddNew "Blocking", "t" & CStr(View_Blocking)
+    tsViews.Tabs.AddNew "Lighting", "t" & CStr(View_Lighting)
+    tsViews.Tabs.AddNew "Areas", "t" & CStr(View_Areas)
+    tsViews.Tabs.AddNew "Sprites", "t" & CStr(View_Sprites)
+    tsViews.Tabs.AddNew "Objects", "t" & CStr(View_Objects)
+    tsViews.Tabs.AddNew "Script", "t" & CStr(View_Script)
+    tsViews.Tabs.AddNew "Properties", "t" & CStr(View_Properties)
 End Sub
 
 Private Sub insInspect_AfterItemChange(ByVal OldValue As Variant, ByVal NewValue As Variant)
@@ -2199,8 +2121,8 @@ Dim l_strItemName As String
     ElseIf TypeOf l_objObject Is Fury2MapLayer Then
         Select Case l_strItemName
         Case "sprites"
-            dtViews.SelectTab View_Sprites + 1
-            dtLists.SelectTab 2
+            tsViews.SelectTab tsViews.Tabs(View_Sprites + 1)
+            tsLists.SelectTab tsLists.Tabs(2)
         Case Else
         End Select
     End If
@@ -2211,10 +2133,10 @@ On Error Resume Next
 Dim l_objInspect As Object
 Dim l_sndObject As Fury2SoundObject
     m_ctlCurrentInspector.Visible = False
-    If (dtInspector.Tabs.Count = 0) Then
+    If (tsInspector.Tabs.Count = 0) Then
         Set m_ctlCurrentInspector = Nothing
     Else
-        Select Case LCase(Trim(dtInspector.SelectedTab.key))
+        Select Case LCase(Trim(tsInspector.SelectedTab.key))
         Case "tiles"
             Set m_ctlCurrentInspector = tpkTiles
         Case "layer"
@@ -2304,7 +2226,7 @@ Dim l_sndObject As Fury2SoundObject
             Set m_ctlCurrentInspector = Nothing
         End Select
     End If
-    dtInspector_Resize
+    tsInspector_Resize
     m_ctlCurrentInspector.Visible = True
 End Sub
 
@@ -2349,49 +2271,52 @@ Public Sub ListChanged()
 On Error Resume Next
 Dim l_strSelectedTab As String
     m_ctlCurrentList.Visible = False
-    dtInspector.Tabs.Clear
-    l_strSelectedTab = dtLists.SelectedTab.key
-    Select Case LCase(Trim(dtLists.SelectedTab.key))
+    tsInspector.DisableUpdates = True
+    tsInspector.Tabs.Clear
+    l_strSelectedTab = tsLists.SelectedTab.key
+    Select Case LCase(Trim(tsLists.SelectedTab.key))
     Case "layers"
         Set m_ctlCurrentList = elLayers
         RefreshLayers
-        With dtInspector.Tabs
+        With tsInspector.Tabs
             If (m_lngCurrentView = View_Tiles) Then
-                .Add "Tiles", , "Tiles"
+                .AddNew "Tiles", "Tiles"
             End If
-            .Add "Layer", , "Layer"
+            .AddNew "Layer", "Layer"
         End With
     Case "sprites"
         Set m_ctlCurrentList = elSprites
         RefreshSprites
-        With dtInspector.Tabs
-            .Add "Sprite", , "Sprite"
-            .Add "Script", , "Script"
-            .Add "Path", , "Path"
+        With tsInspector.Tabs
+            .AddNew "Sprite", "Sprite"
+            .AddNew "Script", "Script"
+            .AddNew "Path", "Path"
         End With
     Case "lights"
         Set m_ctlCurrentList = elLights
         RefreshLights
-        With dtInspector.Tabs
-            .Add "Light", , "Light"
+        With tsInspector.Tabs
+            .AddNew "Light", "Light"
         End With
     Case "areas"
         Set m_ctlCurrentList = elAreas
         RefreshAreas
-        With dtInspector.Tabs
-            .Add "Area", , "Area"
-            .Add "Script", , "Script"
+        With tsInspector.Tabs
+            .AddNew "Area", "Area"
+            .AddNew "Script", "Script"
         End With
     Case "objects"
         Set m_ctlCurrentList = elObjects
-        With dtInspector.Tabs
+        With tsInspector.Tabs
         End With
     Case Else
         Set m_ctlCurrentList = Nothing
     End Select
+    tsInspector.DisableUpdates = False
+    tsInspector.Reflow
     InspectorChanged
     m_ctlCurrentList.Visible = True
-    dtLists_Resize
+    tsLists_Resize
 End Sub
 
 Public Function MapObjectFromPoint(ByVal X As Long, ByVal Y As Long) As Fury2MapObject
@@ -2699,7 +2624,7 @@ End Sub
 Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
-Dim l_ptMouse As PointAPI
+Dim l_ptMouse As POINTAPI
     With m_mapMap.Layers(m_lngSelectedLayer).Sprites
         BeginProcess "Performing Paste..."
         If AtIndex < 1 Then
@@ -3088,42 +3013,36 @@ End Sub
 Public Sub Redraw_Blocking()
 On Error Resume Next
 Dim l_rctSelection As Fury2Rect
-    Select Case m_mapMap.CollisionType
-    Case 0 ' None
-    Case 1 ' Tile
-    Case 2 ' Vector
-        With m_mapMap.Layers(m_lngSelectedLayer)
-            ReDim Preserve m_bytSelectedCollisionLines(0 To .CollisionLineCount)
-            SoftFX.MultiPrimitive_Line_AA_Ptr m_imgBackbuffer.Handle, .CollisionLinePointer(0), m_voViewOptions.BlockingColor, .CollisionLineCount, hsMap.Value, vsMap.Value
-            SoftFX.RenderLines_Masked m_imgBackbuffer.Handle, .CollisionLinePointer(0), VarPtr(m_bytSelectedCollisionLines(1)), SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), 0, 2), 255), .CollisionLineCount, hsMap.Value, vsMap.Value
-        End With
-        Select Case Tool_Blocking
-        Case BlockingTool_Line, BlockingTool_PolyLine
-            If m_lngPoint > 0 Then
-                m_imgBackbuffer.FilledEllipse Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 255), 1, 1
-                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+    With m_mapMap.Layers(m_lngSelectedLayer)
+        ReDim Preserve m_bytSelectedCollisionLines(0 To .CollisionLineCount)
+        SoftFX.MultiPrimitive_Line_AA_Ptr m_imgBackbuffer.Handle, .CollisionLinePointer(0), m_voViewOptions.BlockingColor, .CollisionLineCount, hsMap.Value, vsMap.Value
+        SoftFX.RenderLines_Masked m_imgBackbuffer.Handle, .CollisionLinePointer(0), VarPtr(m_bytSelectedCollisionLines(1)), SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), 0, 2), 255), .CollisionLineCount, hsMap.Value, vsMap.Value
+    End With
+    Select Case Tool_Blocking
+    Case BlockingTool_Line, BlockingTool_PolyLine
+        If m_lngPoint > 0 Then
+            m_imgBackbuffer.FilledEllipse Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 255), 1, 1
+            m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+        End If
+        m_imgBackbuffer.FilledEllipse Array(m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 220, 220, 127), 1, 1, RenderMode_SourceAlpha
+    Case BlockingTool_Rectangle
+        If m_lngPoint > 0 Then
+            m_imgBackbuffer.FilledEllipse Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 255), 1, 1
+            m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_fptPoints(0).X - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+            m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
+            m_imgBackbuffer.AntiAliasLine Array(m_lngMouseX - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+            m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_lngMouseY - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+        End If
+        m_imgBackbuffer.FilledEllipse Array(m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 220, 220, 127), 1, 1, RenderMode_SourceAlpha
+    Case BlockingTool_Select
+        If m_booSelectingBlocking Then
+            Set l_rctSelection = F2Rect(m_lngStartMouseX - hsMap.Value, m_lngStartMouseY - vsMap.Value, m_lngMouseX - hsMap.Value + Sgn(m_lngMouseX - m_lngStartMouseX), m_lngMouseY - vsMap.Value + Sgn(m_lngMouseY - m_lngStartMouseY)).Rationalize
+            If l_rctSelection.Width >= 4 And l_rctSelection.Height >= 4 Then
+                m_imgBackbuffer.Box l_rctSelection, F2Black
+                m_imgBackbuffer.Box l_rctSelection.Adjust(-1, -1), F2White
+                m_imgBackbuffer.Fill l_rctSelection.Adjust(-1, -1), SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), RenderMode_SourceAlpha
             End If
-            m_imgBackbuffer.FilledEllipse Array(m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 220, 220, 127), 1, 1, RenderMode_SourceAlpha
-        Case BlockingTool_Rectangle
-            If m_lngPoint > 0 Then
-                m_imgBackbuffer.FilledEllipse Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 255), 1, 1
-                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_fptPoints(0).X - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
-                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
-                m_imgBackbuffer.AntiAliasLine Array(m_lngMouseX - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
-                m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_lngMouseY - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
-            End If
-            m_imgBackbuffer.FilledEllipse Array(m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 220, 220, 127), 1, 1, RenderMode_SourceAlpha
-        Case BlockingTool_Select
-            If m_booSelectingBlocking Then
-                Set l_rctSelection = F2Rect(m_lngStartMouseX - hsMap.Value, m_lngStartMouseY - vsMap.Value, m_lngMouseX - hsMap.Value + Sgn(m_lngMouseX - m_lngStartMouseX), m_lngMouseY - vsMap.Value + Sgn(m_lngMouseY - m_lngStartMouseY)).Rationalize
-                If l_rctSelection.Width >= 4 And l_rctSelection.Height >= 4 Then
-                    m_imgBackbuffer.Box l_rctSelection, F2Black
-                    m_imgBackbuffer.Box l_rctSelection.Adjust(-1, -1), F2White
-                    m_imgBackbuffer.Fill l_rctSelection.Adjust(-1, -1), SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), RenderMode_SourceAlpha
-                End If
-            End If
-        Case Else
-        End Select
+        End If
     Case Else
     End Select
 End Sub
@@ -3338,7 +3257,7 @@ Dim l_lngWidth As Long, l_lngHeight As Long
     ElseIf (m_imgBrush.Width <> l_lngWidth) Or (m_imgBrush.Height <> l_lngHeight) Then
         m_imgBrush.Resize l_lngWidth, l_lngHeight
     End If
-    m_imgBrush.Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+    m_imgBrush.Clear SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Red, Blue)
     m_brsBrush.Render m_imgBrush, m_mapMap.Layers(m_lngSelectedLayer), 1
     picBrush_Paint
 End Sub
@@ -3578,21 +3497,22 @@ Dim l_mobObject As Fury2MapObject
         elObjects.Refresh
     End If
     Set l_mobObject = m_mapMap.Objects(m_lngSelectedObject)
-    With dtInspector.Tabs
+    tsInspector.DisableUpdates = True
+    With tsInspector.Tabs
         If TypeOf l_mobObject Is Fury2SoundObject Then
             If .Item(1).key <> "Sound" Then
                 .Clear
-                .Add "Sound", , "Sound"
-                dtInspector.SelectTab 1
+                .AddNew "Sound", "Sound"
             End If
         Else
             If .Item(1).key <> "Object" Then
                 .Clear
-                .Add "Object", , "Object"
-                dtInspector.SelectTab 1
+                .AddNew "Object", "Object"
             End If
         End If
     End With
+    tsInspector.DisableUpdates = False
+    tsInspector.Reflow
     InspectorChanged
 End Sub
 
@@ -3675,9 +3595,9 @@ End Sub
 Public Sub ResizeAll()
 On Error Resume Next
     picMapView_Resize
-    dtLists_Resize
-    dtInspector_Resize
-    dtTool_Resize
+    tsLists_Resize
+    tsInspector_Resize
+    tsTool_Resize
 End Sub
 
 Public Sub ResizeMapTools()
@@ -3884,14 +3804,14 @@ End Sub
 
 Public Sub Tiles_ToolChanged()
 On Error Resume Next
-    With dtTool.Tabs
+    With tsTool.Tabs
         Select Case m_lngCurrentTool(View_Tiles)
         Case TileTool_Pen, TileTool_Line, TileTool_Rectangle, TileTool_FilledRectangle, _
             TileTool_Circle, TileTool_FilledCircle, TileTool_FloodFill, TileTool_Replace
-            .Add "Brush", , "Brush"
-            .Add "Options", , "Options"
+            .AddNew "Brush", "Brush"
+            .AddNew "Options", "Options"
         Case TileTool_Selection
-            .Add "Options", , "Options"
+            .AddNew "Options", "Options"
         Case Else
         End Select
     End With
@@ -4987,7 +4907,8 @@ Dim l_strTool As String
     m_booDraggingLightingObstructions = False
     m_booDraggingLightingPlanes = False
     ResetOverlay
-    dtTool.Tabs.Clear
+    tsTool.DisableUpdates = True
+    tsTool.Tabs.Clear
     Select Case m_lngCurrentView
     Case View_Tiles
         Tiles_ToolChanged
@@ -4997,7 +4918,9 @@ Dim l_strTool As String
         Lighting_ToolChanged
     Case Else
     End Select
-    dtTool.Tabs.Add "View", , "View"
+    tsTool.Tabs.AddNew "View", "View"
+    tsTool.DisableUpdates = False
+    tsTool.Reflow
     ToolInspectorChanged
     Redraw
     Screen.MousePointer = 0
@@ -5006,7 +4929,7 @@ End Sub
 Public Sub ToolInspectorChanged()
 On Error Resume Next
     m_ctlCurrentTool.Visible = False
-    Select Case LCase(Trim(dtTool.SelectedTab.key))
+    Select Case LCase(Trim(tsTool.SelectedTab.key))
     Case "view"
         Set m_ctlCurrentTool = insTool
         With insTool
@@ -5018,7 +4941,7 @@ On Error Resume Next
         Set m_ctlCurrentTool = Nothing
     End Select
     m_ctlCurrentTool.Visible = True
-    dtTool_Resize
+    tsTool_Resize
 End Sub
 
 Private Sub tpkTiles_SelectionChanged(ByRef Tiles() As Integer)
@@ -5119,26 +5042,29 @@ Dim l_objObject As Object
     picMapView.Visible = picSidebar.Visible
     insMap.Visible = (m_lngCurrentView = View_Properties)
     scMap.Visible = (m_lngCurrentView = View_Script)
-    With dtLists.Tabs
+    tsLists.DisableUpdates = True
+    With tsLists.Tabs
         .Clear
         Select Case m_lngCurrentView
         Case View_Tiles
-            .Add "Layers", , "Layers"
+            .AddNew "Layers", "Layers"
         Case View_Blocking
-            .Add "Layers", , "Layers"
+            .AddNew "Layers", "Layers"
         Case View_Lighting
-            .Add "Layers", , "Layers"
-            .Add "Lights", , "Lights"
+            .AddNew "Layers", "Layers"
+            .AddNew "Lights", "Lights"
         Case View_Areas
-            .Add "Areas", , "Areas"
+            .AddNew "Areas", "Areas"
         Case View_Sprites
-            .Add "Layers", , "Layers"
-            .Add "Sprites", , "Sprites"
+            .AddNew "Layers", "Layers"
+            .AddNew "Sprites", "Sprites"
         Case View_Objects
-            .Add "Objects", , "Objects"
+            .AddNew "Objects", "Objects"
         Case Else
         End Select
     End With
+    tsLists.DisableUpdates = False
+    tsLists.Reflow
     Select Case m_lngCurrentView
     Case View_Properties
         insMap.Inspect m_mapMap, "Map"
@@ -5151,7 +5077,7 @@ Dim l_objObject As Object
     Redraw
     RefreshMapTools
     ResizeMapTools
-    dtViews_Resize
+    tsViews_Resize
     ToolChanged
     Screen.MousePointer = 0
 End Sub

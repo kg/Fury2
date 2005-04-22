@@ -119,7 +119,9 @@ Private Sub iWidget_MouseDown(ByVal Parent As iContainer, ByVal Button As Long, 
 On Error Resume Next
     If Visible = False Then Exit Sub
     Parent.SetCapture Me
-    DispatchEvent "MouseDown", Button, Shift, X, Y
+    With Rectangle
+        DispatchEvent "MouseDown", Button, Shift, X - .Left, Y - .Top
+    End With
 End Sub
 
 Private Sub iWidget_MouseEnter(ByVal Parent As iContainer)
@@ -135,14 +137,18 @@ End Sub
 Private Sub iWidget_MouseMove(ByVal Parent As iContainer, ByVal Button As Long, ByVal Shift As Long, X As Long, Y As Long)
 On Error Resume Next
     If Visible = False Then Exit Sub
-    DispatchEvent "MouseMove", Button, Shift, X, Y
+    With Rectangle
+        DispatchEvent "MouseMove", Button, Shift, X - .Left, Y - .Top
+    End With
 End Sub
 
 Private Sub iWidget_MouseUp(ByVal Parent As iContainer, ByVal Button As Long, ByVal Shift As Long, X As Long, Y As Long)
 On Error Resume Next
     If Visible = False Then Exit Sub
     Parent.ReleaseCapture Me
-    DispatchEvent "MouseUp", Button, Shift, X, Y
+    With Rectangle
+        DispatchEvent "MouseUp", Button, Shift, X - .Left, Y - .Top
+    End With
 End Sub
 
 Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)

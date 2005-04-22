@@ -60,7 +60,7 @@ Dim l_lngParameterCount As Long
         If Object Is Nothing Then Exit Function
         Set l_objObject = Object
     End If
-    Engine.ContextLevelAdd "Bound(" & TypeName(l_objObject) & "." & Method & ")"
+    Engine.ContextLevelAdd "Event(" & TypeName(l_objObject) & "." & Method & ")"
     If VarType(BoundParameters) = vbObject Then
         If (UBound(Parameters) >= 0) Then
             ReDim l_varParameters(0 To UBound(Parameters))
@@ -120,7 +120,7 @@ Dim l_lngParameterCount As Long
     End Select
     m_lngBlocked = m_lngBlocked - 1
     If Err = 438 Then
-        Engine.DebugOut "Bound event failed to invoke: " & TypeName(l_objObject) & "." & Method
+        Engine.DebugOut "Event failed to invoke: " & TypeName(l_objObject) & "." & Method
     End If
     Engine.ContextLevelRemove
 End Function

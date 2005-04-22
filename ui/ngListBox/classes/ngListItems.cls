@@ -181,6 +181,10 @@ End Sub
 
 Public Sub Clear()
 On Error Resume Next
+Dim l_liItem As ngListItem
+    For Each l_liItem In m_colCollection
+        l_liItem.Free
+    Next l_liItem
     Set m_colCollection = New Collection
 End Sub
 

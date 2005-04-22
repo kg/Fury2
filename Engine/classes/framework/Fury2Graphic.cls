@@ -125,25 +125,23 @@ On Error Resume Next
     Height = Images(AnimationFrame).Height
 End Property
 
-Function Show(ByVal X, ByVal Y, Optional ByVal Alpha = 1, Optional ByVal Slot = -1) As Long
+Function Show(ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1, Optional ByVal Slot As Long = -1) As Long
 On Error Resume Next
     If Slot = -1 Then Slot = Engine.ActivePictureSlots
-    Engine.ShowPicture Slot, Images(AnimationFrame), Floor(CSng(X) - XCenter), Floor(CSng(Y) - YCenter), , , , , BlitMode, Alpha
+    Engine.ShowPicture Slot, Images(AnimationFrame), Floor(X - XCenter), Floor(Y - YCenter), , , , , BlitMode, Alpha
     Show = Slot
 End Function
 
-Sub Draw(ByVal Surface, ByVal X, ByVal Y, Optional ByVal Alpha = 1)
+Sub Draw(ByVal Surface As Fury2Image, ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1)
 On Error Resume Next
-Dim l_imgSurface As Fury2Image
 Dim l_imgFrame As Fury2Image
     If Images.Count = 0 Then Exit Sub
-    Set l_imgSurface = Surface
-    If l_imgSurface Is Nothing Then Exit Sub
+    If Surface Is Nothing Then Exit Sub
     AnimationFrame = WrapValue(AnimationFrame, 1, Images.Count)
     Set l_imgFrame = Images(AnimationFrame)
     If l_imgFrame Is Nothing Then Exit Sub
     With l_imgFrame
-        l_imgSurface.Blit F2Rect(Floor(CSng(X) - XCenter), Floor(CSng(Y) - YCenter), .Width, .Height, False), .Rectangle, l_imgFrame, Alpha * Me.Alpha, BlitMode
+        Surface.Blit F2Rect(Floor(X - XCenter), Floor(Y - YCenter), .Width, .Height, False), .Rectangle, l_imgFrame, Alpha * Me.Alpha, BlitMode
     End With
 End Sub
 

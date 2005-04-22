@@ -37,6 +37,10 @@ Implements iPlugin
 Implements iFileTypePlugin
 Private m_objEditor As Object
 
+Public Property Get Editor() As Object
+    Set Editor = m_objEditor
+End Property
+
 Private Sub iPlugin_ShowConfiguration()
 End Sub
 

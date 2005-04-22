@@ -91,6 +91,9 @@ Private m_booLoaded As Boolean
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
 
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+End Property
+
 Private Property Get iDocument_Object() As Object
     Set iDocument_Object = Me
 End Property

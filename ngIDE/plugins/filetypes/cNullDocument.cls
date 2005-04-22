@@ -33,6 +33,9 @@ Attribute VB_Exposed = False
 Option Explicit
 Implements iDocument
 
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+End Property
+
 Private Property Get iDocument_Object() As Object
     Set iDocument_Object = Me
 End Property

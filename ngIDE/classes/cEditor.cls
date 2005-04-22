@@ -188,6 +188,19 @@ Dim l_booResult As Boolean
     Err.Clear
 End Function
 
+Public Sub Action_PreviousWindow()
+On Error Resume Next
+Dim l_lngIndex As Long
+    l_lngIndex = frmMain.Documents.Find(frmMain.ActiveChild)
+    If l_lngIndex = 1 Then
+        l_lngIndex = frmMain.Documents.Count
+    Else
+        l_lngIndex = l_lngIndex - 1
+    End If
+    frmMain.ActivateChild l_lngIndex
+    Err.Clear
+End Sub
+
 Public Sub Action_NextWindow()
 On Error Resume Next
 Dim l_lngIndex As Long
@@ -467,6 +480,7 @@ On Error Resume Next
     End If
     frmMain.HideInactiveWindows
     frmMain.RefreshActiveDocument
+    frmMain.RefreshDocumentTabs
     Set m_docChild = Document
     If Not (m_docChild Is Nothing) Then
         If m_docChild.Toolbar Is Nothing Then Else m_docChild.Toolbar.ShowToolbar frmMain.tbrLeft

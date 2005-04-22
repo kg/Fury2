@@ -353,7 +353,8 @@ End Property
 
 Public Property Set ClipRectangle(ByRef NewRect As Fury2Rect)
 On Error Resume Next
-    SoftFX.SetImageClipRectangle m_lngImage, NewRect.GetRectangle
+    SoftFX.SetImageClipRectangle m_lngImage, Rectangle.GetRectangle
+    ClippedSetClipRectangle NewRect
 End Property
 
 Public Sub Composite(ByVal Color As Long)

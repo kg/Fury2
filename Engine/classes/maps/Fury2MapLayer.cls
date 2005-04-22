@@ -908,10 +908,10 @@ End Sub
 Public Function SetCollisionLine(ByVal Index As Long, NewLine)
 On Error Resume Next
     With mvarBlockingLines(Index)
-        .Start.X = NewLine.Left
-        .Start.Y = NewLine.Top
-        .end.X = NewLine.Right
-        .end.Y = NewLine.Bottom
+        .Start.X = NewLine.left
+        .Start.Y = NewLine.top
+        .end.X = NewLine.right
+        .end.Y = NewLine.bottom
     End With
 End Function
 

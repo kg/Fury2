@@ -1,6 +1,5 @@
 VERSION 5.00
-Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.5#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.10#0"; "ngUI.ocx"
 Begin VB.Form frmPluginManager 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Plugin Manager"
@@ -126,181 +125,181 @@ Begin VB.Form frmPluginManager
       Begin ngUI.ngListBox lstPlugins 
          Height          =   2220
          Left            =   75
-         TabIndex        =   21
+         TabIndex        =   6
          Top             =   225
          Width           =   4110
          _ExtentX        =   7250
          _ExtentY        =   3916
+         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+            Name            =   "Tahoma"
+            Size            =   8.25
+            Charset         =   0
+            Weight          =   400
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
+         AllowReorder    =   0   'False
+         AllowMultiSelect=   0   'False
+         AllowNullSelection=   0   'False
       End
    End
-   Begin vbalDTab6.vbalDTabControl dtSelected 
+   Begin VB.PictureBox picPluginOptions 
+      BackColor       =   &H80000014&
+      BorderStyle     =   0  'None
+      Height          =   1035
+      Left            =   75
+      ScaleHeight     =   69
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   383
+      TabIndex        =   17
+      Top             =   2940
+      Visible         =   0   'False
+      Width           =   5745
+      Begin VB.CheckBox chkShowInOpenDialog 
+         BackColor       =   &H80000014&
+         Caption         =   "Show in Open Dialog"
+         Enabled         =   0   'False
+         Height          =   255
+         Left            =   975
+         TabIndex        =   21
+         Top             =   765
+         Width           =   4770
+      End
+      Begin VB.CheckBox chkShowNewMenu 
+         BackColor       =   &H80000014&
+         Caption         =   "Show option on New File Menu"
+         Enabled         =   0   'False
+         Height          =   255
+         Left            =   975
+         TabIndex        =   20
+         Top             =   510
+         Width           =   4770
+      End
+      Begin VB.CheckBox chkShowPluginButton 
+         BackColor       =   &H80000014&
+         Caption         =   "Show button on Plugin Toolbar"
+         Enabled         =   0   'False
+         Height          =   255
+         Left            =   975
+         TabIndex        =   19
+         Top             =   0
+         Width           =   4770
+      End
+      Begin VB.CheckBox chkShowPluginMenu 
+         BackColor       =   &H80000014&
+         Caption         =   "Show option on Tools Menu"
+         Enabled         =   0   'False
+         Height          =   255
+         Left            =   975
+         TabIndex        =   18
+         Top             =   255
+         Width           =   4770
+      End
+   End
+   Begin VB.PictureBox picPluginInfo 
+      BackColor       =   &H80000014&
+      BorderStyle     =   0  'None
+      Height          =   1830
+      Left            =   75
+      ScaleHeight     =   122
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   383
+      TabIndex        =   8
+      Top             =   2940
+      Visible         =   0   'False
+      Width           =   5745
+      Begin VB.TextBox txtPluginDescription 
+         BackColor       =   &H80000014&
+         Height          =   870
+         Left            =   975
+         Locked          =   -1  'True
+         MultiLine       =   -1  'True
+         ScrollBars      =   2  'Vertical
+         TabIndex        =   12
+         Top             =   945
+         Width           =   4770
+      End
+      Begin VB.TextBox txtPluginPath 
+         BackColor       =   &H80000014&
+         Height          =   300
+         Left            =   975
+         Locked          =   -1  'True
+         TabIndex        =   11
+         Top             =   630
+         Width           =   4770
+      End
+      Begin VB.TextBox txtPluginType 
+         BackColor       =   &H80000014&
+         Height          =   300
+         Left            =   975
+         Locked          =   -1  'True
+         TabIndex        =   10
+         Top             =   315
+         Width           =   4770
+      End
+      Begin VB.TextBox txtPluginName 
+         BackColor       =   &H80000014&
+         Height          =   300
+         Left            =   975
+         Locked          =   -1  'True
+         TabIndex        =   9
+         Top             =   0
+         Width           =   4770
+      End
+      Begin VB.Label Label1 
+         Alignment       =   1  'Right Justify
+         AutoSize        =   -1  'True
+         BackColor       =   &H80000014&
+         Caption         =   "Description:"
+         Height          =   195
+         Left            =   60
+         TabIndex        =   16
+         Top             =   990
+         Width           =   855
+      End
+      Begin VB.Label lblPath 
+         Alignment       =   1  'Right Justify
+         AutoSize        =   -1  'True
+         BackColor       =   &H80000014&
+         Caption         =   "Path:"
+         Height          =   195
+         Left            =   525
+         TabIndex        =   15
+         Top             =   675
+         Width           =   390
+      End
+      Begin VB.Label lblType 
+         Alignment       =   1  'Right Justify
+         AutoSize        =   -1  'True
+         BackColor       =   &H80000014&
+         Caption         =   "Type:"
+         Height          =   195
+         Left            =   495
+         TabIndex        =   14
+         Top             =   360
+         Width           =   420
+      End
+      Begin VB.Label lblName 
+         Alignment       =   1  'Right Justify
+         AutoSize        =   -1  'True
+         BackColor       =   &H80000014&
+         Caption         =   "Name:"
+         Height          =   195
+         Left            =   450
+         TabIndex        =   13
+         Top             =   45
+         Width           =   465
+      End
+   End
+   Begin ngUI.ngTabStrip tsSelected 
       Height          =   2220
       Left            =   30
-      TabIndex        =   6
+      TabIndex        =   7
       Top             =   2595
       Width           =   5805
       _ExtentX        =   10239
       _ExtentY        =   3916
-      AllowScroll     =   0   'False
-      TabAlign        =   0
-      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   700
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      ShowCloseButton =   0   'False
-      MoveableTabs    =   0   'False
-      Begin VB.PictureBox picPluginOptions 
-         BorderStyle     =   0  'None
-         Height          =   1035
-         Left            =   30
-         ScaleHeight     =   69
-         ScaleMode       =   3  'Pixel
-         ScaleWidth      =   383
-         TabIndex        =   7
-         Top             =   360
-         Visible         =   0   'False
-         Width           =   5745
-         Begin VB.CheckBox chkShowInOpenDialog 
-            Caption         =   "Show in Open Dialog"
-            Enabled         =   0   'False
-            Height          =   255
-            Left            =   975
-            TabIndex        =   11
-            Top             =   765
-            Width           =   4635
-         End
-         Begin VB.CheckBox chkShowNewMenu 
-            Caption         =   "Show option on New File Menu"
-            Enabled         =   0   'False
-            Height          =   255
-            Left            =   975
-            TabIndex        =   10
-            Top             =   510
-            Width           =   4635
-         End
-         Begin VB.CheckBox chkShowPluginButton 
-            Caption         =   "Show button on Plugin Toolbar"
-            Enabled         =   0   'False
-            Height          =   255
-            Left            =   975
-            TabIndex        =   8
-            Top             =   0
-            Width           =   4635
-         End
-         Begin VB.CheckBox chkShowPluginMenu 
-            Caption         =   "Show option on Tools Menu"
-            Enabled         =   0   'False
-            Height          =   255
-            Left            =   975
-            TabIndex        =   9
-            Top             =   255
-            Width           =   4635
-         End
-      End
-      Begin VB.PictureBox picPluginInfo 
-         BorderStyle     =   0  'None
-         Height          =   1830
-         Left            =   30
-         ScaleHeight     =   122
-         ScaleMode       =   3  'Pixel
-         ScaleWidth      =   383
-         TabIndex        =   12
-         Top             =   360
-         Visible         =   0   'False
-         Width           =   5745
-         Begin VB.TextBox txtPluginDescription 
-            BackColor       =   &H8000000F&
-            Height          =   870
-            Left            =   975
-            Locked          =   -1  'True
-            MultiLine       =   -1  'True
-            ScrollBars      =   2  'Vertical
-            TabIndex        =   20
-            Top             =   945
-            Width           =   4635
-         End
-         Begin VB.TextBox txtPluginPath 
-            BackColor       =   &H8000000F&
-            Height          =   300
-            Left            =   975
-            Locked          =   -1  'True
-            TabIndex        =   18
-            Top             =   630
-            Width           =   4635
-         End
-         Begin VB.TextBox txtPluginType 
-            BackColor       =   &H8000000F&
-            Height          =   300
-            Left            =   975
-            Locked          =   -1  'True
-            TabIndex        =   16
-            Top             =   315
-            Width           =   4635
-         End
-         Begin VB.TextBox txtPluginName 
-            BackColor       =   &H8000000F&
-            Height          =   300
-            Left            =   975
-            Locked          =   -1  'True
-            TabIndex        =   14
-            Top             =   0
-            Width           =   4635
-         End
-         Begin VB.Label Label1 
-            Alignment       =   1  'Right Justify
-            AutoSize        =   -1  'True
-            Caption         =   "Description:"
-            Height          =   195
-            Left            =   60
-            TabIndex        =   19
-            Top             =   990
-            Width           =   855
-         End
-         Begin VB.Label lblPath 
-            Alignment       =   1  'Right Justify
-            AutoSize        =   -1  'True
-            Caption         =   "Path:"
-            Height          =   195
-            Left            =   525
-            TabIndex        =   17
-            Top             =   675
-            Width           =   390
-         End
-         Begin VB.Label lblType 
-            Alignment       =   1  'Right Justify
-            AutoSize        =   -1  'True
-            Caption         =   "Type:"
-            Height          =   195
-            Left            =   495
-            TabIndex        =   15
-            Top             =   360
-            Width           =   420
-         End
-         Begin VB.Label lblName 
-            Alignment       =   1  'Right Justify
-            AutoSize        =   -1  'True
-            Caption         =   "Name:"
-            Height          =   195
-            Left            =   450
-            TabIndex        =   13
-            Top             =   45
-            Width           =   465
-         End
-      End
    End
 End
 Attribute VB_Name = "frmPluginManager"
@@ -465,9 +464,15 @@ On Error Resume Next
     LoadPlugins
 End Sub
 
-Private Sub dtSelected_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsSelected_Resize()
 On Error Resume Next
-    Select Case LCase(Trim(theTab.key))
+    picPluginInfo.Move tsSelected.Left + 2, tsSelected.Top + tsSelected.IdealHeight + 1, tsSelected.Width - 4, tsSelected.Height - (tsSelected.IdealHeight + 3)
+    picPluginOptions.Move picPluginInfo.Left, picPluginInfo.Top, picPluginInfo.Width, picPluginInfo.Height
+End Sub
+
+Private Sub tsSelected_TabSelected(theTab As ngTab)
+On Error Resume Next
+    Select Case LCase(Trim(theTab.Text))
     Case "information"
         picPluginInfo.Visible = True
         picPluginOptions.Visible = False
@@ -480,13 +485,14 @@ End Sub
 
 Private Sub Form_Activate()
 On Error Resume Next
-    dtSelected_TabSelected dtSelected.SelectedTab
+    tsSelected_Resize
+    tsSelected.SelectTab 1
 End Sub
 
 Private Sub Form_Load()
 On Error Resume Next
-    dtSelected.Tabs.Add "Information", , "Information"
-    dtSelected.Tabs.Add "Options", , "Options"
+    tsSelected.Tabs.AddNew "Information"
+    tsSelected.Tabs.AddNew "Options"
     RefreshPluginList
 End Sub
 
@@ -498,3 +504,4 @@ Private Sub lstPlugins_SelectionChange()
 On Error Resume Next
     RefreshPluginProperties
 End Sub
+

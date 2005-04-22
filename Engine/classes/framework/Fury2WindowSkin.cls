@@ -196,10 +196,10 @@ Dim l_lngMax As Long
     Set l_rctRectangle = Rectangle
     If Err <> 0 Then Exit Function
     With l_rctRectangle
-        .Left = .Left + vbMax(m_lngWidths(WS_TopLeft), m_lngWidths(WS_Left), m_lngWidths(WS_BottomLeft)) - m_lngEdgeOverlap
-        .Right = .Right - vbMax(m_lngWidths(WS_TopRight), m_lngWidths(WS_Right), m_lngWidths(WS_BottomRight)) + m_lngEdgeOverlap
-        .Top = .Top + vbMax(m_lngHeights(WS_TopLeft), m_lngHeights(WS_Top), m_lngHeights(WS_TopRight)) - m_lngEdgeOverlap
-        .Bottom = .Bottom - vbMax(m_lngHeights(WS_BottomLeft), m_lngHeights(WS_Bottom), m_lngHeights(WS_BottomRight)) + m_lngEdgeOverlap
+        .left = .left + vbMax(m_lngWidths(WS_TopLeft), m_lngWidths(WS_Left), m_lngWidths(WS_BottomLeft)) - m_lngEdgeOverlap
+        .right = .right - vbMax(m_lngWidths(WS_TopRight), m_lngWidths(WS_Right), m_lngWidths(WS_BottomRight)) + m_lngEdgeOverlap
+        .top = .top + vbMax(m_lngHeights(WS_TopLeft), m_lngHeights(WS_Top), m_lngHeights(WS_TopRight)) - m_lngEdgeOverlap
+        .bottom = .bottom - vbMax(m_lngHeights(WS_BottomLeft), m_lngHeights(WS_Bottom), m_lngHeights(WS_BottomRight)) + m_lngEdgeOverlap
     End With
     Err.Clear
     Set AdjustRectangle = l_rctRectangle
@@ -217,8 +217,8 @@ Dim l_rctArea As Rectangle
     If Err <> 0 Then Exit Sub
     l_rctArea = l_rctRectangle.GetRectangle
     With l_rctArea
-        .Left = .Left + m_lngEdgeOverlap
-        .Top = .Top + m_lngEdgeOverlap
+        .left = .left + m_lngEdgeOverlap
+        .top = .top + m_lngEdgeOverlap
         .Width = .Width - (m_lngEdgeOverlap * 2)
         .Height = .Height - (m_lngEdgeOverlap * 2)
     End With

@@ -108,6 +108,9 @@ Private m_booVisible As Boolean
 Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
 
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+End Property
+
 Private Property Get iDocument_Object() As Object
     Set iDocument_Object = Me
 End Property

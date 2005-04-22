@@ -41,7 +41,7 @@ Implements IVirtualFileCollection
 
 Private mCol As Collection
 
-Public Function Find(Obj) As Long
+Public Function Find(ByVal Obj As Fury2Camera) As Long
 On Error Resume Next
 Dim l_objItem As Object, l_lngItems As Long
     If mCol.Count <= 0 Then Exit Function
@@ -86,10 +86,11 @@ Dim l_objObject As Object
     Add l_objObject, , ToIndex
 End Sub
 
-Public Sub Add(ByVal Obj As Fury2Camera, Optional sKey, Optional ByVal AtIndex As Long = -1)
+Public Sub Add(ByVal Obj As Fury2Camera, Optional ByVal sKey As String, Optional ByVal AtIndex As Long = -1)
 On Error Resume Next
     If mCol.Count >= c_lngMaxCameras Then Exit Sub
-    If IsMissing(sKey) Then
+    sKey = LCase(Trim(sKey))
+    If Len(sKey) < 1 Then
         If AtIndex = -1 Then
             mCol.Add Obj
         Else
@@ -135,7 +136,6 @@ Public Sub Remove(vntIndexKey As Variant)
 On Error Resume Next
     mCol.Remove vntIndexKey
 End Sub
-
 
 Public Property Get NewEnum() As IUnknown
 Attribute NewEnum.VB_UserMemId = -4

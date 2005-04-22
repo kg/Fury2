@@ -2,7 +2,7 @@ VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{396F7AC0-A0DD-11D3-93EC-00C0DFE7442A}#1.0#0"; "vbalIml6.ocx"
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#7.4#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.9#0"; "ngUI.ocx"
 Begin VB.Form frmCommandBrowser 
    BorderStyle     =   0  'None
    Caption         =   "Command Browser"
@@ -250,6 +250,9 @@ Dim m_tlbSound As TypeLibInfo
 Dim m_tlbFilesystem As TypeLibInfo
 Dim m_splSplitMain As New cSplitter
 Dim m_splSplitMembers As New cSplitter
+
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+End Property
 
 Private Property Get iDocument_Object() As Object
     Set iDocument_Object = Me

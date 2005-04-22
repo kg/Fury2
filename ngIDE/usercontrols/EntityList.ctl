@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#7.3#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.10#0"; "ngUI.ocx"
 Begin VB.UserControl EntityList 
    AutoRedraw      =   -1  'True
    ClientHeight    =   3600
@@ -141,9 +141,9 @@ Public Property Let SelectedItem(ByVal NewItem As Long)
 On Error Resume Next
 Dim l_lngY As Long, l_lngViewMinY As Long, l_lngViewMaxY As Long
 Dim l_lngHeight As Long, l_lngMaxHeight As Long
-    If m_booActive = False Then Exit Property
     If NewItem = m_lngSelectedItem Then Exit Property
     m_lngSelectedItem = ClipValue(NewItem, 0, BoundObject.Count)
+    If m_booActive = False Then Exit Property
     RaiseEvent ItemSelected(m_lngSelectedItem)
     UserControl_Paint
 End Property
@@ -302,9 +302,10 @@ Private Sub UserControl_Paint()
 On Error Resume Next
 Static m_booHere As Boolean
 Dim l_lngY As Long, l_lngHeight As Long, l_lngItems As Long, l_lngMaxHeight As Long
-Dim l_objObject As Object, l_rctItem As Rect
+Dim l_objObject As Object, l_rctItem As RECT
     If m_booActive = False Then Exit Sub
     If m_booHere Then Exit Sub
+    vsScrollbar.Move UserControl.ScaleWidth - vsScrollbar.Width, 0, vsScrollbar.Width, UserControl.ScaleHeight - IIf(tbrOptions.Visible, tbrOptions.Height, 0)
     m_booHere = True
     UserControl.Line (0, 0)-(vsScrollbar.Left - 1, UserControl.ScaleHeight - 1), UserControl.BackColor, BF
     If BoundObject Is Nothing Then

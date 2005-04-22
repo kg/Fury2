@@ -14,6 +14,22 @@ Attribute VB_Exposed = True
 Option Explicit
 Private m_colResourceCache As Collection
 
+Public Sub SetTheme(ByRef ResourceFile As ngResourceFile, Optional Pattern As String = "*.png")
+On Error Resume Next
+    Set g_rfThemeFile = ResourceFile
+    g_strThemePattern = Pattern
+End Sub
+
+Public Sub SetTabTheme(Theme As String)
+On Error Resume Next
+    g_strTabTheme = Theme
+End Sub
+
+Public Sub SetToolbarTheme(Theme As String)
+On Error Resume Next
+    g_strToolbarTheme = Theme
+End Sub
+
 Public Function BindEvent(ByRef Obj As Object, ByRef Method As String, Optional ByRef Parameters = Nothing) As ngEvent
 On Error Resume Next
 Dim l_evtEvent As ngEvent
@@ -40,7 +56,7 @@ Dim l_rfFile As ngResourceFile
         End If
         Set l_rfFile = New ngResourceFile
         Set l_rfFile.Archive = l_szaArchive
-        l_rfFile.Filename = l_szaArchive.ArchivePath
+        l_rfFile.Filename = Filename
         l_rfFile.Refresh
         m_colResourceCache.Add l_rfFile
     End If

@@ -29,6 +29,7 @@ Begin VB.UserControl ObjectInspector
       Top             =   -15
       Width           =   4650
       Begin VB.PictureBox picItems 
+         AutoRedraw      =   -1  'True
          BorderStyle     =   0  'None
          Height          =   2820
          Left            =   210

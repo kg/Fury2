@@ -69,7 +69,7 @@ Public Property Get Engine() As Fury2Engine
 End Property
 #End If
 
-Public Sub Hook(Obj As Object)
+Public Sub Hook(ByVal Obj As Object)
 On Error Resume Next
     Set mHook = Obj
 End Sub
@@ -155,10 +155,11 @@ Dim l_objObject As Object
     Err.Clear
 End Sub
 
-Public Sub Add(Obj, Optional ByVal sKey, Optional ByVal AtIndex)
+Public Sub Add(Obj, Optional ByVal sKey As String = "", Optional ByVal AtIndex As Long = -1)
 On Error Resume Next
-    If IsMissing(sKey) Then
-        If IsMissing(AtIndex) Then
+    sKey = LCase(Trim(sKey))
+    If Len(sKey) < 1 Then
+        If AtIndex = -1 Then
             mCol.Add Obj
         Else
             If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
@@ -172,8 +173,7 @@ On Error Resume Next
             End If
         End If
     Else
-        sKey = LCase(Trim(CStr(sKey)))
-        If IsMissing(AtIndex) Then
+        If AtIndex = -1 Then
             mCol.Add Obj, sKey
         Else
             If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
@@ -210,7 +210,7 @@ On Error Resume Next
     Err.Clear
 End Property
 
-Public Function Find(Var) As Long
+Public Function Find(ByVal Var) As Long
 On Error Resume Next
 Dim m_lngItems As Long, m_objItem As Object
     If mCol.Count <= 0 Then Exit Function

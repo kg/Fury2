@@ -62,6 +62,7 @@ End Sub
 
 Public Sub Hide()
 On Error Resume Next
+    If frmMain.Documents.Find(Me) < 1 Then Exit Sub
     If g_edEditor.Event_DocumentClose(Me) Then Exit Sub
     SetBusyState True
     If Not (Form Is Nothing) Then

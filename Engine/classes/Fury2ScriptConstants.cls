@@ -83,19 +83,6 @@ Public Property Get SoundType_Music() As Long
     SoundType_Music = 2
 End Property
 
-Public Property Get CollisionType_None() As Long
-    CollisionType_None = 0
-End Property
-Public Property Get CollisionType_Tile() As Long
-    CollisionType_Tile = 1
-End Property
-Public Property Get CollisionType_Vector() As Long
-    CollisionType_Vector = 2
-End Property
-Public Property Get CollisionType_Rectangle() As Long
-    CollisionType_Rectangle = 3
-End Property
-
 Public Property Get F2LM_PlayOnce() As Long
     F2LM_PlayOnce = 0
 End Property

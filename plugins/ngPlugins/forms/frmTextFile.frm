@@ -78,10 +78,45 @@ Attribute VB_Exposed = False
 
 Option Explicit
 Implements iExtendedForm
+Implements iCustomMenus
 Implements iDocument
 
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
+
+Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
+On Error Resume Next
+    With Handler
+'        .DestroyMenu "Word Wrap"
+    End With
+End Sub
+
+Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
+On Error Resume Next
+    With Handler
+'        .DefineMenu "Word &Wrap", "Word Wrap"
+    End With
+End Sub
+
+Private Sub iCustomMenus_MenuClick(key As String)
+On Error Resume Next
+    Select Case LCase(Trim(key))
+    Case "word wrap"
+    Case Else
+    End Select
+End Sub
+
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+On Error Resume Next
+    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\text.png")
+End Property
+
+Private Function Editor() As Object
+On Error Resume Next
+Dim l_objPlugin As TextFile
+    Set l_objPlugin = m_fpgPlugin
+    Set Editor = l_objPlugin.Editor
+End Function
 
 Private Property Get iDocument_Object() As Object
     Set iDocument_Object = Me

@@ -62,13 +62,6 @@ Public Enum Fury2WindowSkinBackgroundModes
     WBM_ScaledImagePlusGradient = 4
 End Enum
 
-Public Enum Fury2CollisionTypes
-    CT_None = 0
-    CT_Tile = 1
-    CT_Line = 2
-    CT_Rectangle = 3
-End Enum
-
 Public Enum Fury2EngineModes
     EM_Normal = 0
     EM_Library = 1

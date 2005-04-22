@@ -118,3 +118,39 @@ Public Enum ngResourceTypes
     rtyScript
     rtyIcon
 End Enum
+
+Public Enum ngTabStripMetrics
+    tsmTabHorizontalMargin
+    tsmTabVerticalMargin
+    tsmImageMargin
+    tsmTextMargin
+    tsm_max
+End Enum
+
+Public Enum ngTabTextAlignment
+    tsaLeft
+    tsaRight
+End Enum
+
+Public Enum ngTabStates
+    tstNormal
+    tstHighlighted
+    tstSelected
+End Enum
+
+Public Enum ngTabStripColors
+    tscBackground
+    tscText
+    tscFill
+    tscBorder
+    tscHighlight
+    tscHighlightText
+    tscHighlightFill
+    tscHighlightBorder
+    tscSelected
+    tscSelectedText
+    tscSelectedFill
+    tscSelectedBorder
+    tsc_max
+End Enum
+

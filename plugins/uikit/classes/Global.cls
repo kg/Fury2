@@ -208,7 +208,7 @@ Dim l_strFile As String, l_strFolder As String
         Set l_filFiles = Engine.FileSystem.EnumFiles(l_strFolder + "/glyphs/", "*.png")
         For l_lngFiles = 1 To l_filFiles.Count
             l_strFile = l_filFiles.File(l_lngFiles)
-            l_sknSkin.Glyphs.Add Engine.LoadImage(l_strFile), LCase(Trim(Replace(Replace(l_strFile, l_strFolder & "/glyphs/", ""), ".png", "")))
+            l_sknSkin.Glyphs.Add Engine.LoadImage(l_strFile, True), LCase(Trim(Replace(Replace(l_strFile, l_strFolder & "/glyphs/", ""), ".png", "")))
         Next l_lngFiles
         Skins.Add l_sknSkin, LCase(Trim(Replace(Replace(l_strFolder, Path, ""), "/", "")))
     Next

@@ -1,5 +1,6 @@
 #include "../header/GLFX.hpp"
 #include "../header/Tilemap.hpp"
+#include "../header/WindowSkin.hpp"
 
 using namespace SoftFX;
 using namespace GL;
@@ -253,16 +254,17 @@ void BlitSimple_Core(Override::OverrideParameters *Parameters) {
   readParam(int, SourceY, 4);
   FX::Rectangle AreaCopy = Area;
   if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
-    int texWidth = powerOfTwo(GetImageWidth(Source));
-    int texHeight = powerOfTwo(GetImageHeight(Source));
-    float xScale = 1.0f / texWidth;
-    float yScale = 1.0f / texHeight;
-    float U1 = (SourceX) * xScale, V1 = (SourceY) * yScale;
-    float U2 = U1 + ((Area.Width) * xScale), V2 = V1 + ((Area.Height) * yScale);
     enableTextures();
     selectImageAsTexture(Source);
     setScaleMode<Linear>();
-    drawTexturedRectangle(Area, U1, V1, U2, V2);
+    Texture* tex = getTexture(Source);
+    if ((Area.Width == tex->Width) && (Area.Height == tex->Height) && (SourceX == 0) && (SourceY == 0)) { 
+      drawTexturedRectangle(Area, tex->U1, tex->V1, tex->U2, tex->V2);
+    } else {
+      float U1 = tex->U(SourceX), V1 = tex->V(SourceY);
+      float U2 = tex->U(SourceX + Area.Width), V2 = tex->V(SourceY + Area.Height);
+      drawTexturedRectangle(Area, U1, V1, U2, V2);
+    }
     SetImageDirty(Dest, 1);
   }
 }
@@ -275,7 +277,7 @@ void BlitSimple_FBTex_Core(Override::OverrideParameters *Parameters) {
   readParam(int, SourceY, 4);
   FX::Rectangle AreaCopy = Area;
   if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
-    copyFramebufferToTexture(getNamedTag(Dest, Texture), Dest);
+    copyFramebufferToTexture(getTexture(Dest), Dest);
     int texWidth = powerOfTwo(GetImageWidth(Source));
     int texHeight = powerOfTwo(GetImageHeight(Source));
     float xScale = 1.0f / texWidth;
@@ -520,13 +522,85 @@ defOverride(BlitSimple_Normal_Tint_Opacity) {
   return Success;
 }
 
-passOverride(BlitSimple_Matte, BlitSimple_Normal)
+void prepMatte(int Image) {
+  Texture* tex = getTexture(Image);
+  if (tex == 0) selectImageAsTexture(Image);
+  tex = getTexture(Image);
+  if (tex) {
+    if (tex->MatteOptimized) {
+    } else {
+      Pixel matteColor = GetImageMatteColor(Image);
+      FilterSimple_Replace(Image, 0, matteColor, Pixel(0, 0, 0, 0));
+      SetImageMatteColor(Image, Pixel(0, 0, 0, 0));
+      uploadImageToTexture(tex, Image);
+      tex->MatteOptimized = true;
+    }
+  }
+}
 
-passOverride(BlitSimple_Matte_Opacity, BlitSimple_Normal_Opacity)
+defOverride(BlitSimple_Matte) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<SourceAlpha>();
+  setVertexColor(White);
+  prepMatte(Source);
+  BlitSimple_Core(Parameters);
+  return Success;
+}
 
-passOverride(BlitSimple_Matte_Tint, BlitSimple_Normal_Tint)
+defOverride(BlitSimple_Matte_Opacity) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(int, Opacity, 5);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<SourceAlpha>();
+  setVertexColor(Pixel(255, 255, 255, Opacity));
+  prepMatte(Source);
+  BlitSimple_Core(Parameters);
+  return Success;
+}
 
-passOverride(BlitSimple_Matte_Tint_Opacity, BlitSimple_Normal_Tint_Opacity)
+defOverride(BlitSimple_Matte_Tint) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(Pixel, Color, 5);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<SourceAlpha>();
+  setVertexColor(White);
+  setFogColor(Color);
+  setFogOpacity(Color[::Alpha] / 255.0f);
+  enableFog();
+  prepMatte(Source);
+  BlitSimple_Core(Parameters);
+  disableFog();
+  return Success;
+}
+
+defOverride(BlitSimple_Matte_Tint_Opacity) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(Pixel, Color, 5);
+  readParam(int, Opacity, 6);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<SourceAlpha>();
+  setVertexColor(Pixel(255, 255, 255, Opacity));
+  setFogColor(Color);
+  setFogOpacity(Color[::Alpha] / 255.0f);
+  enableFog();
+  prepMatte(Source);
+  BlitSimple_Core(Parameters);
+  disableFog();
+  return Success;
+}
 
 defOverride(BlitSimple_SourceAlpha) {
   readParam(int, Dest, 0);
@@ -636,12 +710,6 @@ void BlitResample_Core(Override::OverrideParameters *Parameters) {
   FX::Rectangle DestCopy = DestRect;
   FX::Rectangle SourceCopy = SourceRect;
   if (Clip2D_PairedRect(&DestCopy, &SourceCopy, Dest, Source, &DestRect, &SourceRect, 0)) {
-    int texWidth = powerOfTwo(GetImageWidth(Source));
-    int texHeight = powerOfTwo(GetImageHeight(Source));
-    float xScale = 1.0f / texWidth;
-    float yScale = 1.0f / texHeight;
-    float U1 = (SourceRect.Left) * xScale, V1 = (SourceRect.Top) * yScale;
-    float U2 = U1 + ((SourceRect.Width) * xScale), V2 = V1 + ((SourceRect.Height) * yScale);
     enableTextures();
     selectImageAsTexture(Source);
     if (Scaler == GetBilinearScaler()) {
@@ -649,7 +717,14 @@ void BlitResample_Core(Override::OverrideParameters *Parameters) {
     } else {
       setScaleMode<Linear>();
     }
-    drawTexturedRectangle(DestRect, U1, V1, U2, V2);
+    Texture* tex = getTexture(Source);
+    if ((SourceRect.Width == tex->Width) && (SourceRect.Height == tex->Height) && (SourceRect.Left == 0) && (SourceRect.Top == 0)) { 
+      drawTexturedRectangle(DestRect, tex->U1, tex->V1, tex->U2, tex->V2);
+    } else {
+      float U1 = tex->U(SourceRect.Left), V1 = tex->V(SourceRect.Top);
+      float U2 = tex->U(SourceRect.right()), V2 = tex->V(SourceRect.bottom());
+      drawTexturedRectangle(DestRect, U1, V1, U2, V2);
+    }
     SetImageDirty(Dest, 1);
   }
 }
@@ -1216,7 +1291,7 @@ defOverride(FilterSimple_ConvexPolygon) {
 
 defOverride(FilterSimple_ConvexPolygon_Textured) {
   readParam(int, Image, 0);
-  readParam(int, Texture, 1);
+  readParam(int, TextureImage, 1);
   readParam(int, Polygon, 2);
   readParam(int, Scaler, 3);
   readParam(int, Renderer, 4);
@@ -1225,7 +1300,7 @@ defOverride(FilterSimple_ConvexPolygon_Textured) {
   lockCheck(Image);
   selectContext(Image);
   enableTextures();
-  selectImageAsTexture(Texture);
+  selectImageAsTexture(TextureImage);
   if ((Renderer == GetSourceAlphaRenderer()) || (Renderer == GetMergeRenderer())) {
     setBlendMode<SourceAlpha>();
     if (RenderArgument[::Alpha] > 0) {
@@ -1256,13 +1331,12 @@ defOverride(FilterSimple_ConvexPolygon_Textured) {
   }
   setVertexColor(White);
   setBlendColor(White);
-  float xr = 1.0f / powerOfTwo(GetImageWidth(Texture));
-  float yr = 1.0f / powerOfTwo(GetImageHeight(Texture));
+  Texture* tex = getTexture(TextureImage);
   TexturedVertex* ptr = GetTexturedPolygonVertexPointer(Polygon, 0);
   int vertex_count = GetTexturedPolygonVertexCount(Polygon);
   beginDraw(GL_POLYGON);
   for (int i = 0; i < vertex_count; ++i) {
-    glTexCoord2f(ptr->U * xr, ptr->V * yr);
+    glTexCoord2f(tex->U(ptr->U), tex->V(ptr->V));
     glVertex2f(ptr->X, ptr->Y);
     ptr++;
   }
@@ -1288,7 +1362,292 @@ defOverride(Copy) {
   return Failure;
 }
 
+void BlitTiled(int Dest, int Source, FX::Rectangle* DestRect) {
+  if (ClipRectangle_ImageClipRect(DestRect, Dest)) {
+    enableTextures();
+    selectImageAsTexture(Source);
+    Texture* tex = getTexture(Source);
+    setScaleMode<Linear>();
+    drawTexturedRectangleTiledF(DestRect->Left, DestRect->Top, DestRect->Width, DestRect->Height, tex->Width, tex->Height, tex->U1, tex->V1, tex->U2, tex->V2);
+  }
+}
+
+void BlitScaled(int Dest, int Source, FX::Rectangle* DestRect) {
+  if (ClipRectangle_ImageClipRect(DestRect, Dest)) {
+    enableTextures();
+    selectImageAsTexture(Source);
+    setScaleMode<Linear>();
+    Texture* tex = getTexture(Source);
+    drawTexturedRectangleF(DestRect->Left, DestRect->Top, DestRect->Width, DestRect->Height, tex->U1, tex->V1, tex->U2, tex->V2);
+  }
+}
+
+defOverride(RenderWindow) {
+FX::Rectangle dest, source, clipper, clip;
+int xs = 0, ys = 0;
+int xm[2] = {0,0}, ym[2] = {0,0};
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(WindowSkinParam*, WindowSkin, 2);
+  readParam(wsSectionFlags, SectionFlags, 3);
+  selectContext(Image);
+  GetImageClipRectangle(Image, &clip);
+  clipper = clip;
+  clipper.Left = ClipValue(Area.Left - WindowSkin->EdgeOffsets[0], clip.Left, clip.right());
+  clipper.setRight(ClipValue(Area.right() + WindowSkin->EdgeOffsets[2], clip.Left, clip.right()));
+  clipper.Top = ClipValue(Area.Top - WindowSkin->EdgeOffsets[1], clip.Top, clip.bottom());
+  clipper.setBottom(ClipValue(Area.bottom() + WindowSkin->EdgeOffsets[3], clip.Top, clip.bottom()));
+  xm[0] = _Max(_Max(GetImageWidth(WindowSkin->pImages[wsTopLeft]), GetImageWidth(WindowSkin->pImages[wsLeft])),GetImageWidth(WindowSkin->pImages[wsBottomLeft]));
+  xm[1] = _Max(_Max(GetImageWidth(WindowSkin->pImages[wsTopRight]), GetImageWidth(WindowSkin->pImages[wsRight])),GetImageWidth(WindowSkin->pImages[wsBottomRight]));
+  ym[0] = _Max(_Max(GetImageHeight(WindowSkin->pImages[wsTopLeft]), GetImageHeight(WindowSkin->pImages[wsTop])),GetImageHeight(WindowSkin->pImages[wsTopRight]));
+  ym[1] = _Max(_Max(GetImageHeight(WindowSkin->pImages[wsBottomLeft]), GetImageHeight(WindowSkin->pImages[wsBottom])),GetImageHeight(WindowSkin->pImages[wsBottomRight]));
+  xs = GetImageWidth(WindowSkin->pImages[wsMiddle]);
+  ys = GetImageHeight(WindowSkin->pImages[wsMiddle]);
+  switch(WindowSkin->RenderMode) {
+  case BlitMode_Additive:
+      setBlendMode<Additive>();
+      break;
+  case BlitMode_Subtractive:
+      setBlendMode<Subtractive>();
+      break;
+  case BlitMode_SourceAlpha:
+      setBlendMode<SourceAlpha>();
+      break;
+  case BlitMode_Font_SourceAlpha:
+      setBlendMode<Font_SourceAlpha>();
+      break;
+  case BlitMode_Normal:
+      setBlendMode<Normal>();
+      break;
+  default:
+  case BlitMode_Default:
+      return Failure;
+      break;
+  }
+  SetImageClipRectangle(Image, &clipper);
+  if (SectionFlags & sfMiddle) {
+    GetImageRectangle(WindowSkin->pImages[wsMiddle], &source);
+    dest.setValues(Area.Left - WindowSkin->EdgeOffsets[0], Area.Top - WindowSkin->EdgeOffsets[1], 
+        Area.Width + WindowSkin->EdgeOffsets[0] + WindowSkin->EdgeOffsets[2], Area.Height + WindowSkin->EdgeOffsets[1] + WindowSkin->EdgeOffsets[3]);
+    setFog(WindowSkin->TintColors[wsMiddle]);
+    switch (WindowSkin->BackgroundMode) {
+    default:
+    case 0:
+        // tiled blit
+        setVertexColor(Pixel(255, 255, 255, WindowSkin->Alpha));
+        BlitTiled(Image, WindowSkin->pImages[wsMiddle], &dest);
+        break;
+    case 1:
+        // scaled blit
+        setVertexColor(Pixel(255, 255, 255, WindowSkin->Alpha));
+        BlitScaled(Image, WindowSkin->pImages[wsMiddle], &dest);
+        break;
+    case 2:
+        // gradient
+        disableTextures();
+        drawGradientRectangle(&dest, MultiplyAlpha(WindowSkin->CornerColors[0], WindowSkin->Alpha), MultiplyAlpha(WindowSkin->CornerColors[1], WindowSkin->Alpha), MultiplyAlpha(WindowSkin->CornerColors[2], WindowSkin->Alpha), MultiplyAlpha(WindowSkin->CornerColors[3], WindowSkin->Alpha));
+        break;
+    case 3:
+        // tiled blit
+        setVertexColor(Pixel(255, 255, 255, WindowSkin->Alpha));
+        BlitTiled(Image, WindowSkin->pImages[wsMiddle], &dest);
+        disableTextures();
+        drawGradientRectangle(&dest, MultiplyAlpha(WindowSkin->CornerColors[0], WindowSkin->Alpha), MultiplyAlpha(WindowSkin->CornerColors[1], WindowSkin->Alpha), MultiplyAlpha(WindowSkin->CornerColors[2], WindowSkin->Alpha), MultiplyAlpha(WindowSkin->CornerColors[3], WindowSkin->Alpha));
+        break;
+    case 4:
+        // scaled blit
+        setVertexColor(Pixel(255, 255, 255, WindowSkin->Alpha));
+        BlitScaled(Image, WindowSkin->pImages[wsMiddle], &dest);
+        disableTextures();
+        drawGradientRectangle(&dest, MultiplyAlpha(WindowSkin->CornerColors[0], WindowSkin->Alpha), MultiplyAlpha(WindowSkin->CornerColors[1], WindowSkin->Alpha), MultiplyAlpha(WindowSkin->CornerColors[2], WindowSkin->Alpha), MultiplyAlpha(WindowSkin->CornerColors[3], WindowSkin->Alpha));
+        break;
+    }
+  }
+  setVertexColor(Pixel(255, 255, 255, WindowSkin->Alpha));
+  SetImageClipRectangle(Image, &clip);
+  if (SectionFlags & sfTop) {
+    setFog(WindowSkin->TintColors[wsTop]);
+    dest.setValues(Area.Left, Area.Top - GetImageHeight(WindowSkin->pImages[wsTop]), Area.Width, GetImageHeight(WindowSkin->pImages[wsTop]));
+    BlitTiled(Image, WindowSkin->pImages[wsTop], &dest);
+  }
+  if (SectionFlags & sfBottom) {
+    setFog(WindowSkin->TintColors[wsBottom]);
+    dest.setValues(Area.Left, Area.bottom(), Area.Width, GetImageHeight(WindowSkin->pImages[wsBottom]));
+    BlitTiled(Image, WindowSkin->pImages[wsBottom], &dest);
+  }
+  if (SectionFlags & sfLeft) {
+    setFog(WindowSkin->TintColors[wsLeft]);
+    dest.setValues(Area.Left - GetImageWidth(WindowSkin->pImages[wsLeft]), Area.Top, GetImageWidth(WindowSkin->pImages[wsLeft]), Area.Height);
+    BlitTiled(Image, WindowSkin->pImages[wsLeft], &dest);
+  }
+  if (SectionFlags & sfRight) {
+    setFog(WindowSkin->TintColors[wsRight]);
+    dest.setValues(Area.right(), Area.Top, GetImageWidth(WindowSkin->pImages[wsRight]), Area.Height);
+    BlitTiled(Image, WindowSkin->pImages[wsRight], &dest);
+  }
+  if (SectionFlags & sfBottomRight) {
+    setFog(WindowSkin->TintColors[wsBottomRight]);
+    dest.setValues(Area.right(), Area.bottom(), GetImageWidth(WindowSkin->pImages[wsBottomRight]), GetImageHeight(WindowSkin->pImages[wsBottomRight]));
+    BlitScaled(Image, WindowSkin->pImages[wsBottomRight], &dest);
+  }
+  if (SectionFlags & sfBottomLeft) {
+    setFog(WindowSkin->TintColors[wsBottomLeft]);
+    dest.setValues(Area.Left - GetImageWidth(WindowSkin->pImages[wsBottomLeft]), Area.bottom(), GetImageWidth(WindowSkin->pImages[wsBottomLeft]), GetImageHeight(WindowSkin->pImages[wsBottomLeft]));
+    BlitScaled(Image, WindowSkin->pImages[wsBottomLeft], &dest);
+  }
+  if (SectionFlags & sfTopRight) {
+    setFog(WindowSkin->TintColors[wsTopRight]);
+    dest.setValues(Area.right(), Area.Top - GetImageHeight(WindowSkin->pImages[wsTopRight]), GetImageWidth(WindowSkin->pImages[wsTopRight]), GetImageHeight(WindowSkin->pImages[wsTopRight]));
+    BlitScaled(Image, WindowSkin->pImages[wsTopRight], &dest);
+  }
+  if (SectionFlags & sfTopLeft) {
+    setFog(WindowSkin->TintColors[wsTopLeft]);
+    dest.setValues(Area.Left - GetImageWidth(WindowSkin->pImages[wsTopLeft]), Area.Top - GetImageHeight(WindowSkin->pImages[wsTopLeft]), GetImageWidth(WindowSkin->pImages[wsTopLeft]), GetImageHeight(WindowSkin->pImages[wsTopLeft]));
+    BlitScaled(Image, WindowSkin->pImages[wsTopLeft], &dest);
+  }
+  disableFog();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+/*
+Export int RenderWindow(Image *Dest, Rectangle *Area, WindowSkinParam * wp, int SectionFlags) {
+int xs = 0, ys = 0;
+int xm[2] = {0,0}, ym[2] = {0,0};
+Rectangle dest, source, clipper, *clip;
+Rectangle old_clip;
+    if (!Dest) return Failure;
+    if (!wp) return Failure;
+    if (!wp->pImages) return Failure;
+    if (!Area) return Failure;
+    if (SectionFlags <= 0) {
+      SectionFlags = sfAll;
+    }
+    int result;
+    if (result = Override::EnumOverrides(Override::RenderWindow, 4, Dest, Area, wp, SectionFlags)) {
+      return result;
+    }
+    enableClipping = true;
+    old_clip = Dest->ClipRectangle;
+    dest = *Area;
+    clip = &(Dest->ClipRectangle);
+    clipper = *clip;
+    clipper.Left = ClipValue(Area->Left - wp->EdgeOffsets[0], clip->Left, clip->right());
+    clipper.setRight(ClipValue(Area->right() + wp->EdgeOffsets[2], clip->Left, clip->right()));
+    clipper.Top = ClipValue(Area->Top - wp->EdgeOffsets[1], clip->Top, clip->bottom());
+    clipper.setBottom(ClipValue(Area->bottom() + wp->EdgeOffsets[3], clip->Top, clip->bottom()));
+    Dest->ClipRectangle = clipper;
+    xm[0] = _Max(_Max(wp->pImages[wsTopLeft]->Width, wp->pImages[wsLeft]->Width),wp->pImages[wsBottomLeft]->Width);
+    xm[1] = _Max(_Max(wp->pImages[wsTopRight]->Width, wp->pImages[wsRight]->Width),wp->pImages[wsBottomRight]->Width);
+    ym[0] = _Max(_Max(wp->pImages[wsTopLeft]->Height, wp->pImages[wsTop]->Height),wp->pImages[wsTopRight]->Height);
+    ym[1] = _Max(_Max(wp->pImages[wsBottomLeft]->Height, wp->pImages[wsBottom]->Height),wp->pImages[wsBottomRight]->Height);
+    xs = wp->pImages[wsMiddle]->Width;
+    ys = wp->pImages[wsMiddle]->Height;
+    if (SectionFlags & sfMiddle) {
+      source = wp->pImages[wsMiddle]->getRectangle();
+      dest.setValues(Area->Left - wp->EdgeOffsets[0], Area->Top - wp->EdgeOffsets[1], 
+          Area->Width + wp->EdgeOffsets[0] + wp->EdgeOffsets[2], Area->Height + wp->EdgeOffsets[1] + wp->EdgeOffsets[3]);
+      switch (wp->BackgroundMode) {
+      default:
+      case 0:
+          if ((xs <= 1) && (ys <= 1)) {
+              // alpha fill
+              FilterSimple_Fill_SourceAlpha_Opacity(Dest, &dest, wp->pImages[wsMiddle]->getPixel(0,0), wp->Alpha);
+          } else {
+              // tiled blit
+              ModedTiledBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsMiddle], &dest, wp->TintColors[wsMiddle], wp->Alpha);
+          }
+          break;
+      case 1:
+          if ((xs <= 1) && (ys <= 1)) {
+              // alpha fill
+              FilterSimple_Fill_SourceAlpha_Opacity(Dest, &dest, wp->pImages[wsMiddle]->getPixel(0,0), wp->Alpha);
+          } else {
+              // scaled blit
+              ModedResampleBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsMiddle], &dest, &source, wp->TintColors[wsMiddle], wp->Alpha);
+          }
+          break;
+      case 2:
+          // gradient
+          FilterSimple_Gradient_4Point_SourceAlpha(Dest, &dest, MultiplyAlpha(wp->CornerColors[0], wp->Alpha), MultiplyAlpha(wp->CornerColors[1], wp->Alpha), MultiplyAlpha(wp->CornerColors[2], wp->Alpha), MultiplyAlpha(wp->CornerColors[3], wp->Alpha));
+          break;
+      case 3:
+          if ((xs <= 1) && (ys <= 1)) {
+              // alpha fill
+              FilterSimple_Fill_SourceAlpha_Opacity(Dest, &dest, wp->pImages[wsMiddle]->getPixel(0,0), wp->Alpha);
+          } else {
+              // tiled blit
+              ModedTiledBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsMiddle], &dest, wp->TintColors[wsMiddle], wp->Alpha);
+          }
+          FilterSimple_Gradient_4Point_SourceAlpha(Dest, &dest, MultiplyAlpha(wp->CornerColors[0], wp->Alpha), MultiplyAlpha(wp->CornerColors[1], wp->Alpha), MultiplyAlpha(wp->CornerColors[2], wp->Alpha), MultiplyAlpha(wp->CornerColors[3], wp->Alpha));
+          break;
+      case 4:
+          if ((xs <= 1) && (ys <= 1)) {
+              // alpha fill
+              FilterSimple_Fill_SourceAlpha_Opacity(Dest, &dest, wp->pImages[wsMiddle]->getPixel(0,0), wp->Alpha);
+          } else {
+              // scaled blit
+              ModedResampleBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsMiddle], &dest, &source, wp->TintColors[wsMiddle], wp->Alpha);
+          }
+          FilterSimple_Gradient_4Point(Dest, &dest, MultiplyAlpha(wp->CornerColors[0], wp->Alpha), MultiplyAlpha(wp->CornerColors[1], wp->Alpha), MultiplyAlpha(wp->CornerColors[2], wp->Alpha), MultiplyAlpha(wp->CornerColors[3], wp->Alpha));
+          break;
+      }
+    }
+
+    Dest->ClipRectangle = old_clip;
+
+    if (SectionFlags & sfTop) {
+      dest.setValues(Area->Left, Area->Top - wp->pImages[wsTop]->Height, Area->Width, wp->pImages[wsTop]->Height);
+      ModedTiledBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsTop], &dest, wp->TintColors[wsTop], wp->Alpha);
+    }
+
+    if (SectionFlags & sfBottom) {
+      dest.setValues(Area->Left, Area->bottom(), Area->Width, wp->pImages[wsBottom]->Height);
+      ModedTiledBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsBottom], &dest, wp->TintColors[wsBottom], wp->Alpha);
+    }
+
+    if (SectionFlags & sfLeft) {
+      dest.setValues(Area->Left - wp->pImages[wsLeft]->Width, Area->Top, wp->pImages[wsLeft]->Width, Area->Height);
+      ModedTiledBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsLeft], &dest, wp->TintColors[wsLeft], wp->Alpha);
+    }
+
+    if (SectionFlags & sfRight) {
+      dest.setValues(Area->right(), Area->Top, wp->pImages[wsRight]->Width, Area->Height);
+      ModedTiledBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsRight], &dest, wp->TintColors[wsRight], wp->Alpha);
+    }
+
+    Dest->ClipRectangle = old_clip;
+      
+    if (SectionFlags & sfBottomRight) {
+      dest.setValues(Area->right(), Area->bottom(), wp->pImages[wsBottomRight]->Width, wp->pImages[wsBottomRight]->Height);
+      ModedBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsBottomRight], &dest, 0, 0, wp->TintColors[wsBottomRight], wp->Alpha);
+    }
+
+    if (SectionFlags & sfBottomLeft) {
+      dest.setValues(Area->Left - wp->pImages[wsBottomLeft]->Width, Area->bottom(), wp->pImages[wsBottomLeft]->Width, wp->pImages[wsBottomLeft]->Height);
+      ModedBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsBottomLeft], &dest, 0, 0, wp->TintColors[wsBottomLeft], wp->Alpha);
+    }
+
+    if (SectionFlags & sfTopRight) {
+      dest.setValues(Area->right(), Area->Top - wp->pImages[wsTopRight]->Height, wp->pImages[wsTopRight]->Width, wp->pImages[wsTopRight]->Height);
+      ModedBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsTopRight], &dest, 0, 0, wp->TintColors[wsTopRight], wp->Alpha);
+    }
+
+    if (SectionFlags & sfTopLeft) {
+      dest.setValues(Area->Left - wp->pImages[wsTopLeft]->Width, Area->Top - wp->pImages[wsTopLeft]->Height, wp->pImages[wsTopLeft]->Width, wp->pImages[wsTopLeft]->Height);
+      ModedBlit((SFX_BlitModes)wp->RenderMode, Dest, wp->pImages[wsTopLeft], &dest, 0, 0, wp->TintColors[wsTopLeft], wp->Alpha);
+    }
+
+    Dest->ClipRectangle = old_clip;
+
+    return true;
+}
+*/
+
 defOverride(RenderTilemapLayer) {
+int tile = 0;
 int cx = 0, cy = 0;
 int dx = 0, dy = 0;
 short *pRow, *pTile;
@@ -1297,6 +1656,7 @@ FX::Rectangle oldRect;
 int pTarget = 0;
 int maxX = 0, maxY = 0;
 int cv = 0;
+Texture* tex;
   readParam(TilemapLayerParam*, Layer, 0);
   readParam(CameraParam*, Camera, 1);
   readParam(int, sx, 2);
@@ -1322,15 +1682,10 @@ int cv = 0;
   int tileCount = GetTileCount(Layer->pTileset);
   int tileWidth = GetTileWidth(Layer->pTileset);
   int tileHeight = GetTileHeight(Layer->pTileset);
-  float xScale = 1.0f / powerOfTwo(tileWidth);
-  float yScale = 1.0f / powerOfTwo(tileHeight);
-  float U1 = 0, V1 = 0;
-  float U2 = U1 + (tileWidth * xScale), V2 = V1 + (tileHeight * yScale);
 
   switch(Layer->Effect) {
   default:
   case 0:
-  case 1:
     setBlendMode<Normal>();
     setVertexColor(White);
     setBlendColor(Pixel(255, 255, 255, alpha));
@@ -1340,6 +1695,7 @@ int cv = 0;
       setFogOpacity(Layer->TintColor[::Alpha] / 255.0f);
     }
     break;
+  case 1:
   case 2:
     setBlendMode<SourceAlpha>();
     setVertexColor(Pixel(255, 255, 255, alpha));
@@ -1395,8 +1751,11 @@ int cv = 0;
         cv = *pTile;
         if ((cv == Layer->MaskedTile) || (cv >= tileCount) || (cv < 0)) {
         } else {
-          selectImageAsTexture(GetTile(Layer->pTileset, cv));
-          drawTexturedRectangle(rctDest, U1, V1, U2, V2);
+          tile = GetTile(Layer->pTileset, cv);
+          selectImageAsTexture(tile);
+          if (Layer->Effect == 1) prepMatte(tile);
+          tex = getTexture(tile);
+          drawTexturedRectangle(rctDest, tex->U1, tex->V1, tex->U2, tex->V2);
         }
         dx += tileWidth;
         pTile++;
@@ -1411,14 +1770,18 @@ int cv = 0;
 defOverride(Deallocate) {
 	readParam(int, Image, 0);
   if (GetImagePointer(Image, 0, 0) != 0) {
+    Texture* tex = getTexture(Image);
+    if (tex) {
+      for (unsigned int i = 0; i < Global->SmallImageCache.size(); ++i) {
+        Global->SmallImageCache[i]->freeSpot(tex);
+      }
+      delete getTexture(Image);
+      setNamedTag(Image, Texture, 0);
+    }
     for (unsigned int i = 0; i < Global->ImageHeap.size(); ++i) {
       if (Global->ImageHeap[i] == Image) {
         Global->ImageHeap[i] = 0;
       }
-    }
-    if (getNamedTag(Image, Texture)) {
-      destroyTexture(getNamedTag(Image, Texture));
-      setNamedTag(Image, Texture, 0);
     }
 	  if (checkNamedTag(Image, Context)) {
       HGLRC context = (HGLRC)getNamedTag(Image, Context);
@@ -1519,6 +1882,7 @@ void InstallOverrides() {
   addOverride(FilterSimple_ConvexPolygon);
   addOverride(FilterSimple_ConvexPolygon_Textured);
   addOverride(RenderTilemapLayer);
+  addOverride(RenderWindow);
 }
 
 void UninstallOverrides() {
@@ -1603,6 +1967,7 @@ void UninstallOverrides() {
   removeOverride(FilterSimple_ConvexPolygon);
   removeOverride(FilterSimple_ConvexPolygon_Textured);
   removeOverride(RenderTilemapLayer);
+  removeOverride(RenderWindow);
 }
 
 Export void GLInstallAllocateHook() {

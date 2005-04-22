@@ -40,7 +40,11 @@ namespace SoftFX {
 	defImport(int, GetImageTag, (int Image, int Index) , 8) \
 	defImport(int, GetImageLocked, (int Image) , 4) \
 	defImport(int, GetImageDirty, (int Image) , 4) \
+	defImport(DoubleWord, GetImageMatteColor, (int Image) , 4) \
+	defImport(void, SetImageMatteColor, (int Image, Pixel Color) , 8) \
   defImport(int, GetImageRectangle, (int Image, FX::Rectangle* Rect) , 8) \
+  defImport(int, GetImageClipRectangle, (int Image, FX::Rectangle* Rect) , 8) \
+  defImport(void, SetImageClipRectangle, (int Image, FX::Rectangle* Rect) , 8) \
 	defImport(void, SetImageWidth, (int Image, int Value) , 8) \
 	defImport(void, SetImageHeight, (int Image, int Value) , 8) \
 	defImport(void, SetImagePitch, (int Image, int Value) , 8) \
@@ -72,6 +76,7 @@ namespace SoftFX {
   defImport(int, GetTileCount, (int Tileset), 4) \
   defImport(int, GetTileWidth, (int Tileset), 4) \
   defImport(int, GetTileHeight, (int Tileset), 4) \
+  defImport(int, FilterSimple_Replace, (int Image, FX::Rectangle* Area, Pixel Find, Pixel Replace), 16) \
 /* IMPORTS GO HERE */ \
 	defEnd
 
@@ -154,5 +159,37 @@ inline void SetImageTag(int Image, int Index, void* Value) {
 inline void SetImageTag(int Image, int Index, int Value) {
   return SetImageTag_(Image, Index, Value);
 }
+
+enum SFX_BlitModes {
+    BlitMode_Default = -1,
+    BlitMode_Normal = 0,
+    BlitMode_Matte = 1,
+    BlitMode_SourceAlpha = 2,
+    BlitMode_Additive = 3,
+    BlitMode_Subtractive = 4,
+    BlitMode_AND = 5,
+    BlitMode_OR = 6,
+    BlitMode_XOR = 7,
+    BlitMode_Lightmap = 8,
+    BlitMode_Lightmap_RGB = 9,
+    BlitMode_Matte_Tint = 10,
+    BlitMode_SourceAlpha_Tint = 11,
+    BlitMode_Font = 12,
+    BlitMode_Font_SourceAlpha = 13,
+    BlitMode_Dither = 14,
+    BlitMode_Screen = 15,
+    BlitMode_Multiply = 16,
+    BlitMode_Merge = 17,
+    BlitMode_Unerase = 18,
+    BlitMode_Erase = 19,
+    BlitMode_Font_Merge = 20,
+    BlitMode_Behind = 21,
+    BlitMode_Dodge = 22,
+    BlitMode_Burn = 23,
+    BlitMode_Normal_Tint = 24,
+  	BlitMode_Additive_SourceAlpha = 25,
+	  BlitMode_Subtractive_SourceAlpha = 26,
+    BlitMode_SourceAlpha_ColorMask = 27
+};
 
 }

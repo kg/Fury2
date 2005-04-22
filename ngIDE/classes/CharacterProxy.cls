@@ -12,6 +12,7 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
+Implements IVirtualFileSaveable
 Private m_fntFont As Fury2Font
 Private m_lngCharacter As Long
 
@@ -94,3 +95,46 @@ Public Property Let Value(ByVal NewValue As Long)
 On Error Resume Next
     m_fntFont.CharacterValue(m_lngCharacter) = NewValue
 End Property
+
+Public Property Get ValueString() As String
+On Error Resume Next
+    ValueString = Chr(m_fntFont.CharacterValue(m_lngCharacter))
+End Property
+
+Public Property Let ValueString(ByVal NewValue As String)
+On Error Resume Next
+    m_fntFont.CharacterValue(m_lngCharacter) = Asc(Left(NewValue, 1))
+End Property
+
+Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
+On Error Resume Next
+Dim l_lngValue As Long
+Dim l_imgImage As Fury2Image
+    With File
+        Set l_imgImage = F2Image(1, 1)
+        .Load l_imgImage
+        Set Image = l_imgImage
+        .Load l_lngValue
+        Value = l_lngValue
+        .Load l_lngValue
+        Width = l_lngValue
+        .Load l_lngValue
+        Height = l_lngValue
+        .Load l_lngValue
+        XOffset = l_lngValue
+        .Load l_lngValue
+        YOffset = l_lngValue
+    End With
+End Sub
+
+Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
+On Error Resume Next
+    With File
+        .Save Image
+        .Save Value
+        .Save Width
+        .Save Height
+        .Save XOffset
+        .Save YOffset
+    End With
+End Sub

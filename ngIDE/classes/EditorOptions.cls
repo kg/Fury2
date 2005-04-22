@@ -50,7 +50,9 @@ Attribute PromptWhenSwitchingGames.VB_VarDescription = "Prompts before switching
 Public PromptSaveWhenClosing As Boolean
 Attribute PromptSaveWhenClosing.VB_VarDescription = "Prompts to save all open files when closing them as a group."
 Public NoticeAutoCloseTime As Single
+Attribute NoticeAutoCloseTime.VB_VarDescription = "The number of seconds a notice will wait before automatically closing."
 Public ScriptTimeout As Single
+Attribute ScriptTimeout.VB_VarDescription = "The number of seconds the editor will wait before assuming that a script has locked up."
 
 Public Function Duplicate() As EditorOptions
 On Error Resume Next

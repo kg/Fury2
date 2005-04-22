@@ -280,7 +280,11 @@ static void _glewInfo_GL_VERSION_2_0 (void)
   glewInfoFunc("glGetActiveUniform", glGetActiveUniform == NULL);
   glewInfoFunc("glGetAttachedShaders", glGetAttachedShaders == NULL);
   glewInfoFunc("glGetAttribLocation", glGetAttribLocation == NULL);
+  glewInfoFunc("glGetProgramInfoLog", glGetProgramInfoLog == NULL);
+  glewInfoFunc("glGetProgramiv", glGetProgramiv == NULL);
+  glewInfoFunc("glGetShaderInfoLog", glGetShaderInfoLog == NULL);
   glewInfoFunc("glGetShaderSource", glGetShaderSource == NULL);
+  glewInfoFunc("glGetShaderiv", glGetShaderiv == NULL);
   glewInfoFunc("glGetUniformLocation", glGetUniformLocation == NULL);
   glewInfoFunc("glGetUniformfv", glGetUniformfv == NULL);
   glewInfoFunc("glGetUniformiv", glGetUniformiv == NULL);
@@ -436,6 +440,15 @@ static void _glewInfo_GL_APPLE_float_pixels (void)
 }
 
 #endif /* GL_APPLE_float_pixels */
+
+#ifdef GL_APPLE_pixel_buffer
+
+static void _glewInfo_GL_APPLE_pixel_buffer (void)
+{
+  glewPrintExt("GL_APPLE_pixel_buffer", GLEW_APPLE_pixel_buffer, glewGetExtension("GL_APPLE_pixel_buffer"));
+}
+
+#endif /* GL_APPLE_pixel_buffer */
 
 #ifdef GL_APPLE_specular_vector
 
@@ -1613,8 +1626,8 @@ static void _glewInfo_GL_EXT_framebuffer_object (void)
   glewInfoFunc("glCheckFramebufferStatusEXT", glCheckFramebufferStatusEXT == NULL);
   glewInfoFunc("glDeleteFramebuffersEXT", glDeleteFramebuffersEXT == NULL);
   glewInfoFunc("glDeleteRenderbuffersEXT", glDeleteRenderbuffersEXT == NULL);
-  glewInfoFunc("glFrameBufferTexture1DEXT", glFrameBufferTexture1DEXT == NULL);
   glewInfoFunc("glFramebufferRenderbufferEXT", glFramebufferRenderbufferEXT == NULL);
+  glewInfoFunc("glFramebufferTexture1DEXT", glFramebufferTexture1DEXT == NULL);
   glewInfoFunc("glFramebufferTexture2DEXT", glFramebufferTexture2DEXT == NULL);
   glewInfoFunc("glFramebufferTexture3DEXT", glFramebufferTexture3DEXT == NULL);
   glewInfoFunc("glGenFramebuffersEXT", glGenFramebuffersEXT == NULL);
@@ -4450,6 +4463,9 @@ static void glewInfo (void)
 #ifdef GL_APPLE_float_pixels
   _glewInfo_GL_APPLE_float_pixels();
 #endif /* GL_APPLE_float_pixels */
+#ifdef GL_APPLE_pixel_buffer
+  _glewInfo_GL_APPLE_pixel_buffer();
+#endif /* GL_APPLE_pixel_buffer */
 #ifdef GL_APPLE_specular_vector
   _glewInfo_GL_APPLE_specular_vector();
 #endif /* GL_APPLE_specular_vector */

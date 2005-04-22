@@ -21,6 +21,9 @@ typedef Byte Channel;
 
 #define Align(n) __declspec(align(n))
 
+static const int SmallTextureSize = 64;
+static const int CacheTextureSize = 512;
+
 static const int Trivial_Success = 2;
 static const int Success = 1;
 static const int Failure = 0;
@@ -79,13 +82,30 @@ extern GLFXGlobal* Global;
 #include "ScaleModes.hpp"
 #include "Pixel.hpp"
 #include "Rectangle.hpp"
+#include "Texture.hpp"
 #include "GLFXGlobal.hpp"
 #include "GL.hpp"
 
 static const Pixel White = Pixel(0xFFFFFFFF);
 static const Pixel Black = Pixel(0x0);
 
-Export inline int ClipValue(int value, int min, int max) {
+template <class T> T inline _Max(T one, T two) {
+    if (one > two) {
+        return one;
+    } else {
+        return two;
+    }
+}
+
+template <class T> T inline _Min(T one, T two) {
+    if (one < two) {
+        return one;
+    } else {
+        return two;
+    }
+}
+
+inline int ClipValue(int value, int min, int max) {
 int iClipped;
     iClipped = -(int)(value < min);
     value = (min & iClipped) | (value & ~iClipped);

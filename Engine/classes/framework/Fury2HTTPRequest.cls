@@ -75,12 +75,18 @@ On Error Resume Next
     Set m_reqRequest = New HTTPConnect
 End Sub
 
-Public Sub Go(ByRef URL As String, Optional ByVal Port As Long = 80)
+Public Sub Go(ByRef URL As String, Optional ByVal Port As Long = 80, Optional ByRef PostData As Variant = Nothing)
 On Error Resume Next
     m_strURL = URL
     m_strFilename = Mid(m_strURL, InStrRev(m_strURL, "/") + 1)
     Engine.HTTPRequestCount = Engine.HTTPRequestCount + 1
-    m_reqRequest.FetchURL URL, Port, , , , , , Engine.HTTPRequestCount
+    If (VarType(PostData) And vbString) = vbString Then
+        m_reqRequest.FetchURL URL, Port, , , , , CStr(PostData), Engine.HTTPRequestCount
+    ElseIf (VarType(PostData) And vbArray) = vbArray Then
+        m_reqRequest.FetchURL URL, Port, , , , , Join(PostData, "&"), Engine.HTTPRequestCount
+    Else
+        m_reqRequest.FetchURL URL, Port, , , , , , Engine.HTTPRequestCount
+    End If
 End Sub
 
 Public Property Get Error() As Long

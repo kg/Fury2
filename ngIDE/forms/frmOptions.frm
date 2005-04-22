@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.10#0"; "ngUI.ocx"
 Begin VB.Form frmOptions 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Options"
@@ -38,16 +38,17 @@ Begin VB.Form frmOptions
       EndProperty
       Height          =   390
       Left            =   4335
-      TabIndex        =   5
+      TabIndex        =   4
       Top             =   450
       Width           =   1500
    End
    Begin VB.ListBox lstFileTypes 
+      BackColor       =   &H80000014&
       Height          =   4380
       IntegralHeight  =   0   'False
       Left            =   75
       Style           =   1  'Checkbox
-      TabIndex        =   4
+      TabIndex        =   3
       Top             =   390
       Visible         =   0   'False
       Width           =   4185
@@ -55,7 +56,7 @@ Begin VB.Form frmOptions
    Begin ngIDE.ObjectInspector insOptions 
       Height          =   4380
       Left            =   75
-      TabIndex        =   3
+      TabIndex        =   2
       Top             =   390
       Visible         =   0   'False
       Width           =   4185
@@ -97,36 +98,14 @@ Begin VB.Form frmOptions
       Top             =   30
       Width           =   1500
    End
-   Begin vbalDTab6.vbalDTabControl dtSelected 
+   Begin ngUI.ngTabStrip tsViews 
       Height          =   4785
       Left            =   30
-      TabIndex        =   2
+      TabIndex        =   5
       Top             =   30
       Width           =   4275
       _ExtentX        =   7541
       _ExtentY        =   8440
-      AllowScroll     =   0   'False
-      TabAlign        =   0
-      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   700
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      ShowCloseButton =   0   'False
-      MoveableTabs    =   0   'False
    End
 End
 Attribute VB_Name = "frmOptions"
@@ -212,15 +191,15 @@ On Error Resume Next
     Unload Me
 End Sub
 
-Private Sub dtSelected_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsViews_TabSelected(theTab As ngTab)
 On Error Resume Next
     insOptions.Visible = False
     lstFileTypes.Visible = False
-    Select Case LCase(Trim(theTab.key))
+    Select Case LCase(Trim(theTab.Text))
     Case "general"
         insOptions.Visible = True
         insOptions.Inspect m_optOptions
-    Case "associations"
+    Case "file associations"
         lstFileTypes.Visible = True
         RefreshFileTypes
     Case "editor scripts"
@@ -230,15 +209,15 @@ End Sub
 
 Private Sub Form_Activate()
 On Error Resume Next
-    dtSelected_TabSelected dtSelected.SelectedTab
+    tsViews_TabSelected tsViews.SelectedTab
 End Sub
 
 Private Sub Form_Load()
 On Error Resume Next
     Set m_optOptions = g_edEditor.Options.Duplicate
-    dtSelected.Tabs.Add "General", , "General"
-    dtSelected.Tabs.Add "Associations", , "File Associations"
-    dtSelected.Tabs.Add "Editor Scripts", , "Editor Scripts"
+    tsViews.Tabs.AddNew "General"
+    tsViews.Tabs.AddNew "File Associations"
+    tsViews.Tabs.AddNew "Editor Scripts"
     insOptions.ShowHierarchy = False
 End Sub
 

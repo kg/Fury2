@@ -45,7 +45,7 @@ Public Property Get Width() As Long
     Width = mvarWidth
 End Property
 
-Public Property Let Width(NewWidth As Long)
+Public Property Let Width(ByVal NewWidth As Long)
     mvarWidth = NewWidth
 End Property
 
@@ -53,11 +53,11 @@ Public Property Get Height() As Long
     Height = mvarHeight
 End Property
 
-Public Property Let Height(NewHeight As Long)
+Public Property Let Height(ByVal NewHeight As Long)
     mvarHeight = NewHeight
 End Property
 
-Public Sub SetValues(Width, Height)
+Public Sub SetValues(ByVal Width As Long, ByVal Height As Long)
 On Error Resume Next
     mvarWidth = Width
     mvarHeight = Height

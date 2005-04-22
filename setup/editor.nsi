@@ -57,14 +57,20 @@ Section "-Editor"
     DeleteRegKey HKLM "Software\Squared Interactive\ngIDE"
 
     IfFileExists $INSTDIR\sys\engine.dll EngineFound
+        DetailPrint "Engine not installed."
+        StrCpy $2 "$EXEDIR\fury2_beta_${VERSION}.exe"
+        IfFileExists $2 setupfound
+        DetailPrint "Attempting to download engine..."
         Call ConnectInternet
-        StrCpy $2 "$TEMP\fury2_editor_installer.exe"
         NSISdl::download http://fury2.luminance.org/downloads/fury2_beta_${VERSION}.exe $2
         Pop $0
         StrCmp $0 success success
-            DetailPrint "download failed: $0"
+            DetailPrint "Engine download failed: $0"
             Abort
+        setupfound:
+            DetailPrint "Engine installer found."
         success:
+            DetailPrint "Installing engine."
             ExecWait '"$2"'
             Delete $2
     EngineFound:

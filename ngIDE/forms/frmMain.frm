@@ -1,10 +1,9 @@
 VERSION 5.00
-Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
 Object = "{4F11FEBA-BBC2-4FB6-A3D3-AA5B5BA087F4}#1.0#0"; "vbalSbar6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{EF59A10B-9BC4-11D3-8E24-44910FC10000}#11.0#0"; "vbalEdit.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.7#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.11#0"; "ngUI.ocx"
 Begin VB.MDIForm frmMain 
    AutoShowChildren=   0   'False
    BackColor       =   &H8000000C&
@@ -36,14 +35,14 @@ Begin VB.MDIForm frmMain
       ScaleHeight     =   80
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   555
-      TabIndex        =   13
+      TabIndex        =   12
       Top             =   5100
       Visible         =   0   'False
       Width           =   8325
       Begin vbalEdit.vbalRichEdit reLog 
          Height          =   945
          Left            =   0
-         TabIndex        =   14
+         TabIndex        =   13
          Top             =   255
          Width           =   8325
          _ExtentX        =   14684
@@ -69,13 +68,13 @@ Begin VB.MDIForm frmMain
    End
    Begin ngUI.ngToolbar tbrLeft 
       Align           =   3  'Align Left
-      Height          =   3435
+      Height          =   2940
       Left            =   0
-      TabIndex        =   10
-      Top             =   1665
+      TabIndex        =   9
+      Top             =   2160
       Width           =   720
       _ExtentX        =   1270
-      _ExtentY        =   6059
+      _ExtentY        =   5186
    End
    Begin VB.PictureBox picFileSidebar 
       Align           =   4  'Align Right
@@ -90,13 +89,13 @@ Begin VB.MDIForm frmMain
          Strikethrough   =   0   'False
       EndProperty
       ForeColor       =   &H80000013&
-      Height          =   3435
+      Height          =   2940
       Left            =   6330
-      ScaleHeight     =   229
+      ScaleHeight     =   196
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   133
       TabIndex        =   7
-      Top             =   1665
+      Top             =   2160
       Visible         =   0   'False
       Width           =   2000
       Begin vbalTreeViewLib6.vbalTreeView tvFileTree 
@@ -127,35 +126,6 @@ Begin VB.MDIForm frmMain
             Strikethrough   =   0   'False
          EndProperty
       End
-      Begin vbalDTab6.vbalDTabControl tsFileTabs 
-         Height          =   360
-         Left            =   0
-         TabIndex        =   9
-         Top             =   2910
-         Width           =   1950
-         _ExtentX        =   3440
-         _ExtentY        =   635
-         AllowScroll     =   0   'False
-         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-            Name            =   "Tahoma"
-            Size            =   8.25
-            Charset         =   0
-            Weight          =   400
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-            Name            =   "Tahoma"
-            Size            =   8.25
-            Charset         =   0
-            Weight          =   700
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         ShowCloseButton =   0   'False
-      End
    End
    Begin VB.PictureBox picToolbarsTop 
       Align           =   1  'Align Top
@@ -169,9 +139,9 @@ Begin VB.MDIForm frmMain
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   420
+      Height          =   915
       Left            =   0
-      ScaleHeight     =   28
+      ScaleHeight     =   61
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   555
       TabIndex        =   2
@@ -213,6 +183,15 @@ Begin VB.MDIForm frmMain
          _ExtentX        =   3281
          _ExtentY        =   635
       End
+      Begin ngUI.ngTabStrip tsDocuments 
+         Height          =   525
+         Left            =   0
+         TabIndex        =   14
+         Top             =   570
+         Width           =   8325
+         _ExtentX        =   14684
+         _ExtentY        =   926
+      End
    End
    Begin VB.PictureBox picHiddenControls 
       Align           =   1  'Align Top
@@ -236,9 +215,14 @@ Begin VB.MDIForm frmMain
       Top             =   0
       Visible         =   0   'False
       Width           =   8325
+      Begin VB.Timer tmrTabs 
+         Interval        =   5000
+         Left            =   930
+         Top             =   465
+      End
       Begin VB.Timer tmrNotice 
          Enabled         =   0   'False
-         Interval        =   50
+         Interval        =   100
          Left            =   930
          Top             =   0
       End
@@ -259,13 +243,13 @@ Begin VB.MDIForm frmMain
          ScaleHeight     =   77
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   380
-         TabIndex        =   11
+         TabIndex        =   10
          Top             =   30
          Width           =   5700
          Begin ngUI.ngToolbar tbrNotice 
             Height          =   240
             Left            =   0
-            TabIndex        =   12
+            TabIndex        =   11
             Top             =   915
             Width           =   5700
             _ExtentX        =   10054
@@ -286,7 +270,7 @@ Begin VB.MDIForm frmMain
       End
       Begin VB.Timer tmrFocusTracker 
          Enabled         =   0   'False
-         Interval        =   250
+         Interval        =   333
          Left            =   0
          Top             =   465
       End
@@ -353,11 +337,9 @@ Attribute VB_Exposed = False
 Option Explicit
 Implements iCustomMenuHandler
 Private Const WM_MDIGETACTIVE = &H229
-Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
-Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
+Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
 
-Dim WithEvents m_mdiTabs As cMDITabs
-Attribute m_mdiTabs.VB_VarHelpID = -1
 Private m_colNoticeQueue As Engine.Fury2Collection
 Private m_notNotice As cNotice
 Private m_imgNotice As Fury2Image
@@ -367,6 +349,34 @@ Private m_booNonClientFocus As Boolean
 Private m_colChildWindows As Engine.Fury2Collection
 Private m_sngProgress As Single
 Private m_cmnLastDocument As iCustomMenus
+
+Public Sub InitTabs()
+On Error Resume Next
+    Set tsDocuments.ResourceFile = g_edEditor.Resources
+    tsDocuments.LoadTheme "theme\tabstrip\"
+End Sub
+
+Public Sub RefreshDocumentTabs()
+On Error Resume Next
+Dim l_docDocument As cChildManager
+    tsDocuments.DisableUpdates = True
+    tsDocuments.ShowCloseButtons = True
+    tsDocuments.Tabs.Clear
+    For Each l_docDocument In m_colChildWindows
+        With tsDocuments.Tabs.AddNew(l_docDocument.Form.Caption)
+            If l_docDocument Is Me.ActiveChild Then
+                tsDocuments.SelectTab tsDocuments.Tabs(.Index)
+            End If
+            Set .Image = l_docDocument.Document.DocumentIcon
+            Set .Tag = l_docDocument
+        End With
+    Next l_docDocument
+    tsDocuments.DisableUpdates = False
+    tsDocuments.Reflow
+    If tsDocuments.IdealHeight <> tsDocuments.Height Then
+        RefreshToolbars
+    End If
+End Sub
 
 Public Sub LogAppend(ByRef Text As String, Optional ByVal Color As Long = vbButtonText)
 On Error Resume Next
@@ -394,7 +404,7 @@ End Sub
 
 Private Function GetToolbarX(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
+Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0))) * Screen.TwipsPerPixelX
@@ -402,7 +412,7 @@ End Function
 
 Private Function GetToolbarY(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
+Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0))) * Screen.TwipsPerPixelY
@@ -413,14 +423,13 @@ On Error Resume Next
 Dim l_mgrForm As cChildManager
 Dim l_booHidden As Boolean
 Dim l_frmForm As Form
-    m_mdiTabs.ForceRefresh
+    m_colChildWindows.Remove m_colChildWindows.Find(Document)
     Set l_frmForm = Document.Form
     Document.Detach
     Unload l_frmForm
-    m_colChildWindows.Remove m_colChildWindows.Find(Document)
     m_colChildWindows(m_colChildWindows.Count).Activate
     HideInactiveWindows
-    m_mdiTabs.ForceRefresh
+    RefreshDocumentTabs
 End Sub
 
 Public Sub HideInactiveWindows()
@@ -562,9 +571,9 @@ Dim l_mgrManager As cChildManager
     Child.WindowState = 2
     Child.extender.WindowState = 2
     Child.Show
-    m_mdiTabs.ForceRefresh
     g_edEditor.Event_DocumentActivate l_mgrManager
     Err.Clear
+    RefreshDocumentTabs
 End Sub
 
 Friend Sub DereferenceChildManager(ByRef Manager As cChildManager)
@@ -688,7 +697,6 @@ End Sub
 
 Public Sub RefreshWindows()
 On Error Resume Next
-    m_mdiTabs.ForceRefresh
 End Sub
 
 Public Sub ResizeSidebars()
@@ -699,24 +707,17 @@ End Sub
 Public Sub InitToolbars()
 On Error Resume Next
 Dim l_fntMarlett As StdFont
-'    tbrMain.CreateToolbar 16, False, False, True, 16
-'    tbrMain.Wrappable = True
     RefreshMenus
     Set tbrMenus.ResourceFile = g_edEditor.Resources
-    tbrMenus.LoadTheme "theme\toolbar\"
     tbrMenus.ResourcePattern = "toolbar\*.png"
     Set tbrMain.ResourceFile = g_edEditor.Resources
-    tbrMain.LoadTheme "theme\toolbar\"
     tbrMain.ResourcePattern = "toolbar\*.png"
     Set tbrGame.ResourceFile = g_edEditor.Resources
     tbrGame.ResourcePattern = "toolbar\*.png"
-    tbrGame.LoadTheme "theme\toolbar\"
     Set tbrPlugins.ResourceFile = g_edEditor.Resources
     tbrPlugins.ResourcePattern = "toolbar\*.png"
-    tbrPlugins.LoadTheme "theme\toolbar\"
     Set tbrLeft.ResourceFile = g_edEditor.Resources
     tbrLeft.ResourcePattern = "toolbar\*.png"
-    tbrLeft.LoadTheme "theme\toolbar\"
     tbrLeft.Orientation = tboVertical
     Set l_fntMarlett = New StdFont
     l_fntMarlett.Name = "Marlett"
@@ -760,9 +761,6 @@ On Error Resume Next
 End Sub
 
 Public Sub InitSidebars()
-On Error Resume Next
-    tsFileTabs.ImageList = frmIcons.ilIcons.hIml
-    tsFileTabs.Tabs.Add "Game", , "Game"
 End Sub
 
 Public Sub InitMenus()
@@ -771,12 +769,6 @@ Dim l_mnuMenu As cPopupMenu
     Set l_mnuMenu = GetMenu("Main Menu")
     With l_mnuMenu
     End With
-End Sub
-
-Public Sub InitMDITabs()
-On Error Resume Next
-    Set m_mdiTabs = New cMDITabs
-    m_mdiTabs.Attach Me.hwnd
 End Sub
 
 Private Sub iCustomMenuHandler_DefineMenu(Caption As String, key As String, Optional ParentKey As String, Optional AcceleratorString As String = "", Optional Icon As stdole.Picture = Nothing, Optional HelpText As String = "", Optional ByVal Checked As Boolean = False, Optional ByVal Enabled As Boolean = True)
@@ -903,13 +895,21 @@ On Error Resume Next
     Set m_imgNotice = F2Image(1, 1)
     g_booMainWindowLoaded = True
     Set m_colChildWindows = New Engine.Fury2Collection
-    InitMDITabs
+    InitThemes
     InitSidebars
     InitToolbars
+    InitTabs
     InitStatus
     InitMenus
     LoadFormPosition Me
     SetAppIcon Me
+End Sub
+
+Public Sub InitThemes()
+On Error Resume Next
+    SetTheme g_edEditor.Resources, "*.png"
+    SetToolbarTheme "theme\toolbar\"
+    SetTabTheme "theme\tabstrip\"
 End Sub
 
 Private Sub MDIForm_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -964,7 +964,8 @@ Dim l_lngWidth As Long, l_lngHeight As Long, l_lngTotalHeight As Long
     l_lngHeight = IIf(tbrPlugins.Visible, tbrPlugins.Height, 0)
     If l_lngHeight > l_lngTotalHeight Then l_lngTotalHeight = l_lngHeight
     tbrPlugins.Move tbrGame.Left + IIf(tbrGame.Visible, tbrGame.Width, 0), tbrMain.Top, l_lngWidth, tbrPlugins.IdealHeight
-    picToolbarsTop.Height = (tbrMenus.Height + l_lngTotalHeight) * Screen.TwipsPerPixelY
+    tsDocuments.Move 0, tbrMain.Top + tbrMain.Height + 1, picToolbarsTop.ScaleWidth, tsDocuments.IdealHeight
+    picToolbarsTop.Height = (tbrMenus.Height + l_lngTotalHeight + tsDocuments.IdealHeight + 1) * Screen.TwipsPerPixelY
 End Sub
 
 Private Sub MDIForm_Resize()
@@ -990,8 +991,7 @@ End Sub
 
 Private Sub picFileSidebar_Resize()
 On Error Resume Next
-    tsFileTabs.Move 0, picFileSidebar.ScaleHeight - tsFileTabs.Height, picFileSidebar.ScaleWidth, tsFileTabs.Height
-    tvFileTree.Move 2, 16, picFileSidebar.ScaleWidth - 4, picFileSidebar.ScaleHeight - (tsFileTabs.Height + 16)
+    tvFileTree.Move 2, 16, picFileSidebar.ScaleWidth - 4, picFileSidebar.ScaleHeight - 18
 End Sub
 
 Private Sub picLog_Paint()
@@ -1036,11 +1036,12 @@ End Sub
 Private Sub picToolbarsTop_Resize()
 On Error Resume Next
     tbrMenus.Width = picToolbarsTop.ScaleWidth
+    tsDocuments.Width = picToolbarsTop.ScaleWidth
 End Sub
 
 Private Sub sbStatus_DrawItem(ByVal lhDC As Long, ByVal iPanel As Long, ByVal lLeftPixels As Long, ByVal lTopPixels As Long, ByVal lRightPixels As Long, ByVal lBottomPixels As Long)
 On Error Resume Next
-Dim l_rctProgress As RECT
+Dim l_rctProgress As Rect
 Dim l_lngBrush As Long
     If LCase(sbStatus.PanelKey(iPanel)) = "progress" Then
         With l_rctProgress
@@ -1443,22 +1444,35 @@ End Sub
 Private Sub tmrRefreshFileSidebar_Timer()
 On Error Resume Next
     tmrRefreshFileSidebar.Enabled = False
-    If tsFileTabs.SelectedTab.key = "Game" Then
-        Err.Clear
-        If g_engEngine Is Nothing Then
-            tvFileTree.Nodes.Clear
-            tvFileTree.Enabled = False
-        ElseIf g_engEngine.Filesystem Is Nothing Then
-            tvFileTree.Nodes.Clear
-            tvFileTree.Enabled = False
-        Else
-            EnumFilesystem tvFileTree, g_engEngine.Filesystem
-            tvFileTree.Enabled = True
-        End If
+    If g_engEngine Is Nothing Then
+        tvFileTree.Nodes.Clear
+        tvFileTree.Enabled = False
+    ElseIf g_engEngine.Filesystem Is Nothing Then
+        tvFileTree.Nodes.Clear
+        tvFileTree.Enabled = False
     Else
-        EnumFilesystem tvFileTree, g_fsFilesystem, , , , True
+        EnumFilesystem tvFileTree, g_engEngine.Filesystem
         tvFileTree.Enabled = True
     End If
+End Sub
+
+Private Sub tmrTabs_Timer()
+On Error Resume Next
+'    RefreshDocumentTabs
+End Sub
+
+Private Sub tsDocuments_TabClose(theTab As ngUI.ngTab)
+On Error Resume Next
+Dim l_mgrChild As cChildManager
+    Set l_mgrChild = theTab.Tag
+    l_mgrChild.Hide
+End Sub
+
+Private Sub tsDocuments_TabSelected(theTab As ngUI.ngTab)
+On Error Resume Next
+Dim l_mgrChild As cChildManager
+    Set l_mgrChild = theTab.Tag
+    l_mgrChild.Activate
 End Sub
 
 Private Sub tsFileTabs_TabClick(theTab As vbalDTab6.cTab, ByVal iButton As MouseButtonConstants, ByVal Shift As ShiftConstants, ByVal X As Single, ByVal Y As Single)
@@ -1470,11 +1484,7 @@ Private Sub tvFileTree_AfterLabelEdit(node As vbalTreeViewLib6.cTreeViewNode, Ne
 On Error Resume Next
 Dim l_strPath As String, l_strNewPath As String
 Dim l_fsFilesystem As Fury2Filesystem
-    If tsFileTabs.SelectedTab.key = "Game" Then
-        Set l_fsFilesystem = g_engEngine.Filesystem
-    Else
-        Set l_fsFilesystem = g_fsFilesystem
-    End If
+    Set l_fsFilesystem = g_engEngine.Filesystem
     If Right(node.key, 1) = "/" Then
         ' Folder
         l_strPath = Replace(l_fsFilesystem.Root & Replace(node.key, "/", "\"), "\\", "\")
@@ -1493,19 +1503,9 @@ On Error Resume Next
 Dim l_strFilename As String
 Dim l_filFile As Fury2File
     If Right(Trim(tvFileTree.SelectedItem.key), 1) = "/" Then Exit Sub
-    If tsFileTabs.SelectedTab.key = "Game" Then
-        Set l_filFile = g_engEngine.Filesystem.File(tvFileTree.SelectedItem.key)
-        l_strFilename = l_filFile.GetRealFilename
-        g_edEditor.File_Open l_strFilename
-    Else
-        If tvFileTree.SelectedItem.key = ".." Then
-            g_fsFilesystem.Root = GetPath(StripEndCharacters(g_fsFilesystem.Root, 1))
-            RefreshFileSidebar
-        Else
-            l_strFilename = g_fsFilesystem.TranslateFilename(tvFileTree.SelectedItem.key)
-            g_edEditor.File_Open l_strFilename
-        End If
-    End If
+    Set l_filFile = g_engEngine.Filesystem.File(tvFileTree.SelectedItem.key)
+    l_strFilename = l_filFile.GetRealFilename
+    g_edEditor.File_Open l_strFilename
 End Sub
 
 Private Sub tvFileTree_DragDropRequest(Data As DataObject, nodeOver As vbalTreeViewLib6.cTreeViewNode, ByVal bAbove As Boolean, ByVal hitTest As Long)
@@ -1527,16 +1527,19 @@ Private Sub tvFileTree_Expand(node As vbalTreeViewLib6.cTreeViewNode)
 On Error Resume Next
 End Sub
 
+Private Sub tvFileTree_KeyDown(KeyCode As Integer, Shift As Integer)
+On Error Resume Next
+    If KeyCode = vbKeyF5 Then
+        RefreshFileSidebar
+    End If
+End Sub
+
 Private Sub tvFileTree_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_nodNode As cTreeViewNode
 Dim l_strFolderName As String
 Dim l_fsFilesystem As Fury2Filesystem
-    If tsFileTabs.SelectedTab.key = "Game" Then
-        Set l_fsFilesystem = g_engEngine.Filesystem
-    Else
-        Set l_fsFilesystem = g_fsFilesystem
-    End If
+    Set l_fsFilesystem = g_engEngine.Filesystem
     If Button = 2 Then
         Set l_nodNode = tvFileTree.hitTest(X, Y)
         If l_nodNode Is Nothing Then
@@ -1600,9 +1603,9 @@ Dim l_lngLeftSpace As Long, l_lngRightSpace As Long
 Dim l_lngTopSpace As Long, l_lngBottomSpace As Long
 Dim l_lngTextHeight As Long, l_lngTitleHeight As Long
 Dim l_lngWidth As Long, l_lngHeight As Long
-Dim l_rctWindow As Win32.RECT
+Dim l_rctWindow As Win32.Rect
 Dim l_lngWindowWidth As Long, l_lngWindowHeight As Long
-Dim l_rctTextSize As Win32.RECT, l_rctText As Win32.RECT
+Dim l_rctTextSize As Win32.Rect, l_rctText As Win32.Rect
 Dim l_sngCloseTime As Single
 Dim l_strWaitingNotices As String
     GetClientRect Me.hwnd, l_rctWindow
@@ -1619,6 +1622,7 @@ Dim l_strWaitingNotices As String
         l_lngLeftSpace = l_lngLeftSpace + m_notNotice.Icon.Width + 4
     End If
     If Reposition Then
+        tbrNotice.EnableTheme = False
         tbrNotice.DisableUpdates = True
         tbrNotice.Buttons.Clear
         tbrNotice.Font.Name = picNotice.Font.Name
@@ -1723,6 +1727,7 @@ End Sub
 Public Sub ShowNotice(Optional Title As String = "", Optional Text As String = "", Optional Icon As Fury2Image = Nothing, Optional Options As Variant = Nothing, Optional AutoClose As Boolean = True)
 On Error Resume Next
 Dim l_notNew As cNotice
+    tbrNotice.EnableTheme = False
     Set l_notNew = New cNotice
     With l_notNew
         If (VarType(Options) And vbArray) = vbArray Then

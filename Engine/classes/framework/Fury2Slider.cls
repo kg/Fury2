@@ -32,6 +32,7 @@ Option Explicit
 '    License along with this library; if not, write to the Free Software
 '    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 '
+Implements IVirtualFileSaveable
 Implements Fury2Object
 Public StartTime As Double
 Public EndTime As Double
@@ -93,4 +94,20 @@ On Error Resume Next
     m_booPaused = False
     StartTime = Engine.HiTimer
     EndTime = StartTime + Length
+End Sub
+
+Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
+On Error Resume Next
+    File.ReadSegment_Begin
+        File.Load StartTime
+        File.Load EndTime
+    File.ReadSegment_End
+End Sub
+
+Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
+On Error Resume Next
+    File.WriteSegment_Begin
+        File.Save StartTime
+        File.Save EndTime
+    File.WriteSegment_End
 End Sub

@@ -150,6 +150,11 @@ Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
 Private m_lngCurrentView As UserDataEditorViews
 
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+On Error Resume Next
+    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\userdata.png")
+End Property
+
 Public Property Set Data(ByRef NewData As Object)
 On Error Resume Next
     Set m_objData = NewData

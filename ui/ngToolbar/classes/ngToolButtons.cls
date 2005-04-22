@@ -19,13 +19,13 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 Implements IVirtualFileSaveable
 
-Private m_lstParent As ngToolbar
+Private m_tbrParent As ngToolbar
 Private m_colCollection As Collection
 
 Friend Sub Free()
 On Error Resume Next
 Dim l_btnButton As ngToolButton
-    Set m_lstParent = Nothing
+    Set m_tbrParent = Nothing
     For Each l_btnButton In m_colCollection
         l_btnButton.Free
     Next l_btnButton
@@ -44,7 +44,7 @@ End Sub
 
 Friend Sub SetParent(Parent As ngToolbar)
 On Error Resume Next
-    Set m_lstParent = Parent
+    Set m_tbrParent = Parent
 End Sub
 
 Public Function AddNew(Optional ByRef Text As String = "", Optional ByRef Key As String = "", Optional ByRef Image As Variant = Nothing, Optional ByRef Tooltip As String = "", Optional ByVal Style As ngToolButtonStyles = bsyNormal, Optional ByVal TextAlignment As ngToolButtonTextAlignment = btaRight, Optional ByVal Enabled As Boolean = True, Optional ByVal Checked As Boolean = False, Optional ByVal AtIndex As Long = -1) As ngToolButton
@@ -64,7 +64,7 @@ Dim l_resFile As ngResource
         End If
         .Tooltip = Tooltip
         If VarType(Image) = vbString Then
-            Set l_resFile = m_lstParent.ResourceFile(Replace(m_lstParent.ResourcePattern, "*", Image))
+            Set l_resFile = m_tbrParent.ResourceFile(Replace(m_tbrParent.ResourcePattern, "*", Image))
             If Not (l_resFile Is Nothing) Then
                 Set .Image = l_resFile.LoadImage()
             End If
@@ -115,9 +115,9 @@ Dim l_strKey As String
             End If
         End If
     End If
-    Obj.SetParent m_lstParent
+    Obj.SetParent m_tbrParent
     Reindex
-    m_lstParent.Reflow
+    m_tbrParent.Reflow
     Err.Clear
 End Sub
 
@@ -162,7 +162,7 @@ On Error Resume Next
     End If
     m_colCollection.Remove IndexOrKey
     Reindex
-    m_lstParent.Reflow
+    m_tbrParent.Reflow
 End Sub
 
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)
@@ -182,6 +182,10 @@ End Sub
 
 Public Sub Clear()
 On Error Resume Next
+Dim l_btnButton As ngToolButton
+    For Each l_btnButton In m_colCollection
+        l_btnButton.Free
+    Next l_btnButton
     Set m_colCollection = New Collection
 End Sub
 

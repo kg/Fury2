@@ -1,6 +1,5 @@
 namespace GL {
   extern int blendMode;
-  extern int scaleMode;
   extern bool texturesEnabled[4];
   extern bool fogEnabled;
   extern GLuint activeTexture[4];
@@ -9,17 +8,21 @@ namespace GL {
   extern Pixel fogColor;
   extern Pixel blendColor;
 
+  inline Texture* getTexture(int Image) {
+    return reinterpret_cast<Texture*>(getNamedTag(Image, Texture));
+  }
+
   extern void init();
 
   extern void flushImageHeap();
 
-  extern GLuint createTexture(int width, int height);
-  extern GLuint createTextureFromImage(int image);
-  extern GLuint createTextureFromFramebuffer(int image);
+  extern Texture* createTexture(int width, int height);
+  extern Texture* createTextureFromImage(int image);
+  extern Texture* createTextureFromFramebuffer(int image);
   extern void copyImageToFramebuffer(int image);
   extern void copyFramebufferToImage(int image);
-  extern void copyFramebufferToTexture(GLuint handle, int image);
-  extern void uploadImageToTexture(GLuint handle, int image);
+  extern void copyFramebufferToTexture(Texture *tex, int image);
+  extern void uploadImageToTexture(Texture *tex, int image);
   extern void selectImageAsTexture(int image);
   extern void selectTexture(GLuint handle);
   extern void destroyTexture(GLuint handle);
@@ -39,12 +42,23 @@ namespace GL {
   extern void setBlendColor(Pixel color);
   extern void setTextureColor(Pixel color);
 
+  inline void setFog(Pixel color) {
+    if (color[::Alpha]) {
+      enableFog();
+      setFogColor(color);
+      setFogOpacity(color[::Alpha] / 255.0f);
+    } else {
+      disableFog();
+    }
+  }
+
   extern void drawLine(FPoint& start, FPoint& end);
   extern void drawGradientLine(FPoint& start, FPoint& end, Pixel startColor, Pixel endColor);
   extern void drawRectangle(FX::Rectangle& rect);
   extern void drawGradientRectangle(FX::Rectangle& rect, Pixel colorTL, Pixel colorTR, Pixel colorBL, Pixel colorBR);
   extern void drawTexturedRectangle(FX::Rectangle& rect, float U1, float V1, float U2, float V2);
   extern void drawTexturedRectangleF(float X, float Y, float W, float H, float U1, float V1, float U2, float V2);
+  extern void drawTexturedRectangleTiledF(float X, float Y, float W, float H, float SW, float SH, float U1, float V1, float U2, float V2);
   extern void draw2TexturedRectangle(FX::Rectangle& rect, float U1, float V1, float U2, float V2);
   extern void draw2TexturedRectangle(FX::Rectangle& rect, float U11, float V11, float U12, float V12, float U21, float V21, float U22, float V22);
   extern void drawBox(FX::Rectangle& box);
@@ -63,17 +77,21 @@ namespace GL {
 
   template <int Stage> void selectImageAsTextureN(int image) {
     switchTextureStage<Stage>();
+    Texture* tex = 0;
     GLuint handle = 0;
-    handle = getNamedTag(image, Texture);
+    tex = getTexture(image);
+    if (tex) handle = tex->Handle;
     if (handle == 0) {
       if (checkNamedTag(image, Context)) {
         // this is a context
         endDraw();
-        handle = createTextureFromFramebuffer(image);
+        tex = createTextureFromFramebuffer(image);
+        if (tex) handle = tex->Handle;
       } else {
         // this is an image
         endDraw();
-        handle = createTextureFromImage(image);
+        tex = createTextureFromImage(image);
+        if (tex) handle = tex->Handle;
       }
     } else {
       if (checkNamedTag(image, Context)) {
@@ -81,14 +99,14 @@ namespace GL {
         if (SoftFX::GetImageDirty(image)) {
           // the texture is out of sync with the framebuffer
           endDraw();
-          copyFramebufferToTexture(handle, image);
+          copyFramebufferToTexture(tex, image);
         }
       } else {
         // this is an image
         if (SoftFX::GetImageDirty(image)) {
           // this image's texture is out of sync with system memory
           endDraw();
-          uploadImageToTexture(handle, image);
+          uploadImageToTexture(tex, image);
         }
       }
     }
@@ -129,11 +147,8 @@ namespace GL {
   }
 
   template <class Mode> inline void setScaleMode() {
-    if (scaleMode != Mode::id) {
-      endDraw();
-      Mode::Set();
-      scaleMode = Mode::id;
-    }
+    endDraw();
+    Mode::Set();
   }
 
   inline void selectContext(int Image) {

@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="GLFX"
 	ProjectGUID="{3A410C42-E439-4191-B1E9-186A3971A4F4}"
+	RootNamespace="GLFX"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -40,13 +41,13 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				PreprocessorDefinitions="GLEW_STATIC"
-				MinimalRebuild="TRUE"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="FALSE"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 				CallingConvention="2"
 			/>
@@ -61,11 +62,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib glu32.lib"
+				AdditionalDependencies="opengl32.lib glu32.lib user32.lib gdi32.lib kernel32.lib"
 				OutputFile="$(OutDir)/GLFX.dll"
 				LinkIncremental="2"
-				IgnoreAllDefaultLibraries="FALSE"
-				GenerateDebugInformation="TRUE"
+				IgnoreAllDefaultLibraries="false"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/GLFX.pdb"
 				SubSystem="2"
 				ImportLibrary="$(OutDir)/GLFX.lib"
@@ -82,6 +83,9 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
@@ -119,18 +123,17 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
-				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="TRUE"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				OmitFramePointers="TRUE"
-				WholeProgramOptimization="TRUE"
+				OmitFramePointers="true"
+				WholeProgramOptimization="true"
 				PreprocessorDefinitions="GLEW_STATIC"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="FALSE"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 				CallingConvention="2"
 			/>
@@ -145,11 +148,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib"
+				AdditionalDependencies="opengl32.lib glu32.lib user32.lib gdi32.lib kernel32.lib"
 				OutputFile="$(OutDir)/GLFX.dll"
 				LinkIncremental="1"
-				IgnoreAllDefaultLibraries="FALSE"
-				GenerateDebugInformation="TRUE"
+				IgnoreAllDefaultLibraries="false"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -167,6 +170,9 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
@@ -204,20 +210,19 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				GlobalOptimizations="FALSE"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="TRUE"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				WholeProgramOptimization="FALSE"
+				WholeProgramOptimization="false"
 				PreprocessorDefinitions="GLEW_STATIC"
-				StringPooling="TRUE"
-				MinimalRebuild="TRUE"
+				StringPooling="true"
+				MinimalRebuild="true"
 				RuntimeLibrary="0"
-				BufferSecurityCheck="FALSE"
+				BufferSecurityCheck="false"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="FALSE"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 				CallingConvention="2"
 			/>
@@ -232,11 +237,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib glu32.lib"
+				AdditionalDependencies="opengl32.lib glu32.lib user32.lib gdi32.lib kernel32.lib"
 				OutputFile="$(OutDir)/GLFX.dll"
 				LinkIncremental="1"
-				IgnoreAllDefaultLibraries="FALSE"
-				GenerateDebugInformation="TRUE"
+				IgnoreAllDefaultLibraries="false"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -254,6 +259,9 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
@@ -350,7 +358,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\header\Texture.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\header\Tilemap.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\header\WindowSkin.hpp"
 				>
 			</File>
 		</Filter>

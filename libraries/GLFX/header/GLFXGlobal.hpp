@@ -5,6 +5,7 @@ public:
   HGLRC Context;
   zeroinit<bool> Windowed;
   std::vector<int> ImageHeap;
+  std::vector<TextureGroup*> SmallImageCache;
   int Framebuffer;
   int OutputWidth, OutputHeight;
   int ScaleMode;

@@ -1,7 +1,7 @@
 VERSION 5.00
-Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{EF59A10B-9BC4-11D3-8E24-44910FC10000}#11.0#0"; "vbalEdit.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.10#0"; "ngUI.ocx"
 Begin VB.Form frmGameDebugger 
    BorderStyle     =   0  'None
    Caption         =   "Game Debugger"
@@ -24,13 +24,14 @@ Begin VB.Form frmGameDebugger
    ScaleWidth      =   470
    ShowInTaskbar   =   0   'False
    Begin VB.PictureBox picConsole 
+      BackColor       =   &H80000014&
       BorderStyle     =   0  'None
       Height          =   2385
       Left            =   90
       ScaleHeight     =   159
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   130
-      TabIndex        =   2
+      TabIndex        =   1
       Top             =   435
       Width           =   1950
       Begin VB.TextBox txtConsoleInput 
@@ -45,14 +46,14 @@ Begin VB.Form frmGameDebugger
          EndProperty
          Height          =   315
          Left            =   45
-         TabIndex        =   4
+         TabIndex        =   3
          Top             =   1215
          Width           =   1860
       End
       Begin vbalEdit.vbalRichEdit reConsole 
          Height          =   1170
          Left            =   45
-         TabIndex        =   3
+         TabIndex        =   2
          Top             =   30
          Width           =   1800
          _ExtentX        =   3175
@@ -67,7 +68,7 @@ Begin VB.Form frmGameDebugger
             Italic          =   0   'False
             Strikethrough   =   0   'False
          EndProperty
-         BackColor       =   -2147483633
+         BackColor       =   -2147483628
          ForeColor       =   -2147483630
          ViewMode        =   1
          Border          =   0   'False
@@ -84,7 +85,7 @@ Begin VB.Form frmGameDebugger
    Begin ngIDE.ObjectInspector insVariables 
       Height          =   3600
       Left            =   2070
-      TabIndex        =   1
+      TabIndex        =   0
       Top             =   2130
       Visible         =   0   'False
       Width           =   4800
@@ -97,36 +98,14 @@ Begin VB.Form frmGameDebugger
       _ExtentX        =   847
       _ExtentY        =   794
    End
-   Begin vbalDTab6.vbalDTabControl dtViews 
-      Height          =   5880
-      Left            =   30
-      TabIndex        =   0
-      Top             =   30
-      Width           =   7020
-      _ExtentX        =   12383
-      _ExtentY        =   10372
-      AllowScroll     =   0   'False
-      TabAlign        =   0
-      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   700
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      ShowCloseButton =   0   'False
-      MoveableTabs    =   0   'False
+   Begin ngUI.ngTabStrip tsViews 
+      Height          =   4350
+      Left            =   1335
+      TabIndex        =   4
+      Top             =   75
+      Width           =   4755
+      _ExtentX        =   8387
+      _ExtentY        =   7673
    End
 End
 Attribute VB_Name = "frmGameDebugger"
@@ -167,6 +146,9 @@ End Enum
 Dim m_strCurrentView As String
 Dim m_ctlCurrentView As Control
 
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+End Property
+
 Public Function TextColor(Color As TextColors) As Long
 On Error Resume Next
     Select Case Color
@@ -184,7 +166,7 @@ End Function
 
 Public Sub ShowConsole()
 On Error Resume Next
-    dtViews.SelectTab 1
+    tsViews.SelectTab 1
 End Sub
 
 Public Sub ConsoleAppend(ByRef Text As String, Optional ByVal Color As Long = vbButtonText)
@@ -202,13 +184,13 @@ End Sub
 
 Public Sub InitViews()
 On Error Resume Next
-    dtViews.Tabs.Add "Console", , "Console"
-    dtViews.Tabs.Add "Variables", , "Variables"
+    tsViews.Tabs.AddNew "Console", "Console"
+    tsViews.Tabs.AddNew "Variables", "Variables"
 End Sub
 
-Private Sub dtViews_Resize()
+Private Sub tsViews_Resize()
 On Error Resume Next
-    m_ctlCurrentView.Move (2) + dtViews.Left, 24, dtViews.Width - 4, dtViews.Height - 26
+    m_ctlCurrentView.Move (2) + tsViews.Left, tsViews.IdealHeight + tsViews.Top + 1, tsViews.Width - 4, tsViews.Height - (tsViews.IdealHeight + 3)
 End Sub
 
 Public Sub ViewChanged()
@@ -222,7 +204,7 @@ On Error Resume Next
         Set m_ctlCurrentView = picConsole
     Case Else
     End Select
-    dtViews_Resize
+    tsViews_Resize
     RefreshView
     m_ctlCurrentView.Visible = True
     m_ctlCurrentView.ZOrder
@@ -239,7 +221,7 @@ Dim l_seEngine As ScriptEngine
     End Select
 End Sub
 
-Private Sub dtViews_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsViews_TabSelected(theTab As ngTab)
 On Error Resume Next
     m_strCurrentView = theTab.key
     ViewChanged
@@ -278,7 +260,7 @@ End Sub
 
 Private Sub Form_Resize()
 On Error Resume Next
-    dtViews.Move 2, 2, Me.ScaleWidth - 4, Me.ScaleHeight - 4
+    tsViews.Move 2, 2, Me.ScaleWidth - 4, Me.ScaleHeight - 4
 End Sub
 
 Private Property Get iDocument_CanSave() As Boolean

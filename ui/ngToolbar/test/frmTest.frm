@@ -1,6 +1,7 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.5#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.10#0"; "ngUI.ocx"
 Begin VB.Form frmTest 
+   BackColor       =   &H000000FF&
    Caption         =   "ngToolbar Test"
    ClientHeight    =   5490
    ClientLeft      =   60
@@ -15,19 +16,41 @@ Begin VB.Form frmTest
       Italic          =   0   'False
       Strikethrough   =   0   'False
    EndProperty
+   FontTransparent =   0   'False
    LinkTopic       =   "Form1"
    ScaleHeight     =   366
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   419
    StartUpPosition =   3  'Windows Default
+   Begin ngUI.ngTabStrip tsTabs 
+      Height          =   765
+      Left            =   60
+      TabIndex        =   2
+      Top             =   4680
+      Width           =   3435
+      _ExtentX        =   6059
+      _ExtentY        =   1349
+   End
    Begin ngUI.ngListBox lbxTest 
       Height          =   3600
-      Left            =   735
+      Left            =   330
       TabIndex        =   1
-      Top             =   945
+      Top             =   855
       Width           =   4800
       _ExtentX        =   8467
       _ExtentY        =   6350
+      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Tempus Sans ITC"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      AllowReorder    =   0   'False
+      AllowMultiSelect=   0   'False
+      AllowNullSelection=   0   'False
    End
    Begin ngUI.ngToolbar tbrTest 
       Align           =   1  'Align Top
@@ -53,11 +76,14 @@ Dim l_imgTest As Fury2Image
 Dim l_rfFile As ngResourceFile
 Dim l_lngIndex As Long
     Set l_rfFile = LoadResourceFile("J:\development\binary\sys\resources\common.zip")
-    Set tbrTest.ResourceFile = l_rfFile
+'    Set tbrTest.ResourceFile = l_rfFile
     Set l_imgTest = Nothing
+    SetTheme l_rfFile, "*.png"
+    SetToolbarTheme "theme\toolbar\"
+    SetTabTheme "theme\tabstrip\"
     tbrTest.Orientation = tboHorizontal
-    tbrTest.ResourcePattern = "*.png"
-    tbrTest.LoadTheme "theme\toolbar\"
+'    tbrTest.ResourcePattern = "*.png"
+'    tbrTest.LoadTheme "theme\toolbar\"
     Set tbrTest.Buttons.AddNew("Left", "Test1", "tileset", , , btaLeft).Font = Me.Font
     tbrTest.Buttons.AddNew "Right", "Test2", l_imgTest, , , btaRight
     tbrTest.Buttons.AddNew "-"
@@ -75,5 +101,19 @@ Dim l_lngIndex As Long
     For l_lngIndex = 0 To 99
         lbxTest.ListItems.AddNew "Item &" & l_lngIndex
     Next l_lngIndex
+'    Set tsTabs.ResourceFile = l_rfFile
+'    tsTabs.ResourcePattern = "*.png"
+'    tsTabs.LoadTheme "theme\tabstrip\"
+    tsTabs.ShowCloseButtons = True
+    tsTabs.Tabs.AddNew "Tab 1", , F2ImageFromPicture(Me.Icon)
+    tsTabs.Tabs.AddNew "Tab 2", , F2ImageFromPicture(Me.Icon)
+    tsTabs.Tabs.AddNew "Tab 3", , F2ImageFromPicture(Me.Icon)
+    tsTabs.Tabs.AddNew "Tab 4"
+    tsTabs.Tabs.AddNew "Tab 5"
+    tsTabs.Tabs.AddNew "Tab 6"
+    tsTabs.Tabs.AddNew "Tab 7"
+    tsTabs.Tabs.AddNew "Tab 8"
+    tsTabs.Tabs.AddNew "Tab 9"
+    tsTabs.Tabs.AddNew "Tab 10"
 End Sub
 

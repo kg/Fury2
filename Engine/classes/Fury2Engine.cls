@@ -36,6 +36,8 @@ Attribute VB_Ext_KEY = "Member0" ,"SoundEngine"
 
 Option Explicit
 
+Private Declare Function GetForegroundWindow Lib "user32" () As Long
+
 Private Type Fury2Picture
     Visible As Boolean
     DestRect As Fury2Rect
@@ -75,6 +77,8 @@ Public Mouse As Fury2Mouse
 Public Keyboard As Fury2Keyboard
 Public Joysticks As Fury2Collection
 
+Private m_lngInterruptTimer As Long
+Private m_dblCPUFrequency As Double
 Private m_dxDirectX As DirectX8
 Private m_devDeviceirectInput As DirectInput8
 
@@ -113,6 +117,9 @@ Public DefaultFont As String, DefaultWindowSkin As String, DefaultCursor As Stri
 Public RangedProjectileChecks As Boolean
 Attribute RangedProjectileChecks.VB_VarMemberFlags = "40"
 
+Private m_booHaltScripts As Boolean
+
+Private m_lngLastWindow As Long
 Private SavedPictures() As Fury2Picture, SavedActivePictureSlots As Long
 Private SavedHotspots() As Fury2Hotspot
 Private OnscreenPictures() As Fury2Picture
@@ -215,6 +222,8 @@ Attribute IObjThis.VB_VarMemberFlags = "40"
 
 Private m_imgBackbuffer As Fury2Image
 
+Private m_booENetInitialized As Boolean
+
 Private m_objOutputPlugin As Object
 Public OutputPlugin As String, VSync As Boolean
 Attribute OutputPlugin.VB_VarDescription = "The name of the output plugin."
@@ -238,6 +247,7 @@ Attribute HideConfiguration.VB_VarDescription = "This flag controls whether the 
 Public ClearEveryFrame As Boolean, BackgroundColor As Long
 Attribute ClearEveryFrame.VB_VarDescription = "This flag causes the engine to clear the backbuffer to black every frame. Usually not necessary if a camera is visible, so defaults to off to increase speed."
 
+Private Hosts As Fury2Collection
 Private Graphics As Fury2Collection
 Private Videos As Fury2Collection
 Public Controls As Fury2Collection
@@ -303,7 +313,7 @@ Public KeysEntered As String, TrapKeys As Boolean
 Public DefaultTransition As Long, DefaultTransitionLength As Single
 Attribute DefaultTransition.VB_VarDescription = "The default transition used for map changes."
 
-Public RedrawHook As Fury2Event, UpdateHook As Fury2Event
+Public RedrawHook As Fury2Event, UpdateHook As Fury2Event, LostFocusHook As Fury2Event, GotFocusHook As Fury2Event
 Attribute RedrawHook.VB_VarMemberFlags = "40"
 Public MouseDownHook As Fury2Event, MouseMoveHook As Fury2Event, MouseUpHook As Fury2Event, MouseDblClickHook As Fury2Event
 Public SavedMaps As Fury2Collection
@@ -323,6 +333,7 @@ Private RanStartEvent As Boolean
 
 Private m_booFresh As Boolean
 Private m_imgMouseBuffer As Fury2Image
+Private m_dblTimeOffset As Double
 Public ConsoleItems As Fury2Collection
 Private m_objNotify As Object, m_booNotifyNoLogging As Boolean
 
@@ -331,20 +342,15 @@ Public Debugger As Fury2Debugger
 Public Halted As Boolean
 Public EditMode As Boolean
 
-Public Property Get GFXEngine() As Object
-    Set GFXEngine = m_objOutputPlugin
-End Property
-
-Public Sub SetNotify(ByRef Obj As Object)
-On Error Resume Next
-    Set m_objNotify = Obj
-    m_booNotifyNoLogging = False
-End Sub
-
 Sub AddObject(ByRef Name As String, ByVal Obj As Object)
 Attribute AddObject.VB_Description = "Adds a command object to the script engine."
 On Error Resume Next
     m_ScriptEngine.AddObject Name, Obj
+End Sub
+
+Private Sub AddRef(ByRef Obj As IShellFolderEx_TLB.IUnknown)
+On Error Resume Next
+    Obj.AddRef
 End Sub
 
 Function AddTextElement(Text, ByVal X As Long, ByVal Y As Long, Optional ByVal Realtime As Boolean = False) As Fury2TextElement
@@ -847,12 +853,6 @@ On Error Resume Next
     Err.Clear
 End Property
 
-Public Function NullEvent() As Fury2Event
-On Error Resume Next
-'    Set NullEvent = New Fury2Event
-'    NullEvent.SetEngine Me
-End Function
-
 Public Function BindEvent(ByRef Method, Optional Object = Nothing, Optional BindParameters As Variant = Nothing) As Fury2Event
 On Error Resume Next
     If VarType(Method) = vbString Then
@@ -918,7 +918,7 @@ Dim l_lngSubthreads As Long
     End If
 End Sub
 
-Function CacheScript(Filename As String, Script As String) As String
+Function CacheScript(ByVal Filename As String, ByVal Script As String) As String
 On Error Resume Next
 Dim m_csScript As Fury2ScriptCache
     CacheScript = FindScript(Filename)
@@ -932,7 +932,7 @@ Dim m_csScript As Fury2ScriptCache
     End If
 End Function
 
-Function CallByName(ByVal Obj As Object, ByRef Member As String, ByVal CallType As Long, ParamArray Parameters() As Variant)
+Function CallByName(ByVal Obj As Object, ByVal Member As String, ByVal CallType As Long, ParamArray Parameters() As Variant)
 On Error Resume Next
     Select Case UBound(Parameters)
     Case 0
@@ -991,22 +991,9 @@ On Error Resume Next
     Err.Clear
 End Function
 
-Friend Sub SetMouseLocation(ByVal X As Single, ByVal Y As Single)
-On Error Resume Next
-Dim l_lngBorderWidth As Long, l_lngTitleHeight As Long, l_lngOldMode As Long
-Dim l_lngWidth As Long, l_lngHeight As Long
-    With m_objOutputPlugin.Window
-        l_lngOldMode = .ScaleMode
-        .ScaleMode = 1
-        l_lngBorderWidth = (.Width - .ScaleWidth) \ 2
-        l_lngTitleHeight = (.Height - .ScaleHeight) - (l_lngBorderWidth * 2)
-        .ScaleMode = l_lngOldMode
-        SetCursorPos (X * (.ScaleWidth / ScreenWidth)) + (l_lngBorderWidth / Screen.TwipsPerPixelX) + (.left / Screen.TwipsPerPixelX), (Y * (.ScaleHeight / ScreenHeight)) + ((l_lngBorderWidth + l_lngTitleHeight) / Screen.TwipsPerPixelY) + (.top / Screen.TwipsPerPixelY)
-    End With
-End Sub
-
 Private Sub Class_Initialize()
 On Error Resume Next
+    m_dblTimeOffset = 0
     m_booFresh = True
     m_booIDE = InIDE
     RanStartEvent = False
@@ -1027,6 +1014,7 @@ On Error Resume Next
     Set MessageQueue = F2Collection()
     Set MessageWindows = F2Collection()
     Set Graphics = F2Collection()
+    Set Hosts = F2Collection()
     Set Videos = F2Collection()
     Set m_colPluginStack = New Collection
     Set m_colReversePluginStack = New Collection
@@ -1170,6 +1158,44 @@ Public Property Get Colin() As Variant
 On Error Resume Next
     Colin = "Once the creator learns a VB data type other than variant for parameters (no joke!) then we'll be talking :p"
 End Property
+
+Friend Sub ConsoleBackspace()
+On Error Resume Next
+Dim l_strLeft As String, l_strRight As String
+    l_strLeft = Mid(ConsoleText, 1, ConsoleCaretPos - 2)
+    l_strRight = Mid(ConsoleText, ConsoleCaretPos)
+    ConsoleText = l_strLeft + l_strRight
+    ConsoleCaretPos = ConsoleCaretPos - 1
+End Sub
+
+Public Sub ConsoleCommand(ByRef Command As String)
+On Error Resume Next
+    If left(Trim(Command), 1) = "?" Then
+        Err.Clear
+        ScriptEngine.AddCode ScriptEngine.Language.GenerateSubCall("TextOut", ScriptEngine.Language.GenerateFunctionCall("ToString", Mid(Command, 2) & ", true"))
+    Else
+        Err.Clear
+        ScriptEngine.AddCode Command
+    End If
+End Sub
+
+Friend Sub ConsoleDelete()
+On Error Resume Next
+Dim l_strLeft As String, l_strRight As String
+    l_strLeft = Mid(ConsoleText, 1, ConsoleCaretPos - 1)
+    l_strRight = Mid(ConsoleText, ConsoleCaretPos + 1)
+    ConsoleText = l_strLeft + l_strRight
+End Sub
+
+Friend Sub ConsoleInsert(ByRef Text As String)
+On Error Resume Next
+Dim l_strLeft As String, l_strRight As String
+    l_strLeft = Mid(ConsoleText, 1, ConsoleCaretPos - 1)
+    l_strRight = Mid(ConsoleText, ConsoleCaretPos)
+    ConsoleText = l_strLeft + Text + l_strRight
+    ConsoleCaretPos = ConsoleCaretPos + Len(Text)
+    Err.Clear
+End Sub
 
 Public Sub ContextLevelAdd(ByRef Name As String)
 Attribute ContextLevelAdd.VB_MemberFlags = "40"
@@ -1350,6 +1376,68 @@ Dim m_teNew As Fury2TimerEvent
     Set CreateTimerEvent = m_teNew
 End Function
 
+Public Sub CriticalError(Source As String, Location As String, Optional Description As String = "Unknown Error")
+On Error Resume Next
+Dim m_lngHandle As Long
+Dim m_strError As String
+Dim l_frmError As frmCriticalError
+    Halted = True
+    If EditMode Then
+        If Err.Number <> 0 Then
+            m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
+            Err.Description + "(" + CStr(Err.Number) + ")" + vbCrLf + _
+            "From: """ + Err.Source + """" + vbCrLf + _
+            "In english: """ + Description + """" + vbCrLf + _
+            "Context: " + ScriptContext + vbCrLf + _
+            "Frames rendered: " + CStr(FrameCount)
+        Else
+            m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
+            "In english: """ + Description + """" + vbCrLf + _
+            "Context: " + ScriptContext + vbCrLf + _
+            "Frames rendered: " + CStr(FrameCount)
+        End If
+'        MsgBox m_strError, vbInformation, "Error"
+        Exit Sub
+    End If
+    If m_booIDE Then Stop
+    If Debugger Is Nothing Then
+    Else
+        Debugger.CriticalError Source, Location, Description
+        Exit Sub
+    End If
+    If m_objOutputPlugin.Fullscreen Then m_objOutputPlugin.GoWindowed
+    If Err.Number <> 0 Then
+        m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
+        Err.Description + "(" + CStr(Err.Number) + ")" + vbCrLf + _
+        "From: """ + Err.Source + """" + vbCrLf + _
+        "In english: """ + Description + """" + vbCrLf + _
+        "Context: " + ScriptContext + vbCrLf + _
+        "Frames rendered: " + CStr(FrameCount)
+    Else
+        m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
+        "In english: """ + Description + """" + vbCrLf + _
+        "Context: " + ScriptContext + vbCrLf + _
+        "Frames rendered: " + CStr(FrameCount)
+    End If
+    m_lngHandle = FreeFile
+    Open App.Path + IIf(right(App.Path, 1) = "\", "", "\") + "error.wtf" For Append As #m_lngHandle
+    Print #m_lngHandle, m_strError
+    Close #m_lngHandle
+    Mouse.Visible = True
+    Set l_frmError = New frmCriticalError
+    Load l_frmError
+    Set l_frmError.Engine = Me
+    l_frmError.Show
+    SetTopmost l_frmError, True
+    l_frmError.lblInfo.Caption = m_strError
+    l_frmError.SetFocus
+    DoEvents
+    Do While Halted
+        DoEvents
+        Sleep (1)
+    Loop
+End Sub
+
 Function DataType(ByRef Data As Variant) As String
 On Error Resume Next
 Dim l_lngType As Long, l_strArray As String
@@ -1385,6 +1473,44 @@ End Function
 Public Sub DebugBreak()
 On Error Resume Next
     Stop
+End Sub
+
+Public Sub DebugOut(ByRef Text)
+On Error Resume Next
+Dim l_strCBoard As String
+Dim l_strText As String
+    If Debugger Is Nothing Then Else Debugger.DebugOut ToString(Text)
+    If Not LogDebugMessages Then Exit Sub
+    l_strText = CStr(Text)
+    If LogToClipboard Then
+        l_strCBoard = Clipboard.GetText
+        Clipboard.Clear
+        Clipboard.SetText l_strCBoard + vbCrLf + "> " + l_strText
+    End If
+    #If DebugFeatures = 1 Then
+    If Not (ConsoleItems Is Nothing) Then
+        If InStr(l_strText, vbCrLf) Then
+            Dim l_varLines As Variant
+            Dim l_lngLines As Long
+            l_varLines = Split(l_strText, vbCrLf)
+            For l_lngLines = LBound(l_varLines) To UBound(l_varLines)
+                ConsoleItems.Add CStr(l_varLines(l_lngLines))
+            Next l_lngLines
+        Else
+            ConsoleItems.Add l_strText
+        End If
+        Do While ConsoleItems.Count > 100
+            ConsoleItems.Remove 1
+        Loop
+    End If
+    Debug.Print l_strText
+    If (m_objNotify Is Nothing) Or (m_booNotifyNoLogging) Then
+    Else
+        Err.Clear
+        m_objNotify.LogOutput l_strText
+        If Err <> 0 Then m_booNotifyNoLogging = True
+    End If
+    #End If
 End Sub
 
 Sub DefocusWindow()
@@ -1471,10 +1597,10 @@ Attribute DestroyTimer.VB_Description = "Destroys a timer."
 On Error Resume Next
     If VarType(ID) = vbString Then
         Timers.Remove CStr(ID)
-    ElseIf VarType(ID) = vbLong Then
-        Timers.Remove CLng(ID)
     ElseIf TypeOf ID Is Fury2Timer Then
         Timers.Remove Timers.Find(ID)
+    Else
+        Timers.Remove CLng(ID)
     End If
     Err.Clear
 End Sub
@@ -1482,6 +1608,16 @@ End Sub
 Public Property Get Digits() As String
 Attribute Digits.VB_Description = "Returns a string of numbers useful for testing."
     Digits = "0123456789"
+End Property
+
+Friend Property Get DirectInput() As DirectInput8
+On Error Resume Next
+    Set DirectInput = m_devDeviceirectInput
+End Property
+
+Friend Property Get DirectX() As DirectX8
+On Error Resume Next
+    Set DirectX = m_dxDirectX
 End Property
 
 Public Sub DisableAllHotspots()
@@ -1512,6 +1648,19 @@ On Error Resume Next
     DistanceBetween = Sqr((Rx * Rx) + (Ry * Ry))
 End Function
 
+Public Sub EmptyImageCache()
+On Error Resume Next
+Dim l_imgImage As Fury2Image
+    If m_Images.Count < 1 Then Exit Sub
+    DebugOut "Emptying image cache"
+    Do While m_Images.Count > 0
+        Set l_imgImage = m_Images(1)
+        l_imgImage.Deallocate
+        Set l_imgImage = Nothing
+        m_Images.Remove 1
+    Loop
+End Sub
+
 Public Sub EnableHotspot(ByVal Index As Long)
 Attribute EnableHotspot.VB_Description = "Enables a hotspot."
 On Error Resume Next
@@ -1525,6 +1674,29 @@ Sub EndTrace()
     #If DebugFeatures = 1 Then
     m_booTrace = False
     #End If
+End Sub
+
+Friend Sub EngineLoop()
+On Error Resume Next
+    m_objOutputPlugin.Window.SetFocus
+    If (ErrorOccurred) And (Debugger Is Nothing) Then ShowConsole
+    Cameras.Dirty
+    m_objNotify.Begin
+    Do
+        Game
+        If Not (Debugger Is Nothing) Then Debugger.DebugGameEnd
+        If TerminateEngine Then
+            Exit Do
+        ElseIf Terminating Then
+            Terminating = False
+            DebugOut "Reloading game"
+            LoadGame CurrentGame
+            Game
+        Else
+            Exit Do
+        End If
+    Loop
+    Shutdown
 End Sub
 
 Public Sub ErrorMessage(ByRef Error As String, ByRef Details As String)
@@ -1885,29 +2057,6 @@ Dim l_lngImages As Long
     Set F2Graphic = l_gfcGraphic
 End Function
 
-Friend Sub GraphicDestroyed(ByRef Obj As Fury2Graphic)
-On Error Resume Next
-'    Graphics.Remove Graphics.Find(Obj)
-End Sub
-
-Private Sub RemoveRef(ByRef Obj As IShellFolderEx_TLB.IUnknown)
-On Error Resume Next
-    Obj.Release
-End Sub
-
-Private Sub AddRef(ByRef Obj As IShellFolderEx_TLB.IUnknown)
-On Error Resume Next
-    Obj.AddRef
-End Sub
-
-Public Function F2Sprite() As Fury2Sprite
-On Error Resume Next
-Dim l_sprNew As Fury2Sprite
-    Set l_sprNew = New Fury2Sprite
-    l_sprNew.SetEngine Me
-    Set F2Sprite = l_sprNew
-End Function
-
 Public Function F2Map(Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal Layers As Long = 1, Optional ByVal Tileset As Fury2Tileset = Nothing) As Fury2Map
 Attribute F2Map.VB_Description = "Creates a map object."
 On Error Resume Next
@@ -1935,6 +2084,14 @@ Dim l_sndSound As Fury2SoundObject
     l_sndSound.Repeat = Repeat
     Set F2SoundObject = l_sndSound
     Err.Clear
+End Function
+
+Public Function F2Sprite() As Fury2Sprite
+On Error Resume Next
+Dim l_sprNew As Fury2Sprite
+    Set l_sprNew = New Fury2Sprite
+    l_sprNew.SetEngine Me
+    Set F2Sprite = l_sprNew
 End Function
 
 Public Function F2TextElement() As Fury2TextElement
@@ -1993,6 +2150,19 @@ On Error Resume Next
     F2WindowSkin.SetEngine Me
 End Function
 
+Function FadeBGM(Optional ByVal FromVolume As Single = -1, Optional ByVal ToVolume As Single = -1, Optional ByVal Length As Double = 1) As Fury2SoundFader
+On Error Resume Next
+Dim l_fadFader As Fury2SoundFader
+    Set l_fadFader = New Fury2SoundFader
+    Set l_fadFader.Handle = SoundEngine.Handles(CurrentBGMHandle)
+    Set l_fadFader.Slider = F2Slider
+    l_fadFader.VolumeStart = IIf(FromVolume < 0, l_fadFader.Handle.Volume, FromVolume)
+    l_fadFader.VolumeEnd = IIf(ToVolume < 0, l_fadFader.Handle.Volume, ToVolume)
+    l_fadFader.Slider.Start Length
+    HookEvents l_fadFader
+    Set FadeBGM = l_fadFader
+End Function
+
 Public Sub FadePicture(ByVal Slot As Long, Optional ByVal StartAlpha As Single = -1, Optional ByVal EndAlpha As Single = -1, Optional ByVal Speed As Double = 3.33333317812224E-02, Optional ByRef EndScript As String = "")
 Attribute FadePicture.VB_Description = "Fades a picture slot in or out."
 On Error Resume Next
@@ -2049,12 +2219,12 @@ Dim m_Value As Variant
     Err.Clear
 End Property
 
-Public Property Get flags(ByRef Index As String) As Variant
-Attribute flags.VB_MemberFlags = "40"
-    flags = Flag(Index)
+Public Property Get Flags(ByRef Index As String) As Variant
+Attribute Flags.VB_MemberFlags = "40"
+    Flags = Flag(Index)
 End Property
 
-Public Property Let flags(ByRef Index As String, ByVal NewValue As Variant)
+Public Property Let Flags(ByRef Index As String, ByVal NewValue As Variant)
     Flag(Index) = NewValue
 End Property
 
@@ -2108,19 +2278,6 @@ Dim m_imgObj As Fury2Image, m_lngObj As Long
                 m_lngObj = m_lngObj + 1
             End If
         End If
-    Loop
-End Sub
-
-Public Sub EmptyImageCache()
-On Error Resume Next
-Dim l_imgImage As Fury2Image
-    If m_Images.Count < 1 Then Exit Sub
-    DebugOut "Emptying image cache"
-    Do While m_Images.Count > 0
-        Set l_imgImage = m_Images(1)
-        l_imgImage.Deallocate
-        Set l_imgImage = Nothing
-        m_Images.Remove 1
     Loop
 End Sub
 
@@ -2232,6 +2389,7 @@ Dim l_lngThreadID As Long
         FrameLength = 1# / CDbl(DesiredFramerate)
         NextFrame = LastFrameStart + FrameLength
         Elapsed = Elapsed + (FrameStart - LastFrameStart)
+        If Elapsed < 0 Then Elapsed = 0
         If BalanceFramerate Then
             FramesElapsed = FramesElapsed + Floor((Elapsed) / FrameLength)
             If FramesElapsed > MaxFrameskip Then FramesElapsed = MaxFrameskip
@@ -2263,6 +2421,8 @@ Dim l_lngThreadID As Long
                 UpdateStart = HiTimer
                 Update
                 If Terminating Then Exit Do
+                UpdateENet
+                If Terminating Then Exit Do
                 UpdateEnd = HiTimer
                 If (UpdateEnd - UpdateStart) > UpdateMaxLength Then
                     UpdateOverflowCount = UpdateOverflowCount + 1
@@ -2276,6 +2436,8 @@ Dim l_lngThreadID As Long
             UpdateTimers
             If Terminating Then Exit Do
             UpdateEvents
+            If Terminating Then Exit Do
+            UpdateWindow
             If Terminating Then Exit Do
             
             Redraw
@@ -2400,8 +2562,13 @@ On Error Resume Next
     GetUserInput = InputBox(Prompt)
 End Function
 
+Public Property Get GFXEngine() As Object
+    Set GFXEngine = m_objOutputPlugin
+End Property
+
 Public Sub GFXEngine_Closed()
 Attribute GFXEngine_Closed.VB_MemberFlags = "40"
+On Error Resume Next
     If Running = True Then
         Running = False
     End If
@@ -2416,42 +2583,11 @@ On Error Resume Next
     End If
 End Sub
 
-Public Sub ConsoleCommand(ByRef Command As String)
+Public Sub GFXEngine_GotFocus()
 On Error Resume Next
-    If left(Trim(Command), 1) = "?" Then
-        Err.Clear
-        ScriptEngine.AddCode ScriptEngine.Language.GenerateSubCall("TextOut", ScriptEngine.Language.GenerateFunctionCall("ToString", Mid(Command, 2) & ", true"))
-    Else
-        Err.Clear
-        ScriptEngine.AddCode Command
+    If Not GotFocusHook Is Nothing Then
+        GotFocusHook.Invoke
     End If
-End Sub
-
-Friend Sub ConsoleInsert(ByRef Text As String)
-On Error Resume Next
-Dim l_strLeft As String, l_strRight As String
-    l_strLeft = Mid(ConsoleText, 1, ConsoleCaretPos - 1)
-    l_strRight = Mid(ConsoleText, ConsoleCaretPos)
-    ConsoleText = l_strLeft + Text + l_strRight
-    ConsoleCaretPos = ConsoleCaretPos + Len(Text)
-    Err.Clear
-End Sub
-
-Friend Sub ConsoleBackspace()
-On Error Resume Next
-Dim l_strLeft As String, l_strRight As String
-    l_strLeft = Mid(ConsoleText, 1, ConsoleCaretPos - 2)
-    l_strRight = Mid(ConsoleText, ConsoleCaretPos)
-    ConsoleText = l_strLeft + l_strRight
-    ConsoleCaretPos = ConsoleCaretPos - 1
-End Sub
-
-Friend Sub ConsoleDelete()
-On Error Resume Next
-Dim l_strLeft As String, l_strRight As String
-    l_strLeft = Mid(ConsoleText, 1, ConsoleCaretPos - 1)
-    l_strRight = Mid(ConsoleText, ConsoleCaretPos + 1)
-    ConsoleText = l_strLeft + l_strRight
 End Sub
 
 Public Sub GFXEngine_KeyDown(ByVal KeyCode As Integer, ByVal Shift As Integer, Optional ByVal Force As Boolean = False)
@@ -2625,6 +2761,13 @@ On Error Resume Next
     QueueEvent 1, , , CLng(KeyCode), CLng(Shift)
 End Sub
 
+Public Sub GFXEngine_LostFocus()
+On Error Resume Next
+    If Not LostFocusHook Is Nothing Then
+        LostFocusHook.Invoke
+    End If
+End Sub
+
 Public Sub GFXEngine_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single, Optional ByVal Force As Boolean = False)
 Attribute GFXEngine_MouseDown.VB_MemberFlags = "40"
 On Error Resume Next
@@ -2704,6 +2847,11 @@ Dim l_imgCopy As Fury2Image
     Set GrabScreen = l_imgCopy
 End Function
 
+Friend Sub GraphicDestroyed(ByRef Obj As Fury2Graphic)
+On Error Resume Next
+'    Graphics.Remove Graphics.Find(Obj)
+End Sub
+
 Public Sub HideAllPictures()
 Attribute HideAllPictures.VB_Description = "Hides all active picture slots."
 On Error Resume Next
@@ -2755,11 +2903,18 @@ End Sub
 
 Public Function HiTimer() As Double
 Attribute HiTimer.VB_Description = "Returns an extremely accurate timer value."
+On Error Resume Next
 Dim PCounter As Currency, PFrequency As Currency
-    Call QueryPerformanceCounter(PCounter)
     Call QueryPerformanceFrequency(PFrequency)
-    HiTimer = PCounter / PFrequency
+    Call QueryPerformanceCounter(PCounter)
+    HiTimer = (PCounter / PFrequency) - m_dblTimeOffset
 End Function
+
+Public Sub AdjustGameClock(ByVal Amount As Double)
+On Error Resume Next
+    m_dblTimeOffset = m_dblTimeOffset - Amount
+    ResetTiming
+End Sub
 
 Public Sub HookEvent(ByRef Name As String, ByVal EventHook)
 Attribute HookEvent.VB_Description = "Redirects an engine event to a script function."
@@ -2769,6 +2924,10 @@ On Error Resume Next
         Set RedrawHook = BindEvent(EventHook)
     Case "update"
         Set UpdateHook = BindEvent(EventHook)
+    Case "lostfocus"
+        Set LostFocusHook = BindEvent(EventHook)
+    Case "gotfocus"
+        Set GotFocusHook = BindEvent(EventHook)
     Case "mousedown"
         Set MouseDownHook = BindEvent(EventHook)
     Case "mousemove"
@@ -2836,6 +2995,19 @@ Dim l_reqRequest As Fury2HTTPRequest
         .Go URL, Port
     End With
     Set HTTPGet = l_reqRequest
+End Function
+
+Function HTTPPost(ByVal URL As String, Optional ByRef Data As Variant = Nothing, Optional ByVal Port As Long = 80, Optional ByRef CompleteEvent = "", Optional ByRef ProgressEvent = "") As Fury2HTTPRequest
+On Error Resume Next
+Dim l_reqRequest As Fury2HTTPRequest
+    Set l_reqRequest = New Fury2HTTPRequest
+    With l_reqRequest
+        .SetEngine Me
+        Set .CompleteEvent = BindEvent(CompleteEvent)
+        Set .ProgressEvent = BindEvent(ProgressEvent)
+        .Go URL, Port, Data
+    End With
+    Set HTTPPost = l_reqRequest
 End Function
 
 Public Property Get Icon() As String
@@ -2957,6 +3129,22 @@ Dim l_strModule As String
     ContextLevelRemove
 End Sub
 
+Friend Sub Init(Parameters As String)
+On Error Resume Next
+    Randomize Timer
+    m_booMouseVisible = True
+    
+    If LoadGame(Parameters) Then
+        EngineLoop
+    Else
+        If EditMode Then
+        Else
+            MsgBox "Unable to load game!"
+            Shutdown
+        End If
+    End If
+End Sub
+
 Friend Sub InitDefaultControls()
 On Error Resume Next
     Set Controls = F2Collection()
@@ -2975,15 +3163,19 @@ On Error Resume Next
     Controls("Cancel").Repeat = True
 End Sub
 
-Friend Sub InitKeyboard()
+Friend Sub InitDirectInput()
 On Error Resume Next
-    BindKey vbKeyA, Controls("OK")
-    BindKey vbKeyS, Controls("Cancel")
-    BindKey vbKeyLeft, Controls("Left")
-    BindKey vbKeyUp, Controls("Up")
-    BindKey vbKeyRight, Controls("Right")
-    BindKey vbKeyDown, Controls("Down")
-    BindKey vbKeyEscape, Controls("Quit")
+    Set m_dxDirectX = New DirectX8
+    Set m_devDeviceirectInput = m_dxDirectX.DirectInputCreate()
+End Sub
+
+Friend Sub InitInput()
+On Error Resume Next
+    If EditMode Then Exit Sub
+    InitDirectInput
+    InitDefaultControls
+    InitKeyboard
+    InitJoysticks
 End Sub
 
 Friend Sub InitJoysticks()
@@ -3039,29 +3231,15 @@ Dim l_joyJoystick As Fury2Joystick
     End If
 End Sub
 
-Friend Property Get DirectX() As DirectX8
+Friend Sub InitKeyboard()
 On Error Resume Next
-    Set DirectX = m_dxDirectX
-End Property
-
-Friend Property Get DirectInput() As DirectInput8
-On Error Resume Next
-    Set DirectInput = m_devDeviceirectInput
-End Property
-
-Friend Sub InitDirectInput()
-On Error Resume Next
-    Set m_dxDirectX = New DirectX8
-    Set m_devDeviceirectInput = m_dxDirectX.DirectInputCreate()
-End Sub
-
-Friend Sub InitInput()
-On Error Resume Next
-    If EditMode Then Exit Sub
-    InitDirectInput
-    InitDefaultControls
-    InitKeyboard
-    InitJoysticks
+    BindKey vbKeyA, Controls("OK")
+    BindKey vbKeyS, Controls("Cancel")
+    BindKey vbKeyLeft, Controls("Left")
+    BindKey vbKeyUp, Controls("Up")
+    BindKey vbKeyRight, Controls("Right")
+    BindKey vbKeyDown, Controls("Down")
+    BindKey vbKeyEscape, Controls("Quit")
 End Sub
 
 Friend Sub InitScriptEngine()
@@ -3077,6 +3255,33 @@ On Error Resume Next
     m_ScriptEngine.AddObject "Globals", New Fury2Globals
     If EditMode Then m_ScriptEngine.AddObject "Editor", m_objNotify, False, False, True
 End Sub
+
+Friend Function InstantiateByName(ByRef Name As String) As Object
+On Error Resume Next
+Dim l_objItem As Object
+Dim l_parItem As Fury2Party
+    Select Case LCase(Trim(Name))
+    Case "fury2party"
+        Set l_parItem = New Fury2Party
+        l_parItem.SetEngine Me
+        Set l_objItem = l_parItem
+    Case Else
+    End Select
+    If l_objItem Is Nothing Then
+        ScriptEngine.AddCode "Set Engine.IObjThis = " & ScriptEngine.Language.GenerateInstantiation(Trim(LCase(Name)))
+        Set l_objItem = IObjThis
+        Set IObjThis = Nothing
+        If l_objItem Is Nothing Then
+            Err.Clear
+            Set l_objItem = CreateObject("Engine." & Name)
+            If l_objItem Is Nothing Then
+                Err.Clear
+                Set l_objItem = CreateObject("libGraphics." & Name)
+            End If
+        End If
+    End If
+    Set InstantiateByName = l_objItem
+End Function
 
 Public Sub iTerminate()
 On Error Resume Next
@@ -3118,6 +3323,11 @@ Dim m_lngItems As Long
     Next m_lngItems
     Err.Clear
 End Function
+
+Public Property Get Joystick() As Fury2Joystick
+On Error Resume Next
+    Set Joystick = Joysticks(1)
+End Property
 
 Public Property Get KeyState(ByVal Key As Long) As Boolean
 Attribute KeyState.VB_Description = "Returns the state of a key."
@@ -3213,7 +3423,7 @@ Public Function LoadGame(ByVal Game As String) As Boolean
 On Error Resume Next
 Dim l_varScripts As Variant, l_lngScripts As Long
 Dim l_varPackages As Variant, l_lngPackages As Long
-Dim l_objObject As Object
+Dim l_objObject As Object, l_varTest As Variant
     ContextLevelAdd "LoadGame(""" & Game & """)"
     DebugOut "Loading game """ & Game & """"
     Set ConsoleItems = F2Collection()
@@ -3245,6 +3455,17 @@ Dim l_objObject As Object
     Configuration.Load "global.f2config"
     ParseConfiguration
     InitScriptEngine
+    InitENet
+    l_varTest = Evaluate("5 + 5")
+    If (CLng(l_varTest) <> 10) Then
+        MsgBox "Unable to initialize script engine!", vbCritical, "Error"
+        Exit Function
+    End If
+    l_varTest = Evaluate("Engine.Version")
+    If (CStr(l_varTest) <> Version) Then
+        MsgBox "Unable to initialize script engine!", vbCritical, "Error"
+        Exit Function
+    End If
     If EditMode Then
         Err.Clear
         l_varPackages = Split(Filesystem.File("editor_packages.f2config").Text, vbCrLf)
@@ -3349,6 +3570,8 @@ Dim l_objObject As Object
             Next l_lngScripts
         End If
         If m_booIDE Then DebugOut "Starting game"
+        m_dblTimeOffset = 0
+        m_dblTimeOffset = HiTimer
         m_objNotify.Init
         Include "init", False
         ContextLevelAdd "Engine_Init"
@@ -3436,22 +3659,6 @@ Dim l_objObject As Object
     ContextLevelRemove
 End Function
 
-Public Function LoadVideo(ByVal Filename As String) As Fury2Video
-On Error Resume Next
-Dim l_vidNew As Fury2Video
-    Set l_vidNew = Videos(Filename)
-    If l_vidNew Is Nothing Then
-        Set l_vidNew = New Fury2Video
-        l_vidNew.SetEngine Me
-        If l_vidNew.Load(Filename) Then
-            Err.Clear
-            Videos.Add l_vidNew, Filename
-            Set LoadVideo = l_vidNew
-        End If
-    End If
-    Err.Clear
-End Function
-
 Public Function LoadImage(ByVal Filename As String, Optional ByVal IgnoreErrors As Boolean = False) As Fury2Image
 Attribute LoadImage.VB_Description = "Loads an image file into the cache and returns an image object."
 On Error Resume Next
@@ -3466,12 +3673,14 @@ Dim m_imgPicture As Fury2Image
         Err.Clear
         If Filesystem.FileExists(Filename) Then
             Set m_imgPicture = m_Images(Me.iLoadImage(Filename, IgnoreErrors))
+        Else
+            Set m_imgPicture = Nothing
         End If
     End If
     m_imgPicture.Name = Filename
     If m_imgPicture.Handle = 0 Then Set m_imgPicture = Nothing
     If m_imgPicture Is Nothing Then
-        'If EditMode = False Then CriticalError "LoadImage", "LoadImage", "Unable to load image: """ + filename + """"
+        If (EditMode = False) And (IgnoreErrors = False) Then CriticalError "LoadImage", "LoadImage", "Unable to load image: """ + Filename + """"
     End If
     Set LoadImage = m_imgPicture
 End Function
@@ -3567,6 +3776,31 @@ On Error Resume Next
     SavedMaps.Remove Name
 End Sub
 
+Function LoadOutputPlugin(ByRef NewPlugin As String)
+On Error Resume Next
+Dim l_objTemp As Object
+    Err.Clear
+    DebugOut "Loading output plugin """ & NewPlugin & """"
+    If Not (Debugger Is Nothing) Then Set l_objTemp = Debugger.DebugCreateOutputPlugin()
+    If l_objTemp Is Nothing Then
+        Err.Clear
+        Set l_objTemp = CreateObject("video_" + CStr(Trim(NewPlugin)) + "." + CStr(Trim(NewPlugin)) + "Engine")
+        If Err.Number <> 0 Then
+            Err.Clear
+            Call RegisterServer(RootPath + "video_" + NewPlugin + ".dll", False)
+            Call RegisterServer(RootPath + "video_" + NewPlugin + ".dll", True)
+            Set l_objTemp = CreateObject("video_" + CStr(Trim(NewPlugin)) + "." + CStr(Trim(NewPlugin)) + "Engine")
+            If Err.Number <> 0 Then CriticalError "LoadOutputPlugin """ + CStr(NewPlugin) + """", "CreateObject()", Err.Description + "(Error #" + CStr(Err.Number) + ")"
+        End If
+    End If
+    If l_objTemp Is Nothing Then Exit Function
+    l_objTemp.HookEvents Me
+    SetAppIcon l_objTemp.Window
+    m_lngLastWindow = l_objTemp.Window.hWnd
+    Set LoadOutputPlugin = l_objTemp
+    Set l_objTemp = Nothing
+End Function
+
 Public Function LoadPlugin(ByRef DLLFile As String, ByRef PluginName As String) As Object
 Attribute LoadPlugin.VB_Description = "Loads a plugin from a DLL."
 On Error Resume Next
@@ -3645,6 +3879,47 @@ Dim m_glbGlobals As Fury2Globals
     ContextLevelRemove
 End Function
 
+Public Function LoadUserData(ByRef Filename As String, Optional ByVal Data As Object = Nothing) As Object
+On Error Resume Next
+Dim l_vfFile As VirtualFile
+Dim l_strType As String
+Dim l_objData As Object
+    Set l_vfFile = Filesystem.File(Filename).Load
+    Set LoadUserData = LoadUserDataFromFile(l_vfFile, Data)
+    Err.Clear
+End Function
+
+Public Function LoadUserDataFromFile(ByVal File As VirtualFile, Optional ByVal Data As Object = Nothing) As Object
+On Error Resume Next
+Dim l_strType As String
+    File.ReadSegment_Begin
+        File.Load l_strType
+        If (Data Is Nothing) Then
+            Set Data = InstantiateByName(l_strType)
+        End If
+        File.Load Data
+    File.ReadSegment_End
+    Set Data.Engine = Me
+    Set LoadUserDataFromFile = Data
+    Err.Clear
+End Function
+
+Public Function LoadVideo(ByVal Filename As String) As Fury2Video
+On Error Resume Next
+Dim l_vidNew As Fury2Video
+    Set l_vidNew = Videos(Filename)
+    If l_vidNew Is Nothing Then
+        Set l_vidNew = New Fury2Video
+        l_vidNew.SetEngine Me
+        If l_vidNew.Load(Filename) Then
+            Err.Clear
+            Videos.Add l_vidNew, Filename
+            Set LoadVideo = l_vidNew
+        End If
+    End If
+    Err.Clear
+End Function
+
 Public Function LoadWindowSkin(ByVal Filename As String) As Fury2WindowSkin
 On Error Resume Next
     Set LoadWindowSkin = New Fury2WindowSkin
@@ -3673,6 +3948,25 @@ End Sub
 
 Private Sub m_ScriptEngine_ExecutionEnd()
 On Error Resume Next
+End Sub
+
+Private Sub m_ScriptEngine_InterruptPoll(Interrupt As Boolean)
+On Error Resume Next
+    If m_booHaltScripts Then Interrupt = True
+    If Terminating Then
+        m_lngInterruptTimer = m_lngInterruptTimer + 1
+        If m_lngInterruptTimer >= 5 Then
+            Interrupt = True
+        End If
+    Else
+        m_lngInterruptTimer = 0
+    End If
+    If EditMode Then
+        DoEvents
+    Else
+        Debugger.InterruptPoll Interrupt
+        DoEvents
+    End If
 End Sub
 
 Public Sub MapLoad(ByVal Filename As String)
@@ -3808,6 +4102,12 @@ Public Sub Notify_CriticalError()
 Attribute Notify_CriticalError.VB_MemberFlags = "40"
     CriticalError "Unknown", "Unknown"
 End Sub
+
+Public Function NullEvent() As Fury2Event
+On Error Resume Next
+'    Set NullEvent = New Fury2Event
+'    NullEvent.SetEngine Me
+End Function
 
 Public Function PadString(Text, ByVal Length As Long, Optional ByVal PaddingCharacter As String = " ") As String
 Attribute PadString.VB_Description = "Pads a string to a certain length."
@@ -4284,6 +4584,11 @@ On Error Resume Next
     LoadPicture Filename
 End Sub
 
+Private Sub RemoveRef(ByRef Obj As IShellFolderEx_TLB.IUnknown)
+On Error Resume Next
+    Obj.Release
+End Sub
+
 Sub ResetHotspots()
 Attribute ResetHotspots.VB_Description = "Resets all hotspots."
 On Error Resume Next
@@ -4534,6 +4839,29 @@ Dim l_glbGlobals As New Fury2Globals
     SaveToFile = l_glbGlobals.SaveToFile(Obj, File)
 End Function
 
+Public Sub SaveUserData(ByRef Filename As String, ByVal Data As Object)
+On Error Resume Next
+Dim l_vfFile As VirtualFile
+Dim l_strType As String
+Dim l_objData As Object
+    Set l_vfFile = F2File
+    SaveUserDataToFile l_vfFile, Data
+    Filesystem.CreateFile(Filename).Save l_vfFile
+    Err.Clear
+End Sub
+
+Public Sub SaveUserDataToFile(ByVal File As VirtualFile, ByVal Data As Object)
+On Error Resume Next
+Dim l_strType As String
+Dim l_objData As Object
+    File.WriteSegment_Begin
+        l_strType = TypeName(Data)
+        File.Save l_strType
+        File.Save Data
+    File.WriteSegment_End
+    Err.Clear
+End Sub
+
 Public Property Get ScriptContext() As String
 On Error Resume Next
     ScriptContext = Join(m_strScriptContext, ">")
@@ -4570,6 +4898,31 @@ End Sub
 Friend Sub SetIObjThis()
 On Error Resume Next
     m_ScriptEngine.AddCode m_ScriptEngine.Language.GenerateAssignment("Object", "Engine" & m_ScriptEngine.Language.MethodOperator & "IObjThis", True)
+End Sub
+
+Friend Sub SetMouseLocation(ByVal X As Single, ByVal Y As Single)
+On Error Resume Next
+Dim l_lngBorderWidth As Long, l_lngTitleHeight As Long, l_lngOldMode As Long
+Dim l_lngWidth As Long, l_lngHeight As Long
+    With m_objOutputPlugin.Window
+        If GetForegroundWindow() = .hWnd Then
+            l_lngOldMode = .ScaleMode
+            .ScaleMode = 1
+            l_lngBorderWidth = (.Width - .ScaleWidth) \ 2
+            l_lngTitleHeight = (.Height - .ScaleHeight) - (l_lngBorderWidth * 2)
+            .ScaleMode = l_lngOldMode
+            SetCursorPos (X * (.ScaleWidth / ScreenWidth)) + (l_lngBorderWidth / Screen.TwipsPerPixelX) + (.left / Screen.TwipsPerPixelX), (Y * (.ScaleHeight / ScreenHeight)) + ((l_lngBorderWidth + l_lngTitleHeight) / Screen.TwipsPerPixelY) + (.top / Screen.TwipsPerPixelY)
+        Else
+            g_lngMouseX = X
+            g_lngMouseY = Y
+        End If
+    End With
+End Sub
+
+Public Sub SetNotify(ByRef Obj As Object)
+On Error Resume Next
+    Set m_objNotify = Obj
+    m_booNotifyNoLogging = False
 End Sub
 
 Public Sub SetPictureBlitMode(ByVal Slot As Long, ByVal BlitMode As SFXBlitModes)
@@ -4644,6 +4997,43 @@ Dim m_lngSlot As Long
     Next m_lngSlot
 End Sub
 
+Public Sub Shutdown()
+On Error Resume Next
+Dim m_frmForm As Form
+Dim m_lngForms As Long
+Dim m_lngWait As Long
+Dim Obj As Object
+    Halted = False
+    ScriptContext = "Shutdown"
+    StopBGM
+    SoundEngine.FreeAll
+    If m_booIDE Then DebugOut "Ending game"
+    UnloadAllMaps
+    ScriptEngine.Exec "Engine_Shutdown"
+    m_booHaltScripts = True
+    For m_lngWait = 1 To 10
+        SleepEx 1, True
+        DoEvents
+    Next m_lngWait
+    ReleaseScriptEngine
+    DeInitENet
+    m_objOutputPlugin.HookEvents Nothing
+    m_objOutputPlugin.Shutdown
+    SoundEngine.Shutdown
+    Set m_objOutputPlugin = Nothing
+    Set m_imgBackbuffer = Nothing
+    For Each Obj In EventHooks
+        Obj.Shutdown
+        Set Obj = Nothing
+    Next Obj
+    ShowCursor True
+    EmptyImageCache
+    For m_lngForms = Forms.Count To 0 Step -1
+        Unload Forms(m_lngForms)
+    Next m_lngForms
+    m_objNotify.Quit
+End Sub
+
 Public Property Get SmoothScaling() As Boolean
 On Error Resume Next
     SmoothScaling = m_booSmoothScaling
@@ -4664,19 +5054,6 @@ Attribute SoundEngine.VB_Description = "The sound engine."
 On Error Resume Next
     Set SoundEngine = m_SoundEngine
 End Property
-
-Function FadeBGM(Optional ByVal FromVolume As Single = -1, Optional ByVal ToVolume As Single = -1, Optional ByVal Length As Double = 1) As Fury2SoundFader
-On Error Resume Next
-Dim l_fadFader As Fury2SoundFader
-    Set l_fadFader = New Fury2SoundFader
-    Set l_fadFader.Handle = SoundEngine.Handles(CurrentBGMHandle)
-    Set l_fadFader.Slider = F2Slider
-    l_fadFader.VolumeStart = IIf(FromVolume < 0, l_fadFader.Handle.Volume, FromVolume)
-    l_fadFader.VolumeEnd = IIf(ToVolume < 0, l_fadFader.Handle.Volume, ToVolume)
-    l_fadFader.Slider.Start Length
-    HookEvents l_fadFader
-    Set FadeBGM = l_fadFader
-End Function
 
 Sub StopBGM(Optional ByVal Fade As Boolean = True)
 Attribute StopBGM.VB_Description = "Stops the currently playing BGM."
@@ -4745,30 +5122,6 @@ Dim m_imgOld As Fury2Image
     Err.Clear
 End Sub
 
-Function LoadOutputPlugin(ByRef NewPlugin As String)
-On Error Resume Next
-Dim l_objTemp As Object
-    Err.Clear
-    DebugOut "Loading output plugin """ & NewPlugin & """"
-    If Not (Debugger Is Nothing) Then Set l_objTemp = Debugger.DebugCreateOutputPlugin()
-    If l_objTemp Is Nothing Then
-        Err.Clear
-        Set l_objTemp = CreateObject("video_" + CStr(Trim(NewPlugin)) + "." + CStr(Trim(NewPlugin)) + "Engine")
-        If Err.Number <> 0 Then
-            Err.Clear
-            Call RegisterServer(RootPath + "video_" + NewPlugin + ".dll", False)
-            Call RegisterServer(RootPath + "video_" + NewPlugin + ".dll", True)
-            Set l_objTemp = CreateObject("video_" + CStr(Trim(NewPlugin)) + "." + CStr(Trim(NewPlugin)) + "Engine")
-            If Err.Number <> 0 Then CriticalError "LoadOutputPlugin """ + CStr(NewPlugin) + """", "CreateObject()", Err.Description + "(Error #" + CStr(Err.Number) + ")"
-        End If
-    End If
-    If l_objTemp Is Nothing Then Exit Function
-    l_objTemp.HookEvents Me
-    SetAppIcon l_objTemp.Window
-    Set LoadOutputPlugin = l_objTemp
-    Set l_objTemp = Nothing
-End Function
-
 Sub SwitchOutputPlugin(ByRef NewPlugin As String)
 On Error Resume Next
     If m_objOutputPlugin Is Nothing Then
@@ -4821,43 +5174,10 @@ Dim m_camCamera As Fury2Camera
     Paused = m_booPaused
 End Sub
 
-Public Sub DebugOut(ByRef Text)
+Public Property Get Time() As Double
 On Error Resume Next
-Dim l_strCBoard As String
-Dim l_strText As String
-    If Debugger Is Nothing Then Else Debugger.DebugOut ToString(Text)
-    If Not LogDebugMessages Then Exit Sub
-    l_strText = CStr(Text)
-    If LogToClipboard Then
-        l_strCBoard = Clipboard.GetText
-        Clipboard.Clear
-        Clipboard.SetText l_strCBoard + vbCrLf + "> " + l_strText
-    End If
-    #If DebugFeatures = 1 Then
-    If Not (ConsoleItems Is Nothing) Then
-        If InStr(l_strText, vbCrLf) Then
-            Dim l_varLines As Variant
-            Dim l_lngLines As Long
-            l_varLines = Split(l_strText, vbCrLf)
-            For l_lngLines = LBound(l_varLines) To UBound(l_varLines)
-                ConsoleItems.Add CStr(l_varLines(l_lngLines))
-            Next l_lngLines
-        Else
-            ConsoleItems.Add l_strText
-        End If
-        Do While ConsoleItems.Count > 100
-            ConsoleItems.Remove 1
-        Loop
-    End If
-    Debug.Print l_strText
-    If (m_objNotify Is Nothing) Or (m_booNotifyNoLogging) Then
-    Else
-        Err.Clear
-        m_objNotify.LogOutput l_strText
-        If Err <> 0 Then m_booNotifyNoLogging = True
-    End If
-    #End If
-End Sub
+    Time = HiTimer
+End Property
 
 Public Sub TextOut(ByRef Text)
 Attribute TextOut.VB_Description = "Outputs text to the engine log."
@@ -5294,6 +5614,23 @@ On Error Resume Next
     Redraw
 End Sub
 
+Friend Sub UpdateENet()
+On Error Resume Next
+Dim l_hosHost As VBENetHost, l_lngIndex As Long
+    If Not m_booENetInitialized Then Exit Sub
+    ContextLevelAdd "ENet"
+    ProfileStart "ENet"
+        For Each l_hosHost In Hosts
+            l_hosHost.Poll
+            If GetReferenceCount(l_hosHost) < 6 Then
+                l_lngIndex = Hosts.Find(l_hosHost)
+                Hosts.Remove l_lngIndex
+            End If
+        Next l_hosHost
+    ProfileStop "ENet"
+    ContextLevelRemove
+End Sub
+
 Friend Sub UpdateEvents()
 On Error Resume Next
 Dim m_lngQueue As Long
@@ -5490,6 +5827,21 @@ Dim l_vidVideo As Fury2Video
     Err.Clear
 End Sub
 
+Friend Sub UpdateWindow()
+On Error Resume Next
+Dim l_lngWindow As Long, l_lngGameWindow
+    l_lngWindow = GetForegroundWindow()
+    l_lngGameWindow = m_objOutputPlugin.Window.hWnd
+    If l_lngWindow <> m_lngLastWindow Then
+        m_lngLastWindow = l_lngWindow
+        If l_lngWindow <> l_lngGameWindow Then
+            GFXEngine_LostFocus
+        Else
+            GFXEngine_GotFocus
+        End If
+    End If
+End Sub
+
 Function VariableName(Name) As String
 On Error Resume Next
 Dim m_lngChars As Long
@@ -5526,6 +5878,7 @@ End Property
 
 Public Sub Wait(Time)
 Attribute Wait.VB_Description = "Waits a certain number of seconds."
+On Error Resume Next
 Dim StartTime As Double, EndTime As Double
 Dim i As Long
     ContextLevelAdd "Engine.Wait(" + Format(Time, "###.####") + "s)"
@@ -5601,230 +5954,107 @@ On Error Resume Next
     If Running = True Then DoEvents
     If HarassCPU Then Else Call SleepEx(1, True)
     If Sync Then UpdateTimers
+    UpdateWindow
 End Sub
 
-Friend Sub Init(Parameters As String)
+Friend Sub InitENet()
 On Error Resume Next
-    Randomize Timer
-    m_booMouseVisible = True
-    
-    If LoadGame(Parameters) Then
-        EngineLoop
+Dim l_lngResult As Long
+    m_booENetInitialized = False
+    Err.Clear
+    l_lngResult = -1
+    l_lngResult = enet_initialize()
+    If l_lngResult = 0 Then
+        m_booENetInitialized = True
     Else
-        If EditMode Then
-        Else
-            MsgBox "Unable to load game!"
-            Shutdown
+        m_booENetInitialized = False
+    End If
+End Sub
+
+Friend Sub DeInitENet()
+On Error Resume Next
+Dim l_hosHost As VBENetHost
+    If m_booENetInitialized Then
+        For Each l_hosHost In Hosts
+            l_hosHost.DisconnectAll
+        Next l_hosHost
+        enet_deinitialize
+        m_booENetInitialized = False
+    End If
+End Sub
+
+Public Function CreatePacket(Optional ByVal Length As Long = 0, Optional ByVal Reliable As Boolean = False) As VBENetPacket
+On Error Resume Next
+Dim l_pktPacket As VBENetPacket
+    If m_booENetInitialized Then
+        Set l_pktPacket = New VBENetPacket
+        If Length > 0 Then
+            l_pktPacket.Create Length, Abs(CLng(Reliable))
         End If
+        Set CreatePacket = l_pktPacket
     End If
-End Sub
-
-Friend Sub EngineLoop()
-On Error Resume Next
-    m_objOutputPlugin.Window.SetFocus
-    If (ErrorOccurred) And (Debugger Is Nothing) Then ShowConsole
-    Cameras.Dirty
-    m_objNotify.Begin
-    Do
-        Game
-        If Not (Debugger Is Nothing) Then Debugger.DebugGameEnd
-        If TerminateEngine Then
-            Exit Do
-        ElseIf Terminating Then
-            Terminating = False
-            DebugOut "Reloading game"
-            LoadGame CurrentGame
-            Game
-        Else
-            Exit Do
-        End If
-    Loop
-    Shutdown
-End Sub
-
-Public Sub Shutdown()
-On Error Resume Next
-Dim m_frmForm As Form
-Dim m_lngForms As Long
-Dim m_lngWait As Long
-Dim Obj As Object
-    Halted = False
-    ScriptContext = "Shutdown"
-    StopBGM
-    SoundEngine.FreeAll
-    If m_booIDE Then DebugOut "Ending game"
-    UnloadAllMaps
-    ScriptEngine.Exec "Engine_Shutdown"
-    For m_lngWait = 1 To 50
-        SleepEx 1, True
-        DoEvents
-    Next m_lngWait
-    ReleaseScriptEngine
-    m_objOutputPlugin.HookEvents Nothing
-    m_objOutputPlugin.Shutdown
-    SoundEngine.Shutdown
-    Set m_objOutputPlugin = Nothing
-    Set m_imgBackbuffer = Nothing
-    For Each Obj In EventHooks
-        Obj.Shutdown
-        Set Obj = Nothing
-    Next Obj
-    ShowCursor True
-    EmptyImageCache
-    For m_lngForms = Forms.Count To 0 Step -1
-        Unload Forms(m_lngForms)
-    Next m_lngForms
-    m_objNotify.Quit
-End Sub
-
-Public Sub CriticalError(Source As String, Location As String, Optional Description As String = "Unknown Error")
-On Error Resume Next
-Dim m_lngHandle As Long
-Dim m_strError As String
-Dim l_frmError As frmCriticalError
-    Halted = True
-    If EditMode Then
-        If Err.Number <> 0 Then
-            m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
-            Err.Description + "(" + CStr(Err.Number) + ")" + vbCrLf + _
-            "From: """ + Err.Source + """" + vbCrLf + _
-            "In english: """ + Description + """" + vbCrLf + _
-            "Context: " + ScriptContext + vbCrLf + _
-            "Frames rendered: " + CStr(FrameCount)
-        Else
-            m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
-            "In english: """ + Description + """" + vbCrLf + _
-            "Context: " + ScriptContext + vbCrLf + _
-            "Frames rendered: " + CStr(FrameCount)
-        End If
-'        MsgBox m_strError, vbInformation, "Error"
-        Exit Sub
-    End If
-    If m_booIDE Then Stop
-    If Debugger Is Nothing Then
-    Else
-        Debugger.CriticalError Source, Location, Description
-        Exit Sub
-    End If
-    If m_objOutputPlugin.Fullscreen Then m_objOutputPlugin.GoWindowed
-    If Err.Number <> 0 Then
-        m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
-        Err.Description + "(" + CStr(Err.Number) + ")" + vbCrLf + _
-        "From: """ + Err.Source + """" + vbCrLf + _
-        "In english: """ + Description + """" + vbCrLf + _
-        "Context: " + ScriptContext + vbCrLf + _
-        "Frames rendered: " + CStr(FrameCount)
-    Else
-        m_strError = "Critical error in """ + Source + """ at """ + Location + """, Time: " + CStr(Now) + vbCrLf + _
-        "In english: """ + Description + """" + vbCrLf + _
-        "Context: " + ScriptContext + vbCrLf + _
-        "Frames rendered: " + CStr(FrameCount)
-    End If
-    m_lngHandle = FreeFile
-    Open App.Path + IIf(right(App.Path, 1) = "\", "", "\") + "error.wtf" For Append As #m_lngHandle
-    Print #m_lngHandle, m_strError
-    Close #m_lngHandle
-    Mouse.Visible = True
-    Set l_frmError = New frmCriticalError
-    Load l_frmError
-    Set l_frmError.Engine = Me
-    l_frmError.Show
-    SetTopmost l_frmError, True
-    l_frmError.lblInfo.Caption = m_strError
-    l_frmError.SetFocus
-    DoEvents
-    Do While Halted
-        DoEvents
-        Sleep (1)
-    Loop
-End Sub
-
-Private Sub m_ScriptEngine_InterruptPoll(Interrupt As Boolean)
-On Error Resume Next
-    If EditMode Then
-        DoEvents
-    Else
-        Debugger.InterruptPoll Interrupt
-        DoEvents
-    End If
-End Sub
-
-Friend Function InstantiateByName(ByRef Name As String) As Object
-On Error Resume Next
-Dim l_objItem As Object
-Dim l_parItem As Fury2Party
-    Select Case LCase(Trim(Name))
-    Case "fury2party"
-        Set l_parItem = New Fury2Party
-        l_parItem.SetEngine Me
-        Set l_objItem = l_parItem
-    Case Else
-    End Select
-    If l_objItem Is Nothing Then
-        ScriptEngine.AddCode "Set Engine.IObjThis = " & ScriptEngine.Language.GenerateInstantiation(Trim(LCase(Name)))
-        Set l_objItem = IObjThis
-        Set IObjThis = Nothing
-        If l_objItem Is Nothing Then
-            Err.Clear
-            Set l_objItem = CreateObject("Engine." & Name)
-            If l_objItem Is Nothing Then
-                Err.Clear
-                Set l_objItem = CreateObject("libGraphics." & Name)
-            End If
-        End If
-    End If
-    Set InstantiateByName = l_objItem
 End Function
 
-Public Function LoadUserData(ByRef Filename As String, Optional ByVal Data As Object = Nothing) As Object
+Public Function CreatePacketFromFile(ByVal File As VirtualFile, Optional ByVal Reliable As Boolean = False)
 On Error Resume Next
-Dim l_vfFile As VirtualFile
-Dim l_strType As String
-Dim l_objData As Object
-    Set l_vfFile = Filesystem.File(Filename).Load
-    Set LoadUserData = LoadUserDataFromFile(l_vfFile, Data)
-    Err.Clear
-End Function
-
-Public Sub SaveUserData(ByRef Filename As String, ByVal Data As Object)
-On Error Resume Next
-Dim l_vfFile As VirtualFile
-Dim l_strType As String
-Dim l_objData As Object
-    Set l_vfFile = F2File
-    SaveUserDataToFile l_vfFile, Data
-    Filesystem.CreateFile(Filename).Save l_vfFile
-    Err.Clear
-End Sub
-
-Public Function LoadUserDataFromFile(ByVal File As VirtualFile, Optional ByVal Data As Object = Nothing) As Object
-On Error Resume Next
-Dim l_strType As String
-    File.ReadSegment_Begin
-        File.Load l_strType
-        If (Data Is Nothing) Then
-            Set Data = InstantiateByName(l_strType)
+Dim l_pktPacket As VBENetPacket
+    If m_booENetInitialized Then
+        Set l_pktPacket = New VBENetPacket
+        If File.Length > 0 Then
+            l_pktPacket.Create File.Length, Abs(CLng(Reliable))
+            CopyMemory ByVal l_pktPacket.DataPointer, ByVal File.Pointer, File.Length
         End If
-        File.Load Data
-    File.ReadSegment_End
-    Set Data.Engine = Me
-    Set LoadUserDataFromFile = Data
-    Err.Clear
+        Set CreatePacketFromFile = l_pktPacket
+    End If
 End Function
 
-Public Sub SaveUserDataToFile(ByVal File As VirtualFile, ByVal Data As Object)
+Public Function CreateAddress(ByVal Host As String, ByVal Port As Long) As VBENetAddress
 On Error Resume Next
-Dim l_strType As String
-Dim l_objData As Object
-    File.WriteSegment_Begin
-        l_strType = TypeName(Data)
-        File.Save l_strType
-        File.Save Data
-    File.WriteSegment_End
-    Err.Clear
-End Sub
+Dim l_adrAddress As VBENetAddress
+    If m_booENetInitialized Then
+        Set l_adrAddress = New VBENetAddress
+        l_adrAddress.Host = Host
+        l_adrAddress.Port = Port
+        Set CreateAddress = l_adrAddress
+    End If
+End Function
 
-Public Property Get Joystick() As Fury2Joystick
+Public Function CreateAddressFromString(ByVal Text As String) As VBENetAddress
 On Error Resume Next
-    Set Joystick = Joysticks(1)
-End Property
+Dim l_adrAddress As VBENetAddress
+    If m_booENetInitialized Then
+        Set l_adrAddress = New VBENetAddress
+        l_adrAddress.Text = Text
+        Set CreateAddressFromString = l_adrAddress
+    End If
+End Function
+
+Public Function CreateServerHost(ByVal Address As VBENetAddress, Optional ByVal ClientCount As Long = 32, Optional ByVal IncomingBandwidthLimit As Long = 0, Optional ByVal OutgoingBandwidthLimit As Long = 0) As VBENetHost
+On Error Resume Next
+Dim l_hosHost As VBENetHost
+    If m_booENetInitialized Then
+        Set l_hosHost = New VBENetHost
+        l_hosHost.SetEngine Me
+        If l_hosHost.Create(Address, ClientCount, IncomingBandwidthLimit, OutgoingBandwidthLimit) Then
+            Hosts.Add l_hosHost
+            Set CreateServerHost = l_hosHost
+        End If
+    Else
+        TextOut "Unable to create server; ENet not available!"
+    End If
+End Function
+
+Public Function CreateClientHost(Optional ByVal ServerCount As Long = 1, Optional ByVal IncomingBandwidthLimit As Long = 0, Optional ByVal OutgoingBandwidthLimit As Long = 0) As VBENetHost
+On Error Resume Next
+Dim l_hosHost As VBENetHost
+    If m_booENetInitialized Then
+        Set l_hosHost = New VBENetHost
+        l_hosHost.SetEngine Me
+        If l_hosHost.Create(Nothing, ServerCount, IncomingBandwidthLimit, OutgoingBandwidthLimit) Then
+            Hosts.Add l_hosHost
+            Set CreateClientHost = l_hosHost
+        End If
+    Else
+        TextOut "Unable to create client; ENet not available!"
+    End If
+End Function

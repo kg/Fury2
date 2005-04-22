@@ -5,6 +5,7 @@ Begin VB.UserControl ngToolbar
    ClientLeft      =   0
    ClientTop       =   0
    ClientWidth     =   2430
+   ControlContainer=   -1  'True
    BeginProperty Font 
       Name            =   "Tahoma"
       Size            =   8.25
@@ -18,6 +19,7 @@ Begin VB.UserControl ngToolbar
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   162
    Begin VB.Timer tmrMouseTracker 
+      Enabled         =   0   'False
       Interval        =   100
       Left            =   615
       Top             =   0
@@ -358,6 +360,7 @@ Dim l_btnButton As ngToolButton
 Dim l_lngRowHeight As Long
 Dim l_booNewRow As Boolean
 Dim l_lngIndex As Long, l_lngRowStart As Long, l_lngButton As Long
+    If Not UserControl.Ambient.UserMode Then Exit Sub
     m_lngIdealWidth = 0
     m_lngIdealHeight = 0
     For Each l_btnButton In m_tbcButtons
@@ -405,6 +408,7 @@ Dim l_lngIndex As Long, l_lngRowStart As Long, l_lngButton As Long
         Next l_lngButton
     End If
     RaiseEvent Reflow
+    UpdateMouse
     Redraw
 End Sub
 
@@ -857,11 +861,20 @@ End Sub
 
 Private Sub UserControl_Show()
 On Error Resume Next
-    Select Case UserControl.Extender.Align
-    Case vbAlignTop, vbAlignBottom
-    Case vbAlignLeft, vbAlignRight
-    Case Else
-    End Select
+Dim l_rfOld As ngResourceFile
+Dim l_strOldPattern As String
+    If Ambient.UserMode Then
+        tmrMouseTracker.Enabled = True
+        If g_strToolbarTheme <> "" Then
+            Set l_rfOld = Me.ResourceFile
+            l_strOldPattern = Me.ResourcePattern
+            Set Me.ResourceFile = g_rfThemeFile
+            Me.ResourcePattern = g_strThemePattern
+            LoadTheme g_strToolbarTheme
+            Me.ResourcePattern = l_strOldPattern
+            Set Me.ResourceFile = l_rfOld
+        End If
+    End If
     InitSurface
     Reflow
 End Sub

@@ -75,6 +75,11 @@ Private m_colAccelerators As New Fury2Collection
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
 
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+On Error Resume Next
+    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\script.png")
+End Property
+
 Private Property Get iDocument_Object() As Object
     Set iDocument_Object = Me
 End Property

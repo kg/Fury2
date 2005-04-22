@@ -42,7 +42,6 @@ Var ALREADY_INSTALLED
 ;Installer Sections
 
 Section "-Example Games"
-	SetOutPath "$INSTDIR\Examples\"
 	SetOutPath "$INSTDIR"
     StrCpy $ALREADY_INSTALLED 0
     IfFileExists "$INSTDIR\Uninstall_Examples.exe" old_installation new_installation
@@ -57,33 +56,42 @@ Section "-Example Games"
     old_installation:
 
     IfFileExists $INSTDIR\sys\engine.dll EngineFound
+        DetailPrint "Engine not installed."
+        StrCpy $2 "$EXEDIR\fury2_beta_${VERSION}.exe"
+        IfFileExists $2 setupfound
+        DetailPrint "Attempting to download engine..."
         Call ConnectInternet
-        StrCpy $2 "$TEMP\fury2_editor_installer.exe"
         NSISdl::download http://fury2.luminance.org/downloads/fury2_beta_${VERSION}.exe $2
         Pop $0
         StrCmp $0 success success
-            DetailPrint "download failed: $0"
+            DetailPrint "Engine download failed: $0"
             Abort
+        setupfound:
+            DetailPrint "Engine installer found."
         success:
+            DetailPrint "Installing engine."
             ExecWait '"$2"'
             Delete $2
     EngineFound:
 
+	SetOutPath "$INSTDIR\Examples\"
     File /nonfatal /r "C:\Documents and Settings\Kevin\My Documents\Projects\fury2\docs\Examples\*.*"
 SectionEnd
 
 Section "Start Menu Shortcuts"
   CreateDirectory "$SMPROGRAMS\Fury²"
   CreateDirectory "$SMPROGRAMS\Fury²\Examples"
-  CreateShortCut "$SMPROGRAMS\Fury²\Examples\Fury² Intro.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\intro" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\Fury²\Examples\AVI Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\avi" "$INSTDIR\sys\fury².exe"
   CreateShortCut "$SMPROGRAMS\Fury²\Examples\Basic Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\basic" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\Fury²\Examples\Rain Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\rain" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\Fury²\Examples\Menus Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\menus" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\Fury²\Examples\HTTP Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\http" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\Fury²\Examples\Paint Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\paint" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\Fury²\Examples\Chat Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\chat" "$INSTDIR\sys\fury².exe"
   CreateShortCut "$SMPROGRAMS\Fury²\Examples\Explosion Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\explosion" "$INSTDIR\sys\fury².exe"
-  CreateShortCut "$SMPROGRAMS\Fury²\Examples\Reveal Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\reveal" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\Fury²\Examples\Fury² Intro.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\intro" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\Fury²\Examples\HTTP Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\http" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\Fury²\Examples\Menus Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\menus" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\Fury²\Examples\Paint Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\paint" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\Fury²\Examples\Rain Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\rain" "$INSTDIR\sys\fury².exe"
   CreateShortCut "$SMPROGRAMS\Fury²\Examples\Reflect Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\reflect" "$INSTDIR\sys\fury².exe"
+  CreateShortCut "$SMPROGRAMS\Fury²\Examples\Reveal Example.lnk" "$INSTDIR\sys\fury².exe" "$INSTDIR\examples\reveal" "$INSTDIR\sys\fury².exe"
   CreateShortCut "$SMPROGRAMS\Fury²\Uninstall ${NAME}.lnk" "$INSTDIR\uninstall_examples.exe"
 SectionEnd
 

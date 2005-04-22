@@ -40,5 +40,5 @@ cNotice = 0, 0, 0, 0, C
 frmTerminate = 0, 0, 0, 0, C, 22, 25, 822, 538, C
 mdlText = 0, 0, 0, 0, C
 frmScriptInput = 44, 50, 845, 563, C, 132, 150, 933, 663, C
-Script = 198, 225, 999, 738, C, 0, 0, 0, 0, C
+Script = 198, 225, 999, 738, C, 132, 150, 935, 659, C
 mdlCodeSense = 66, 75, 847, 595, C

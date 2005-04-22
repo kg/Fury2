@@ -12,10 +12,12 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
+Private Const c_dblMaxAge As Double = 5 * 60
 Private Declare Function GetTempPath Lib "kernel32" Alias "GetTempPathA" (ByVal nBufferLength As Long, ByVal lpBuffer As String) As Long
 Private m_colCollection As Collection
 Private m_strFilename As String
 Private m_szaArchive As SAWZipNG.Archive
+Private m_dblOpenedAt As Double
 
 Friend Sub Free()
 On Error Resume Next
@@ -85,7 +87,13 @@ On Error Resume Next
 Dim l_lngFiles As Long
 Dim l_fiInfo As SAWZipNG.FileInfo
 Dim l_resResource As ngResource
+    m_dblOpenedAt = Timer
+    For Each l_resResource In m_colCollection
+        l_resResource.Free
+    Next l_resResource
     Set m_colCollection = New Collection
+    m_szaArchive.Close
+    m_szaArchive.Open m_strFilename, OM_READONLY
     For l_lngFiles = 0 To m_szaArchive.FileCount - 1
         Set l_resResource = New ngResource
         Set l_fiInfo = m_szaArchive.GetFileInfo(l_lngFiles)
@@ -123,6 +131,9 @@ End Property
 Public Property Get Item(ByVal IndexOrKey) As ngResource
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
+    If (Timer - m_dblOpenedAt) > c_dblMaxAge Then
+        Refresh
+    End If
     If VarType(IndexOrKey) = vbString Then
         IndexOrKey = CStr(IndexOrKey)
     End If
@@ -133,6 +144,9 @@ End Property
 
 Public Property Get Count() As Long
 On Error Resume Next
+    If (Timer - m_dblOpenedAt) > c_dblMaxAge Then
+        Refresh
+    End If
     Count = m_colCollection.Count
 End Property
 

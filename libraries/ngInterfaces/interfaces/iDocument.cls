@@ -36,3 +36,6 @@ End Property
 
 Public Property Get Object() As Object
 End Property
+
+Public Property Get DocumentIcon() As Fury2Image
+End Property

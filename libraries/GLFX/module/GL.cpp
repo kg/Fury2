@@ -33,24 +33,53 @@ namespace GL {
   }
 
   void flushImageHeap() {
-    GLuint handle;
+    Texture* handle;
     int image;
     for (unsigned int i = 0; i < Global->ImageHeap.size(); ++i) {
       image = Global->ImageHeap[i];
-      handle = getNamedTag(image, Texture);
-      if (handle != 0) {
-        destroyTexture(handle);
+      handle = getTexture(image);
+      if (handle) {
+        delete handle;
         setNamedTag(image, Texture, 0);
       }
     }
     Global->ImageHeap.clear();
+    for (unsigned int i = 0; i < Global->SmallImageCache.size(); ++i) {
+      handle = Global->SmallImageCache[i]->CacheTexture;
+      if (handle) {
+        delete handle;
+      }
+      delete Global->SmallImageCache[i];
+    }
+    Global->SmallImageCache.clear();
   }
 
-  GLuint createTexture(int width, int height) {
+  Texture* createSmallTexture(int width, int height) {
+    if (width > SmallTextureSize) return 0;
+    if (height > SmallTextureSize) return 0;
+    int x, y, w, h;
+    w = powerOfTwo(width);
+    h = powerOfTwo(height);
+    for (unsigned int i = 0; i < Global->SmallImageCache.size(); i++) {
+      if (Global->SmallImageCache[i]->findFreeSpot(w, h, x, y)) {
+        return Global->SmallImageCache[i]->fillSpot(x, y, width, height);
+      }
+    }
+    Texture* tex = createTexture(CacheTextureSize, CacheTextureSize);
+    TextureGroup* newGroup = new TextureGroup(tex);
+    Global->SmallImageCache.push_back(newGroup);
+    return newGroup->fillSpot(0, 0, width, height);
+  }
+
+  Texture* createTexture(int width, int height) {
     if (width < 1) return 0;
     if (height < 1) return 0;
     endDraw();
     GLuint handle = 0;
+    if ((width <= SmallTextureSize) && (height <= SmallTextureSize)) {
+      Texture* tex = createSmallTexture(width, height);
+      if (tex) return tex;
+    }
     glGenTextures(1, &handle);
     selectTexture(handle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -60,7 +89,7 @@ namespace GL {
     int texWidth = powerOfTwo(width);
     int texHeight = powerOfTwo(height);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texWidth, texHeight, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, 0);
-    return handle;
+    return new Texture(handle, 0, 0, width, height, 1.0f / texWidth, 1.0f / texHeight);
   }
 
   void copyFramebufferToImage(int image) {
@@ -94,63 +123,61 @@ namespace GL {
     glEnable(GL_BLEND);
   }
 
-  void copyFramebufferToTexture(GLuint handle, int image) {
+  void copyFramebufferToTexture(Texture *tex, int image) {
     int width = SoftFX::GetImageWidth(image);
     int height = SoftFX::GetImageHeight(image);
-    int texWidth = powerOfTwo(width);
-    int texHeight = powerOfTwo(height);
     int yOffset = (Global->OutputHeight - height);
     FX::Rectangle rect = FX::Rectangle(0, 0, width, height);
     disableTexture<1>();
-    selectTexture(handle);
+    selectTexture(tex->Handle);
     endDraw();
     glFlush();
     setBlendMode<BlendModes::Normal>();
     glDisable(GL_BLEND);
-    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, yOffset, width, height);
-    drawTexturedRectangleF(0, 0, width, height, 0, 0, (float)width / texWidth, (float)height / texHeight);
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, tex->Left, tex->Top, 0, yOffset, width, height);
+    drawTexturedRectangleF(0, 0, width, height, tex->U1, tex->V1, tex->U2, tex->V2);
     endDraw();
-    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, yOffset, width, height);
-    drawTexturedRectangleF(0, 0, width, height, 0, 0, (float)width / texWidth, (float)height / texHeight);
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, tex->Left, tex->Top, 0, yOffset, width, height);
+    drawTexturedRectangleF(0, 0, width, height, tex->U1, tex->V1, tex->U2, tex->V2);
     endDraw();
     glEnable(GL_BLEND);
     SoftFX::SetImageDirty(image, 0);
   }
 
-  void uploadImageToTexture(GLuint handle, int image) {
+  void uploadImageToTexture(Texture *tex, int image) {
     int width = SoftFX::GetImageWidth(image);
     int height = SoftFX::GetImageHeight(image);
     void* ptr = SoftFX::GetImagePointer(image, 0, 0);
     if (width < 1) return;
     if (height < 1) return;
     if (ptr == Null) return;
-    selectTexture(handle);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ptr);
+    selectTexture(tex->Handle);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, tex->Left, tex->Top, width, height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ptr);
     SoftFX::SetImageDirty(image, 0);
   }
 
-  GLuint createTextureFromImage(int image) {
+  Texture* createTextureFromImage(int image) {
     int width = SoftFX::GetImageWidth(image);
     int height = SoftFX::GetImageHeight(image);
     if (width < 1) return 0;
     if (height < 1) return 0;
-    GLuint handle = createTexture(width, height);
-    setNamedTag(image, Texture, handle);
-    uploadImageToTexture(handle, image);
+    Texture* tex = createTexture(width, height);
+    setNamedTag(image, Texture, tex);
+    uploadImageToTexture(tex, image);
     Global->ImageHeap.push_back(image);
-    return handle;
+    return tex;
   }
 
-  GLuint createTextureFromFramebuffer(int image) {
+  Texture* createTextureFromFramebuffer(int image) {
     int width = SoftFX::GetImageWidth(image);
     int height = SoftFX::GetImageHeight(image);
     if (width < 1) return 0;
     if (height < 1) return 0;
-    GLuint handle = createTexture(width, height);
-    setNamedTag(image, Texture, handle);
-    copyFramebufferToTexture(handle, image);
+    Texture* tex = createTexture(width, height);
+    setNamedTag(image, Texture, tex);
+    copyFramebufferToTexture(tex, image);
     Global->ImageHeap.push_back(image);
-    return handle;
+    return tex;
   }
 
   void selectTexture(GLuint handle) {
@@ -309,6 +336,28 @@ namespace GL {
     glVertex2f(X + W, Y + H);
     glTexCoord2f(U1, V2);
     glVertex2f(X, Y + H);
+  }
+
+  void drawTexturedRectangleTiledF(float X, float Y, float W, float H, float SW, float SH, float U1, float V1, float U2, float V2) {
+    float cx, cy, ex = X + W, ey = Y + H;
+    float cx2, cy2;
+    beginDraw(GL_QUADS);
+    for (cy = Y; cy < ey; cy += SH) {
+      for (cx = X; cx < ex; cx += SW) {
+        cx2 = cx + SW;
+        cy2 = cy + SH;
+        if (cx2 > ex) cx2 = ex;
+        if (cy2 > ey) cy2 = ey;
+        glTexCoord2f(U1, V1);
+        glVertex2f(cx, cy);
+        glTexCoord2f(U2, V1);
+        glVertex2f(cx2, cy);
+        glTexCoord2f(U2, V2);
+        glVertex2f(cx2, cy2);
+        glTexCoord2f(U1, V2);
+        glVertex2f(cx, cy2);
+      }
+    }
   }
 
   void draw2TexturedRectangle(FX::Rectangle& rect, float U1, float V1, float U2, float V2) {

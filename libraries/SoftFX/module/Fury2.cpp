@@ -1035,6 +1035,10 @@ Rectangle old_clip;
     if (SectionFlags <= 0) {
       SectionFlags = sfAll;
     }
+    int result;
+    if (result = Override::EnumOverrides(Override::RenderWindow, 4, Dest, Area, wp, SectionFlags)) {
+      return result;
+    }
     enableClipping = true;
     old_clip = Dest->ClipRectangle;
     dest = *Area;

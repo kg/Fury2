@@ -106,15 +106,19 @@ Dim l_lngLayers As Long
     If Handle = 0 Then
         Handle = 0
         Handle = CLng(mvarBuffer.Tag(0))
+        If mvarBuffer.Tag(2) = MatteColor Then
+        Else
+            Handle = 0
+        End If
         Err.Clear
         If (Handle = 0) Or (ForceNew) Then
             Handle = SoftFX.AllocateTileset(mvarBuffer.Handle, mvarTileWidth, mvarTileHeight)
             If Handle = 0 Then
             Else
-                mvarBuffer.Tag = Array(Handle, 1)
+                mvarBuffer.Tag = Array(Handle, 1, MatteColor)
             End If
         Else
-            mvarBuffer.Tag = Array(mvarBuffer.Tag(0), mvarBuffer.Tag(1) + 1)
+            mvarBuffer.Tag = Array(mvarBuffer.Tag(0), mvarBuffer.Tag(1) + 1, mvarBuffer.Tag(2))
             Handle = CLng(mvarBuffer.Tag(0))
         End If
     End If

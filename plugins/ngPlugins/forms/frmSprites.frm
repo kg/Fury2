@@ -2,7 +2,7 @@ VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.6#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.9#0"; "ngUI.ocx"
 Begin VB.Form frmSprites 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -471,6 +471,11 @@ Private m_booVisible As Boolean
 Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
 Private m_lngCurrentView As SpriteEditorViews
+
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+On Error Resume Next
+    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\sprite.png")
+End Property
 
 Private Sub InspectListItems(Inspector As ObjectInspector, Items() As ngListItem)
 On Error Resume Next
@@ -961,25 +966,34 @@ Dim l_lngItems As Long
 Dim l_fraFrame As Fury2PoseFrame
 Dim l_liItem As ngListItem
     If SelectedPose Is Nothing Then Exit Sub
-    lstFrames.AllowReorder = True
-    lstFrames.DisableUpdates = True
-    With lstFrames.ListItems
-        If .Count <> SelectedPose.Frames.Count Then
+    If lstPoses.SelectedItemCount > 1 Then
+        lstFrames.AllowReorder = False
+        lstFrames.DisableUpdates = True
+        With lstFrames.ListItems
             .Clear
-            l_lngItems = 1
-            For Each l_fraFrame In SelectedPose.Frames
-                Set .AddNew(IIf(l_lngItems = 1, "Stopped Frame", "Animation Frame " & l_lngItems - 1)).Tag = l_fraFrame
-                l_lngItems = l_lngItems + 1
-            Next l_fraFrame
-        Else
-            l_lngItems = 1
-            For Each l_liItem In lstFrames.ListItems
-                l_liItem.Text = IIf(l_lngItems = 1, "Stopped Frame", "Animation Frame " & l_lngItems - 1)
-                Set l_liItem.Tag = SelectedPose.Frames(l_lngItems)
-                l_lngItems = l_lngItems + 1
-            Next l_liItem
-        End If
-    End With
+            .AddNew "[multiple poses]"
+        End With
+    Else
+        lstFrames.AllowReorder = True
+        lstFrames.DisableUpdates = True
+        With lstFrames.ListItems
+            If .Count <> SelectedPose.Frames.Count Then
+                .Clear
+                l_lngItems = 1
+                For Each l_fraFrame In SelectedPose.Frames
+                    Set .AddNew(IIf(l_lngItems = 1, "Stopped Frame", "Animation Frame " & l_lngItems - 1)).Tag = l_fraFrame
+                    l_lngItems = l_lngItems + 1
+                Next l_fraFrame
+            Else
+                l_lngItems = 1
+                For Each l_liItem In lstFrames.ListItems
+                    l_liItem.Text = IIf(l_lngItems = 1, "Stopped Frame", "Animation Frame " & l_lngItems - 1)
+                    Set l_liItem.Tag = SelectedPose.Frames(l_lngItems)
+                    l_lngItems = l_lngItems + 1
+                Next l_liItem
+            End If
+        End With
+    End If
     lstFrames.DisableUpdates = False
     lstFrames.Reflow
 End Sub
@@ -1429,6 +1443,9 @@ End Sub
 
 Public Sub FramesViewChanged()
 On Error Resume Next
+Dim l_lngItemCount As Long, l_lngIndex As Long, l_lngFrame As Long
+Dim l_liItems() As ngListItem
+Dim l_fraFrames() As Object, l_fraFrame As Fury2PoseFrame
     Screen.MousePointer = 11
     insFrameOptions.Visible = False
     scFrame.Visible = False
@@ -1438,10 +1455,28 @@ On Error Resume Next
     Select Case LCase(Trim(dtFrames.SelectedTab.key))
     Case "options"
         insFrameOptions.ShowHierarchy = True
-        If lstFrames.SelectedItemCount > 1 Then
-            InspectListItems insFrameOptions, lstFrames.SelectedItems
+        If lstPoses.SelectedItemCount > 1 Then
+            l_liItems = lstPoses.SelectedItems
+            For l_lngIndex = LBound(l_liItems) To UBound(l_liItems)
+                l_lngItemCount = l_lngItemCount + SelectedSprite.Poses(l_liItems(l_lngIndex).Index).Frames.Count
+            Next l_lngIndex
+            ReDim l_fraFrames(0 To l_lngItemCount - 1)
+            l_lngFrame = 0
+            For l_lngIndex = LBound(l_liItems) To UBound(l_liItems)
+                With SelectedSprite.Poses(l_liItems(l_lngIndex).Index)
+                    For Each l_fraFrame In .Frames
+                        Set l_fraFrames(l_lngFrame) = l_fraFrame
+                        l_lngFrame = l_lngFrame + 1
+                    Next l_fraFrame
+                End With
+            Next l_lngIndex
+            insFrameOptions.InspectMultiple l_fraFrames
         Else
-            insFrameOptions.Inspect SelectedFrame, "Frame #" & m_lngSelectedFrame, True
+            If lstFrames.SelectedItemCount > 1 Then
+                InspectListItems insFrameOptions, lstFrames.SelectedItems
+            Else
+                insFrameOptions.Inspect SelectedFrame, "Frame #" & m_lngSelectedFrame, True
+            End If
         End If
         insFrameOptions.Visible = True
         insFrameOptions.ZOrder
@@ -2016,6 +2051,7 @@ End Sub
 Private Sub lstFrames_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
 Dim l_ptMouse As POINTAPI
+    If lstPoses.SelectedItemCount > 1 Then Exit Sub
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstFrames.hwnd, l_ptMouse

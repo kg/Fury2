@@ -233,7 +233,9 @@ On Error Resume Next
         MousePressed = True
         DispatchEvent "Press"
     End If
-    DispatchEvent "MouseDown", Button, Shift, X, Y
+    With Rectangle
+        DispatchEvent "MouseDown", Button, Shift, X - .Left, Y - .Top
+    End With
     RefreshState
 End Sub
 
@@ -252,7 +254,9 @@ End Sub
 Private Sub iWidget_MouseMove(ByVal Parent As iContainer, ByVal Button As Long, ByVal Shift As Long, X As Long, Y As Long)
 On Error Resume Next
     If Visible = False Then Exit Sub
-    DispatchEvent "MouseMove", Button, Shift, X, Y
+    With Rectangle
+        DispatchEvent "MouseMove", Button, Shift, X - .Left, Y - .Top
+    End With
 End Sub
 
 Private Sub iWidget_MouseUp(ByVal Parent As iContainer, ByVal Button As Long, ByVal Shift As Long, X As Long, Y As Long)
@@ -274,7 +278,9 @@ On Error Resume Next
         End If
     End If
     RefreshState
-    DispatchEvent "MouseUp", Button, Shift, X, Y
+    With Rectangle
+        DispatchEvent "MouseUp", Button, Shift, X - .Left, Y - .Top
+    End With
 End Sub
 
 Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)

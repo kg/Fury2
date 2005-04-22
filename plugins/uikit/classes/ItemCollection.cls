@@ -102,7 +102,7 @@ Dim l_objObject As Object
     Err.Clear
 End Sub
 
-Public Sub CallMethod(MethodName As String, Optional IgnoreErrors As Boolean = False)
+Public Sub CallMethod(ByVal MethodName As String, Optional ByVal IgnoreErrors As Boolean = False)
 On Error Resume Next
 Dim l_objObject As Object
     If mCol.Count < 1 Then Exit Sub
@@ -117,7 +117,7 @@ Dim l_objObject As Object
     Err.Clear
 End Sub
 
-Public Function AddItem(Text As String, Optional Image = Nothing) As Item
+Public Function AddItem(ByVal Text As String, Optional ByVal Image As Fury2Image = Nothing) As Item
 On Error Resume Next
 Dim l_lngItems As Long
 Dim l_itmItem As Item
@@ -149,10 +149,10 @@ Dim l_itmItem As Item
     Err.Clear
 End Sub
 
-Public Sub Add(Obj, Optional ByVal sKey, Optional ByVal AtIndex)
+Public Sub Add(Obj, Optional ByVal sKey As String = "", Optional ByVal AtIndex As Long = -1)
 On Error Resume Next
-    If IsMissing(sKey) Then
-        If IsMissing(AtIndex) Then
+    If Len(sKey) < 1 Then
+        If AtIndex = -1 Then
             mCol.Add Obj
         Else
             If mCol.Count = 0 Then
@@ -167,7 +167,7 @@ On Error Resume Next
         End If
     Else
         sKey = LCase(Trim(CStr(sKey)))
-        If IsMissing(AtIndex) Then
+        If AtIndex = -1 Then
             mCol.Add Obj, sKey
         Else
             If mCol.Count = 0 Then
@@ -209,9 +209,9 @@ Dim m_lngItems As Long, m_objItem As Object
             End If
             m_lngItems = m_lngItems + 1
         Next m_objItem
-    Else
+    ElseIf VarType(Var) = vbString Then
         For m_lngItems = 1 To mCol.Count
-            If mCol(m_lngItems) = Var Then
+            If mCol(m_lngItems).Text = Var Then
                 Find = m_lngItems
                 Exit Function
             End If

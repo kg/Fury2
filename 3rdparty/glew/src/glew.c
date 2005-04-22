@@ -341,7 +341,11 @@ PFNGLGETACTIVEATTRIBPROC __glewGetActiveAttrib = NULL;
 PFNGLGETACTIVEUNIFORMPROC __glewGetActiveUniform = NULL;
 PFNGLGETATTACHEDSHADERSPROC __glewGetAttachedShaders = NULL;
 PFNGLGETATTRIBLOCATIONPROC __glewGetAttribLocation = NULL;
+PFNGLGETPROGRAMINFOLOGPROC __glewGetProgramInfoLog = NULL;
+PFNGLGETPROGRAMIVPROC __glewGetProgramiv = NULL;
+PFNGLGETSHADERINFOLOGPROC __glewGetShaderInfoLog = NULL;
 PFNGLGETSHADERSOURCEPROC __glewGetShaderSource = NULL;
+PFNGLGETSHADERIVPROC __glewGetShaderiv = NULL;
 PFNGLGETUNIFORMLOCATIONPROC __glewGetUniformLocation = NULL;
 PFNGLGETUNIFORMFVPROC __glewGetUniformfv = NULL;
 PFNGLGETUNIFORMIVPROC __glewGetUniformiv = NULL;
@@ -855,8 +859,8 @@ PFNGLBINDRENDERBUFFEREXTPROC __glewBindRenderbufferEXT = NULL;
 PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC __glewCheckFramebufferStatusEXT = NULL;
 PFNGLDELETEFRAMEBUFFERSEXTPROC __glewDeleteFramebuffersEXT = NULL;
 PFNGLDELETERENDERBUFFERSEXTPROC __glewDeleteRenderbuffersEXT = NULL;
-PFNGLFRAMEBUFFERTEXTURE1DEXTPROC __glewFrameBufferTexture1DEXT = NULL;
 PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC __glewFramebufferRenderbufferEXT = NULL;
+PFNGLFRAMEBUFFERTEXTURE1DEXTPROC __glewFramebufferTexture1DEXT = NULL;
 PFNGLFRAMEBUFFERTEXTURE2DEXTPROC __glewFramebufferTexture2DEXT = NULL;
 PFNGLFRAMEBUFFERTEXTURE3DEXTPROC __glewFramebufferTexture3DEXT = NULL;
 PFNGLGENFRAMEBUFFERSEXTPROC __glewGenFramebuffersEXT = NULL;
@@ -1388,6 +1392,7 @@ GLboolean __GLEW_APPLE_client_storage = GL_FALSE;
 GLboolean __GLEW_APPLE_element_array = GL_FALSE;
 GLboolean __GLEW_APPLE_fence = GL_FALSE;
 GLboolean __GLEW_APPLE_float_pixels = GL_FALSE;
+GLboolean __GLEW_APPLE_pixel_buffer = GL_FALSE;
 GLboolean __GLEW_APPLE_specular_vector = GL_FALSE;
 GLboolean __GLEW_APPLE_texture_range = GL_FALSE;
 GLboolean __GLEW_APPLE_transform_hint = GL_FALSE;
@@ -1823,7 +1828,11 @@ static GLboolean _glewInit_GL_VERSION_2_0 (GLEW_CONTEXT_ARG_DEF_INIT)
   r = ((glGetActiveUniform = (PFNGLGETACTIVEUNIFORMPROC)glewGetProcAddress((const GLubyte*)"glGetActiveUniform")) == NULL) || r;
   r = ((glGetAttachedShaders = (PFNGLGETATTACHEDSHADERSPROC)glewGetProcAddress((const GLubyte*)"glGetAttachedShaders")) == NULL) || r;
   r = ((glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC)glewGetProcAddress((const GLubyte*)"glGetAttribLocation")) == NULL) || r;
+  r = ((glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)glewGetProcAddress((const GLubyte*)"glGetProgramInfoLog")) == NULL) || r;
+  r = ((glGetProgramiv = (PFNGLGETPROGRAMIVPROC)glewGetProcAddress((const GLubyte*)"glGetProgramiv")) == NULL) || r;
+  r = ((glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)glewGetProcAddress((const GLubyte*)"glGetShaderInfoLog")) == NULL) || r;
   r = ((glGetShaderSource = (PFNGLGETSHADERSOURCEPROC)glewGetProcAddress((const GLubyte*)"glGetShaderSource")) == NULL) || r;
+  r = ((glGetShaderiv = (PFNGLGETSHADERIVPROC)glewGetProcAddress((const GLubyte*)"glGetShaderiv")) == NULL) || r;
   r = ((glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)glewGetProcAddress((const GLubyte*)"glGetUniformLocation")) == NULL) || r;
   r = ((glGetUniformfv = (PFNGLGETUNIFORMFVPROC)glewGetProcAddress((const GLubyte*)"glGetUniformfv")) == NULL) || r;
   r = ((glGetUniformiv = (PFNGLGETUNIFORMIVPROC)glewGetProcAddress((const GLubyte*)"glGetUniformiv")) == NULL) || r;
@@ -1967,6 +1976,10 @@ static GLboolean _glewInit_GL_APPLE_fence (GLEW_CONTEXT_ARG_DEF_INIT)
 #ifdef GL_APPLE_float_pixels
 
 #endif /* GL_APPLE_float_pixels */
+
+#ifdef GL_APPLE_pixel_buffer
+
+#endif /* GL_APPLE_pixel_buffer */
 
 #ifdef GL_APPLE_specular_vector
 
@@ -3023,8 +3036,8 @@ static GLboolean _glewInit_GL_EXT_framebuffer_object (GLEW_CONTEXT_ARG_DEF_INIT)
   r = ((glCheckFramebufferStatusEXT = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC)glewGetProcAddress((const GLubyte*)"glCheckFramebufferStatusEXT")) == NULL) || r;
   r = ((glDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC)glewGetProcAddress((const GLubyte*)"glDeleteFramebuffersEXT")) == NULL) || r;
   r = ((glDeleteRenderbuffersEXT = (PFNGLDELETERENDERBUFFERSEXTPROC)glewGetProcAddress((const GLubyte*)"glDeleteRenderbuffersEXT")) == NULL) || r;
-  r = ((glFrameBufferTexture1DEXT = (PFNGLFRAMEBUFFERTEXTURE1DEXTPROC)glewGetProcAddress((const GLubyte*)"glFrameBufferTexture1DEXT")) == NULL) || r;
   r = ((glFramebufferRenderbufferEXT = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)glewGetProcAddress((const GLubyte*)"glFramebufferRenderbufferEXT")) == NULL) || r;
+  r = ((glFramebufferTexture1DEXT = (PFNGLFRAMEBUFFERTEXTURE1DEXTPROC)glewGetProcAddress((const GLubyte*)"glFramebufferTexture1DEXT")) == NULL) || r;
   r = ((glFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC)glewGetProcAddress((const GLubyte*)"glFramebufferTexture2DEXT")) == NULL) || r;
   r = ((glFramebufferTexture3DEXT = (PFNGLFRAMEBUFFERTEXTURE3DEXTPROC)glewGetProcAddress((const GLubyte*)"glFramebufferTexture3DEXT")) == NULL) || r;
   r = ((glGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC)glewGetProcAddress((const GLubyte*)"glGenFramebuffersEXT")) == NULL) || r;
@@ -4668,77 +4681,90 @@ GLenum glewContextInit (GLEW_CONTEXT_ARG_DEF_LIST)
 {
   const GLubyte* s;
   GLuint major, minor;
-  /* query opengl version */
-  s = glGetString(GL_VERSION);
-  if (!s) return GLEW_ERROR_NO_GL_VERSION;
-  major = _glewStrCLen(s, '.')-1;
-  minor = _glewStrCLen(s, '.')+1;
-  
-  if (s+major == NULL
-      || s+minor-1 == NULL || s+minor == NULL
-      || (s[major] == 1 && s[minor] < '1'))
+  /* check for SiS driver */
+  s = glGetString(GL_RENDERER);
+  if (s && _glewStrSame(s,"SiS",3))
   {
-    return GLEW_ERROR_GL_VERSION_10_ONLY;
+	  GLEW_VERSION_1_1 = GL_TRUE;
+      GLEW_VERSION_1_2 = GL_FALSE;
+      GLEW_VERSION_1_3 = GL_FALSE;
+      GLEW_VERSION_1_4 = GL_FALSE;
+      GLEW_VERSION_1_5 = GL_FALSE;
+      GLEW_VERSION_2_0 = GL_FALSE;
   }
   else
   {
-    if (s[major] >= '2')
-    {
-      GLEW_VERSION_1_1 = GL_TRUE;
-      GLEW_VERSION_1_2 = GL_TRUE;
-      GLEW_VERSION_1_3 = GL_TRUE;
-      GLEW_VERSION_1_4 = GL_TRUE;
-      GLEW_VERSION_1_5 = GL_TRUE;
-      GLEW_VERSION_2_0 = GL_TRUE;
-    }
-    else
-    {
-      if (s[minor] >= '5')
-      {
-        GLEW_VERSION_1_1 = GL_TRUE;
-        GLEW_VERSION_1_2 = GL_TRUE;
-        GLEW_VERSION_1_3 = GL_TRUE;
-        GLEW_VERSION_1_4 = GL_TRUE;
-        GLEW_VERSION_1_5 = GL_TRUE;
-        GLEW_VERSION_2_0 = GL_FALSE;
-      }
-      if (s[minor] == '4')
-      {
-        GLEW_VERSION_1_1 = GL_TRUE;
-        GLEW_VERSION_1_2 = GL_TRUE;
-        GLEW_VERSION_1_3 = GL_TRUE;
-        GLEW_VERSION_1_4 = GL_TRUE;
-        GLEW_VERSION_1_5 = GL_FALSE;
-        GLEW_VERSION_2_0 = GL_FALSE;
-      }
-      if (s[minor] == '3')
-      {
-        GLEW_VERSION_1_1 = GL_TRUE;
-        GLEW_VERSION_1_2 = GL_TRUE;
-        GLEW_VERSION_1_3 = GL_TRUE;
-        GLEW_VERSION_1_4 = GL_FALSE;
-        GLEW_VERSION_1_5 = GL_FALSE;
-        GLEW_VERSION_2_0 = GL_FALSE;
-      }
-      if (s[minor] == '2')
-      {
-        GLEW_VERSION_1_1 = GL_TRUE;
-        GLEW_VERSION_1_2 = GL_TRUE;
-        GLEW_VERSION_1_3 = GL_FALSE;
-        GLEW_VERSION_1_4 = GL_FALSE;
-        GLEW_VERSION_1_5 = GL_FALSE;
-        GLEW_VERSION_2_0 = GL_FALSE;
-      }
-      if (s[minor] < '2')
-      {
-        GLEW_VERSION_1_1 = GL_TRUE;
-        GLEW_VERSION_1_2 = GL_FALSE;
-        GLEW_VERSION_1_3 = GL_FALSE;
-        GLEW_VERSION_1_4 = GL_FALSE;
-        GLEW_VERSION_1_5 = GL_FALSE;
-        GLEW_VERSION_2_0 = GL_FALSE;
-      }
-    }
+	/* query opengl version */
+	s = glGetString(GL_VERSION);
+	if (!s) return GLEW_ERROR_NO_GL_VERSION;
+	major = _glewStrCLen(s, '.')-1;
+	minor = _glewStrCLen(s, '.')+1;
+  	if (s+major == NULL
+	  || s+minor-1 == NULL || s+minor == NULL
+	  || (s[major] == 1 && s[minor] < '1'))
+	{
+	  return GLEW_ERROR_GL_VERSION_10_ONLY;
+	}
+	else
+	{
+	  if (s[major] >= '2')
+	  {
+		GLEW_VERSION_1_1 = GL_TRUE;
+		GLEW_VERSION_1_2 = GL_TRUE;
+		GLEW_VERSION_1_3 = GL_TRUE;
+		GLEW_VERSION_1_4 = GL_TRUE;
+		GLEW_VERSION_1_5 = GL_TRUE;
+		GLEW_VERSION_2_0 = GL_TRUE;
+	  }
+	  else
+	  {
+		if (s[minor] >= '5')
+		{
+		  GLEW_VERSION_1_1 = GL_TRUE;
+		  GLEW_VERSION_1_2 = GL_TRUE;
+		  GLEW_VERSION_1_3 = GL_TRUE;
+		  GLEW_VERSION_1_4 = GL_TRUE;
+		  GLEW_VERSION_1_5 = GL_TRUE;
+		  GLEW_VERSION_2_0 = GL_FALSE;
+		}
+	    if (s[minor] == '4')
+		{
+		  GLEW_VERSION_1_1 = GL_TRUE;
+		  GLEW_VERSION_1_2 = GL_TRUE;
+		  GLEW_VERSION_1_3 = GL_TRUE;
+		  GLEW_VERSION_1_4 = GL_TRUE;
+		  GLEW_VERSION_1_5 = GL_FALSE;
+		  GLEW_VERSION_2_0 = GL_FALSE;
+		}
+		if (s[minor] == '3')
+		{
+		  GLEW_VERSION_1_1 = GL_TRUE;
+		  GLEW_VERSION_1_2 = GL_TRUE;
+		  GLEW_VERSION_1_3 = GL_TRUE;
+		  GLEW_VERSION_1_4 = GL_FALSE;
+		  GLEW_VERSION_1_5 = GL_FALSE;
+		  GLEW_VERSION_2_0 = GL_FALSE;
+		}
+		if (s[minor] == '2')
+		{
+		  GLEW_VERSION_1_1 = GL_TRUE;
+		  GLEW_VERSION_1_2 = GL_TRUE;
+		  GLEW_VERSION_1_3 = GL_FALSE;
+		  GLEW_VERSION_1_4 = GL_FALSE;
+		  GLEW_VERSION_1_5 = GL_FALSE;
+		  GLEW_VERSION_2_0 = GL_FALSE;
+		}
+		if (s[minor] < '2')
+		{
+		  GLEW_VERSION_1_1 = GL_TRUE;
+		  GLEW_VERSION_1_2 = GL_FALSE;
+		  GLEW_VERSION_1_3 = GL_FALSE;
+		  GLEW_VERSION_1_4 = GL_FALSE;
+		  GLEW_VERSION_1_5 = GL_FALSE;
+		  GLEW_VERSION_2_0 = GL_FALSE;
+		}
+	  }
+	}
   }
   /* initialize extensions */
 #ifdef GL_VERSION_1_2
@@ -4780,6 +4806,9 @@ GLenum glewContextInit (GLEW_CONTEXT_ARG_DEF_LIST)
 #ifdef GL_APPLE_float_pixels
   GLEW_APPLE_float_pixels = glewGetExtension("GL_APPLE_float_pixels");
 #endif /* GL_APPLE_float_pixels */
+#ifdef GL_APPLE_pixel_buffer
+  GLEW_APPLE_pixel_buffer = glewGetExtension("GL_APPLE_pixel_buffer");
+#endif /* GL_APPLE_pixel_buffer */
 #ifdef GL_APPLE_specular_vector
   GLEW_APPLE_specular_vector = glewGetExtension("GL_APPLE_specular_vector");
 #endif /* GL_APPLE_specular_vector */
@@ -7008,7 +7037,7 @@ const GLubyte* glewGetString (GLenum name)
   static const GLubyte* _glewString[] =
   {
     (const GLubyte*)NULL,
-    (const GLubyte*)"1.3.1"
+    (const GLubyte*)"1.3.2"
   };
   const int max_string = sizeof(_glewString)/sizeof(*_glewString) - 1;
   return _glewString[(int)name > max_string ? 0 : (int)name];
@@ -7142,6 +7171,13 @@ GLboolean glewIsSupported (const char* name)
         if (_glewStrSame3(&pos, &len, (const GLubyte*)"float_pixels", 12))
         {
           ret = GLEW_APPLE_float_pixels;
+          continue;
+        }
+#endif
+#ifdef GL_APPLE_pixel_buffer
+        if (_glewStrSame3(&pos, &len, (const GLubyte*)"pixel_buffer", 12))
+        {
+          ret = GLEW_APPLE_pixel_buffer;
           continue;
         }
 #endif

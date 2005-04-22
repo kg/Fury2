@@ -86,6 +86,7 @@ Section "-Engine"
 	File "J:\development\binary\sys\compressed\Video_OpenGL.dll"
 	File "J:\development\binary\sys\compressed\uikit.dll"
 	File "J:\development\binary\sys\compressed\http.dll"
+	File "J:\development\binary\sys\compressed\vbenet.dll"
 
    !insertmacro InstallLib REGDLL $ALREADY_INSTALLED REBOOT_PROTECTED    "J:\development\binary\sys\win32\vbscript.dll" "$SYSDIR\vbscript.dll" "$SYSDIR"
 

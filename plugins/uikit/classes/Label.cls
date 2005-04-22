@@ -139,7 +139,9 @@ On Error Resume Next
     If Visible = False Then Exit Sub
     Parent.SetFocus Me
     Parent.SetCapture Me
-    DispatchEvent "MouseDown", Button, Shift, X, Y
+    With Rectangle
+        DispatchEvent "MouseDown", Button, Shift, X - .Left, Y - .Top
+    End With
 End Sub
 
 Private Sub iWidget_MouseEnter(ByVal Parent As iContainer)

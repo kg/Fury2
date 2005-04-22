@@ -51,7 +51,7 @@ Dim l_araArea As Fury2Area
     Next l_araArea
 End Sub
 
-Public Function Find(Obj) As Long
+Public Function Find(ByVal Obj As Fury2Area) As Long
 On Error Resume Next
 Dim l_objItem As Object, l_lngItems As Long
     If mCol.Count <= 0 Then Exit Function
@@ -69,7 +69,7 @@ Friend Sub SetParent(Parent As Fury2Map)
     Set mvarParent = Parent
 End Sub
 
-Public Function AddNew(X As Long, Y As Long) As Fury2Area
+Public Function AddNew(ByVal X As Long, ByVal Y As Long) As Fury2Area
 On Error Resume Next
     If mCol.Count >= c_lngMaxAreas Then Exit Function
     mCol.Add New Fury2Area
@@ -82,10 +82,11 @@ On Error Resume Next
     End With
 End Function
 
-Public Sub Add(Obj As Fury2Area, Optional ByVal sKey, Optional ByVal AtIndex)
+Public Sub Add(ByVal Obj As Fury2Area, Optional ByVal sKey As String = "", Optional ByVal AtIndex As Long = -1)
 On Error Resume Next
-    If IsMissing(sKey) Then
-        If IsMissing(AtIndex) Then
+    sKey = LCase(Trim(sKey))
+    If Len(sKey) < 1 Then
+        If AtIndex = -1 Then
             mCol.Add Obj
         Else
             If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
@@ -99,8 +100,7 @@ On Error Resume Next
             End If
         End If
     Else
-        sKey = LCase(Trim(CStr(sKey)))
-        If IsMissing(AtIndex) Then
+        If AtIndex = -1 Then
             mCol.Add Obj, sKey
         Else
             If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then

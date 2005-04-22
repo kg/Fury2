@@ -141,7 +141,6 @@ Dim l_lyrLayer As Fury2MapLayer
                 Set l_tstTileset = DefaultEngine.F2Tileset(.Tileset, .TileWidth, .TileHeight, .TileMatteColor)
                 Set l_mapMap = DefaultEngine.F2Map(.Width, .Height, .Layers, l_tstTileset)
                 l_mapMap.EditMode = True
-                l_mapMap.CollisionType = .CollisionType
                 l_mapMap.Resize .Width, .Height
                 For Each l_lyrLayer In l_mapMap.Layers
                     l_lyrLayer.Effect = .LayerEffect

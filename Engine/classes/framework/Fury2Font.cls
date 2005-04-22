@@ -153,7 +153,7 @@ Public Property Let Codeset(NewCodeset As String)
     m_strCodeset = NewCodeset
 End Property
 
-Public Function GetTextRectangle(Text, Optional MaximumWidth As Long = -1) As Fury2Rect
+Public Function GetTextRectangle(Text, Optional ByVal MaximumWidth As Long = -1) As Fury2Rect
 On Error Resume Next
 Dim l_lngMaxWidth As Long
 Dim l_rctArea As Rectangle
@@ -174,7 +174,7 @@ Dim l_optOptions As TextParam
     ProfileStop "Measure Text"
 End Function
 
-Public Function TextWidth(Text, Optional MaxWidth As Long = -1) As Long
+Public Function TextWidth(Text, Optional ByVal MaxWidth As Long = -1) As Long
 On Error Resume Next
 Dim l_strText As String
 Dim l_rctArea As Rectangle
@@ -201,7 +201,7 @@ Dim l_optOptions As TextParam
     ProfileStop "Measure Text"
 End Function
 
-Public Function TextHeight(Text, Optional MaxWidth As Long = -1) As Long
+Public Function TextHeight(Text, Optional ByVal MaxWidth As Long = -1) As Long
 On Error Resume Next
 Dim l_strText As String
 Dim l_rctArea As Rectangle
@@ -251,10 +251,22 @@ On Error Resume Next
     m_cpmCharParams(Index).MapValue = Value
 End Property
 
-Public Property Get Character(Index) As Fury2Image
+Public Property Get Character(ByVal Index As Long) As Fury2Image
 Attribute Character.VB_Description = "*"
 On Error Resume Next
-    Set Character = m_colCharImages(CLng(Index))
+    Set Character = m_colCharImages(Index)
+End Property
+
+Public Property Set Character(ByVal Index As Long, ByVal NewImage As Fury2Image)
+On Error Resume Next
+    m_colCharImages.Remove Index
+    If Index < m_colCharImages.Count Then
+        m_colCharImages.Add NewImage, , Index
+    ElseIf Index > 1 Then
+        m_colCharImages.Add NewImage, , , Index - 1
+    Else
+        m_colCharImages.Add NewImage
+    End If
 End Property
 
 Public Property Get CharacterCount() As Long
@@ -400,7 +412,7 @@ Dim l_lngXO As Long, l_lngYO As Long
     With l_rctRectangle
         l_lngXO = (.Width - l_optOptions.Width) \ 2
         l_lngYO = (.Height - (l_optOptions.Height - m_fpmFontParam.BaseHeight + m_lngFullHeight)) \ 2
-        Set l_rctRectangle = F2Rect(.Left + l_lngXO, .Top + l_lngYO, .Right, .Bottom)
+        Set l_rctRectangle = F2Rect(.left + l_lngXO, .top + l_lngYO, .right, .bottom)
     End With
     l_lngColor = m_fpmFontParam.FillColor
     ProfileStart "Draw Text"
@@ -535,7 +547,7 @@ Dim l_lngChars As Long, l_lngMaxHeight As Long, l_lngMinHeight As Long
     End With
 End Sub
 
-Function CreateFixed(ByVal Width, ByVal Height, Optional ByVal Count = 256) As Boolean
+Function CreateFixed(ByVal Width As Long, ByVal Height As Long, Optional ByVal Count As Long = 256) As Boolean
 On Error Resume Next
 Dim l_lngChars As Long
 Dim l_imgCharacter As Fury2Image
@@ -944,7 +956,7 @@ Function Load(ByVal Filename As String) As Boolean
 On Error Resume Next
 Dim l_strExtension As String
     If InStr(Filename, ";") Then
-        l_strExtension = LCase(Trim(Left(Filename, InStr(Filename, ";") - 1)))
+        l_strExtension = LCase(Trim(left(Filename, InStr(Filename, ";") - 1)))
         Select Case l_strExtension
         Case "ttf", "ttfont", "truetype", "font"
             Load = ImportTTF(Engine.TTFont(Mid(Filename, InStr(Filename, ";") + 1)))
@@ -973,9 +985,8 @@ Dim l_strExtension As String
     End If
 End Function
 
-Function Save(ByVal Filename) As Boolean
+Function Save(ByVal Filename As String) As Boolean
 On Error Resume Next
-    m_strFilename = Filename
     Save = Engine.SaveToFile(Me, Engine.Filesystem.CreateFile(Filename))
 End Function
 

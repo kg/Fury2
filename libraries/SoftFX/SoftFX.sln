@@ -6,6 +6,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "typelibs", "..\typelibs\typ
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GLFX", "..\GLFX\GLFX.vcproj", "{3A410C42-E439-4191-B1E9-186A3971A4F4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vbenet", "..\vbenet\vbenet.vcproj", "{3A410C42-E439-4191-B1E9-186A3971A4F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -31,6 +33,12 @@ Global
 		{3A410C42-E439-4191-B1E9-186A3971A4F4}.Development|Win32.Build.0 = Development|Win32
 		{3A410C42-E439-4191-B1E9-186A3971A4F4}.Release|Win32.ActiveCfg = Release|Win32
 		{3A410C42-E439-4191-B1E9-186A3971A4F4}.Release|Win32.Build.0 = Release|Win32
+		{3A410C42-E439-4191-B1E9-186A3971A4F5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3A410C42-E439-4191-B1E9-186A3971A4F5}.Debug|Win32.Build.0 = Debug|Win32
+		{3A410C42-E439-4191-B1E9-186A3971A4F5}.Development|Win32.ActiveCfg = Development|Win32
+		{3A410C42-E439-4191-B1E9-186A3971A4F5}.Development|Win32.Build.0 = Development|Win32
+		{3A410C42-E439-4191-B1E9-186A3971A4F5}.Release|Win32.ActiveCfg = Release|Win32
+		{3A410C42-E439-4191-B1E9-186A3971A4F5}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -50,7 +50,6 @@ Private m_lyrLayers As Fury2MapLayers
 Private m_strFilename As String
 Private m_strName As String
 Private m_sprSprites As Fury2Sprites
-Private m_lngCollisionType As Long
 Private m_booScriptFailed As Boolean
 Private m_strScriptSource As String
 Private m_objScript As Object
@@ -145,17 +144,11 @@ Dim l_lngLayer As Long
         .x2 = X + W
         .y2 = Y + H
     End With
-    Select Case CollisionType
-    Case 0
-    Case 1
-    Case 2
-        l_lngResult = SoftFX.CheckLineCollide(l_frArea, ByVal m_lyrLayers(Layer).CollisionLinePointer(0), m_lyrLayers(Layer).CollisionLineCount)
-        If l_lngResult > 0 Then
-            Blocked = True
-            Exit Function
-        End If
-    Case Else
-    End Select
+    l_lngResult = SoftFX.CheckLineCollide(l_frArea, ByVal m_lyrLayers(Layer).CollisionLinePointer(0), m_lyrLayers(Layer).CollisionLineCount)
+    If l_lngResult > 0 Then
+        Blocked = True
+        Exit Function
+    End If
     If m_lyrLayers(Layer).Sprites.SpriteFromArea(l_rctArea, ExcludeSprite, True) Is Nothing Then
     Else
         Blocked = True
@@ -191,15 +184,10 @@ On Error Resume Next
     m_lngHeight = 0
 End Sub
 
-Public Property Get CollisionType() As Fury2CollisionTypes
+Public Property Get CollisionType() As Long
 Attribute CollisionType.VB_Description = "The map's collision type."
 Attribute CollisionType.VB_MemberFlags = "40"
-    CollisionType = m_lngCollisionType
-End Property
-
-Public Property Let CollisionType(ByVal NewType As Fury2CollisionTypes)
-On Error Resume Next
-    m_lngCollisionType = NewType
+    CollisionType = 2
 End Property
 
 Sub CreateNew(Name As String, ByVal Width As Long, ByVal Height As Long, ByVal LayerCount As Long, Tileset As Fury2Tileset)
@@ -240,7 +228,6 @@ Dim m_CreateLayers As Long, m_NewLayer As Fury2MapLayer, cX As Long, cY As Long
             m_lyrLayers.Add m_NewLayer
         Next m_CreateLayers
     End If
-    CollisionType = m_lngCollisionType
     Err.Clear
     Init
 End Sub
@@ -291,7 +278,7 @@ Dim m_strFind As String, m_strValue As String, m_strKey As String
     For m_lngItems = m_lngLBound To m_lngUBound
         m_strValue = m_strSettings(m_lngItems)
         m_strKey = ""
-        m_strKey = Left(m_strValue, InStr(m_strValue, "=") - 1)
+        m_strKey = left(m_strValue, InStr(m_strValue, "=") - 1)
         If Trim(LCase(m_strKey)) = m_strFind Then
             GetSetting = Mid(m_strValue, InStr(m_strValue, "=") + 1)
             Exit Function
@@ -337,10 +324,7 @@ Dim l_sngProgMul As Single
     If m_lyrLayers.Count > 0 Then
         For l_lngLayers = 1 To m_lyrLayers.Count
             With m_lyrLayers(l_lngLayers)
-                If Me.CollisionType = 2 Then
-                    ' Create vector collision matrix
-                    .CreateCollisionMatrix Me.MaxX, Me.MaxY
-                End If
+                .CreateCollisionMatrix Me.MaxX, Me.MaxY
                 .UpdateDepthmap
                 Set .Sprites.Parent = Me
                 .Sprites.SetLayer l_lngLayers
@@ -398,7 +382,7 @@ On Error Resume Next
                 .Load m_lngHeight
             .ReadSegment_End
             .ReadSegment_Begin
-                .Load m_lngCollisionType
+'                .Load m_lngCollisionType
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load m_strScriptSource
@@ -418,9 +402,6 @@ On Error Resume Next
             .Load m_mobObjects
         .ReadSegment_End
     End With
-    
-    ' Initialize
-    CollisionType = m_lngCollisionType
 End Sub
 
 Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
@@ -436,7 +417,7 @@ On Error Resume Next
                 .Save Height
             .WriteSegment_End
             .WriteSegment_Begin
-                .Save m_lngCollisionType
+                .Save CLng(2)
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save m_strScriptSource
@@ -628,7 +609,7 @@ Dim m_strFind As String, m_strValue As String, m_strKey As String
     For m_lngItems = m_lngLBound To m_lngUBound
         m_strValue = m_strSettings(m_lngItems)
         m_strKey = ""
-        m_strKey = Left(m_strValue, InStr(m_strValue, "=") - 1)
+        m_strKey = left(m_strValue, InStr(m_strValue, "=") - 1)
         If Trim(LCase(m_strKey)) = m_strFind Then
             m_strSettings(m_lngItems) = CStr(Setting) + "=" + CStr(Value)
             Exit Sub

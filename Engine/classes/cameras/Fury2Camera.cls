@@ -74,18 +74,58 @@ Private mvarUnGhostLayer As Long
 Private m_engEngine As Fury2Engine
 Private m_filBlur As Fury2ConvolutionFilter
 
-Public Function RenderTargetArray() As Long()
+Public Function AddRenderTarget(Optional ByVal AutoSize As Boolean = False) As Fury2Image
 On Error Resume Next
-Dim l_lngTargets() As Long
-Dim l_lngIndex As Long
-Dim l_imgTarget As Fury2Image
-    ReDim l_lngTargets(0 To mvarRenderTargets.Count - 1)
-    For Each l_imgTarget In mvarRenderTargets
-        l_lngTargets(l_lngIndex) = l_imgTarget.Handle
-        l_lngIndex = l_lngIndex + 1
-    Next l_imgTarget
-    RenderTargetArray = l_lngTargets
+    Set AddRenderTarget = F2Image(mvarWidth, mvarHeight)
+    If AutoSize Then AddRenderTarget.Tag = "AutoSize"
+    mvarRenderTargets.Add AddRenderTarget
 End Function
+
+Public Property Get Alpha() As Single
+    Alpha = mvarAlpha
+End Property
+
+Public Property Let Alpha(ByVal NewAlpha As Single)
+On Error Resume Next
+    mvarAlpha = Abs(NewAlpha)
+    If mvarAlpha > 1 Then mvarAlpha = 1
+End Property
+
+Public Property Get Buffer() As Fury2Image
+On Error Resume Next
+    Set Buffer = RenderTargets(1)
+End Property
+
+Public Sub CenterOn(ByVal X As Single, ByVal Y As Single)
+On Error Resume Next
+Dim m_sngNewX As Single, m_sngNewY As Single
+    m_sngNewX = Ceil(X - (mvarWidth / 2))
+    m_sngNewY = Ceil(Y - (mvarHeight / 2))
+    Move m_sngNewX - mvarViewportX, m_sngNewY - mvarViewportY
+End Sub
+
+Private Sub Class_Initialize()
+On Error Resume Next
+    mvarAlpha = 1
+    Set mvarRenderTargets = New Collection
+    AddRenderTarget True
+    AddRenderTarget True
+    AddRenderTarget True
+    mvarDirty = True
+    ShowSprites = True
+    ShowTiles = True
+    EnableParallax = True
+    EnableWrapping = True
+    LightingScaleRatio = 1
+    LightmapBlitMode = BlitMode_Lightmap_RGB
+    Gamma = 255
+End Sub
+
+Private Sub Class_Terminate()
+On Error Resume Next
+    Err.Clear
+    Set Buffer = Nothing
+End Sub
 
 Friend Sub ClearRenderTargets()
 On Error Resume Next
@@ -95,78 +135,6 @@ Dim l_imgTarget As Fury2Image
     Next l_imgTarget
 End Sub
 
-Friend Sub ResizeRenderTargets()
-On Error Resume Next
-Dim l_imgTarget As Fury2Image
-    For Each l_imgTarget In mvarRenderTargets
-        If l_imgTarget.Tag = "AutoSize" Then
-        Else
-            l_imgTarget.Resize mvarWidth, mvarHeight
-        End If
-    Next l_imgTarget
-End Sub
-
-Public Function AddRenderTarget(Optional ByVal AutoSize As Boolean = False) As Fury2Image
-On Error Resume Next
-    Set AddRenderTarget = F2Image(mvarWidth, mvarHeight)
-    If AutoSize Then AddRenderTarget.Tag = "AutoSize"
-    mvarRenderTargets.Add AddRenderTarget
-End Function
-
-Public Property Get LightingSoftness() As Single
-    LightingSoftness = mvarLightingSoftness
-End Property
-
-Public Property Let LightingSoftness(ByVal NewValue As Single)
-    mvarLightingSoftness = NewValue
-    Set m_filBlur = Nothing
-End Property
-
-Friend Sub SetEngine(Engine As Fury2Engine)
-    Set m_engEngine = Engine
-End Sub
-
-Public Property Get Engine() As Fury2Engine
-    Set Engine = m_engEngine
-End Property
-
-Public Property Get UnGhostLayer() As Long
-On Error Resume Next
-    UnGhostLayer = mvarUnGhostLayer
-End Property
-
-Public Property Let UnGhostLayer(ByVal NewLayer As Long)
-On Error Resume Next
-    If mvarViewingMap Is Nothing Then Exit Property
-    If mvarViewingMap.Layers.Count < 0 Then Exit Property
-    mvarUnGhostLayer = ClipValue(NewLayer, 0, mvarViewingMap.Layers.Count)
-End Property
-
-Public Function XPad() As Long
-On Error Resume Next
-    XPad = 0
-End Function
-
-Public Function YPad() As Long
-On Error Resume Next
-    YPad = 0
-End Function
-
-Public Sub SetMap(Obj As Fury2Map)
-On Error Resume Next
-    Set mvarViewingMap = Obj
-    mvarMap = 0
-End Sub
-
-Public Property Get Gamma() As Long
-    Gamma = mvarGamma
-End Property
-
-Public Property Let Gamma(NewGamma As Long)
-On Error Resume Next
-    mvarGamma = ClipValue(NewGamma, 0, 1024)
-End Property
-
 Public Property Get ConstrainToMap() As Boolean
     ConstrainToMap = mvarConstrainToMap
 End Property
@@ -174,6 +142,11 @@ End Property
 Public Property Let ConstrainToMap(ByVal NewValue As Boolean)
     mvarConstrainToMap = NewValue
 End Property
+
+Public Sub CopyToDC(ByVal hdc As Long)
+On Error Resume Next
+    CopyImageToDC hdc, F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer
+End Sub
 
 Public Property Get Dirty() As Boolean
     Dirty = mvarDirty
@@ -183,13 +156,9 @@ Public Property Let Dirty(ByVal NewDirty As Boolean)
     mvarDirty = NewDirty
 End Property
 
-Sub Free()
-On Error Resume Next
-Dim l_imgTarget As Fury2Image
-    For Each l_imgTarget In mvarRenderTargets
-        l_imgTarget.Unsize
-    Next l_imgTarget
-End Sub
+Public Property Get Engine() As Fury2Engine
+    Set Engine = m_engEngine
+End Property
 
 Sub FlushBuffer()
 On Error Resume Next
@@ -214,6 +183,33 @@ Dim m_rctObj As Fury2Rect
     mvarOldY = m_sngNewY
 End Sub
 
+Sub Free()
+On Error Resume Next
+Dim l_imgTarget As Fury2Image
+    For Each l_imgTarget In mvarRenderTargets
+        l_imgTarget.Unsize
+    Next l_imgTarget
+End Sub
+
+Public Property Get Gamma() As Long
+    Gamma = mvarGamma
+End Property
+
+Public Property Let Gamma(ByVal NewGamma As Long)
+On Error Resume Next
+    mvarGamma = ClipValue(NewGamma, 0, 1024)
+End Property
+
+Public Property Let Height(ByVal vData As Long)
+On Error Resume Next
+    mvarHeight = vData
+    mvarDirty = True
+End Property
+
+Public Property Get Height() As Long
+    Height = mvarHeight
+End Property
+
 Sub Init()
 On Error Resume Next
     Err.Clear
@@ -228,30 +224,34 @@ On Error Resume Next
     Err.Clear
 End Sub
 
-Public Property Get Alpha() As Single
-    Alpha = mvarAlpha
-End Property
-
-Public Property Let Alpha(ByVal NewAlpha As Single)
+Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
-    mvarAlpha = Abs(NewAlpha)
-    If mvarAlpha > 1 Then mvarAlpha = 1
+    With File
+        .ReadSegment_Begin
+        .ReadSegment_End
+    End With
+End Sub
+
+Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
+On Error Resume Next
+    With File
+        .WriteSegment_Begin
+        .WriteSegment_End
+    End With
+End Sub
+
+Public Property Get LightingSoftness() As Single
+    LightingSoftness = mvarLightingSoftness
 End Property
 
-Public Property Let Y(ByVal vData As Long)
-    mvarY = ClipValue(vData, 0, Engine.ScreenHeight - mvarHeight)
+Public Property Let LightingSoftness(ByVal NewValue As Single)
+    mvarLightingSoftness = NewValue
+    Set m_filBlur = Nothing
 End Property
 
-Public Property Get Y() As Long
-    Y = mvarY
-End Property
-
-Public Property Let X(ByVal vData As Long)
-    mvarX = ClipValue(vData, 0, Engine.ScreenWidth - mvarWidth)
-End Property
-
-Public Property Get X() As Long
-    X = mvarX
+Public Property Get Lightmap() As Fury2Image
+On Error Resume Next
+    Set Lightmap = RenderTargets(2)
 End Property
 
 Public Property Let Map(ByVal NewMap As Long)
@@ -266,19 +266,6 @@ End Property
 
 Public Property Get Map() As Long
     Map = mvarMap
-End Property
-
-Public Property Get ViewingMap() As Fury2Map
-    Set ViewingMap = mvarViewingMap
-End Property
-
-Friend Property Set ViewingMap(ByVal NewMap As Fury2Map)
-    Set mvarViewingMap = NewMap
-End Property
-
-Public Property Get ViewportRectangle() As Fury2Rect
-On Error Resume Next
-    Set ViewportRectangle = F2Rect(ViewportX, ViewportY, Width, Height, False)
 End Property
 
 Public Sub Move(ByVal XDistance As Single, ByVal YDistance As Single)
@@ -307,22 +294,17 @@ Dim m_sngOldX As Single, m_sngOldY As Single
     End If
 End Sub
 
-Public Sub CenterOn(ByVal X As Single, ByVal Y As Single)
+Public Sub Redraw(Optional ByVal Area As Fury2Rect = Nothing)
 On Error Resume Next
-Dim m_sngNewX As Single, m_sngNewY As Single
-    m_sngNewX = Ceil(X - (mvarWidth / 2))
-    m_sngNewY = Ceil(Y - (mvarHeight / 2))
-    Move m_sngNewX - mvarViewportX, m_sngNewY - mvarViewportY
-End Sub
-
-Public Sub ScrollTo(ByVal NewX As Single, ByVal NewY As Single, Optional ByVal Speed As Double = 1)
-On Error Resume Next
-    mvarViewportXVelocity = Speed
-    mvarViewportYVelocity = Speed
-    mvarViewportXTarget = X
-    mvarViewportYTarget = Y
-    mvarSubthreaded = True
-    Engine.Subthread
+Dim m_lngLayers As Long
+    If (Engine.Cameras.Count = 1) And (Engine.DisableCameraBuffers) Then
+        Exit Sub
+    End If
+    If Area Is Nothing Then
+        Render Buffer.Rectangle
+    Else
+        Render Area.Copy
+    End If
 End Sub
 
 Public Sub Refresh()
@@ -364,29 +346,6 @@ Dim m_lngEffects As Long
     End If
     Set Engine.Backbuffer.ClipRectangle = Engine.Backbuffer.Rectangle
 End Sub
-
-Public Sub CopyToDC(ByVal hdc As Long)
-On Error Resume Next
-    CopyImageToDC hdc, F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer
-End Sub
-
-Private Function SelectTintColor(ByVal Index As Long, ByVal Count As Long) As Long
-On Error Resume Next
-    Select Case Index Mod 6
-    Case 0
-        SelectTintColor = BGRA(160, 0, 0, 127)
-    Case 1
-        SelectTintColor = BGRA(160, 160, 0, 127)
-    Case 2
-        SelectTintColor = BGRA(0, 160, 0, 127)
-    Case 3
-        SelectTintColor = BGRA(0, 160, 160, 127)
-    Case 4
-        SelectTintColor = BGRA(0, 0, 160, 127)
-    Case Else
-        SelectTintColor = BGRA(160, 0, 160, 127)
-    End Select
-End Function
 
 Public Sub Render(Optional ByVal Area As Fury2Rect = Nothing, Optional ByVal Output As Fury2Image = Nothing)
 On Error Resume Next
@@ -663,65 +622,21 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
     mvarDirty = False
 End Sub
 
-Public Sub Redraw(Optional ByVal Area As Fury2Rect = Nothing)
+Public Function RenderTargetArray() As Long()
 On Error Resume Next
-Dim m_lngLayers As Long
-    If (Engine.Cameras.Count = 1) And (Engine.DisableCameraBuffers) Then
-        Exit Sub
-    End If
-    If Area Is Nothing Then
-        Render Buffer.Rectangle
-    Else
-        Render Area.Copy
-    End If
-End Sub
+Dim l_lngTargets() As Long
+Dim l_lngIndex As Long
+Dim l_imgTarget As Fury2Image
+    ReDim l_lngTargets(0 To mvarRenderTargets.Count - 1)
+    For Each l_imgTarget In mvarRenderTargets
+        l_lngTargets(l_lngIndex) = l_imgTarget.Handle
+        l_lngIndex = l_lngIndex + 1
+    Next l_imgTarget
+    RenderTargetArray = l_lngTargets
+End Function
 
-Public Property Let ViewportY(ByVal vData As Single)
-    If mvarConstrainToMap Then
-        If mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight <= mvarHeight Then
-            mvarViewportY = -(mvarHeight - (mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight)) \ 2
-        Else
-            mvarViewportY = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) - mvarHeight))
-        End If
-    Else
-        mvarViewportY = vData
-    End If
-End Property
-
-Public Property Get ViewportY() As Single
-    ViewportY = mvarViewportY
-End Property
-
-Public Property Let ViewportX(ByVal vData As Single)
-    If mvarConstrainToMap Then
-        If mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth <= mvarWidth Then
-            mvarViewportX = -(mvarWidth - (mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth)) \ 2
-        Else
-            mvarViewportX = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) - mvarWidth))
-        End If
-    Else
-        mvarViewportX = vData
-    End If
-End Property
-
-Public Property Get ViewportX() As Single
-    ViewportX = mvarViewportX
-End Property
-
-Public Property Let Height(ByVal vData As Long)
-On Error Resume Next
-    mvarHeight = vData
-    mvarDirty = True
-End Property
-
-Public Property Get Height() As Long
-    Height = mvarHeight
-End Property
-
-Public Property Let Width(ByVal vData As Long)
-On Error Resume Next
-    mvarWidth = vData
-    mvarDirty = True
+Public Property Get RenderTargets(ByVal Index As Long)
+    Set RenderTargets = mvarRenderTargets(Index)
 End Property
 
 Sub Reposition(ByVal L As Long, ByVal T As Long, ByVal W As Long, ByVal H As Long, Optional ByVal Absolute = True)
@@ -739,67 +654,71 @@ On Error Resume Next
     mvarDirty = True
 End Sub
 
-Public Property Get Width() As Long
-    Width = mvarWidth
-End Property
-
-Public Property Get RenderTargets(ByVal Index As Long)
-    Set RenderTargets = mvarRenderTargets(Index)
-End Property
+Friend Sub ResizeRenderTargets()
+On Error Resume Next
+Dim l_imgTarget As Fury2Image
+    For Each l_imgTarget In mvarRenderTargets
+        If l_imgTarget.Tag = "AutoSize" Then
+        Else
+            l_imgTarget.Resize mvarWidth, mvarHeight
+        End If
+    Next l_imgTarget
+End Sub
 
 Friend Property Get ScratchBuffer() As Fury2Image
 On Error Resume Next
     Set ScratchBuffer = RenderTargets(3)
 End Property
 
-Public Property Get Lightmap() As Fury2Image
+Public Sub ScrollTo(ByVal NewX As Single, ByVal NewY As Single, Optional ByVal Speed As Double = 1)
 On Error Resume Next
-    Set Lightmap = RenderTargets(2)
+    mvarViewportXVelocity = Speed
+    mvarViewportYVelocity = Speed
+    mvarViewportXTarget = X
+    mvarViewportYTarget = Y
+    mvarSubthreaded = True
+    Engine.Subthread
+End Sub
+
+Private Function SelectTintColor(ByVal Index As Long, ByVal Count As Long) As Long
+On Error Resume Next
+    Select Case Index Mod 6
+    Case 0
+        SelectTintColor = BGRA(160, 0, 0, 127)
+    Case 1
+        SelectTintColor = BGRA(160, 160, 0, 127)
+    Case 2
+        SelectTintColor = BGRA(0, 160, 0, 127)
+    Case 3
+        SelectTintColor = BGRA(0, 160, 160, 127)
+    Case 4
+        SelectTintColor = BGRA(0, 0, 160, 127)
+    Case Else
+        SelectTintColor = BGRA(160, 0, 160, 127)
+    End Select
+End Function
+
+Friend Sub SetEngine(Engine As Fury2Engine)
+    Set m_engEngine = Engine
+End Sub
+
+Public Sub SetMap(Obj As Fury2Map)
+On Error Resume Next
+    Set mvarViewingMap = Obj
+    mvarMap = 0
+End Sub
+
+Public Property Get UnGhostLayer() As Long
+On Error Resume Next
+    UnGhostLayer = mvarUnGhostLayer
 End Property
 
-Public Property Get Buffer() As Fury2Image
+Public Property Let UnGhostLayer(ByVal NewLayer As Long)
 On Error Resume Next
-    Set Buffer = RenderTargets(1)
+    If mvarViewingMap Is Nothing Then Exit Property
+    If mvarViewingMap.Layers.Count < 0 Then Exit Property
+    mvarUnGhostLayer = ClipValue(NewLayer, 0, mvarViewingMap.Layers.Count)
 End Property
-
-Private Sub Class_Initialize()
-On Error Resume Next
-    mvarAlpha = 1
-    Set mvarRenderTargets = New Collection
-    AddRenderTarget True
-    AddRenderTarget True
-    AddRenderTarget True
-    mvarDirty = True
-    ShowSprites = True
-    ShowTiles = True
-    EnableParallax = True
-    EnableWrapping = True
-    LightingScaleRatio = 1
-    LightmapBlitMode = BlitMode_Lightmap_RGB
-    Gamma = 255
-End Sub
-
-Private Sub Class_Terminate()
-On Error Resume Next
-    Err.Clear
-    Set Buffer = Nothing
-End Sub
-
-Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
-On Error Resume Next
-    With File
-        .ReadSegment_Begin
-        .ReadSegment_End
-    End With
-End Sub
-
-Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
-On Error Resume Next
-    With File
-        .WriteSegment_Begin
-        .WriteSegment_End
-    End With
-End Sub
 
 Public Sub Update()
 On Error Resume Next
@@ -832,3 +751,85 @@ Dim l_sngXV As Single, l_sngYV As Single
         End If
     End If
 End Sub
+
+Friend Property Set ViewingMap(ByVal NewMap As Fury2Map)
+    Set mvarViewingMap = NewMap
+End Property
+
+Public Property Get ViewingMap() As Fury2Map
+    Set ViewingMap = mvarViewingMap
+End Property
+
+Public Property Get ViewportRectangle() As Fury2Rect
+On Error Resume Next
+    Set ViewportRectangle = F2Rect(ViewportX, ViewportY, Width, Height, False)
+End Property
+
+Public Property Let ViewportX(ByVal vData As Single)
+    If mvarConstrainToMap Then
+        If mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth <= mvarWidth Then
+            mvarViewportX = -(mvarWidth - (mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth)) \ 2
+        Else
+            mvarViewportX = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) - mvarWidth))
+        End If
+    Else
+        mvarViewportX = vData
+    End If
+End Property
+
+Public Property Get ViewportX() As Single
+    ViewportX = mvarViewportX
+End Property
+
+Public Property Let ViewportY(ByVal vData As Single)
+    If mvarConstrainToMap Then
+        If mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight <= mvarHeight Then
+            mvarViewportY = -(mvarHeight - (mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight)) \ 2
+        Else
+            mvarViewportY = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) - mvarHeight))
+        End If
+    Else
+        mvarViewportY = vData
+    End If
+End Property
+
+Public Property Get ViewportY() As Single
+    ViewportY = mvarViewportY
+End Property
+
+Public Property Let Width(ByVal vData As Long)
+On Error Resume Next
+    mvarWidth = vData
+    mvarDirty = True
+End Property
+
+Public Property Get Width() As Long
+    Width = mvarWidth
+End Property
+
+Public Property Let X(ByVal vData As Long)
+    mvarX = ClipValue(vData, 0, Engine.ScreenWidth - mvarWidth)
+End Property
+
+Public Property Get X() As Long
+    X = mvarX
+End Property
+
+Public Function XPad() As Long
+On Error Resume Next
+    XPad = 0
+End Function
+
+Public Property Let Y(ByVal vData As Long)
+    mvarY = ClipValue(vData, 0, Engine.ScreenHeight - mvarHeight)
+End Property
+
+Public Property Get Y() As Long
+    Y = mvarY
+End Property
+
+Public Function YPad() As Long
+On Error Resume Next
+    YPad = 0
+End Function
+

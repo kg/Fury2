@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
-Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.10#0"; "ngUI.ocx"
 Begin VB.Form frmFont 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -27,21 +27,54 @@ Begin VB.Form frmFont
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   613
    ShowInTaskbar   =   0   'False
+   Begin VB.PictureBox picPreview 
+      Height          =   1485
+      Left            =   0
+      ScaleHeight     =   95
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   143
+      TabIndex        =   1
+      Top             =   0
+      Visible         =   0   'False
+      Width           =   2205
+   End
+   Begin ngPlugins.ObjectInspector insOverview 
+      Height          =   3045
+      Left            =   855
+      TabIndex        =   0
+      Top             =   1170
+      Visible         =   0   'False
+      Width           =   1710
+      _ExtentX        =   3016
+      _ExtentY        =   5371
+   End
    Begin VB.PictureBox picCharacters 
+      BackColor       =   &H80000014&
       BorderStyle     =   0  'None
       Height          =   5580
       Left            =   2850
       ScaleHeight     =   372
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   393
-      TabIndex        =   3
+      TabIndex        =   2
       Top             =   1020
       Visible         =   0   'False
       Width           =   5895
+      Begin VB.PictureBox picImage 
+         Height          =   1485
+         Left            =   1905
+         ScaleHeight     =   95
+         ScaleMode       =   3  'Pixel
+         ScaleWidth      =   143
+         TabIndex        =   8
+         Top             =   1740
+         Visible         =   0   'False
+         Width           =   2205
+      End
       Begin cFScroll.FlatScrollBar hsCharacters 
          Height          =   210
          Left            =   30
-         TabIndex        =   5
+         TabIndex        =   4
          Top             =   1500
          Width           =   5835
          _ExtentX        =   10292
@@ -58,109 +91,44 @@ Begin VB.Form frmFont
          ScaleHeight     =   96
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   385
-         TabIndex        =   4
+         TabIndex        =   3
          Top             =   15
          Width           =   5835
       End
       Begin ngPlugins.ObjectInspector insCharacter 
          Height          =   3435
-         Left            =   1230
-         TabIndex        =   7
-         Top             =   2385
+         Left            =   780
+         TabIndex        =   5
+         Top             =   2100
          Visible         =   0   'False
          Width           =   5745
          _ExtentX        =   10134
          _ExtentY        =   6059
       End
-      Begin vbalDTab6.vbalDTabControl dtCharacter 
-         Height          =   3825
-         Left            =   270
-         TabIndex        =   6
-         Top             =   1965
-         Width           =   5835
-         _ExtentX        =   10292
-         _ExtentY        =   6747
-         AllowScroll     =   0   'False
-         TabAlign        =   0
-         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-            Name            =   "Tahoma"
-            Size            =   8.25
-            Charset         =   0
-            Weight          =   400
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-            Name            =   "Tahoma"
-            Size            =   8.25
-            Charset         =   0
-            Weight          =   700
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         ShowCloseButton =   0   'False
-         MoveableTabs    =   0   'False
+      Begin ngUI.ngTabStrip tsCharacter 
+         Height          =   2145
+         Left            =   225
+         TabIndex        =   7
+         Top             =   2145
+         Width           =   1965
+         _ExtentX        =   3466
+         _ExtentY        =   3784
       End
    End
-   Begin VB.PictureBox picPreview 
-      Height          =   1485
-      Left            =   0
-      ScaleHeight     =   95
-      ScaleMode       =   3  'Pixel
-      ScaleWidth      =   143
-      TabIndex        =   2
-      Top             =   0
-      Visible         =   0   'False
-      Width           =   2205
+   Begin ngUI.ngTabStrip tsViews 
+      Height          =   375
+      Left            =   2595
+      TabIndex        =   6
+      Top             =   405
+      Width           =   720
+      _ExtentX        =   1270
+      _ExtentY        =   661
    End
    Begin sMDIinActiveX.MDIActiveX extender 
       Left            =   -15
       Top             =   0
       _ExtentX        =   847
       _ExtentY        =   794
-   End
-   Begin ngPlugins.ObjectInspector insOverview 
-      Height          =   3045
-      Left            =   855
-      TabIndex        =   0
-      Top             =   1170
-      Visible         =   0   'False
-      Width           =   1710
-      _ExtentX        =   3016
-      _ExtentY        =   5371
-   End
-   Begin vbalDTab6.vbalDTabControl dtViews 
-      Height          =   7290
-      Left            =   1710
-      TabIndex        =   1
-      Top             =   540
-      Width           =   9150
-      _ExtentX        =   16140
-      _ExtentY        =   12859
-      AllowScroll     =   0   'False
-      TabAlign        =   0
-      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   700
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      ShowCloseButton =   0   'False
-      MoveableTabs    =   0   'False
    End
 End
 Attribute VB_Name = "frmFont"
@@ -206,6 +174,7 @@ Private Const c_lngUndoStackLength As Long = 50
 Private Const c_lngRedoStackLength As Long = 25
 
 Private m_imgPreview As Fury2Image
+Private m_imgImage As Fury2Image
 Private m_imgCharacterList As Fury2Image
 
 Private m_lngSelectedCharacter As Long
@@ -223,9 +192,40 @@ Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
 Private m_lngCurrentView As FontEditorViews
 
-Private Sub dtCharacter_Resize()
+Public Property Get SelectedCharacter() As CharacterProxy
 On Error Resume Next
-    insCharacter.Move (2) + dtCharacter.Left, dtCharacter.Top + 24, dtCharacter.Width - 4, dtCharacter.Height - 26
+Dim l_prxProxy As CharacterProxy
+    Set l_prxProxy = New CharacterProxy
+    Set l_prxProxy.Font = m_fntFont
+    l_prxProxy.Character = m_lngSelectedCharacter
+    Set SelectedCharacter = l_prxProxy
+End Property
+
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+On Error Resume Next
+    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\font.png")
+End Property
+
+Private Sub picImage_Paint()
+On Error Resume Next
+Dim l_sngXRatio As Single, l_sngYRatio As Single, l_sngRatio As Single
+    l_sngXRatio = picImage.ScaleWidth / m_imgImage.Width
+    l_sngYRatio = picImage.ScaleHeight / m_imgImage.Height
+    If (l_sngXRatio < l_sngYRatio) Then l_sngRatio = l_sngXRatio Else l_sngRatio = l_sngYRatio
+    DrawImageToDC picImage.hdc, F2Rect(0, 0, m_imgImage.Width * l_sngRatio, m_imgImage.Height * l_sngRatio, False), m_imgImage.Rectangle, m_imgImage
+    picImage.Line (m_imgImage.Width * l_sngRatio, 0)-(picImage.ScaleWidth, picImage.ScaleHeight), picImage.BackColor, BF
+    picImage.Line (0, m_imgImage.Height * l_sngRatio)-(picImage.ScaleWidth, picImage.ScaleHeight), picImage.BackColor, BF
+End Sub
+
+Private Sub picImage_Resize()
+On Error Resume Next
+    RedrawImage
+End Sub
+
+Private Sub tsCharacter_Resize()
+On Error Resume Next
+    insCharacter.Move (2) + tsCharacter.Left, tsCharacter.Top + tsCharacter.IdealHeight + 1, tsCharacter.Width - 4, tsCharacter.Height - (tsCharacter.IdealHeight + 3)
+    picImage.Move insCharacter.Left, insCharacter.Top, insCharacter.Width, insCharacter.Height
 End Sub
 
 Private Sub hsCharacters_Change()
@@ -257,6 +257,8 @@ End Sub
 Public Property Get ActiveType() As String
 On Error Resume Next
     Select Case LCase(Trim(Me.ActiveControl.Name))
+    Case "piccharacters", "piccharacterlist", "inscharacter", "tscharacter"
+        ActiveType = "Characters"
     Case Else
     End Select
 End Property
@@ -273,11 +275,13 @@ End Property
 Public Sub AllocateBuffers()
 On Error Resume Next
     Set m_imgPreview = F2Image(1, 1)
+    Set m_imgImage = F2Image(1, 1)
 End Sub
 
 Public Sub DeallocateBuffers()
 On Error Resume Next
     Set m_imgPreview = Nothing
+    Set m_imgImage = Nothing
 End Sub
 
 Public Sub Redraw()
@@ -301,12 +305,13 @@ End Sub
 
 Public Sub RedrawSelectedCharacter()
 On Error Resume Next
-Dim l_prxProxy As CharacterProxy
-    Set l_prxProxy = New CharacterProxy
-    Set l_prxProxy.Font = m_fntFont
-    l_prxProxy.Character = m_lngSelectedCharacter
-    insCharacter.Inspect l_prxProxy, "Character " & m_lngSelectedCharacter, , , True
-    insCharacter.Visible = True
+    Select Case LCase(Trim(tsCharacter.SelectedTab.Text))
+    Case "properties"
+        insCharacter.Inspect SelectedCharacter, "Character " & m_lngSelectedCharacter, , , True
+    Case "image"
+        RedrawImage
+    Case Else
+    End Select
 End Sub
 
 Public Sub RedrawCharacterList()
@@ -476,9 +481,11 @@ End Sub
 
 Public Sub InitViews()
 On Error Resume Next
-    dtViews.Tabs.Add "t" & CStr(View_Overview), , "Overview"
-    dtViews.Tabs.Add "t" & CStr(View_Characters), , "Characters"
-    dtViews.Tabs.Add "t" & CStr(View_Preview), , "Preview"
+    tsViews.Tabs.AddNew "Overview", "t" & CStr(View_Overview)
+    tsViews.Tabs.AddNew "Characters", "t" & CStr(View_Characters)
+    tsViews.Tabs.AddNew "Preview", "t" & CStr(View_Preview)
+    tsCharacter.Tabs.AddNew "Properties"
+    tsCharacter.Tabs.AddNew "Image"
 End Sub
 
 Public Sub RefreshAll()
@@ -494,7 +501,7 @@ Dim l_objObject As Object
     insOverview.Visible = False
     picPreview.Visible = False
     picCharacters.Visible = False
-    dtViews_Resize
+    tsViews_Resize
     Select Case m_lngCurrentView
     Case View_Overview
         insOverview.Visible = True
@@ -520,6 +527,20 @@ On Error Resume Next
             "1234567890-= !@#$%^&*()_+", m_imgPreview.Rectangle
     End With
     picPreview_Paint
+End Sub
+
+Public Sub RedrawImage()
+On Error Resume Next
+Dim l_imgImage As Fury2Image
+    Set l_imgImage = SelectedCharacter.Image
+    If (m_imgImage.Width <> l_imgImage.Width) Or (m_imgImage.Height <> l_imgImage.Height) Then
+        m_imgImage.Resize l_imgImage.Width, l_imgImage.Height
+    End If
+    With m_imgImage
+        .Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+        .Blit , , l_imgImage, , BlitMode_SourceAlpha
+    End With
+    picImage_Paint
 End Sub
 
 Private Function ClipboardContainsFormat(Format As FontEditorClipboardFormats) As Boolean
@@ -558,23 +579,32 @@ Dim l_objPlugin As FontEditor
     Set Editor = l_objPlugin.Editor
 End Function
 
-Private Sub dtViews_Resize()
+Private Sub tsCharacter_TabSelected(TheTab As ngUI.ngTab)
+On Error Resume Next
+    insCharacter.Visible = False
+    picImage.Visible = False
+    tsCharacter_Resize
+    Select Case LCase(Trim(TheTab.Text))
+    Case "properties"
+        insCharacter.Visible = True
+    Case "image"
+        picImage.Visible = True
+    Case Else
+    End Select
+    RedrawSelectedCharacter
+End Sub
+
+Private Sub tsViews_Resize()
 On Error Resume Next
     Select Case m_lngCurrentView
     Case View_Overview
-        insOverview.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
+        insOverview.Move (2) + tsViews.Left, tsViews.Top + tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - (tsViews.IdealHeight + 3)
     Case View_Preview
-        picPreview.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
+        picPreview.Move (2) + tsViews.Left, tsViews.Top + tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - (tsViews.IdealHeight + 3)
     Case View_Characters
-        picCharacters.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
+        picCharacters.Move (2) + tsViews.Left, tsViews.Top + tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - (tsViews.IdealHeight + 3)
     Case Else
     End Select
-End Sub
-
-Private Sub dtViews_TabSelected(theTab As vbalDTab6.cTab)
-On Error Resume Next
-    m_lngCurrentView = CLng(Mid(theTab.key, 2))
-    ViewChanged
 End Sub
 
 Public Sub Form_Activate()
@@ -582,7 +612,7 @@ On Error Resume Next
     Set insOverview.Editor = Editor
     AllocateBuffers
     Form_Resize
-    dtViews_Resize
+    tsViews_Resize
     ViewChanged
     Redraw
 End Sub
@@ -612,7 +642,7 @@ On Error GoTo 0
         m_booVisible = True
         RefreshAll
     End If
-    dtViews.Move 2, 2, Me.ScaleWidth - 4, Me.ScaleHeight - 4
+    tsViews.Move 2, 2, Me.ScaleWidth - 4, Me.ScaleHeight - 4
 End Sub
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
@@ -705,6 +735,8 @@ End Property
 Private Sub iEditingCommands_CanCopy(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
+    Case "Characters"
+        NewValue = (m_lngSelectedCharacter > 1)
     Case Else
     End Select
 End Sub
@@ -712,6 +744,8 @@ End Sub
 Private Sub iEditingCommands_CanCut(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
+    Case "Characters"
+        NewValue = (m_lngSelectedCharacter > 1)
     Case Else
     End Select
 End Sub
@@ -719,6 +753,8 @@ End Sub
 Private Sub iEditingCommands_CanDelete(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
+    Case "Characters"
+        NewValue = (m_lngSelectedCharacter > 1)
     Case Else
     End Select
 End Sub
@@ -726,6 +762,8 @@ End Sub
 Private Sub iEditingCommands_CanPaste(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
+    Case "Characters"
+        NewValue = ClipboardContainsFormat(FCF_Character)
     Case Else
     End Select
 End Sub
@@ -755,6 +793,8 @@ End Sub
 Private Sub iEditingCommands_Copy()
 On Error Resume Next
     Select Case ActiveType
+    Case "Characters"
+        CopyCharacter
     Case Else
     End Select
 End Sub
@@ -762,6 +802,8 @@ End Sub
 Private Sub iEditingCommands_Cut()
 On Error Resume Next
     Select Case ActiveType
+    Case "Characters"
+        CutCharacter
     Case Else
     End Select
 End Sub
@@ -769,6 +811,8 @@ End Sub
 Private Sub iEditingCommands_Delete()
 On Error Resume Next
     Select Case ActiveType
+    Case "Characters"
+        DeleteCharacter
     Case Else
     End Select
 End Sub
@@ -776,6 +820,8 @@ End Sub
 Private Sub iEditingCommands_Paste()
 On Error Resume Next
     Select Case ActiveType
+    Case "Characters"
+        PasteCharacter
     Case Else
     End Select
 End Sub
@@ -837,6 +883,24 @@ Dim l_rctCharacter As Fury2Rect
                 m_lngSelectedCharacter = l_lngCharacter
                 RedrawCharacterList
                 RedrawSelectedCharacter
+                If Button = 2 Then
+                    Editor.ActionUpdate
+                    Select Case QuickShowMenu(picCharacterList, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+                        Menus(MenuString("&Insert New"), "-", MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
+                        frmIcons.ilContextMenus)
+                    Case 1
+                        InsertCharacter
+                    Case 3
+                        CutCharacter
+                    Case 4
+                        CopyCharacter
+                    Case 5
+                        PasteCharacter
+                    Case 6
+                        DeleteCharacter
+                    Case Else
+                    End Select
+                End If
                 Exit For
             End If
             l_lngX = l_lngX + ClipValue(l_imgCharacter.Width, 6, 999) + 1
@@ -855,7 +919,7 @@ Private Sub picCharacters_Resize()
 On Error Resume Next
     picCharacterList.Move 2, 2, picCharacters.ScaleWidth - 4, m_fntFont.FullHeight + 16
     hsCharacters.Move 2, picCharacterList.Top + picCharacterList.Height + 2, picCharacterList.Width, hsCharacters.Height
-    dtCharacter.Move 2, hsCharacters.Top + hsCharacters.Height + 2, picCharacterList.Width, picCharacters.ScaleHeight - hsCharacters.Height - picCharacterList.Height - 8
+    tsCharacter.Move 2, hsCharacters.Top + hsCharacters.Height + 2, picCharacterList.Width, picCharacters.ScaleHeight - hsCharacters.Height - picCharacterList.Height - 8
 End Sub
 
 Private Sub picPreview_Paint()
@@ -872,4 +936,61 @@ Private Property Get iDocument_Modified() As Boolean
 On Error Resume Next
     iDocument_Modified = True
 End Property
+
+Private Sub tsViews_TabSelected(TheTab As ngUI.ngTab)
+On Error Resume Next
+    m_lngCurrentView = CLng(Mid(TheTab.key, 2))
+    ViewChanged
+End Sub
+
+Public Sub CutCharacter()
+On Error Resume Next
+    CopyCharacter
+    DeleteCharacter
+End Sub
+
+Public Sub CopyCharacter()
+On Error Resume Next
+    CustomClipboard.ClipboardOpen Me.hwnd
+    ClipboardSerialize CustomClipboard, ClipboardFormat(FCF_Character), SelectedCharacter
+    CustomClipboard.ClipboardClose
+End Sub
+
+Public Function PasteCharacter() As CharacterProxy
+On Error Resume Next
+Dim l_chCharacter As CharacterProxy
+    Set l_chCharacter = New CharacterProxy
+    Set l_chCharacter.Font = m_fntFont
+    m_fntFont.AddCharacter F2Image(1, 1), 0
+    l_chCharacter.Character = m_fntFont.CharacterCount
+    m_lngSelectedCharacter = m_fntFont.CharacterCount
+    CustomClipboard.ClipboardOpen Me.hwnd
+    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(FCF_Character), l_chCharacter) Then
+        CustomClipboard.ClipboardClose
+        RedrawCharacterList
+        RedrawSelectedCharacter
+        Editor.ToolbarUpdate
+        Set PasteCharacter = l_chCharacter
+    Else
+        CustomClipboard.ClipboardClose
+    End If
+End Function
+
+Public Sub InsertCharacter()
+On Error Resume Next
+    m_fntFont.AddCharacter F2Image(4, 4), 0
+    m_lngSelectedCharacter = m_fntFont.CharacterCount
+    RedrawCharacterList
+    RedrawSelectedCharacter
+    Editor.ToolbarUpdate
+End Sub
+
+Public Sub DeleteCharacter()
+On Error Resume Next
+    m_fntFont.RemoveCharacter m_lngSelectedCharacter
+    m_lngSelectedCharacter = ClipValue(m_lngSelectedCharacter, 1, m_fntFont.CharacterCount)
+    RedrawCharacterList
+    RedrawSelectedCharacter
+    Editor.ToolbarUpdate
+End Sub
 

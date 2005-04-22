@@ -102,7 +102,7 @@ On Error Resume Next
     Err.Clear
 End Function
     
-Function Action(Optional ByRef Activator As Object, Optional ByVal ActionName As String = "Activate") As Boolean
+Function Action(Optional ByVal Activator As Object, Optional ByVal ActionName As String = "Activate") As Boolean
 On Error Resume Next
     mvarMap.Engine.ContextLevelAdd "Area_" + ActionName
     ActionName = LCase(Trim(ActionName))
@@ -182,7 +182,7 @@ Dim l_strScript As String
     Err.Clear
 End Property
 
-Public Property Let X(vData As Long)
+Public Property Let X(ByVal vData As Long)
     mvarX = vData
 End Property
 
@@ -190,7 +190,7 @@ Public Property Get X() As Long
     X = mvarX
 End Property
 
-Public Property Let Y(vData As Long)
+Public Property Let Y(ByVal vData As Long)
     mvarY = vData
 End Property
 
@@ -198,7 +198,7 @@ Public Property Get Y() As Long
     Y = mvarY
 End Property
 
-Public Property Let Width(vData As Long)
+Public Property Let Width(ByVal vData As Long)
     mvarWidth = vData
 End Property
 
@@ -206,7 +206,7 @@ Public Property Get Width() As Long
     Width = mvarWidth
 End Property
 
-Public Property Let Height(vData As Long)
+Public Property Let Height(ByVal vData As Long)
     mvarHeight = vData
 End Property
 
@@ -216,8 +216,8 @@ End Property
 
 Public Property Set Rectangle(vData As Fury2Rect)
     With vData
-        mvarX = .Left
-        mvarY = .Top
+        mvarX = .left
+        mvarY = .top
         mvarWidth = .Width
         mvarHeight = .Height
     End With
@@ -235,7 +235,7 @@ Public Property Get RandomChance() As Single
     RandomChance = mvarRandomChance
 End Property
 
-Public Property Let RandomChance(NewChance As Single)
+Public Property Let RandomChance(ByVal NewChance As Single)
     mvarRandomChance = NewChance
 End Property
 
@@ -243,7 +243,7 @@ Public Property Get Name() As String
     Name = mvarName
 End Property
 
-Public Property Let Name(NewName As String)
+Public Property Let Name(ByVal NewName As String)
     mvarName = NewName
 End Property
 
@@ -255,13 +255,13 @@ Friend Sub DualIntersect(ByRef Rectangle1 As Rectangle, ByRef Rectangle2 As Rect
 On Error Resume Next
     With Rectangle1
         Value1 = False
-        If mvarX > (.Left + .Width) Then
+        If mvarX > (.left + .Width) Then
         Else
-            If mvarY > (.Top + .Height) Then
+            If mvarY > (.top + .Height) Then
             Else
-                If (mvarX + mvarWidth) < .Left Then
+                If (mvarX + mvarWidth) < .left Then
                 Else
-                    If (mvarY + mvarHeight) < .Top Then
+                    If (mvarY + mvarHeight) < .top Then
                     Else
                         Value1 = True
                     End If
@@ -271,13 +271,13 @@ On Error Resume Next
     End With
     With Rectangle2
         Value2 = False
-        If mvarX > (.Left + .Width) Then
+        If mvarX > (.left + .Width) Then
         Else
-            If mvarY > (.Top + .Height) Then
+            If mvarY > (.top + .Height) Then
             Else
-                If (mvarX + mvarWidth) < .Left Then
+                If (mvarX + mvarWidth) < .left Then
                 Else
-                    If (mvarY + mvarHeight) < .Top Then
+                    If (mvarY + mvarHeight) < .top Then
                     Else
                         Value2 = True
                     End If

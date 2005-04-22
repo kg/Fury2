@@ -181,13 +181,13 @@ Dim l_lngPadding As Long
         l_lngThumbSize = l_lngBarSize * ThumbSize
         l_lngBarSize = l_lngBarSize - (l_lngThumbSize)
         l_lngBarPos = l_sngValue * l_lngBarSize
-        Value = Minimum + (((X - m_btnMinus.Rectangle.Right - l_lngPadding - (l_lngThumbSize / 2)) / l_lngBarSize) * (Maximum - Minimum))
+        Value = Minimum + (((X + m_btnThumb.Rectangle.Left - m_btnMinus.Rectangle.Right - l_lngPadding - (l_lngThumbSize / 2)) / l_lngBarSize) * (Maximum - Minimum))
     Else
         l_lngBarSize = Rectangle.Height - (m_btnMinus.Rectangle.Height + m_btnPlus.Rectangle.Height) - (l_lngPadding * 2)
         l_lngThumbSize = l_lngBarSize * ThumbSize
         l_lngBarSize = l_lngBarSize - (l_lngThumbSize)
         l_lngBarPos = l_sngValue * l_lngBarSize
-        Value = Minimum + (((Y - m_btnMinus.Rectangle.Bottom - l_lngPadding - (l_lngThumbSize / 2)) / l_lngBarSize) * (Maximum - Minimum))
+        Value = Minimum + (((Y + m_btnThumb.Rectangle.Top - m_btnMinus.Rectangle.Bottom - l_lngPadding - (l_lngThumbSize / 2)) / l_lngBarSize) * (Maximum - Minimum))
     End If
     If Value < Minimum Then Value = Minimum
     If Value > Maximum Then Value = Maximum

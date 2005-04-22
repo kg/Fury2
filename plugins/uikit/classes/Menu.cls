@@ -216,7 +216,9 @@ Private Sub iWidget_MouseDown(ByVal Parent As iContainer, ByVal Button As Long, 
 On Error Resume Next
     If Visible = False Then Exit Sub
     Parent.SetCapture Me
-    DispatchEvent "MouseDown", Button, Shift, X, Y
+    With Rectangle
+        DispatchEvent "MouseDown", Button, Shift, X - .Left, Y - .Top
+    End With
 End Sub
 
 Private Sub iWidget_MouseEnter(ByVal Parent As iContainer)
@@ -238,7 +240,9 @@ Dim l_lngHeight As Long, l_itmItem As Item, l_lngItem As Long, l_lngY As Long, l
     Set l_rctNew = Rectangle.Copy
     Me.SelectedItem = 0
     If ((X < Me.Rectangle.Left) Or (X > Me.Rectangle.Right)) Or ((Y < Me.Rectangle.Top) Or (Y > Me.Rectangle.Bottom)) Then
-        DispatchEvent "MouseMove", Button, Shift, X, Y
+        With Rectangle
+            DispatchEvent "MouseMove", Button, Shift, X - .Left, Y - .Top
+        End With
         Exit Sub
     End If
     Y = Y - Me.Rectangle.Top
@@ -262,13 +266,17 @@ Dim l_lngHeight As Long, l_itmItem As Item, l_lngItem As Long, l_lngY As Long, l
         l_lngHeight = l_lngHeight + l_lngItemHeight
         l_lngItem = l_lngItem + 1
     Next l_itmItem
-    DispatchEvent "MouseMove", Button, Shift, X, Y + Me.Rectangle.Top
+    With Rectangle
+        DispatchEvent "MouseMove", Button, Shift, X - .Left, Y - .Top
+    End With
 End Sub
 
 Private Sub iWidget_MouseUp(ByVal Parent As iContainer, ByVal Button As Long, ByVal Shift As Long, X As Long, Y As Long)
 On Error Resume Next
     If Visible = False Then Exit Sub
-    DispatchEvent "MouseUp", Button, Shift, X, Y
+    With Rectangle
+        DispatchEvent "MouseUp", Button, Shift, X - .Left, Y - .Top
+    End With
     If (Me.SelectedItem > 0) Then
         DispatchEvent "Select", Me.SelectedItem
     End If

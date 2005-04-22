@@ -354,6 +354,7 @@ End Sub
 Private Sub iWidget_KeyPress(ByVal Parent As iContainer, Character As Long)
 On Error Resume Next
     DispatchEvent "KeyPress", Character
+    If Character = 0 Then Exit Sub
     If Locked Then Exit Sub
     If mdlGlobal.Engine.CharIsPrintable(Character) Then
         Me.SelectionText = Chr(Character)
@@ -384,7 +385,9 @@ On Error Resume Next
             MoveCaret m_lngDragStartPos
         End If
     End If
-    DispatchEvent "MouseDown", Button, Shift, X, Y
+    With Rectangle
+        DispatchEvent "MouseDown", Button, Shift, X - .Left, Y - .Top
+    End With
 End Sub
 
 Private Sub iWidget_MouseEnter(ByVal Parent As iContainer)

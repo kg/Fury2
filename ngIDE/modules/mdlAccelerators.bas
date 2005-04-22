@@ -46,6 +46,9 @@ On Error Resume Next
         Set g_aclDelete = .AddAccelerator(vbKeyDelete, BindEvent(g_edEditor, "Action_Delete"))
         .AddAccelerator vbKeyF4, BindEvent(g_edEditor, "Action_CloseWindow"), True
         .AddAccelerator vbKeyF6, BindEvent(g_edEditor, "Action_NextWindow"), True
+        .AddAccelerator vbKeyTab, BindEvent(g_edEditor, "Action_NextWindow"), True
+        .AddAccelerator vbKeyF6, BindEvent(g_edEditor, "Action_PreviousWindow"), True, True
+        .AddAccelerator vbKeyTab, BindEvent(g_edEditor, "Action_PreviousWindow"), True, True
         .AddAccelerator vbKeyF8, BindEvent(g_edEditor, "Show_FileSidebar")
         .AddAccelerator vbKeyF9, BindEvent(g_edEditor, "Game_Debug")
     End With

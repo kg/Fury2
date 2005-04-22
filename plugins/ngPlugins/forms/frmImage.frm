@@ -121,6 +121,18 @@ Private m_imgImageCache As Fury2Image
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
 
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+On Error Resume Next
+    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\image.png")
+End Property
+
+Private Function Editor() As Object
+On Error Resume Next
+Dim l_objPlugin As ImageFile
+    Set l_objPlugin = m_fpgPlugin
+    Set Editor = l_objPlugin.Editor
+End Function
+
 Private Property Get iDocument_Object() As Object
     Set iDocument_Object = Me
 End Property

@@ -154,3 +154,62 @@ Public Enum ngTabStripColors
     tsc_max
 End Enum
 
+Public Enum ngMenuItemTextAlignment
+    mtaLeft
+    mtaRight
+End Enum
+
+Public Enum ngMenuItemStyles
+    msyNormal
+    msyCheck
+    msyGroup
+    msySeparator
+End Enum
+
+Public Enum ngMenuItemStates
+    mstNormal
+    mstHighlighted
+    mstPressed
+    mstChecked
+    mstDisabled
+End Enum
+
+Public Enum ngMenuColors
+    mncBackground
+    mncText
+    mncTint
+    mncBorder
+    mncGlow
+    mncHighlight
+    mncHighlightText
+    mncHighlightTint
+    mncHighlightBorder
+    mncHighlightGlow
+    mncPressed
+    mncPressedText
+    mncPressedTint
+    mncPressedBorder
+    mncPressedGlow
+    mncChecked
+    mncCheckedText
+    mncCheckedTint
+    mncCheckedBorder
+    mncCheckedGlow
+    mncDisabled
+    mncDisabledText
+    mncDisabledTint
+    mncDisabledBorder
+    mncDisabledGlow
+    mncSeparator
+    mnc_max
+End Enum
+
+Public Enum ngMenuMetrics
+    mnmItemMargin
+    mnmImageMargin
+    mnmTextMargin
+    mnmSeparatorMargin
+    mnmSeparatorSize
+    mnm_max
+End Enum
+

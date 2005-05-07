@@ -92,6 +92,31 @@ namespace GL {
     return new Texture(handle, 0, 0, width, height, 1.0f / texWidth, 1.0f / texHeight);
   }
 
+  void copyImageToImage(int from, int to) {
+    if (from == to) return;
+    if (checkNamedTag(from, Context)) {
+      // from context
+      if (checkNamedTag(to, Context)) {
+        // to context
+      } else {
+        // to image
+        Texture* tex = getTexture(to);
+        if (tex == 0) tex = createTextureFromImage(to);
+        copyFramebufferToTexture(tex, to);
+      }
+    } else {
+      // from image
+      if (checkNamedTag(to, Context)) {
+        // to context
+        // copyTextureToFramebuffer(getTexture(from), from);
+        copyImageToFramebuffer(from);
+      } else {
+        // to image
+      }
+    }
+    SoftFX::SetImageDirty(to, 0);
+  }
+
   void copyFramebufferToImage(int image) {
     int width = SoftFX::GetImageWidth(image);
     int height = SoftFX::GetImageHeight(image);
@@ -128,6 +153,7 @@ namespace GL {
     int height = SoftFX::GetImageHeight(image);
     int yOffset = (Global->OutputHeight - height);
     FX::Rectangle rect = FX::Rectangle(0, 0, width, height);
+    enableTexture<0>();
     disableTexture<1>();
     selectTexture(tex->Handle);
     endDraw();
@@ -296,34 +322,37 @@ namespace GL {
 
   void drawRectangle(FX::Rectangle& rect) {
     beginDraw(GL_QUADS);
-    glVertex2i(rect.Left, rect.Top);
-    glVertex2i(rect.Left + rect.Width, rect.Top);
-    glVertex2i(rect.Left + rect.Width, rect.Top + rect.Height);
-    glVertex2i(rect.Left, rect.Top + rect.Height);
+    float x = rect.Left, y = rect.Top, x2 = rect.Left + rect.Width, y2 = rect.Top + rect.Height;
+    glVertex2f(x, y);
+    glVertex2f(x2, y);
+    glVertex2f(x2, y2);
+    glVertex2f(x, y2);
   }
 
   void drawGradientRectangle(FX::Rectangle& rect, Pixel colorTL, Pixel colorTR, Pixel colorBL, Pixel colorBR) {
     beginDraw(GL_QUADS);
+    float x = rect.Left, y = rect.Top, x2 = rect.Left + rect.Width, y2 = rect.Top + rect.Height;
     setVertexColor(colorTL);
-    glVertex2i(rect.Left, rect.Top);
+    glVertex2f(x, y);
     setVertexColor(colorTR);
-    glVertex2i(rect.Left + rect.Width, rect.Top);
+    glVertex2f(x2, y);
     setVertexColor(colorBR);
-    glVertex2i(rect.Left + rect.Width, rect.Top + rect.Height);
+    glVertex2f(x2, y2);
     setVertexColor(colorBL);
-    glVertex2i(rect.Left, rect.Top + rect.Height);
+    glVertex2f(x, y2);
   }
 
   void drawTexturedRectangle(FX::Rectangle& rect, float U1, float V1, float U2, float V2) {
     beginDraw(GL_QUADS);
+    float x = rect.Left, y = rect.Top, x2 = rect.Left + rect.Width, y2 = rect.Top + rect.Height;
     glTexCoord2f(U1, V1);
-    glVertex2i(rect.Left, rect.Top);
+    glVertex2f(x, y);
     glTexCoord2f(U2, V1);
-    glVertex2i(rect.Left + rect.Width, rect.Top);
+    glVertex2f(x2, y);
     glTexCoord2f(U2, V2);
-    glVertex2i(rect.Left + rect.Width, rect.Top + rect.Height);
+    glVertex2f(x2, y2);
     glTexCoord2f(U1, V2);
-    glVertex2i(rect.Left, rect.Top + rect.Height);
+    glVertex2f(x, y2);
   }
 
   void drawTexturedRectangleF(float X, float Y, float W, float H, float U1, float V1, float U2, float V2) {
@@ -362,34 +391,36 @@ namespace GL {
 
   void draw2TexturedRectangle(FX::Rectangle& rect, float U1, float V1, float U2, float V2) {
     beginDraw(GL_QUADS);
+    float x = rect.Left, y = rect.Top, x2 = rect.Left + rect.Width, y2 = rect.Top + rect.Height;
     glMultiTexCoord2fARB(GL_TEXTURE0_ARB, U1, V1);
     glMultiTexCoord2fARB(GL_TEXTURE1_ARB, U1, V1);
-    glVertex2i(rect.Left, rect.Top);
+    glVertex2f(x, y);
     glMultiTexCoord2fARB(GL_TEXTURE0_ARB, U2, V1);
     glMultiTexCoord2fARB(GL_TEXTURE1_ARB, U2, V1);
-    glVertex2i(rect.Left + rect.Width, rect.Top);
+    glVertex2f(x2, y);
     glMultiTexCoord2fARB(GL_TEXTURE0_ARB, U2, V2);
     glMultiTexCoord2fARB(GL_TEXTURE1_ARB, U2, V2);
-    glVertex2i(rect.Left + rect.Width, rect.Top + rect.Height);
+    glVertex2f(x2, y2);
     glMultiTexCoord2fARB(GL_TEXTURE0_ARB, U1, V2);
     glMultiTexCoord2fARB(GL_TEXTURE1_ARB, U1, V2);
-    glVertex2i(rect.Left, rect.Top + rect.Height);
+    glVertex2f(x, y2);
   }
 
   void draw2TexturedRectangle(FX::Rectangle& rect, float U11, float V11, float U12, float V12, float U21, float V21, float U22, float V22) {
     beginDraw(GL_QUADS);
+    float x = rect.Left, y = rect.Top, x2 = rect.Left + rect.Width, y2 = rect.Top + rect.Height;
     glMultiTexCoord2fARB(GL_TEXTURE0_ARB, U11, V11);
     glMultiTexCoord2fARB(GL_TEXTURE1_ARB, U21, V21);
-    glVertex2i(rect.Left, rect.Top);
+    glVertex2f(x, y);
     glMultiTexCoord2fARB(GL_TEXTURE0_ARB, U12, V11);
     glMultiTexCoord2fARB(GL_TEXTURE1_ARB, U22, V21);
-    glVertex2i(rect.Left + rect.Width, rect.Top);
+    glVertex2f(x2, y);
     glMultiTexCoord2fARB(GL_TEXTURE0_ARB, U12, V12);
     glMultiTexCoord2fARB(GL_TEXTURE1_ARB, U22, V22);
-    glVertex2i(rect.Left + rect.Width, rect.Top + rect.Height);
+    glVertex2f(x2, y2);
     glMultiTexCoord2fARB(GL_TEXTURE0_ARB, U11, V12);
     glMultiTexCoord2fARB(GL_TEXTURE1_ARB, U21, V22);
-    glVertex2i(rect.Left, rect.Top + rect.Height);
+    glVertex2f(x, y2);
   }
 
   void drawBox(FX::Rectangle& box) {

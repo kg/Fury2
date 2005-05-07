@@ -85,6 +85,7 @@ Dim l_strFilename As String
         m_strRealPath = m_feFile.Parent.LocateFile(m_feFile.Filename)
         l_strFilename = m_strRealPath
     End If
+    l_strFilename = Replace(l_strFilename, "\\", "\")
     GetRealFilename = l_strFilename
 End Function
 

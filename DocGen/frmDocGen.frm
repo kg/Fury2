@@ -556,6 +556,9 @@ Sub Generate()
 On Error Resume Next
     ChDrive Left(App.Path, 2)
     ChDir App.Path
+    MkDir "Output"
+    MkDir "Input"
+    MkDir "Output\Documentation"
     Log "Generating"
     Set Classes = New Collection
     Set Enums = New Collection

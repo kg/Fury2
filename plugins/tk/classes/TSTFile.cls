@@ -24,6 +24,7 @@ Private Type RGBTriplet
     Blue As Byte
 End Type
 
+Public Filename As String
 Private m_lngTileCount As Long
 Private m_lngTileWidth As Long
 Private m_lngTileHeight As Long
@@ -109,7 +110,7 @@ On Error Resume Next
 End Property
 
 Public Property Get TileCount() As Long
-    TileCount = CLng(m_colTiles.Count)
+    TileCount = CLng(m_colTiles.count)
 End Property
 
 Private Sub Class_Initialize()
@@ -123,10 +124,10 @@ Public Property Get Image() As Fury2Image
 Dim m_lngTiles As Long
 Dim m_tleTile As TSTTile
 Dim l_lngX As Long, l_lngY As Long
-    Set Image = F2Image(8 * m_lngTileWidth, m_lngTileHeight * Ceil(m_colTiles.Count / 8))
+    Set Image = F2Image(8 * m_lngTileWidth, m_lngTileHeight * Ceil(m_colTiles.count / 8))
     l_lngX = 0
     l_lngY = 0
-    For m_lngTiles = 1 To m_colTiles.Count
+    For m_lngTiles = 1 To m_colTiles.count
         Set m_tleTile = m_colTiles(m_lngTiles)
         Image.Blit F2Rect(l_lngX, l_lngY, m_lngTileWidth, m_lngTileHeight, False), , m_tleTile.Image()
         l_lngX = l_lngX + m_lngTileWidth

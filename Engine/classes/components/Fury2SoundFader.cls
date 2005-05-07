@@ -13,11 +13,10 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
 Implements Fury2Plugin
-Public Handle As SoundHandle
+Public Channel As Channel
 Public VolumeStart As Single
 Public VolumeEnd As Single
 Public Slider As Fury2Slider
-Public FreeWhenDone As Boolean
 Private m_engEngine As Fury2Engine
 
 Friend Sub SetEngine(Engine As Fury2Engine)
@@ -85,13 +84,9 @@ Private Sub Fury2Plugin_SyncUpdate()
 On Error Resume Next
 Dim l_sngVolume As Single
     l_sngVolume = VolumeStart + ((VolumeEnd - VolumeStart) * Slider.Progress)
-    Handle.Volume = l_sngVolume
+    Channel.Volume = l_sngVolume
     If Slider.Finished Then
-        If FreeWhenDone Then
-            Handle.Kill
-            Handle.Free
-            Set Handle = Nothing
-        End If
+        Set Channel = Nothing
         Engine.UnHookEvents Me
     End If
 End Sub

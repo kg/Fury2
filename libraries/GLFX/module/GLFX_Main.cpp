@@ -10,6 +10,17 @@ int __cdecl DllMain(int hModule, int ul_reason_for_call, void* lpReserved)
 	return 1;
 }
 
+Export int GLCopySurface(int from, int to) {
+  if (!Global) return Failure;
+  if (from) {
+    if (to) {
+      GL::copyImageToImage(from, to);
+      return Success;
+    }
+  }
+  return Failure;
+}
+
 Export int GLSetOutputSize(int width, int height) {
   if (!Global) return Failure;
   Global->OutputWidth = width;

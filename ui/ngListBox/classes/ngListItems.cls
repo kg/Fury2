@@ -168,6 +168,7 @@ Dim l_liItem As Object
     If FromIndex = ToIndex Then Exit Sub
     Set l_liItem = m_colCollection.Item(FromIndex)
     m_booDisableEvents = True
+    Remove l_liItem.Key
     Remove FromIndex
     If (FromIndex < ToIndex) Then
 '        Trust me, this works - even though it doesn't make sense unless you think about it
@@ -185,6 +186,11 @@ Dim l_liItem As ngListItem
     For Each l_liItem In m_colCollection
         l_liItem.Free
     Next l_liItem
+    Set m_colCollection = New Collection
+End Sub
+
+Friend Sub FastClear()
+On Error Resume Next
     Set m_colCollection = New Collection
 End Sub
 

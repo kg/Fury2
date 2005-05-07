@@ -43,12 +43,12 @@ Public LoopMode As Fury2LoopModes
 Public BlitMode As SFXBlitModes
 Public Alpha As Single
 Public FadeSpeed As Double
-Public AnimationDelay As Long
+Public AnimationDelay As Single
 Public AnimationFrame As Long
 Public AnimationDirection As Long
 Private m_parParam As AnimatedGraphicParam
 Private m_lngImages() As Long
-Private AnimationDelayBuildup As Long
+Private m_sngLastFrame As Double
 Private m_engEngine As Fury2Engine
 
 Friend Sub SetEngine(Engine As Fury2Engine)
@@ -147,15 +147,16 @@ End Sub
 
 Sub Update()
 On Error Resume Next
+Dim l_dblElapsed As Double
     If Images.Count > 1 Then
-        AnimationDelayBuildup = AnimationDelayBuildup + 1
-        If AnimationDelayBuildup >= AnimationDelay Then
-            AnimationDelayBuildup = AnimationDelayBuildup - AnimationDelay
+        l_dblElapsed = (Engine.HiTimer - m_sngLastFrame) / ((1 / Engine.DesiredFramerate) * AnimationDelay)
+        If (l_dblElapsed >= 1) Then
+            m_sngLastFrame = Engine.HiTimer - ((l_dblElapsed - Floor(l_dblElapsed)) * (1 / Engine.DesiredFramerate) * AnimationDelay)
             Select Case LoopMode
             Case F2LM_Restart
-                AnimationFrame = WrapValue(AnimationFrame + AnimationDirection, 1, Images.Count)
+                AnimationFrame = WrapValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.Count)
             Case F2LM_PingPong
-                AnimationFrame = AnimationFrame + AnimationDirection
+                AnimationFrame = AnimationFrame + (AnimationDirection * Floor(l_dblElapsed))
                 If (AnimationFrame < 1) Then
                     AnimationFrame = 2
                     AnimationDirection = 1
@@ -164,7 +165,7 @@ On Error Resume Next
                     AnimationDirection = -1
                 End If
             Case F2LM_OneShot
-                AnimationFrame = ClipValue(AnimationFrame + AnimationDirection, 1, Images.Count)
+                AnimationFrame = ClipValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.Count)
             End Select
         End If
     End If

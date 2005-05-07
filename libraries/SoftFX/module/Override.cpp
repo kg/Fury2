@@ -56,7 +56,7 @@ Export int AddOverride(const char* key, Override::Override value) {
   if (find(Override::Overrides[index].begin(), Override::Overrides[index].end(), value) != Override::Overrides[index].end()) {
     return false;
   } else {
-    Override::Overrides[index].push_front(value);
+    Override::Overrides[index].insert(Override::Overrides[index].begin(), value);
     Override::EnableOverrides = true;
     return true;
   }
@@ -83,8 +83,10 @@ Export int RemoveOverride(const char* key, Override::Override value) {
   SS_Start
   Override::OverrideIndex index = Override::OverrideKeyToIndex(key);
   if (index < 0) return false;
-  if (find(Override::Overrides[index].begin(), Override::Overrides[index].end(), value) != Override::Overrides[index].end()) {
-    Override::Overrides[index].remove(value);
+  Override::OverrideList::iterator iter;
+  iter = find(Override::Overrides[index].begin(), Override::Overrides[index].end(), value);
+  if (iter != Override::Overrides[index].end()) {
+    Override::Overrides[index].erase(iter);
     return true;
   } else {
     return false;
@@ -147,9 +149,9 @@ int Override::EnumOverrides(Override::OverrideIndex index, int parameter_count, 
     }
     va_end(parameter_list);
     Override::OverrideList::iterator OverrideIter = KeyOverrides->begin();
+    eofp *fpv;
     while (OverrideIter != KeyOverrides->end()) {
       if (*OverrideIter) {
-        eofp *fpv;
         ps.index = index;
         ps.count = parameter_count;
         ps.key = key.c_str();
@@ -157,18 +159,14 @@ int Override::EnumOverrides(Override::OverrideIndex index, int parameter_count, 
         // may thee rest in peace
         fpv = (eofp*)*OverrideIter;
         if (fpv) {
-          result = 0;
-          try {
-            result = fpv(&ps);
-          } catch ( ... ) {
-          }
+          result = fpv(&ps);
         }
         if (result != 0) {
           ProfileStop("EnumOverrides");
           return result;
         }
       }
-      OverrideIter++;
+      ++OverrideIter;
     }
   }
   SS_End

@@ -629,30 +629,36 @@ End Sub
 Public Property Get Script() As Object
 Attribute Script.VB_Description = "*The map's script."
 On Error Resume Next
-Dim MapName As String
 Dim l_strScript As String
     Err.Clear
     If Trim(m_strScriptSource) = "" Then Exit Property
     If m_objScript Is Nothing Then
         If (m_booScriptFailed = False) Then
             Err.Clear
-            Engine.MapObjectCount = Engine.MapObjectCount + 1
-            MapName = Engine.VariableName("m" & Filename + "script")
             With Engine.ScriptEngine.Language
-                l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
-                .GenerateClassVariable("Map") & .LineTerminator & _
-                .GenerateClassMethod("F2OInit", Array("T", "M"), _
-                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
-                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
-                ) & .LineTerminator & m_strScriptSource
+                If left(Trim(m_strScriptSource), 2) = "<#" Then
+                    l_strScript = Trim(m_strScriptSource)
+                    l_strScript = Mid(l_strScript, 3, Len(l_strScript) - 3)
+                    l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
+                    .GenerateClassVariable("Map") & .LineTerminator & _
+                    .GenerateClassMethod("F2OInit", Array("T", "M"), _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
+                    ) & .LineTerminator & mvarEngine.GetFile(l_strScript)
+                Else
+                    l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
+                    .GenerateClassVariable("Map") & .LineTerminator & _
+                    .GenerateClassMethod("F2OInit", Array("T", "M"), _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
+                    ) & .LineTerminator & m_strScriptSource
+                End If
                 m_booScript_Update = .ImplementsMethod(l_strScript, "Update")
                 m_booScript_Redraw = .ImplementsMethod(l_strScript, "Redraw")
                 m_booScript_Load = .ImplementsMethod(l_strScript, "Load")
                 m_booScript_Unload = .ImplementsMethod(l_strScript, "Unload")
                 m_booScript_Start = .ImplementsMethod(l_strScript, "Start")
-                Engine.CacheScript Filename + "_M", .GenerateClass(MapName, l_strScript)
-                Err.Clear
-                Set m_objScript = Engine.ScriptEngine.Eval(.GenerateInstantiation(MapName))
+                Set m_objScript = mvarEngine.GenerateScriptObject(l_strScript)
             End With
             Set Engine.IObjThis = Me
             Err.Clear
@@ -758,13 +764,13 @@ Dim l_mobObject As Fury2MapObject
             ProfileStart "Map.Lights.Update"
             l_lyrLayer.Lighting.Update
             ProfileStop "Map.Lights.Update"
-            Engine.ContextLevelRemove
             If l_lyrLayer.TileAnimations Is Nothing Then
             Else
                 ProfileStart "Map.TileAnimations.Update"
                 l_lyrLayer.TileAnimations.Update
                 ProfileStop "Map.TileAnimations.Update"
             End If
+            Engine.ContextLevelRemove
             l_lngLayers = l_lngLayers + 1
         Next l_lyrLayer
     End If

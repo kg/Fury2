@@ -87,7 +87,7 @@ On Error Resume Next
     If Obj.BindControl Is Nothing Then Obj.Rebind
 End Sub
 
-Public Property Get Item(vntIndexKey As Variant) As Fury2JoystickBinding
+Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2JoystickBinding
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
     Set Item = mCol(vntIndexKey)

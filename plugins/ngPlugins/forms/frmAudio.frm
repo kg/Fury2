@@ -149,9 +149,18 @@ Option Explicit
 Implements iExtendedForm
 Implements iDocument
 
-Private m_hndHandle As SoundHandle
+Private m_sndSound As Sound
+Private m_chnChannel As Channel
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
+
+Private Sub Form_Unload(Cancel As Integer)
+On Error Resume Next
+    m_chnChannel.Kill
+    Set m_chnChannel = Nothing
+    m_sndSound.Free
+    m_sndSound = Nothing
+End Sub
 
 Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
 End Property
@@ -163,9 +172,9 @@ End Property
 Public Sub RefreshInfo()
 On Error Resume Next
 Dim l_sngLength As Single
-    txtFileName.Text = GetTitle(m_hndHandle.Name)
+    txtFileName.Text = GetTitle(m_sndSound.Filename)
     With txtFileType
-        Select Case LCase(Trim(GetExtension(m_hndHandle.Name)))
+        Select Case LCase(Trim(GetExtension(m_sndSound.Filename)))
         Case "wav"
             .Text = "RIFF Wave Audio"
         Case "aif", "aiff"
@@ -196,24 +205,28 @@ End Sub
 
 Private Sub cmdPause_Click()
 On Error Resume Next
-    m_hndHandle.Paused = Not m_hndHandle.Paused
+    m_chnChannel.Paused = Not m_chnChannel.Paused
 End Sub
 
 Private Sub cmdPlay_Click()
 On Error Resume Next
-    If m_hndHandle.Playing Then
-        cmdPlay.Caption = "&Play"
-        m_hndHandle.Kill
-    Else
+    If m_chnChannel Is Nothing Then
         cmdPlay.Caption = "&Stop"
-        m_hndHandle.Play
+        Set m_chnChannel = m_sndSound.Play(False)
+    Else
+        cmdPlay.Caption = "&Play"
+        m_chnChannel.Kill
+        Set m_chnChannel = Nothing
     End If
 End Sub
 
 Private Sub cmdRewind_Click()
 On Error Resume Next
-    m_hndHandle.Kill
-    m_hndHandle.Play
+    If m_chnChannel Is Nothing Then
+    Else
+        m_chnChannel.Kill
+        Set m_chnChannel = m_sndSound.Play(False)
+    End If
 End Sub
 
 Private Sub Form_Activate()
@@ -222,7 +235,6 @@ End Sub
 
 Private Sub Form_QueryUnload(Cancel As Integer, UnloadMode As Integer)
 On Error Resume Next
-    m_hndHandle.Free
 End Sub
 
 Private Property Get iDocument_Plugin() As ngInterfaces.iPlugin
@@ -235,8 +247,8 @@ On Error Resume Next
     Set m_fpgPlugin = RHS
 End Property
 
-Friend Sub SetHandle(Handle As SoundHandle)
-    Set m_hndHandle = Handle
+Friend Sub SetHandle(Handle As Sound)
+    Set m_sndSound = Handle
     RefreshInfo
 End Sub
 

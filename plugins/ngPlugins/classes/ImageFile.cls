@@ -35,11 +35,32 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 Implements iPlugin
 Implements iFileTypePlugin
+Public Enum ImageFileClipboardFormats
+    CF_Image
+End Enum
+Private m_lngClipboardFormats(0 To 0)
 Private m_objEditor As Object
+Private m_clpClipboard As cCustomClipboard
+
+Friend Property Get CustomClipboard() As cCustomClipboard
+On Error Resume Next
+    Set CustomClipboard = m_clpClipboard
+End Property
+
+Public Property Get ClipboardFormat(Format As ImageFileClipboardFormats) As Long
+On Error Resume Next
+    ClipboardFormat = m_lngClipboardFormats(Format)
+End Property
 
 Public Property Get Editor() As Object
     Set Editor = m_objEditor
 End Property
+
+Private Sub Class_Initialize()
+On Error Resume Next
+    Set m_clpClipboard = New cCustomClipboard
+    m_lngClipboardFormats(CF_Image) = m_clpClipboard.AddFormat("Fury2Image")
+End Sub
 
 Private Sub iPlugin_ShowConfiguration()
 End Sub

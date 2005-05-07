@@ -50,172 +50,6 @@ Private InputState(0 To 3) As Boolean
 
 Public LeftBinding As String, UpBinding As String, RightBinding As String, DownBinding As String, ActivateBinding As String
 
-Public Sub Update()
-On Error Resume Next
-    If Obj Is Nothing Then Exit Sub
-    If TypeOf Obj Is Fury2Sprite Then
-        If (MoveCamera = True) And (Not (Camera Is Nothing)) Then
-            Camera.CenterOn Obj.X, Obj.YCenter - Obj.Z
-        End If
-        Obj.AnimateWhileMoving = True
-        If Enabled Then
-            With Engine
-            If Obj.Path.Count <= 0 Then
-                    If .DisableMovement Then
-                        Obj.Velocity = Obj.Velocity - .VelocityDecay
-                        If Obj.Velocity <= 0.05 Then
-                            Obj.Velocity = 0
-                        Else
-                        End If
-                    Else
-                        Select Case Style
-                        Case CS_Normal
-                            If InputState(3) = False And InputState(0) = False And _
-                            InputState(1) = True And InputState(2) = False Then
-                                Obj.Angle = 90 ' Right
-                            ElseIf InputState(3) = False And InputState(0) = False And _
-                            InputState(1) = True And InputState(2) = True Then
-                                Obj.Angle = 135 ' Down-Right
-                            ElseIf InputState(3) = False And InputState(0) = False And _
-                            InputState(1) = False And InputState(2) = True Then
-                                Obj.Angle = 180 ' Down
-                            ElseIf InputState(3) = True And InputState(0) = False And _
-                            InputState(1) = False And InputState(2) = True Then
-                                Obj.Angle = 225 ' Down-Left
-                            ElseIf InputState(3) = True And InputState(0) = False And _
-                            InputState(1) = False And InputState(2) = False Then
-                                Obj.Angle = 270 ' Left
-                            ElseIf InputState(3) = True And InputState(0) = True And _
-                            InputState(1) = False And InputState(2) = False Then
-                                Obj.Angle = 315 ' Up-Left
-                            ElseIf InputState(3) = False And InputState(0) = True And _
-                            InputState(1) = False And InputState(2) = False Then
-                                Obj.Angle = 0 ' Up
-                            ElseIf InputState(3) = False And InputState(0) = True And _
-                            InputState(1) = True And InputState(2) = False Then
-                                Obj.Angle = 45 ' Up-Right
-                            End If
-                            If InputState(3) Or InputState(1) Or InputState(0) Or InputState(2) Then
-                                If (Obj.State = Obj.IdleState) Then Obj.State = Obj.WalkState
-                                Obj.Velocity = Obj.Velocity + .VelocityDecay
-                                If Obj.Velocity > Obj.WalkSpeed Then Obj.Velocity = Obj.WalkSpeed
-                            Else
-                                Obj.Velocity = Obj.Velocity - .VelocityDecay
-                                If Obj.Velocity < .VelocityDecay Then
-                                    If (Obj.State = Obj.WalkState) Then Obj.State = Obj.IdleState
-                                    Obj.Velocity = 0
-                                End If
-                            End If
-                        Case CS_ResidentEvil
-                            If InputState(3) And InputState(1) Then
-                            ElseIf InputState(3) Then
-                                Obj.Angle = Obj.Angle - TurnSpeed
-                            ElseIf InputState(1) Then
-                                Obj.Angle = Obj.Angle + TurnSpeed
-                            End If
-                            If InputState(0) Then
-                                Obj.State = Obj.WalkState
-                                Obj.Velocity = Obj.Velocity + .VelocityDecay
-                                If Obj.Velocity > Obj.WalkSpeed Then Obj.Velocity = Obj.WalkSpeed
-                            ElseIf InputState(2) Then
-                                Obj.State = Obj.WalkState
-                                Obj.Velocity = Obj.Velocity - .VelocityDecay
-                                If Obj.Velocity < -Obj.WalkSpeed Then
-                                    Obj.Velocity = -Obj.WalkSpeed
-                                End If
-                            Else
-                                Obj.Velocity = Obj.Velocity - .VelocityDecay
-                                If Obj.Velocity < .VelocityDecay Then
-                                    Obj.State = Obj.IdleState
-                                    Obj.Velocity = 0
-                                End If
-                            End If
-                        Case CS_VerticalShooter
-                            If InputState(3) = False And InputState(1) = True Then
-                                Obj.State = Obj.WalkState
-                                Obj.XVelocity = Obj.WalkSpeed
-                            ElseIf InputState(3) = True And InputState(1) = False Then
-                                Obj.State = Obj.WalkState
-                                Obj.XVelocity = -Obj.WalkSpeed
-                            Else
-                                Obj.State = Obj.IdleState
-                                Obj.XVelocity = 0
-                            End If
-                            Obj.YVelocity = Obj.WalkSpeed
-                        Case CS_HorizontalShooter
-                            If InputState(0) = False And InputState(2) = True Then
-                                Obj.State = Obj.WalkState
-                                Obj.YVelocity = Obj.WalkSpeed
-                            ElseIf InputState(0) = True And InputState(2) = False Then
-                                Obj.State = Obj.WalkState
-                                Obj.YVelocity = -Obj.WalkSpeed
-                            Else
-                                Obj.State = Obj.IdleState
-                                Obj.YVelocity = 0
-                            End If
-                            Obj.XVelocity = Obj.WalkSpeed
-                        Case CS_Platformer
-                            If InputState(3) = False And InputState(1) = True Then
-                                Obj.Angle = 90 ' Right
-                            ElseIf InputState(3) = True And InputState(1) = False Then
-                                Obj.Angle = 270 ' Left
-                            End If
-                            If InputState(3) Or InputState(1) Then
-                                Obj.State = Obj.WalkState
-                                Obj.Velocity = Obj.Velocity + .VelocityDecay
-                                If Obj.Velocity > Obj.WalkSpeed Then Obj.Velocity = Obj.WalkSpeed
-                            Else
-                                Obj.Velocity = Obj.Velocity - .VelocityDecay
-                            If Obj.Velocity < .VelocityDecay Then
-                                Obj.State = Obj.IdleState
-                                Obj.Velocity = 0
-                            End If
-                            End If
-                        Case Else
-                        End Select
-                    End If
-            End If
-            End With
-        Else
-            InputState(0) = False
-            InputState(1) = False
-            InputState(2) = False
-            InputState(3) = False
-            Obj.Velocity = Obj.Velocity - Engine.VelocityDecay
-            If Obj.Velocity < Engine.VelocityDecay Then
-                Obj.State = Obj.IdleState
-                Obj.Velocity = 0
-            End If
-        End If
-        If (MoveCamera = True) And (Not (Camera Is Nothing)) Then
-            Camera.CenterOn CLng(Obj.X) + CameraXOffset, CLng(Obj.Y - Obj.Z) + CameraYOffset
-            If Engine.SmartMessageBoxPositioning Then
-                Engine.DefaultMessageTop = IIf((Obj.Y - Obj.Z) < (Engine.ScreenHeight * 0.49), 1, 0)
-            End If
-        End If
-    ElseIf TypeOf Obj Is Fury2Camera Then
-        If Enabled Then
-            If InputState(3) And InputState(1) Then
-            ElseIf InputState(3) Then
-                Obj.ViewportX = Obj.ViewportX - ScrollSpeed
-            ElseIf InputState(1) Then
-                Obj.ViewportX = Obj.ViewportX + ScrollSpeed
-            End If
-            If InputState(0) And InputState(2) Then
-            ElseIf InputState(0) Then
-                Obj.ViewportY = Obj.ViewportY - ScrollSpeed
-            ElseIf InputState(2) Then
-                Obj.ViewportY = Obj.ViewportY + ScrollSpeed
-            End If
-        Else
-            InputState(0) = False
-            InputState(1) = False
-            InputState(2) = False
-            InputState(3) = False
-        End If
-    End If
-End Sub
-
 Private Sub Class_Initialize()
     ScrollSpeed = 1
     MoveCamera = True
@@ -317,7 +151,97 @@ Private Sub Fury2Plugin_Unload()
 End Sub
 
 Private Sub Fury2Plugin_Update()
-    Update
+On Error Resume Next
+    If Obj Is Nothing Then Exit Sub
+    If TypeOf Obj Is Fury2Sprite Then
+        Obj.AnimateWhileMoving = True
+        If Enabled Then
+            With Engine
+                If Obj.Path.Count <= 0 Then
+                    If .DisableMovement Then
+                        Obj.Velocity = Obj.Velocity - .VelocityDecay
+                        If Obj.Velocity <= 0.05 Then
+                            Obj.Velocity = 0
+                        Else
+                        End If
+                    Else
+                        If InputState(3) = False And InputState(0) = False And _
+                        InputState(1) = True And InputState(2) = False Then
+                            Obj.Angle = 90 ' Right
+                        ElseIf InputState(3) = False And InputState(0) = False And _
+                        InputState(1) = True And InputState(2) = True Then
+                            Obj.Angle = 135 ' Down-Right
+                        ElseIf InputState(3) = False And InputState(0) = False And _
+                        InputState(1) = False And InputState(2) = True Then
+                            Obj.Angle = 180 ' Down
+                        ElseIf InputState(3) = True And InputState(0) = False And _
+                        InputState(1) = False And InputState(2) = True Then
+                            Obj.Angle = 225 ' Down-Left
+                        ElseIf InputState(3) = True And InputState(0) = False And _
+                        InputState(1) = False And InputState(2) = False Then
+                            Obj.Angle = 270 ' Left
+                        ElseIf InputState(3) = True And InputState(0) = True And _
+                        InputState(1) = False And InputState(2) = False Then
+                            Obj.Angle = 315 ' Up-Left
+                        ElseIf InputState(3) = False And InputState(0) = True And _
+                        InputState(1) = False And InputState(2) = False Then
+                            Obj.Angle = 0 ' Up
+                        ElseIf InputState(3) = False And InputState(0) = True And _
+                        InputState(1) = True And InputState(2) = False Then
+                            Obj.Angle = 45 ' Up-Right
+                        End If
+                        If InputState(3) Or InputState(1) Or InputState(0) Or InputState(2) Then
+                            If (Obj.State = Obj.IdleState) Then Obj.State = Obj.WalkState
+                            Obj.Velocity = Obj.Velocity + .VelocityDecay
+                            If Obj.Velocity > Obj.WalkSpeed Then Obj.Velocity = Obj.WalkSpeed
+                        Else
+                            Obj.Velocity = Obj.Velocity - .VelocityDecay
+                            If Obj.Velocity < .VelocityDecay Then
+                                If (Obj.State = Obj.WalkState) Then Obj.State = Obj.IdleState
+                                Obj.Velocity = 0
+                            End If
+                        End If
+                    End If
+                End If
+            End With
+        Else
+            InputState(0) = False
+            InputState(1) = False
+            InputState(2) = False
+            InputState(3) = False
+            Obj.Velocity = Obj.Velocity - Engine.VelocityDecay
+            If Obj.Velocity < Engine.VelocityDecay Then
+                Obj.State = Obj.IdleState
+                Obj.Velocity = 0
+            End If
+        End If
+        If (MoveCamera = True) And (Not (Camera Is Nothing)) Then
+            Camera.CenterOn CLng(Obj.X) + CameraXOffset, CLng(Obj.Y - Obj.Z) + CameraYOffset
+            If Engine.SmartMessageBoxPositioning Then
+                Engine.DefaultMessageTop = IIf((Obj.Y - Obj.Z) < (Engine.ScreenHeight * 0.49), 1, 0)
+            End If
+        End If
+    ElseIf TypeOf Obj Is Fury2Camera Then
+        If Enabled Then
+            If InputState(3) And InputState(1) Then
+            ElseIf InputState(3) Then
+                Obj.ViewportX = Obj.ViewportX - ScrollSpeed
+            ElseIf InputState(1) Then
+                Obj.ViewportX = Obj.ViewportX + ScrollSpeed
+            End If
+            If InputState(0) And InputState(2) Then
+            ElseIf InputState(0) Then
+                Obj.ViewportY = Obj.ViewportY - ScrollSpeed
+            ElseIf InputState(2) Then
+                Obj.ViewportY = Obj.ViewportY + ScrollSpeed
+            End If
+        Else
+            InputState(0) = False
+            InputState(1) = False
+            InputState(2) = False
+            InputState(3) = False
+        End If
+    End If
 End Sub
 
 Private Sub Fury2Plugin_OutputPluginChanged()

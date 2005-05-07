@@ -189,7 +189,6 @@ Dim l_strScript As String
     If m_objScript Is Nothing Then
         If (m_booScriptFailed = False) Then
             Err.Clear
-            Engine.TimerEventObjectCount = Engine.TimerEventObjectCount + 1
             With Engine.ScriptEngine.Language
                 l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                 .GenerateClassVariable("Map") & .LineTerminator & _
@@ -197,8 +196,7 @@ Dim l_strScript As String
                 .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
                 .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
                 ) & .LineTerminator & ScriptSource
-                Engine.CacheScript "TE" & Engine.TimerEventObjectCount, .GenerateClass("TE" & Engine.TimerEventObjectCount, l_strScript)
-                Set m_objScript = Engine.ScriptEngine.Eval(.GenerateInstantiation("TE" & Engine.TimerEventObjectCount))
+                Set m_objScript = Engine.GenerateScriptObject(l_strScript)
             End With
             Set Engine.IObjThis = Me
             m_objScript.F2OInit Me, m_mapMap

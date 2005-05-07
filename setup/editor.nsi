@@ -48,13 +48,12 @@ Section "-Editor"
      StrCpy $ALREADY_INSTALLED 1
     new_installation:
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayName" "${NAME}"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "UninstallString" "$INSTDIR\Uninstall.exe"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "UninstallString" "$INSTDIR\Uninstall_Editor.exe"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "DisplayVersion" "${VERSION}"
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoModify" 1
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}" "NoRepair" 1
 	WriteUninstaller "$INSTDIR\Uninstall_Editor.exe"
     old_installation:
-    DeleteRegKey HKLM "Software\Squared Interactive\ngIDE"
 
     IfFileExists $INSTDIR\sys\engine.dll EngineFound
         DetailPrint "Engine not installed."
@@ -74,6 +73,9 @@ Section "-Editor"
             ExecWait '"$2"'
             Delete $2
     EngineFound:
+
+    DeleteRegKey HKLM "Software\Squared Interactive\ngIDE"
+    DeleteRegKey HKCU "Software\Squared Interactive\ngIDE"
 
     SetOutPath "$INSTDIR\sys"
 	File "J:\development\binary\sys\compressed\ngIDE.exe"

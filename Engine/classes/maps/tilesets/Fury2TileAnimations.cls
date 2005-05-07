@@ -110,8 +110,8 @@ End Sub
 
 Sub Update()
 On Error Resume Next
+    If mCol.Count < 1 Then Exit Sub
 Dim l_tanAnimation As Fury2TileAnimation
-    If mCol.Count = 0 Then Exit Sub
     For Each l_tanAnimation In mCol
         l_tanAnimation.Update
         mvarMapTable(l_tanAnimation.Tile) = l_tanAnimation.Frame(l_tanAnimation.CurrentFrame)
@@ -128,7 +128,7 @@ On Error Resume Next
     End If
 End Function
 
-Public Property Get Item(vntIndexKey As Variant) As Fury2TileAnimation
+Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2TileAnimation
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
     Set Item = mCol(vntIndexKey)

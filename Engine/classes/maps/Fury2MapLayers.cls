@@ -75,7 +75,7 @@ Dim l_objObject As Object
 '        Trust me, this works - even though it doesn't make sense unless you think about it
 '        ToIndex = ToIndex - 1
     End If
-    Add l_objObject, , ToIndex
+    Add l_objObject, ToIndex
 End Sub
 
 Public Function Find(Obj) As Long
@@ -101,42 +101,26 @@ Dim m_lyrLayer As Fury2MapLayer
     Err.Clear
 End Sub
 
-Public Sub Add(ByVal Obj As Fury2MapLayer, Optional sKey, Optional AtIndex)
+Public Sub Add(ByVal Obj As Fury2MapLayer, Optional ByVal AtIndex As Long = -1)
 On Error Resume Next
     Obj.SetParent Parent
-    If IsMissing(sKey) Then
-        If IsMissing(AtIndex) Then
-            mCol.Add Obj
-        Else
-            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
-                mCol.Add Obj
-            ElseIf AtIndex <= 1 Then
-                mCol.Add Obj, , 1
-            ElseIf mCol.Count > AtIndex Then
-                mCol.Add Obj, , AtIndex
-            Else
-                mCol.Add Obj, , , AtIndex - 1
-            End If
-        End If
+    If AtIndex = -1 Then
+        mCol.Add Obj
     Else
-        If IsMissing(AtIndex) Then
-            mCol.Add Obj, sKey
+        If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
+            mCol.Add Obj
+        ElseIf AtIndex <= 1 Then
+            mCol.Add Obj, , 1
+        ElseIf mCol.Count > AtIndex Then
+            mCol.Add Obj, , AtIndex
         Else
-            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
-                mCol.Add Obj, sKey
-            ElseIf AtIndex <= 1 Then
-                mCol.Add Obj, sKey, 1
-            ElseIf mCol.Count > AtIndex Then
-                mCol.Add Obj, sKey, AtIndex
-            Else
-                mCol.Add Obj, sKey, , AtIndex - 1
-            End If
+            mCol.Add Obj, , , AtIndex - 1
         End If
     End If
     Err.Clear
 End Sub
 
-Public Property Get Item(vntIndexKey As Variant) As Fury2MapLayer
+Public Property Get Item(ByVal vntIndexKey As Long) As Fury2MapLayer
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
   Set Item = mCol(vntIndexKey)

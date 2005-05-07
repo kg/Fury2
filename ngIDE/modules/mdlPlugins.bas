@@ -137,7 +137,6 @@ Dim l_plgPlugin As iPlugin
         InstallPlugin "internal.cUnknownFileType", App.Path
         InstallPlugin "ngPlugins.RM2kXSpriteImporter", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.TextFile", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.HTMLFile", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.ImageFile", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.TilesetAssembler", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.ImageGridRemover", GetPath(App.Path) & "\ng.dll"
@@ -147,11 +146,12 @@ Dim l_plgPlugin As iPlugin
         InstallPlugin "ngPlugins.ScriptFile", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.SpriteEditor", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.FontEditor", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.TilesetEditor", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.CommandBrowser", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.ShowPictureDesigner", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.UserDataEditor", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "tk.TKTilesetImporter", GetPath(App.Path) & "\tk.dll"
-'        InstallPlugin "tk.TKBoardImporter", GetPath(App.Path) & "\tk.dll"
+        InstallPlugin "tk.TKBoardImporter", GetPath(App.Path) & "\tk.dll"
         l_lngCount = ReadRegSetting("Plugins\Count", 0)
     End If
     If l_lngCount > 0 Then

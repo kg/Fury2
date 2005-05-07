@@ -506,24 +506,24 @@ Dim m_bytText() As Byte
     Loop
 End Sub
 
-Public Sub LoadGeneric(ByRef Data, ByVal VarType)
+Public Sub LoadGeneric(ByRef Data, ByVal VarType As String)
 On Error Resume Next
     ' Fills the data type so that the proper type is loaded. Used for VBscript.
-    Select Case VarType
-    Case vbString, "string", "String"
+    Select Case LCase(Trim(VarType))
+    Case "string", "s"
         Data = CStr(Data)
-    Case vbLong, "long", "Long"
+    Case "long", "int", "i"
         Data = CLng(Data)
-    Case vbInteger, "integer", "Integer"
+    Case "integer", "short"
         Data = CInt(Data)
-    Case vbSingle, "single", "Single", "number", "Number"
+    Case "single", "number", "float", "f"
         Data = CSng(Data)
-    Case vbDouble, "double", "Double"
+    Case "double", "dbl"
         Data = CDbl(Data)
-    Case vbDate, "date", "Date"
+    Case "date", "Date", "time", "datetime", "d"
         Data = CDate(Data)
-    Case vbBoolean, "boolean", "Boolean", "bool", "Bool"
-        Data = CDate(Data)
+    Case "boolean", "bool", "b"
+        Data = CBool(Data)
     Case Else
     End Select
     Load Data

@@ -86,7 +86,7 @@ Dim l_objWaypoint As Fury2Waypoint
     End If
 End Sub
 
-Public Function Find(Obj) As Long
+Public Function Find(ByVal Obj) As Long
 On Error Resume Next
 Dim l_objItem As Object, l_lngItems As Long
     If mCol.Count <= 0 Then Exit Function
@@ -169,7 +169,7 @@ On Error Resume Next
     End If
 End Sub
 
-Public Property Get Item(vntIndexKey As Variant) As Fury2Waypoint
+Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2Waypoint
 Attribute Item.VB_Description = "*"
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next

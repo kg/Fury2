@@ -126,10 +126,8 @@ Dim l_strChosenName As String
     If Engine.FileSystem.FileExists(Path) = False Then
         Engine.CriticalError "UIKit", "LoadForm", "File not found: " & Path
     End If
-    l_strName = Engine.VariableName(Path)
     l_strScript = Engine.FileSystem.File(Path).Text
-    Engine.CacheScript l_strName, Engine.ScriptEngine.Language.GenerateClass(l_strName, l_strScript)
-    Set LoadForm = Engine.ScriptEngine.Eval(Engine.ScriptEngine.Language.GenerateInstantiation(l_strName))
+    Set LoadForm = Engine.GenerateScriptObject(l_strScript)
     l_strChosenName = l_strName
     l_strChosenName = CStr(LoadForm.Name)
     Forms.Remove l_strChosenName

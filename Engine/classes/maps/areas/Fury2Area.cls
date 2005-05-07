@@ -145,15 +145,12 @@ End Function
 
 Public Property Get Script() As Object
 On Error Resume Next
-Dim AreaName As String
 Dim l_strScript As String
     Err.Clear
     If Trim(ScriptSource) = "" Then Exit Property
     If mvarScript Is Nothing Then
         If (mvarScriptFailed = False) Then
             Err.Clear
-            mvarMap.Engine.AreaObjectCount = mvarMap.Engine.AreaObjectCount + 1
-            AreaName = mvarMap.Engine.VariableName("m" & mvarMap.Filename + "a" & Index)
             With mvarMap.Engine.ScriptEngine.Language
                 l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                 .GenerateClassVariable("Map") & .LineTerminator & _
@@ -166,8 +163,7 @@ Dim l_strScript As String
                 mvarScript_Enter = .ImplementsMethod(l_strScript, "Enter")
                 mvarScript_Move = .ImplementsMethod(l_strScript, "Move")
                 mvarScript_Leave = .ImplementsMethod(l_strScript, "Leave")
-                mvarMap.Engine.CacheScript mvarMap.Filename + "_A" & Index, .GenerateClass(AreaName, l_strScript)
-                Set mvarScript = mvarMap.Engine.ScriptEngine.Eval(.GenerateInstantiation(AreaName))
+                Set mvarScript = mvarMap.Engine.GenerateScriptObject(l_strScript)
             End With
             Set mvarMap.Engine.IObjThis = Me
             mvarScript.F2OInit Me, mvarMap
@@ -254,15 +250,10 @@ End Property
 Friend Sub DualIntersect(ByRef Rectangle1 As Rectangle, ByRef Rectangle2 As Rectangle, ByRef Value1 As Boolean, ByRef Value2 As Boolean)
 On Error Resume Next
     With Rectangle1
-        Value1 = False
-        If mvarX > (.left + .Width) Then
-        Else
-            If mvarY > (.top + .Height) Then
-            Else
-                If (mvarX + mvarWidth) < .left Then
-                Else
-                    If (mvarY + mvarHeight) < .top Then
-                    Else
+        If mvarX <= (.left + .Width) Then
+            If mvarY <= (.top + .Height) Then
+                If (mvarX + mvarWidth) >= .left Then
+                    If (mvarY + mvarHeight) >= .top Then
                         Value1 = True
                     End If
                 End If
@@ -270,15 +261,10 @@ On Error Resume Next
         End If
     End With
     With Rectangle2
-        Value2 = False
-        If mvarX > (.left + .Width) Then
-        Else
-            If mvarY > (.top + .Height) Then
-            Else
-                If (mvarX + mvarWidth) < .left Then
-                Else
-                    If (mvarY + mvarHeight) < .top Then
-                    Else
+        If mvarX <= (.left + .Width) Then
+            If mvarY <= (.top + .Height) Then
+                If (mvarX + mvarWidth) >= .left Then
+                    If (mvarY + mvarHeight) >= .top Then
                         Value2 = True
                     End If
                 End If

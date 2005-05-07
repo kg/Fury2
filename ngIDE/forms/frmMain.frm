@@ -336,9 +336,10 @@ Attribute VB_Exposed = False
 
 Option Explicit
 Implements iCustomMenuHandler
+
 Private Const WM_MDIGETACTIVE = &H229
-Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
-Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
 
 Private m_colNoticeQueue As Engine.Fury2Collection
 Private m_notNotice As cNotice
@@ -404,7 +405,7 @@ End Sub
 
 Private Function GetToolbarX(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
+Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0))) * Screen.TwipsPerPixelX
@@ -412,7 +413,7 @@ End Function
 
 Private Function GetToolbarY(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
+Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0))) * Screen.TwipsPerPixelY
@@ -801,68 +802,6 @@ On Error Resume Next
     Err.Clear
 End Sub
 
-Private Sub m_mdiTabs_BeforeWindowSwitch(ByVal hwnd As Long, Cancel As Boolean)
-On Error Resume Next
-Dim l_booFound As Boolean
-Dim l_mgrForm As cChildManager
-    If Me.Enabled = False Then
-        Cancel = True
-    Else
-        For Each l_mgrForm In m_colChildWindows
-            Err.Clear
-            If (l_mgrForm.Form.hwnd = hwnd) Then
-                l_booFound = True
-                Exit For
-            ElseIf l_mgrForm.extender Is Nothing Then
-            Else
-                If l_mgrForm.extender.hwnd = hwnd Then
-                    l_booFound = True
-                    Exit For
-                End If
-            End If
-        Next l_mgrForm
-        If l_booFound Then
-        Else
-            Cancel = True
-        End If
-    End If
-End Sub
-
-Private Sub m_mdiTabs_CloseWindow(ByVal hwnd As Long)
-On Error Resume Next
-    If Not Me.Enabled Then Exit Sub
-    If TypeOf Me.ActiveChild.Form Is frmGameDebugger Then Exit Sub
-    SetBusyState True
-    g_edEditor.Action_CloseWindow
-    SetBusyState False
-End Sub
-
-Private Sub m_mdiTabs_TabClick(ByVal iButton As MouseButtonConstants, ByVal hwnd As Long, ByVal screenX As Long, ByVal screenY As Long)
-On Error Resume Next
-Dim l_mgrForm As cChildManager
-    If Not Me.Enabled Then Exit Sub
-    For Each l_mgrForm In m_colChildWindows
-        Err.Clear
-        If (l_mgrForm.Form.hwnd = hwnd) Then
-            l_mgrForm.Activate
-            Exit For
-        ElseIf l_mgrForm.extender Is Nothing Then
-        Else
-            If l_mgrForm.extender.hwnd = hwnd Then
-                l_mgrForm.Activate
-                Exit For
-            End If
-        End If
-    Next l_mgrForm
-End Sub
-
-Private Sub m_mdiTabs_WindowChanged(ByVal hwnd As Long)
-On Error Resume Next
-Dim l_mgrChild As cChildManager
-    Set l_mgrChild = Me.ActiveChild
-    g_edEditor.Event_DocumentActivate l_mgrChild
-End Sub
-
 Private Sub MDIForm_Activate()
 On Error Resume Next
     g_edEditor.AcceleratorManager.Enabled = True
@@ -915,13 +854,15 @@ End Sub
 Private Sub MDIForm_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_varFiles As Variant, l_lngFiles As Long
-    If Data.Files.Count > 0 Then
-        Effect = vbDropEffectCopy
-        ReDim l_varFiles(0 To Data.Files.Count - 1)
-        For l_lngFiles = 1 To Data.Files.Count
-            l_varFiles(l_lngFiles - 1) = Data.Files(l_lngFiles)
-        Next l_lngFiles
-        g_edEditor.OpenFiles l_varFiles
+    If Data.GetFormat(vbCFFiles) Then
+        If Data.Files.Count > 0 Then
+            Effect = vbDropEffectCopy
+            ReDim l_varFiles(0 To Data.Files.Count - 1)
+            For l_lngFiles = 1 To Data.Files.Count
+                l_varFiles(l_lngFiles - 1) = Data.Files(l_lngFiles)
+            Next l_lngFiles
+            g_edEditor.OpenFiles l_varFiles
+        End If
     End If
 End Sub
 
@@ -1041,7 +982,7 @@ End Sub
 
 Private Sub sbStatus_DrawItem(ByVal lhDC As Long, ByVal iPanel As Long, ByVal lLeftPixels As Long, ByVal lTopPixels As Long, ByVal lRightPixels As Long, ByVal lBottomPixels As Long)
 On Error Resume Next
-Dim l_rctProgress As Rect
+Dim l_rctProgress As RECT
 Dim l_lngBrush As Long
     If LCase(sbStatus.PanelKey(iPanel)) = "progress" Then
         With l_rctProgress
@@ -1300,6 +1241,7 @@ Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l
         Set m_cmnLastDocument = Nothing
         With Menu
             .Enabled(.IndexForKey("Action:CloseWindow")) = Not (Me.ActiveChild Is Nothing)
+            .Enabled(.IndexForKey("Action:PreviousWindow")) = (Me.Documents.Count > 1)
             .Enabled(.IndexForKey("Action:NextWindow")) = (Me.Documents.Count > 1)
         End With
         Set l_cmnDocument = Me.ActiveChild.Form
@@ -1472,7 +1414,10 @@ Private Sub tsDocuments_TabSelected(theTab As ngUI.ngTab)
 On Error Resume Next
 Dim l_mgrChild As cChildManager
     Set l_mgrChild = theTab.Tag
-    l_mgrChild.Activate
+    If l_mgrChild Is ActiveChild Then
+    Else
+        l_mgrChild.Activate
+    End If
 End Sub
 
 Private Sub tsFileTabs_TabClick(theTab As vbalDTab6.cTab, ByVal iButton As MouseButtonConstants, ByVal Shift As ShiftConstants, ByVal X As Single, ByVal Y As Single)
@@ -1514,9 +1459,9 @@ Dim l_lngFiles As Long
     If Data.Files.Count > 0 Then
         For l_lngFiles = 1 To Data.Files.Count
             If Right(Trim(nodeOver.key), 1) = "/" Then
-                FileCopy Data.Files(l_lngFiles), g_edEditor.GamePath & "\" & Replace(nodeOver.key, "/", "\") & GetTitle(Data.Files(l_lngFiles))
+                DoCopy Data.Files(l_lngFiles), g_edEditor.GamePath & "\" & Replace(nodeOver.key, "/", "\") & GetTitle(Data.Files(l_lngFiles))
             Else
-                FileCopy Data.Files(l_lngFiles), g_edEditor.GamePath & "\" & GetTitle(Data.Files(l_lngFiles))
+                DoCopy Data.Files(l_lngFiles), g_edEditor.GamePath & "\" & GetTitle(Data.Files(l_lngFiles))
             End If
         Next l_lngFiles
         RefreshFileSidebar
@@ -1558,15 +1503,18 @@ Dim l_fsFilesystem As Fury2Filesystem
             If Right(l_nodNode.key, 1) = "/" Then
                 ' Folder
                 Select Case QuickShowMenu(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-                    Menus("Expand", "Explore", "-", "Delete", "-", "New Folder"))
+                    Menus("Expand", "Explore", "-", "Rename", "Delete", "-", "New Folder"))
                 Case 1
                     l_nodNode.Expanded = True
                 Case 2
                     Shell "explorer """ & Replace(l_fsFilesystem.Root & Replace(l_nodNode.key, "/", "\"), "\\", "\") & """", vbNormalFocus
                 Case 4
-                    RmDir l_fsFilesystem.Root & Replace(l_nodNode.key, "/", "\")
+                    DoRename l_fsFilesystem.Root & Replace(l_nodNode.key, "/", "\")
                     RefreshFileSidebar
-                Case 6
+                Case 5
+                    DoDelete l_fsFilesystem.Root & Replace(l_nodNode.key, "/", "\")
+                    RefreshFileSidebar
+                Case 7
                     l_strFolderName = InputBox("Folder Name", "New Folder", "New Folder")
                     MkDir l_fsFilesystem.Root & Replace(l_nodNode.key, "/", "\") & l_strFolderName
                     RefreshFileSidebar
@@ -1575,11 +1523,14 @@ Dim l_fsFilesystem As Fury2Filesystem
             Else
                 ' File
                 Select Case QuickShowMenu(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-                    Menus("Open", "-", "Delete"))
+                    Menus("Open", "-", "Rename", "Delete"))
                 Case 1
                     g_edEditor.File_Open l_fsFilesystem.File(l_nodNode.key).GetRealFilename
                 Case 3
-                    Kill l_fsFilesystem.File(l_nodNode.key).GetRealFilename
+                    DoRename l_fsFilesystem.File(l_nodNode.key).GetRealFilename
+                    RefreshFileSidebar
+                Case 4
+                    DoDelete l_fsFilesystem.File(l_nodNode.key).GetRealFilename
                     RefreshFileSidebar
                 Case Else
                 End Select
@@ -1603,9 +1554,9 @@ Dim l_lngLeftSpace As Long, l_lngRightSpace As Long
 Dim l_lngTopSpace As Long, l_lngBottomSpace As Long
 Dim l_lngTextHeight As Long, l_lngTitleHeight As Long
 Dim l_lngWidth As Long, l_lngHeight As Long
-Dim l_rctWindow As Win32.Rect
+Dim l_rctWindow As Win32.RECT
 Dim l_lngWindowWidth As Long, l_lngWindowHeight As Long
-Dim l_rctTextSize As Win32.Rect, l_rctText As Win32.Rect
+Dim l_rctTextSize As Win32.RECT, l_rctText As Win32.RECT
 Dim l_sngCloseTime As Single
 Dim l_strWaitingNotices As String
     GetClientRect Me.hwnd, l_rctWindow
@@ -1721,7 +1672,9 @@ On Error Resume Next
         End If
         If .CloseTime <> -1 Then tmrNotice.Enabled = True
     End With
+    tbrNotice.EnableTheme = False
     picNotice.Visible = True
+    tbrNotice.EnableTheme = False
 End Sub
 
 Public Sub ShowNotice(Optional Title As String = "", Optional Text As String = "", Optional Icon As Fury2Image = Nothing, Optional Options As Variant = Nothing, Optional AutoClose As Boolean = True)

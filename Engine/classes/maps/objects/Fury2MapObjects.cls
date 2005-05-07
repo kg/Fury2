@@ -43,7 +43,7 @@ On Error Resume Next
     Set mCol = Nothing
 End Sub
 
-Public Function Find(Obj) As Long
+Public Function Find(ByVal Obj) As Long
 On Error Resume Next
 Dim l_objItem As Object, l_lngItems As Long
     If mCol.Count <= 0 Then Exit Function
@@ -107,7 +107,7 @@ On Error Resume Next
     Set GenericItem = mCol(vntIndexKey)
 End Property
 
-Public Property Get Item(vntIndexKey As Variant)
+Public Property Get Item(ByVal vntIndexKey As Variant)
 On Error Resume Next
 Dim l_mobItem As Fury2MapObject
 Dim l_sndItem As Fury2SoundObject

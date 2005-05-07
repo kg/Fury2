@@ -413,9 +413,9 @@ On Error Resume Next
     picUI.Refresh
 End Sub
 
-Private Function ClipboardContainsFormat(Format As FontEditorClipboardFormats) As Boolean
+Private Function ClipboardContainsFormat(Format As TilesetEditorClipboardFormats) As Boolean
 On Error Resume Next
-Dim l_objPlugin As FontEditor
+Dim l_objPlugin As TilesetEditor
     Set l_objPlugin = m_fpgPlugin
     With l_objPlugin.CustomClipboard
         .GetCurrentFormats Me.hwnd
@@ -423,9 +423,9 @@ Dim l_objPlugin As FontEditor
     End With
 End Function
 
-Private Function ClipboardFormat(Format As FontEditorClipboardFormats) As Long
+Private Function ClipboardFormat(Format As TilesetEditorClipboardFormats) As Long
 On Error Resume Next
-Dim l_objPlugin As FontEditor
+Dim l_objPlugin As TilesetEditor
     Set l_objPlugin = m_fpgPlugin
     ClipboardFormat = l_objPlugin.ClipboardFormat(Format)
 End Function
@@ -437,7 +437,7 @@ End Function
 
 Private Function CustomClipboard() As cCustomClipboard
 On Error Resume Next
-Dim l_objPlugin As FontEditor
+Dim l_objPlugin As TilesetEditor
     Set l_objPlugin = m_fpgPlugin
     Set CustomClipboard = l_objPlugin.CustomClipboard
 End Function
@@ -465,9 +465,9 @@ On Error Resume Next
     End Select
 End Sub
 
-Private Sub dtViews_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub dtViews_TabSelected(TheTab As vbalDTab6.cTab)
 On Error Resume Next
-    m_lngCurrentView = CLng(Mid(theTab.key, 2))
+    m_lngCurrentView = CLng(Mid(TheTab.key, 2))
     ViewChanged
 End Sub
 
@@ -488,7 +488,7 @@ End Sub
 
 Private Sub Form_Load()
 On Error Resume Next
-'    vsFont.Width = GetScrollbarSize(vsFont)
+'    vsTileset.Width = GetScrollbarSize(vsTileset)
     InitViews
     Form_Activate
 End Sub

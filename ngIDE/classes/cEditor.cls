@@ -502,6 +502,7 @@ End Function
 Public Sub Event_FilesystemChanged()
 On Error Resume Next
     frmMain.RefreshFileSidebar
+    frmMain.RefreshDocumentTabs
 End Sub
 
 Public Sub Event_FocusChanged()
@@ -1143,6 +1144,20 @@ End Sub
 Public Function SelectFile(Optional Filter As String = "", Optional Title As String = "Open...") As String
 On Error Resume Next
     SelectFile = SelectLocalFile(Filter, Title)
+End Function
+
+Public Function SelectSaveFilename(Optional OldFilename As String = "", Optional Filter As String = "", Optional Title As String = "Save...") As String
+On Error Resume Next
+Dim l_dlgDialog As New GCommonDialog
+Dim l_strFilename As String
+Dim l_booOldState As Boolean
+    l_strFilename = OldFilename
+    l_booOldState = g_edEditor.AcceleratorManager.Enabled
+    g_edEditor.AcceleratorManager.Enabled = False
+    If l_dlgDialog.VBGetSaveFileName(l_strFilename, , True, Filter & "|All Files|*.*", , , Title) Then
+        SelectSaveFilename = l_strFilename
+    End If
+    g_edEditor.AcceleratorManager.Enabled = l_booOldState
 End Function
 
 Public Sub Macro_Run(Optional ByVal Filename As String = "")

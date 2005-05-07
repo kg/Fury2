@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.10#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.12#0"; "ngUI.ocx"
 Begin VB.Form frmMap 
    BorderStyle     =   0  'None
    ClientHeight    =   5580
@@ -197,13 +197,13 @@ Begin VB.Form frmMap
                _ExtentY        =   1164
             End
             Begin ngPlugins.TilePicker tpkTiles 
-               Height          =   300
-               Left            =   1140
+               Height          =   675
+               Left            =   1335
                TabIndex        =   14
-               Top             =   120
+               Top             =   600
                Width           =   420
                _ExtentX        =   741
-               _ExtentY        =   529
+               _ExtentY        =   1191
             End
             Begin ngPlugins.ObjectInspector insInspect 
                Height          =   660
@@ -346,7 +346,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As PointAPI) As Long
 Implements iExtendedForm
 Implements iEditingCommands
 Implements iCustomMenus
@@ -615,7 +615,7 @@ Public Sub AutoScroll(Optional ByVal X As Long = -32767, Optional ByVal Y As Lon
 On Error Resume Next
 Dim l_lngX1 As Long, l_lngY1 As Long, l_lngX2 As Long, l_lngY2 As Long
 Dim l_lngScrollX As Long, l_lngScrollY As Long
-Dim l_ptCursor As POINTAPI
+Dim l_ptCursor As PointAPI
 Dim l_lngCapture As Long
     If Not m_voViewOptions.AutoScroll Then Exit Sub
     hsMap.Tag = "lock"
@@ -669,6 +669,11 @@ End Sub
 
 Public Sub Blocking_ToolChanged()
 On Error Resume Next
+    If Tool_Blocking = BlockingTool_PolyLine Then
+        SelectCollisionLines -1, -1
+    End If
+    m_lngPoint = 0
+    Redraw
 End Sub
 
 Public Sub BlockingUndoPush(Optional ByVal Layer As Long = -1)
@@ -1214,6 +1219,16 @@ Dim l_lngTemp As Long
     Next l_lngY
 End Sub
 
+Private Sub tmrRefreshTileset_Timer()
+
+End Sub
+
+Private Sub tpkTiles_TilesetModified()
+On Error Resume Next
+    RefreshBrush
+    Redraw
+End Sub
+
 Private Sub tsInspector_Resize()
 On Error Resume Next
     If m_ctlCurrentInspector Is Nothing Then
@@ -1223,7 +1238,7 @@ On Error Resume Next
     End If
 End Sub
 
-Private Sub tsInspector_TabSelected(theTab As ngTab)
+Private Sub tsInspector_TabSelected(TheTab As ngTab)
 On Error Resume Next
     InspectorChanged
 End Sub
@@ -1237,7 +1252,7 @@ On Error Resume Next
     End If
 End Sub
 
-Private Sub tsLists_TabSelected(theTab As ngTab)
+Private Sub tsLists_TabSelected(TheTab As ngTab)
 On Error Resume Next
     ListChanged
 End Sub
@@ -1251,7 +1266,7 @@ On Error Resume Next
     End If
 End Sub
 
-Private Sub tsTool_TabSelected(theTab As ngTab)
+Private Sub tsTool_TabSelected(TheTab As ngTab)
 On Error Resume Next
     ToolInspectorChanged
 End Sub
@@ -1266,9 +1281,9 @@ On Error Resume Next
     If scMap.Visible Then scMap.ZOrder
 End Sub
 
-Private Sub tsViews_TabSelected(theTab As ngTab)
+Private Sub tsViews_TabSelected(TheTab As ngTab)
 On Error Resume Next
-    m_lngCurrentView = CLng(Mid(theTab.key, 2))
+    m_lngCurrentView = CLng(Mid(TheTab.key, 2))
     ViewChanged
 End Sub
 
@@ -1282,7 +1297,7 @@ Dim l_lyrLayer As Fury2MapLayer
     Set l_lyrLayer = m_mapMap.Layers(Index).Duplicate
     l_lyrLayer.Name = "Copy Of " & l_lyrLayer.Name
     l_lyrLayer.Tileset.Reload
-    m_mapMap.Layers.Add l_lyrLayer, , Index + 1
+    m_mapMap.Layers.Add l_lyrLayer, Index + 1
     ObjectUndoPush m_mapMap.Layers, l_lyrLayer, Index + 1, OUO_Remove
     m_lngSelectedLayer = Index + 1
     RefreshLayers
@@ -2137,7 +2152,7 @@ Dim l_sndObject As Fury2SoundObject
         Set m_ctlCurrentInspector = Nothing
     Else
         Select Case LCase(Trim(tsInspector.SelectedTab.key))
-        Case "tiles"
+        Case "tileset"
             Set m_ctlCurrentInspector = tpkTiles
         Case "layer"
             Set m_ctlCurrentInspector = insInspect
@@ -2280,7 +2295,7 @@ Dim l_strSelectedTab As String
         RefreshLayers
         With tsInspector.Tabs
             If (m_lngCurrentView = View_Tiles) Then
-                .AddNew "Tiles", "Tiles"
+                .AddNew "Tileset", "Tileset"
             End If
             .AddNew "Layer", "Layer"
         End With
@@ -2433,7 +2448,7 @@ On Error Resume Next
 Dim l_lyrLayer As Fury2MapLayer
     BeginProcess "Creating Layer..."
     Set l_lyrLayer = m_mapMap.Layers(1).Duplicate
-    l_lyrLayer.Name = "New Layer"
+    l_lyrLayer.Name = "Layer " & m_mapMap.Layers.Count + 1
     l_lyrLayer.Clear l_lyrLayer.Tileset.TransparentTile
     l_lyrLayer.Tileset.Reload
     m_mapMap.Layers.Add l_lyrLayer
@@ -2549,7 +2564,7 @@ Dim l_lyrLayer As Fury2MapLayer
     If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_MapLayer), l_lyrLayer) Then
         CustomClipboard.ClipboardClose
         ObjectUndoPush m_mapMap.Layers, l_lyrLayer, AtIndex, OUO_Remove
-        m_mapMap.Layers.Add l_lyrLayer, , AtIndex
+        m_mapMap.Layers.Add l_lyrLayer, AtIndex
         l_lyrLayer.Tileset.Reload
         m_lngSelectedLayer = AtIndex
         If DoRedraw Then
@@ -2624,7 +2639,7 @@ End Sub
 Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     With m_mapMap.Layers(m_lngSelectedLayer).Sprites
         BeginProcess "Performing Paste..."
         If AtIndex < 1 Then
@@ -2963,8 +2978,9 @@ On Error Resume Next
         m_camCamera.Render , m_imgBackbuffer
     End If
     If m_voViewOptions.ShowGrid Then
-        Filter_Grid_SourceAlpha m_imgBackbuffer.Handle, m_imgBackbuffer.Rectangle.GetRectangle, F2RGB(0, 0, 0, 96), m_lngTileWidth, m_lngTileHeight, -hsMap.Value + 1, -vsMap.Value + 1
-        Filter_Grid_SourceAlpha m_imgBackbuffer.Handle, m_imgBackbuffer.Rectangle.GetRectangle, F2RGB(255, 255, 255, 127), m_lngTileWidth, m_lngTileHeight, -hsMap.Value, -vsMap.Value
+'        Filter_Grid_SourceAlpha m_imgBackbuffer.Handle, m_imgBackbuffer.Rectangle.GetRectangle, F2RGB(0, 0, 0, 96), m_lngTileWidth, m_lngTileHeight, -hsMap.Value + 1, -vsMap.Value + 1
+'        Filter_Grid_SourceAlpha m_imgBackbuffer.Handle, m_imgBackbuffer.Rectangle.GetRectangle, F2RGB(255, 255, 255, 127), m_lngTileWidth, m_lngTileHeight, -hsMap.Value, -vsMap.Value
+        Filter_Grid_SourceAlpha m_imgBackbuffer.Handle, m_imgBackbuffer.Rectangle.GetRectangle, m_voViewOptions.GridColor, m_lngTileWidth, m_lngTileHeight, -hsMap.Value, -vsMap.Value
     End If
     Select Case m_lngCurrentView
     Case View_Blocking
@@ -3233,6 +3249,8 @@ End Sub
 
 Public Sub RefreshAll()
 On Error Resume Next
+    Set tpkTiles.ResourceFile = Editor.LoadResources("ng")
+    tpkTiles.InitToolbar
     ViewChanged
 End Sub
 
@@ -3540,6 +3558,8 @@ End Sub
 Public Sub RefreshTiles()
 On Error Resume Next
     If m_mapMap Is Nothing Then Exit Sub
+    Set tpkTiles.Editor = Editor
+    Set tpkTiles.Clipboard = CustomClipboard
     Set tpkTiles.Tileset = m_mapMap.Layers(m_lngSelectedLayer).Tileset
     m_lngTileWidth = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileWidth
     m_lngTileHeight = m_mapMap.Layers(m_lngSelectedLayer).Tileset.TileHeight
@@ -3571,8 +3591,8 @@ Dim l_lngWidth As Long, l_lngHeight As Long
     l_lngWidth = Ceil(m_lngViewWidth * l_lngZoom / 100)
     l_lngHeight = Ceil(m_lngViewHeight * l_lngZoom / 100)
     StretchBlt picMapViewport.hdc, 0, 0, l_lngWidth, l_lngHeight, picDisplayBuffer.hdc, 0, 0, m_lngViewWidth, m_lngViewHeight, vbSrcCopy
-    picMapViewport.Line (l_lngWidth, 0)-(picMapViewport.ScaleWidth, picMapViewport.ScaleHeight), picMapViewport.BackColor, BF
-    picMapViewport.Line (0, l_lngHeight)-(picMapViewport.ScaleWidth, picMapViewport.ScaleHeight), picMapViewport.BackColor, BF
+    picMapViewport.Line (l_lngWidth, 0)-(picMapViewport.ScaleWidth, picMapViewport.ScaleHeight), GetSystemColor(SystemColor_Button_Highlight), BF
+    picMapViewport.Line (0, l_lngHeight)-(picMapViewport.ScaleWidth, picMapViewport.ScaleHeight), GetSystemColor(SystemColor_Button_Highlight), BF
     If (picMapViewport.AutoRedraw) And (Flip) Then picMapViewport.Refresh
 End Sub
 
@@ -3660,13 +3680,25 @@ On Error Resume Next
     End If
 End Sub
 
-Public Sub SelectCollisionLines(Optional ByVal First As Long = 0, Optional ByVal Last As Long = -32767)
+Public Sub SelectCollisionLines(Optional ByVal First As Long = 0, Optional ByVal Last As Long = -32767, Optional ByVal Toggle As Boolean = False, Optional ByVal Combine As Boolean = False)
 On Error Resume Next
 Dim l_lngLines As Long
     If Last = -32767 Then Last = First
-    For l_lngLines = LBound(m_bytSelectedCollisionLines) To UBound(m_bytSelectedCollisionLines)
-        m_bytSelectedCollisionLines(l_lngLines) = IIf((l_lngLines >= First) And (l_lngLines <= Last), 255, 0)
-    Next l_lngLines
+    If Combine Then
+        For l_lngLines = LBound(m_bytSelectedCollisionLines) To UBound(m_bytSelectedCollisionLines)
+            If (l_lngLines >= First) And (l_lngLines <= Last) Then
+                m_bytSelectedCollisionLines(l_lngLines) = 255
+            End If
+        Next l_lngLines
+    ElseIf Toggle Then
+        For l_lngLines = LBound(m_bytSelectedCollisionLines) To UBound(m_bytSelectedCollisionLines)
+            m_bytSelectedCollisionLines(l_lngLines) = IIf((l_lngLines >= First) And (l_lngLines <= Last), IIf(m_bytSelectedCollisionLines(l_lngLines) = 255, 0, 255), 0)
+        Next l_lngLines
+    Else
+        For l_lngLines = LBound(m_bytSelectedCollisionLines) To UBound(m_bytSelectedCollisionLines)
+            m_bytSelectedCollisionLines(l_lngLines) = IIf((l_lngLines >= First) And (l_lngLines <= Last), 255, 0)
+        Next l_lngLines
+    End If
 End Sub
 
 Public Sub SelectLayer(ByVal Layer As Long)
@@ -3960,6 +3992,8 @@ End Property
 Public Sub Tool_Blocking_Down(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
     If Button = 2 Then
+        m_lngPoint = 0
+        Redraw
         Select Case QuickShowMenu(picMapViewport, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
             Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
             frmIcons.ilContextMenus)
@@ -4079,7 +4113,7 @@ Dim l_rctSelection As Fury2Rect
                     .AddCollisionLine m_fptPoints(0).X, m_fptPoints(0).Y, m_fptPoints(1).X, m_fptPoints(1).Y
                     m_fptPoints(0) = m_fptPoints(1)
                     ReDim Preserve m_bytSelectedCollisionLines(0 To .CollisionLineCount)
-                    SelectCollisionLines .CollisionLineCount
+                    SelectCollisionLines .CollisionLineCount, , , True
                 End With
                 Redraw
             End If
@@ -5077,6 +5111,8 @@ Dim l_objObject As Object
     Redraw
     RefreshMapTools
     ResizeMapTools
+    RefreshBrush
+    RefreshTiles
     tsViews_Resize
     ToolChanged
     Screen.MousePointer = 0

@@ -1,6 +1,8 @@
 VERSION 5.00
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.11#0"; "ngUI.ocx"
 Begin VB.UserControl TilePicker 
+   BackColor       =   &H80000014&
    ClientHeight    =   4125
    ClientLeft      =   0
    ClientTop       =   0
@@ -9,6 +11,20 @@ Begin VB.UserControl TilePicker
    ScaleHeight     =   275
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   119
+   Begin VB.Timer tmrRefreshToolbar 
+      Interval        =   1000
+      Left            =   285
+      Top             =   1815
+   End
+   Begin ngUI.ngToolbar tbrTileset 
+      Height          =   360
+      Left            =   0
+      TabIndex        =   3
+      Top             =   0
+      Width           =   765
+      _ExtentX        =   1349
+      _ExtentY        =   635
+   End
    Begin VB.PictureBox picTilesetCache 
       AutoRedraw      =   -1  'True
       AutoSize        =   -1  'True
@@ -45,13 +61,13 @@ Begin VB.UserControl TilePicker
       Style           =   -1
    End
    Begin cFScroll.FlatScrollBar vsScrollbar 
-      Height          =   3885
+      Height          =   3855
       Left            =   1545
       TabIndex        =   0
-      Top             =   0
+      Top             =   60
       Width           =   240
       _ExtentX        =   423
-      _ExtentY        =   6853
+      _ExtentY        =   6800
       Orientation     =   1
       Max             =   100
       Style           =   -1
@@ -84,7 +100,12 @@ Attribute VB_Exposed = False
 Option Explicit
 Public Event SelectionChanged(Tiles() As Integer)
 Public Event TileHover(Tile As Integer)
+Public Event TilesetModified()
 
+Public Editor As Object
+Public ResourceFile As ngResourceFile
+Public Clipboard As cCustomClipboard
+Private m_lngClipboardFormat As Long
 Private m_lngBuffer As Long
 Private m_lngWidth As Long, m_lngHeight As Long
 Private m_lngStartX As Long, m_lngStartY As Long
@@ -92,16 +113,71 @@ Private m_tstTileset As Fury2Tileset
 Private m_booPreserveRows As Boolean
 Private m_intSelectedTiles() As Integer
 
+Friend Sub CutTile(ByVal Index As Long)
+On Error Resume Next
+    CopyTile Index
+    DeleteTile Index
+End Sub
+
+Friend Sub CopyTile(ByVal Index As Long)
+On Error Resume Next
+    If m_lngClipboardFormat = 0 Then
+        m_lngClipboardFormat = Clipboard.AddFormat("Fury2Image")
+    End If
+    Clipboard.ClipboardOpen Me.hwnd
+    ClipboardSerialize Clipboard, m_lngClipboardFormat, m_tstTileset.Tile(Index + 1)
+    Clipboard.ClipboardClose
+End Sub
+
+Friend Sub PasteTile(ByVal AtIndex As Long)
+On Error Resume Next
+Dim l_imgTile As Fury2Image
+    If m_lngClipboardFormat = 0 Then
+        m_lngClipboardFormat = Clipboard.AddFormat("Fury2Image")
+    End If
+    Clipboard.ClipboardOpen Me.hwnd
+    Set l_imgTile = New Fury2Image
+    If ClipboardDeserialize(Clipboard, m_lngClipboardFormat, l_imgTile) Then
+        SoftFX.InsertTile m_tstTileset.Handle, l_imgTile.Handle, AtIndex
+        TilesetModified
+    End If
+    Clipboard.ClipboardClose
+End Sub
+
+Friend Sub DeleteTile(ByVal Index As Long)
+On Error Resume Next
+    m_tstTileset.Remove Index + 1
+    TilesetModified
+End Sub
+
+Private Property Get CanPaste() As Boolean
+On Error Resume Next
+    If m_lngClipboardFormat = 0 Then
+        m_lngClipboardFormat = Clipboard.AddFormat("Fury2Image")
+    End If
+    Clipboard.GetCurrentFormats UserControl.hwnd
+    CanPaste = Clipboard.HasCurrentFormat(m_lngClipboardFormat)
+End Property
+
+Friend Sub TilesetModified()
+On Error Resume Next
+    m_lngBuffer = 0
+    RebuildCache
+    Cls
+    Redraw
+    RaiseEvent TilesetModified
+End Sub
+
 Public Sub RebuildCache()
 On Error Resume Next
 Dim l_imgTilesetCache As Fury2Image
-    m_lngBuffer = m_tstTileset.Buffer.Handle
-    Set l_imgTilesetCache = m_tstTileset.Buffer.Duplicate
+    m_lngBuffer = m_tstTileset.Handle
+    Set l_imgTilesetCache = m_tstTileset.GenerateBuffer
     With l_imgTilesetCache
         If .AlphaChannel Then
-            .Composite SwapChannels(GetSystemColor(SystemColor_Button_Face), Blue, Red)
+            .Composite SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Blue, Red)
         Else
-            .ReplaceColor .Rectangle, m_tstTileset.MaskColor, SwapChannels(GetSystemColor(SystemColor_Button_Face), Blue, Red)
+            .ReplaceColor .Rectangle, m_tstTileset.MaskColor, SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Blue, Red)
         End If
     End With
     Set picTilesetCache.Picture = l_imgTilesetCache.Picture
@@ -114,6 +190,7 @@ Dim l_lngSX As Long, l_lngSY As Long
 Dim l_lngTile As Long
 Dim l_lngSelectedTiles As Long
 Dim l_booSelected As Boolean
+    Y = Y - IIf(tbrTileset.Visible, tbrTileset.Height, 0)
     l_lngY = -vsScrollbar.Value
     l_lngX = -hsScrollbar.Value
     HitTest = -1
@@ -217,10 +294,10 @@ Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
     If Not (m_tstTileset Is Nothing) Then
         l_lngMaxX = m_tstTileset.TileWidth
         l_lngMaxY = m_tstTileset.TileHeight
-        If m_lngBuffer <> m_tstTileset.Buffer.Handle Then RebuildCache
+        If m_lngBuffer <> m_tstTileset.Handle Then RebuildCache
         If (m_tstTileset.TileWidth > 0) And (m_tstTileset.TileHeight > 0) Then
             Set l_imgTile = F2Image(m_tstTileset.TileWidth, m_tstTileset.TileHeight)
-            l_lngBackgroundColor = SwapChannels(GetSystemColor(SystemColor_Button_Face), Blue, Red)
+            l_lngBackgroundColor = SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Blue, Red)
             Do Until ((l_lngSY + m_tstTileset.TileHeight) > picTilesetCache.Height)
                 If l_lngMaxX < (l_lngX + m_tstTileset.TileWidth) Then l_lngMaxX = (l_lngX + m_tstTileset.TileWidth)
                 If l_lngMaxY < (l_lngY + m_tstTileset.TileHeight) Then l_lngMaxY = (l_lngY + m_tstTileset.TileHeight)
@@ -233,13 +310,13 @@ Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
                         End If
                     Next l_lngSelectedTiles
                     If l_booSelected Then
-                        l_imgTile.Copy m_tstTileset.Tile(l_lngTile)
+                        l_imgTile.Copy m_tstTileset.Tile(l_lngTile + 1)
                         l_imgTile.Composite l_lngBackgroundColor
                         l_imgTile.Box l_imgTile.Rectangle.Adjust(-1, -1), F2RGB(0, 0, 0, 160), RenderMode_SourceAlpha
                         l_imgTile.Box l_imgTile.Rectangle, F2RGB(255, 255, 255, 160), RenderMode_SourceAlpha
-                        CopyImageToDC UserControl.hdc, F2Rect(l_lngX, l_lngY, m_tstTileset.TileWidth, m_tstTileset.TileHeight, False), l_imgTile
+                        CopyImageToDC UserControl.hdc, F2Rect(l_lngX, l_lngY + IIf(tbrTileset.Visible, tbrTileset.Height, 0), m_tstTileset.TileWidth, m_tstTileset.TileHeight, False), l_imgTile
                     Else
-                        BitBlt UserControl.hdc, l_lngX, l_lngY, m_tstTileset.TileWidth, m_tstTileset.TileHeight, picTilesetCache.hdc, l_lngSX, l_lngSY, vbSrcCopy
+                        BitBlt UserControl.hdc, l_lngX, l_lngY + IIf(tbrTileset.Visible, tbrTileset.Height, 0), m_tstTileset.TileWidth, m_tstTileset.TileHeight, picTilesetCache.hdc, l_lngSX, l_lngSY, vbSrcCopy
                     End If
                     'm_imgBuffer.Blit F2Rect(l_lngX, l_lngY, m_tstTileset.TileWidth, m_tstTileset.TileHeight, False), F2Rect(l_lngSX, l_lngSY, m_tstTileset.TileWidth, m_tstTileset.TileHeight, False), m_imgTilesetCache
                 End If
@@ -300,13 +377,13 @@ Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
         hsScrollbar.Value = 0
         hsScrollbar.Enabled = False
     End If
-    UserControl.Line (l_lngMaxX, 0)-(m_lngWidth, m_lngHeight), UserControl.BackColor, BF
-    UserControl.Line (0, l_lngMaxY)-(l_lngMaxX, m_lngHeight), UserControl.BackColor, BF
+    UserControl.Line (l_lngMaxX, IIf(tbrTileset.Visible, tbrTileset.Height, 0))-(m_lngWidth, m_lngHeight + IIf(tbrTileset.Visible, tbrTileset.Height, 0)), UserControl.BackColor, BF
+    UserControl.Line (0, l_lngMaxY + IIf(tbrTileset.Visible, tbrTileset.Height, 0))-(l_lngMaxX, m_lngHeight + IIf(tbrTileset.Visible, tbrTileset.Height, 0)), UserControl.BackColor, BF
     If UserControl.AutoRedraw Then UserControl.Refresh
     vsScrollbar.Visible = vsScrollbar.Enabled
     hsScrollbar.Visible = hsScrollbar.Enabled
     l_lngWidth = UserControl.ScaleWidth - IIf(vsScrollbar.Visible, vsScrollbar.Width, 0)
-    l_lngHeight = UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0)
+    l_lngHeight = UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0) - IIf(tbrTileset.Visible, tbrTileset.Height, 0)
     If (l_lngWidth <> m_lngWidth) Or (l_lngHeight <> m_lngHeight) Then
         m_lngWidth = l_lngWidth
         m_lngHeight = l_lngHeight
@@ -328,11 +405,77 @@ Private Sub hsScrollbar_Change()
     Redraw
 End Sub
 
+Private Sub tbrTileset_ButtonClick(Button As ngUI.ngToolButton)
+On Error Resume Next
+Dim l_strFilename As String
+Dim l_imgTileset As Fury2Image
+Dim l_plgPlugin As iFileTypePlugin
+Dim l_docDocument As iDocument, l_frmDocument As frmTileset
+    Select Case LCase(Trim(Button.key))
+    Case "importtileset"
+        l_strFilename = Editor.SelectFile("Tilesets|*.f2tileset;*.rts;*.vsp;*.png;*.gif;*.bmp;*.jpg;*.tga", "Import Tileset...")
+        If Len(Trim(l_strFilename)) > 0 Then
+            If InStr(l_strFilename, m_tstTileset.Engine.FileSystem.Root) Then
+                m_tstTileset.Embed = False
+                m_tstTileset.Filename = Replace(Replace(l_strFilename, m_tstTileset.Engine.FileSystem.Root, "/"), "\", "/")
+                m_tstTileset.Reload
+                TilesetModified
+                RefreshToolbar
+            Else
+                Editor.ShowNotice "Warning", "Selected tileset not in game folder. Tiles embedded."
+                Set l_imgTileset = F2LoadImage(l_strFilename)
+                m_tstTileset.Embed = True
+                m_tstTileset.RemoveAll
+                If l_imgTileset Is Nothing Then
+                    m_tstTileset.LoadTileset F2File(l_strFilename)
+                Else
+                    m_tstTileset.AddTiles l_imgTileset
+                End If
+                TilesetModified
+                RefreshToolbar
+            End If
+        End If
+    Case "exporttileset"
+        Set l_plgPlugin = Editor.FindFileTypePlugin("Tileset")
+        Set l_docDocument = l_plgPlugin.CreateNew(False)
+        Set l_frmDocument = l_docDocument
+        l_frmDocument.SetTileset m_tstTileset.Duplicate
+        Editor.NewDocument l_docDocument
+    Case "cut"
+        CutTile m_intSelectedTiles(0)
+    Case "copy"
+        CopyTile m_intSelectedTiles(0)
+    Case "paste"
+        PasteTile m_intSelectedTiles(0)
+    Case "delete"
+        DeleteTile m_intSelectedTiles(0)
+    Case Else
+    End Select
+End Sub
+
+Private Sub tbrTileset_ButtonPress(Button As ngUI.ngToolButton, Cancel As Boolean)
+On Error Resume Next
+    Select Case LCase(Trim(Button.key))
+    Case "embed"
+        m_tstTileset.Embed = Not Button.Checked
+        m_tstTileset.Reload
+        TilesetModified
+    Case Else
+    End Select
+End Sub
+
+Private Sub tmrRefreshToolbar_Timer()
+On Error Resume Next
+    RefreshToolbar
+End Sub
+
 Private Sub UserControl_Hide()
     DeallocateBackbuffer
 End Sub
 
 Private Sub UserControl_Initialize()
+On Error Resume Next
+    tbrTileset.Visible = False
     ReDim m_intSelectedTiles(0 To 0)
     m_intSelectedTiles(0) = -1
 End Sub
@@ -354,15 +497,37 @@ End Sub
 
 Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
+Dim l_booCanPaste As Boolean
+Dim l_booEmbed As Boolean
+Dim l_lngFormat As Long
+Dim l_lngTile As Long
+Dim l_imgTile As Fury2Image
+Dim l_intSelectedTiles() As Integer
+    ReDim l_intSelectedTiles(0 To 0, 0 To 0)
+    l_intSelectedTiles(0, 0) = HitTest(X, Y)
+    SetSelectedTiles l_intSelectedTiles
     If Button = 1 Then
         m_lngStartX = X
         m_lngStartY = Y
     ElseIf Button = 2 Then
-        Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, Menus(MenuString("Preserve Rows", , , , , m_booPreserveRows)))
+        l_lngTile = HitTest(X, Y)
+        l_booEmbed = m_tstTileset.Embed
+        Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+            Menus(MenuString("Preserve Rows", , , , , m_booPreserveRows), "-", _
+            MenuString("Cu&t", , , "CUT", , , l_booEmbed), MenuString("&Copy", , , "COPY"), MenuString("&Paste", , , "PASTE", , , CanPaste And l_booEmbed), MenuString("&Delete", , , "DELETE", , , l_booEmbed)) _
+            , frmIcons.ilContextMenus)
         Case 1
             m_booPreserveRows = Not m_booPreserveRows
             Cls
             Redraw
+        Case 3
+            CutTile l_lngTile
+        Case 4
+            CopyTile l_lngTile
+        Case 5
+            PasteTile l_lngTile
+        Case 6
+            DeleteTile l_lngTile
         Case Else
         End Select
     End If
@@ -412,20 +577,57 @@ Dim l_lngX As Long, l_lngY As Long
 End Sub
 
 Private Sub UserControl_Paint()
+On Error Resume Next
     If Not UserControl.AutoRedraw Then Redraw
 End Sub
 
 Private Sub UserControl_Resize()
-    vsScrollbar.Move UserControl.ScaleWidth - (GetScrollbarSize(vsScrollbar) + 1), 0, GetScrollbarSize(vsScrollbar) + 1, UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0)
+On Error Resume Next
+    tbrTileset.Move 0, 0, UserControl.ScaleWidth, tbrTileset.IdealHeight
+    vsScrollbar.Move UserControl.ScaleWidth - (GetScrollbarSize(vsScrollbar) + 1), tbrTileset.Height, GetScrollbarSize(vsScrollbar) + 1, UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0) - IIf(tbrTileset.Visible, tbrTileset.Height, 0)
     hsScrollbar.Move 0, UserControl.ScaleHeight - (GetScrollbarSize(hsScrollbar) + 1), UserControl.ScaleWidth - IIf(vsScrollbar.Visible, vsScrollbar.Width, 0), GetScrollbarSize(hsScrollbar) + 1
     vsScrollbar.Visible = vsScrollbar.Enabled
     hsScrollbar.Visible = hsScrollbar.Enabled
     m_lngWidth = UserControl.ScaleWidth - IIf(vsScrollbar.Visible, vsScrollbar.Width, 0)
-    m_lngHeight = UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0)
+    m_lngHeight = UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0) - IIf(tbrTileset.Visible, tbrTileset.Height, 0)
     Redraw
 End Sub
 
+Public Sub InitToolbar()
+On Error Resume Next
+    Set tbrTileset.ResourceFile = ResourceFile
+    tbrTileset.ResourcePattern = "map editor\tile picker\*.png"
+    With tbrTileset.Buttons
+        .Clear
+        .AddNew , "ImportTileset", "import", "Import Tileset"
+        .AddNew , "ExportTileset", "export", "Export Tileset"
+        .AddNew "-"
+        .AddNew , "Cut", "cut", "Cut Tile"
+        .AddNew , "Copy", "copy", "Copy Tile"
+        .AddNew , "Paste", "paste", "Paste Tile"
+        .AddNew , "Delete", "delete", "Delete Tile"
+        .AddNew "-"
+        .AddNew , "Embed", "embed", "Embed Tileset", bsyCheck
+    End With
+    RefreshToolbar
+    tbrTileset.Visible = True
+    UserControl_Resize
+End Sub
+
+Public Sub RefreshToolbar()
+On Error Resume Next
+Dim l_booEmbed As Boolean
+    l_booEmbed = m_tstTileset.Embed
+    With tbrTileset.Buttons
+        .Item("Cut").Enabled = l_booEmbed
+        .Item("Paste").Enabled = l_booEmbed And CanPaste
+        .Item("Delete").Enabled = l_booEmbed
+        .Item("Embed").Checked = l_booEmbed
+    End With
+End Sub
+
 Private Sub UserControl_Show()
+On Error Resume Next
     AllocateBackbuffer
     Redraw
 End Sub

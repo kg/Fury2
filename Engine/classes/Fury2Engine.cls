@@ -99,7 +99,7 @@ Public HideLog As Boolean
 
 Public DisableCameraBuffers As Boolean
 
-Public CachedNames As Collection
+Public ScriptCache As Collection
 
 Public ControlStyle As Long
 Attribute ControlStyle.VB_VarDescription = "Specifies the style of keyboard control used by the Fury2Controller object."
@@ -160,6 +160,7 @@ Public DisableMoveQueue As Boolean
 Attribute DisableMoveQueue.VB_VarMemberFlags = "40"
 Public DefaultBGMVolume As Single
 Attribute DefaultBGMVolume.VB_VarDescription = "The default volume for BGMs."
+Public DefaultSampleVolume As Single
 
 Public Party As Fury2Party
 Attribute Party.VB_VarDescription = "The current party."
@@ -178,10 +179,9 @@ Public AutoThrottle As Boolean, DisableMovement As Boolean
 Attribute AutoThrottle.VB_VarMemberFlags = "40"
 Attribute AutoThrottle.VB_VarDescription = "This flag automatically drops the engine's speed when CPU usage goes above 75%. (Disabled)"
 
-Public CurrentBGM As String, CurrentBGMHandle As Long, OldBGM As String
+Public CurrentBGM As Sound, BGMStack As Fury2Collection
 Attribute CurrentBGM.VB_VarDescription = "Returns the filename of the current BGM."
-Attribute CurrentBGMHandle.VB_VarDescription = "Returns the index of the current BGM. Can be used to get a SoundHandle for the BGM."
-Attribute OldBGM.VB_VarDescription = "The BGM played previously."
+Public CurrentBGMChannel As Channel
 
 Public AccurateRotation As Boolean
 
@@ -213,8 +213,8 @@ Attribute MessageQueue.VB_VarDescription = "The current message box queue."
 Public MessageWindows As Fury2Collection
 Attribute MessageWindows.VB_VarDescription = "The message windows currently active."
 
-Public SpriteObjectCount As Long, AreaObjectCount As Long, MapObjectCount As Long, TimerEventObjectCount As Long
-Attribute SpriteObjectCount.VB_VarMemberFlags = "40"
+Public ScriptObjectCount As Long
+Attribute ScriptObjectCount.VB_VarMemberFlags = "40"
 Public HTTPRequestCount As Long
 
 Public IObjThis As Object
@@ -844,12 +844,13 @@ End Property
 
 Public Property Get BGMVolume() As Single
 On Error Resume Next
-    BGMVolume = m_SoundEngine.Handles(CurrentBGMHandle).Volume
+    BGMVolume = CurrentBGM.Volume
 End Property
 
 Public Property Let BGMVolume(ByVal Volume As Single)
 On Error Resume Next
-    m_SoundEngine.Handles(CurrentBGMHandle).Volume = Volume
+    CurrentBGM.Volume = Volume
+    CurrentBGMChannel.Volume = Volume
     Err.Clear
 End Property
 
@@ -918,20 +919,6 @@ Dim l_lngSubthreads As Long
     End If
 End Sub
 
-Function CacheScript(ByVal Filename As String, ByVal Script As String) As String
-On Error Resume Next
-Dim m_csScript As Fury2ScriptCache
-    CacheScript = FindScript(Filename)
-    If Len(CacheScript) < 1 Then
-        Set m_csScript = New Fury2ScriptCache
-        m_csScript.Name = VariableName(Filename)
-        m_csScript.Filename = Filename
-        CachedNames.Add m_csScript, LCase(Trim(Filename))
-        CacheScript = m_csScript.Name
-        ScriptEngine.AddCode Script
-    End If
-End Function
-
 Function CallByName(ByVal Obj As Object, ByVal Member As String, ByVal CallType As Long, ParamArray Parameters() As Variant)
 On Error Resume Next
     Select Case UBound(Parameters)
@@ -997,6 +984,7 @@ On Error Resume Next
     m_booFresh = True
     m_booIDE = InIDE
     RanStartEvent = False
+    ScriptObjectCount = 0
     ReDim OnscreenPictures(0 To c_lngMaxPictureSlot)
     ReDim SavedPictures(0 To c_lngMaxPictureSlot)
     ReDim Hotspots(0 To c_lngMaxHotspot)
@@ -1008,7 +996,7 @@ On Error Resume Next
     Set Keyboard = New Fury2Keyboard
     Keyboard.SetEngine Me
     Set Joysticks = F2Collection()
-    Set CachedNames = New Collection
+    Set ScriptCache = New Collection
     Set EventHookStack = New Collection
     Set Timers = F2Collection()
     Set MessageQueue = F2Collection()
@@ -1016,6 +1004,7 @@ On Error Resume Next
     Set Graphics = F2Collection()
     Set Hosts = F2Collection()
     Set Videos = F2Collection()
+    Set BGMStack = F2Collection()
     Set m_colPluginStack = New Collection
     Set m_colReversePluginStack = New Collection
     Set m_Images = New Collection
@@ -1035,9 +1024,7 @@ On Error Resume Next
     Configuration.SetEngine Me
     Configuration.InitDefaultSettings
     Set mvarCameras = New Fury2Cameras
-    Set m_SoundEngine = New SoundEngine
-    Set m_SoundEngine.m_Engine = Me
-    m_SoundEngine.Init
+    InitSoundEngine
     Set Font = New Fury2Font
     Font.SetEngine Me
     Set WindowSkin = New Fury2WindowSkin
@@ -1053,6 +1040,7 @@ On Error Resume Next
     PushPictures
     PushHotspots
     DefaultBGMVolume = 0.65
+    DefaultSampleVolume = 1
     ActivationDistance = c_lngDefaultActivationDistance
     MaxPathWait = c_lngDefaultMaxPathWait
     ScriptLanguage = "VBScript"
@@ -2154,10 +2142,10 @@ Function FadeBGM(Optional ByVal FromVolume As Single = -1, Optional ByVal ToVolu
 On Error Resume Next
 Dim l_fadFader As Fury2SoundFader
     Set l_fadFader = New Fury2SoundFader
-    Set l_fadFader.Handle = SoundEngine.Handles(CurrentBGMHandle)
+    Set l_fadFader.Channel = CurrentBGMChannel
     Set l_fadFader.Slider = F2Slider
-    l_fadFader.VolumeStart = IIf(FromVolume < 0, l_fadFader.Handle.Volume, FromVolume)
-    l_fadFader.VolumeEnd = IIf(ToVolume < 0, l_fadFader.Handle.Volume, ToVolume)
+    l_fadFader.VolumeStart = IIf(FromVolume < 0, l_fadFader.Channel.Volume, FromVolume)
+    l_fadFader.VolumeEnd = IIf(ToVolume < 0, l_fadFader.Channel.Volume, ToVolume)
     l_fadFader.Slider.Start Length
     HookEvents l_fadFader
     Set FadeBGM = l_fadFader
@@ -2184,17 +2172,6 @@ Public Sub FastQuit()
 Attribute FastQuit.VB_MemberFlags = "40"
     PostQuitMessage 0
 End Sub
-
-Function FindScript(ByRef Filename As String) As String
-On Error Resume Next
-Dim m_csScript As Fury2ScriptCache
-    Set m_csScript = CachedNames(LCase(Trim(Filename)))
-    If m_csScript Is Nothing Then
-    Else
-        FindScript = m_csScript.Name
-    End If
-    Set m_csScript = Nothing
-End Function
 
 Public Property Get Flag(ByRef Index As String) As Variant
 Attribute Flag.VB_Description = "An array of global game settings."
@@ -2563,6 +2540,8 @@ On Error Resume Next
 End Function
 
 Public Property Get GFXEngine() As Object
+Attribute GFXEngine.VB_MemberFlags = "40"
+On Error Resume Next
     Set GFXEngine = m_objOutputPlugin
 End Property
 
@@ -3242,6 +3221,14 @@ On Error Resume Next
     BindKey vbKeyEscape, Controls("Quit")
 End Sub
 
+Friend Sub InitSoundEngine()
+On Error Resume Next
+    Set m_SoundEngine = New SoundEngine
+    Set m_SoundEngine.m_Engine = Me
+    m_SoundEngine.Enabled = Not Me.DisableSound
+    m_SoundEngine.Init
+End Sub
+
 Friend Sub InitScriptEngine()
 On Error Resume Next
     Set m_ScriptEngine = New ScriptEngine
@@ -3475,6 +3462,7 @@ Dim l_objObject As Object, l_varTest As Variant
     '            Filesystem.LoadPackage Trim(l_varPackages(l_lngPackages))
             Next l_lngPackages
         End If
+        InitSoundEngine
     Else
         InitInput
         Include "constants", False
@@ -3505,6 +3493,7 @@ Dim l_objObject As Object, l_varTest As Variant
         If InIDE Then
             If MsgBox("Disable sound?", vbYesNo) = vbYes Then DisableSound = True
         End If
+        InitSoundEngine
         If ScreenWidth = 0 Then ScreenWidth = 320
         If ScreenHeight = 0 Then ScreenHeight = 240
         If ScreenWidth < 4 Or ScreenHeight < 4 Then
@@ -3667,7 +3656,7 @@ Dim m_imgPicture As Fury2Image
     If EditMode Then FlushImageCache
     Err.Clear
     Set m_imgPicture = Nothing
-    Filename = LCase(Trim(Filesystem.AutoSelectExtension(Filename, "png;f2g;tga;jpg;bmp;gif")))
+    Filename = LCase(Trim(Filesystem.AutoSelectExtension(Filename, "png;tga;jpg;bmp;gif;pcx")))
     Set m_imgPicture = m_Images(Filename)
     If (m_imgPicture Is Nothing) Or (Err.Number <> 0) Then
         Err.Clear
@@ -4088,8 +4077,8 @@ End Sub
 
 Public Sub Mute()
 On Error Resume Next
-    OldVolume = SoundEngine.Volume
-    SoundEngine.Volume = 0
+    OldVolume = SoundEngine.MasterVolume
+    SoundEngine.MasterVolume = 0
 End Sub
 
 Public Function NormalizeAngle(ByVal Angle As Single) As Single
@@ -4201,6 +4190,7 @@ Dim l_varValues, l_strSetting As String
         ScriptLanguage = .Settings("Language")
         
         DefaultBGMVolume = CSng(.Settings("Music Volume"))
+        DefaultSampleVolume = CSng(.Settings("Sound Volume"))
                 
         HideConfiguration = Not .ToBoolean("Show Configuration Dialog")
         
@@ -4262,21 +4252,27 @@ Dim m_sngDist As Single
     y2 = m_sngY
 End Function
 
-Sub PlayBGM(Filename As String, Optional ByVal Fade As Boolean = True)
+Sub PlayBGM(ByVal Filename, Optional ByVal Fade As Boolean = True)
 Attribute PlayBGM.VB_Description = "Loads a BGM and plays it, stopping any previously playing BGMs."
 On Error Resume Next
-    If CurrentBGMHandle <> 0 Then StopBGM False
-    If m_SoundEngine.EnableMusic Then
-        CurrentBGM = Filename
-        CurrentBGMHandle = m_SoundEngine.Load(Filename, True)
-        m_SoundEngine.Handles(CurrentBGMHandle).Play
-        If Fade Then
-            m_SoundEngine.Handles(CurrentBGMHandle).Volume = 0
-            FadeBGM , DefaultBGMVolume
-        Else
-            m_SoundEngine.Handles(CurrentBGMHandle).Volume = DefaultBGMVolume
-        End If
+    If Not (CurrentBGM Is Nothing) Then StopBGM False
+    If VarType(Filename) = vbObject Then
+        Set CurrentBGM = Filename
+    Else
+        Set CurrentBGM = SoundEngine.Load(CStr(Filename))
+        CurrentBGM.LoopMode = LoopMode_Normal
+        CurrentBGM.LoopCount = -1
     End If
+    Set CurrentBGMChannel = CurrentBGM.Play(True)
+    CurrentBGMChannel.Priority = 0
+    If Fade Then
+        CurrentBGMChannel.Volume = 0
+        FadeBGM , DefaultBGMVolume
+    Else
+        CurrentBGMChannel.Volume = DefaultBGMVolume
+    End If
+    CurrentBGMChannel.Paused = False
+    SoundEngine.FlushCache
     Err.Clear
 End Sub
 
@@ -4287,16 +4283,19 @@ End Property
 
 Sub PlaySample(ByVal Filename As String)
 On Error Resume Next
-Dim m_Handle As Long
-    m_Handle = SoundEngine.LoadSample(Filename, False)
-    SoundEngine.Handles(m_Handle).Play
+Dim l_sndSample As Sound
+    Set l_sndSample = SoundEngine.Load(Filename)
+    l_sndSample.Volume = DefaultSampleVolume
+    l_sndSample.Play
     Err.Clear
 End Sub
 
 Sub PopBGM(Optional ByVal Crossfade As Boolean = True)
 On Error Resume Next
-    SwitchBGM OldBGM, Crossfade
-    OldBGM = ""
+Dim l_sndOld As Sound
+    Set l_sndOld = BGMStack.Item(BGMStack.Count)
+    BGMStack.Remove BGMStack.Count
+    SwitchBGM l_sndOld, Crossfade
     Err.Clear
 End Sub
 
@@ -4343,7 +4342,7 @@ End Sub
 Sub PushBGM(ByVal Filename As String, Optional ByVal Crossfade As Boolean = True)
 Attribute PushBGM.VB_MemberFlags = "40"
 On Error Resume Next
-    OldBGM = CurrentBGM
+    BGMStack.Add CurrentBGM
     SwitchBGM Filename, Crossfade
     Err.Clear
 End Sub
@@ -4891,6 +4890,12 @@ On Error Resume Next
         Set .ClickEvent = BindEvent(ClickEvent)
         Set .EnterEvent = BindEvent(EnterEvent)
         Set .LeaveEvent = BindEvent(LeaveEvent)
+        If (Mouse.X >= .x1) And (Mouse.Y >= .y1) And (Mouse.X < .x2) And (Mouse.Y < .y2) Then
+            .EnterEvent.Invoke
+            .Hovering = True
+        Else
+            .Hovering = False
+        End If
     End With
     Err.Clear
 End Sub
@@ -5006,7 +5011,7 @@ Dim Obj As Object
     Halted = False
     ScriptContext = "Shutdown"
     StopBGM
-    SoundEngine.FreeAll
+    SoundEngine.FlushCache
     If m_booIDE Then DebugOut "Ending game"
     UnloadAllMaps
     ScriptEngine.Exec "Engine_Shutdown"
@@ -5015,11 +5020,11 @@ Dim Obj As Object
         SleepEx 1, True
         DoEvents
     Next m_lngWait
+    SoundEngine.Shutdown
     ReleaseScriptEngine
     DeInitENet
     m_objOutputPlugin.HookEvents Nothing
     m_objOutputPlugin.Shutdown
-    SoundEngine.Shutdown
     Set m_objOutputPlugin = Nothing
     Set m_imgBackbuffer = Nothing
     For Each Obj In EventHooks
@@ -5059,15 +5064,12 @@ Sub StopBGM(Optional ByVal Fade As Boolean = True)
 Attribute StopBGM.VB_Description = "Stops the currently playing BGM."
 On Error Resume Next
     If Fade Then
-        FadeBGM(, 0).FreeWhenDone = True
+        FadeBGM , 0
     Else
-        If CurrentBGM <> "" And CurrentBGMHandle <> 0 Then
-            m_SoundEngine.Handles(CurrentBGMHandle).Kill
-            m_SoundEngine.Handles(CurrentBGMHandle).Free
-        End If
+        CurrentBGMChannel.Kill
     End If
-    CurrentBGM = ""
-    CurrentBGMHandle = 0
+    Set CurrentBGM = Nothing
+    Set CurrentBGMChannel = Nothing
     Err.Clear
 End Sub
 
@@ -5096,12 +5098,27 @@ Dim Temp
     End If
 End Sub
 
-Sub SwitchBGM(ByRef Filename As String, Optional ByVal Crossfade As Boolean = True)
+Sub SwitchBGM(ByVal BGM, Optional ByVal Crossfade As Boolean = True)
 Attribute SwitchBGM.VB_Description = "Changes the currently playing BGM. If the BGM specified is already playing, nothing happens."
 On Error Resume Next
-    If Trim(LCase(CurrentBGM)) = Trim(LCase(Filename)) Then Exit Sub
-    StopBGM Crossfade
-    PlayBGM Filename, Crossfade
+Dim l_sndBGM As Sound
+    If VarType(BGM) = vbObject Then
+        Set l_sndBGM = BGM
+        If l_sndBGM Is CurrentBGM Then Exit Sub
+        StopBGM Crossfade
+        PlayBGM BGM, Crossfade
+    Else
+        BGM = CStr(BGM)
+        Set l_sndBGM = SoundEngine.Load(BGM)
+        If l_sndBGM Is CurrentBGM Then Exit Sub
+        If (CurrentBGM Is Nothing) Then
+        Else
+            If BGM = CurrentBGM.Filename Then Exit Sub
+            If l_sndBGM.Name = CurrentBGM.Name Then Exit Sub
+        End If
+        StopBGM Crossfade
+        PlayBGM l_sndBGM, Crossfade
+    End If
     Err.Clear
 End Sub
 
@@ -5506,7 +5523,7 @@ End Sub
 
 Public Sub Unmute()
 On Error Resume Next
-    SoundEngine.Volume = OldVolume
+    SoundEngine.MasterVolume = OldVolume
 End Sub
 
 Public Function UnregisterDLL(Filename) As Boolean
@@ -5599,10 +5616,17 @@ Static m_sngLastTimer As Single
             UpdateHook.Invoke
         End If
     End If
+    SoundEngine.Update
     If ConsoleSliding Then
         ConsoleOffset = (ConsoleStartOffset) + ((ConsoleEndOffset - ConsoleStartOffset) * ((HiTimer - Me.ConsoleStartTime) / (Me.ConsoleEndTime - Me.ConsoleStartTime)))
-        If ConsoleOffset < 0 Then ConsoleOffset = 0
-        If ConsoleOffset > ConsoleHeight Then ConsoleOffset = ConsoleHeight
+        If ConsoleOffset < 0 Then
+            ConsoleOffset = 0
+            ConsoleSliding = False
+        End If
+        If ConsoleOffset > ConsoleHeight Then
+            ConsoleOffset = ConsoleHeight
+            ConsoleSliding = False
+        End If
     End If
     ProfileStop "Update"
     ContextLevelRemove
@@ -5617,12 +5641,19 @@ End Sub
 Friend Sub UpdateENet()
 On Error Resume Next
 Dim l_hosHost As VBENetHost, l_lngIndex As Long
+Dim l_lngCount As Long
     If Not m_booENetInitialized Then Exit Sub
     ContextLevelAdd "ENet"
     ProfileStart "ENet"
         For Each l_hosHost In Hosts
             l_hosHost.Poll
-            If GetReferenceCount(l_hosHost) < 6 Then
+            l_lngCount = (l_hosHost.Peers.Count + IIf(l_hosHost.TimeSynchronizer Is Nothing, 0, 1))
+            l_lngCount = GetReferenceCount(l_hosHost) - l_lngCount
+            If l_lngCount <= 5 Then
+                DebugOut "Freeing ENet Host"
+                l_hosHost.DisconnectAll
+                l_hosHost.Flush
+                l_hosHost.Free
                 l_lngIndex = Hosts.Find(l_hosHost)
                 Hosts.Remove l_lngIndex
             End If
@@ -5700,11 +5731,12 @@ End Sub
 Public Sub UpdatePictures()
 Attribute UpdatePictures.VB_MemberFlags = "40"
 On Error Resume Next
+    If ActivePictureSlots < 1 Then Exit Sub
 Dim m_sngX As Single, m_sngY As Single, m_sngW As Single, m_sngH As Single
 Dim m_sngProgress As Single, m_sngProgress2 As Single
 Dim m_lngPictures As Long, l_objGraph As Fury2Graphic
     ProfileStart "UpdatePictures"
-    For m_lngPictures = 0 To c_lngMaxPictureSlot
+    For m_lngPictures = 0 To ActivePictureSlots
         With OnscreenPictures(m_lngPictures)
             If .Picture Is Nothing Then
             Else
@@ -6057,4 +6089,31 @@ Dim l_hosHost As VBENetHost
     Else
         TextOut "Unable to create client; ENet not available!"
     End If
+End Function
+
+Public Property Get VideoDriver() As Object
+On Error Resume Next
+    Set VideoDriver = GFXEngine
+End Property
+
+Public Function GenerateScriptObject(ByRef Source As String) As Object
+On Error Resume Next
+Dim l_csScript As Fury2ScriptCache
+Dim l_strSource As String
+    l_strSource = LCase(Trim(Source))
+    For Each l_csScript In ScriptCache
+        If l_csScript.Source = l_strSource Then
+            Set GenerateScriptObject = ScriptEngine.Eval(ScriptEngine.Language.GenerateInstantiation(l_csScript.Name))
+            Exit Function
+        End If
+    Next l_csScript
+    Set l_csScript = New Fury2ScriptCache
+    ScriptObjectCount = ScriptObjectCount + 1
+    l_csScript.Name = "SO_" & ScriptObjectCount
+    l_csScript.Source = l_strSource
+    ScriptCache.Add l_csScript
+    With ScriptEngine.Language
+        ScriptEngine.AddCode .GenerateClass(l_csScript.Name, Source)
+    End With
+    Set GenerateScriptObject = ScriptEngine.Eval(ScriptEngine.Language.GenerateInstantiation(l_csScript.Name))
 End Function

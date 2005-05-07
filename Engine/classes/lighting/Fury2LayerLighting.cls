@@ -418,6 +418,7 @@ End Sub
 
 Public Sub Update()
 On Error Resume Next
+    If Lights.Count < 1 Then Exit Sub
 Dim l_litLight As Fury2LightSource
     For Each l_litLight In Lights
         With l_litLight

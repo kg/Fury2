@@ -38,7 +38,7 @@ Implements IInspectable
 Implements IVirtualFileSaveable
 
 Public Merge As Boolean
-Attribute Merge.VB_VarDescription = "Enables/disables Merge rendering mode."
+Attribute Merge.VB_VarDescription = "*Enables/disables Merge rendering mode."
 Private m_lngFullHeight As Long
 Private m_lngCharCount As Long
 Private m_colCharImages As Collection
@@ -58,6 +58,7 @@ Friend Sub SetEngine(Engine As Fury2Engine)
 End Sub
 
 Public Property Get Engine() As Fury2Engine
+Attribute Engine.VB_Description = "*"
     Set Engine = m_engEngine
 End Property
 
@@ -146,6 +147,7 @@ Public Property Let Author(NewAuthor As String)
 End Property
 
 Public Property Get Codeset() As String
+Attribute Codeset.VB_Description = "*"
     Codeset = m_strCodeset
 End Property
 
@@ -240,6 +242,11 @@ On Error Resume Next
     FullHeight = m_lngFullHeight
 End Property
 
+Public Property Let FullHeight(ByVal NewValue As Long)
+On Error Resume Next
+    m_lngFullHeight = NewValue
+End Property
+
 Public Property Get CharacterValue(Index) As Integer
 Attribute CharacterValue.VB_Description = "*"
 On Error Resume Next
@@ -278,6 +285,7 @@ Public Property Get Filename() As String
 End Property
 
 Public Property Get EnhancedDraw() As Boolean
+Attribute EnhancedDraw.VB_Description = "*"
     EnhancedDraw = m_fpmFontParam.EffectMode = 5
 End Property
 
@@ -503,7 +511,7 @@ Dim m_lngMoveBack As Long
             m_cpmCharParams(m_lngMoveBack) = m_cpmCharParams(m_lngMoveBack + 1)
         Next m_lngMoveBack
     End If
-    m_lngCharCount = m_lngCharCount + 1
+    m_lngCharCount = m_lngCharCount - 1
     ReDim Preserve m_cpmCharParams(1 To m_lngCharCount)
     Refresh
 End Sub
@@ -534,13 +542,16 @@ Dim l_lngChars As Long, l_lngMaxHeight As Long, l_lngMinHeight As Long
             End If
             m_lngCharMappings(.MapValue) = VarPtr(m_cpmCharParams(l_lngChars))
             .pImage = m_colCharImages(l_lngChars).Handle
-        End With
-        With m_colCharImages(l_lngChars)
-            If (m_cpmCharParams(l_lngChars).YOffset + .Height) > m_lngFullHeight Then
-                m_lngFullHeight = (m_cpmCharParams(l_lngChars).YOffset + .Height)
-            End If
+            With m_colCharImages(l_lngChars)
+                If (m_cpmCharParams(l_lngChars).YOffset + .Height) > l_lngMaxHeight Then
+                    l_lngMaxHeight = (m_cpmCharParams(l_lngChars).YOffset + .Height)
+                End If
+            End With
         End With
     Next l_lngChars
+    If m_lngFullHeight <= 0 Then
+        m_lngFullHeight = l_lngMaxHeight
+    End If
     With m_fpmFontParam
         .MapCount = UBound(m_lngCharMappings)
         .MapPointer = VarPtr(m_lngCharMappings(0))
@@ -1018,7 +1029,7 @@ Dim l_lngVersion As Long
         .ReadSegment_End
         .ReadSegment_Begin
             .RawLoad VarPtr(m_fpmFontParam), Len(m_fpmFontParam)
-            .Load m_lngFullHeight
+            If Not .EOS Then .Load m_lngFullHeight
         .ReadSegment_End
         ReDim m_cpmCharParams(1 To m_lngCharCount)
         .ReadSegment_Begin

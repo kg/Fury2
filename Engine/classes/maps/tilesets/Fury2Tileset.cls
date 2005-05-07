@@ -41,6 +41,9 @@ Implements IVirtualFileSaveable
 
 Public Handle As Long
 Attribute Handle.VB_VarDescription = "*Internal value"
+Public Embed As Boolean
+Private m_lngRowWidth As Long
+Private m_booImageBased As Boolean
 Private m_lyrParent As Fury2MapLayer
 Private m_booOwnsTileset As Boolean
 Private mvarTilesPerRow As Long
@@ -54,6 +57,19 @@ Private mvarMatteColor As Long
 Private mvarHasAlpha As Boolean
 Private mvarTransparentTile As Long
 Private m_engEngine As Fury2Engine
+
+Public Property Get RowWidth() As Long
+    RowWidth = m_lngRowWidth
+End Property
+
+Public Property Let RowWidth(ByVal NewValue As Long)
+    m_lngRowWidth = NewValue
+End Property
+
+Public Property Get ImageBased() As Boolean
+On Error Resume Next
+    ImageBased = m_booImageBased
+End Property
 
 Friend Sub SetEngine(Engine As Fury2Engine)
     Set m_engEngine = Engine
@@ -97,30 +113,34 @@ On Error Resume Next
 Dim l_lngLayers As Long
     If Handle <> 0 Then DeallocateTileset
     If Engine.EditMode Then ForceNew = True
-    If mvarBuffer Is Nothing Then
-        Load
-    End If
-    If mvarBuffer.Handle = 0 Then
-        Exit Sub
-    End If
-    If Handle = 0 Then
-        Handle = 0
-        Handle = CLng(mvarBuffer.Tag(0))
-        If mvarBuffer.Tag(2) = MatteColor Then
-        Else
+    If ImageBased Then
+        If mvarBuffer Is Nothing Then
+            Load
+        End If
+        If mvarBuffer.Handle = 0 Then
+            Exit Sub
+        End If
+        If Handle = 0 Then
             Handle = 0
-        End If
-        Err.Clear
-        If (Handle = 0) Or (ForceNew) Then
-            Handle = SoftFX.AllocateTileset(mvarBuffer.Handle, mvarTileWidth, mvarTileHeight)
-            If Handle = 0 Then
-            Else
-                mvarBuffer.Tag = Array(Handle, 1, MatteColor)
-            End If
-        Else
-            mvarBuffer.Tag = Array(mvarBuffer.Tag(0), mvarBuffer.Tag(1) + 1, mvarBuffer.Tag(2))
             Handle = CLng(mvarBuffer.Tag(0))
+            If mvarBuffer.Tag(2) = MatteColor Then
+            Else
+                Handle = 0
+            End If
+            Err.Clear
+            If (Handle = 0) Or (ForceNew) Then
+                Handle = SoftFX.AllocateTileset(mvarBuffer.Handle, mvarTileWidth, mvarTileHeight)
+                If Handle = 0 Then
+                Else
+                    mvarBuffer.Tag = Array(Handle, 1, MatteColor)
+                End If
+            Else
+                mvarBuffer.Tag = Array(mvarBuffer.Tag(0), mvarBuffer.Tag(1) + 1, mvarBuffer.Tag(2))
+                Handle = CLng(mvarBuffer.Tag(0))
+            End If
         End If
+    Else
+        Handle = SoftFX.AllocateEmptyTileset(0, mvarTileWidth, mvarTileHeight)
     End If
 End Sub
 
@@ -138,12 +158,17 @@ Dim m_tstNew As Fury2Tileset
     With m_tstNew
         .SetEngine Engine
         .HasAlpha = mvarHasAlpha
-        Err.Clear
-        .MatteColor = Buffer.MatteColor
-        If Err.Number <> 0 Then .MatteColor = mvarMatteColor
+        .MatteColor = MatteColor
         .TransparentTile = mvarTransparentTile
-        .SetData mvarTileWidth, mvarTileHeight, mvarFilename, mvarBuffer
-        .AllocateTileset
+        .Embed = Embed
+        .Filename = Filename
+        .TileWidth = TileWidth
+        .TileHeight = TileHeight
+        If Embed Then
+            .AddTiles Me.GenerateBuffer
+        ElseIf ImageBased Then
+            .Load
+        End If
     End With
     Set Duplicate = m_tstNew
     Set m_tstNew = Nothing
@@ -152,32 +177,37 @@ End Function
 Public Sub RecalculateSizes()
 Attribute RecalculateSizes.VB_Description = "Updates the TilesPerRow, TilesPerColumn, and TileCount values."
 On Error Resume Next
-    If mvarBuffer Is Nothing Then Exit Sub
-    With mvarBuffer
-        If mvarTileWidth >= .Width Then
-            mvarTilesPerRow = 1
-        Else
-            mvarTilesPerRow = .Width \ mvarTileWidth
-        End If
-        If mvarTileHeight >= .Height Then
-            mvarTilesPerColumn = 1
-        Else
-            mvarTilesPerColumn = .Height \ mvarTileHeight
-        End If
-        If mvarTileHeight >= .Height Then
+    If ImageBased Then
+        If mvarBuffer Is Nothing Then Exit Sub
+        With mvarBuffer
             If mvarTileWidth >= .Width Then
-                mvarTileCount = 1
+                mvarTilesPerRow = 1
             Else
-                mvarTileCount = (.Width \ mvarTileWidth)
+                mvarTilesPerRow = .Width \ mvarTileWidth
             End If
-        Else
-            If mvarTileWidth >= .Width Then
-                mvarTileCount = 1
+            If mvarTileHeight >= .Height Then
+                mvarTilesPerColumn = 1
             Else
-                mvarTileCount = (.Width \ mvarTileWidth) * (.Height \ mvarTileHeight)
+                mvarTilesPerColumn = .Height \ mvarTileHeight
             End If
-        End If
-    End With
+            If mvarTileHeight >= .Height Then
+                If mvarTileWidth >= .Width Then
+                    mvarTileCount = 1
+                Else
+                    mvarTileCount = (.Width \ mvarTileWidth)
+                End If
+            Else
+                If mvarTileWidth >= .Width Then
+                    mvarTileCount = 1
+                Else
+                    mvarTileCount = (.Width \ mvarTileWidth) * (.Height \ mvarTileHeight)
+                End If
+            End If
+        End With
+    Else
+        mvarTilesPerColumn = 1
+        mvarTilesPerRow = 1
+    End If
 End Sub
 
 Public Property Let TransparentTile(ByVal vData As Long)
@@ -190,12 +220,14 @@ Public Property Get TransparentTile() As Long
 End Property
 
 Public Property Let HasAlpha(ByVal vData As Boolean)
-Attribute HasAlpha.VB_Description = "This flag determines whether or not the tileset's alpha channel is enabled."
+Attribute HasAlpha.VB_Description = "This flag determines whether or not the tileset's alpha channel is enabled. (Deprecated)"
+Attribute HasAlpha.VB_MemberFlags = "40"
     mvarHasAlpha = vData
 End Property
 
+' Deprecated
 Public Property Get HasAlpha() As Boolean
-    HasAlpha = mvarHasAlpha
+    HasAlpha = True
 End Property
 
 Public Property Get MaskColor() As Long
@@ -227,48 +259,99 @@ Public Property Let TileHeight(ByVal vData As Long)
 Attribute TileHeight.VB_Description = "The height of a tile."
 On Error Resume Next
     mvarTileHeight = ClipValue(vData, 2, 256)
-    RecalculateSizes
-    DeallocateTileset
-    AllocateTileset True
+    If ImageBased Then
+        RecalculateSizes
+        DeallocateTileset
+        AllocateTileset True
+    Else
+        ResizeTileset TileWidth, mvarTileHeight
+    End If
 End Property
 
 Public Property Get TileHeight() As Long
-    TileHeight = mvarTileHeight
+On Error Resume Next
+    If ImageBased Then
+        TileHeight = mvarTileHeight
+    Else
+        If Handle <> 0 Then TileHeight = GetTileHeight(Handle)
+    End If
 End Property
 
 Public Property Let TileWidth(ByVal vData As Long)
 Attribute TileWidth.VB_Description = "The width of a tile."
 On Error Resume Next
     mvarTileWidth = ClipValue(vData, 2, 256)
-    RecalculateSizes
-    DeallocateTileset
-    AllocateTileset True
+    If ImageBased Then
+        RecalculateSizes
+        DeallocateTileset
+        AllocateTileset True
+    Else
+        ResizeTileset mvarTileWidth, TileHeight
+    End If
 End Property
 
 Public Property Get TileWidth() As Long
-    TileWidth = mvarTileWidth
+On Error Resume Next
+    If ImageBased Then
+        TileWidth = mvarTileWidth
+    Else
+        If Handle <> 0 Then TileWidth = GetTileWidth(Handle)
+    End If
 End Property
 
 Public Property Set Buffer(vData As Fury2Image)
 Attribute Buffer.VB_Description = "*The image containing the tileset's tiles."
+On Error Resume Next
     Set mvarBuffer = vData
+    AllocateTileset
 End Property
 
 Public Property Get Buffer() As Fury2Image
+On Error Resume Next
     Set Buffer = mvarBuffer
 End Property
+
+Public Function GenerateBuffer() As Fury2Image
+On Error Resume Next
+Dim l_imgTile As Fury2Image, l_rctDest As Fury2Rect
+Dim l_lngX As Long, l_lngY As Long, l_lngIndex As Long
+    If ImageBased Then
+        Set GenerateBuffer = mvarBuffer.Duplicate
+    Else
+        If (mvarBuffer Is Nothing) Then
+            m_lngRowWidth = ClipValue(m_lngRowWidth, 1, 64)
+            Set GenerateBuffer = F2Image(TileWidth * m_lngRowWidth, TileHeight * Ceil(TileCount / m_lngRowWidth))
+            GenerateBuffer.AlphaChannel = True
+            Set l_imgTile = New Fury2Image
+            l_imgTile.Deallocate
+            Set l_rctDest = F2Rect(0, 0, TileWidth, TileHeight)
+            For l_lngIndex = 0 To TileCount - 1
+                l_rctDest.RelLeft = l_lngX
+                l_rctDest.RelTop = l_lngY
+                l_imgTile.SetHandle GetTile(Handle, l_lngIndex)
+                GenerateBuffer.Blit l_rctDest, , l_imgTile
+                l_lngX = l_lngX + TileWidth
+                If ((l_lngX + TileWidth) > GenerateBuffer.Width) Then
+                    l_lngX = 0
+                    l_lngY = l_lngY + TileHeight
+                End If
+            Next l_lngIndex
+            Set mvarBuffer = GenerateBuffer
+        Else
+            Set GenerateBuffer = mvarBuffer.Duplicate
+        End If
+    End If
+End Function
 
 Sub Reload()
 Attribute Reload.VB_Description = "Reloads the tileset."
 On Error Resume Next
-    mvarMatteColor = mvarBuffer.MatteColor
-    Engine.ReLoadPicture mvarFilename
-    Set mvarBuffer = Engine.LoadImage(mvarFilename)
-    mvarBuffer.MatteColor = mvarMatteColor
-    AllocateTileset
-    With mvarBuffer
-        RecalculateSizes
-    End With
+    If Embed Then
+    Else
+        DeallocateTileset
+        Set mvarBuffer = Nothing
+        Load
+    End If
 End Sub
 
 Public Sub Render(Surface As Fury2Image, Optional Area As Fury2Rect = Nothing, Optional Alpha As Single = 1, Optional XOffset As Long = 0, Optional YOffset As Long = 0)
@@ -302,24 +385,71 @@ Dim l_imgHandle As Fury2Image
     Next l_lngTile
 End Sub
 
+Sub LoadTileset(ByVal Filename)
+On Error Resume Next
+Dim l_vfFile As VirtualFile
+Dim l_tstTileset As Fury2Tileset
+    If VarType(Filename) = vbString Then
+        Set l_vfFile = Engine.Filesystem.File(Filename).Load()
+    Else
+        Set l_vfFile = Filename
+    End If
+    If ValidateFileHeader(l_vfFile) Then
+        Set l_tstTileset = New Fury2Tileset
+        l_tstTileset.SetEngine Engine
+        l_vfFile.Load l_tstTileset
+        DeallocateTileset
+        Handle = l_tstTileset.Handle
+        RowWidth = l_tstTileset.RowWidth
+        TransparentTile = l_tstTileset.TransparentTile
+        l_tstTileset.Handle = 0
+        Set l_tstTileset = Nothing
+    End If
+End Sub
+
+Sub SaveTileset(ByVal Filename)
+On Error Resume Next
+Dim l_vfFile As VirtualFile
+    If VarType(Filename) = vbString Then
+        Set l_vfFile = F2File()
+    Else
+        Set l_vfFile = Filename
+    End If
+    l_vfFile.Save g_strHeader
+    l_vfFile.Save Me
+    If VarType(Filename) = vbString Then
+        Engine.Filesystem.CreateFile(Filename).Save l_vfFile
+    End If
+End Sub
+
 Sub Load(Optional DetectMask As Boolean = False)
 On Error Resume Next
 Dim m_glbGlobals As Fury2Globals
 Dim m_strDir As String
 Dim l_lngIndex As Long
 Dim l_booNew As Boolean
+Dim l_strFilename As String
 Static m_lngRecurse As Long
     If Trim(mvarFilename) = "" Then
+        AllocateTileset
+        m_booImageBased = False
+        Exit Sub
+    End If
+    l_strFilename = LCase(Trim(Engine.Filesystem.AutoSelectExtension(Filename, "f2tileset")))
+    If InStr(l_strFilename, ".f2tileset") Then
+        m_booImageBased = False
+        LoadTileset l_strFilename
         Exit Sub
     End If
     Engine.ContextLevelAdd "Tileset.Load(""" + CStr(mvarFilename) + """)"
     m_lngRecurse = m_lngRecurse + 1
     Set mvarBuffer = Nothing
+    m_booImageBased = True
     If Engine.EditMode Then
-        Set mvarBuffer = Engine.LoadImage(mvarFilename)
+        Set mvarBuffer = Engine.LoadImage(l_strFilename)
     Else
         l_booNew = False
-        l_lngIndex = Engine.iLoadImage(mvarFilename, , l_booNew)
+        l_lngIndex = Engine.iLoadImage(l_strFilename, , l_booNew)
         Set mvarBuffer = Engine.Images(l_lngIndex)
     End If
     If mvarBuffer Is Nothing Then
@@ -332,13 +462,13 @@ Static m_lngRecurse As Long
         m_lngRecurse = m_lngRecurse - 1
         Exit Sub
     End If
+    m_lngRowWidth = mvarBuffer.Width \ TileWidth
     mvarBuffer.MatteColor = mvarMatteColor
     With mvarBuffer
         RecalculateSizes
         If DetectMask Then
             .MatteColor = .GetPixel(.Width - 1, .Height - 1)
             mvarMatteColor = .MatteColor
-        Else
         End If
     End With
     AllocateTileset
@@ -346,21 +476,68 @@ Static m_lngRecurse As Long
     Engine.ContextLevelRemove
 End Sub
 
+Friend Sub ReadTiles(ByVal File As VirtualFile)
+On Error Resume Next
+Dim l_lngCount As Long
+Dim l_lngWidth As Long
+Dim l_lngHeight As Long
+Dim l_lngIndex As Long
+Dim l_imgImage As Fury2Image
+    Engine.ContextLevelAdd "Tileset.ReadTiles()"
+    DeallocateTileset
+    With File
+        .ReadSegment_Begin
+            .ReadSegment_Begin
+                .Load l_lngCount
+                .Load l_lngWidth
+                .Load l_lngHeight
+            .ReadSegment_End
+            Handle = AllocateEmptyTileset(l_lngCount, l_lngWidth, l_lngHeight)
+            .ReadSegment_Begin
+                Set l_imgImage = New Fury2Image
+                For l_lngIndex = 1 To l_lngCount
+                    .Load l_imgImage
+                    ReplaceTile Handle, l_lngIndex - 1, l_imgImage.Handle
+                Next l_lngIndex
+            .ReadSegment_End
+        .ReadSegment_End
+    End With
+    Engine.ContextLevelRemove
+End Sub
+
+Friend Sub WriteTiles(ByVal File As VirtualFile)
+On Error Resume Next
+Dim l_lngCount As Long
+Dim l_lngWidth As Long
+Dim l_lngHeight As Long
+Dim l_lngIndex As Long
+    Engine.ContextLevelAdd "Tileset.WriteTiles()"
+    With File
+        .WriteSegment_Begin
+            l_lngCount = GetTileCount(Handle)
+            l_lngWidth = GetTileWidth(Handle)
+            l_lngHeight = GetTileHeight(Handle)
+            .WriteSegment_Begin
+                .Save l_lngCount
+                .Save l_lngWidth
+                .Save l_lngHeight
+            .WriteSegment_End
+            .WriteSegment_Begin
+                For l_lngIndex = 1 To l_lngCount
+                    .Save Tile(l_lngIndex)
+                Next l_lngIndex
+            .WriteSegment_End
+        .WriteSegment_End
+    End With
+    Engine.ContextLevelRemove
+End Sub
+
 Public Property Let Filename(ByVal vData As String)
 Attribute Filename.VB_Description = "The name of the image the tileset's tiles will be loaded from.{ImagePath}"
 On Error Resume Next
+    If mvarFilename = vData Then Exit Property
     mvarFilename = vData
-    Set Buffer = Nothing
-    If (Handle = 0) Then
-        Load
-        RecalculateSizes
-        AllocateTileset True
-    Else
-        DeallocateTileset
-        Load
-        RecalculateSizes
-        AllocateTileset True
-    End If
+    Reload
 End Property
 
 Public Property Get Filename() As String
@@ -372,13 +549,18 @@ On Error Resume Next
     If Handle <> 0 Then
         Set Tile = New Fury2Image
         Tile.Deallocate
-        Tile.SetHandle SoftFX.GetTile(Handle, Index)
+        Tile.SetHandle SoftFX.GetTile(Handle, Index - 1)
     End If
 End Property
 
 Public Property Get TileCount() As Long
 Attribute TileCount.VB_Description = "The number of tiles in the tileset."
-    TileCount = mvarTileCount
+On Error Resume Next
+    If ImageBased Then
+        TileCount = mvarTileCount
+    Else
+        TileCount = GetTileCount(Handle)
+    End If
 End Property
 
 Public Property Get TilesPerColumn() As Long
@@ -393,25 +575,30 @@ End Property
 
 Public Property Get Height() As Long
 Attribute Height.VB_Description = "The height of the tileset's source image."
-    Height = mvarBuffer.Height
+On Error Resume Next
+    If ImageBased Then
+    Else
+        Height = mvarBuffer.Height
+    End If
 End Property
 
 Public Property Get Width() As Long
 Attribute Width.VB_Description = "The width of the tileset's source image."
-    Width = mvarBuffer.Width
+On Error Resume Next
+    If ImageBased Then
+    Else
+        Width = mvarBuffer.Width
+    End If
 End Property
 
 Private Sub Class_Initialize()
 On Error Resume Next
-    If mvarBuffer Is Nothing Then
-        Set mvarBuffer = New Fury2Image
-        mvarBuffer.Resize 1, 1
-    End If
     mvarTileWidth = 16
     mvarTileHeight = 16
     mvarTransparentTile = -1
     mvarMatteColor = c_lngNullColor
-    mvarBuffer.MatteColor = c_lngNullColor
+    AllocateTileset
+    m_booImageBased = False
 End Sub
 
 Private Sub Class_Terminate()
@@ -432,13 +619,25 @@ On Error Resume Next
             .Save mvarTilesPerRow
             .Save mvarTilesPerColumn
             .Save mvarTransparentTile
+            .Save m_booImageBased
+            .Save Embed
+            .WriteSegment_Begin
+                .Save m_lngRowWidth
+            .WriteSegment_End
         .WriteSegment_End
+        If Embed Then
+            WriteTiles File
+        End If
     End With
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As VirtualFile)
 On Error Resume Next
+Dim l_strFilename As String
     mvarTransparentTile = -1
+    m_booImageBased = True
+    Embed = False
+    Set mvarBuffer = Nothing
     With File
         .ReadSegment_Begin
             .Load mvarFilename
@@ -449,33 +648,91 @@ On Error Resume Next
             .Load mvarTileCount
             .Load mvarTilesPerRow
             .Load mvarTilesPerColumn
-            .Load mvarTransparentTile
+            If Not .EOS Then
+                .Load mvarTransparentTile
+            End If
+            If Not .EOS Then
+                .Load m_booImageBased
+                .Load Embed
+            End If
+            .ReadSegment_Begin
+                .Load m_lngRowWidth
+            .ReadSegment_End
         .ReadSegment_End
+        If Embed Then
+            ReadTiles File
+        End If
     End With
-    If mvarBuffer Is Nothing Then
-        Set mvarBuffer = New Fury2Image
-        mvarBuffer.MatteColor = mvarMatteColor
+    If Embed Then
     Else
-        mvarBuffer.MatteColor = mvarMatteColor
+        Load
     End If
-    Load
     Err.Clear
+End Sub
+
+Public Sub AddTiles(ByVal Source As Fury2Image)
+On Error Resume Next
+Dim l_imgTiles() As Fury2Image
+Dim l_lngIndex As Long
+    If Handle <> 0 Then
+        If Source Is Nothing Then Exit Sub
+        If TileCount = 0 Then
+            m_lngRowWidth = Source.Width \ TileWidth
+        End If
+        l_imgTiles = Source.Split(TileWidth, TileHeight)
+        For l_lngIndex = LBound(l_imgTiles) To UBound(l_imgTiles)
+            Add l_imgTiles(l_lngIndex)
+        Next l_lngIndex
+        Set mvarBuffer = Nothing
+    End If
 End Sub
 
 Public Function Add(ByVal NewTile As Fury2Image) As Long
 Attribute Add.VB_Description = "Adds a copy of an image to the tileset as a tile."
 On Error Resume Next
+    If NewTile Is Nothing Then Exit Function
+    If NewTile.Width <> TileWidth Then Exit Function
+    If NewTile.Height <> TileHeight Then Exit Function
     If Handle <> 0 Then
         SoftFX.AddTile Handle, NewTile.Handle
-        mvarTileCount = mvarTileCount + 1
+        mvarTileCount = GetTileCount(Handle)
         Add = mvarTileCount
+        Set mvarBuffer = Nothing
     End If
 End Function
+
+Public Sub RemoveAll()
+On Error Resume Next
+    If Handle <> 0 Then
+        Do While SoftFX.GetTileCount(Handle) > 0
+            SoftFX.RemoveTile Handle, 0
+        Loop
+        Set mvarBuffer = Nothing
+    End If
+End Sub
+
+Public Sub Clear()
+On Error Resume Next
+Dim l_lngWidth As Long, l_lngHeight As Long
+    l_lngWidth = TileWidth
+    l_lngHeight = TileHeight
+    RemoveAll
+    DeallocateTileset
+    Handle = SoftFX.AllocateEmptyTileset(0, l_lngWidth, l_lngHeight)
+End Sub
 
 Public Sub Remove(ByVal Index As Long)
 Attribute Remove.VB_Description = "Removes a tile from the tileset."
 On Error Resume Next
     If Handle <> 0 Then
-        SoftFX.RemoveTile Handle, Index
+        SoftFX.RemoveTile Handle, Index - 1
+        Set mvarBuffer = Nothing
     End If
+End Sub
+
+Public Sub ResizeTileset(ByVal NewWidth As Long, ByVal NewHeight As Long)
+On Error Resume Next
+    DeallocateTileset
+    Handle = AllocateEmptyTileset(0, NewWidth, NewHeight)
+    Set mvarBuffer = Nothing
 End Sub

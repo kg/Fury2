@@ -200,7 +200,7 @@ Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTile As Long
 Dim l_imgTile As Fury2Image
-Dim l_rctText As Win32.Rect
+Dim l_rctText As Win32.RECT
 Dim l_lngMax As Long
     If m_colTiles.Count > 0 Then
         ReDim Preserve m_booSelection(1 To m_colTiles.Count)
@@ -275,11 +275,11 @@ On Error Resume Next
     Unload Me
 End Sub
 
-Private Sub dtTabs_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub dtTabs_TabSelected(TheTab As vbalDTab6.cTab)
 On Error Resume Next
 Dim l_lngTabs As Long
     For l_lngTabs = picTab.LBound To picTab.UBound
-        If l_lngTabs = theTab.Index - 1 Then
+        If l_lngTabs = TheTab.Index - 1 Then
             picTab(l_lngTabs).Visible = True
         Else
             picTab(l_lngTabs).Visible = False

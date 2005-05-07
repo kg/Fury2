@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.10#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.11#0"; "ngUI.ocx"
 Begin VB.Form frmFont 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -206,6 +206,20 @@ On Error Resume Next
     Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\font.png")
 End Property
 
+Private Sub picImage_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+    Editor.ActionUpdate
+    Select Case QuickShowMenu(picImage, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+        Menus(MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
+        frmIcons.ilContextMenus)
+    Case 1
+        CopyImage
+    Case 2
+        PasteImage
+    Case Else
+    End Select
+End Sub
+
 Private Sub picImage_Paint()
 On Error Resume Next
 Dim l_sngXRatio As Single, l_sngYRatio As Single, l_sngRatio As Single
@@ -259,6 +273,8 @@ On Error Resume Next
     Select Case LCase(Trim(Me.ActiveControl.Name))
     Case "piccharacters", "piccharacterlist", "inscharacter", "tscharacter"
         ActiveType = "Characters"
+    Case "picimage"
+        ActiveType = "Image"
     Case Else
     End Select
 End Property
@@ -288,7 +304,7 @@ Public Sub Redraw()
 On Error Resume Next
     Select Case m_lngCurrentView
     Case View_Overview
-        insOverview.Inspect m_fntFont, "Font", True, True
+        insOverview.Inspect m_fntFont, "Font", True
     Case View_Characters
         RedrawCharacters
     Case View_Preview
@@ -307,7 +323,9 @@ Public Sub RedrawSelectedCharacter()
 On Error Resume Next
     Select Case LCase(Trim(tsCharacter.SelectedTab.Text))
     Case "properties"
-        insCharacter.Inspect SelectedCharacter, "Character " & m_lngSelectedCharacter, , , True
+        insCharacter.ClearStack
+        insCharacter.AddToStack m_fntFont, "Font"
+        insCharacter.Inspect SelectedCharacter, "Character " & m_lngSelectedCharacter
     Case "image"
         RedrawImage
     Case Else
@@ -626,7 +644,6 @@ Private Sub Form_Load()
 On Error Resume Next
 '    vsFont.Width = GetScrollbarSize(vsFont)
     hsCharacters.Height = GetScrollbarSize(hsCharacters) + 1
-    Set m_fntFont = DefaultEngine.F2Font()
     InitViews
     Form_Activate
 End Sub
@@ -736,7 +753,9 @@ Private Sub iEditingCommands_CanCopy(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Characters"
-        NewValue = (m_lngSelectedCharacter > 1)
+        NewValue = (m_lngSelectedCharacter >= 1)
+    Case "Image"
+        NewValue = True
     Case Else
     End Select
 End Sub
@@ -745,7 +764,7 @@ Private Sub iEditingCommands_CanCut(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Characters"
-        NewValue = (m_lngSelectedCharacter > 1)
+        NewValue = (m_lngSelectedCharacter >= 1)
     Case Else
     End Select
 End Sub
@@ -754,7 +773,7 @@ Private Sub iEditingCommands_CanDelete(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Characters"
-        NewValue = (m_lngSelectedCharacter > 1)
+        NewValue = (m_lngSelectedCharacter >= 1)
     Case Else
     End Select
 End Sub
@@ -764,6 +783,8 @@ On Error Resume Next
     Select Case ActiveType
     Case "Characters"
         NewValue = ClipboardContainsFormat(FCF_Character)
+    Case "Image"
+        NewValue = ClipboardContainsFormat(FCF_Image)
     Case Else
     End Select
 End Sub
@@ -795,6 +816,8 @@ On Error Resume Next
     Select Case ActiveType
     Case "Characters"
         CopyCharacter
+    Case "Image"
+        CopyImage
     Case Else
     End Select
 End Sub
@@ -822,6 +845,8 @@ On Error Resume Next
     Select Case ActiveType
     Case "Characters"
         PasteCharacter
+    Case "Image"
+        PasteImage
     Case Else
     End Select
 End Sub
@@ -858,7 +883,7 @@ End Sub
 Friend Sub SetFilename(Name As String)
 On Error Resume Next
     m_strFilename = Name
-    Me.Caption = IIf(Trim(Name) = "", "Untitled.f2font", GetTitle(Name))
+    Me.Caption = IIf(Trim(Name) = "", "Untitled.f2Font", GetTitle(Name))
 End Sub
 
 Friend Sub SetFont(Font As Fury2Font)
@@ -901,11 +926,23 @@ Dim l_rctCharacter As Fury2Rect
                     Case Else
                     End Select
                 End If
-                Exit For
+                Exit Sub
             End If
             l_lngX = l_lngX + ClipValue(l_imgCharacter.Width, 6, 999) + 1
         End If
     Next l_lngCharacter
+    If Button = 2 Then
+        Editor.ActionUpdate
+        Select Case QuickShowMenu(picCharacterList, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+            Menus(MenuString("&Insert New"), "-", MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
+            frmIcons.ilContextMenus)
+        Case 1
+            InsertCharacter
+        Case 3
+            PasteCharacter
+        Case Else
+        End Select
+    End If
 End Sub
 
 Private Sub picCharacterList_Resize()
@@ -956,6 +993,13 @@ On Error Resume Next
     CustomClipboard.ClipboardClose
 End Sub
 
+Public Sub CopyImage()
+On Error Resume Next
+    CustomClipboard.ClipboardOpen Me.hwnd
+    ClipboardSerialize CustomClipboard, ClipboardFormat(FCF_Image), SelectedCharacter.Image
+    CustomClipboard.ClipboardClose
+End Sub
+
 Public Function PasteCharacter() As CharacterProxy
 On Error Resume Next
 Dim l_chCharacter As CharacterProxy
@@ -975,6 +1019,22 @@ Dim l_chCharacter As CharacterProxy
         CustomClipboard.ClipboardClose
     End If
 End Function
+
+Public Sub PasteImage()
+On Error Resume Next
+Dim l_imgImage As Fury2Image
+    Set l_imgImage = New Fury2Image
+    CustomClipboard.ClipboardOpen Me.hwnd
+    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(FCF_Image), l_imgImage) Then
+        Set SelectedCharacter.Image = l_imgImage
+        CustomClipboard.ClipboardClose
+        RedrawCharacterList
+        RedrawSelectedCharacter
+        Editor.ToolbarUpdate
+    Else
+        CustomClipboard.ClipboardClose
+    End If
+End Sub
 
 Public Sub InsertCharacter()
 On Error Resume Next

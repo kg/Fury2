@@ -35,8 +35,6 @@ namespace BlendModes {
   _BM_BEGIN(Additive)
     if (GLEW_EXT_blend_minmax) {
       glBlendEquationEXT(GL_FUNC_ADD_EXT);
-    } else {
-      glBlendFunc(GL_ONE, GL_ONE);
     }
     if (GLEW_EXT_blend_color) {
       glBlendFunc(GL_CONSTANT_ALPHA_EXT, GL_ONE);

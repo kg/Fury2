@@ -38,6 +38,7 @@ Implements iFileTypePlugin
 Public Enum FontEditorClipboardFormats
     FCF_MIN_
     FCF_Character
+    FCF_Image
     FCF_MAX_
 End Enum
 Private m_lngClipboardFormats(FCF_MIN_ To FCF_MAX_)
@@ -62,6 +63,7 @@ Private Sub Class_Initialize()
 On Error Resume Next
     Set m_clpClipboard = New cCustomClipboard
     m_lngClipboardFormats(FCF_Character) = m_clpClipboard.AddFormat("Fury2FontCharacter")
+    m_lngClipboardFormats(FCF_Image) = m_clpClipboard.AddFormat("Fury2Image")
 End Sub
 
 Private Sub Class_Terminate()
@@ -118,6 +120,8 @@ Dim l_fntFont As Fury2Font
         Unload frmImportTTF
         Err.Clear
     Else
+        Set l_fntFont = DefaultEngine.F2Font()
+        l_frmNew.SetFont l_fntFont
         Set iFileTypePlugin_CreateNew = l_frmNew
         Set iFileTypePlugin_CreateNew.Plugin = Me
         Err.Clear
@@ -135,8 +139,9 @@ End Function
 
 Private Function iFileTypePlugin_LoadFromFilename(Filename As String) As iDocument
 On Error Resume Next
-Dim l_frmNew As New frmFont
+Dim l_frmNew As frmFont
 Dim l_fntFont As Fury2Font
+    Set l_frmNew = New frmFont
     Set l_fntFont = DefaultEngine.F2Font()
     If LoadFromFile(l_fntFont, F2File(Filename)) Then
         l_frmNew.SetFilename Filename

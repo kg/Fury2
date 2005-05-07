@@ -38,6 +38,7 @@ Implements IVirtualFileSaveable
 Private m_lngBackgroundColor As Long
 Private m_lngLightingObstructionColor As Long
 Private m_lngLightingPlaneColor As Long
+Private m_lngGridColor As Long
 Private m_lngBlockingColor As Long
 Private m_lngPathColor As Long
 Private m_lngPathNodeColor As Long
@@ -178,6 +179,15 @@ Public Property Let BackgroundColor(NewColor As Long)
     m_lngBackgroundColor = NewColor
 End Property
 
+Public Property Get GridColor() As Long
+Attribute GridColor.VB_Description = "The color to use when drawing the grid.{Color}"
+    GridColor = m_lngGridColor
+End Property
+
+Public Property Let GridColor(NewColor As Long)
+    m_lngGridColor = NewColor
+End Property
+
 Private Sub Class_Initialize()
 On Error Resume Next
     m_booAutoScroll = True
@@ -187,6 +197,7 @@ On Error Resume Next
     m_lngLightingPlaneColor = F2RGB(63, 63, 220, 220)
     m_lngPathColor = F2RGB(192, 64, 0, 160)
     m_lngPathNodeColor = F2RGB(240, 96, 16, 220)
+    m_lngGridColor = F2RGB(127, 127, 127, 192)
     m_lngBackgroundColor = F2Black
     m_booEnableWrapping = False
     m_booEnableParallax = False
@@ -210,6 +221,7 @@ On Error Resume Next
         .Load m_lngPathNodeColor
         .Load m_booAlwaysShowLighting
         .Load m_booAlwaysShowSprites
+        If Not .EOS Then .Load m_lngGridColor
     End With
 End Sub
 
@@ -231,5 +243,6 @@ On Error Resume Next
         .Save m_lngPathNodeColor
         .Save m_booAlwaysShowLighting
         .Save m_booAlwaysShowSprites
+        .Save m_lngGridColor
     End With
 End Sub

@@ -20,25 +20,25 @@ Option Explicit
 
 Private m_lngPixels() As Long
 
-Sub Load(File As VirtualFile, Width As Long, Height As Long)
+Sub Load(file As VirtualFile, Width As Long, Height As Long)
 Dim m_lngX As Long, m_lngY As Long
     ReDim m_lngPixels(0 To Width - 1, 0 To Height - 1)
     For m_lngX = 0 To Width - 1
         For m_lngY = 0 To Height - 1
-            File.RawLoad VarPtr(m_lngPixels(m_lngX, m_lngY)) + 2, 1
-            File.RawLoad VarPtr(m_lngPixels(m_lngX, m_lngY)) + 1, 1
-            File.RawLoad VarPtr(m_lngPixels(m_lngX, m_lngY)), 1
+            file.RawLoad VarPtr(m_lngPixels(m_lngX, m_lngY)) + 2, 1
+            file.RawLoad VarPtr(m_lngPixels(m_lngX, m_lngY)) + 1, 1
+            file.RawLoad VarPtr(m_lngPixels(m_lngX, m_lngY)), 1
         Next m_lngY
     Next m_lngX
 End Sub
 
-Sub Save(File As VirtualFile)
+Sub Save(file As VirtualFile)
 Dim m_lngX As Long, m_lngY As Long
     For m_lngX = 0 To UBound(m_lngPixels, 1)
         For m_lngY = 0 To UBound(m_lngPixels, 1)
-            File.RawSave VarPtr(m_lngPixels(m_lngX, m_lngY)) + 2, 1
-            File.RawSave VarPtr(m_lngPixels(m_lngX, m_lngY)) + 1, 1
-            File.RawSave VarPtr(m_lngPixels(m_lngX, m_lngY)), 1
+            file.RawSave VarPtr(m_lngPixels(m_lngX, m_lngY)) + 2, 1
+            file.RawSave VarPtr(m_lngPixels(m_lngX, m_lngY)) + 1, 1
+            file.RawSave VarPtr(m_lngPixels(m_lngX, m_lngY)), 1
         Next m_lngY
     Next m_lngX
 End Sub

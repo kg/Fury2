@@ -146,6 +146,11 @@ End Function
 Public Sub Free()
 On Error Resume Next
 Dim l_perPeer As VBENetPeer
+    If TimeSynchronizer Is Nothing Then
+    Else
+        TimeSynchronizer.Free
+        Set TimeSynchronizer = Nothing
+    End If
     For Each l_perPeer In m_colPeers
         l_perPeer.Free
     Next l_perPeer
@@ -154,6 +159,10 @@ Dim l_perPeer As VBENetPeer
         enet_host_destroy m_lngHost
         m_lngHost = 0
     End If
+    Set m_engEngine = Nothing
+    Set ConnectEvent = Nothing
+    Set RecieveEvent = Nothing
+    Set DisconnectEvent = Nothing
 End Sub
 
 Friend Function Create(ByVal Address As VBENetAddress, ByVal ConnectionCount As Long, ByVal IncomingBandwidth As Long, ByVal OutgoingBandwidth As Long) As Boolean

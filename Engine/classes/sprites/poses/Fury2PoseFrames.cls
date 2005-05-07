@@ -259,7 +259,7 @@ On Error Resume Next
     Err.Clear
 End Sub
 
-Public Property Get Item(vntIndexKey As Variant) As Fury2PoseFrame
+Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2PoseFrame
 Attribute Item.VB_UserMemId = 0
 Attribute Item.VB_MemberFlags = "200"
 On Error Resume Next

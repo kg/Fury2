@@ -270,11 +270,6 @@ Attribute Destroyed.VB_Description = "*This value is true if the sprite has been
     Destroyed = m_booDestroyed
 End Property
 
-Private Sub Dirty()
-On Error Resume Next
-'    Engine.Cameras.Dirty
-End Sub
-
 Public Function Class_ToString() As String
 On Error Resume Next
     Class_ToString = "Sprite: " & m_strName
@@ -351,6 +346,7 @@ Attribute Alpha.VB_Description = "The opacity of the sprite."
 End Property
 
 Public Property Let Alpha(ByVal NewValue As Single)
+On Error Resume Next
     m_spParam.Params.Alpha = NewValue
 End Property
 
@@ -360,12 +356,15 @@ Attribute Angle.VB_Description = "The direction the sprite is facing. (Also affe
 End Property
 
 Public Property Let Angle(ByVal NewValue As Single)
+On Error Resume Next
+    If NewValue = m_spParam.Velocity.B Then Exit Property
     m_spParam.Velocity.B = NewValue
     ReselectPose
 End Property
 
 Public Property Let Animate(ByVal NewValue As Boolean)
 Attribute Animate.VB_Description = "If True, the sprite will animate, both while moving and while stopped."
+On Error Resume Next
     m_booAnimateWhileStopped = NewValue
     m_booAnimateWhileMoving = NewValue
 End Property
@@ -558,7 +557,6 @@ End Property
 Public Sub Die()
 On Error Resume Next
 Dim l_lyrLayer As Fury2MapLayer
-    Dirty
     m_booDestroyed = True
     mvarEngine.ContextLevelAdd Name + " : Die"
     m_objScript.Die
@@ -567,6 +565,17 @@ Dim l_lyrLayer As Fury2MapLayer
     Next l_lyrLayer
     m_mapMap.Sprites.Remove Me
     mvarEngine.ContextLevelRemove
+    Set m_staState = Nothing
+    Set m_posPose = Nothing
+    Set m_fraFrame = Nothing
+    Set SavedPaths = Nothing
+    Set AttachedGraphic = Nothing
+    Set m_posPoses = Nothing
+    Set m_staStates = Nothing
+    Set m_pthPath = Nothing
+    Set m_sprAttached = Nothing
+    Set m_sprSprites = Nothing
+    Set m_mapMap = Nothing
 End Sub
 
 Public Function Duplicate() As Fury2Sprite
@@ -631,6 +640,8 @@ End Property
 
 Public Property Let Frame(ByVal NewValue As Long)
 Attribute Frame.VB_Description = "The current frame being displayed."
+On Error Resume Next
+    If NewValue = m_lngFrame Then Exit Property
     m_lngFrame = NewValue
     UpdateFrame
 End Property
@@ -642,6 +653,7 @@ End Property
 Public Sub Free()
 On Error Resume Next
 Dim l_posPose As Fury2Pose
+    If Not m_booLoaded Then Exit Sub
     Set m_staState = Nothing
     Set m_posPose = Nothing
     Set m_fraFrame = Nothing
@@ -991,7 +1003,7 @@ On Error Resume Next
 Dim l_sprTemplate As Fury2Sprite, l_strTemplateSprite As String, l_strTemplateIndex As String
     If Trim(m_strTemplate) = "" Then
     Else
-        l_strTemplateSprite = Left(m_strTemplate, InStrRev(m_strTemplate, ":") - 1)
+        l_strTemplateSprite = left(m_strTemplate, InStrRev(m_strTemplate, ":") - 1)
         l_strTemplateIndex = Mid(m_strTemplate, InStrRev(m_strTemplate, ":") + 1)
         Set l_sprTemplate = mvarEngine.LoadSprite(l_strTemplateSprite, l_strTemplateIndex)
         If l_sprTemplate Is Nothing Then
@@ -1082,6 +1094,8 @@ End Property
 
 Public Property Let Pose(ByVal NewValue As Long)
 Attribute Pose.VB_Description = "The current pose."
+On Error Resume Next
+    If NewValue = m_lngPose Then Exit Property
     m_lngPose = NewValue
     UpdatePose
 End Property
@@ -1250,8 +1264,7 @@ Dim l_strName As String
     If m_objScript Is Nothing Then
         If (m_booScriptLoadFailed = False) Then
             Err.Clear
-            mvarEngine.SpriteObjectCount = mvarEngine.SpriteObjectCount + 1
-            If Left(Trim(m_strScript), 2) = "<@" Then
+            If left(Trim(m_strScript), 2) = "<@" Then
                 l_strScript = Trim(m_strScript)
                 l_strName = Mid(l_strScript, 3, Len(l_strScript) - 3)
                 Set m_objScript = mvarEngine.ScriptEngine.Eval(l_strName)
@@ -1266,14 +1279,24 @@ Dim l_strName As String
                 m_booScript_Step = m_objScript.ImplementsMethod("Step")
                 m_booScript_FadeOut = m_objScript.ImplementsMethod("FadeOut")
             Else
-                l_strName = mvarEngine.VariableName("ss" & mvarEngine.SpriteObjectCount)
                 With mvarEngine.ScriptEngine.Language
-                    l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
-                    .GenerateClassVariable("Map") & .LineTerminator & _
-                    .GenerateClassMethod("F2OInit", Array("T", "M"), _
-                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
-                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) & .LineTerminator _
-                    ) & m_strScript
+                    If left(Trim(m_strScript), 2) = "<#" Then
+                        l_strScript = Trim(m_strScript)
+                        l_strScript = Mid(l_strScript, 3, Len(l_strScript) - 3)
+                        l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
+                        .GenerateClassVariable("Map") & .LineTerminator & _
+                        .GenerateClassMethod("F2OInit", Array("T", "M"), _
+                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
+                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) & .LineTerminator _
+                        ) & .LineTerminator & mvarEngine.GetFile(l_strScript)
+                    Else
+                        l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
+                        .GenerateClassVariable("Map") & .LineTerminator & _
+                        .GenerateClassMethod("F2OInit", Array("T", "M"), _
+                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
+                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) & .LineTerminator _
+                        ) & .LineTerminator & m_strScript
+                    End If
                     m_booScript_Update = .ImplementsMethod(l_strScript, "Update")
                     m_booScript_Hit = .ImplementsMethod(l_strScript, "Hit")
                     m_booScript_HitMap = .ImplementsMethod(l_strScript, "HitMap")
@@ -1284,8 +1307,7 @@ Dim l_strName As String
                     m_booScript_Died = .ImplementsMethod(l_strScript, "Died")
                     m_booScript_Step = .ImplementsMethod(l_strScript, "Step")
                     m_booScript_FadeOut = .ImplementsMethod(l_strScript, "FadeOut")
-                    mvarEngine.CacheScript l_strName, .GenerateClass(l_strName, l_strScript)
-                    Set m_objScript = mvarEngine.ScriptEngine.Eval(.GenerateInstantiation(l_strName))
+                    Set m_objScript = mvarEngine.GenerateScriptObject(l_strScript)
                 End With
             End If
             Set mvarEngine.IObjThis = Me
@@ -1465,11 +1487,7 @@ Dim l_sprCollided As Fury2Sprite
     If m_booDisplayRotation Then
         RotationAngle = Angle
     End If
-    
-    If m_spParam.Events.Changed Or m_spParam.Events.Moved Then
-        Dirty
-    End If
-    
+        
     If m_spParam.Events.Moved Then
         UpdateAreas
     End If
@@ -1635,14 +1653,13 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
                 l_lngPreState = m_lngState
                 m_posPose.Frames(m_lngFrame).RunScript
                 If (l_lngPreFrame <> m_lngFrame) Or (l_lngPrePose <> m_lngPose) Or (l_lngPreState <> m_lngState) Then
-                    mvarEngine.Cameras.Dirty
                     ProfileStop "Sprite.UpdateAnimation"
                     Exit Sub
                 End If
-                m_lngFrame = m_lngFrame + m_lngAnimationDirection
                 If m_posPose.Frames.Count = 1 Then
-                    m_lngFrame = 1
+                    m_lngFrame = Frame = 1
                 Else
+                    m_lngFrame = m_lngFrame + m_lngAnimationDirection
                     Select Case m_posPose.LoopMode
                     Case F2LM_OneShot
                         If m_lngFrame > m_posPose.Frames.Count Then
@@ -1658,26 +1675,25 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
                         End If
                     Case F2LM_PingPong
                         If m_lngFrame > m_posPose.Frames.Count Then
+                            m_lngAnimationDirection = -m_lngAnimationDirection
                             m_lngFrame = m_posPose.Frames.Count - 1
-                            m_lngAnimationDirection = -m_lngAnimationDirection
                         ElseIf m_lngFrame < 2 Then
-                            m_lngFrame = 3
                             m_lngAnimationDirection = -m_lngAnimationDirection
+                            m_lngFrame = 3
                         End If
                     Case Else
                     End Select
                 End If
-                UpdateFrame
             End If
         Else
             m_sngAnimationDelay = 0
-            If Frame <> 1 Then
-                Frame = 1
+            If m_lngFrame <> 1 Then
+                m_lngFrame = 1
             End If
         End If
     End If
     If m_lngFrame <> l_lngOldFrame Then
-        mvarEngine.Cameras.Dirty
+        UpdateFrame
     End If
     ProfileStop "Sprite.UpdateAnimation"
 End Sub
@@ -1690,36 +1706,34 @@ Dim l_araArea As Fury2Area, l_booWasIn As Boolean, l_booIsIn As Boolean
     m_booAreasUpdated = True
     ProfileStart "Sprite.UpdateAreas"
     With l_rctCurrent
-        .Left = CLng(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2))
-        .Top = CLng(m_spParam.Position.Y - (m_spParam.Obstruction.Height))
+        .left = CLng(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2))
+        .top = CLng(m_spParam.Position.Y - (m_spParam.Obstruction.Height))
         .Width = m_spParam.Obstruction.Width
         .Height = m_spParam.Obstruction.Height
     End With
     With l_rctOld
-        .Left = CLng(m_spOldParam.Position.X - (m_spOldParam.Obstruction.Width / 2))
-        .Top = CLng(m_spOldParam.Position.Y - (m_spOldParam.Obstruction.Height))
+        .left = CLng(m_spOldParam.Position.X - (m_spOldParam.Obstruction.Width / 2))
+        .top = CLng(m_spOldParam.Position.Y - (m_spOldParam.Obstruction.Height))
         .Width = m_spOldParam.Obstruction.Width
         .Height = m_spOldParam.Obstruction.Height
     End With
     For Each l_araArea In m_mapMap.Areas
+        l_booWasIn = False
+        l_booIsIn = False
         l_araArea.DualIntersect l_rctOld, l_rctCurrent, l_booWasIn, l_booIsIn
         
+        ProfileStart "Area Scripts"
         If (Not l_booWasIn) And (l_booIsIn) Then
             ' Enter
-            ProfileStart "Area Scripts"
             l_araArea.Action Me, "Enter"
-            ProfileStop "Area Scripts"
         ElseIf (l_booWasIn) And (l_booIsIn) Then
             ' Move
-            ProfileStart "Area Scripts"
             l_araArea.Action Me, "Move"
-            ProfileStop "Area Scripts"
         ElseIf (l_booWasIn) And (Not l_booIsIn) Then
             ' Leave
-            ProfileStart "Area Scripts"
             l_araArea.Action Me, "Leave"
-            ProfileStop "Area Scripts"
         End If
+        ProfileStop "Area Scripts"
         
         Err.Clear
     Next l_araArea
@@ -1735,8 +1749,8 @@ Dim l_booInside As Boolean
     If m_mapMap Is Nothing Then Exit Sub
     If m_mapMap.Areas.Count = 0 Then Exit Sub
     With l_rctCurrent
-        .Left = CLng(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2))
-        .Top = CLng(m_spParam.Position.Y - (m_spParam.Obstruction.Height))
+        .left = CLng(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2))
+        .top = CLng(m_spParam.Position.Y - (m_spParam.Obstruction.Height))
         .Width = m_spParam.Obstruction.Width
         .Height = m_spParam.Obstruction.Height
     End With
@@ -1767,7 +1781,6 @@ Dim l_fraFrame As Fury2PoseFrame
     Else
         Set m_fraFrame = l_fraFrame
         UpdateGraphic
-        Dirty
     End If
 End Sub
 
@@ -1808,7 +1821,6 @@ Dim l_posPose As Fury2Pose
         Set m_posPose = l_posPose
         UpdateObstruction
         UpdateFrame Force
-        Dirty
     End If
 End Sub
 
@@ -1821,7 +1833,6 @@ Dim l_staState As Fury2State
     Else
         Set m_staState = l_staState
         UpdatePose Force
-        Dirty
     End If
 End Sub
 
@@ -1840,9 +1851,7 @@ Attribute Velocity.VB_Description = "*The sprite's current movement speed."
 End Property
 
 Public Property Let Velocity(ByVal NewValue As Single)
-    If m_spParam.Velocity.V > 0 Then
-'    If NewValue < (m_spParam.Velocity.V / 2) Then Stop
-    End If
+On Error Resume Next
     m_spParam.Velocity.V = NewValue
 End Property
 
@@ -1880,12 +1889,12 @@ Public Property Let X(ByVal NewValue As Single)
     m_spParam.Position.X = NewValue
 End Property
 
-Public Property Get XLeft() As Single
-    XLeft = m_spParam.Position.X - (m_spParam.Graphic.Rectangle.Width / 2)
+Public Property Get xLeft() As Single
+    xLeft = m_spParam.Position.X - (m_spParam.Graphic.Rectangle.Width / 2)
 End Property
 
-Public Property Get XRight() As Single
-    XRight = m_spParam.Position.X + (m_spParam.Graphic.Rectangle.Width / 2)
+Public Property Get xRight() As Single
+    xRight = m_spParam.Position.X + (m_spParam.Graphic.Rectangle.Width / 2)
 End Property
 
 Public Property Get XCenter() As Single
@@ -1924,8 +1933,8 @@ Public Property Get YCenter() As Single
     YCenter = m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height \ 2)
 End Property
 
-Public Property Get YTop() As Single
-    YTop = m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height)
+Public Property Get yTop() As Single
+    yTop = m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height)
 End Property
 
 Public Property Get ConstantYForce() As Single

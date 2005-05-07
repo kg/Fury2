@@ -76,13 +76,13 @@ Dim l_bytFourCC(0 To 3) As Byte
     l_lngResult = AVIStreamInfo(m_lngStream, m_infStream, Len(m_infStream))
     If l_lngResult <> AVIERR_OK Then GoTo ErrorOut
     
-    'check to see if decoder is installed because if it is missing VFW will mangle the stack :(
-    CopyMemory l_bytFourCC(0), m_infStream.fccHandler, 4
-    m_strCodec = StrConv(l_bytFourCC, vbUnicode)
-    If Not CheckForRegKey("SYSTEM\CurrentControlSet\Control\MediaResources\icm\vidc." & m_strCodec) Then
-        Engine.TextOut "Video codec not found: " & m_strCodec
-        GoTo ErrorOut
-    End If
+'    'check to see if decoder is installed because if it is missing VFW will mangle the stack :(
+'    CopyMemory l_bytFourCC(0), m_infStream.fccHandler, 4
+'    m_strCodec = StrConv(l_bytFourCC, vbUnicode)
+'    If CheckForRegKey("SYSTEM\CurrentControlSet\Control\MediaResources\icm\vidc." & m_strCodec) Or _
+'        CheckForRegKey("SOFTWARE\Microsoft\Windows NT\CurrentVersion\Drivers32") Then
+'        Engine.TextOut "Video codec not found: " & m_strCodec
+'    End If
     
     m_dblFrameLength = 1 / (CSng(m_infStream.dwRate) / CSng(m_infStream.dwScale))
     
@@ -164,6 +164,11 @@ End Property
 Public Property Let PlaybackSpeed(ByVal NewValue As Double)
 On Error Resume Next
     m_dblPlaybackSpeed = NewValue
+End Property
+
+Public Property Get Playing() As Boolean
+On Error Resume Next
+    Playing = m_booPlaying
 End Property
 
 Public Property Get Looping() As Boolean

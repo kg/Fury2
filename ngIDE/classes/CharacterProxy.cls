@@ -12,6 +12,7 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
+Implements IInspectable
 Implements IVirtualFileSaveable
 Private m_fntFont As Fury2Font
 Private m_lngCharacter As Long

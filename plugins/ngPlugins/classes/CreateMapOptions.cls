@@ -42,7 +42,7 @@ Private mvarTileset As String
 Private mvarTileWidth As Long
 Private mvarTileHeight As Long
 Private mvarTileMatteColor As Long
-Private mvarLayerEffect As SFXBlitModes
+Private mvarLayerEffect As Fury2LayerEffects
 Private mvarName As String
 
 Public Property Get TileMatteColor() As Long
@@ -63,12 +63,12 @@ Public Property Get Name() As String
     Name = mvarName
 End Property
 
-Public Property Let LayerEffect(ByVal vData As SFXBlitModes)
+Public Property Let LayerEffect(ByVal vData As Fury2LayerEffects)
 Attribute LayerEffect.VB_Description = "The rendering effect to use on the map's layers."
     mvarLayerEffect = vData
 End Property
 
-Public Property Get LayerEffect() As SFXBlitModes
+Public Property Get LayerEffect() As Fury2LayerEffects
     LayerEffect = mvarLayerEffect
 End Property
 

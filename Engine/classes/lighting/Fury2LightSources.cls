@@ -68,7 +68,7 @@ Dim l_litLight As Fury2LightSource
     Set FindByNames = l_colItems
 End Function
 
-Public Function Find(vntIndexKey As Variant) As Long
+Public Function Find(ByVal vntIndexKey As Variant) As Long
 On Error Resume Next
 Dim l_lngLightSources As Long
 Dim l_objObject As Object, l_strKey As String
@@ -155,7 +155,7 @@ On Error Resume Next
     End If
 End Sub
 
-Public Property Get Item(vntIndexKey As Variant) As Fury2LightSource
+Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2LightSource
 Attribute Item.VB_UserMemId = 0
 Attribute Item.VB_MemberFlags = "200"
 On Error Resume Next

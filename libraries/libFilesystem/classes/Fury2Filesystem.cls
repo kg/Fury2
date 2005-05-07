@@ -12,7 +12,6 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Description = "A virtual filesystem."
-
 '
 '    libFilesystem (Fury² Virtual Filesystem Library)
 '    Copyright (C) 2003 Kevin Gadd
@@ -204,6 +203,9 @@ On Error Resume Next
 Dim l_strFilename As String
 Dim l_strPath As String
 Dim l_modModule As Fury2FSModule
+    If InStr(Filename, "\") Then
+        OutputHook.DebugOut "Malformed filename used: " & Filename
+    End If
     
     Filename = Replace(Filename, "\", "/")
         
@@ -513,6 +515,9 @@ Dim l_lngCount As Long, l_lngModuleCount As Long
 Dim l_filFile As Fury2File
 Dim l_feFile As FileEnumerationEntry
     If VarType(Index) = vbString Then
+        If InStr(Index, "\") Then
+            OutputHook.DebugOut "Malformed filename used: " & Index
+        End If
         If Left(Index, 1) <> "/" Then Index = CurrentFolder + Index
         For Each l_modModule In m_colModules
             If l_modModule.Enabled Then
@@ -597,6 +602,9 @@ Attribute GetFile.VB_Description = "Returns the local path of a file if it is al
 Attribute GetFile.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_strLocalPath As String, l_lngLength As Long
+    If InStr(Filename, "\") Then
+        OutputHook.DebugOut "Malformed filename used: " & Filename
+    End If
     l_strLocalPath = Replace(Replace(m_strRoot + Filename, "/", "\"), "\\", "\")
     l_lngLength = -1
     Err.Clear

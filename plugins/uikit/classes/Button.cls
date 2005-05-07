@@ -305,7 +305,9 @@ Dim l_sngAlpha As Single
         End If
         If Not ImageOnly Then m_staState.WindowSkin.Draw Surface, l_rctNew, l_sngAlpha
         .ClippedSetClipRectangle l_rctNew
-        If Not ImageOnly Then m_staState.Font.DrawCentered Surface, Text, l_rctNew, m_staState.TextColor, l_sngAlpha
+        If Not ImageOnly Then
+            m_staState.Font.DrawCentered Surface, Text, l_rctNew, m_staState.TextColor, l_sngAlpha
+        End If
         If (PressedImage Is Nothing) Or (Not ((MousePressed And MouseHovering) Or KeyboardPressed Or Value)) Then
             Set l_objImage = Image
         Else

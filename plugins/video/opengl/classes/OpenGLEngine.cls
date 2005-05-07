@@ -320,3 +320,7 @@ On Error Resume Next
     m_OutForm.MousePointer = IIf(NewValue, 0, 99)
 End Property
 
+Public Sub CopySurface(ByVal FromSurface As Fury2Image, ByVal ToSurface As Fury2Image)
+On Error Resume Next
+    GLCopySurface FromSurface.Handle, ToSurface.Handle
+End Sub

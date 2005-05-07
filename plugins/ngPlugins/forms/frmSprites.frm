@@ -1,8 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
-Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.9#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.11#0"; "ngUI.ocx"
 Begin VB.Form frmSprites 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -35,7 +34,7 @@ Begin VB.Form frmSprites
       ScaleHeight     =   1
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   1
-      TabIndex        =   23
+      TabIndex        =   19
       Top             =   0
       Width           =   15
    End
@@ -58,7 +57,7 @@ Begin VB.Form frmSprites
       Begin ngPlugins.Script scSprite 
          Height          =   750
          Left            =   105
-         TabIndex        =   17
+         TabIndex        =   13
          Top             =   6285
          Width           =   480
          _ExtentX        =   847
@@ -71,7 +70,7 @@ Begin VB.Form frmSprites
          ScaleHeight     =   384
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   396
-         TabIndex        =   9
+         TabIndex        =   7
          Top             =   1470
          Visible         =   0   'False
          Width           =   5940
@@ -82,14 +81,14 @@ Begin VB.Form frmSprites
             ScaleHeight     =   384
             ScaleMode       =   3  'Pixel
             ScaleWidth      =   396
-            TabIndex        =   10
+            TabIndex        =   8
             Top             =   480
             Visible         =   0   'False
             Width           =   5940
             Begin ngUI.ngListBox lstFrames 
                Height          =   1140
                Left            =   210
-               TabIndex        =   20
+               TabIndex        =   16
                Top             =   120
                Width           =   4830
                _ExtentX        =   8520
@@ -113,7 +112,7 @@ Begin VB.Form frmSprites
                ScaleHeight     =   95
                ScaleMode       =   3  'Pixel
                ScaleWidth      =   143
-               TabIndex        =   19
+               TabIndex        =   15
                Top             =   1905
                Visible         =   0   'False
                Width           =   2205
@@ -121,7 +120,7 @@ Begin VB.Form frmSprites
             Begin VB.TextBox txtFrameProperty 
                Height          =   285
                Left            =   930
-               TabIndex        =   18
+               TabIndex        =   14
                Top             =   3420
                Visible         =   0   'False
                Width           =   2565
@@ -129,7 +128,7 @@ Begin VB.Form frmSprites
             Begin ngPlugins.ObjectInspector insFrameOptions 
                Height          =   1725
                Left            =   2250
-               TabIndex        =   12
+               TabIndex        =   9
                Top             =   3045
                Visible         =   0   'False
                Width           =   2310
@@ -139,90 +138,37 @@ Begin VB.Form frmSprites
             Begin ngPlugins.Script scFrame 
                Height          =   975
                Left            =   3960
-               TabIndex        =   13
+               TabIndex        =   10
                Top             =   2115
                Visible         =   0   'False
                Width           =   810
                _ExtentX        =   1429
                _ExtentY        =   1720
             End
-            Begin vbalDTab6.vbalDTabControl dtFrames 
-               Height          =   4350
-               Left            =   225
-               TabIndex        =   11
-               Top             =   1365
-               Width           =   5685
-               _ExtentX        =   10028
-               _ExtentY        =   7673
-               AllowScroll     =   0   'False
-               TabAlign        =   0
-               BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-                  Name            =   "Tahoma"
-                  Size            =   8.25
-                  Charset         =   0
-                  Weight          =   400
-                  Underline       =   0   'False
-                  Italic          =   0   'False
-                  Strikethrough   =   0   'False
-               EndProperty
-               BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-                  Name            =   "Tahoma"
-                  Size            =   8.25
-                  Charset         =   0
-                  Weight          =   700
-                  Underline       =   0   'False
-                  Italic          =   0   'False
-                  Strikethrough   =   0   'False
-               EndProperty
-               ShowCloseButton =   0   'False
-               MoveableTabs    =   0   'False
+            Begin ngUI.ngTabStrip tsFrames 
+               Height          =   3195
+               Left            =   315
+               TabIndex        =   20
+               Top             =   1530
+               Width           =   3450
+               _ExtentX        =   6085
+               _ExtentY        =   5636
             End
          End
          Begin ngPlugins.ObjectInspector insPoseOptions 
             Height          =   1725
             Left            =   315
-            TabIndex        =   15
+            TabIndex        =   11
             Top             =   1950
             Visible         =   0   'False
             Width           =   2310
             _ExtentX        =   4075
             _ExtentY        =   3043
          End
-         Begin vbalDTab6.vbalDTabControl dtPoses 
-            Height          =   4350
-            Left            =   210
-            TabIndex        =   14
-            Top             =   1365
-            Width           =   5685
-            _ExtentX        =   10028
-            _ExtentY        =   7673
-            AllowScroll     =   0   'False
-            TabAlign        =   0
-            BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-               Name            =   "Tahoma"
-               Size            =   8.25
-               Charset         =   0
-               Weight          =   400
-               Underline       =   0   'False
-               Italic          =   0   'False
-               Strikethrough   =   0   'False
-            EndProperty
-            BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-               Name            =   "Tahoma"
-               Size            =   8.25
-               Charset         =   0
-               Weight          =   700
-               Underline       =   0   'False
-               Italic          =   0   'False
-               Strikethrough   =   0   'False
-            EndProperty
-            ShowCloseButton =   0   'False
-            MoveableTabs    =   0   'False
-         End
          Begin ngUI.ngListBox lstPoses 
             Height          =   1140
             Left            =   0
-            TabIndex        =   21
+            TabIndex        =   17
             Top             =   0
             Width           =   4830
             _ExtentX        =   8520
@@ -240,6 +186,15 @@ Begin VB.Form frmSprites
             AllowMultiSelect=   -1  'True
             AllowNullSelection=   0   'False
          End
+         Begin ngUI.ngTabStrip tsPoses 
+            Height          =   645
+            Left            =   135
+            TabIndex        =   21
+            Top             =   1800
+            Width           =   450
+            _ExtentX        =   794
+            _ExtentY        =   1138
+         End
       End
       Begin VB.PictureBox picStates 
          BorderStyle     =   0  'None
@@ -248,7 +203,7 @@ Begin VB.Form frmSprites
          ScaleHeight     =   242
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   341
-         TabIndex        =   5
+         TabIndex        =   4
          Top             =   1275
          Visible         =   0   'False
          Width           =   5115
@@ -257,7 +212,7 @@ Begin VB.Form frmSprites
             IntegralHeight  =   0   'False
             Left            =   2895
             MultiSelect     =   1  'Simple
-            TabIndex        =   7
+            TabIndex        =   5
             Top             =   1905
             Visible         =   0   'False
             Width           =   2175
@@ -265,48 +220,17 @@ Begin VB.Form frmSprites
          Begin ngPlugins.ObjectInspector insStateOptions 
             Height          =   1725
             Left            =   540
-            TabIndex        =   8
+            TabIndex        =   6
             Top             =   1950
             Visible         =   0   'False
             Width           =   2355
             _ExtentX        =   4154
             _ExtentY        =   3043
          End
-         Begin vbalDTab6.vbalDTabControl dtStates 
-            Height          =   2205
-            Left            =   135
-            TabIndex        =   6
-            Top             =   1395
-            Width           =   4980
-            _ExtentX        =   8784
-            _ExtentY        =   3889
-            AllowScroll     =   0   'False
-            TabAlign        =   0
-            BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-               Name            =   "Tahoma"
-               Size            =   8.25
-               Charset         =   0
-               Weight          =   400
-               Underline       =   0   'False
-               Italic          =   0   'False
-               Strikethrough   =   0   'False
-            EndProperty
-            BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-               Name            =   "Tahoma"
-               Size            =   8.25
-               Charset         =   0
-               Weight          =   700
-               Underline       =   0   'False
-               Italic          =   0   'False
-               Strikethrough   =   0   'False
-            EndProperty
-            ShowCloseButton =   0   'False
-            MoveableTabs    =   0   'False
-         End
          Begin ngUI.ngListBox lstStates 
             Height          =   1140
             Left            =   120
-            TabIndex        =   22
+            TabIndex        =   18
             Top             =   105
             Width           =   4830
             _ExtentX        =   8520
@@ -324,6 +248,15 @@ Begin VB.Form frmSprites
             AllowMultiSelect=   -1  'True
             AllowNullSelection=   0   'False
          End
+         Begin ngUI.ngTabStrip tsStates 
+            Height          =   645
+            Left            =   4305
+            TabIndex        =   23
+            Top             =   1590
+            Width           =   825
+            _ExtentX        =   1455
+            _ExtentY        =   1138
+         End
       End
       Begin VB.PictureBox picSidebar 
          BorderStyle     =   0  'None
@@ -332,13 +265,13 @@ Begin VB.Form frmSprites
          ScaleHeight     =   328
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   180
-         TabIndex        =   2
+         TabIndex        =   1
          Top             =   0
          Width           =   2700
          Begin cFScroll.FlatScrollBar vsSprites 
             Height          =   3510
             Left            =   1950
-            TabIndex        =   4
+            TabIndex        =   3
             Top             =   255
             Width           =   285
             _ExtentX        =   503
@@ -357,7 +290,7 @@ Begin VB.Form frmSprites
             ScaleHeight     =   271
             ScaleMode       =   3  'Pixel
             ScaleWidth      =   131
-            TabIndex        =   3
+            TabIndex        =   2
             Top             =   0
             Width           =   1965
          End
@@ -365,42 +298,21 @@ Begin VB.Form frmSprites
       Begin ngPlugins.ObjectInspector insOverview 
          Height          =   3045
          Left            =   180
-         TabIndex        =   16
+         TabIndex        =   12
          Top             =   1965
          Visible         =   0   'False
          Width           =   1710
          _ExtentX        =   3016
          _ExtentY        =   5371
       End
-      Begin vbalDTab6.vbalDTabControl dtViews 
-         Height          =   4920
-         Left            =   0
-         TabIndex        =   1
-         Top             =   0
-         Width           =   6585
-         _ExtentX        =   11615
-         _ExtentY        =   8678
-         TabAlign        =   0
-         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-            Name            =   "Tahoma"
-            Size            =   8.25
-            Charset         =   0
-            Weight          =   400
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-            Name            =   "Tahoma"
-            Size            =   8.25
-            Charset         =   0
-            Weight          =   700
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         ShowCloseButton =   0   'False
-         MoveableTabs    =   0   'False
+      Begin ngUI.ngTabStrip tsViews 
+         Height          =   435
+         Left            =   1305
+         TabIndex        =   22
+         Top             =   15
+         Width           =   330
+         _ExtentX        =   582
+         _ExtentY        =   767
       End
    End
 End
@@ -770,7 +682,7 @@ Dim l_posPose As Fury2Pose
         SelectedSprite.Poses.Remove SelectedSprite.Poses.Find(l_posPose)
     Next l_liItem
     PosesViewChanged
-    Select Case LCase(Trim(dtPoses.SelectedTab.key))
+    Select Case LCase(Trim(tsPoses.SelectedTab.Text))
     Case "frames"
         FramesViewChanged
     Case Else
@@ -1087,7 +999,7 @@ On Error Resume Next
         insOverview.Redraw
     Case View_States
         RedrawStates
-        Select Case LCase(Trim(dtStates.SelectedTab.key))
+        Select Case LCase(Trim(tsStates.SelectedTab.Text))
         Case "options"
             insStateOptions.RefreshValues
             insStateOptions.Redraw
@@ -1097,13 +1009,13 @@ On Error Resume Next
         End Select
     Case View_Poses
         RedrawPoses
-        Select Case LCase(Trim(dtPoses.SelectedTab.key))
+        Select Case LCase(Trim(tsPoses.SelectedTab.Text))
         Case "options"
             insPoseOptions.RefreshValues
             insPoseOptions.Redraw
         Case "frames"
             RedrawFrames
-            Select Case LCase(Trim(dtFrames.SelectedTab.key))
+            Select Case LCase(Trim(tsFrames.SelectedTab.Text))
             Case "options"
                 insFrameOptions.RefreshValues
                 insFrameOptions.Redraw
@@ -1294,7 +1206,7 @@ Public Sub InitSplitters()
 On Error Resume Next
     With m_splSidebar
         .Orientation = cSPLTOrientationVertical
-        .Bind dtViews, picSidebar
+        .Bind tsViews, picSidebar
         .Orientation = cSPLTOrientationVertical
         .MinimumSize(cSPLTRightOrBottomPanel) = 75
         .MaximumSize(cSPLTRightOrBottomPanel) = 200
@@ -1305,19 +1217,19 @@ End Sub
 
 Public Sub InitViews()
 On Error Resume Next
-    dtViews.Tabs.Add "t" & CStr(View_Overview), , "Overview"
-    dtViews.Tabs.Add "t" & CStr(View_States), , "States"
-    dtViews.Tabs.Add "t" & CStr(View_Poses), , "Poses"
-    dtViews.Tabs.Add "t" & CStr(View_Script), , "Script"
-    dtStates.Tabs.Add "Options", , "Options"
-    dtStates.Tabs.Add "Poses", , "Poses"
-    dtPoses.Tabs.Add "Options", , "Options"
-    dtPoses.Tabs.Add "Frames", , "Frames"
-    dtPoses.Tabs.Add "Blocking", , "Blocking"
-    dtFrames.Tabs.Add "Options", , "Options"
-    dtFrames.Tabs.Add "Rectangle", , "Rectangle"
-    dtFrames.Tabs.Add "Alignment", , "Alignment"
-    dtFrames.Tabs.Add "Script", , "Script"
+    tsViews.Tabs.AddNew "Overview", "t" & CStr(View_Overview)
+    tsViews.Tabs.AddNew "States", "t" & CStr(View_States)
+    tsViews.Tabs.AddNew "Poses", "t" & CStr(View_Poses)
+    tsViews.Tabs.AddNew "Script", "t" & CStr(View_Script)
+    tsStates.Tabs.AddNew "Options"
+    tsStates.Tabs.AddNew "Poses"
+    tsPoses.Tabs.AddNew "Options"
+    tsPoses.Tabs.AddNew "Frames"
+    tsPoses.Tabs.AddNew "Blocking"
+    tsFrames.Tabs.AddNew "Options"
+    tsFrames.Tabs.AddNew "Rectangle"
+    tsFrames.Tabs.AddNew "Alignment"
+    tsFrames.Tabs.AddNew "Script"
 End Sub
 
 'Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
@@ -1365,7 +1277,7 @@ Dim l_objObject As Object
     picPoses.Visible = False
     scSprite.Visible = False
     m_splSidebar.Resize
-    dtViews_Resize
+    tsViews_Resize
     Select Case m_lngCurrentView
     Case View_Overview
         insOverview.Visible = True
@@ -1393,8 +1305,8 @@ On Error Resume Next
     Screen.MousePointer = 11
     insStateOptions.Visible = False
     lstStatePoses.Visible = False
-    dtStates_Resize
-    Select Case LCase(Trim(dtStates.SelectedTab.key))
+    tsStates_Resize
+    Select Case LCase(Trim(tsStates.SelectedTab.Text))
     Case "options"
         insStateOptions.ShowHierarchy = False
         If lstStates.SelectedItemCount > 1 Then
@@ -1419,8 +1331,8 @@ On Error Resume Next
     Screen.MousePointer = 11
     insPoseOptions.Visible = False
     picFrames.Visible = False
-    dtPoses_Resize
-    Select Case LCase(Trim(dtPoses.SelectedTab.key))
+    tsPoses_Resize
+    Select Case LCase(Trim(tsPoses.SelectedTab.Text))
     Case "options"
         insPoseOptions.ShowHierarchy = True
         If lstPoses.SelectedItemCount > 1 Then
@@ -1451,8 +1363,8 @@ Dim l_fraFrames() As Object, l_fraFrame As Fury2PoseFrame
     scFrame.Visible = False
     picFrameDisplay.Visible = False
     txtFrameProperty.Visible = False
-    dtFrames_Resize
-    Select Case LCase(Trim(dtFrames.SelectedTab.key))
+    tsFrames_Resize
+    Select Case LCase(Trim(tsFrames.SelectedTab.Text))
     Case "options"
         insFrameOptions.ShowHierarchy = True
         If lstPoses.SelectedItemCount > 1 Then
@@ -1509,7 +1421,7 @@ Dim l_fraFrame As Fury2PoseFrame
     With m_imgFrameDisplay
         .Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
         SelectedFrame.Image.MatteColor = SelectedFrame.MatteColor
-        Select Case dtFrames.SelectedTab.key
+        Select Case tsFrames.SelectedTab.Text
         Case "Rectangle"
             .Blit , , SelectedFrame.Image, 0.5, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
             Err.Clear
@@ -1572,75 +1484,75 @@ Dim l_objPlugin As SpriteEditor
     Set Editor = l_objPlugin.Editor
 End Function
 
-Private Sub dtFrames_Resize()
+Private Sub tsFrames_Resize()
 On Error Resume Next
-    Select Case LCase(Trim(dtFrames.SelectedTab.key))
+    Select Case LCase(Trim(tsFrames.SelectedTab.Text))
     Case "options"
-        insFrameOptions.Move (2) + dtFrames.Left, dtFrames.Top + 24, dtFrames.Width - 4, dtFrames.Height - 26
+        insFrameOptions.Move (2) + tsFrames.Left, tsFrames.Top + 24, tsFrames.Width - 4, tsFrames.Height - 26
     Case "script"
-        scFrame.Move (2) + dtFrames.Left, dtFrames.Top + 24, dtFrames.Width - 4, dtFrames.Height - 26
+        scFrame.Move (2) + tsFrames.Left, tsFrames.Top + 24, tsFrames.Width - 4, tsFrames.Height - 26
     Case "alignment", "rectangle"
-        picFrameDisplay.Move (2) + dtFrames.Left, dtFrames.Top + 24, dtFrames.Width - 4, dtFrames.Height - 26 - txtFrameProperty.Height
+        picFrameDisplay.Move (2) + tsFrames.Left, tsFrames.Top + 24, tsFrames.Width - 4, tsFrames.Height - 26 - txtFrameProperty.Height
         txtFrameProperty.Move picFrameDisplay.Left, picFrameDisplay.Top + picFrameDisplay.Height, picFrameDisplay.Width, txtFrameProperty.Height
     Case Else
     End Select
 End Sub
 
-Private Sub dtFrames_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsFrames_TabSelected(TheTab As ngTab)
 On Error Resume Next
     FramesViewChanged
 End Sub
 
-Private Sub dtPoses_Resize()
+Private Sub tsPoses_Resize()
 On Error Resume Next
-    Select Case LCase(Trim(dtPoses.SelectedTab.key))
+    Select Case LCase(Trim(tsPoses.SelectedTab.Text))
     Case "options"
-        insPoseOptions.Move (2) + dtPoses.Left, dtPoses.Top + 24, dtPoses.Width - 4, dtPoses.Height - 26
+        insPoseOptions.Move (2) + tsPoses.Left, tsPoses.Top + 24, tsPoses.Width - 4, tsPoses.Height - 26
     Case "frames"
-        picFrames.Move (2) + dtPoses.Left, dtPoses.Top + 24, dtPoses.Width - 4, dtPoses.Height - 26
+        picFrames.Move (2) + tsPoses.Left, tsPoses.Top + 24, tsPoses.Width - 4, tsPoses.Height - 26
     Case Else
     End Select
 End Sub
 
-Private Sub dtPoses_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsPoses_TabSelected(TheTab As ngTab)
 On Error Resume Next
     PosesViewChanged
 End Sub
 
-Private Sub dtStates_Resize()
+Private Sub tsStates_Resize()
 On Error Resume Next
-    Select Case LCase(Trim(dtStates.SelectedTab.key))
+    Select Case LCase(Trim(tsStates.SelectedTab.Text))
     Case "options"
-        insStateOptions.Move (2) + dtStates.Left, dtStates.Top + 24, dtStates.Width - 4, dtStates.Height - 26
+        insStateOptions.Move (2) + tsStates.Left, tsStates.Top + 24, tsStates.Width - 4, tsStates.Height - 26
     Case "poses"
-        lstStatePoses.Move (2) + dtStates.Left, dtStates.Top + 24, dtStates.Width - 4, dtStates.Height - 26
+        lstStatePoses.Move (2) + tsStates.Left, tsStates.Top + 24, tsStates.Width - 4, tsStates.Height - 26
     Case Else
     End Select
 End Sub
 
-Private Sub dtStates_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsStates_TabSelected(TheTab As ngTab)
 On Error Resume Next
     StatesViewChanged
 End Sub
 
-Private Sub dtViews_Resize()
+Private Sub tsViews_Resize()
 On Error Resume Next
     Select Case m_lngCurrentView
     Case View_Overview
-        insOverview.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
+        insOverview.Move (2) + tsViews.Left, tsViews.Top + 24, tsViews.Width - 4, tsViews.Height - 26
     Case View_States
-        picStates.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
+        picStates.Move (2) + tsViews.Left, tsViews.Top + 24, tsViews.Width - 4, tsViews.Height - 26
     Case View_Poses
-        picPoses.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
+        picPoses.Move (2) + tsViews.Left, tsViews.Top + 24, tsViews.Width - 4, tsViews.Height - 26
     Case View_Script
-        scSprite.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
+        scSprite.Move (2) + tsViews.Left, tsViews.Top + 24, tsViews.Width - 4, tsViews.Height - 26
     Case Else
     End Select
 End Sub
 
-Private Sub dtViews_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsViews_TabSelected(TheTab As ngTab)
 On Error Resume Next
-    m_lngCurrentView = CLng(Mid(theTab.key, 2))
+    m_lngCurrentView = CLng(Mid(TheTab.key, 2))
     ViewChanged
 End Sub
 
@@ -1652,7 +1564,7 @@ On Error Resume Next
     Set insStateOptions.Editor = Editor
     AllocateBuffers
     Form_Resize
-    dtViews_Resize
+    tsViews_Resize
     picSidebar_Resize
     ViewChanged
     RedrawSprites
@@ -2050,7 +1962,7 @@ End Sub
 
 Private Sub lstFrames_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     If lstPoses.SelectedItemCount > 1 Then Exit Sub
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
@@ -2100,7 +2012,7 @@ End Sub
 
 Private Sub lstPoses_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstPoses.hwnd, l_ptMouse
@@ -2138,7 +2050,7 @@ End Sub
 
 Private Sub lstStatePoses_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
 Dim l_lngItems As Long
     If SelectedState Is Nothing Then Exit Sub
     If Button = 1 Then
@@ -2163,7 +2075,7 @@ End Sub
 Private Sub lstStatePoses_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_lngStatePosesEnd As Long
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
 Dim l_lngItems As Long
     If SelectedState Is Nothing Then Exit Sub
     If ((Button And 1) = 1) And m_booStatePosesDragging Then
@@ -2201,7 +2113,7 @@ End Sub
 
 Private Sub lstStates_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstStates.hwnd, l_ptMouse
@@ -2295,7 +2207,7 @@ End Sub
 Private Sub picFrames_Resize()
 On Error Resume Next
     lstFrames.Move 2, 2, picFrames.ScaleWidth - 4, ClipValue(picFrames.ScaleHeight / 4, 32, 150)
-    dtFrames.Move 2, lstFrames.Top + lstFrames.Height + 2, picFrames.ScaleWidth - 4, picFrames.ScaleHeight - (lstFrames.Top + lstFrames.Height + 4)
+    tsFrames.Move 2, lstFrames.Top + lstFrames.Height + 2, picFrames.ScaleWidth - 4, picFrames.ScaleHeight - (lstFrames.Top + lstFrames.Height + 4)
 End Sub
 
 Private Sub picSidebar_Resize()
@@ -2363,13 +2275,13 @@ End Sub
 Private Sub picPoses_Resize()
 On Error Resume Next
     lstPoses.Move 2, 2, picPoses.ScaleWidth - 4, ClipValue(picPoses.ScaleHeight / 4, 32, 150)
-    dtPoses.Move 2, lstPoses.Top + lstPoses.Height + 2, picPoses.ScaleWidth - 4, picPoses.ScaleHeight - (lstPoses.Top + lstPoses.Height + 4)
+    tsPoses.Move 2, lstPoses.Top + lstPoses.Height + 2, picPoses.ScaleWidth - 4, picPoses.ScaleHeight - (lstPoses.Top + lstPoses.Height + 4)
 End Sub
 
 Private Sub picStates_Resize()
 On Error Resume Next
     lstStates.Move 2, 2, picStates.ScaleWidth - 4, ClipValue(picStates.ScaleHeight / 4, 32, 150)
-    dtStates.Move 2, lstStates.Top + lstStates.Height + 2, picStates.ScaleWidth - 4, picStates.ScaleHeight - (lstStates.Top + lstStates.Height + 4)
+    tsStates.Move 2, lstStates.Top + lstStates.Height + 2, picStates.ScaleWidth - 4, picStates.ScaleHeight - (lstStates.Top + lstStates.Height + 4)
 End Sub
 
 Private Sub scFrame_Change()

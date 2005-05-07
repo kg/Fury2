@@ -99,21 +99,21 @@ End Function
 
 Private Function iFileTypePlugin_CreateNew(Optional ByVal EnableWizard As Boolean = True) As iDocument
 'On Error Resume Next
-'Dim l_frmNew As New frmFont
-'Dim l_fntFont As Fury2Font
+'Dim l_frmNew As New frmTileset
+'Dim l_fntTileset As Fury2Tileset
 '    If EnableWizard Then
 '        Load frmImportTTF
-'        m_objEditor.LoadSettings "FontEditor\DefaultSettings", frmImportTTF.Options
+'        m_objEditor.LoadSettings "TilesetEditor\DefaultSettings", frmImportTTF.Options
 '        frmImportTTF.RefreshSettings
 '        frmImportTTF.Show vbModal
 '        If Not (frmImportTTF.Options Is Nothing) Then
-'            m_objEditor.SaveSettings "FontEditor\DefaultSettings", frmImportTTF.Options
+'            m_objEditor.SaveSettings "TilesetEditor\DefaultSettings", frmImportTTF.Options
 '            With frmImportTTF.Options
 '                l_frmNew.SetFilename ""
 '                l_frmNew.RefreshAll
-'                Set l_fntFont = DefaultEngine.F2Font()
-'                l_fntFont.ImportTTF DefaultEngine.TTFont(.Name, .Size, .Bold, .Italic)
-'                l_frmNew.SetFont l_fntFont
+'                Set l_fntTileset = DefaultEngine.F2Tileset()
+'                l_fntTileset.ImportTTF DefaultEngine.TTTileset(.Name, .Size, .Bold, .Italic)
+'                l_frmNew.SetTileset l_fntTileset
 '                Set iFileTypePlugin_CreateNew = l_frmNew
 '                Set iFileTypePlugin_CreateNew.Plugin = Me
 '            End With

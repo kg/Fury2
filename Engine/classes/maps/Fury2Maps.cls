@@ -105,7 +105,7 @@ On Error Resume Next
     Err.Clear
 End Sub
 
-Public Property Get Item(vntIndexKey As Variant) As Fury2Map
+Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2Map
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
   Set Item = mCol(vntIndexKey)

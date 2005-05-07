@@ -20,10 +20,24 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Private Const c_lngMaxChannels = 512
 Private Const c_lngMaxSoftwareChannels = 32
 
-Private m_colChannels As Collection
 Private m_colSounds As Collection
 Private m_lngFMod As Long
+Public Enabled As Boolean
 Public m_Engine As Object
+
+Friend Function CreateChannel(ByVal Handle As Long, ByVal Sound As Sound) As Channel
+On Error Resume Next
+Dim l_chaNew As Channel
+    If Handle = 0 Then Exit Function
+    Set l_chaNew = New Channel
+    l_chaNew.Init Me, Handle, Sound
+    Set CreateChannel = l_chaNew
+End Function
+
+Public Property Get Handle() As Long
+On Error Resume Next
+    Handle = m_lngFMod
+End Property
 
 Public Sub FlushCache()
 On Error Resume Next
@@ -43,8 +57,9 @@ Dim m_sndObj As Sound, m_lngObj As Long
             Set m_objObj = Nothing
             If m_lngCount <= 2 Then
                 Set m_sndObj = m_colSounds(m_lngObj)
+                m_sndObj.Free
+                m_colSounds.Remove m_lngObj
                 Set m_sndObj = Nothing
-                FreeSound m_lngObj
                 m_lngObj = m_lngObj + 1
             Else
                 m_lngObj = m_lngObj + 1
@@ -55,24 +70,30 @@ End Sub
 
 Public Sub Init()
 On Error Resume Next
-    If m_Engine.DisableSound Then Exit Sub
+    Set m_colSounds = New Collection
+    If Enabled = False Then Exit Sub
     fmodex.FMOD_System_Create m_lngFMod
     fmodex.FMOD_System_Init m_lngFMod, c_lngMaxChannels, c_lngMaxSoftwareChannels, FMOD_INIT_NORMAL, 0
-    InitChannels
 End Sub
 
-Friend Sub InitChannels()
+Public Sub Update()
 On Error Resume Next
+    If Enabled = False Then Exit Sub
+    fmodex.FMOD_System_Update m_lngFMod
 End Sub
 
 Public Sub Shutdown()
 On Error Resume Next
     If m_lngFMod <> 0 Then
+        FlushCache
+        Set m_colSounds = Nothing
         fmodex.FMOD_System_Close m_lngFMod
+        fmodex.FMOD_System_Release m_lngFMod
+        m_lngFMod = 0
     End If
 End Sub
 
-Public Function Find(Obj) As Long
+Public Function Find(ByVal Obj As Sound) As Long
 On Error Resume Next
 Dim m_lngItems As Long
     If m_colSounds.Count <= 0 Then Exit Function
@@ -84,191 +105,79 @@ Dim m_lngItems As Long
     Next m_lngItems
 End Function
 
-Public Function Load(ByVal filename As String, Optional Looping As Boolean = False) As Long
+Public Function Load(ByVal Filename As String) As Sound
 On Error Resume Next
-    Load = -1
-    filename = m_Engine.FileSystem.AutoSelectExtension(filename, "it;xm;s3m;mod;mid;midi;ogg;wma;mp2;mp3;wav")
-    If m_Engine.FileSystem.FileExists(filename) Then
-    Else
-        m_Engine.DebugOut "Unable to load audio file: """ + filename + """"
+Dim l_lngHandle As Long
+Dim l_sndSound As Sound
+Dim l_strFilename As String
+    Filename = Replace(Filename, "\", "/")
+    If Enabled = False Then
+        Set l_sndSound = m_colSounds(Filename)
+        If l_sngSound Is Nothing Then
+            For Each l_sndSound In m_colSounds
+                If LCase(Trim(l_sndSound.Filename)) = LCase(Trim(Filename)) Then
+                    Set Load = l_sndSound
+                    Exit Function
+                End If
+            Next l_sndSound
+            Set l_sndSound = New Sound
+            l_sndSound.Init Me, 0, Filename
+            m_colSounds.Add l_sndSound, Filename
+        End If
+        Set Load = l_sndSound
+        Exit Function
+    End If
+    Set l_sndSound = m_colSounds(Filename)
+    If l_sndSound Is Nothing Then
+        For Each l_sndSound In m_colSounds
+            If LCase(Trim(l_sndSound.Filename)) = LCase(Trim(Filename)) Then
+                Set Load = l_sndSound
+                Exit Function
+            End If
+        Next l_sndSound
+        Filename = m_Engine.FileSystem.AutoSelectExtension(Filename, "it;oxm;xm;s3m;mod;mid;midi;wav;aiff;aif;flac;ogg;aac;wma;mp3;mp2")
+        Set l_sndSound = m_colSounds(Filename)
+        If l_sndSound Is Nothing Then
+            If m_Engine.FileSystem.FileExists(Filename) Then
+                l_strFilename = m_Engine.FileSystem.File(Filename).GetRealFilename
+                For Each l_sndSound In m_colSounds
+                    If l_sndSound.name = l_strFilename Then
+                        Set Load = l_sndSound
+                        Exit Function
+                    End If
+                Next l_sndSound
+                Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_2D Or FMOD_CREATESTREAM, ByVal 0, l_lngHandle)
+                If l_lngHandle Then
+                    Set l_sndSound = New Sound
+                    l_sndSound.Init Me, l_lngHandle, Filename
+                    m_colSounds.Add l_sndSound, Filename
+                End If
+            End If
+        End If
+    End If
+    Set Load = l_sndSound
+    If l_sndSound Is Nothing Then
+        m_Engine.DebugOut "Unable to load audio file: """ + Filename + """"
     End If
 End Function
-
-Private Function CheckExt(ByRef Fn As String, ByVal Ext As String) As Boolean
-On Error Resume Next
-Dim m_lngLength As Long
-    Err.Clear
-    m_lngLength = FileLen(Fn + "." + Ext)
-    If (Err = 0) And (m_lngLength > 0) Then
-        Fn = Fn + "." + Ext
-        CheckExt = True
-    Else
-        CheckExt = False
-    End If
-End Function
-
-Private Sub EnsureSFXExtension(ByRef filename As String)
-On Error Resume Next
-    If InStr(filename, ".") Then Exit Sub
-    If CheckExt(filename, "ogg") Then Exit Sub
-    If CheckExt(filename, "wma") Then Exit Sub
-    If CheckExt(filename, "mp2") Then Exit Sub
-    If CheckExt(filename, "mp3") Then Exit Sub
-    If CheckExt(filename, "oxm") Then Exit Sub
-    If CheckExt(filename, "it") Then Exit Sub
-    If CheckExt(filename, "xm") Then Exit Sub
-    If CheckExt(filename, "mid") Then Exit Sub
-    If CheckExt(filename, "s3m") Then Exit Sub
-    If CheckExt(filename, "mod") Then Exit Sub
-    If CheckExt(filename, "wav") Then Exit Sub
-    If CheckExt(filename, "aiff") Then Exit Sub
-End Sub
-
-Sub FreeAll()
-On Error Resume Next
-Dim Snd As Object
-    For Each Snd In m_colSounds
-        Snd.Kill
-        Snd.Free
-    Next Snd
-    Set m_colSounds = New Collection
-End Sub
-
-Sub StopAll()
-On Error Resume Next
-Dim Snd As Object
-    For Each Snd In m_colSounds
-        Snd.Kill
-    Next Snd
-End Sub
 
 Public Property Get Initialized() As Boolean
 On Error Resume Next
     If m_lngFMod Then Initialized = False Else Initialized = True
 End Property
 
-Public Property Let volume(ByVal NewVolume As Single)
+Public Property Let MasterVolume(ByVal NewValue As Single)
 On Error Resume Next
     If Not Initialized Then Exit Property
-    fmodex.FMOD_System_SetMasterVolume m_lngFMod, NewVolume
+    fmodex.FMOD_System_SetMasterVolume m_lngFMod, NewValue
 End Property
 
-Public Property Get volume() As Single
+Public Property Get MasterVolume() As Single
 On Error Resume Next
 Dim l_sngVolume As Single
     If Not Initialized Then Exit Property
     fmodex.FMOD_System_GetMasterVolume m_lngFMod, l_sngVolume
-    volume = l_sngVolume
-End Property
-
-Public Sub FreeSound(Handle)
-On Error Resume Next
-    If VarType(Handle) = vbString Then
-        m_colSounds.Remove Handle
-        m_colSounds.Add Nothing, Handle
-    Else
-        m_colSounds.Add Nothing, , , Handle
-        m_colSounds.Remove Handle
-    End If
-End Sub
-
-Public Function LoadStream(ByVal filename As String, Optional Looping As Boolean = False) As Long
-On Error Resume Next
-Dim m_Handle As Long
-Dim m_Obj As SoundHandle
-Dim m_filFile As Object
-    LoadStream = -1
-    If m_Engine.DisableSound Then m_colSounds.Add New SoundHandle: LoadStream = m_colSounds.Count: Exit Function
-    Set m_Obj = New SoundHandle
-    filename = m_Engine.FileSystem.AutoSelectExtension(filename, "wav;aiff;aif;ogg;mp3;mp2;wma")
-    If Not m_Engine.FileSystem.FileExists(filename) Then
-        m_Engine.DebugOut "Unable to load stream: """ + filename + """"
-        Exit Function
-    End If
-    Set m_filFile = m_Engine.FileSystem.File(filename)
-    If m_filFile Is Nothing Then Exit Function
-    If Looping Then
-        m_Handle = FSound_Stream.Open(m_filFile.GetRealFilename, FSound_Loop_Normal Or FSound_HW2D, 0, 0)
-    Else
-        m_Handle = FSound_Stream.Open(m_filFile.GetRealFilename, FSound_Loop_Off Or FSound_HW2D, 0, 0)
-    End If
-    If m_Handle = 0 Then Exit Function
-    m_Obj.SetValues SoundType_Stream, m_Handle, True
-    m_Obj.SetEngine Me
-    m_Obj.name = filename
-    m_colSounds.Add m_Obj
-    Set m_Obj = Nothing
-    LoadStream = m_colSounds.Count
-End Function
-
-Public Function LoadSample(ByVal filename As String, Optional Looping As Boolean = False) As Long
-On Error Resume Next
-Dim m_Handle As Long
-Dim m_Obj As SoundHandle
-Dim m_lngHandles As Long
-Dim m_filFile As Object
-    LoadSample = -1
-    Err.Clear
-    Set m_Obj = m_colSounds(filename)
-    If Err.Number <> 0 Or m_Obj Is Nothing Then
-        Err.Clear
-        If m_Engine.DisableSound Then m_colSounds.Add New SoundHandle: LoadSample = m_colSounds.Count: Exit Function
-        filename = m_Engine.FileSystem.AutoSelectExtension(filename, "wav;aiff;aif;ogg;mp3;mp2;wma")
-        Err.Clear
-        Set m_Obj = m_colSounds(filename)
-        If (Err.Number = 0) And (Not (m_Obj Is Nothing)) Then
-            If m_colSounds.Count > 0 Then
-                For m_lngHandles = 1 To m_colSounds.Count
-                    If m_colSounds(m_lngHandles) Is m_Obj Then
-                        LoadSample = m_lngHandles
-                        Err.Clear
-                        Exit Function
-                    End If
-                Next m_lngHandles
-            End If
-        End If
-        If Not m_Engine.FileSystem.FileExists(filename) Then
-            m_Engine.DebugOut "Unable to load sample: """ + filename + """"
-            Exit Function
-        End If
-        Set m_filFile = m_Engine.FileSystem.File(filename)
-        If m_filFile Is Nothing Then Exit Function
-        Set m_Obj = New SoundHandle
-        If Looping Then
-            m_Handle = FSound_Sample.Load(-1, m_filFile.GetRealFilename, FSound_Sample_16Bits Or FSound_Sample_Stereo Or FSound_Sample_Loop_Normal, 0, 0)
-        Else
-            m_Handle = FSound_Sample.Load(-1, m_filFile.GetRealFilename, FSound_Sample_16Bits Or FSound_Sample_Stereo Or FSound_Sample_Loop_Off, 0, 0)
-        End If
-        If m_Handle = 0 Then Exit Function
-        m_Obj.SetValues SoundType_Sample, m_Handle, True
-        m_Obj.SetEngine Me
-        m_Obj.name = filename
-        m_colSounds.Add m_Obj, filename
-        Set m_Obj = Nothing
-        LoadSample = m_colSounds.Count
-        Err.Clear
-        Exit Function
-    Else
-        If m_colSounds.Count > 0 Then
-            For m_lngHandles = 1 To m_colSounds.Count
-                If m_colSounds(m_lngHandles) Is m_Obj Then
-                    LoadSample = m_lngHandles
-                    Err.Clear
-                    Exit Function
-                End If
-            Next m_lngHandles
-        End If
-    End If
-End Function
-
-Public Property Get Handles() As Collection
-On Error Resume Next
-    Set Handles = m_colSounds
-End Property
-
-Public Property Set Handles(NewHandles As Collection)
-On Error Resume Next
-    Set m_colSounds = NewHandles
+    MasterVolume = l_sngVolume
 End Property
 
 Public Property Get Sounds() As Collection
@@ -278,12 +187,11 @@ End Property
 
 Private Sub Class_Initialize()
 On Error Resume Next
+    Enabled = True
     Set m_colSounds = New Collection
 End Sub
 
 Private Sub Class_Terminate()
 On Error Resume Next
-    FlushCache
-    Set m_colSounds = Nothing
     Shutdown
 End Sub

@@ -33,6 +33,16 @@ Public BeginEvent As Fury2Event
 Public ProgressEvent As Fury2Event
 Public CompleteEvent As Fury2Event
 
+Public Sub Free()
+On Error Resume Next
+    Set m_perClient = Nothing
+    Set m_hosServer = Nothing
+    Set m_hosClient = Nothing
+    Set BeginEvent = Nothing
+    Set ProgressEvent = Nothing
+    Set CompleteEvent = Nothing
+End Sub
+
 Public Property Get TimeOffset() As Double
 On Error Resume Next
     TimeOffset = m_dblTimeOffset

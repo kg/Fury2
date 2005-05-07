@@ -273,7 +273,7 @@ On Error Resume Next
 Dim m_sngOldX As Single, m_sngOldY As Single
     If mvarViewingMap Is Nothing Then Exit Sub
     If mvarViewingMap.Layers.Count < 1 Then Exit Sub
-    If XDistance = 0 And YDistance = 0 Then Exit Sub
+    If (Abs(XDistance) < 1) And (Abs(YDistance) < 1) Then Exit Sub
     m_sngOldX = mvarViewportX
     m_sngOldY = mvarViewportY
     mvarViewportX = mvarViewportX + XDistance
@@ -364,6 +364,7 @@ Dim m_rctSprite As Fury2Rect
 Dim m_lngSprites As Long, m_lngPath As Long
 Dim gr As Win32.Rect
 Dim m_lnLines() As FLine, m_lngLines As Long
+Dim l_imgTileset As Fury2Image
 Dim l_imgBuffer As Fury2Image
 Dim l_imgTarget As Fury2Image
 Dim l_sngAlpha As Single
@@ -453,51 +454,62 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
         If (.Layers(Layers).Tileset.Buffer.Width > 0) And .Layers(Layers).Visible Then
             If .Layers(Layers).Prerendered = True Then
                 With .Layers(Layers)
-                    If EnableParallax Then
-                        m_lngVPX = (mvarViewportX * .ParallaxX)
-                        m_lngVPY = (mvarViewportY * .ParallaxY)
-                    Else
-                        m_lngVPX = (mvarViewportX)
-                        m_lngVPY = (mvarViewportY)
+                    Set l_imgTileset = .Tileset.Buffer
+                    If l_imgTileset Is Nothing Then
+                        Set l_imgTileset = .Tileset.GenerateBuffer
                     End If
-                    With CameraParam
-                        .ViewportX = m_lngVPX
-                        .ViewportY = m_lngVPY
-                    End With
-                    m_lngViewX = ClipValue(.Tileset.Buffer.Width - m_lngVPX, 0, mvarWidth)
-                    m_lngViewY = ClipValue(.Tileset.Buffer.Height - m_lngVPY, 0, mvarHeight)
-                    If m_lngVPX < 0 Then
-                        m_lngXOff = Abs(m_lngVPX)
-                        m_lngVPX = 0
-                    End If
-                    If m_lngVPY < 0 Then
-                        m_lngYOff = Abs(m_lngVPY)
-                        m_lngVPY = 0
-                    End If
-                    m_lngViewX = ClipValue(m_lngViewX, 0, mvarWidth - m_lngXOff)
-                    m_lngViewY = ClipValue(m_lngViewY, 0, mvarHeight - m_lngYOff)
-                    m_lngViewX = ClipValue(m_lngViewX, 0, (.Width * .Tileset.TileWidth) - (m_lngXOff + m_lngVPX))
-                    m_lngViewY = ClipValue(m_lngViewY, 0, (.Height * .Tileset.TileHeight) - (m_lngYOff + m_lngVPY))
-                    Set DestTileRect = F2Rect((m_lngXOff), (m_lngYOff), m_lngViewX, m_lngViewY, False)
-                    Set SourceTileRect = F2Rect(m_lngVPX, m_lngVPY, m_lngViewX + m_lngBGX, m_lngViewY + m_lngBGY, False)
-                    If ShowTiles Then
-                        If .RenderTarget = 1 Then
-                            Set l_imgTarget = l_imgBuffer
+                    If Not (l_imgTileset Is Nothing) Then
+                        If EnableParallax Then
+                            m_lngVPX = (mvarViewportX * .ParallaxX)
+                            m_lngVPY = (mvarViewportY * .ParallaxY)
                         Else
-                            Set l_imgTarget = RenderTargets(.RenderTarget)
+                            m_lngVPX = (mvarViewportX)
+                            m_lngVPY = (mvarViewportY)
                         End If
-                        If .Tileset.HasAlpha Then
-                            l_imgTarget.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, .Alpha * l_sngAlpha, BlitMode_SourceAlpha
-                        Else
-                            If .Alpha >= 1 Then
-                                If .Tileset.MaskColor = c_lngNullColor Then
-                                    l_imgTarget.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, l_sngAlpha, BlitMode_Normal
-                                Else
-                                    l_imgTarget.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, l_sngAlpha, BlitMode_Matte
-                                End If
+                        With CameraParam
+                            .ViewportX = m_lngVPX
+                            .ViewportY = m_lngVPY
+                        End With
+                        m_lngViewX = ClipValue(l_imgTileset.Width - m_lngVPX, 0, mvarWidth)
+                        m_lngViewY = ClipValue(l_imgTileset.Height - m_lngVPY, 0, mvarHeight)
+                        If m_lngVPX < 0 Then
+                            m_lngXOff = Abs(m_lngVPX)
+                            m_lngVPX = 0
+                        End If
+                        If m_lngVPY < 0 Then
+                            m_lngYOff = Abs(m_lngVPY)
+                            m_lngVPY = 0
+                        End If
+                        m_lngViewX = ClipValue(m_lngViewX, 0, mvarWidth - m_lngXOff)
+                        m_lngViewY = ClipValue(m_lngViewY, 0, mvarHeight - m_lngYOff)
+                        m_lngViewX = ClipValue(m_lngViewX, 0, (.Width * .Tileset.TileWidth) - (m_lngXOff + m_lngVPX))
+                        m_lngViewY = ClipValue(m_lngViewY, 0, (.Height * .Tileset.TileHeight) - (m_lngYOff + m_lngVPY))
+                        Set DestTileRect = F2Rect((m_lngXOff), (m_lngYOff), m_lngViewX, m_lngViewY, False)
+                        Set SourceTileRect = F2Rect(m_lngVPX, m_lngVPY, m_lngViewX + m_lngBGX, m_lngViewY + m_lngBGY, False)
+                        If ShowTiles Then
+                            If .RenderTarget = 1 Then
+                                Set l_imgTarget = l_imgBuffer
                             Else
-                                l_imgTarget.Blit DestTileRect, SourceTileRect, .Tileset.Buffer, .Alpha * l_sngAlpha, BlitMode_Matte
+                                Set l_imgTarget = RenderTargets(.RenderTarget)
                             End If
+                            Select Case .Effect
+                            Case F2LE_Matte
+                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Matte
+                            Case F2LE_Alpha
+                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_SourceAlpha
+                            Case F2LE_Additive
+                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Additive
+                            Case F2LE_Subtractive
+                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Subtractive
+                            Case F2LE_Screen
+                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Screen
+                            Case F2LE_Multiply
+                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Multiply
+                            Case F2LE_Lightmap
+                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Lightmap
+                            Case Else
+                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Normal
+                            End Select
                         End If
                     End If
                 End With

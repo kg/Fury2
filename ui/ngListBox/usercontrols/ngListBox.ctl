@@ -496,6 +496,10 @@ On Error Resume Next
     End If
 End Sub
 
+Private Sub UserControl_DblClick()
+    Debug.Print "DblClick"
+End Sub
+
 Private Sub UserControl_EnterFocus()
 On Error Resume Next
     If Not m_booVisible Then Exit Sub
@@ -557,7 +561,7 @@ Dim l_liItem As ngListItem
             .DragPosition = 0
         End With
     Next l_liItem
-    m_licDragItems.Clear
+    m_licDragItems.FastClear
 End Sub
 
 Private Sub UserControl_InitProperties()
@@ -605,7 +609,7 @@ Dim l_lngDragTarget As Long
     If (Abs(X - m_lngStartX) > 2) Or (Abs(Y - m_lngStartY) > 2) Then
         m_booDragged = True
     End If
-    If Button = 1 Then
+    If (Button = 1) Then
         If m_licDragItems.Count < 1 Then
         Else
             Set l_liTarget = ItemFromPoint(X, Y)
@@ -658,7 +662,8 @@ Dim l_booToggle As Boolean
             End If
         End If
     End If
-    Redraw
+    m_booDragged = False
+    Reflow
 End Sub
 
 Private Sub UserControl_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)

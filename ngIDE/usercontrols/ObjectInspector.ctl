@@ -42,13 +42,23 @@ Begin VB.UserControl ObjectInspector
          Begin VB.PictureBox picHierarchy 
             BorderStyle     =   0  'None
             Height          =   270
-            Left            =   0
+            Left            =   15
             ScaleHeight     =   18
             ScaleMode       =   3  'Pixel
             ScaleWidth      =   307
             TabIndex        =   7
             Top             =   0
             Width           =   4605
+            Begin VB.TextBox txtFilter 
+               BackColor       =   &H8000000F&
+               BorderStyle     =   0  'None
+               Height          =   255
+               Left            =   0
+               TabIndex        =   8
+               ToolTipText     =   "Filter"
+               Top             =   0
+               Width           =   1125
+            End
          End
          Begin VB.CommandButton cmdDropDown 
             Caption         =   "7"
@@ -175,6 +185,7 @@ Private Type ObjectItem
     CanInspect As Boolean
     ShowElipsis As Boolean
     ShowDropdown As Boolean
+    Filtered As Boolean
     DataType As TliVarType
     SpecialType As ObjectItemTypes
     DropdownValues() As Variant
@@ -187,6 +198,7 @@ Private m_booGroupEdit As Boolean
 Private m_objGroupItems() As Object
 
 Private m_booVisible As Boolean
+Private m_booNoItems As Boolean
 
 Private m_booHaveFocus As Boolean
 Private m_booEditBoxActive As Boolean
@@ -194,6 +206,9 @@ Private m_booEditBoxActive As Boolean
 Private m_splSplitter As New cSplitter
 
 Private m_lngSelectedItem As Long
+
+Private m_strFilter As String
+Private m_booFilterActive As Boolean
 
 Private m_lngNameWidth As Long
 Private m_lngTotalHeight As Long
@@ -288,6 +303,30 @@ On Error Resume Next
     hwnd = UserControl.hwnd
 End Property
 
+Public Sub RefreshFilter()
+On Error Resume Next
+Dim l_lngItems As Long
+Dim l_lngFirstIndex As Long
+    l_lngFirstIndex = -1
+    For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
+        With m_oiItems(l_lngItems)
+            If Len(m_strFilter) > 0 Then
+                .Filtered = Not (InStr(1, .Name, m_strFilter, vbTextCompare) > 0)
+            Else
+                .Filtered = False
+            End If
+            If Not (.Filtered) Then
+                If l_lngFirstIndex = -1 Then l_lngFirstIndex = l_lngItems
+            End If
+        End With
+    Next l_lngItems
+    m_lngSelectedItem = l_lngFirstIndex
+    CalculateSize
+    picItems_Paint
+    picInfo_Paint
+    RefreshEditBox
+End Sub
+
 Public Sub RefreshEditBox(Optional SelectText As Boolean = True)
 On Error Resume Next
 Static l_lngOldIndex As Long
@@ -296,7 +335,7 @@ Dim l_vtType As VbVarType
 Dim l_lngButtonWidth As Long
 Dim l_lngLeftSpace As Long
 Dim l_lngItems As Long, l_lngY As Long
-    If m_objObject Is Nothing Then
+    If (m_objObject Is Nothing) Or (m_booNoItems) Then
         txtEdit.Visible = False
         cmdDropDown.Visible = False
         cmdElipsis.Visible = False
@@ -304,12 +343,14 @@ Dim l_lngItems As Long, l_lngY As Long
     End If
     Err.Clear
     For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
-        If (m_oiItems(l_lngItems).CallTypes And VbGet) = VbGet Then
-            If (l_lngItems = m_lngSelectedItem) Then
-                m_lngEditY = l_lngY
-                Exit For
+        If Not (m_oiItems(l_lngItems).Filtered) Then
+            If (m_oiItems(l_lngItems).CallTypes And VbGet) = VbGet Then
+                If (l_lngItems = m_lngSelectedItem) Then
+                    m_lngEditY = l_lngY
+                    Exit For
+                End If
+                l_lngY = l_lngY + m_lngItemHeight
             End If
-            l_lngY = l_lngY + m_lngItemHeight
         End If
     Next l_lngItems
     With m_oiItems(m_lngSelectedItem)
@@ -368,30 +409,33 @@ Dim l_lngItems As Long, l_lngY As Long
         Select Case l_vtType
         Case vbObject
             If TypeOf m_oiItems(m_lngSelectedItem).Value Is IInspectorType Then
-                txtEdit.Visible = True
+                If Not m_oiItems(m_lngSelectedItem).Filtered Then txtEdit.Visible = True
             End If
         Case Else
             If (l_vtType And vbArray) = vbArray Then
             Else
-                txtEdit.Visible = True
+                If Not m_oiItems(m_lngSelectedItem).Filtered Then txtEdit.Visible = True
             End If
         End Select
         If m_booHaveFocus Then
-            If txtEdit.Visible Then
-                If UserControl.ActiveControl Is cmdElipsis Then
-                ElseIf UserControl.ActiveControl Is cmdDropDown Then
-                Else
-                    txtEdit.SetFocus
-                End If
-                If SelectText Then
-                    txtEdit.SelStart = 0
-                    txtEdit.SelLength = Len(txtEdit.Text)
-                End If
+            If m_booFilterActive Then
             Else
-                If UserControl.ActiveControl Is cmdElipsis Then
-                ElseIf UserControl.ActiveControl Is cmdDropDown Then
+                If txtEdit.Visible Then
+                    If UserControl.ActiveControl Is cmdElipsis Then
+                    ElseIf UserControl.ActiveControl Is cmdDropDown Then
+                    Else
+                        txtEdit.SetFocus
+                    End If
+                    If SelectText Then
+                        txtEdit.SelStart = 0
+                        txtEdit.SelLength = Len(txtEdit.Text)
+                    End If
                 Else
-                    picItems.SetFocus
+                    If UserControl.ActiveControl Is cmdElipsis Then
+                    ElseIf UserControl.ActiveControl Is cmdDropDown Then
+                    Else
+                        picItems.SetFocus
+                    End If
                 End If
             End If
         End If
@@ -565,14 +609,17 @@ Dim l_lngY As Long, l_lngWidth As Long
     m_lngNameWidth = 0
     For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
         With m_oiItems(l_lngItems)
-            If (.CallTypes And VbGet) = VbGet Then
-                l_lngWidth = TextWidth(.Name)
-                If l_lngWidth > m_lngNameWidth Then m_lngNameWidth = l_lngWidth
-                l_lngY = l_lngY + m_lngItemHeight
+            If Not (.Filtered) Then
+                If (.CallTypes And VbGet) = VbGet Then
+                    l_lngWidth = TextWidth(.Name)
+                    If l_lngWidth > m_lngNameWidth Then m_lngNameWidth = l_lngWidth
+                    l_lngY = l_lngY + m_lngItemHeight
+                End If
             End If
         End With
     Next l_lngItems
     m_lngTotalHeight = l_lngY
+    m_booNoItems = (m_lngTotalHeight <= 0)
     UserControl_Resize
     picSplit_Resize
     picItems_Resize
@@ -821,7 +868,15 @@ Dim l_colObject As IInspectableCollection
             m_oiItems(l_lngIndex + l_lngOffset).CallTypes = VbGet
         Next l_lngIndex
     End If
-    If l_lngItemCount = 0 Then txtEdit.Visible = False
+    For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
+        With m_oiItems(l_lngItems)
+            If Len(m_strFilter) > 0 Then
+                .Filtered = Not (InStr(1, .Name, m_strFilter, vbTextCompare) > 0)
+            Else
+                .Filtered = False
+            End If
+        End With
+    Next l_lngItems
     CalculateSize
     RefreshValues
     SortItems False
@@ -979,9 +1034,12 @@ Dim l_lngSpace As Long
         End If
     Next l_lngNames
     picHierarchy.Line (0, 0)-(picHierarchy.ScaleWidth - 1, picHierarchy.ScaleHeight - 1), vbButtonShadow, B
+    picHierarchy.Line (txtFilter.Left + txtFilter.Width, 0)-(picHierarchy.ScaleWidth - 1, picHierarchy.ScaleHeight - 1), vbButtonShadow, B
 End Sub
 
 Private Sub picHierarchy_Resize()
+On Error Resume Next
+    txtFilter.Move 1, 1, ClipValue(picHierarchy.Width * 0.4, 10, 150), picHierarchy.Height - 2
     picHierarchy_Paint
 End Sub
 
@@ -1042,12 +1100,14 @@ Dim l_lngIndex As Long
     l_lngIndex = -1
     l_lngY = picHierarchy.Height - vsScroll.Value
     For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
-        If (m_oiItems(l_lngItems).CallTypes And VbGet) = VbGet Then
-            If (Y >= l_lngY) And (Y < (l_lngY + m_lngItemHeight)) Then
-                l_lngIndex = l_lngItems
-                Exit For
+        If Not (m_oiItems(l_lngItems).Filtered) Then
+            If (m_oiItems(l_lngItems).CallTypes And VbGet) = VbGet Then
+                If (Y >= l_lngY) And (Y < (l_lngY + m_lngItemHeight)) Then
+                    l_lngIndex = l_lngItems
+                    Exit For
+                End If
+                l_lngY = l_lngY + m_lngItemHeight
             End If
-            l_lngY = l_lngY + m_lngItemHeight
         End If
     Next l_lngItems
     If (l_lngIndex >= 0) And (l_lngIndex <= UBound(m_oiItems)) Then
@@ -1168,63 +1228,65 @@ Dim l_lngNameWidth As Long
         l_lngNameWidth = ((picItems.ScaleWidth - vsScroll.Width - MinimumEditWidth))
     End If
     For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
-        If (m_oiItems(l_lngItems).CallTypes And VbGet) = VbGet Then
-            If (l_lngY + m_lngItemHeight) > 0 Then
-                If (l_lngY < picItems.ScaleHeight) Then
-                    If (m_lngSelectedItem = l_lngItems) Then
-                        picItems.Line (0, l_lngY)-(l_lngNameWidth + 4, l_lngY + m_lngItemHeight), vbButtonShadow, B
-                        picItems.Line (1, l_lngY + 1)-(l_lngNameWidth + 3, l_lngY + m_lngItemHeight - 1), vbHighlight, BF
-                    Else
-                        picItems.Line (0, l_lngY)-(l_lngNameWidth + 4, l_lngY + m_lngItemHeight), vbButtonShadow, B
-                        picItems.Line (1, l_lngY + 1)-(l_lngNameWidth + 3, l_lngY + m_lngItemHeight - 1), vbButtonFace, BF
-                    End If
-                    picItems.CurrentX = 2
-                    picItems.CurrentY = l_lngY + 2
-                    If (m_lngSelectedItem = l_lngItems) Then
-                        picItems.ForeColor = vbHighlightText
-                    Else
-                        picItems.ForeColor = vbButtonText
-                    End If
-                    picItems.Print Replace(m_oiItems(l_lngItems).Name, vbCrLf, "<cr>")
-                
-                    picItems.Line (l_lngNameWidth + 4, l_lngY)-(picItems.ScaleWidth - 1 - vsScroll.Width, l_lngY + m_lngItemHeight), vbButtonShadow, B
-                    picItems.Line (l_lngNameWidth + 5, l_lngY + 1)-(picItems.ScaleWidth - 2 - vsScroll.Width, l_lngY + m_lngItemHeight - 1), vbWindowBackground, BF
-                
-                    Select Case m_oiItems(l_lngItems).SpecialType
-                    Case OIT_Color
-                        picItems.CurrentX = l_lngNameWidth + 8 + m_imgColorBuffer.Width
+        If Not (m_oiItems(l_lngItems).Filtered) Then
+            If (m_oiItems(l_lngItems).CallTypes And VbGet) = VbGet Then
+                If (l_lngY + m_lngItemHeight) > 0 Then
+                    If (l_lngY < picItems.ScaleHeight) Then
+                        If (m_lngSelectedItem = l_lngItems) Then
+                            picItems.Line (0, l_lngY)-(l_lngNameWidth + 4, l_lngY + m_lngItemHeight), vbButtonShadow, B
+                            picItems.Line (1, l_lngY + 1)-(l_lngNameWidth + 3, l_lngY + m_lngItemHeight - 1), vbHighlight, BF
+                        Else
+                            picItems.Line (0, l_lngY)-(l_lngNameWidth + 4, l_lngY + m_lngItemHeight), vbButtonShadow, B
+                            picItems.Line (1, l_lngY + 1)-(l_lngNameWidth + 3, l_lngY + m_lngItemHeight - 1), vbButtonFace, BF
+                        End If
+                        picItems.CurrentX = 2
                         picItems.CurrentY = l_lngY + 2
-                        DrawColorBuffer CLng(m_oiItems(l_lngItems).Value)
-                        CopyImageToDC picItems.hdc, F2Rect(l_lngNameWidth + 6, l_lngY + 2, m_imgColorBuffer.Width, m_imgColorBuffer.Height, False), m_imgColorBuffer
-                    Case Else
-                        picItems.CurrentX = l_lngNameWidth + 6
-                        picItems.CurrentY = l_lngY + 2
-                    End Select
+                        If (m_lngSelectedItem = l_lngItems) Then
+                            picItems.ForeColor = vbHighlightText
+                        Else
+                            picItems.ForeColor = vbButtonText
+                        End If
+                        picItems.Print Replace(m_oiItems(l_lngItems).Name, vbCrLf, "<cr>")
                     
-                    If (m_oiItems(l_lngItems).ValueText = "{Error}") Then
-                        picItems.ForeColor = vbButtonShadow
-                    ElseIf (m_oiItems(l_lngItems).ValueText = "{Multiple Values}") Then
-                        picItems.ForeColor = vbButtonShadow
-                    ElseIf (m_oiItems(l_lngItems).CallTypes And VbLet) = VbLet Then
-                        picItems.ForeColor = vbWindowText
-                    ElseIf (TypeOf m_oiItems(l_lngItems).Value Is IInspectorType) Then
-                        picItems.ForeColor = vbWindowText
-                    Else
-                        picItems.ForeColor = vbButtonShadow
-                    End If
+                        picItems.Line (l_lngNameWidth + 4, l_lngY)-(picItems.ScaleWidth - 1 - vsScroll.Width, l_lngY + m_lngItemHeight), vbButtonShadow, B
+                        picItems.Line (l_lngNameWidth + 5, l_lngY + 1)-(picItems.ScaleWidth - 2 - vsScroll.Width, l_lngY + m_lngItemHeight - 1), vbWindowBackground, BF
                     
-                    If (m_lngSelectedItem = l_lngItems) Then
-                        If (txtEdit.Visible = True) Then
+                        Select Case m_oiItems(l_lngItems).SpecialType
+                        Case OIT_Color
+                            picItems.CurrentX = l_lngNameWidth + 8 + m_imgColorBuffer.Width
+                            picItems.CurrentY = l_lngY + 2
+                            DrawColorBuffer CLng(m_oiItems(l_lngItems).Value)
+                            CopyImageToDC picItems.hdc, F2Rect(l_lngNameWidth + 6, l_lngY + 2, m_imgColorBuffer.Width, m_imgColorBuffer.Height, False), m_imgColorBuffer
+                        Case Else
+                            picItems.CurrentX = l_lngNameWidth + 6
+                            picItems.CurrentY = l_lngY + 2
+                        End Select
+                        
+                        If (m_oiItems(l_lngItems).ValueText = "{Error}") Then
+                            picItems.ForeColor = vbButtonShadow
+                        ElseIf (m_oiItems(l_lngItems).ValueText = "{Multiple Values}") Then
+                            picItems.ForeColor = vbButtonShadow
+                        ElseIf (m_oiItems(l_lngItems).CallTypes And VbLet) = VbLet Then
+                            picItems.ForeColor = vbWindowText
+                        ElseIf (TypeOf m_oiItems(l_lngItems).Value Is IInspectorType) Then
+                            picItems.ForeColor = vbWindowText
+                        Else
+                            picItems.ForeColor = vbButtonShadow
+                        End If
+                        
+                        If (m_lngSelectedItem = l_lngItems) Then
+                            If (txtEdit.Visible = True) Then
+                            Else
+                                picItems.Print Replace(m_oiItems(l_lngItems).ValueText, vbCrLf, "<cr>")
+                            End If
                         Else
                             picItems.Print Replace(m_oiItems(l_lngItems).ValueText, vbCrLf, "<cr>")
                         End If
-                    Else
-                        picItems.Print Replace(m_oiItems(l_lngItems).ValueText, vbCrLf, "<cr>")
                     End If
                 End If
+                
+                l_lngY = l_lngY + m_lngItemHeight
             End If
-            
-            l_lngY = l_lngY + m_lngItemHeight
         End If
     Next l_lngItems
     picItems.Line (0, l_lngY + 1)-(picItems.ScaleWidth - vsScroll.Width, picItems.ScaleHeight), vbButtonFace, BF
@@ -1380,6 +1442,27 @@ End Sub
 Private Sub txtEdit_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
     m_booEditBoxActive = True
+End Sub
+
+Private Sub txtFilter_Change()
+On Error Resume Next
+    m_strFilter = txtFilter.Text
+    RefreshFilter
+End Sub
+
+Private Sub txtFilter_GotFocus()
+On Error Resume Next
+    m_booFilterActive = True
+End Sub
+
+Private Sub txtFilter_LostFocus()
+On Error Resume Next
+    m_booFilterActive = False
+End Sub
+
+Private Sub txtFilter_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+    m_booFilterActive = True
 End Sub
 
 Private Sub UserControl_EnterFocus()

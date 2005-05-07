@@ -224,10 +224,10 @@ Public Function SpriteFromArea(ByVal Area As Fury2Rect, Optional ByVal Exclude A
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
-    l_rctArea.x1 = Area.Left
-    l_rctArea.y1 = Area.Top
-    l_rctArea.x2 = Area.Right
-    l_rctArea.y2 = Area.Bottom
+    l_rctArea.x1 = Area.left
+    l_rctArea.y1 = Area.top
+    l_rctArea.x2 = Area.right
+    l_rctArea.y2 = Area.bottom
     Set SpriteFromArea = Nothing
     If mCol.Count < 1 Then Exit Function
     l_lngExclude = Exclude.Pointer
@@ -239,10 +239,10 @@ Public Function SpriteFromScreenArea(ByVal Area As Fury2Rect, Optional ByVal Exc
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
-    l_rctArea.x1 = Area.Left
-    l_rctArea.y1 = Area.Top
-    l_rctArea.x2 = Area.Right
-    l_rctArea.y2 = Area.Bottom
+    l_rctArea.x1 = Area.left
+    l_rctArea.y1 = Area.top
+    l_rctArea.x2 = Area.right
+    l_rctArea.y2 = Area.bottom
     Set SpriteFromScreenArea = Nothing
     If mCol.Count < 1 Then Exit Function
     l_lngExclude = Exclude.Pointer
@@ -293,10 +293,10 @@ Dim l_lngCount As Long, l_lngSize As Long
 Dim l_rctArea As FRect
 Dim l_lngExclude As Long
     l_lngExclude = Exclude.Pointer
-    l_rctArea.x1 = Area.Left
-    l_rctArea.y1 = Area.Top
-    l_rctArea.x2 = Area.Right
-    l_rctArea.y2 = Area.Bottom
+    l_rctArea.x1 = Area.left
+    l_rctArea.y1 = Area.top
+    l_rctArea.x2 = Area.right
+    l_rctArea.y2 = Area.bottom
     ReDim l_varResult(0 To 7)
     l_lngSize = 8
     l_lngStart = Item(1).Pointer
@@ -331,10 +331,10 @@ Dim l_lngCount As Long, l_lngSize As Long
 Dim l_rctArea As FRect
 Dim l_lngExclude As Long
     l_lngExclude = Exclude.Pointer
-    l_rctArea.x1 = Area.Left
-    l_rctArea.y1 = Area.Top
-    l_rctArea.x2 = Area.Right
-    l_rctArea.y2 = Area.Bottom
+    l_rctArea.x1 = Area.left
+    l_rctArea.y1 = Area.top
+    l_rctArea.x2 = Area.right
+    l_rctArea.y2 = Area.bottom
     ReDim l_varResult(0 To 7)
     l_lngSize = 8
     l_lngStart = Item(1).Pointer
@@ -464,16 +464,43 @@ Dim l_lngSprites As Long
     ProfileStop "Sprite.Update"
 End Sub
 
+Public Sub Render(Surface As Fury2Image, Optional ByVal XOffset As Long = 0, Optional ByVal YOffset As Long = 0)
+On Error Resume Next
+Dim l_camCamera As CameraParam
+Dim l_lngRenderTargets() As Long
+    If mvarDirty Then RefreshList
+    Sort
+    Err.Clear
+    If mCol.Count = 0 Then
+    Else
+        Err.Clear
+        With l_camCamera
+            ReDim l_lngRenderTargets(0 To 0)
+            l_lngRenderTargets(0) = Surface.Handle
+            .pRenderTargets = VarPtr(l_lngRenderTargets(0))
+            .RenderTargetCount = 1
+            .ViewportX = XOffset
+            .ViewportY = YOffset
+            .Alpha = 255
+            .Rectangle.left = 0
+            .Rectangle.top = 0
+            .Rectangle.Width = Surface.Width
+            .Rectangle.Height = Surface.Height
+        End With
+        RenderSprites mvarSortedFirst, l_camCamera
+    End If
+End Sub
+
 Public Sub Redraw(Camera As Fury2Camera, Optional OutputBuffer As Fury2Image = Nothing)
 On Error Resume Next
-Dim m_camCamera As CameraParam
+Dim l_camCamera As CameraParam
 Dim l_lngRenderTargets() As Long
     If mvarDirty Then RefreshList
     Err.Clear
     If mCol.Count = 0 Then
     Else
         Err.Clear
-        With m_camCamera
+        With l_camCamera
             l_lngRenderTargets = Camera.RenderTargetArray
             If OutputBuffer Is Nothing Then
             Else
@@ -484,13 +511,12 @@ Dim l_lngRenderTargets() As Long
             .ViewportX = Camera.ViewportX
             .ViewportY = Camera.ViewportY
             .Alpha = 255
-            .Rectangle.Left = 0
-            .Rectangle.Top = 0
+            .Rectangle.left = 0
+            .Rectangle.top = 0
             .Rectangle.Width = Camera.Width
             .Rectangle.Height = Camera.Height
         End With
-        RenderSprites mvarSortedFirst, m_camCamera
-        If Err.Number <> 0 Then Engine.CriticalError "Fury2Sprites.Redraw", "Call RedrawSprites2 mvarFirst, m_camCamera": Exit Sub
+        RenderSprites mvarSortedFirst, l_camCamera
     End If
 End Sub
 
@@ -598,7 +624,7 @@ Dim l_sprSprite As Fury2Sprite
     Set FindByNames = l_colItems
 End Function
 
-Public Function Find(vntIndexKey As Variant) As Long
+Public Function Find(ByVal vntIndexKey As Variant) As Long
 On Error Resume Next
 Dim l_lngSprites As Long
 Dim l_objObject As Object, l_strKey As String
@@ -639,13 +665,17 @@ On Error Resume Next
     Set Sprite = Item(vntIndexKey)
 End Property
 
-Public Property Get Item(vntIndexKey As Variant) As Fury2Sprite
+Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2Sprite
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
 Dim m_lngSprites As Long
 Dim m_strName As String
     If mCol.Count < 1 Then Exit Property
-    Set Item = mCol(Find(vntIndexKey))
+    If VarType(vntIndexKey) = vbString Then
+        Set Item = mCol(Find(vntIndexKey))
+    Else
+        Set Item = mCol(CLng(vntIndexKey))
+    End If
 End Property
 
 Public Property Get Count() As Long

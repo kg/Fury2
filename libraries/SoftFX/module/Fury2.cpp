@@ -70,6 +70,8 @@ Image* Tileset::tile(int i, short* mapTable) {
 
 void Tileset::setTile(int i, Image *newTile) {
     if (this->Initialized) {
+      if (i < 0) return;
+      if (i >= this->Tiles->size()) return;
       if (this->Tiles->at(i)) {
         if (this->Tiles->at(i)->Tags[3] == (DoubleWord)this) {
           delete (this->Tiles->at(i));
@@ -80,12 +82,29 @@ void Tileset::setTile(int i, Image *newTile) {
     }
 }
 
+void Tileset::replaceTile(int i, Image *newTile) {
+    if (this->Initialized) {
+    if (i < 0) return;
+    if (i >= this->Tiles->size()) return;
+      if (this->Tiles->at(i)) {
+        if (this->Tiles->at(i)->Tags[3] == (DoubleWord)this) {
+          delete (this->Tiles->at(i));
+          this->Tiles->at(i) = Null;
+        } 
+      }
+      Image* theTile = this->createTile();
+      theTile->copy(newTile);
+      this->Tiles->at(i) = theTile;
+    }
+}
+
 Image* Tileset::createTile() {
   Image* iTile = Null;
   iTile = new Image(TileWidth, TileHeight);
   if (iTile) {
     iTile->Tags[3] = (DoubleWord)this;
   }
+  RemoveFromHeap(iTile);
   return iTile;
 }
 
@@ -98,19 +117,28 @@ void Tileset::addTile(Image *newTile) {
   }
 }
 
+void Tileset::addTile(Image *newTile, int i) {
+  if (this->Initialized) {
+    Image* theTile = this->createTile();
+    theTile->copy(newTile);
+    this->Tiles->insert(this->Tiles->begin() + i, theTile);
+    this->TileCount = this->Tiles->size();
+  }
+}
+
 void Tileset::removeTile(int i) {
   if (this->Initialized) {
+    if (i < 0) return;
+    if (i >= this->Tiles->size()) return;
     if (this->Tiles->at(i)) {
       if (this->Tiles->at(i)->Tags[3] == (DoubleWord)this) {
         delete (this->Tiles->at(i));
         this->Tiles->at(i) = Null;
       } 
     }
-    std::vector<Image*>::iterator iter = this->Tiles->begin();
-    for (int it = 0; it < i; i++) {
-      iter++;
-    }
+    std::vector<Image*>::iterator iter = this->Tiles->begin() + i;
     this->Tiles->erase(iter);
+    this->TileCount = this->Tiles->size();
   }
 }
 
@@ -126,8 +154,20 @@ Export void SetTile(Tileset *pTileset, int Index, Image* NewImage) {
     return pTileset->setTile(Index, NewImage);
 }
 
+Export void ReplaceTile(Tileset *pTileset, int Index, Image* NewImage) {
+    return pTileset->replaceTile(Index, NewImage);
+}
+
 Export Image* GetTile(Tileset *pTileset, int Index) {
     return pTileset->tile(Index);
+}
+
+Export Image* GetTileFast(Tileset *pTileset, unsigned int Index, short* MapTable) {
+    return pTileset->fastTile(Index, MapTable);
+}
+
+Export Image* CreateTile(Tileset *pTileset) {
+    return pTileset->createTile();
 }
 
 Export int GetTileCount(Tileset *pTileset) {
@@ -144,6 +184,10 @@ Export int GetTileHeight(Tileset *pTileset) {
 
 Export void AddTile(Tileset *pTileset, Image* Tile) {
     pTileset->addTile(Tile);
+}
+
+Export void InsertTile(Tileset *pTileset, Image* Tile, int Index) {
+    pTileset->addTile(Tile, Index);
 }
 
 Export void RemoveTile(Tileset *pTileset, int Index) {
@@ -195,15 +239,15 @@ if (!Layer) return Failure;
 
     alpha = (Camera->Alpha * Layer->Alpha) / 255;
 
-    if (!Layer->pAnimationMap) {
-        temporaryAnimationMap = true;
-//        Layer->pAnimationMap = AllocateArray(short, Layer->pTileset->TileCount);
-//        Layer->pAnimationMap = LookupAllocate<short>(Layer->pTileset->TileCount);
-        Layer->pAnimationMap = StaticAllocate<short>(MappingBuffer, Layer->pTileset->TileCount);
-        for (int i = 0; i < Layer->pTileset->TileCount; i++) {
-          Layer->pAnimationMap[i] = i;
-        }
-    }
+//    if (!Layer->pAnimationMap) {
+//        temporaryAnimationMap = true;
+////        Layer->pAnimationMap = AllocateArray(short, Layer->pTileset->TileCount);
+////        Layer->pAnimationMap = LookupAllocate<short>(Layer->pTileset->TileCount);
+//        Layer->pAnimationMap = StaticAllocate<short>(MappingBuffer, Layer->pTileset->TileCount);
+//        for (int i = 0; i < Layer->pTileset->TileCount; i++) {
+//          Layer->pAnimationMap[i] = i;
+//        }
+//    }
 
     camerax = Camera->ViewportX;
     cameray = Camera->ViewportY;
@@ -324,35 +368,69 @@ if (!Layer) return Failure;
         }
         yClip = (dy >= pTarget->ClipRectangle.Top) && ((dy + Layer->pTileset->TileHeight) < pTarget->ClipRectangle.bottom());
         pTile = pRow + sx;
-        if (Layer->TintColor[::Alpha]) {
-          for (cx = sx; cx < ex; ++cx) {
-              rctDest.Left = dx;
-              if (Layer->WrapX) {
-                  pTile = pRow + (cx % maxX);
-              }
-              cv = *pTile;
-              if ((cv == Layer->MaskedTile) || (cv >= Layer->pTileset->TileCount) || (cv < 0)) {
-              } else {
-                  enableClipping = !((dx >= pTarget->ClipRectangle.Left) && ((dx + Layer->pTileset->TileWidth) < pTarget->ClipRectangle.right()) && yClip);
-                  TintBlitter(pTarget, Layer->pTileset->tile(cv), &rctDest, 0, 0, Layer->TintColor, alpha);
-              }
-              dx += Layer->pTileset->TileWidth;
-              pTile++;
+        if (Layer->pAnimationMap) {
+          if (Layer->TintColor[::Alpha]) {
+            for (cx = sx; cx < ex; ++cx) {
+                rctDest.Left = dx;
+                if (Layer->WrapX) {
+                    pTile = pRow + (cx % maxX);
+                }
+                cv = Layer->pAnimationMap[*pTile];
+                if ((cv == Layer->MaskedTile) || (cv >= Layer->pTileset->TileCount) || (cv < 0)) {
+                } else {
+                    enableClipping = !((dx >= pTarget->ClipRectangle.Left) && ((dx + Layer->pTileset->TileWidth) < pTarget->ClipRectangle.right()) && yClip);
+                    TintBlitter(pTarget, Layer->pTileset->tile(cv), &rctDest, 0, 0, Layer->TintColor, alpha);
+                }
+                dx += Layer->pTileset->TileWidth;
+                pTile++;
+            }
+          } else {
+            for (cx = sx; cx < ex; ++cx) {
+                rctDest.Left = dx;
+                if (Layer->WrapX) {
+                    pTile = pRow + (cx % maxX);
+                }
+                cv = Layer->pAnimationMap[*pTile];
+                if ((cv == Layer->MaskedTile) || (cv >= Layer->pTileset->TileCount) || (cv < 0)) {
+                } else {
+                    enableClipping = !((dx >= pTarget->ClipRectangle.Left) && ((dx + Layer->pTileset->TileWidth) < pTarget->ClipRectangle.right()) && yClip);
+                    Blitter(pTarget, Layer->pTileset->tile(cv), &rctDest, 0, 0, alpha);
+                }
+                dx += Layer->pTileset->TileWidth;
+                pTile++;
+            }
           }
         } else {
-          for (cx = sx; cx < ex; ++cx) {
-              rctDest.Left = dx;
-              if (Layer->WrapX) {
-                  pTile = pRow + (cx % maxX);
-              }
-              cv = *pTile;
-              if ((cv == Layer->MaskedTile) || (cv >= Layer->pTileset->TileCount) || (cv < 0)) {
-              } else {
-                  enableClipping = !((dx >= pTarget->ClipRectangle.Left) && ((dx + Layer->pTileset->TileWidth) < pTarget->ClipRectangle.right()) && yClip);
-                  Blitter(pTarget, Layer->pTileset->tile(cv), &rctDest, 0, 0, alpha);
-              }
-              dx += Layer->pTileset->TileWidth;
-              pTile++;
+          if (Layer->TintColor[::Alpha]) {
+            for (cx = sx; cx < ex; ++cx) {
+                rctDest.Left = dx;
+                if (Layer->WrapX) {
+                    pTile = pRow + (cx % maxX);
+                }
+                cv = *pTile;
+                if ((cv == Layer->MaskedTile) || (cv >= Layer->pTileset->TileCount) || (cv < 0)) {
+                } else {
+                    enableClipping = !((dx >= pTarget->ClipRectangle.Left) && ((dx + Layer->pTileset->TileWidth) < pTarget->ClipRectangle.right()) && yClip);
+                    TintBlitter(pTarget, Layer->pTileset->tile(cv), &rctDest, 0, 0, Layer->TintColor, alpha);
+                }
+                dx += Layer->pTileset->TileWidth;
+                pTile++;
+            }
+          } else {
+            for (cx = sx; cx < ex; ++cx) {
+                rctDest.Left = dx;
+                if (Layer->WrapX) {
+                    pTile = pRow + (cx % maxX);
+                }
+                cv = *pTile;
+                if ((cv == Layer->MaskedTile) || (cv >= Layer->pTileset->TileCount) || (cv < 0)) {
+                } else {
+                    enableClipping = !((dx >= pTarget->ClipRectangle.Left) && ((dx + Layer->pTileset->TileWidth) < pTarget->ClipRectangle.right()) && yClip);
+                    Blitter(pTarget, Layer->pTileset->tile(cv), &rctDest, 0, 0, alpha);
+                }
+                dx += Layer->pTileset->TileWidth;
+                pTile++;
+            }
           }
         }
         dy += Layer->pTileset->TileHeight;
@@ -1258,37 +1336,37 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
         case '_': case '`':
           broke = false;
           buffer += (*current);
-		  if (*current == 9) {
-			// tab
-			bool stopFound = false;
-			if ((Options->TabStops != Null) && (Options->TabStopCount > 0)) {
-			  for (int t = 0; t < Options->TabStopCount; t++) {
-			    if (Options->TabStops[t] > (buffer_width + buffer_X - Rect->Left + Options->Scroll_X)) {
-			      buffer_width = Options->TabStops[t] - (buffer_X - Rect->Left + Options->Scroll_X);
-			      stopFound = true;
-			      break;
-			    }
-			  }
-			}
-			if (!stopFound) {
-		      buffer_width += _current->XIncrement;
-			}
-		  } else {
-	        if (_current) {
-		      buffer_width += _current->XIncrement;
-			}
-		  }
-          if (buffer.size() > 1) {
-            if (((buffer_width + current_X + Options->Scroll_X) > Rect->Width)) {
-              if (Font->WrapMode == 1) { 
-                done = true;
+		      if (*current == 9) {
+			      // tab
+			      bool stopFound = false;
+			      if ((Options->TabStops != Null) && (Options->TabStopCount > 0)) {
+			        for (int t = 0; t < Options->TabStopCount; t++) {
+			          if (Options->TabStops[t] > (buffer_width + buffer_X - Rect->Left + Options->Scroll_X)) {
+			            buffer_width = Options->TabStops[t] - (buffer_X - Rect->Left + Options->Scroll_X);
+			            stopFound = true;
+			            break;
+			          }
+			        }
+			      }
+			      if (!stopFound) {
+  		        buffer_width += _current->XIncrement;
+			      }
+		      } else {
+	          if (_current) {
+  		        buffer_width += _current->XIncrement;
+			      }
+		      }
+          if (((buffer_width + current_X + Options->Scroll_X) > Rect->Width)) {
+            if (Font->WrapMode == 1) { 
+              done = true;
+              _break = true;
+              _render = true;
+            } else {
+              if ((buffer_width) >= Rect->Width) {
+                _break = true;
                 _render = true;
               } else {
-                if ((buffer_width) >= Rect->Width) {
-                  _render = true;
-                } else {
-                  _move_down = true;
-                }
+                _move_down = true;
               }
             }
           }
@@ -1299,9 +1377,10 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
           if (_current) {
             buffer_width += _current->XIncrement;
           }
-          if (((buffer_width + current_X + Options->Scroll_X) > Rect->Width) && !broke) {
+          if (((buffer_width + current_X + Options->Scroll_X) > Rect->Width)) {
             if ((buffer_width) >= Rect->Width) {
               _render = true;
+              _break = true;
             } else {
               _move_down = true;
             }
@@ -1431,6 +1510,7 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
       current_X = 0;
       buffer_X = Rect->Left + Options->Scroll_X;
       buffer_Y += Font->BaseHeight;
+      buffer_width = 0;
       line_count++;
     }
 

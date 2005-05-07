@@ -42,7 +42,8 @@ Public Volume As Single
 Public Sound As String
 Public Repeat As Boolean
 Public Enabled As Boolean
-Public Handle As SoundHandle
+Public Object As Sound
+Public Channel As Channel
 Public Engine As Fury2Engine
 Public Map As Fury2Map
 Public JustLoaded As Boolean
@@ -85,7 +86,7 @@ End Function
 Public Sub Trigger()
 On Error Resume Next
     If Not Enabled Then Exit Sub
-    Handle.PlayEx CalculateVolume
+    Set Channel = Object.Play
 End Sub
 
 Private Sub Class_Initialize()
@@ -96,12 +97,9 @@ End Sub
 
 Private Sub Fury2MapObject_Load(Engine As Fury2Engine, ByRef Map As Fury2Map)
 On Error Resume Next
-Dim l_lngHandle As Long
-    l_lngHandle = Engine.SoundEngine.Load(Sound, Repeat)
-    If l_lngHandle <> 0 Then
-        Set Handle = Engine.SoundEngine.Handles(l_lngHandle)
-    Else
-    End If
+    Set Object = Engine.SoundEngine.Load(Sound)
+    Object.LoopMode = IIf(Repeat, LoopMode_Normal, LoopMode_None)
+    Object.LoopCount = 1
     Set Me.Engine = Engine
     Set Me.Map = Map
     JustLoaded = True
@@ -112,8 +110,8 @@ End Sub
 
 Private Sub Fury2MapObject_Update()
 On Error Resume Next
-    If Handle.Playing Then
-        Handle.Volume = CalculateVolume()
+    If Channel.Playing Then
+        Channel.Volume = CalculateVolume()
     ElseIf JustLoaded Then
         JustLoaded = False
         Trigger
@@ -139,7 +137,8 @@ On Error Resume Next
     End With
     JustLoaded = False
     Set Engine = Nothing
-    Set Handle = Nothing
+    Set Object = Nothing
+    Set Channel = Nothing
     Set Map = Nothing
 End Sub
 

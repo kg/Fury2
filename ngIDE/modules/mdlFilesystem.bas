@@ -19,6 +19,27 @@ Attribute VB_Name = "mdlFilesystem"
 '
 
 Option Explicit
+Private Type SHFILEOPSTRUCT
+    hWnd As Long
+    wFunc As Long
+    pFrom As String
+    pTo As String
+    fFlags As Integer
+    fAnyOperationsAborted As Long
+    hNameMappings As Long
+    lpszProgressTitle As Long ' only used if FOF_SIMPLEPROGRESS, sets dialog title
+End Type
+Private Const FO_COPY = &H2 ' Copy File/Folder
+Private Const FO_DELETE = &H3 ' Delete File/Folder
+Private Const FO_MOVE = &H1 ' Move File/Folder
+Private Const FO_RENAME = &H4 ' Rename File/Folder
+Private Const FOF_ALLOWUNDO = &H40 ' Allow to undo rename, delete ie sends to recycle bin
+Private Const FOF_FILESONLY = &H80 ' Only allow files
+Private Const FOF_NOCONFIRMATION = &H10 ' No File Delete or Overwrite Confirmation Dialog
+Private Const FOF_SILENT = &H4 ' No copy/move dialog
+Private Const FOF_SIMPLEPROGRESS = &H100 ' Does not display file names
+Private Declare Function SHFileOperation Lib "shell32.dll" Alias "SHFileOperationA" (lpFileOp As SHFILEOPSTRUCT) As Long
+
 Private Const c_lngFilesystemUpdateDelay As Long = 10
 
 Global g_fsFilesystem As Fury2Filesystem
@@ -156,6 +177,8 @@ Dim l_booOldState As Boolean
     If Trim(l_strFilename) = "" Then
         l_strFilename = "Untitled"
         l_fpgPlugin.FixUpSaveFilename l_strFilename
+    Else
+        l_strFilename = ""
     End If
     l_booOldState = g_edEditor.AcceleratorManager.Enabled
     g_edEditor.AcceleratorManager.Enabled = False
@@ -218,3 +241,62 @@ Dim l_booOldState As Boolean
         SelectLocalFiles = Array(l_strFilename)
     End If
 End Function
+
+Public Sub DoDelete(ByRef From As String)
+On Error Resume Next
+Dim l_opOp As SHFILEOPSTRUCT
+    l_opOp.wFunc = FO_DELETE
+    l_opOp.pFrom = Replace(From, "\\", "\")
+    SHFileOperation l_opOp
+End Sub
+
+Public Sub DoCopy(ByRef From As String, ByRef ToPath As String)
+On Error Resume Next
+Dim l_opOp As SHFILEOPSTRUCT
+    l_opOp.wFunc = FO_COPY
+    l_opOp.pFrom = Replace(From, "\\", "\")
+    l_opOp.pTo = Replace(ToPath, "\\", "\")
+    If Len(Trim(l_opOp.pTo)) < 1 Then Exit Sub
+    SHFileOperation l_opOp
+End Sub
+
+Public Sub DoMove(ByRef From As String, ByRef ToPath As String)
+On Error Resume Next
+Dim l_opOp As SHFILEOPSTRUCT
+    l_opOp.wFunc = FO_MOVE
+    l_opOp.pFrom = Replace(From, "\\", "\")
+    l_opOp.pTo = Replace(ToPath, "\\", "\")
+    If Len(Trim(l_opOp.pTo)) < 1 Then Exit Sub
+    SHFileOperation l_opOp
+End Sub
+
+Public Sub DoRename(ByRef From As String)
+On Error Resume Next
+Dim l_opOp As SHFILEOPSTRUCT
+Dim l_strPath As String
+Dim l_booFolder As Boolean
+    l_opOp.wFunc = FO_RENAME
+    l_strPath = Replace(From, "\\", "\")
+    If Right(l_strPath, 1) = "\" Then
+        l_booFolder = True
+    End If
+    l_opOp.pFrom = l_strPath
+    If l_booFolder Then
+        l_strPath = Left(l_strPath, InStrRev(Left(l_strPath, Len(l_strPath) - 1), "\"))
+        l_opOp.pTo = InputBox("New folder name:", "Rename", Replace(Replace(Replace(From, "\\", "\"), l_strPath, ""), "\", ""))
+        If Len(Trim(l_opOp.pTo)) < 1 Then Exit Sub
+        l_opOp.pTo = Replace(l_strPath + l_opOp.pTo + "\", "\\", "\")
+        If Right(l_opOp.pFrom, 1) = "\" Then
+            l_opOp.pFrom = Left(l_opOp.pFrom, Len(l_opOp.pFrom) - 1)
+        End If
+        If Right(l_opOp.pTo, 1) = "\" Then
+            l_opOp.pTo = Left(l_opOp.pTo, Len(l_opOp.pTo) - 1)
+        End If
+    Else
+        l_strPath = Left(l_strPath, InStrRev(l_strPath, "\"))
+        l_opOp.pTo = InputBox("New file name:", "Rename", Replace(Replace(From, "\\", "\"), l_strPath, ""))
+        If Len(Trim(l_opOp.pTo)) < 1 Then Exit Sub
+        l_opOp.pTo = l_strPath + l_opOp.pTo
+    End If
+    SHFileOperation l_opOp
+End Sub

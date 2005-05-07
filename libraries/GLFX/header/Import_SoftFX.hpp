@@ -73,6 +73,7 @@ namespace SoftFX {
   defImport(GradientVertex*, GetGradientPolygonVertexPointer, (int Polygon, int Index), 8) \
   defImport(TexturedVertex*, GetTexturedPolygonVertexPointer, (int Polygon, int Index), 8) \
   defImport(int, GetTile, (int Tileset, int Index), 8) \
+  defImport(int, GetTileFast, (int Tileset, unsigned int Index, short* MapTable), 12) \
   defImport(int, GetTileCount, (int Tileset), 4) \
   defImport(int, GetTileWidth, (int Tileset), 4) \
   defImport(int, GetTileHeight, (int Tileset), 4) \

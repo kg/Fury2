@@ -335,9 +335,11 @@ End Property
 
 Public Function Duplicate() As Fury2MapLayer
 Attribute Duplicate.VB_Description = "Creates a copy of the layer."
+On Error Resume Next
 Dim m_lyrNew As Fury2MapLayer
     Set m_lyrNew = New Fury2MapLayer
     With m_lyrNew
+        Set .Parent = Me.Parent
         .WrapX = mvarWrapX
         .WrapY = mvarWrapY
         .Visible = mvarVisible
@@ -1034,9 +1036,23 @@ On Error Resume Next
     mvarHeight = UBound(mvarTiles, 2) + 1
 End Property
 
-Public Property Set Tileset(vData As Fury2Tileset)
+Public Property Set Tileset(ByVal vData As Fury2Tileset)
 Attribute Tileset.VB_Description = "~The layer's tileset."
 On Error Resume Next
+Dim l_lyrLayer As Fury2MapLayer
+    If vData Is Nothing Then Exit Property
+    If Parent Is Nothing Then
+    Else
+        If Parent.Layers Is Nothing Then
+        Else
+            For Each l_lyrLayer In Parent.Layers
+                If vData Is l_lyrLayer.Tileset Then
+                    Set vData = vData.Duplicate
+                    Exit For
+                End If
+            Next l_lyrLayer
+        End If
+    End If
     Set mvarTileset = vData
     mvarTileset.SetParent Me
 End Property

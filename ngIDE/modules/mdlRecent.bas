@@ -19,8 +19,8 @@ Attribute VB_Name = "mdlRecent"
 '
 
 Option Explicit
-Public Const c_lngMaxRecentFiles As Long = 8
-Public Const c_lngMaxRecentGames As Long = 4
+Public Const c_lngMaxRecentFiles As Long = 10
+Public Const c_lngMaxRecentGames As Long = 5
 
 Public Sub AddRecentFile(Filename As String)
 On Error Resume Next

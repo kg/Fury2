@@ -383,11 +383,21 @@ public:
         this->Initialized = true;
     }
 
+    inline Image* fastTile(unsigned int i, short* mapTable) {
+      if (mapTable) {
+        return this->Tiles->operator[](mapTable[i]);
+      } else {
+        return this->Tiles->operator[](i);
+      }
+    }
+
     Image* tile(int i);
     Image* tile(int i, short* mapTable);
     void setTile(int i, Image* newTile);
+    void replaceTile(int i, Image* newTile);
     Image* createTile();
     void addTile(Image* newTile);
+    void addTile(Image* newTile, int i);
     void removeTile(int i);
 
     ~Tileset() {

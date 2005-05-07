@@ -46,6 +46,7 @@ inline int powerOfTwo(int value) {
     #pragma warning( 1 : 4189 )         // local variable initialized but not referenced (moved from lvl 4)
     #pragma warning( disable : 4102 )   // 'foo' : unreferenced label (but who cares?)
 #endif
+#pragma warning( disable : 4530 )       // disabled exception stuff
 #pragma warning( disable : 4996 )       // 'foo' was declared deprecated (cry me a river, C++ standards committee)
 #pragma warning( disable : 4786 )       // identifier truncated in the browser information (why the hell should I care?)
 #pragma warning( disable : 4190 )       // 'foo' has C-linkage specified, but returns struct 'bar' which is incompatible with C (but who really cares?)

@@ -75,9 +75,9 @@ Dim l_varSetting As Variant
         l_varSettings = Split(l_strSettings, vbCrLf)
         For l_lngSettings = LBound(l_varSettings) To UBound(l_varSettings)
             l_strSetting = l_varSettings(l_lngSettings)
-            If InStr(l_strSetting, "//") Then l_strSetting = Left(l_strSetting, InStr(l_strSetting, "//") - 1)
+            If InStr(l_strSetting, "//") Then l_strSetting = left(l_strSetting, InStr(l_strSetting, "//") - 1)
             If InStr(l_strSetting, ":") Then
-                Settings(Left(l_strSetting, InStr(l_strSetting, ":") - 1)) = Mid(l_strSetting, InStr(l_strSetting, ":") + 1)
+                Settings(left(l_strSetting, InStr(l_strSetting, ":") - 1)) = Mid(l_strSetting, InStr(l_strSetting, ":") + 1)
             End If
         Next l_lngSettings
     End If
@@ -166,6 +166,6 @@ On Error Resume Next
     DefineSettings Array(Array("Show Configuration Dialog", "Yes"), Array("Title", "Untitled Game"), Array("Screen Mode", "320x240 @ 32"), Array("Framerate", "60fps"), _
     Array("Special FX", "Yes"), Array("Output Plugin", "GDI"), Array("Vertical Sync", "No"), Array("Show Framerate", "Yes"), Array("Show Titlebar", "Yes"), _
     Array("Default Transition", "Crossfade"), Array("Default Transition Length", "1.0"), "Default Map", Array("Default Font", "TTF;Tahoma"), "Default Window Skin", _
-    Array("Default Start Position", "0 @ 0, 0"), Array("Enable Sound", "Yes"), Array("Music Volume", "0.65"), Array("Language", "VBScript"), Array("Icon", "/icon.ico"), _
+    Array("Default Start Position", "0 @ 0, 0"), Array("Enable Sound", "Yes"), Array("Music Volume", "0.65"), Array("Sound Volume", "1.00"), Array("Language", "VBScript"), Array("Icon", "/icon.ico"), _
     Array("Default Cursor", ""), Array("Screen Scale Ratio", "1.0"), Array("Output Scaling Mode", "Fast"), Array("Fullscreen", "No"))
 End Sub

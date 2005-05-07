@@ -111,6 +111,7 @@ Option Explicit
 Implements iCustomMenus
 Implements iExtendedForm
 Implements iDocument
+Implements iEditingCommands
 
 Private Declare Function SetStretchBltMode Lib "gdi32" (ByVal hdc As Long, ByVal nStretchMode As Long) As Long
 Private Const COLORONCOLOR = 3
@@ -121,10 +122,29 @@ Private m_imgImageCache As Fury2Image
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
 
-Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+Private Function ClipboardContainsFormat(Format As ImageFileClipboardFormats) As Boolean
 On Error Resume Next
-    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\image.png")
-End Property
+Dim l_objPlugin As ImageFile
+    Set l_objPlugin = m_fpgPlugin
+    With l_objPlugin.CustomClipboard
+        .GetCurrentFormats Me.hwnd
+        ClipboardContainsFormat = .HasCurrentFormat(l_objPlugin.ClipboardFormat(Format))
+    End With
+End Function
+
+Private Function ClipboardFormat(Format As ImageFileClipboardFormats) As Long
+On Error Resume Next
+Dim l_objPlugin As ImageFile
+    Set l_objPlugin = m_fpgPlugin
+    ClipboardFormat = l_objPlugin.ClipboardFormat(Format)
+End Function
+
+Private Function CustomClipboard() As cCustomClipboard
+On Error Resume Next
+Dim l_objPlugin As ImageFile
+    Set l_objPlugin = m_fpgPlugin
+    Set CustomClipboard = l_objPlugin.CustomClipboard
+End Function
 
 Private Function Editor() As Object
 On Error Resume Next
@@ -132,6 +152,11 @@ Dim l_objPlugin As ImageFile
     Set l_objPlugin = m_fpgPlugin
     Set Editor = l_objPlugin.Editor
 End Function
+
+Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
+On Error Resume Next
+    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\image.png")
+End Property
 
 Private Property Get iDocument_Object() As Object
     Set iDocument_Object = Me
@@ -294,6 +319,81 @@ Private Property Get iDocument_Typename() As String
 On Error Resume Next
     iDocument_Typename = "Image"
 End Property
+
+Private Sub iEditingCommands_CanCopy(NewValue As Boolean)
+On Error Resume Next
+    NewValue = True
+End Sub
+
+Private Sub iEditingCommands_CanCut(NewValue As Boolean)
+
+End Sub
+
+Private Sub iEditingCommands_CanDelete(NewValue As Boolean)
+
+End Sub
+
+Private Sub iEditingCommands_CanPaste(NewValue As Boolean)
+On Error Resume Next
+    NewValue = ClipboardContainsFormat(CF_Image)
+End Sub
+
+Private Sub iEditingCommands_CanRedo(NewValue As Boolean)
+
+End Sub
+
+Private Sub iEditingCommands_CanSelectAll(NewValue As Boolean)
+
+End Sub
+
+Private Sub iEditingCommands_CanSelectNone(NewValue As Boolean)
+
+End Sub
+
+Private Sub iEditingCommands_CanUndo(NewValue As Boolean)
+
+End Sub
+
+Private Sub iEditingCommands_Copy()
+On Error Resume Next
+    CustomClipboard.ClipboardOpen Me.hwnd
+    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_Image), m_imgImage
+    CustomClipboard.ClipboardClose
+End Sub
+
+Private Sub iEditingCommands_Cut()
+
+End Sub
+
+Private Sub iEditingCommands_Delete()
+
+End Sub
+
+Private Sub iEditingCommands_Paste()
+On Error Resume Next
+    CustomClipboard.ClipboardOpen Me.hwnd
+    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_Image), m_imgImage) Then
+    Else
+        CustomClipboard.ClipboardClose
+    End If
+    picImage_Paint
+End Sub
+
+Private Sub iEditingCommands_Redo()
+
+End Sub
+
+Private Sub iEditingCommands_SelectAll()
+
+End Sub
+
+Private Sub iEditingCommands_SelectNone()
+
+End Sub
+
+Private Sub iEditingCommands_Undo()
+
+End Sub
 
 Private Property Get iExtendedForm_Extender() As Object
 On Error Resume Next

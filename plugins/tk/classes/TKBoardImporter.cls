@@ -26,18 +26,43 @@ On Error Resume Next
 Dim l_brdBoard As TKBoard
 Dim l_mapNew As Fury2Map
 Dim l_tstTileset As Fury2Tileset
-Dim l_lngLayers As Long, l_lngX As Long, l_lngY As Long
+Dim l_lngLayers As Long, l_lngX As Long, l_lngY As Long, l_lngIndex As Long
+Dim l_imgTile As Fury2Image
+Dim l_tsTileset As TSTFile
+Dim l_tleTile As TSTTile
+Dim l_strTile As String, l_strIndex As String
     Commonboard.openBoard Options.Filename, l_brdBoard
     Set l_tstTileset = DefaultEngine.F2Tileset(, 32, 32)
     With l_tstTileset
         .TileWidth = 32
         .TileHeight = 32
-        .HasAlpha = False
-        .TransparentTile = -1
+        .HasAlpha = True
+        .TransparentTile = 0
+        .Embed = True
     End With
     Set l_mapNew = DefaultEngine.F2Map()
     l_mapNew.EditMode = True
+    Set l_tsTileset = New TSTFile
     With l_brdBoard
+        l_tstTileset.Add F2Image(32, 32)
+        For l_lngIndex = LBound(.tileIndex) To UBound(.tileIndex)
+            l_strTile = Trim(.tileIndex(l_lngIndex))
+            If Len(l_strTile) > 0 Then
+                If InStr(l_strTile, ".tst") Then
+                    l_strIndex = Mid(l_strTile, InStrRev(l_strTile, ".tst") + 4)
+                    l_strTile = Left(l_strTile, InStrRev(l_strTile, ".tst") + 3)
+                    If (l_tsTileset.Filename <> l_strTile) Then
+                        l_tsTileset.Filename = l_strTile
+                        l_tsTileset.Load GetPath(Options.Filename) & "\..\tiles\" & l_strTile
+                    End If
+                    Set l_tleTile = l_tsTileset.Tiles(CLng(l_strIndex))
+                    Set l_imgTile = l_tleTile.Image
+                    l_imgTile.FillChannel l_imgTile.Rectangle, 3, 255
+                    l_imgTile.ReplaceColor F2RGB(0, 1, 2), 0
+                    l_tstTileset.Add l_imgTile
+                End If
+            End If
+        Next l_lngIndex
         l_mapNew.CreateNew .boardTitle(0), .bSizeX, .bSizeY, .bSizeL, l_tstTileset
         For l_lngLayers = 1 To .bSizeL
             For l_lngY = 1 To .bSizeY

@@ -126,7 +126,7 @@ On Error Resume Next
     Set Members = mvarMembers
 End Property
 
-Public Property Get Item(vntIndexKey As Variant) As Object
+Public Property Get Item(ByVal vntIndexKey As Variant) As Object
 Attribute Item.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_lngMembers As Long, m_strName As String

@@ -98,7 +98,7 @@ On Error Resume Next
     End If
 End Sub
 
-Public Property Get Item(vntIndexKey As Variant) As Fury2TimerEvent
+Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2TimerEvent
 Attribute Item.VB_UserMemId = 0
 Attribute Item.VB_MemberFlags = "200"
 On Error Resume Next

@@ -19,7 +19,7 @@ Begin VB.UserControl Script
    ScaleHeight     =   3600
    ScaleWidth      =   4800
    Begin CodeSenseCtl.CodeSense csScript 
-      Height          =   3180
+      Height          =   3450
       Left            =   0
       OleObjectBlob   =   "Script.ctx":0000
       TabIndex        =   0

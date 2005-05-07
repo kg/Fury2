@@ -277,6 +277,7 @@ void BlitSimple_FBTex_Core(Override::OverrideParameters *Parameters) {
   readParam(int, SourceY, 4);
   FX::Rectangle AreaCopy = Area;
   if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
+    selectImageAsTexture(Dest);
     copyFramebufferToTexture(getTexture(Dest), Dest);
     int texWidth = powerOfTwo(GetImageWidth(Source));
     int texHeight = powerOfTwo(GetImageHeight(Source));
@@ -1647,7 +1648,7 @@ Rectangle old_clip;
 */
 
 defOverride(RenderTilemapLayer) {
-int tile = 0;
+int tile = 0, lasttile = -1;
 int cx = 0, cy = 0;
 int dx = 0, dy = 0;
 short *pRow, *pTile;
@@ -1728,15 +1729,12 @@ Texture* tex;
   }
 
   enableTextures();
-  setScaleMode<Linear>();
 
   // initialize the y coordinate
-  dy = -cameray;
-  rctDest.Width = tileWidth;
-  rctDest.Height = tileHeight;
+  float tx, ty, tw = tileWidth, th = tileHeight;
+  ty = -cameray;
   for (cy = sy; cy < ey; ++cy) {
-      rctDest.Top = dy;
-      dx = -camerax;
+      tx = -camerax;
       if (Layer->WrapY) {
           pRow = Layer->pData + (Layer->Width * (cy % maxY));
       } else {
@@ -1744,23 +1742,25 @@ Texture* tex;
       }
       pTile = pRow + sx;
       for (cx = sx; cx < ex; ++cx) {
-        rctDest.Left = dx;
         if (Layer->WrapX) {
             pTile = pRow + (cx % maxX);
         }
         cv = *pTile;
         if ((cv == Layer->MaskedTile) || (cv >= tileCount) || (cv < 0)) {
         } else {
-          tile = GetTile(Layer->pTileset, cv);
-          selectImageAsTexture(tile);
-          if (Layer->Effect == 1) prepMatte(tile);
-          tex = getTexture(tile);
-          drawTexturedRectangle(rctDest, tex->U1, tex->V1, tex->U2, tex->V2);
+          tile = GetTileFast(Layer->pTileset, cv, Layer->pAnimationMap);
+          if (tile != lasttile) {
+            selectImageAsTexture(tile);
+            if (Layer->Effect == 1) prepMatte(tile);
+            tex = getTexture(tile);
+            lasttile = tile;
+          }
+          drawTexturedRectangleF(tx, ty, tw, th, tex->U1, tex->V1, tex->U2, tex->V2);
         }
-        dx += tileWidth;
+        tx += tw;
         pTile++;
       }
-      dy += tileHeight;
+      ty += th;
   }
   SetImageDirty(pTarget, 1);
   disableFog();

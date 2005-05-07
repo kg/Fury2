@@ -117,8 +117,8 @@ Dim m_lngSpace As Long
     Else
         m_lngSpace = 2
     End If
-    If X >= Rectangle.Left And X < Rectangle.Right And Y >= Rectangle.Top And Y < Rectangle.Bottom Then
-        m_lngSelectedItem = ((Y - (Rectangle.Top + m_lngSpace)) \ Font.Height) + 1 + ScrollOffset
+    If X >= Rectangle.left And X < Rectangle.right And Y >= Rectangle.top And Y < Rectangle.bottom Then
+        m_lngSelectedItem = ((Y - (Rectangle.top + m_lngSpace)) \ Font.Height) + 1 + ScrollOffset
         If m_lngSelectedItem < 1 Then m_lngSelectedItem = 1
         If m_lngSelectedItem > mCol.Count Then m_lngSelectedItem = mCol.Count
         If Button = 1 Then
@@ -142,18 +142,18 @@ Dim m_lngSpace As Long
     Else
         m_lngSpace = 2
     End If
-    If X >= Rectangle.Left And X < Rectangle.Right And Y >= Rectangle.Top And Y < Rectangle.Bottom Then
+    If X >= Rectangle.left And X < Rectangle.right And Y >= Rectangle.top And Y < Rectangle.bottom Then
         m_lngOldItem = m_lngSelectedItem
         Err.Clear
-        m_lngSelectedItem = ((Y - (Rectangle.Top + m_lngSpace)) \ Font.Height) + 1 + ScrollOffset
+        m_lngSelectedItem = ((Y - (Rectangle.top + m_lngSpace)) \ Font.Height) + 1 + ScrollOffset
         If mCol.Item(m_lngSelectedItem).Enabled Then
         Else
             m_lngSelectedItem = m_lngOldItem
         End If
         If mCol.Count > m_lngVisibleLines Then
-            If (Y < Rectangle.Top + m_lngSpace) Then
+            If (Y < Rectangle.top + m_lngSpace) Then
                 ScrollOffset = ScrollOffset - 1
-            ElseIf (Y > Rectangle.Bottom - m_lngSpace) Then
+            ElseIf (Y > Rectangle.bottom - m_lngSpace) Then
                 ScrollOffset = ScrollOffset + 1
             End If
             If ScrollOffset < 0 Then ScrollOffset = 0
@@ -207,12 +207,12 @@ Dim l_rctTitle As Fury2Rect
             WindowSkin.Draw Engine.Backbuffer, Rectangle, Alpha
         End If
         Set l_rctTitle = TitleFont.GetTextRectangle(Title)
-        TitleFont.Draw Engine.Backbuffer, Title, F2Rect(Rectangle.Left, Rectangle.Top - l_rctTitle.Height, Rectangle.Right, l_rctTitle.Height, False), , Alpha
+        TitleFont.Draw Engine.Backbuffer, Title, F2Rect(Rectangle.left, Rectangle.top - l_rctTitle.Height, Rectangle.right, l_rctTitle.Height, False), , Alpha
         Set .ClipRectangle = Me.Rectangle
-        m_lngCurrentY = Rectangle.Top + m_lngSpace
+        m_lngCurrentY = Rectangle.top + m_lngSpace
         If mCol.Count >= 1 + Me.ScrollOffset Then
             Set m_rctItem = New Fury2Rect
-            m_rctItem.SetValues Rectangle.Left + m_lngSpace, 0, Rectangle.Right - m_lngSpace, 0
+            m_rctItem.SetValues Rectangle.left + m_lngSpace, 0, Rectangle.right - m_lngSpace, 0
             For m_lngDrawItems = 1 + Me.ScrollOffset To mCol.Count
                 Set m_fmiItem = mCol.Item(m_lngDrawItems)
                 With m_fmiItem
@@ -220,20 +220,20 @@ Dim l_rctTitle As Fury2Rect
                     If InStr(m_strCaption, "<%=") Then
                         m_strCaption = Engine.ParseString(m_strCaption)
                     End If
-                    If m_lngCurrentY >= Rectangle.Bottom - m_lngSpace Then Exit For
+                    If m_lngCurrentY >= Rectangle.bottom - m_lngSpace Then Exit For
 '                    m_lngItemHeight = Font.Height
                     If .Icon Is Nothing Then
-                        m_rctItem.SetValues Rectangle.Left + m_lngSpace, m_lngCurrentY, m_rctItem.Right, Rectangle.Bottom
+                        m_rctItem.SetValues Rectangle.left + m_lngSpace, m_lngCurrentY, m_rctItem.right, Rectangle.bottom
                         m_lngItemHeight = Font.Draw(Engine.Backbuffer, m_strCaption, m_rctItem, m_fmiItem.Color, Alpha * .Alpha) * Font.Height
                         If m_lngDrawItems = m_lngSelectedItem Then
                             m_lngArrowCoord = m_lngCurrentY + (m_lngItemHeight \ 2)
                         End If
                         m_lngCurrentY = m_lngCurrentY + m_lngItemHeight
                     Else
-                        m_rctItem.SetValues Rectangle.Left + m_lngSpace + .Icon.Width, m_lngCurrentY, m_rctItem.Right, Rectangle.Bottom
+                        m_rctItem.SetValues Rectangle.left + m_lngSpace + .Icon.Width, m_lngCurrentY, m_rctItem.right, Rectangle.bottom
                         m_lngItemHeight = Font.Draw(Engine.Backbuffer, m_strCaption, m_rctItem, m_fmiItem.Color, Alpha * .Alpha) * Font.Height
                         If (.Icon.Height > m_lngItemHeight) Then m_lngItemHeight = .Icon.Height
-                        .Icon.Draw Engine.Backbuffer, Rectangle.Left + m_lngSpace, m_lngCurrentY + m_lngItemHeight \ 2, Alpha * .Alpha
+                        .Icon.Draw Engine.Backbuffer, Rectangle.left + m_lngSpace, m_lngCurrentY + m_lngItemHeight \ 2, Alpha * .Alpha
                         If m_lngDrawItems = m_lngSelectedItem Then
                             m_lngArrowCoord = m_lngCurrentY + (m_lngItemHeight \ 2)
                         End If
@@ -242,7 +242,7 @@ Dim l_rctTitle As Fury2Rect
                 End With
             Next m_lngDrawItems
 '            m_lngArrowCoord = ((m_lngSelectedItem - Me.ScrollOffset) - 1) * Font.Height
-            Set .ClipRectangle = F2Rect(0, Rectangle.Top, .Width, Rectangle.Bottom, False)
+            Set .ClipRectangle = F2Rect(0, Rectangle.top, .Width, Rectangle.bottom, False)
         End If
         .UpdateClipRect
         If WindowSkin.EdgeOverlap Then
@@ -250,7 +250,7 @@ Dim l_rctTitle As Fury2Rect
         End If
         If m_lngArrowCoord = c_lngNullValue Then
         Else
-            Cursor.Draw Engine.Backbuffer, Rectangle.Left, m_lngArrowCoord, Alpha
+            Cursor.Draw Engine.Backbuffer, Rectangle.left, m_lngArrowCoord, Alpha
         End If
     End With
     If mCol.Count > m_lngVisibleLines Then
@@ -307,7 +307,7 @@ On Error Resume Next
     Set objNewMember = Nothing
 End Function
 
-Public Property Get Item(vntIndexKey As Variant) As Fury2MenuItem
+Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2MenuItem
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
   Set Item = mCol(vntIndexKey)

@@ -35,4 +35,4 @@ Implements Fury2Object
 
 Option Explicit
 Public Name As String
-Public Filename As String
+Public Source As String

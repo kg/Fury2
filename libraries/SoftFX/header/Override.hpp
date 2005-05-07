@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 namespace Override {
 typedef void* Override;
-typedef std::list<Override> OverrideList;
+typedef std::vector<Override> OverrideList;
 typedef std::map<std::string, OverrideIndex> SToITable;
 extern std::string OverrideIToSTable[_count];
 extern SToITable OverrideSToITable;

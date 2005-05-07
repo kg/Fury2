@@ -19,6 +19,7 @@ namespace GL {
   extern Texture* createTexture(int width, int height);
   extern Texture* createTextureFromImage(int image);
   extern Texture* createTextureFromFramebuffer(int image);
+  extern void copyImageToImage(int from, int to);
   extern void copyImageToFramebuffer(int image);
   extern void copyFramebufferToImage(int image);
   extern void copyFramebufferToTexture(Texture *tex, int image);

@@ -43,7 +43,7 @@ End Sub
 Private Function iFileTypePlugin_CanOpenFile(Filename As String) As Boolean
 On Error Resume Next
     Select Case LCase(Trim(GetExtension(Filename)))
-    Case "wav", "mp2", "mp3", "ogg", "wma", "xm", "s3m", "it", "mod", "oxm", "mid", "rmi", "aiff", "aif"
+    Case "wav", "mp2", "mp3", "ogg", "wma", "xm", "s3m", "it", "mod", "oxm", "mid", "rmi", "aiff", "aif", "flac", "aac"
         iFileTypePlugin_CanOpenFile = True
     Case Else
     End Select
@@ -65,19 +65,15 @@ End Function
 Private Function iFileTypePlugin_LoadFromFilename(Filename As String) As iDocument
 On Error Resume Next
 Dim l_frmNew As frmAudio
-Dim l_hndHandle As SoundHandle, l_lngHandle As Long
 Dim l_strRoot As String
     l_strRoot = m_objEditor.Engine.FileSystem.Root
+    Set l_frmNew = New frmAudio
+    l_frmNew.SetFilename Filename
     m_objEditor.Engine.FileSystem.Root = GetPath(Filename)
-    l_lngHandle = m_objEditor.Engine.SoundEngine.Load(GetTitle(Filename), False)
+    l_frmNew.SetHandle m_objEditor.Engine.SoundEngine.Load(GetTitle(Filename))
     m_objEditor.Engine.FileSystem.Root = l_strRoot
-    If l_lngHandle Then
-        Set l_frmNew = New frmAudio
-        l_frmNew.SetFilename Filename
-        l_frmNew.SetHandle m_objEditor.Engine.SoundEngine.Handles(l_lngHandle)
-        Set iFileTypePlugin_LoadFromFilename = l_frmNew
-        Set iFileTypePlugin_LoadFromFilename.Plugin = Me
-    End If
+    Set iFileTypePlugin_LoadFromFilename = l_frmNew
+    Set iFileTypePlugin_LoadFromFilename.Plugin = Me
 End Function
 
 Private Property Get iFileTypePlugin_ShowInNewMenu() As Boolean

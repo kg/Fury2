@@ -80,8 +80,7 @@ Dim l_rctOld As Fury2Rect
     Err.Clear
     For Each l_fraFrame In mCol
         With l_fraFrame
-            Set l_rctOld = .Image.ClipRectangle
-            Set .Image.ClipRectangle = .Rectangle
+            .Image.PushClipRectangle .Rectangle
             Select Case l_lngParameterCount
             Case 1
                 CallByName .Image, FunctionName, VbMethod, Parameters(0)
@@ -98,7 +97,7 @@ Dim l_rctOld As Fury2Rect
             Case Else
                 CallByName .Image, FunctionName, VbMethod
             End Select
-            Set .Image.ClipRectangle = l_rctOld
+            .Image.PopClipRectangle
         End With
     Next l_fraFrame
     Err.Clear

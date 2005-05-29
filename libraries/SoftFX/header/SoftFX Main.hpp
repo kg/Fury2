@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #ifdef _DEBUG
   #define TRACE
 #else
-#define TRACE
+//#define TRACE
 #endif
 //#define SAFE_PIXEL
 //#define VIRTUALALLOC

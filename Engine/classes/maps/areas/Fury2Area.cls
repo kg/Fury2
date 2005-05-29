@@ -48,6 +48,7 @@ Private mvarHeight As Long
 Private mvarMap As Fury2Map
 Private mvarMoveInterval As Long
 Private mvarRandomChance As Single
+Private mvarNamePattern As String
 Private mvarName As String
 Private mvarScript_Activate As Boolean
 Private mvarScript_Enter As Boolean
@@ -140,6 +141,7 @@ On Error Resume Next
         If Script Is Nothing Then Else CallByName Script, ActionName, VbMethod
         If Err.Number <> 0 Then Action = False
     End If
+    mvarMap.Engine.TextOut mvarMap.Engine.ToString(Me) & "_Enter(" & mvarMap.Engine.ToString(Activator) & ")"
     mvarMap.Engine.ContextLevelRemove
 End Function
 
@@ -243,6 +245,14 @@ Public Property Let Name(ByVal NewName As String)
     mvarName = NewName
 End Property
 
+Public Property Get NamePattern() As String
+    NamePattern = mvarNamePattern
+End Property
+
+Public Property Let NamePattern(ByVal NewNamePattern As String)
+    mvarNamePattern = NewNamePattern
+End Property
+
 Public Property Get Rectangle() As Fury2Rect
     Set Rectangle = F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False)
 End Property
@@ -296,6 +306,7 @@ End Property
 Private Sub Class_Initialize()
     mvarRandomChance = 1
     mvarName = "Untitled"
+    mvarNamePattern = "*"
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
@@ -318,6 +329,11 @@ On Error Resume Next
                 mvarHeight = -mvarHeight
             End If
             .Load mvarMoveInterval
+            If .EOS Then
+                mvarNamePattern = "*"
+            Else
+                .Load mvarNamePattern
+            End If
         .ReadSegment_End
     End With
 End Sub
@@ -334,6 +350,7 @@ On Error Resume Next
             .Save mvarRandomChance
             .Save mvarName
             .Save mvarMoveInterval
+            .Save mvarNamePattern
         .WriteSegment_End
     End With
 End Sub

@@ -19,10 +19,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma pack(1)
 
-static const DoubleWord Red = 2;
-static const DoubleWord Green = 1;
-static const DoubleWord Blue = 0;
-static const DoubleWord Alpha = 3;
+enum ColorChannels {
+	Red = 2,
+	Green = 1,
+	Blue = 0,
+	Alpha = 3
+};
 
 class Pixel {
 public:
@@ -36,7 +38,7 @@ public:
       return (this->V == rhs.V);
     }
 
-    inline Channel& operator[](DoubleWord i) {
+    inline Channel& operator[](ColorChannels i) {
 #ifdef SAFE_PIXEL
       assert((i >= 0) && (i <= 3));
 #endif

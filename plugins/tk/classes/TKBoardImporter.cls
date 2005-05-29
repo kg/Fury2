@@ -65,6 +65,7 @@ Dim l_strTile As String, l_strIndex As String
         Next l_lngIndex
         l_mapNew.CreateNew .boardTitle(0), .bSizeX, .bSizeY, .bSizeL, l_tstTileset
         For l_lngLayers = 1 To .bSizeL
+            l_mapNew.Layers(l_lngLayers).Effect = F2LE_Alpha
             For l_lngY = 1 To .bSizeY
                 For l_lngX = 1 To .bSizeX
                     l_mapNew.Layers(l_lngLayers).Tile(l_lngX - 1, l_lngY - 1) = .board(l_lngX, l_lngY, l_lngLayers)

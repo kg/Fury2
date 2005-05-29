@@ -18,6 +18,9 @@ Implements IVirtualFileSaveable
 Public Dirty As Boolean
 Public Tag As Variant
 
+Private m_rctMe As Fury2Rect
+Private m_rctClip As Fury2Rect
+Private m_rcClipStack() As Rectangle
 Private m_booNoDelete As Boolean
 Private m_strName As String
 Private m_booAlphaChannel As Boolean
@@ -25,6 +28,52 @@ Private m_lngImage As Long
 Private m_bmdBlitMode As SFXBlitModes
 Private m_smdResampleMode As SFXResampleModes
 Private m_rmdRenderMode As SFXRenderModes
+
+Private Function GetReferenceCount(ByVal Obj As Object) As Long
+On Error Resume Next
+Dim m_objObj As IShellFolderEx_TLB.IUnknown
+    Set m_objObj = Obj
+    If Err <> 0 Then Exit Function
+    m_objObj.AddRef
+    GetReferenceCount = m_objObj.Release
+End Function
+
+Private Function GetScaler(ByVal ResampleMode As SFXResampleModes) As Long
+On Error Resume Next
+    Select Case ResampleMode
+    Case SFXResampleModes.ResampleMode_Bilinear, SFXResampleModes.ResampleMode_Bilinear_High_Quality
+        GetScaler = GetBilinearScaler
+    Case SFXResampleModes.ResampleMode_Bilinear_Wrap
+        GetScaler = GetBilinearWrapScaler
+    Case SFXResampleModes.ResampleMode_Linear_Wrap
+        GetScaler = GetLinearWrapScaler
+    Case SFXResampleModes.ResampleMode_Bilinear_Clamp
+        GetScaler = GetBilinearClampScaler
+    Case SFXResampleModes.ResampleMode_Linear_Clamp
+        GetScaler = GetLinearClampScaler
+    Case SFXResampleModes.ResampleMode_Linear
+        GetScaler = GetLinearScaler
+    Case Else
+    End Select
+End Function
+
+Private Function GetRenderer(ByVal RenderMode As SFXRenderModes) As Long
+On Error Resume Next
+    Select Case RenderMode
+    Case SFXRenderModes.RenderMode_SourceAlpha
+        GetRenderer = GetSourceAlphaRenderer()
+    Case SFXRenderModes.RenderMode_Additive
+        GetRenderer = GetAdditiveRenderer()
+    Case SFXRenderModes.RenderMode_Subtractive
+        GetRenderer = GetSubtractiveRenderer()
+    Case SFXRenderModes.RenderMode_Merge
+        GetRenderer = GetMergeRenderer()
+    Case SFXRenderModes.RenderMode_Screen
+        GetRenderer = GetScreenRenderer()
+    Case SFXRenderModes.RenderMode_Shadow
+        GetRenderer = GetShadowRenderer()
+    End Select
+End Function
 
 Public Sub Adjust(ByVal Amount As Long, Optional ByVal Area As Fury2Rect = Nothing)
 On Error Resume Next
@@ -144,14 +193,7 @@ Dim l_lngScaler As Long
     If Mode = BlitMode_Default Then Mode = m_bmdBlitMode
     If ResampleMode = ResampleMode_Default Then ResampleMode = m_smdResampleMode
     If ((l_rctSource.Width <> l_rctDest.Width) Or (l_rctSource.Height <> l_rctDest.Height)) Then
-        Select Case ResampleMode
-        Case SFXResampleModes.ResampleMode_Bilinear
-            l_lngScaler = GetBilinearScaler
-        Case SFXResampleModes.ResampleMode_Linear
-            l_lngScaler = GetLinearScaler
-        Case Else
-            l_lngScaler = 0
-        End Select
+        l_lngScaler = GetScaler(ResampleMode)
     End If
     If l_lngScaler Then
         Select Case Mode
@@ -238,6 +280,26 @@ Dim l_lngScaler As Long
     End If
 End Sub
 
+Public Sub DeformBlit(Optional ByVal DestRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal Source As Fury2Image = Nothing, Optional ByVal Mesh As Fury2DeformationMesh = Nothing, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default, Optional ByVal Color As Long = 0)
+On Error Resume Next
+Dim l_rctDest As Fury2Rect, l_rctSource As Fury2Rect
+Dim l_imgSource As Fury2Image
+    Set l_rctDest = DestRectangle
+    Set l_rctSource = SourceRectangle
+    Set l_imgSource = Source
+    If Err <> 0 Then
+        Err.Clear
+        Exit Sub
+    End If
+    If Mesh Is Nothing Then Exit Sub
+    If l_imgSource Is Nothing Then Exit Sub
+    If l_rctDest Is Nothing Then Set l_rctDest = Me.Rectangle
+    If l_rctSource Is Nothing Then Set l_rctSource = l_imgSource.Rectangle
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    If ResampleMode = ResampleMode_Default Then ResampleMode = m_smdResampleMode
+    SoftFX.Blit_Deform m_lngImage, l_imgSource.Handle, Mesh.GetParam, l_rctDest.GetRectangle, l_rctSource.GetRectangle, Color, GetRenderer(Mode), GetScaler(ResampleMode)
+End Sub
+
 Public Function Compare(Optional ByVal DestRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal Source As Fury2Image = Nothing) As Long
 On Error Resume Next
 Dim l_rctDest As Fury2Rect, l_rctSource As Fury2Rect
@@ -283,11 +345,14 @@ Dim l_lngColor As Long
 End Sub
 
 Private Sub Class_Initialize()
+On Error Resume Next
     If Initialized Then Allocate
     m_booAlphaChannel = False
+    ResetClipRectangleStack
 End Sub
 
 Private Sub Class_Terminate()
+On Error Resume Next
     Deallocate
 End Sub
 
@@ -324,6 +389,32 @@ Dim l_rcRectangle As Rectangle
     End If
 End Function
 
+Public Function PopClipRectangle() As Boolean
+On Error Resume Next
+    If UBound(m_rcClipStack) > 0 Then
+        SoftFX.SetImageClipRectangle m_lngImage, m_rcClipStack(UBound(m_rcClipStack))
+        ReDim Preserve m_rcClipStack(0 To UBound(m_rcClipStack) - 1)
+        PopClipRectangle = True
+    End If
+End Function
+
+Public Sub PushClipRectangle(ByVal NewRect As Fury2Rect)
+On Error Resume Next
+Dim l_rcRect As Rectangle
+    ReDim Preserve m_rcClipStack(0 To UBound(m_rcClipStack) + 1)
+    SoftFX.GetImageClipRectangle m_lngImage, m_rcClipStack(UBound(m_rcClipStack))
+    l_rcRect = NewRect.GetRectangle
+    If SoftFX.ClipRectangle_ImageClipRect(l_rcRect, m_lngImage) Then
+        SoftFX.SetImageClipRectangle m_lngImage, l_rcRect
+    Else
+        l_rcRect.Left = 0
+        l_rcRect.Top = 0
+        l_rcRect.Width = 0
+        l_rcRect.Height = 0
+        SoftFX.SetImageClipRectangle m_lngImage, l_rcRect
+    End If
+End Sub
+
 Public Sub ClippedSetClipRectangle(ByVal NewRect As Fury2Rect)
 On Error Resume Next
 Dim l_rcRect As Rectangle
@@ -347,9 +438,36 @@ End Function
 Public Property Get ClipRectangle() As Fury2Rect
 On Error Resume Next
 Dim l_rctRect As Rectangle
+Dim l_lngRefCount As Long
     SoftFX.GetImageClipRectangle m_lngImage, l_rctRect
-    Set ClipRectangle = F2RectFromStruct(l_rctRect)
+    If m_rctClip Is Nothing Then
+        Set m_rctClip = F2RectFromStruct(l_rctRect)
+    Else
+        ' If we already have a rectangle object for ourselves, see if someone is holding a reference to it
+        l_lngRefCount = GetReferenceCount(m_rctClip)
+        If (l_lngRefCount > 4) Then
+            ' Someone's got a reference, so we make ourselves a new copy instead of screwing with theirs
+            Set m_rctClip = F2RectFromStruct(l_rctRect)
+        Else
+            ' Nobody has a reference to our rectangle, so we can just update it (in case someone modified it) and return it
+            m_rctClip.SetRectangle l_rctRect
+        End If
+    End If
+    Set ClipRectangle = m_rctClip
 End Property
+
+Public Sub ResetClipRectangle()
+On Error Resume Next
+Dim l_rctRect As Rectangle
+    SoftFX.GetImageRectangle m_lngImage, l_rctRect
+    SoftFX.SetImageClipRectangle m_lngImage, l_rctRect
+End Sub
+
+Public Sub ResetClipRectangleStack()
+On Error Resume Next
+    ReDim m_rcClipStack(0 To 0)
+    SoftFX.GetImageRectangle m_lngImage, m_rcClipStack(0)
+End Sub
 
 Public Property Set ClipRectangle(ByRef NewRect As Fury2Rect)
 On Error Resume Next
@@ -381,19 +499,7 @@ Dim l_plyPoly As GenericPolygon
     If Err <> 0 Then Exit Sub
     l_plyPoly.VertexPointer = VarPtr(l_ptPoints(0))
     l_plyPoly.VertexCount = (UBound(Points) - LBound(Points)) + 1
-    Select Case Mode
-    Case SFXRenderModes.RenderMode_Normal
-        Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, 0, 0
-    Case SFXRenderModes.RenderMode_SourceAlpha
-        Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, GetSourceAlphaRenderer(), 0
-    Case SFXRenderModes.RenderMode_Additive
-        Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, GetAdditiveRenderer(), 0
-    Case SFXRenderModes.RenderMode_Subtractive
-        Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, GetSubtractiveRenderer(), 0
-    Case SFXRenderModes.RenderMode_Merge
-        Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, GetMergeRenderer(), 0
-    Case Else
-    End Select
+    Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, GetRenderer(Mode), 0
 End Sub
 
 Public Sub Copy(ByVal Image As Fury2Image)
@@ -407,6 +513,7 @@ On Error Resume Next
     Set Me.ClipRectangle = Image.ClipRectangle
     Me.MaskColor = Image.MaskColor
     Me.ResampleMode = Image.ResampleMode
+    ResetClipRectangleStack
 End Sub
 
 Public Sub CopyChannel(ByRef SourceImage, ByVal DestChannel As Long, ByVal SourceChannel As Long)
@@ -450,7 +557,7 @@ On Error Resume Next
     DIBHandle = GetImageDIBHandle(m_lngImage)
 End Property
 
-Public Function Draw(Surface, ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1, Optional ByVal ScalePercentage As Single = 1, Optional ByVal RotationAngle As Single = 0, Optional ByVal Mode As SFXBlitModes = BlitMode_Default, Optional ByVal Color = &HFFFFFFFF, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default) As Fury2Rect
+Public Function Draw(ByVal Surface As Fury2Image, ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1, Optional ByVal ScalePercentage As Single = 1, Optional ByVal RotationAngle As Single = 0, Optional ByVal Mode As SFXBlitModes = BlitMode_Default, Optional ByVal Color As Long = &HFFFFFFFF, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default) As Fury2Rect
 On Error Resume Next
 Dim l_sngX As Single, l_sngY As Single
 Dim l_sngAlpha As Single, l_sngScale As Single, l_sngAngle As Single
@@ -496,6 +603,8 @@ Dim l_lngMode As Long, l_arrPoints As Variant
             l_lngMode = SFXRenderModes.RenderMode_Additive
         Case BlitMode_Subtractive
             l_lngMode = SFXRenderModes.RenderMode_Subtractive
+        Case BlitMode_Screen
+            l_lngMode = SFXRenderModes.RenderMode_Screen
         Case BlitMode_Merge
             l_lngMode = SFXRenderModes.RenderMode_Merge
         Case Else
@@ -652,19 +761,7 @@ Dim l_plyPoly As GenericPolygon
     If Err <> 0 Then Exit Sub
     l_plyPoly.VertexPointer = VarPtr(l_ptPoints(0))
     l_plyPoly.VertexCount = (UBound(Points) - LBound(Points)) + 1
-    Select Case Mode
-    Case SFXRenderModes.RenderMode_Normal
-        Primitive_ConvexPolygon_Gradient Handle, l_plyPoly, 0, 0
-    Case SFXRenderModes.RenderMode_SourceAlpha
-        Primitive_ConvexPolygon_Gradient Handle, l_plyPoly, GetSourceAlphaRenderer(), 0
-    Case SFXRenderModes.RenderMode_Additive
-        Primitive_ConvexPolygon_Gradient Handle, l_plyPoly, GetAdditiveRenderer(), 0
-    Case SFXRenderModes.RenderMode_Subtractive
-        Primitive_ConvexPolygon_Gradient Handle, l_plyPoly, GetSubtractiveRenderer(), 0
-    Case SFXRenderModes.RenderMode_Merge
-        Primitive_ConvexPolygon_Gradient Handle, l_plyPoly, GetMergeRenderer(), 0
-    Case Else
-    End Select
+    Primitive_ConvexPolygon_Gradient Handle, l_plyPoly, GetRenderer(Mode), 0
 End Sub
 
 Public Sub GradientFill(ByVal Rectangle As Fury2Rect, ByVal Colors, Optional ByVal Mode As SFXRenderModes = RenderMode_Default)
@@ -1071,8 +1168,22 @@ End Sub
 Public Property Get Rectangle() As Fury2Rect
 On Error Resume Next
 Dim l_rctRect As Rectangle
+Dim l_lngRefCount As Long
     SoftFX.GetImageRectangle m_lngImage, l_rctRect
-    Set Rectangle = F2RectFromStruct(l_rctRect)
+    If m_rctMe Is Nothing Then
+        Set m_rctMe = F2RectFromStruct(l_rctRect)
+    Else
+        ' If we already have a rectangle object for ourselves, see if someone is holding a reference to it
+        l_lngRefCount = GetReferenceCount(m_rctMe)
+        If (l_lngRefCount > 4) Then
+            ' Someone's got a reference, so we make ourselves a new copy instead of screwing with theirs
+            Set m_rctMe = F2RectFromStruct(l_rctRect)
+        Else
+            ' Nobody has a reference to our rectangle, so we can just update it (in case someone modified it) and return it
+            m_rctMe.SetRectangle l_rctRect
+        End If
+    End If
+    Set Rectangle = m_rctMe
 End Property
 
 Public Property Get RenderMode() As SFXRenderModes
@@ -1156,6 +1267,8 @@ On Error Resume Next
     Else
         If Initialized Then SoftFX.ReAllocateImage m_lngImage, Width, Height
     End If
+    ResetClipRectangle
+    ResetClipRectangleStack
 End Sub
 
 Public Sub Rotate(ByVal Angle As Single)
@@ -1287,13 +1400,12 @@ On Error Resume Next
     SoftFX.Filter_Swap_Channels m_lngImage, ClipRectangle.GetRectangle, Channel1, Channel2
 End Sub
 
-Public Sub TexturedConvexPolygon(ByVal Points, ByRef Texture, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default)
+Public Sub TexturedConvexPolygon(ByVal Points, ByVal Texture As Fury2Image, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default, Optional ByVal Color As Long = 0)
 On Error Resume Next
 Dim l_ptPoints() As TexturedVertex
 Dim l_lngColor As Long
 Dim l_imgTexture As Fury2Image
 Dim l_lngPoints As Long
-Dim l_lngScaler As Long
 Dim l_plyPoly As GenericPolygon
     If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
     If (VarType(Points) And vbArray) <> vbArray Then Exit Sub
@@ -1335,30 +1447,10 @@ Dim l_plyPoly As GenericPolygon
     Next l_lngPoints
     If Err <> 0 Then Exit Sub
     If ResampleMode = ResampleMode_Default Then ResampleMode = m_smdResampleMode
-    Select Case ResampleMode
-    Case SFXResampleModes.ResampleMode_Bilinear
-        l_lngScaler = GetBilinearScaler
-    Case SFXResampleModes.ResampleMode_Linear
-        l_lngScaler = GetLinearScaler
-    Case Else
-        l_lngScaler = GetLinearScaler
-    End Select
     l_plyPoly.VertexPointer = VarPtr(l_ptPoints(0))
     l_plyPoly.VertexCount = (UBound(Points) - LBound(Points)) + 1
     If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
-    Select Case Mode
-    Case SFXRenderModes.RenderMode_Normal
-        Primitive_ConvexPolygon_Textured Handle, l_imgTexture.Handle, l_plyPoly, l_lngScaler, 0, 0
-    Case SFXRenderModes.RenderMode_SourceAlpha
-        Primitive_ConvexPolygon_Textured Handle, l_imgTexture.Handle, l_plyPoly, l_lngScaler, GetSourceAlphaRenderer(), 0
-    Case SFXRenderModes.RenderMode_Additive
-        Primitive_ConvexPolygon_Textured Handle, l_imgTexture.Handle, l_plyPoly, l_lngScaler, GetAdditiveRenderer(), 0
-    Case SFXRenderModes.RenderMode_Subtractive
-        Primitive_ConvexPolygon_Textured Handle, l_imgTexture.Handle, l_plyPoly, l_lngScaler, GetSubtractiveRenderer(), 0
-    Case SFXRenderModes.RenderMode_Merge
-        Primitive_ConvexPolygon_Textured Handle, l_imgTexture.Handle, l_plyPoly, l_lngScaler, GetMergeRenderer(), 0
-    Case Else
-    End Select
+    Primitive_ConvexPolygon_Textured Handle, l_imgTexture.Handle, l_plyPoly, GetScaler(ResampleMode), GetRenderer(Mode), Color
 End Sub
 
 Public Sub TexturedQuad(ByVal Points, ByRef Texture, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default)

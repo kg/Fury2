@@ -559,11 +559,9 @@ Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraph
 On Error Resume Next
 Dim l_wdgWidget As iWidget, l_lngWidget As Long
 Dim l_rctNew As Fury2Rect
-Dim l_rctOld As Fury2Rect
 Dim l_staState As SkinState, l_strState As String
     If Visible = False Then Exit Sub
     With Surface
-        Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
         If HaveFocus Then
             l_strState = "active"
@@ -572,7 +570,7 @@ Dim l_staState As SkinState, l_strState As String
         End If
         Set l_staState = Skin.States(l_strState)
         l_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
-        .ClippedSetClipRectangle l_rctNew
+        .PushClipRectangle l_rctNew
         Surface.Blit l_rctNew, , Background, , IIf(Background.AlphaChannel, BlitMode_SourceAlpha, BlitMode_Normal)
         l_staState.Font.DrawCentered Surface, Engine.ParseString(Text), Fury2GEGlobal.F2Rect(l_rctNew.Left, l_rctNew.Top, l_rctNew.Width, l_staState.Font.FullHeight, False), SetAlpha(l_staState.TextColor, GetAlpha(l_staState.TextColor) * Opacity)
         With Rectangle
@@ -581,7 +579,7 @@ Dim l_staState As SkinState, l_strState As String
                 l_wdgWidget.Redraw Me, Surface, XOffset + .Left, YOffset + .Top, Opacity
             Next l_lngWidget
         End With
-        Set .ClipRectangle = l_rctOld
+        .PopClipRectangle
     End With
 End Sub
 

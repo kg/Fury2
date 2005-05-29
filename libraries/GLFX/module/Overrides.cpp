@@ -14,6 +14,50 @@ using namespace ScaleModes;
 #define clipCheck(img, rect) \
   if (!ClipRectangle_ImageClipRect(&rect, img)) return Trivial_Success;
 
+void setScaler(int Scaler) {
+	if (Scaler == GetBilinearScaler()) {
+		setScaleMode<Bilinear>();
+	} else if (Scaler == GetBilinearWrapScaler()) {
+		setScaleMode<Bilinear_Wrap>();
+	} else if (Scaler == GetBilinearClampScaler()) {
+		setScaleMode<Bilinear_Clamp>();
+	} else if (Scaler == GetLinearWrapScaler()) {
+		setScaleMode<Linear_Wrap>();
+	} else if (Scaler == GetLinearClampScaler()) {
+		setScaleMode<Linear_Clamp>();
+	} else {
+		setScaleMode<Linear>();
+	}
+}
+
+void setRenderer(int Renderer, Pixel RenderArgument) {
+  if ((Renderer == GetSourceAlphaRenderer()) || (Renderer == GetMergeRenderer())) {
+    setBlendMode<SourceAlpha>();
+    if (RenderArgument[::Alpha] > 0) {
+      setFogColor(RenderArgument);
+      enableFog();
+      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
+    } else {
+      disableFog();
+    }
+  } else if (Renderer == GetAdditiveRenderer()) {
+    setBlendMode<Additive>();
+    disableFog();
+  } else if (Renderer == GetSubtractiveRenderer()) { 
+    setBlendMode<Subtractive>();
+    disableFog();
+  } else {
+    setBlendMode<Normal>();
+    if (RenderArgument[::Alpha] > 0) {
+      setFogColor(RenderArgument);
+      enableFog();
+      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
+    } else {
+      disableFog();
+    }
+  }
+}
+
 defOverride(Allocate) {
 	readParam(int, Image, 0);
 	readParam(int, Width, 1);
@@ -713,11 +757,7 @@ void BlitResample_Core(Override::OverrideParameters *Parameters) {
   if (Clip2D_PairedRect(&DestCopy, &SourceCopy, Dest, Source, &DestRect, &SourceRect, 0)) {
     enableTextures();
     selectImageAsTexture(Source);
-    if (Scaler == GetBilinearScaler()) {
-      setScaleMode<Bilinear>();
-    } else {
-      setScaleMode<Linear>();
-    }
+	setScaler(Scaler);
     Texture* tex = getTexture(Source);
     if ((SourceRect.Width == tex->Width) && (SourceRect.Height == tex->Height) && (SourceRect.Left == 0) && (SourceRect.Top == 0)) { 
       drawTexturedRectangle(DestRect, tex->U1, tex->V1, tex->U2, tex->V2);
@@ -1251,29 +1291,7 @@ defOverride(FilterSimple_ConvexPolygon) {
   lockCheck(Image);
   selectContext(Image);
   disableTextures();
-  if ((Renderer == GetSourceAlphaRenderer()) || (Renderer == GetMergeRenderer())) {
-    setBlendMode<SourceAlpha>();
-    if (RenderArgument[::Alpha] > 0) {
-      setFogColor(RenderArgument);
-      enableFog();
-      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
-    } else {
-      disableFog();
-    }
-  } else if (Renderer == GetAdditiveRenderer()) {
-    setBlendMode<Additive>();
-  } else if (Renderer == GetSubtractiveRenderer()) { 
-    setBlendMode<Subtractive>();
-  } else {
-    setBlendMode<Normal>();
-    if (RenderArgument[::Alpha] > 0) {
-      setFogColor(RenderArgument);
-      enableFog();
-      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
-    } else {
-      disableFog();
-    }
-  }
+  setRenderer(Renderer, RenderArgument);
   setVertexColor(White);
   setBlendColor(White);
   FPoint* ptr = GetPolygonVertexPointer(Polygon, 0);
@@ -1302,34 +1320,8 @@ defOverride(FilterSimple_ConvexPolygon_Textured) {
   selectContext(Image);
   enableTextures();
   selectImageAsTexture(TextureImage);
-  if ((Renderer == GetSourceAlphaRenderer()) || (Renderer == GetMergeRenderer())) {
-    setBlendMode<SourceAlpha>();
-    if (RenderArgument[::Alpha] > 0) {
-      setFogColor(RenderArgument);
-      enableFog();
-      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
-    } else {
-      disableFog();
-    }
-  } else if (Renderer == GetAdditiveRenderer()) {
-    setBlendMode<Additive>();
-  } else if (Renderer == GetSubtractiveRenderer()) { 
-    setBlendMode<Subtractive>();
-  } else {
-    setBlendMode<Normal>();
-    if (RenderArgument[::Alpha] > 0) {
-      setFogColor(RenderArgument);
-      enableFog();
-      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
-    } else {
-      disableFog();
-    }
-  }
-  if (Scaler == GetBilinearScaler()) {
-    setScaleMode<Bilinear>();
-  } else {
-    setScaleMode<Linear>();
-  }
+  setRenderer(Renderer, RenderArgument);
+  setScaler(Scaler);
   setVertexColor(White);
   setBlendColor(White);
   Texture* tex = getTexture(TextureImage);
@@ -1650,7 +1642,6 @@ Rectangle old_clip;
 defOverride(RenderTilemapLayer) {
 int tile = 0, lasttile = -1;
 int cx = 0, cy = 0;
-int dx = 0, dy = 0;
 short *pRow, *pTile;
 FX::Rectangle rctDest;
 FX::Rectangle oldRect;
@@ -1800,6 +1791,101 @@ defOverride(Deallocate) {
 	return Failure;
 }
 
+defOverride(BlitDeform) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(MeshParam*, Mesh, 2);
+  readParamRect(DestRect, 3, Null);
+  readParamRect(SourceRect, 4, Null);
+  readParam(Pixel, RenderArgument, 5);
+  readParam(int, Renderer, 6);
+  readParam(int, Scaler, 7);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  //clipCheck(Dest, DestRect);
+  enableTextures();
+  selectImageAsIsolatedTexture(Source);
+  setRenderer(Renderer, RenderArgument);
+  setScaler(Scaler);
+  DoubleWord iCX = 0, iCY = DestRect.Height + 1;  
+  int pixelsToDraw = 0;
+  int mw = Mesh->Width - 1, mh = Mesh->Height - 1;
+  int cx = 0, cy = 0;
+  float cxw = 0, cyw = 0, sx = 0, sy = 0, lsx = 0, lsy = 0;
+  float cxi = (mw / (float)DestRect.Width), cyi = (mh / (float)DestRect.Height);
+  float dx = DestRect.Left, dy = DestRect.Top;
+  bool update_points = true, first_update = true, perform_draw = false;
+  Texture* tex = getTexture(Source);
+  if (tex->IsolatedTexture != 0) tex = tex->IsolatedTexture;
+  float bx = SourceRect.Left, by = SourceRect.Top;
+  float bxi = (1 / (DestRect.Width / (float)(SourceRect.Width))), byi = (1 / (DestRect.Height / (float)(SourceRect.Height)));
+  MeshPoint p[4];
+  beginDraw(GL_LINES);
+  while (iCY--) {
+    iCX = (DoubleWord)DestRect.Width + 1;
+    cxw = 0;
+    cx = 0;
+    bx = SourceRect.Left;
+    dx = DestRect.Left;
+    update_points = true;
+    first_update = true;
+    pixelsToDraw = 0;
+    while (iCX--) {
+      cxw += cxi;
+      pixelsToDraw++;
+      while (cxw >= 1.0f) {
+        cxw -= 1.0f;
+        cx++;
+        update_points = true;
+      }
+      if ((update_points) || (iCX == 0)) {
+        update_points = false;
+        lsx = sx;
+        lsy = sy;
+        /* sometimes i hate that inline is just a hint
+        Mesh->get4Points(cx, cy, p);
+        this is one of those times */
+        
+        p[0] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
+        p[1] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
+        p[2] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+        p[3] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+
+        sx = bx + (((p[0].X * (1 - cxw) + p[1].X * cxw) * (1 - cyw) + (p[2].X * (1 - cxw) + p[3].X * cxw) * cyw));
+        sy = by + (((p[0].Y * (1 - cxw) + p[1].Y * cxw) * (1 - cyw) + (p[2].Y * (1 - cxw) + p[3].Y * cxw) * cyw)) - 0.5;
+        if (first_update) {
+          first_update = false;
+          bx += bxi;
+        }
+        else
+          perform_draw = true;
+      }
+      if (perform_draw) {
+        if (iCX == 0) pixelsToDraw--;
+        perform_draw = false;
+        glTexCoord2f(tex->U(lsx), tex->V(lsy));
+        glVertex2f(dx, dy);
+        glTexCoord2f(tex->U(sx), tex->V(sy));
+        glVertex2f(dx + pixelsToDraw, dy);
+        dx += pixelsToDraw;
+        pixelsToDraw = 0;
+      }
+      bx += bxi;
+    }
+    by += byi;
+    cyw += cyi;
+    dy += 1.0f;
+    while (cyw >= 1.0f) {
+      cyw -= 1.0f;
+      cy++;
+      update_points = true;
+    }
+  }
+  endDraw();
+  return Success;
+}
+
 void InstallOverrides() {
 	addOverride(Deallocate);
   addOverride(Clear);
@@ -1862,6 +1948,7 @@ void InstallOverrides() {
   addOverride(BlitMask_Normal_Opacity);
   addOverride(BlitMask_SourceAlpha_Opacity);
   addOverride(BlitMask_Merge_Opacity);
+  addOverride(BlitDeform);
   addOverride(FilterSimple_Gradient_4Point);
   addOverride(FilterSimple_Gradient_4Point_SourceAlpha);
   addOverride(FilterSimple_Gradient_Vertical);
@@ -1947,6 +2034,7 @@ void UninstallOverrides() {
   removeOverride(BlitMask_Normal_Opacity);
   removeOverride(BlitMask_SourceAlpha_Opacity);
   removeOverride(BlitMask_Merge_Opacity);
+  removeOverride(BlitDeform);
   removeOverride(FilterSimple_Gradient_4Point);
   removeOverride(FilterSimple_Gradient_4Point_SourceAlpha);
   removeOverride(FilterSimple_Gradient_Vertical);

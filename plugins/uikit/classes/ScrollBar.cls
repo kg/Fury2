@@ -617,7 +617,6 @@ Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraph
 On Error Resume Next
 Dim l_wdgWidget As iWidget
 Dim l_rctNew As Fury2Rect
-Dim l_rctOld As Fury2Rect
 Dim l_staState As SkinState
 Dim l_lngBarSize As Long
 Dim l_lngThumbSize As Long
@@ -628,7 +627,7 @@ Dim l_lngPadding As Long
     With Surface
 '        Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
-'        .ClippedSetClipRectangle l_rctNew
+'        .PushClipRectangle l_rctNew
         Set l_staState = Skin.States("border")
         l_lngPadding = l_staState.EdgeOffset
         l_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
@@ -658,7 +657,7 @@ Dim l_lngPadding As Long
                 l_wdgWidget.Redraw Me, Surface, XOffset + .Left, YOffset + .Top, Opacity
             Next l_wdgWidget
         End With
-'        Set .ClipRectangle = l_rctOld
+'        .PopClipRectangle
     End With
 End Sub
 

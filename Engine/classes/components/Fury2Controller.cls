@@ -152,53 +152,56 @@ End Sub
 
 Private Sub Fury2Plugin_Update()
 On Error Resume Next
+Dim l_sprObj As Fury2Sprite
+Dim l_camObj As Fury2Camera
     If Obj Is Nothing Then Exit Sub
     If TypeOf Obj Is Fury2Sprite Then
-        Obj.AnimateWhileMoving = True
+        Set l_sprObj = Obj
+        l_sprObj.AnimateWhileMoving = True
         If Enabled Then
-            With Engine
-                If Obj.Path.Count <= 0 Then
-                    If .DisableMovement Then
-                        Obj.Velocity = Obj.Velocity - .VelocityDecay
-                        If Obj.Velocity <= 0.05 Then
-                            Obj.Velocity = 0
+            With l_sprObj
+                If .Path.Count <= 0 Then
+                    If Engine.DisableMovement Then
+                        .Velocity = .Velocity - Engine.VelocityDecay
+                        If .Velocity <= 0.05 Then
+                            .Velocity = 0
                         Else
                         End If
                     Else
                         If InputState(3) = False And InputState(0) = False And _
                         InputState(1) = True And InputState(2) = False Then
-                            Obj.Angle = 90 ' Right
+                            .Angle = 90 ' Right
                         ElseIf InputState(3) = False And InputState(0) = False And _
                         InputState(1) = True And InputState(2) = True Then
-                            Obj.Angle = 135 ' Down-Right
+                            .Angle = 135 ' Down-Right
                         ElseIf InputState(3) = False And InputState(0) = False And _
                         InputState(1) = False And InputState(2) = True Then
-                            Obj.Angle = 180 ' Down
+                            .Angle = 180 ' Down
                         ElseIf InputState(3) = True And InputState(0) = False And _
                         InputState(1) = False And InputState(2) = True Then
-                            Obj.Angle = 225 ' Down-Left
+                            .Angle = 225 ' Down-Left
                         ElseIf InputState(3) = True And InputState(0) = False And _
                         InputState(1) = False And InputState(2) = False Then
-                            Obj.Angle = 270 ' Left
+                            .Angle = 270 ' Left
                         ElseIf InputState(3) = True And InputState(0) = True And _
                         InputState(1) = False And InputState(2) = False Then
-                            Obj.Angle = 315 ' Up-Left
+                            .Angle = 315 ' Up-Left
                         ElseIf InputState(3) = False And InputState(0) = True And _
                         InputState(1) = False And InputState(2) = False Then
-                            Obj.Angle = 0 ' Up
+                            .Angle = 0 ' Up
                         ElseIf InputState(3) = False And InputState(0) = True And _
                         InputState(1) = True And InputState(2) = False Then
-                            Obj.Angle = 45 ' Up-Right
+                            .Angle = 45 ' Up-Right
                         End If
                         If InputState(3) Or InputState(1) Or InputState(0) Or InputState(2) Then
-                            If (Obj.State = Obj.IdleState) Then Obj.State = Obj.WalkState
-                            Obj.Velocity = Obj.Velocity + .VelocityDecay
-                            If Obj.Velocity > Obj.WalkSpeed Then Obj.Velocity = Obj.WalkSpeed
+                            If (.State = .IdleState) Then .State = .WalkState
+                            .Velocity = .Velocity + Engine.VelocityDecay
+                            If .Velocity > .WalkSpeed Then .Velocity = .WalkSpeed
                         Else
-                            Obj.Velocity = Obj.Velocity - .VelocityDecay
-                            If Obj.Velocity < .VelocityDecay Then
-                                If (Obj.State = Obj.WalkState) Then Obj.State = Obj.IdleState
-                                Obj.Velocity = 0
+                            .Velocity = .Velocity - Engine.VelocityDecay
+                            If .Velocity < Engine.VelocityDecay Then
+                                If (.State = .WalkState) Then .State = .IdleState
+                                .Velocity = 0
                             End If
                         End If
                     End If
@@ -209,32 +212,35 @@ On Error Resume Next
             InputState(1) = False
             InputState(2) = False
             InputState(3) = False
-            Obj.Velocity = Obj.Velocity - Engine.VelocityDecay
-            If Obj.Velocity < Engine.VelocityDecay Then
-                Obj.State = Obj.IdleState
-                Obj.Velocity = 0
+            l_sprObj.Velocity = l_sprObj.Velocity - Engine.VelocityDecay
+            If l_sprObj.Velocity < Engine.VelocityDecay Then
+                l_sprObj.State = l_sprObj.IdleState
+                l_sprObj.Velocity = 0
             End If
         End If
         If (MoveCamera = True) And (Not (Camera Is Nothing)) Then
-            Camera.CenterOn CLng(Obj.X) + CameraXOffset, CLng(Obj.Y - Obj.Z) + CameraYOffset
+            Camera.CenterOn CLng(l_sprObj.X) + CameraXOffset, CLng(l_sprObj.Y) + CameraYOffset
             If Engine.SmartMessageBoxPositioning Then
-                Engine.DefaultMessageTop = IIf((Obj.Y - Obj.Z) < (Engine.ScreenHeight * 0.49), 1, 0)
+                Engine.DefaultMessageTop = IIf((l_sprObj.Y - l_sprObj.Z) < (Engine.ScreenHeight * 0.49), 1, 0)
             End If
         End If
     ElseIf TypeOf Obj Is Fury2Camera Then
+        Set l_camObj = Obj
         If Enabled Then
-            If InputState(3) And InputState(1) Then
-            ElseIf InputState(3) Then
-                Obj.ViewportX = Obj.ViewportX - ScrollSpeed
-            ElseIf InputState(1) Then
-                Obj.ViewportX = Obj.ViewportX + ScrollSpeed
-            End If
-            If InputState(0) And InputState(2) Then
-            ElseIf InputState(0) Then
-                Obj.ViewportY = Obj.ViewportY - ScrollSpeed
-            ElseIf InputState(2) Then
-                Obj.ViewportY = Obj.ViewportY + ScrollSpeed
-            End If
+            With l_camObj
+                If InputState(3) And InputState(1) Then
+                ElseIf InputState(3) Then
+                    .ViewportX = .ViewportX - ScrollSpeed
+                ElseIf InputState(1) Then
+                    .ViewportX = .ViewportX + ScrollSpeed
+                End If
+                If InputState(0) And InputState(2) Then
+                ElseIf InputState(0) Then
+                    .ViewportY = .ViewportY - ScrollSpeed
+                ElseIf InputState(2) Then
+                    .ViewportY = .ViewportY + ScrollSpeed
+                End If
+            End With
         Else
             InputState(0) = False
             InputState(1) = False

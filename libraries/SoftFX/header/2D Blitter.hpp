@@ -56,12 +56,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
                                                                 \
     ImageLockManager ilDest(lockingMode, Dest);                 \
     ImageLockManager ilSource(lockingMode, Source);             \
-    if (!ilDest.performUnlock()) {                              \
+    if (!ilDest.performUnlock())                              \
         return Failure;                                         \
-    }                                                           \
-    if (!ilSource.performUnlock()) {                            \
+    if (!ilSource.performUnlock())                            \
         return Failure;                                         \
-    }                                                           \
     int DSX = SX, DSY = SY;                                     \
                                                                 \
     Rectangle rCoordinates;                                     \

@@ -67,14 +67,6 @@ Public Enum Fury2EngineModes
     EM_Library = 1
 End Enum
 
-Public Enum Fury2ControllerStyles
-    CS_Normal = 0
-    CS_ResidentEvil = 1
-    CS_Platformer = 2
-    CS_HorizontalShooter = 3
-    CS_VerticalShooter = 4
-End Enum
-
 Public Enum Fury2TransitionTypes
     TR_None = 0
     TR_Fade = 1
@@ -114,7 +106,8 @@ Public Enum Fury2SpriteEffects
 End Enum
 
 Public Enum Fury2SpriteClasses
-    F2SC_Null = -1
+    F2SC_Any = -1
+    F2SC_None = -1
     F2SC_Normal = 0
     F2SC_PartyMember = 1
     F2SC_NPC = 2
@@ -290,48 +283,6 @@ Dim m_vfFile As VirtualFile
     Set m_vfFile = Nothing
     If Err.Number <> 0 Then Exit Function
     LoadFromFile = True
-End Function
-
-Public Function SaveToFileWithRevisions(ByRef Obj As Fury2TrackedObject, ByRef File As Object) As Boolean
-On Error Resume Next
-Dim m_vfFile As VirtualFile
-    If Obj Is Nothing Then Exit Function
-    Err.Clear
-    If TypeOf File Is Fury2File Then
-        Set m_vfFile = New VirtualFile
-    ElseIf TypeOf File Is VirtualFile Then
-        Set m_vfFile = File
-    End If
-    m_vfFile.Save g_strHeader
-    m_vfFile.Save Obj
-    m_vfFile.Save Obj.Revision
-    If TypeOf File Is Fury2File Then
-        If Err = 0 Then File.Save m_vfFile
-    End If
-    Set m_vfFile = Nothing
-    If Err.Number <> 0 Then Exit Function
-    SaveToFileWithRevisions = True
-End Function
-
-Public Function LoadFromFileWithRevisions(ByRef Obj As Fury2TrackedObject, ByRef File As Object) As Boolean
-On Error Resume Next
-Dim m_vfFile As VirtualFile
-    If Obj Is Nothing Then Exit Function
-    Err.Clear
-    If TypeOf File Is Fury2File Then
-        Set m_vfFile = File.Load
-    ElseIf TypeOf File Is VirtualFile Then
-        Set m_vfFile = File
-    End If
-    If ValidateFileHeader(m_vfFile) Then
-        m_vfFile.Load Obj
-        m_vfFile.Load Obj.Revision
-    Else
-        Exit Function
-    End If
-    Set m_vfFile = Nothing
-    If Err.Number <> 0 Then Exit Function
-    LoadFromFileWithRevisions = True
 End Function
 
 Public Function GetEngineVersion() As String

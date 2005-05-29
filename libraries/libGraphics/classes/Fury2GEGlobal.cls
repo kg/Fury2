@@ -19,8 +19,45 @@ Public Enum ResamplingMethods
     [BiLinear] = 1
 End Enum
 
+Private Const RectCacheSize As Long = 32
+
+Private RectCache As Collection
 Private CPUFreq As Currency
 Private Const Black As Long = &HFF000000, White As Long = &HFFFFFFFF
+
+Private Function GetReferenceCount(ByVal Obj As Object) As Long
+On Error Resume Next
+Dim m_objObj As IShellFolderEx_TLB.IUnknown
+    Set m_objObj = Obj
+    If Err <> 0 Then Exit Function
+    m_objObj.AddRef
+    GetReferenceCount = m_objObj.Release
+End Function
+
+Friend Sub RectCacheGC()
+On Error Resume Next
+Dim l_rctRect As Fury2Rect
+Dim l_lngRefCount As Long
+    Do While RectCache.Count > RectCacheSize
+        RectCache.Remove 1
+    Loop
+End Sub
+
+Friend Function RectCacheCreate() As Fury2Rect
+On Error Resume Next
+Dim l_rctRect As Fury2Rect
+Dim l_lngRefCount As Long
+    For Each l_rctRect In RectCache
+        l_lngRefCount = GetReferenceCount(l_rctRect)
+        If l_lngRefCount <= 5 Then
+            Set RectCacheCreate = l_rctRect
+            Exit Function
+        End If
+    Next l_rctRect
+    Set RectCacheCreate = New Fury2Rect
+    RectCache.Add RectCacheCreate
+    RectCacheGC
+End Function
 
 Public Function PointInPolygon(ByVal PolyPoints, ByVal Point) As Boolean
 Dim l_ptPoints() As FPoint
@@ -56,6 +93,14 @@ Dim l_lngCenterWeight As Long
     -2, l_lngCenterWeight, -2, _
     0, -2, 0)
     F2SharpenFilter.Divisor = -8 + l_lngCenterWeight
+End Function
+
+Public Function F2DeformationMesh(Optional ByVal Width As Long = 2, Optional ByVal Height As Long = 2) As Fury2DeformationMesh
+On Error Resume Next
+Dim l_mshMesh As Fury2DeformationMesh
+    Set l_mshMesh = New Fury2DeformationMesh
+    l_mshMesh.Resize Width, Height
+    Set F2DeformationMesh = l_mshMesh
 End Function
 
 Public Function F2GaussianBlurFilter(Optional ByVal Radius As Single = 1) As Fury2ConvolutionFilter
@@ -394,7 +439,7 @@ End Function
 Public Function F2Rect(x1, y1, x2, y2, Optional Absolute = True) As Fury2Rect
 On Error Resume Next
 Dim NewRect As Fury2Rect
-    Set NewRect = New Fury2Rect
+    Set NewRect = RectCacheCreate()
     If Absolute Then
         NewRect.SetValues CLng(x1), CLng(y1), CLng(x2), CLng(y2)
     Else
@@ -887,3 +932,12 @@ On Error Resume Next
     End If
 End Function
 
+Private Sub Class_Initialize()
+    Set RectCache = New Collection
+End Sub
+
+Private Sub Class_Terminate()
+On Error Resume Next
+    RectCacheGC
+    Set RectCache = Nothing
+End Sub

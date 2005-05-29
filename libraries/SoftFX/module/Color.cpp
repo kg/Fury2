@@ -89,17 +89,17 @@ Export DoubleWord GrayA(int V, int A) {
 }
 
 Export DoubleWord SwapChannels(Pixel Color, int Channel1, int Channel2) {
-    _Swap<Byte>(Color[Channel1], Color[Channel2]);
+    _Swap<Byte>(Color[(ColorChannels)ClipValue(Channel1, 0, 3)], Color[(ColorChannels)ClipValue(Channel2, 0, 3)]);
     return Color.V;
 }
 
 Export DoubleWord SetChannel(Pixel Color, int Channel, int Value) {
-    Color[Channel] = ClipByte(Value);
+    Color[(ColorChannels)ClipValue(Channel, 0, 3)] = ClipByte(Value);
     return Color.V;
 }
 
 Export DoubleWord GetChannel(Pixel Color, int Channel) {
-    return Color[Channel];
+    return Color[(ColorChannels)ClipValue(Channel, 0, 3)];
 }
 
 Export DoubleWord BlendColors(Pixel Dest, Pixel Source, int Opacity) {
@@ -142,6 +142,6 @@ Export DoubleWord InvertColorRGB(Pixel Color) {
 }
 
 Export DoubleWord InvertChannel(Pixel Color, int Channel) {
-    Color[Channel] ^= 0xFF;
+    Color[(ColorChannels)ClipValue(Channel, 0, 3)] ^= 0xFF;
     return Color.V;
 }

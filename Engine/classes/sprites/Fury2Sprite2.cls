@@ -453,6 +453,7 @@ On Error Resume Next
     VelocityMultiplier = 1
     AnimationMultiplier = 1
     m_spParam.Obj = ObjPtr(Me)
+    m_spOldParam = m_spParam
 End Sub
 
 Public Sub CopyTo(ByVal OtherSprite, Optional ByVal AsTemplate As Boolean = False)
@@ -864,6 +865,7 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
         .ReadSegment_End
         VelocityMultiplier = 1
         AnimationMultiplier = 1
+        m_spOldParam = m_spParam
         DoEvents
     End With
 End Sub
@@ -1722,18 +1724,22 @@ Dim l_araArea As Fury2Area, l_booWasIn As Boolean, l_booIsIn As Boolean
         l_booIsIn = False
         l_araArea.DualIntersect l_rctOld, l_rctCurrent, l_booWasIn, l_booIsIn
         
-        ProfileStart "Area Scripts"
         If (Not l_booWasIn) And (l_booIsIn) Then
             ' Enter
-            l_araArea.Action Me, "Enter"
+            If Me.Name Like l_araArea.NamePattern Then
+                l_araArea.Action Me, "Enter"
+            End If
         ElseIf (l_booWasIn) And (l_booIsIn) Then
             ' Move
-            l_araArea.Action Me, "Move"
+            If Me.Name Like l_araArea.NamePattern Then
+                l_araArea.Action Me, "Move"
+            End If
         ElseIf (l_booWasIn) And (Not l_booIsIn) Then
             ' Leave
-            l_araArea.Action Me, "Leave"
+            If Me.Name Like l_araArea.NamePattern Then
+                l_araArea.Action Me, "Leave"
+            End If
         End If
-        ProfileStop "Area Scripts"
         
         Err.Clear
     Next l_araArea
@@ -1743,24 +1749,18 @@ End Sub
 
 Private Sub InitAreas()
 On Error Resume Next
-Dim l_rctCurrent As Rectangle
+Dim l_rctMe As Fury2Rect
 Dim l_araArea As Fury2Area
-Dim l_booInside As Boolean
     If m_mapMap Is Nothing Then Exit Sub
     If m_mapMap.Areas.Count = 0 Then Exit Sub
-    With l_rctCurrent
-        .left = CLng(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2))
-        .top = CLng(m_spParam.Position.Y - (m_spParam.Obstruction.Height))
-        .Width = m_spParam.Obstruction.Width
-        .Height = m_spParam.Obstruction.Height
-    End With
+    Set l_rctMe = Me.Rectangle(False)
     For Each l_araArea In m_mapMap.Areas
-        l_araArea.DualIntersect l_rctCurrent, l_rctCurrent, l_booInside, l_booInside
-        
-        If (l_booInside) Then
+        If (l_araArea.Rectangle.Intersect(l_rctMe)) Then
             ' Enter
             ProfileStart "Area Scripts"
-            l_araArea.Action Me, "Enter"
+            If Me.Name Like l_araArea.NamePattern Then
+                l_araArea.Action Me, "Enter"
+            End If
             ProfileStop "Area Scripts"
         End If
         

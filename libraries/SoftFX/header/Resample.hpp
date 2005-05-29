@@ -23,5 +23,7 @@ void  SampleRow_Bilinear(Image *Source, int X, int Y, int XW, int YW, int XI, in
 void  SampleRow_Linear(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest);
 void  SampleRow_Bilinear_Rolloff(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest);
 void  SampleRow_Linear_Rolloff(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest);
+void  SampleRow_Bilinear_Wrap(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest);
+void  SampleRow_Linear_Wrap(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest);
 
 #define resample_included

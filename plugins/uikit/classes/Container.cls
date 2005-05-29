@@ -546,20 +546,18 @@ Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraph
 On Error Resume Next
 Dim l_wdgWidget As iWidget
 Dim l_rctNew As Fury2Rect
-Dim l_rctOld As Fury2Rect
 Dim l_lngWidget As Long
     If Visible = False Then Exit Sub
     With Surface
-        Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
-        .ClippedSetClipRectangle l_rctNew
+        .PushClipRectangle l_rctNew
         With Rectangle
             For l_lngWidget = Children.Count To 1 Step -1
                 Set l_wdgWidget = Children(l_lngWidget)
                 l_wdgWidget.Redraw Me, Surface, XOffset + .Left, YOffset + .Top, Opacity
             Next l_lngWidget
         End With
-        Set .ClipRectangle = l_rctOld
+        .PopClipRectangle
     End With
 End Sub
 

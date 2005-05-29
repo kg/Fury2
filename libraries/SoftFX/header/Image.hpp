@@ -23,9 +23,10 @@ enum ResampleModes {
   ResampleMode_Linear = 1,
   ResampleMode_Bilinear = 2,
   ResampleMode_Bilinear_High_Quality = 3,
-  ResampleMode_Bicubic = 4,
-  ResampleMode_Gaussian = 5,
-  ResampleMode_2xSaI = 6
+  ResampleMode_Linear_Wrap = 4,
+  ResampleMode_Bilinear_Wrap = 5,
+  ResampleMode_Linear_Clamp = 6,
+  ResampleMode_Bilinear_Clamp = 7
 };
 
 struct BitmapInfoHeader{
@@ -299,6 +300,11 @@ public:
     return *(this->fast_pointer(X, Y));
   }
 
+  inline Pixel getPixelWrap(Coordinate X, Coordinate Y) {
+    IfLocked(return 0)
+    return *(this->fast_pointer(WrapValue(X, 0, this->Width - 1), WrapValue(Y, 0, this->Height - 1)));
+  }
+
   inline Pixel getPixelClipRect(int X, int Y) {
     if (X < this->ClipRectangle.Left) X = this->ClipRectangle.Left;
     if (Y < this->ClipRectangle.Top) Y = this->ClipRectangle.Top;
@@ -335,10 +341,6 @@ public:
   }
 
   inline Pixel getPixelAA(float X, float Y) {
-    if (X < 0) X = 0;
-    if (Y < 0) Y = 0;
-    if (X >= Width) X = Width - 1;
-    if (Y >= Height) Y = Height - 1;
     int xi = X * 255.0, yi = Y * 255.0;
     Byte xw = xi % 255, yw = yi % 255;
     xi /= 255;
@@ -347,10 +349,6 @@ public:
   }
 
   inline Pixel getPixelAA(int xi, int yi, Byte xw, Byte yw) {
-    if (xi < 0) xi = 0;
-    if (yi < 0) yi = 0;
-    if (xi >= Width) xi = Width - 1;
-    if (yi >= Height) yi = Height - 1;
     Pixel pValue; if (Override::EnumOverrides(Override::GetPixelAA, 4, this, xi, yi, (int)xw, (int)yw, &pValue)) return pValue;
     IfLocked(return 0)
     Byte w[4];
@@ -383,6 +381,54 @@ public:
     a += Level->V[S[::Alpha]];
     Level = AlphaLevelLookup(w[3]);
     S = this->getPixelClip(++xi, yi);    
+    S[::Blue] = ClipByte(b + Level->V[S[::Blue]]);
+    S[::Green] = ClipByte(g + Level->V[S[::Green]]);
+    S[::Red] = ClipByte(r + Level->V[S[::Red]]);
+    S[::Alpha] = ClipByte(a + Level->V[S[::Alpha]]);
+    return S;
+  }
+
+  inline Pixel getPixelAARolloff(float X, float Y) {
+    int xi = X * 255.0, yi = Y * 255.0;
+    Byte xw = xi % 255, yw = yi % 255;
+    xi /= 255;
+    yi /= 255;
+    return this->getPixelAARolloff(xi, yi, xw, yw);
+  }
+
+  inline Pixel getPixelAARolloff(int xi, int yi, Byte xw, Byte yw) {
+    Pixel pValue; if (Override::EnumOverrides(Override::GetPixelAA, 4, this, xi, yi, (int)xw, (int)yw, &pValue)) return pValue;
+    IfLocked(return 0)
+    Byte w[4];
+    {
+      w[1] = AlphaLookup(xw, yw ^ 0xFF);
+      w[2] = AlphaLookup(xw ^ 0xFF, yw);
+      w[3] = AlphaLookup(xw, yw);
+      w[0] = (w[1] + w[2] + w[3]) ^ 0xFF;
+    }
+    short b, g, r, a;
+    Pixel S;
+    AlphaLevel *Level;
+    Level = AlphaLevelLookup(w[0]);
+    S = this->getPixelRolloff(xi, yi);
+    b = Level->V[S[::Blue]];
+    g = Level->V[S[::Green]];
+    r = Level->V[S[::Red]];
+    a = Level->V[S[::Alpha]];
+    Level = AlphaLevelLookup(w[1]);
+    S = this->getPixelRolloff(++xi, yi);
+    b += Level->V[S[::Blue]];
+    g += Level->V[S[::Green]];
+    r += Level->V[S[::Red]];
+    a += Level->V[S[::Alpha]];
+    Level = AlphaLevelLookup(w[2]);
+    S = this->getPixelRolloff(--xi, ++yi);
+    b += Level->V[S[::Blue]];
+    g += Level->V[S[::Green]];
+    r += Level->V[S[::Red]];
+    a += Level->V[S[::Alpha]];
+    Level = AlphaLevelLookup(w[3]);
+    S = this->getPixelRolloff(++xi, yi);    
     S[::Blue] = ClipByte(b + Level->V[S[::Blue]]);
     S[::Green] = ClipByte(g + Level->V[S[::Green]]);
     S[::Red] = ClipByte(r + Level->V[S[::Red]]);

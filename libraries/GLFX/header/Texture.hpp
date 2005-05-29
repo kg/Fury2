@@ -1,5 +1,6 @@
 struct Texture {
   GLuint Handle;
+  Texture* IsolatedTexture;
   float U1, V1, U2, V2, XScale, YScale;
   int Left, Top, Width, Height;
   bool MatteOptimized;
@@ -7,6 +8,7 @@ struct Texture {
 
   Texture(GLuint handle = 0, int left = 0, int top = 0, int width = 0, int height = 0, float xs = 0, float ys = 0, bool owner = true) {
     Handle = handle;
+    IsolatedTexture = 0;
     XScale = xs;
     YScale = ys;
     Left = left;
@@ -22,6 +24,10 @@ struct Texture {
   }
 
   ~Texture() {
+    if (IsolatedTexture != 0) {
+      delete IsolatedTexture;
+      IsolatedTexture = 0;
+    }
     if (Owner) {
       if (Handle != 0) {
         glDeleteTextures(1, &Handle);

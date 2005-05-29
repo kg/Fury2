@@ -37,13 +37,11 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 
 Option Explicit
 Implements Fury2Object
-Implements Fury2TrackedObject
 Implements IVirtualFileCollection
 Implements IInspectableCollection
 
 Public Loaded As Boolean
 Private mvarDirty As Boolean
-Private mvarRevision As Fury2RevisionData
 Private mCol As Collection
 Private mColUpdate As Collection
 Private mvarIndex As Long
@@ -112,14 +110,6 @@ Dim l_sprSprite As Fury2Sprite
     mvarDirty = True
 End Sub
 
-Private Property Get Fury2TrackedObject_Revision() As Fury2RevisionData
-    Set Fury2TrackedObject_Revision = mvarRevision
-End Property
-
-Public Property Get Revision() As Fury2RevisionData
-    Set Revision = mvarRevision
-End Property
-
 Friend Sub SetParent(NewParent As Fury2Map)
 On Error Resume Next
     Set mvarParent = NewParent
@@ -186,7 +176,7 @@ On Error Resume Next
     mvarSortedFirst = SoftFX.SortSprites(mvarFirst)
 End Sub
 
-Public Function SpriteFromPoint(ByVal X As Single, ByVal Y As Single, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Fury2Sprite
+Public Function SpriteFromPoint(ByVal X As Single, ByVal Y As Single, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Fury2SpriteClasses = F2SC_Any, Optional ByVal ExcludedClass As Fury2SpriteClasses = F2SC_Any) As Fury2Sprite
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
@@ -203,7 +193,7 @@ Dim l_rctArea As FRect
     If l_lngResult > 0 Then Set SpriteFromPoint = mCol.Item(l_lngResult)
 End Function
 
-Public Function SpriteFromScreenPoint(ByVal X As Single, ByVal Y As Single, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Fury2Sprite
+Public Function SpriteFromScreenPoint(ByVal X As Single, ByVal Y As Single, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Fury2SpriteClasses = F2SC_Any, Optional ByVal ExcludedClass As Fury2SpriteClasses = F2SC_Any) As Fury2Sprite
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
@@ -220,7 +210,7 @@ Dim l_rctArea As FRect
     If l_lngResult > 0 Then Set SpriteFromScreenPoint = mCol.Item(l_lngResult)
 End Function
 
-Public Function SpriteFromArea(ByVal Area As Fury2Rect, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Fury2Sprite
+Public Function SpriteFromArea(ByVal Area As Fury2Rect, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Fury2SpriteClasses = F2SC_Any, Optional ByVal ExcludedClass As Fury2SpriteClasses = F2SC_Any) As Fury2Sprite
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
@@ -235,7 +225,7 @@ Dim l_rctArea As FRect
     If l_lngResult > 0 Then Set SpriteFromArea = mCol.Item(l_lngResult)
 End Function
 
-Public Function SpriteFromScreenArea(ByVal Area As Fury2Rect, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Fury2Sprite
+Public Function SpriteFromScreenArea(ByVal Area As Fury2Rect, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = F2SC_Any, Optional ByVal ExcludedClass As Fury2SpriteClasses = F2SC_Any) As Fury2Sprite
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
@@ -250,7 +240,7 @@ Dim l_rctArea As FRect
     If l_lngResult > 0 Then Set SpriteFromScreenArea = mCol.Item(l_lngResult)
 End Function
 
-Public Function SpritesFromDistance(ByVal Sprite As Fury2Sprite, ByVal MaxDistance As Single, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
+Public Function SpritesFromDistance(ByVal Sprite As Fury2Sprite, ByVal MaxDistance As Single, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = F2SC_Any, Optional ByVal ExcludedClass As Fury2SpriteClasses = F2SC_Any) As Variant
 On Error Resume Next
 Dim l_varResult As Variant
 Dim l_lngResult As Long, l_lngStart As Long
@@ -285,7 +275,7 @@ Dim l_sngDistance As Single
     SpritesFromDistance = l_varResult
 End Function
 
-Public Function SpritesFromArea(Area, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
+Public Function SpritesFromArea(Area, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Fury2SpriteClasses = F2SC_Any, Optional ByVal ExcludedClass As Fury2SpriteClasses = F2SC_Any) As Variant
 On Error Resume Next
 Dim l_varResult As Variant
 Dim l_lngResult As Long, l_lngStart As Long
@@ -323,7 +313,7 @@ Dim l_lngExclude As Long
     SpritesFromArea = l_varResult
 End Function
 
-Public Function SpritesFromScreenArea(Area, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
+Public Function SpritesFromScreenArea(Area, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Fury2SpriteClasses = F2SC_Any, Optional ByVal ExcludedClass As Fury2SpriteClasses = F2SC_Any) As Variant
 On Error Resume Next
 Dim l_varResult As Variant
 Dim l_lngResult As Long, l_lngStart As Long
@@ -362,7 +352,7 @@ Dim l_lngExclude As Long
 End Function
 
 ' todo
-Public Function SpritesFromPolygon(Poly, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
+Public Function SpritesFromPolygon(Poly, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Fury2SpriteClasses = F2SC_Any, Optional ByVal ExcludedClass As Fury2SpriteClasses = F2SC_Any) As Variant
 On Error Resume Next
 Dim l_varResult As Variant
 Dim l_sprSprite As Fury2Sprite
@@ -388,7 +378,7 @@ Dim l_lngCount As Long, l_lngSize As Long
 End Function
 
 ' todo
-Public Function SpritesFromOnscreenPolygon(Poly, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1) As Variant
+Public Function SpritesFromOnscreenPolygon(Poly, Optional ByVal Exclude As Fury2Sprite = Nothing, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Fury2SpriteClasses = F2SC_Any, Optional ByVal ExcludedClass As Fury2SpriteClasses = F2SC_Any) As Variant
 On Error Resume Next
 Dim l_varResult As Variant
 Dim l_lngResult As Long, l_lngStart As Long
@@ -419,7 +409,7 @@ Dim l_lngCount As Long, l_lngSize As Long
     SpritesFromOnscreenPolygon = l_varResult
 End Function
 
-Public Function GetClosest(ByVal Check As Fury2Sprite, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1, Optional ByRef OutputDistance) As Fury2Sprite
+Public Function GetClosest(ByVal Check As Fury2Sprite, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Fury2SpriteClasses = F2SC_Any, Optional ByVal ExcludedClass As Fury2SpriteClasses = F2SC_Any, Optional ByRef OutputDistance) As Fury2Sprite
 On Error Resume Next
 Dim m_sngDistance As Single
 Dim l_lngResult As Long
@@ -431,7 +421,7 @@ Dim l_lngResult As Long
     Err.Clear
 End Function
 
-Public Function GetFarthest(ByVal Check As Fury2Sprite, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Long = -1, Optional ByVal ExcludedClass As Long = -1, Optional ByRef OutputDistance) As Fury2Sprite
+Public Function GetFarthest(ByVal Check As Fury2Sprite, Optional ByVal MustBeSolid As Boolean = False, Optional ByVal Class As Fury2SpriteClasses = F2SC_Any, Optional ByVal ExcludedClass As Fury2SpriteClasses = F2SC_Any, Optional ByRef OutputDistance) As Fury2Sprite
 On Error Resume Next
 Dim m_sngDistance As Single
 Dim l_lngResult As Long
@@ -532,9 +522,8 @@ Dim m_lngSprites As Long
     Err.Clear
 End Sub
 
-Friend Sub AcceptNew(Obj)
+Friend Sub AcceptNew(ByVal Obj As Fury2Sprite)
 On Error Resume Next
-    If TypeOf Obj Is Fury2Sprite Then Else Exit Sub
     If Find(Obj) Then Exit Sub
     mCol.Add Obj
     mvarDirty = True
@@ -542,12 +531,13 @@ End Sub
 
 Public Sub MoveTo(ByRef Index, ByVal NewLayer As Long)
 On Error Resume Next
+Dim l_sprItem As Fury2Sprite
     Err.Clear
-    With mvarParent.Layers(NewLayer).Sprites
-        .AcceptNew Item(Index)
-        Item(Index).SetAttributes .Count, NewLayer, mvarParent.Layers(NewLayer).Sprites, mvarParent
-    End With
+    Set l_sprItem = Item(Index)
     Remove Index
+    With mvarParent.Layers(NewLayer).Sprites
+        .Add l_sprItem
+    End With
     mvarDirty = True
 End Sub
 
@@ -671,7 +661,9 @@ On Error Resume Next
 Dim m_lngSprites As Long
 Dim m_strName As String
     If mCol.Count < 1 Then Exit Property
-    If VarType(vntIndexKey) = vbString Then
+    If VarType(vntIndexKey) = vbObject Then
+        Set Item = vntIndexKey
+    ElseIf VarType(vntIndexKey) = vbString Then
         Set Item = mCol(Find(vntIndexKey))
     Else
         Set Item = mCol(CLng(vntIndexKey))
@@ -714,14 +706,12 @@ Private Sub Class_Initialize()
     SetEngine DefaultEngine
     Set mCol = New Collection
     Set mColUpdate = New Collection
-    Set mvarRevision = New Fury2RevisionData
     mvarDirty = True
 End Sub
 
 Private Sub Class_Terminate()
     'destroys collection when this class is terminated
     Set mvarParent = Nothing
-    Set mvarRevision = Nothing
     Set mCol = Nothing
     Set mColUpdate = Nothing
 End Sub

@@ -18,7 +18,7 @@ Option Explicit
 
 Public ScriptsRunning As Long
 
-Private WithEvents m_Engine As SCRHostLib.Host
+Private WithEvents m_Engine As SCRHOSTLib.Host
 Attribute m_Engine.VB_VarHelpID = -1
 
 Private m_Language As IScriptLanguage
@@ -128,7 +128,7 @@ On Error Resume Next
     Case "vbscript", "vb", "vbs", "vba"
         Set LoadLanguage = New VBScriptLanguage
     Case "python", "py"
-'        Set LoadLanguage = New PythonLanguage
+        Set LoadLanguage = New PythonLanguage
     Case "jscript", "javascript", "js", "java script", "ecmascript"
         Set LoadLanguage = New JScriptLanguage
     Case Else

@@ -169,19 +169,19 @@ struct FLine {
         this->End.Y = 0;
     }
     FLine(ILine *Line);
-	inline bool intersect(FLine& that, FPoint& point) {
-		// Based on the 2d line intersection method from "comp.graphics.algorithms Frequently Asked Questions"
-		float q = (this->Start.Y - that.Start.Y) * (that.End.X - that.Start.X) - (this->Start.X - that.Start.X) * (that.End.Y - that.Start.Y);
-		float d = (this->End.X - this->Start.X) * (that.End.Y - that.Start.Y) - (this->End.Y - this->Start.Y) * (that.End.X - that.Start.X);
-		if( d == 0 ) return false;
-		float r = q / d;
-		q = (this->Start.Y - that.Start.Y) * (this->End.X - this->Start.X) - (this->Start.X - that.Start.X) * (this->End.Y - this->Start.Y);
-		float s = q / d;
-		if( r < 0 || r > 1 || s < 0 || s > 1 ) return false;
-		point.X = this->Start.X + (int) (0.5f + r * (this->End.X - this->Start.X));
-		point.Y = this->Start.Y + (int) (0.5f + r * (this->End.Y - this->Start.Y));
-		return true;
-	}
+	  inline bool intersect(FLine& that, FPoint& point) {
+		  // Based on the 2d line intersection method from "comp.graphics.algorithms Frequently Asked Questions"
+		  float q = (this->Start.Y - that.Start.Y) * (that.End.X - that.Start.X) - (this->Start.X - that.Start.X) * (that.End.Y - that.Start.Y);
+		  float d = (this->End.X - this->Start.X) * (that.End.Y - that.Start.Y) - (this->End.Y - this->Start.Y) * (that.End.X - that.Start.X);
+		  if( d == 0 ) return false;
+		  float r = q / d;
+		  q = (this->Start.Y - that.Start.Y) * (this->End.X - this->Start.X) - (this->Start.X - that.Start.X) * (this->End.Y - this->Start.Y);
+		  float s = q / d;
+		  if( r < 0 || r > 1 || s < 0 || s > 1 ) return false;
+		  point.X = this->Start.X + (0.5f + r * (this->End.X - this->Start.X));
+		  point.Y = this->Start.Y + (0.5f + r * (this->End.Y - this->Start.Y));
+		  return true;
+	  }
     inline float slope() {
       return (End.Y - Start.Y) / (End.X - Start.X);
     }

@@ -50,6 +50,7 @@ Dim biggestValue, biggestIndex As Long, checkAll As Long
 End Function
 
 Public Function F2Rect(x1, y1, x2, y2, Optional Absolute = True) As Fury2Rect
+On Error Resume Next
 Dim NewRect As Fury2Rect
     Set NewRect = New Fury2Rect
     If Absolute Then
@@ -62,6 +63,7 @@ Dim NewRect As Fury2Rect
 End Function
 
 Public Function F2RectFromStruct(Rect As SoftFX.Rectangle) As Fury2Rect
+On Error Resume Next
 Dim NewRect As Fury2Rect
     Set NewRect = New Fury2Rect
     NewRect.SetRectangle Rect

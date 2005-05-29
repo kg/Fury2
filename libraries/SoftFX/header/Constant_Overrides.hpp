@@ -189,6 +189,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(BlitMask_SourceAlpha_Opacity) \
   defItem(BlitMask_Merge_Opacity) \
   defItem(BlitMask_) \
+  defItem(BlitDeform) \
   defItem(RenderTilemapLayer) \
   defItem(RenderWindow) \
   defItem(RenderText) \

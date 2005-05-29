@@ -65,23 +65,23 @@ End Sub
 
 Public Property Get Playing() As Boolean
 On Error Resume Next
-Dim l_booValue As Boolean
-    ResultCheck fmodex.FMOD_Channel_IsPlaying(m_lngHandle, l_booValue)
-    Playing = l_booValue
+Dim l_lngValue As Long
+    ResultCheck fmodex.FMOD_Channel_IsPlaying(m_lngHandle, l_lngValue)
+    Playing = l_lngValue
 End Property
 
 Public Property Get Virtual() As Boolean
 On Error Resume Next
-Dim l_booValue As Boolean
-    ResultCheck fmodex.FMOD_Channel_IsVirtual(m_lngHandle, l_booValue)
-    Virtual = l_booValue
+Dim l_lngValue As Long
+    ResultCheck fmodex.FMOD_Channel_IsVirtual(m_lngHandle, l_lngValue)
+    Virtual = l_lngValue
 End Property
 
 Public Property Get Muted() As Boolean
 On Error Resume Next
-Dim l_booMuted As Boolean
-    ResultCheck fmodex.FMOD_Channel_GetMute(m_lngHandle, l_booMuted)
-    Muted = l_booMuted
+Dim l_lngMuted As Long
+    ResultCheck fmodex.FMOD_Channel_GetMute(m_lngHandle, l_lngMuted)
+    Muted = l_lngMuted
 End Property
 
 Public Property Let Muted(ByVal NewValue As Boolean)
@@ -91,9 +91,9 @@ End Property
 
 Public Property Get Paused() As Boolean
 On Error Resume Next
-Dim l_booPaused As Boolean
-    ResultCheck fmodex.FMOD_Channel_GetPaused(m_lngHandle, l_booPaused)
-    Paused = l_booPaused
+Dim l_lngPaused As Long
+    ResultCheck fmodex.FMOD_Channel_GetPaused(m_lngHandle, l_lngPaused)
+    Paused = l_lngPaused
 End Property
 
 Public Property Let Paused(ByVal NewValue As Boolean)
@@ -101,11 +101,11 @@ On Error Resume Next
     ResultCheck fmodex.FMOD_Channel_SetPaused(m_lngHandle, NewValue)
 End Property
 
-Public Property Get audibility() As Single
+Public Property Get Audibility() As Single
 On Error Resume Next
 Dim l_sngValue As Single
     ResultCheck fmodex.FMOD_Channel_GetAudibility(m_lngHandle, l_sngValue)
-    audibility = l_sngValue
+    Audibility = l_sngValue
 End Property
 
 Public Property Get Volume() As Single
@@ -156,11 +156,11 @@ On Error Resume Next
     ResultCheck fmodex.FMOD_Channel_SetPriority(m_lngHandle, NewValue)
 End Property
 
-Public Property Get position() As Double
+Public Property Get Position() As Double
 On Error Resume Next
 Dim l_lngValue As Long
     ResultCheck fmodex.FMOD_Channel_GetPosition(m_lngHandle, l_lngValue, FMOD_TIMEUNIT_MS)
-    position = CDbl(l_lngValue) / 1000#
+    Position = CDbl(l_lngValue) / 1000#
 End Property
 
 Public Sub Kill()

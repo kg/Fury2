@@ -1,18 +1,52 @@
 VERSION 5.00
 Begin VB.Form frmTest 
    Caption         =   "OpenGL"
-   ClientHeight    =   3600
+   ClientHeight    =   4500
    ClientLeft      =   60
    ClientTop       =   450
-   ClientWidth     =   4800
+   ClientWidth     =   6000
    Icon            =   "frmTest.frx":0000
    LinkTopic       =   "Form1"
-   ScaleHeight     =   240
+   ScaleHeight     =   300
    ScaleMode       =   3  'Pixel
-   ScaleWidth      =   320
+   ScaleWidth      =   400
    StartUpPosition =   2  'CenterScreen
+   Begin VB.CommandButton cmdToggleDeform 
+      Caption         =   "Toggle Deform"
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   495
+      Left            =   3570
+      TabIndex        =   1
+      Top             =   4005
+      Width           =   1215
+   End
+   Begin VB.CommandButton cmdToggleHW 
+      Caption         =   "Toggle GL"
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   495
+      Left            =   4785
+      TabIndex        =   0
+      Top             =   4005
+      Width           =   1215
+   End
    Begin VB.Timer tmrRedraw 
-      Interval        =   100
+      Interval        =   25
       Left            =   75
       Top             =   90
    End
@@ -25,17 +59,24 @@ Attribute VB_Exposed = False
 Option Explicit
 Private m_lngOldBitmap As Long
 Private m_filFilter As Fury2ConvolutionFilter
-Dim m_imgTexture As Fury2Image
+Dim m_imgPattern As Fury2Image
+Dim m_imgTexture() As Fury2Image
+Dim m_imgTextureBlend As Fury2Image
 Dim m_imgBuffer As Fury2Image
 Dim m_imgCopy As Fury2Image
 Dim m_lngTexture As Long
 Dim m_lngX As Long, m_lngY As Long
 Dim m_varPoly() As Variant
+Public UseHardware As Boolean
+Public EnableDeform As Boolean
 
 Public Sub Redraw()
 On Error Resume Next
 Dim l_lngWidth As Long, l_lngHeight As Long
+Dim l_lngX As Long, l_lngY As Long
 Static l_sngS As Single, l_sngR As Single
+Static l_lngFrame As Long
+Dim l_mshMesh As Fury2DeformationMesh
 '    F2LockingMode = LockingMode_Default
 ''    Set l_devDevice = GetImageDevice(m_imgBuffer)
 '    With m_imgBuffer
@@ -71,8 +112,8 @@ Static l_sngS As Single, l_sngR As Single
 ''    m_imgBuffer.ConvexPolygon Array(Array(10, 10), Array(50, 10), Array(50, 50), Array(25, 75), Array(10, 50)), F2White
 '    m_imgBuffer.Adjust -16
     m_imgBuffer.Clear 0
-    m_imgTexture.Draw m_imgBuffer, m_imgBuffer.Width / 2, m_imgBuffer.Height / 2, 1, 1, l_sngR, BlitMode_Additive, , ResampleMode_Bilinear
-    m_imgBuffer.Blit f2rect(50, 50, 100, 100, False), , m_imgBuffer
+'    m_imgTexture.Draw m_imgBuffer, m_imgBuffer.Width / 2, m_imgBuffer.Height / 2, 1, 1, l_sngR, BlitMode_Additive, , ResampleMode_Bilinear
+'    m_imgBuffer.Blit f2rect(50, 50, 100, 100, False), , m_imgBuffer
 '    m_imgBuffer.Blit , , m_imgTexture, 1, BlitMode_SourceAlpha_Tint, F2RGB(0, 255, 0, 255)
 '    m_imgBuffer.Fill F2Rect(10, 10, 50, 50, False), F2RGB(0, 31, 0, 127)
 '    m_imgBuffer.Fill F2Rect(60, 10, 50, 50, False), F2RGB(0, 31, 0, 127), RenderMode_SourceAlpha
@@ -95,19 +136,50 @@ Static l_sngS As Single, l_sngR As Single
 '    m_imgBuffer.Draw m_imgBuffer, m_imgBuffer.Width / 2, m_imgBuffer.Height / 2, 1, 0.5, , , , ResampleMode_Bilinear
     'm_imgBuffer.Blit F2Rect(50, 50, m_imgBuffer.Width, m_imgBuffer.Height, False), , m_imgBuffer, , BlitMode_Normal
     'm_imgBuffer.AdjustRGB 0, 64, -64
+    m_imgTextureBlend.Blit , , m_imgTexture(l_lngFrame), 1
+    m_imgTextureBlend.Blit , , m_imgTexture(WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))), l_sngS
+    Set l_mshMesh = New Fury2DeformationMesh
+    l_mshMesh.Resize 16, 16
+    For l_lngY = 0 To l_mshMesh.Height - 1
+        For l_lngX = 0 To l_mshMesh.Width - 1
+            If EnableDeform Then
+                l_mshMesh.Value(l_lngX, l_lngY) = Array(Sin((l_lngY / 2) + l_sngR) * 2.5, Sin((l_lngX / 2) - l_sngR) * 7.5)
+            End If
+        Next l_lngX
+    Next l_lngY
+    'm_imgPattern.DeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgTextureBlend, l_mshMesh, RenderMode_Normal, ResampleMode_Bilinear_Wrap
+'    m_imgPattern.Box m_imgPattern.Rectangle, F2White
+    m_imgBuffer.Locked = UseHardware
+    m_imgBuffer.DeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgTextureBlend, l_mshMesh, RenderMode_Normal, ResampleMode_Bilinear_Wrap
+    m_imgBuffer.Locked = True
     GLFlip ' Me.HDC
-    l_sngS = 1
-    l_sngR = l_sngR + 1
+    l_sngS = l_sngS + 0.075
+    If (l_sngS >= 1) Then
+        l_sngS = l_sngS - 1
+        l_lngFrame = WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))
+    End If
+    l_sngR = l_sngR + 0.1
+End Sub
+
+Private Sub cmdToggleDeform_Click()
+On Error Resume Next
+    EnableDeform = Not EnableDeform
+End Sub
+
+Private Sub cmdToggleHW_Click()
+On Error Resume Next
+    UseHardware = Not UseHardware
 End Sub
 
 Private Sub Form_Load()
 On Error Resume Next
+    UseHardware = True
     Randomize Timer
     F2Init
     GLInit Me.HWND, Me.HDC
     GLSetOutputSize Me.ScaleWidth, Me.ScaleHeight
     GLInstallAllocateHook
-    Set m_imgBuffer = F2Image(320, 240)
+    Set m_imgBuffer = F2Image(400, 300)
     GLUninstallAllocateHook
     SetImageLocked m_imgBuffer.Handle, 1
 '    InitOpenGLOverride
@@ -127,7 +199,10 @@ On Error Resume Next
 '    glLoadIdentity
 '    Set m_imgRenderTarget = mdlDX8Override.CreateDX8RenderTarget(128, 128, GetImageDevice(m_imgBuffer))
 '    Set m_imgRenderTarget = F2Image(150, 150)
-    Set m_imgTexture = F2LoadImage("J:\chia\set00.png")
+'    Set m_imgTexture = F2LoadImage("J:\chia\set00.png")
+    m_imgTexture() = F2LoadImage("J:\water.png").Split(32, 32)
+    Set m_imgTextureBlend = F2Image(32, 32)
+    Set m_imgPattern = F2Image(256, 256)
 '    m_imgBuffer.Clear F2Black
 '    m_lngTexture = CreateTextureFromImage(m_imgTexture.Handle)
 '    m_imgInFrontTexture.Box m_imgInFrontTexture.Rectangle, F2RGB(255, 255, 255, 0)
@@ -170,7 +245,7 @@ On Error Resume Next
     GLSetOutputSize Me.ScaleWidth, Me.ScaleHeight
     GLInstallAllocateHook
     m_imgBuffer.Unsize
-    m_imgBuffer.Resize 320, 240
+    m_imgBuffer.Resize 400, 300
     GLUninstallAllocateHook
     SetImageLocked m_imgBuffer.Handle, 1
 '    If m_imgBuffer.Width <> (Me.ScaleWidth \ 2) Or m_imgBuffer.Height <> (Me.ScaleHeight \ 2) Then

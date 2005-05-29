@@ -277,10 +277,144 @@ int i;
     return;
 }
 
+void SampleRow_Bilinear_Wrap(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest) {
+int xw, yw;
+int i;
+Byte w[4];
+short b, g, r, a;
+Pixel S;
+AlphaLevel *Level;
+    X = X;
+    Y = Y;
+    XW = XW;
+    YW = YW;
+    for (i = 0; i < Count; i++) {
+      if (XW >= 65535) {
+        X += (XW / 65535);
+        XW = XW % 65535;
+      }
+      if (XW < 0) {
+        X -= ((-XW) / 65535) + 1;
+        XW = 65535 - (-XW % 65535);
+      }
+      if (YW >= 65535) {
+        Y += (YW / 65535);
+        YW = YW % 65535;
+      }
+      if (YW < 0) {
+        Y -= ((-YW) / 65535) + 1;
+        YW = 65535 - (-YW % 65535);
+      }
+
+      if ((XW) || (YW)) {
+
+        xw = XW / 256;
+        yw = YW / 256;
+        w[1] = AlphaLookup(xw, yw ^ 0xFF);
+        w[2] = AlphaLookup(xw ^ 0xFF, yw);
+        w[3] = AlphaLookup(xw, yw);
+        w[0] = (w[1] + w[2] + w[3]) ^ 0xFF;
+
+        Level = AlphaLevelLookup(w[0]);
+        S = Source->getPixelWrap(X, Y);
+        b = Level->V[S[::Blue]];
+        g = Level->V[S[::Green]];
+        r = Level->V[S[::Red]];
+        a = Level->V[S[::Alpha]];
+
+        Level = AlphaLevelLookup(w[1]);
+        S = Source->getPixelWrap(X+1, Y);
+        b += Level->V[S[::Blue]];
+        g += Level->V[S[::Green]];
+        r += Level->V[S[::Red]];
+        a += Level->V[S[::Alpha]];
+
+        Level = AlphaLevelLookup(w[2]);
+        S = Source->getPixelWrap(X, Y+1);
+        b += Level->V[S[::Blue]];
+        g += Level->V[S[::Green]];
+        r += Level->V[S[::Red]];
+        a += Level->V[S[::Alpha]];
+
+        Level = AlphaLevelLookup(w[3]);
+        S = Source->getPixelWrap(X+1, Y+1);    
+
+        (*Dest)[::Blue] = ClipByteHigh(b + Level->V[S[::Blue]]);
+        (*Dest)[::Green] = ClipByteHigh(g + Level->V[S[::Green]]);
+        (*Dest)[::Red] = ClipByteHigh(r + Level->V[S[::Red]]);
+        (*Dest)[::Alpha] = ClipByteHigh(a + Level->V[S[::Alpha]]);
+
+      } else {
+
+        *Dest = Source->getPixelWrap(X, Y);
+
+      }
+
+      Dest++;
+
+      X += XI;
+      Y += YI;
+      XW += XWI;
+      YW += YWI;
+    }
+    return;
+}
+
+void SampleRow_Linear_Wrap(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest) {
+int i;
+    X = X;
+    Y = Y;
+    XW = XW;
+    YW = YW;
+    for (i = 0; i < Count; i++) {
+      if (XW >= 65535) {
+        X += (XW / 65535);
+        XW = XW % 65535;
+      }
+      if (XW < 0) {
+        X -= ((-XW) / 65535) + 1;
+        XW = 65535 - (-XW % 65535);
+      }
+      if (YW >= 65535) {
+        Y += (YW / 65535);
+        YW = YW % 65535;
+      }
+      if (YW < 0) {
+        Y -= ((-YW) / 65535) + 1;
+        YW = 65535 - (-YW % 65535);
+      }
+
+      *Dest = Source->getPixelWrap(X, Y);
+      Dest++;
+
+      X += XI;
+      Y += YI;
+      XW += XWI;
+      YW += YWI;
+    }
+    return;
+}
+
 Export int GetBilinearScaler() {
   return (int)SampleRow_Bilinear_Rolloff;
 }
 
 Export int GetLinearScaler() {
   return (int)SampleRow_Linear_Rolloff;
+}
+
+Export int GetBilinearClampScaler() {
+  return (int)SampleRow_Bilinear;
+}
+
+Export int GetLinearClampScaler() {
+  return (int)SampleRow_Linear;
+}
+
+Export int GetBilinearWrapScaler() {
+  return (int)SampleRow_Bilinear_Wrap;
+}
+
+Export int GetLinearWrapScaler() {
+  return (int)SampleRow_Linear_Wrap;
 }

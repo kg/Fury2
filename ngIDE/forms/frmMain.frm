@@ -3,7 +3,7 @@ Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
 Object = "{4F11FEBA-BBC2-4FB6-A3D3-AA5B5BA087F4}#1.0#0"; "vbalSbar6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{EF59A10B-9BC4-11D3-8E24-44910FC10000}#11.0#0"; "vbalEdit.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#9.0#0"; "ngUI.ocx"
 Begin VB.MDIForm frmMain 
    AutoShowChildren=   0   'False
    BackColor       =   &H8000000C&
@@ -338,8 +338,8 @@ Option Explicit
 Implements iCustomMenuHandler
 
 Private Const WM_MDIGETACTIVE = &H229
-Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
-Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
+Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
 
 Private m_colNoticeQueue As Engine.Fury2Collection
 Private m_notNotice As cNotice
@@ -405,7 +405,7 @@ End Sub
 
 Private Function GetToolbarX(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
+Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0))) * Screen.TwipsPerPixelX
@@ -413,7 +413,7 @@ End Function
 
 Private Function GetToolbarY(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
+Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0))) * Screen.TwipsPerPixelY
@@ -482,7 +482,7 @@ Dim l_mgrForm As cChildManager
     l_mgrForm.Activate
 End Sub
 
-Public Sub CloseAllChildren(Optional ByVal Prompt As Boolean = True)
+Public Function CloseAllChildren(Optional ByVal Prompt As Boolean = True) As Boolean
 On Error Resume Next
 Dim l_lngForm As Long, l_mgrChild As cChildManager
 Dim l_sngScale As Single
@@ -494,10 +494,11 @@ Dim l_lngCount As Long
     If Prompt Then
         If l_lngCount > 0 Then
             Load frmSaveOpenDocuments
+            frmSaveOpenDocuments.Cancelled = False
             frmSaveOpenDocuments.Show vbModal, frmMain
             If frmSaveOpenDocuments.Cancelled Then
                 Unload frmSaveOpenDocuments
-                Exit Sub
+                Exit Function
             Else
                 Unload frmSaveOpenDocuments
             End If
@@ -523,7 +524,8 @@ Dim l_lngCount As Long
     SetProgress
     SetBusyState False
     Err.Clear
-End Sub
+    CloseAllChildren = True
+End Function
 
 Public Sub RefreshFileSidebar()
 On Error Resume Next
@@ -982,7 +984,7 @@ End Sub
 
 Private Sub sbStatus_DrawItem(ByVal lhDC As Long, ByVal iPanel As Long, ByVal lLeftPixels As Long, ByVal lTopPixels As Long, ByVal lRightPixels As Long, ByVal lBottomPixels As Long)
 On Error Resume Next
-Dim l_rctProgress As RECT
+Dim l_rctProgress As Rect
 Dim l_lngBrush As Long
     If LCase(sbStatus.PanelKey(iPanel)) = "progress" Then
         With l_rctProgress
@@ -1554,9 +1556,9 @@ Dim l_lngLeftSpace As Long, l_lngRightSpace As Long
 Dim l_lngTopSpace As Long, l_lngBottomSpace As Long
 Dim l_lngTextHeight As Long, l_lngTitleHeight As Long
 Dim l_lngWidth As Long, l_lngHeight As Long
-Dim l_rctWindow As Win32.RECT
+Dim l_rctWindow As Win32.Rect
 Dim l_lngWindowWidth As Long, l_lngWindowHeight As Long
-Dim l_rctTextSize As Win32.RECT, l_rctText As Win32.RECT
+Dim l_rctTextSize As Win32.Rect, l_rctText As Win32.Rect
 Dim l_sngCloseTime As Single
 Dim l_strWaitingNotices As String
     GetClientRect Me.hwnd, l_rctWindow

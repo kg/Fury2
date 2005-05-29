@@ -20,7 +20,7 @@
 			IntermediateDirectory=".\../../../binary/sys/temp"
 			ConfigurationType="2"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			ATLMinimizesCRunTimeLibraryUsage="false"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -37,8 +37,8 @@
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
 				TargetEnvironment="1"
 				TypeLibraryName=".\../../../binary/sys/SoftFX.tlb"
 				HeaderFileName=""
@@ -46,18 +46,17 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				GlobalOptimizations="FALSE"
 				PreprocessorDefinitions="WIN32;_WINDOWS;WIN32_LEAN_AND_MEAN;STRICT;ZLIB_DLL;MNG_USE_DLL;MNG_SKIP_LCMS;MNG_SKIP_IJG6B"
-				StringPooling="TRUE"
-				MinimalRebuild="TRUE"
+				StringPooling="true"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				SmallerTypeCheck="TRUE"
+				SmallerTypeCheck="true"
 				RuntimeLibrary="1"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="TRUE"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="0"
-				DefaultCharIsUnsigned="TRUE"
-				TreatWChar_tAsBuiltInType="TRUE"
+				DefaultCharIsUnsigned="true"
+				TreatWChar_tAsBuiltInType="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\../../../binary/sys/temp/SoftFX.pch"
 				AssemblerListingLocation=".\../../../binary/sys/temp/"
@@ -65,7 +64,7 @@
 				ProgramDataBaseFileName=".\../../../binary/sys/temp/"
 				BrowseInformation="1"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
 				CallingConvention="2"
 			/>
@@ -82,17 +81,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				IgnoreImportLibrary="TRUE"
+				IgnoreImportLibrary="true"
 				AdditionalDependencies="../../../libraries/lib/corona.lib"
 				OutputFile=".\../../../binary/sys/SoftFX.dll"
 				LinkIncremental="2"
-				SuppressStartupBanner="TRUE"
-				GenerateManifest="FALSE"
-				GenerateDebugInformation="TRUE"
+				SuppressStartupBanner="true"
+				GenerateManifest="false"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\../../../binary/sys/SoftFX.pdb"
-				GenerateMapFile="FALSE"
+				GenerateMapFile="false"
 				MapFileName=".\../../../binary/sys/temp/SoftFX.map"
-				TurnOffAssemblyGeneration="TRUE"
+				TurnOffAssemblyGeneration="true"
 				ImportLibrary=".\../../../binary/sys/SoftFX.lib"
 				TargetMachine="1"
 			/>
@@ -107,6 +106,9 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
@@ -125,7 +127,7 @@
 			IntermediateDirectory=".\../../../binary/sys/temp"
 			ConfigurationType="2"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			ATLMinimizesCRunTimeLibraryUsage="false"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -143,8 +145,8 @@
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
 				TargetEnvironment="1"
 				TypeLibraryName=".\../../../binary/sys/SoftFX.tlb"
 				HeaderFileName=""
@@ -152,25 +154,24 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
-				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="TRUE"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				OmitFramePointers="TRUE"
-				EnableFiberSafeOptimizations="TRUE"
+				OmitFramePointers="true"
+				EnableFiberSafeOptimizations="true"
 				PreprocessorDefinitions="WIN32;_WINDOWS;WIN32_LEAN_AND_MEAN;STRICT;ZLIB_DLL;MNG_USE_DLL;MNG_SKIP_LCMS;MNG_SKIP_IJG6B"
-				StringPooling="TRUE"
-				MinimalRebuild="TRUE"
+				StringPooling="true"
+				MinimalRebuild="true"
 				ExceptionHandling="1"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="0"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="FALSE"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="false"
 				EnableEnhancedInstructionSet="0"
 				FloatingPointModel="2"
-				DisableLanguageExtensions="FALSE"
-				DefaultCharIsUnsigned="TRUE"
-				TreatWChar_tAsBuiltInType="TRUE"
+				DisableLanguageExtensions="false"
+				DefaultCharIsUnsigned="true"
+				TreatWChar_tAsBuiltInType="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\../../../binary/sys/temp/SoftFX.pch"
 				AssemblerOutput="2"
@@ -179,7 +180,7 @@
 				ProgramDataBaseFileName=".\../../../binary/sys/temp/"
 				BrowseInformation="1"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CallingConvention="2"
 			/>
@@ -196,17 +197,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				RegisterOutput="FALSE"
-				IgnoreImportLibrary="TRUE"
+				RegisterOutput="false"
+				IgnoreImportLibrary="true"
 				AdditionalDependencies="../../../libraries/lib/corona.lib"
 				OutputFile=".\../../../binary/sys/SoftFX.dll"
 				LinkIncremental="2"
-				SuppressStartupBanner="TRUE"
-				GenerateManifest="FALSE"
+				SuppressStartupBanner="true"
+				GenerateManifest="false"
 				ProgramDatabaseFile=".\../../../binary/sys/SoftFX.pdb"
-				GenerateMapFile="FALSE"
+				GenerateMapFile="false"
 				MapFileName=".\../../../binary/sys/temp/SoftFX.map"
-				MapExports="FALSE"
+				MapExports="false"
 				OptimizeReferences="0"
 				EnableCOMDATFolding="0"
 				OptimizeForWindows98="2"
@@ -224,6 +225,9 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
@@ -242,7 +246,7 @@
 			IntermediateDirectory=".\../../../binary/sys/temp"
 			ConfigurationType="2"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			ATLMinimizesCRunTimeLibraryUsage="false"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -259,8 +263,8 @@
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
 				TargetEnvironment="1"
 				TypeLibraryName=".\../../../binary/sys/SoftFX.tlb"
 				HeaderFileName=""
@@ -268,25 +272,24 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				GlobalOptimizations="FALSE"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="TRUE"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				EnableFiberSafeOptimizations="FALSE"
-				WholeProgramOptimization="FALSE"
+				EnableFiberSafeOptimizations="false"
+				WholeProgramOptimization="false"
 				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;WIN32_LEAN_AND_MEAN;STRICT;JSFILE;ZLIB_DLL;MNG_USE_DLL;MNG_SKIP_LCMS;MNG_SKIP_IJG6B"
-				StringPooling="TRUE"
-				MinimalRebuild="TRUE"
+				StringPooling="true"
+				MinimalRebuild="true"
 				ExceptionHandling="1"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="0"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="FALSE"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="false"
 				EnableEnhancedInstructionSet="0"
 				FloatingPointModel="2"
-				DisableLanguageExtensions="FALSE"
-				DefaultCharIsUnsigned="TRUE"
-				TreatWChar_tAsBuiltInType="TRUE"
+				DisableLanguageExtensions="false"
+				DefaultCharIsUnsigned="true"
+				TreatWChar_tAsBuiltInType="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\../../../binary/sys/temp/SoftFX.pch"
 				AssemblerOutput="2"
@@ -295,7 +298,7 @@
 				ProgramDataBaseFileName=".\../../../binary/sys/"
 				BrowseInformation="1"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CallingConvention="2"
 			/>
@@ -312,27 +315,27 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				RegisterOutput="FALSE"
-				IgnoreImportLibrary="TRUE"
-				AdditionalOptions="/LTCG"
+				RegisterOutput="false"
+				IgnoreImportLibrary="true"
+				AdditionalOptions="/LTCG /PROFILE"
 				AdditionalDependencies="../../../libraries/lib/corona.lib"
 				ShowProgress="2"
 				OutputFile=".\../../../binary/sys/SoftFX.dll"
 				LinkIncremental="0"
-				SuppressStartupBanner="TRUE"
-				GenerateManifest="TRUE"
-				GenerateDebugInformation="TRUE"
+				SuppressStartupBanner="true"
+				GenerateManifest="true"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\../../../binary/sys/SoftFX.pdb"
-				GenerateMapFile="FALSE"
+				GenerateMapFile="false"
 				MapFileName=".\../../../binary/sys/temp/SoftFX.map"
-				MapExports="FALSE"
+				MapExports="false"
 				OptimizeReferences="0"
 				EnableCOMDATFolding="0"
 				OptimizeForWindows98="2"
-				TurnOffAssemblyGeneration="TRUE"
+				TurnOffAssemblyGeneration="true"
 				ImportLibrary=".\../../../binary/sys/SoftFX.lib"
 				TargetMachine="1"
-				Profile="FALSE"
+				Profile="false"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -345,6 +348,9 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
@@ -654,6 +660,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\module\memcpy_amd.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\module\Mesh.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\module\Override.cpp"
 				>
 			</File>
@@ -877,6 +891,10 @@
 			</File>
 			<File
 				RelativePath=".\header\LookupTable.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\header\memcpy_amd.hpp"
 				>
 			</File>
 			<File

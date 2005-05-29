@@ -36,10 +36,8 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 
 Implements Fury2Object
-Implements Fury2TrackedObject
 Implements IVirtualFileSaveable
 
-Private mvarRevision As Fury2RevisionData
 Private mvarMembers As Fury2Collection
 Public Money As Long
 Public Leader As Long
@@ -64,10 +62,6 @@ End Sub
 
 Public Property Get Engine() As Fury2Engine
     Set Engine = m_engEngine
-End Property
-
-Public Property Get Revision() As Fury2RevisionData
-    Set Revision = mvarRevision
 End Property
 
 Public Sub InitMap(ByVal Index As Long, ByVal StartX As Single, ByVal StartY As Single, ByVal Layer As Long)
@@ -165,15 +159,10 @@ End Property
 
 Private Sub Class_Initialize()
 On Error Resume Next
-    Set mvarRevision = New Fury2RevisionData
     Set mvarMembers = New Fury2Collection
     mvarMembers.Hook Me
     Leader = 1
 End Sub
-
-Private Property Get Fury2TrackedObject_Revision() As Fury2RevisionData
-    Set Fury2TrackedObject_Revision = mvarRevision
-End Property
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next

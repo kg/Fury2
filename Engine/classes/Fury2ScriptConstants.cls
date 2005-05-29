@@ -131,6 +131,21 @@ End Property
 Public Property Get ResampleMode_Bilinear() As Long
     ResampleMode_Bilinear = 2
 End Property
+Public Property Get ResampleMode_Bilinear_High_Quality() As Long
+    ResampleMode_Bilinear_High_Quality = 3
+End Property
+Public Property Get ResampleMode_Linear_Wrap() As Long
+    ResampleMode_Linear_Wrap = 4
+End Property
+Public Property Get ResampleMode_Bilinear_Wrap() As Long
+    ResampleMode_Bilinear_Wrap = 5
+End Property
+Public Property Get ResampleMode_Linear_Clamp() As Long
+    ResampleMode_Linear_Clamp = 6
+End Property
+Public Property Get ResampleMode_Bilinear_Clamp() As Long
+    ResampleMode_Bilinear_Clamp = 7
+End Property
 
 Public Property Get BlitMode_Default() As Long
     BlitMode_Default = -1

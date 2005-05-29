@@ -71,25 +71,28 @@ namespace GL {
     return newGroup->fillSpot(0, 0, width, height);
   }
 
-  Texture* createTexture(int width, int height) {
+  Texture* createTexture(int width, int height, bool enableCache) {
     if (width < 1) return 0;
     if (height < 1) return 0;
     endDraw();
     GLuint handle = 0;
-    if ((width <= SmallTextureSize) && (height <= SmallTextureSize)) {
-      Texture* tex = createSmallTexture(width, height);
-      if (tex) return tex;
+    if (enableCache) {
+      if ((width <= SmallTextureSize) && (height <= SmallTextureSize)) {
+        Texture* tex = createSmallTexture(width, height);
+        if (tex) return tex;
+      }
     }
     glGenTextures(1, &handle);
     selectTexture(handle);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    setScaleMode<ScaleModes::Linear>();
     int texWidth = powerOfTwo(width);
     int texHeight = powerOfTwo(height);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texWidth, texHeight, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, 0);
     return new Texture(handle, 0, 0, width, height, 1.0f / texWidth, 1.0f / texHeight);
+  }
+
+  Texture* createTexture(int width, int height) {
+    return createTexture(width, height, true);
   }
 
   void copyImageToImage(int from, int to) {
@@ -101,7 +104,7 @@ namespace GL {
       } else {
         // to image
         Texture* tex = getTexture(to);
-        if (tex == 0) tex = createTextureFromImage(to);
+        if (tex == 0) tex = createTextureFromImage(to, true);
         copyFramebufferToTexture(tex, to);
       }
     } else {
@@ -179,27 +182,31 @@ namespace GL {
     if (ptr == Null) return;
     selectTexture(tex->Handle);
     glTexSubImage2D(GL_TEXTURE_2D, 0, tex->Left, tex->Top, width, height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ptr);
+    if (tex->IsolatedTexture != 0) {
+      selectTexture(tex->IsolatedTexture->Handle);
+      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ptr);
+    }
     SoftFX::SetImageDirty(image, 0);
   }
 
-  Texture* createTextureFromImage(int image) {
+  Texture* createTextureFromImage(int image, bool enableCache) {
     int width = SoftFX::GetImageWidth(image);
     int height = SoftFX::GetImageHeight(image);
     if (width < 1) return 0;
     if (height < 1) return 0;
-    Texture* tex = createTexture(width, height);
+    Texture* tex = createTexture(width, height, enableCache);
     setNamedTag(image, Texture, tex);
     uploadImageToTexture(tex, image);
     Global->ImageHeap.push_back(image);
     return tex;
   }
 
-  Texture* createTextureFromFramebuffer(int image) {
+  Texture* createTextureFromFramebuffer(int image, bool enableCache) {
     int width = SoftFX::GetImageWidth(image);
     int height = SoftFX::GetImageHeight(image);
     if (width < 1) return 0;
     if (height < 1) return 0;
-    Texture* tex = createTexture(width, height);
+    Texture* tex = createTexture(width, height, enableCache);
     setNamedTag(image, Texture, tex);
     copyFramebufferToTexture(tex, image);
     Global->ImageHeap.push_back(image);
@@ -212,6 +219,10 @@ namespace GL {
 
   void selectImageAsTexture(int image) {
     selectImageAsTextureN<0>(image);
+  }
+
+  void selectImageAsIsolatedTexture(int image) {
+    selectImageAsIsolatedTextureN<0>(image);
   }
 
   void destroyTexture(GLuint handle) {
@@ -365,6 +376,14 @@ namespace GL {
     glVertex2f(X + W, Y + H);
     glTexCoord2f(U1, V2);
     glVertex2f(X, Y + H);
+  }
+
+  void drawTexturedLineF(float X1, float Y1, float X2, float Y2, float U1, float V1, float U2, float V2) {
+    beginDraw(GL_LINES);
+    glTexCoord2f(U1, V1);
+    glVertex2f(X1, Y1);
+    glTexCoord2f(U2, V2);
+    glVertex2f(X2, Y2);
   }
 
   void drawTexturedRectangleTiledF(float X, float Y, float W, float H, float SW, float SH, float U1, float V1, float U2, float V2) {

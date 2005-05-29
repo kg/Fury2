@@ -17,14 +17,16 @@ namespace GL {
   extern void flushImageHeap();
 
   extern Texture* createTexture(int width, int height);
-  extern Texture* createTextureFromImage(int image);
-  extern Texture* createTextureFromFramebuffer(int image);
+  extern Texture* createTexture(int width, int height, bool enableCache);
+  extern Texture* createTextureFromImage(int image, bool enableCache);
+  extern Texture* createTextureFromFramebuffer(int image, bool enableCache);
   extern void copyImageToImage(int from, int to);
   extern void copyImageToFramebuffer(int image);
   extern void copyFramebufferToImage(int image);
   extern void copyFramebufferToTexture(Texture *tex, int image);
   extern void uploadImageToTexture(Texture *tex, int image);
   extern void selectImageAsTexture(int image);
+  extern void selectImageAsIsolatedTexture(int image);
   extern void selectTexture(GLuint handle);
   extern void destroyTexture(GLuint handle);
 
@@ -55,6 +57,7 @@ namespace GL {
 
   extern void drawLine(FPoint& start, FPoint& end);
   extern void drawGradientLine(FPoint& start, FPoint& end, Pixel startColor, Pixel endColor);
+  extern void drawTexturedLineF(float X1, float Y1, float X2, float Y2, float U1, float V1, float U2, float V2);
   extern void drawRectangle(FX::Rectangle& rect);
   extern void drawGradientRectangle(FX::Rectangle& rect, Pixel colorTL, Pixel colorTR, Pixel colorBL, Pixel colorBR);
   extern void drawTexturedRectangle(FX::Rectangle& rect, float U1, float V1, float U2, float V2);
@@ -86,12 +89,12 @@ namespace GL {
       if (checkNamedTag(image, Context)) {
         // this is a context
         endDraw();
-        tex = createTextureFromFramebuffer(image);
+        tex = createTextureFromFramebuffer(image, false);
         if (tex) handle = tex->Handle;
       } else {
         // this is an image
         endDraw();
-        tex = createTextureFromImage(image);
+        tex = createTextureFromImage(image, true);
         if (tex) handle = tex->Handle;
       }
     } else {
@@ -108,6 +111,59 @@ namespace GL {
           // this image's texture is out of sync with system memory
           endDraw();
           uploadImageToTexture(tex, image);
+        }
+      }
+    }
+    selectTextureN<Stage>(handle);
+  }
+
+  template <int Stage> void selectImageAsIsolatedTextureN(int image) {
+    switchTextureStage<Stage>();
+    Texture* tex = 0;
+    GLuint handle = 0;
+    tex = getTexture(image);
+    if (tex) {
+      if (tex->IsolatedTexture) {
+        handle = tex->IsolatedTexture->Handle;
+      } else {
+        handle = tex->Handle;
+      }
+    }
+    if (handle == 0) {
+      if (checkNamedTag(image, Context)) {
+        // this is a context
+        endDraw();
+        tex = createTextureFromFramebuffer(image, false);
+        if (tex) handle = tex->Handle;
+      } else {
+        // this is an image
+        endDraw();
+        tex = createTextureFromImage(image, false);
+        if (tex) handle = tex->Handle;
+      }
+    } else {
+      if (checkNamedTag(image, Context)) {
+        // this is a context
+        if (SoftFX::GetImageDirty(image)) {
+          // the texture is out of sync with the framebuffer
+          endDraw();
+          copyFramebufferToTexture(tex, image);
+        }
+      } else {
+        // this is an image
+        if ((tex->IsolatedTexture == 0) && (tex->Owner == false)) {
+          tex->IsolatedTexture = createTextureFromImage(image, false);
+          SoftFX::SetImageDirty(image, 1);
+        }
+        if (SoftFX::GetImageDirty(image)) {
+          // this image's texture is out of sync with system memory
+          endDraw();
+          uploadImageToTexture(tex, image);
+        }
+        if (tex->Owner) {
+          handle = tex->Handle;
+        } else {
+          handle = tex->IsolatedTexture->Handle;
         }
       }
     }

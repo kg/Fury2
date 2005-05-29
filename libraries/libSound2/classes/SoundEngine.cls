@@ -105,7 +105,7 @@ Dim m_lngItems As Long
     Next m_lngItems
 End Function
 
-Public Function Load(ByVal Filename As String) As Sound
+Public Function Load(ByVal Filename As String, Optional ByRef soundtype As String = "Stream") As Sound
 On Error Resume Next
 Dim l_lngHandle As Long
 Dim l_sndSound As Sound
@@ -146,7 +146,13 @@ Dim l_strFilename As String
                         Exit Function
                     End If
                 Next l_sndSound
-                Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_2D Or FMOD_CREATESTREAM, ByVal 0, l_lngHandle)
+                Select Case LCase(Trim(soundtype))
+                Case "stream"
+                    Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_2D Or FMOD_CREATESTREAM, ByVal 0, l_lngHandle)
+                Case "sample"
+                    Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_2D Or FMOD_CREATESAMPLE, ByVal 0, l_lngHandle)
+                Case Else
+                End Select
                 If l_lngHandle Then
                     Set l_sndSound = New Sound
                     l_sndSound.Init Me, l_lngHandle, Filename

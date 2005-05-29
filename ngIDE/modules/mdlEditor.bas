@@ -163,13 +163,14 @@ Dim l_strDocs As String
         Next l_docDocument
         mdlRegistry.WriteRegSetting "Previous Documents", l_strDocs
     End If
-    frmMain.CloseAllChildren g_edEditor.Options.PromptSaveWhenClosing
-    SetBusyState True
-    SetStatus "Shutting Down"
-    Load frmTerminate
-    frmTerminate.Show
-    frmTerminate.tmrKill.Enabled = True
-    SetBusyState False
+    If frmMain.CloseAllChildren(g_edEditor.Options.PromptSaveWhenClosing) Then
+        SetBusyState True
+        SetStatus "Shutting Down"
+        Load frmTerminate
+        frmTerminate.Show
+        frmTerminate.tmrKill.Enabled = True
+        SetBusyState False
+    End If
 End Sub
 
 Public Function InIDE() As Boolean

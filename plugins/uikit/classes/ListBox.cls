@@ -212,7 +212,6 @@ End Sub
 Private Sub iWidget_MouseDown(ByVal Parent As iContainer, ByVal Button As Long, ByVal Shift As Long, X As Long, Y As Long)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect, l_rctItem As Fury2Rect
-Dim l_rctOld As Fury2Rect
 Dim l_staState As SkinState
 Dim l_lngHeight As Long, l_itmItem As Object, l_lngItem As Long, l_lngY As Long, l_lngItemHeight As Long
 Dim l_lngWidth As Long
@@ -316,7 +315,7 @@ End Sub
 Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect, l_rctItem As Fury2Rect
-Dim l_rctOld As Fury2Rect
+
 Dim l_staState As SkinState
 Dim l_lngHeight As Long, l_itmItem As Object, l_lngItem As Long, l_lngY As Long, l_lngItemHeight As Long
 Dim l_lngWidth As Long
@@ -331,7 +330,6 @@ Dim l_lngWidth As Long
     End If
     l_lngY = -ScrollOffset
     With Surface
-        Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
         Set l_rctItem = l_rctNew.Copy
         m_sbrScrollbar.Visible = (m_lngTotalHeight > Rectangle.Height)
@@ -348,7 +346,7 @@ Dim l_lngWidth As Long
         End If
         l_rctItem.Width = l_lngWidth
         m_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
-        .ClippedSetClipRectangle l_rctNew
+        .PushClipRectangle l_rctNew
         l_lngItem = 1
         For Each l_itmItem In m_colItems
             l_rctItem.Top = l_lngY + l_rctNew.Top
@@ -376,7 +374,7 @@ Dim l_lngWidth As Long
             Rectangle.Height = l_lngHeight
         End If
         m_lngTotalHeight = l_lngHeight
-        Set .ClipRectangle = l_rctOld
+        .PopClipRectangle
         If (m_sbrScrollbar.Visible) Then
             ' Dirty hack
             m_sbrScrollbar.Widget.Redraw Nothing, Surface, XOffset + Rectangle.Left, YOffset + Rectangle.Top, Opacity

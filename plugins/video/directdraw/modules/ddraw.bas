@@ -9,12 +9,21 @@ Global m_ddsFlip As DirectDrawSurface7
 Global m_sdScreen As DDSURFACEDESC2
 Global m_lngHWnd As Long
 
-Public Sub DDInitScreen(Optional ByVal Fullscreen As Boolean = False, Optional ByVal Width As Long = 0, Optional ByVal Height As Long = 0, Optional ByVal BitDepth As Long = 32, Optional ByVal HardwareFlip As Boolean = False)
+Public Sub DDInitScreen(Optional ByVal Fullscreen As Boolean = False, Optional ByVal Width As Long = 0, Optional ByVal Height As Long = 0, Optional ByVal HardwareFlip As Boolean = False)
 On Error Resume Next
 Dim l_sdDesc As DDSURFACEDESC2
     If Fullscreen Then
         m_DD7.SetCooperativeLevel m_lngHWnd, DDSCL_EXCLUSIVE Or DDSCL_FULLSCREEN
-        m_DD7.SetDisplayMode Width, Height, BitDepth, 0, DDSDM_DEFAULT
+        Err.Clear
+        m_DD7.SetDisplayMode Width, Height, 32, 0, DDSDM_DEFAULT
+        If Err.Number = DDERR_UNSUPPORTEDMODE Or Err.Number = DDERR_INVALIDMODE Then
+            Err.Clear
+            m_DD7.SetDisplayMode Width, Height, 24, 0, DDSDM_DEFAULT
+            If Err.Number = DDERR_UNSUPPORTEDMODE Or Err.Number = DDERR_INVALIDMODE Then
+                Err.Clear
+                m_DD7.SetDisplayMode Width, Height, 16, 0, DDSDM_DEFAULT
+            End If
+        End If
     Else
         m_DD7.SetCooperativeLevel m_lngHWnd, DDSCL_NORMAL
     End If

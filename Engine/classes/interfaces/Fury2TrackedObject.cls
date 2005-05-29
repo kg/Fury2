@@ -34,8 +34,3 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 '
 
 Option Explicit
-
-Private mvarRevision As Fury2RevisionData
-
-Public Property Get Revision() As Fury2RevisionData
-End Property

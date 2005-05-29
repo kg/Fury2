@@ -16,33 +16,25 @@ Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
 Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Attribute VB_Ext_KEY = "Member0" ,"GFXSurface"
 Option Explicit
+Implements Fury2VideoDriver
 Private Declare Function SetWindowPos Lib "user32" (ByVal HWND As Long, ByVal hWndInsertAfter As Long, ByVal x As Long, ByVal y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
 Private Declare Function ShowCursor Lib "user32" (ByVal bShow As Long) As Long
 Private Const SWP_NOMOVE As Long = 2
 Private Const SWP_NOSIZE As Long = 1
 Private Const HWND_TOPMOST As Long = -1
 Private Const HWND_NOTOPMOST As Long = -2
-Dim WithEvents m_OutForm As Form
+Private WithEvents m_OutForm As Form
 Attribute m_OutForm.VB_VarHelpID = -1
-Dim m_Closed As Boolean
-Dim m_DX7 As DirectX7
-Dim m_DD7 As DirectDraw7
-Public Event DblClick()
-Public Event MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
-Public Event MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
-Public Event MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
-Public Event KeyDown(KeyCode As Integer, Shift As Integer)
-Public Event KeyUp(KeyCode As Integer, Shift As Integer)
-Public Event Closed()
-Public Event Resize()
-Public Event Paint()
+Private m_booClosed As Boolean
+Private m_DX7 As DirectX7
+Private m_DD7 As DirectDraw7
 Private m_booError As Boolean
 Private m_booEnabled As Boolean
 Private m_booFullscreen As Boolean
-Private m_Hooked As Object
+Private m_objHooked As Fury2VideoEventSink
 Private m_lngWidth As Long, m_lngHeight As Long, m_lngBPP As Long
-Public ScaleRatio As Single
-Public Backbuffer As Fury2Image
+Private m_sngScaleRatio As Single
+Private m_imgBackbuffer As Fury2Image
 
 Private Sub SetFormSize(ByRef Frm As Form, x As Long, y As Long, Optional ByVal Center As Boolean = False)
 On Error Resume Next
@@ -59,37 +51,54 @@ Dim BW As Long, TH As Long, OldMode As Long
     Frm.ScaleMode = OldMode
 End Sub
 
-Public Function CreateImage(ByVal Width As Long, ByVal Height As Long) As Fury2Image
+Private Property Get Fury2VideoDriver_Backbuffer() As libGraphics.Fury2Image
+    Set Fury2VideoDriver_Backbuffer = m_imgBackbuffer
+End Property
+
+Public Function Fury2VideoDriver_CreateImage(ByVal Width As Long, ByVal Height As Long) As libGraphics.Fury2Image
 On Error Resume Next
-    Set CreateImage = F2Image(Width, Height)
+    Set Fury2VideoDriver_CreateImage = F2Image(Width, Height)
 '    Set CreateImage = CreateContext(m_OutForm.hDC, Width, Height)
 End Function
 
-Private Sub InitBackbuffer()
+Friend Sub InitBackbuffer()
 On Error Resume Next
     If m_booError Then Exit Sub
     If Not m_booEnabled Then Exit Sub
     GLSetOutputSize m_OutForm.ScaleWidth, m_OutForm.ScaleHeight
     GLInstallAllocateHook
-    If Backbuffer Is Nothing Then
-        Set Backbuffer = F2Image(m_lngWidth, m_lngHeight)
+    If m_imgBackbuffer Is Nothing Then
+        Set m_imgBackbuffer = F2Image(m_lngWidth, m_lngHeight)
     Else
-        Backbuffer.Unsize
-        Backbuffer.Resize m_lngWidth, m_lngHeight
+        m_imgBackbuffer.Unsize
+        m_imgBackbuffer.Resize m_lngWidth, m_lngHeight
     End If
     GLUninstallAllocateHook
-    SetImageLocked Backbuffer.Handle, 1
-    Backbuffer.Clear
-'    Set Backbuffer = CreateContext(m_OutForm.HDC, m_lngWidth, m_lngHeight)
+    SetImageLocked m_imgBackbuffer.Handle, 1
+    m_imgBackbuffer.Clear
+'    Set m_imgBackbuffer = CreateContext(m_OutForm.HDC, m_lngWidth, m_lngHeight)
 End Sub
 
-Private Sub DestroyBackbuffer()
+Friend Sub DestroyBackbuffer()
 On Error Resume Next
-    Set Backbuffer = Nothing
+    Set m_imgBackbuffer = Nothing
 End Sub
 
-Public Sub SetCaption(Text As String)
-    If Fullscreen Then
+Private Sub Fury2VideoDriver_HookEvents(ByVal Obj As libVideo.Fury2VideoEventSink)
+    Set m_objHooked = Obj
+End Sub
+
+Private Property Let Fury2VideoDriver_ScaleRatio(ByVal RHS As Single)
+    m_sngScaleRatio = RHS
+End Property
+
+Private Property Get Fury2VideoDriver_ScaleRatio() As Single
+    Fury2VideoDriver_ScaleRatio = m_sngScaleRatio
+End Property
+
+Public Sub Fury2VideoDriver_SetCaption(ByRef Text As String)
+On Error Resume Next
+    If m_booFullscreen Then
         If m_OutForm.Caption <> "" Then
             m_OutForm.Caption = ""
             SetWindowText m_OutForm.HWND, Text
@@ -99,90 +108,78 @@ Public Sub SetCaption(Text As String)
     End If
 End Sub
 
-Public Property Get SupportsGamma() As Boolean
-    SupportsGamma = False
-End Property
-
-Public Property Let Fullscreen(NewValue As Boolean)
+Friend Sub SetFullscreen(ByVal RHS As Boolean)
 On Error Resume Next
-    If NewValue = m_booFullscreen Then
+    If RHS = m_booFullscreen Then
     Else
-        m_booFullscreen = NewValue
-        If NewValue Then
+        m_booFullscreen = RHS
+        If RHS Then
             m_OutForm.Caption = ""
             m_DD7.SetCooperativeLevel m_OutForm.HWND, DDSCL_FULLSCREEN Or DDSCL_EXCLUSIVE
             Err.Clear
-            m_DD7.SetDisplayMode m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, 32, 0, DDSDM_DEFAULT
-            If Err.Number = DDERR_INVALIDMODE Then
+            m_DD7.SetDisplayMode m_lngWidth * m_sngScaleRatio, m_lngHeight * m_sngScaleRatio, 32, 0, DDSDM_DEFAULT
+            If Err.Number = DDERR_INVALIDMODE Or Err.Number = DDERR_UNSUPPORTEDMODE Then
                 Err.Clear
-                m_DD7.SetDisplayMode m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, 24, 0, DDSDM_DEFAULT
-                If Err.Number = DDERR_INVALIDMODE Then
+                m_DD7.SetDisplayMode m_lngWidth * m_sngScaleRatio, m_lngHeight * m_sngScaleRatio, 24, 0, DDSDM_DEFAULT
+                If Err.Number = DDERR_INVALIDMODE Or Err.Number = DDERR_UNSUPPORTEDMODE Then
                     Err.Clear
-                    m_DD7.SetDisplayMode m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, 16, 0, DDSDM_DEFAULT
-                    If Err.Number = DDERR_INVALIDMODE Then
+                    m_DD7.SetDisplayMode m_lngWidth * m_sngScaleRatio, m_lngHeight * m_sngScaleRatio, 16, 0, DDSDM_DEFAULT
+                    If Err.Number = DDERR_INVALIDMODE Or Err.Number = DDERR_UNSUPPORTEDMODE Then
                         Err.Clear
                         m_booFullscreen = False
                         m_DD7.RestoreDisplayMode
                         m_DD7.SetCooperativeLevel m_OutForm.HWND, DDSCL_NORMAL
-                        Exit Property
+                        Exit Sub
                     End If
                 End If
             End If
-            SetWindowPos m_OutForm.HWND, HWND_TOPMOST, 0, 0, m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, 0
+            SetWindowPos m_OutForm.HWND, HWND_TOPMOST, 0, 0, m_lngWidth * m_sngScaleRatio, m_lngHeight * m_sngScaleRatio, 0
             Reallocate
         Else
-            SetWindowPos m_OutForm.HWND, HWND_NOTOPMOST, 0, 0, m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, 0
+            SetWindowPos m_OutForm.HWND, HWND_NOTOPMOST, 0, 0, m_lngWidth * m_sngScaleRatio, m_lngHeight * m_sngScaleRatio, 0
             m_DD7.RestoreDisplayMode
             m_DD7.SetCooperativeLevel m_OutForm.HWND, DDSCL_NORMAL
-            SetFormSize m_OutForm, m_lngWidth * ScaleRatio, m_lngHeight * ScaleRatio, True
+            SetFormSize m_OutForm, m_lngWidth * m_sngScaleRatio, m_lngHeight * m_sngScaleRatio, True
             Reallocate
         End If
     End If
-End Property
-
-Public Property Get Fullscreen() As Boolean
-    Fullscreen = m_booFullscreen
-End Property
-
-Public Sub HookEvents(Obj As Object)
-    Set m_Hooked = Obj
 End Sub
 
-Public Property Get Window() As Object
-    Set Window = m_OutForm
+Public Property Get Fury2VideoDriver_Fullscreen() As Boolean
+    Fury2VideoDriver_Fullscreen = m_booFullscreen
 End Property
 
-Public Property Let Closed(NewClosed As Boolean)
-    m_Closed = NewClosed
+Public Property Get Fury2VideoDriver_Window() As Object
+    Set Fury2VideoDriver_Window = m_OutForm
 End Property
 
-Public Property Get Closed() As Boolean
-    Closed = m_Closed
+Public Property Get Fury2VideoDriver_Closed() As Boolean
+    Fury2VideoDriver_Closed = m_booClosed
 End Property
 
-Public Sub Shutdown()
+Public Sub Fury2VideoDriver_Shutdown()
 On Error Resume Next
-    m_Closed = True
+    m_booClosed = True
     Unload m_OutForm
 End Sub
 
-Public Sub ResizeWindow(ByVal XSize As Long, ByVal YSize As Long)
+Public Sub Fury2VideoDriver_ResizeWindow(ByVal XSize As Long, ByVal YSize As Long)
 On Error Resume Next
-    SetFormSize m_OutForm, XSize * ScaleRatio, YSize * ScaleRatio, True
+    SetFormSize m_OutForm, XSize * m_sngScaleRatio, YSize * m_sngScaleRatio, True
     Reallocate
 End Sub
 
-Public Sub Init(ByVal XRes As Long, ByVal YRes As Long, ByVal BPP As Long, ByVal Caption As String, Optional ByVal Windowed As Boolean = False, Optional ByVal ScreenX = 0, Optional ByVal ScreenY = 0, Optional ByVal Window As Long = 0)
+Public Sub Fury2VideoDriver_Init(ByVal XRes As Long, ByVal YRes As Long, ByRef Caption As String, Optional ByVal Windowed As Boolean = False)
 On Error Resume Next
-'    If F2Initialized = False Then
-'        Exit Sub
-'    End If
+    If F2Initialized = False Then
+        Exit Sub
+    End If
     Set m_OutForm = New frmOpenGL
     Load m_OutForm
     m_OutForm.Caption = Caption
     m_lngWidth = XRes
     m_lngHeight = YRes
-    SetFormSize m_OutForm, XRes * ScaleRatio, YRes * ScaleRatio
+    SetFormSize m_OutForm, XRes * m_sngScaleRatio, YRes * m_sngScaleRatio
     m_OutForm.Show
     Err.Clear
     GLInit m_OutForm.HWND, m_OutForm.HDC
@@ -192,25 +189,26 @@ On Error Resume Next
         Exit Sub
     End If
     m_booEnabled = True
+    m_booClosed = False
     Reallocate
-    Fullscreen = Not Windowed
+    SetFullscreen Not Windowed
 End Sub
 
-Public Sub Flip()
+Private Sub Fury2VideoDriver_Flip()
 On Error Resume Next
-    If m_Closed Then Exit Sub
+    If m_booClosed Then Exit Sub
     If Not m_booEnabled Then Exit Sub
     GLFlip ' m_OutForm.HDC
 End Sub
 
-Public Sub GoFullscreen()
+Public Sub Fury2VideoDriver_GoFullscreen()
 On Error Resume Next
-    Fullscreen = True
+    SetFullscreen True
 End Sub
 
-Public Sub GoWindowed()
+Public Sub Fury2VideoDriver_GoWindowed()
 On Error Resume Next
-    Fullscreen = False
+    SetFullscreen False
 End Sub
 
 Public Sub Free()
@@ -218,6 +216,7 @@ Public Sub Free()
 End Sub
 
 Public Sub Reallocate()
+    If m_OutForm.WindowState = 1 Then Exit Sub
     InitBackbuffer
 End Sub
 
@@ -227,7 +226,7 @@ On Error Resume Next
     Set m_DX7 = New DirectX7
     Set m_DD7 = m_DX7.DirectDrawCreate("")
     F2Init
-    ScaleRatio = 1
+    m_sngScaleRatio = 1
     'InitOpenGLOverride
 End Sub
 
@@ -238,49 +237,49 @@ End Sub
 
 Private Sub m_OutForm_DblClick()
 On Error Resume Next
-    m_Hooked.GFXEngine_DblClick
+    m_objHooked.DblClick
 End Sub
 
 Private Sub m_OutForm_KeyDown(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
     If KeyCode = vbKeyF4 And Shift = vbAltMask Then
         m_OutForm.Hide
-        m_Closed = True
+        m_booClosed = True
     ElseIf KeyCode = vbKeyReturn And Shift = vbAltMask Then
-        Fullscreen = Not Fullscreen
+        SetFullscreen Not m_booFullscreen
     Else
-        m_Hooked.GFXEngine_KeyDown KeyCode, Shift
+        m_objHooked.KeyDown KeyCode, Shift
     End If
 End Sub
 
 Private Sub m_OutForm_KeyPress(KeyAscii As Integer)
 On Error Resume Next
-    m_Hooked.GFXEngine_KeyPress KeyAscii
+    m_objHooked.KeyPress KeyAscii
 End Sub
 
 Private Sub m_OutForm_KeyUp(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
-    m_Hooked.GFXEngine_KeyUp KeyCode, Shift
+    m_objHooked.KeyUp KeyCode, Shift
 End Sub
 
 Private Sub m_OutForm_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    m_Hooked.GFXEngine_MouseDown Button, Shift, x, y
+    m_objHooked.MouseDown Button, Shift, x, y
 End Sub
 
 Private Sub m_OutForm_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    m_Hooked.GFXEngine_MouseMove Button, Shift, x, y
+    m_objHooked.MouseMove Button, Shift, x, y
 End Sub
 
 Private Sub m_OutForm_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    m_Hooked.GFXEngine_MouseUp Button, Shift, x, y
+    m_objHooked.MouseUp Button, Shift, x, y
 End Sub
 
 Private Sub m_OutForm_Paint()
 On Error Resume Next
-    m_Hooked.GFXEngine_Paint
+    m_objHooked.Paint
 End Sub
 
 Private Sub m_OutForm_QueryUnload(Cancel As Integer, UnloadMode As Integer)
@@ -288,31 +287,31 @@ On Error Resume Next
     If UnloadMode = 1 Or UnloadMode = 5 Then
     Else
         GLShutdown
-        Shutdown
-        m_Hooked.GFXEngine_Closed
-        m_Closed = True
+        Fury2VideoDriver_Shutdown
+        m_objHooked.Closed
+        m_booClosed = True
     End If
 End Sub
 
 Private Sub m_OutForm_Resize()
 On Error Resume Next
 Static l_lngState As Long
-    If (l_lngState <> m_OutForm.WindowState) Or (m_OutForm.ScaleWidth <> (m_lngWidth * ScaleRatio)) Or (m_OutForm.ScaleHeight <> (m_lngHeight * ScaleRatio)) Then
+    If (l_lngState <> m_OutForm.WindowState) Or (m_OutForm.ScaleWidth <> (m_lngWidth * m_sngScaleRatio)) Or (m_OutForm.ScaleHeight <> (m_lngHeight * m_sngScaleRatio)) Then
         l_lngState = m_OutForm.WindowState
         Reallocate
         GLFlip ' m_OutForm.HDC
     End If
-    m_Hooked.GFXEngine_Resize
+    m_objHooked.Resize
 End Sub
 
-Public Property Get MouseVisible() As Boolean
+Public Property Get Fury2VideoDriver_MouseVisible() As Boolean
 On Error Resume Next
-    MouseVisible = m_OutForm.MousePointer = 0
+    Fury2VideoDriver_MouseVisible = m_OutForm.MousePointer = 0
 End Property
 
-Public Property Let MouseVisible(ByVal NewValue As Boolean)
+Public Property Let Fury2VideoDriver_MouseVisible(ByVal NewValue As Boolean)
 On Error Resume Next
-    If Fullscreen Then
+    If m_booFullscreen Then
         If m_OutForm.MousePointer <> IIf(NewValue, 0, 99) Then
             ShowCursor Abs(NewValue)
         End If

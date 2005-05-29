@@ -211,9 +211,14 @@ void Image::resample(Image* Target, int Width, int Height, ResampleModes Resampl
   case 0:
     break;
   case ResampleMode_Linear:
+  case ResampleMode_Linear_Wrap:
+  case ResampleMode_Linear_Clamp:
     ::ResampleImage_Linear(this, Target);
     break;
   case ResampleMode_Bilinear:
+  case ResampleMode_Bilinear_Wrap:
+  case ResampleMode_Bilinear_Clamp:
+  case ResampleMode_Bilinear_High_Quality:
     if ((Width == (this->Width / 2)) && (Height == (this->Height / 2))) {
       ::ResampleImage_Half(this, Target);
     } else if ((Width == (this->Width * 2)) && (Height == (this->Height * 2))) {
@@ -221,19 +226,6 @@ void Image::resample(Image* Target, int Width, int Height, ResampleModes Resampl
     } else {
       ::ResampleImage_Bilinear(this, Target);
     } 
-    break;
-  case ResampleMode_Bilinear_High_Quality:
-    // Covers not implemented
-    ::ResampleImage_Bilinear(this, Target);
-    break;
-  case ResampleMode_Bicubic:
-    // Bicubic not implemented
-    break;
-  case ResampleMode_Gaussian:
-    // Gaussian not implemented
-    break;
-  case ResampleMode_2xSaI:
-    // 2xSaI not implemented
     break;
   }
   return;

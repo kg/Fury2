@@ -35,6 +35,8 @@ Attribute VB_Ext_KEY = "Member0" ,"SoundEngine"
 '
 
 Option Explicit
+Implements Fury2Object
+Implements Fury2VideoEventSink
 
 Private Declare Function GetForegroundWindow Lib "user32" () As Long
 
@@ -224,7 +226,8 @@ Private m_imgBackbuffer As Fury2Image
 
 Private m_booENetInitialized As Boolean
 
-Private m_objOutputPlugin As Object
+Private m_objVideoDriver As Object
+Private m_objOutputPlugin As Fury2VideoDriver
 Public OutputPlugin As String, VSync As Boolean
 Attribute OutputPlugin.VB_VarDescription = "The name of the output plugin."
 
@@ -854,7 +857,7 @@ On Error Resume Next
     Err.Clear
 End Property
 
-Public Function BindEvent(ByRef Method, Optional Object = Nothing, Optional BindParameters As Variant = Nothing) As Fury2Event
+Public Function BindEvent(ByRef Method, Optional ByVal Object = Nothing, Optional ByRef BindParameters As Variant = Nothing) As Fury2Event
 On Error Resume Next
     If VarType(Method) = vbString Then
         If Len(Trim(ToString(Method))) = 0 Then Exit Function
@@ -1160,7 +1163,8 @@ Public Sub ConsoleCommand(ByRef Command As String)
 On Error Resume Next
     If left(Trim(Command), 1) = "?" Then
         Err.Clear
-        ScriptEngine.AddCode ScriptEngine.Language.GenerateSubCall("TextOut", ScriptEngine.Language.GenerateFunctionCall("ToString", Mid(Command, 2) & ", true"))
+'        TextOut ScriptEngine.Language.GenerateSubCall("Engine" & ScriptEngine.Language.MethodOperator & "TextOut", ScriptEngine.Language.GenerateFunctionCall("Engine" & ScriptEngine.Language.MethodOperator & "ToString", Mid(Command, 2) & ", 1"))
+        ScriptEngine.AddCode ScriptEngine.Language.GenerateSubCall("TextOut", Mid(Command, 2))
     Else
         Err.Clear
         ScriptEngine.AddCode Command
@@ -2209,11 +2213,11 @@ Public Sub FlipScreen()
 Attribute FlipScreen.VB_Description = "Forces the engine to copy the backbuffer to the screen."
 On Error Resume Next
     If Running Then Else Exit Sub
-    If m_objOutputPlugin.Closed Then GFXEngine_Closed
+    If m_objOutputPlugin.Closed Then Fury2VideoEventSink_Closed
     If m_objOutputPlugin.Window.WindowState = 1 Then
     Else
         If Running Then
-            m_objOutputPlugin.VSync = VSync
+            ' m_objOutputPlugin.VSync = VSync
             If MouseCursor Is Nothing Then
             Else
                 If (m_imgMouseBuffer.Width <> MouseCursor.Width) Or (m_imgMouseBuffer.Height <> MouseCursor.Height) Then
@@ -2545,8 +2549,8 @@ On Error Resume Next
     Set GFXEngine = m_objOutputPlugin
 End Property
 
-Public Sub GFXEngine_Closed()
-Attribute GFXEngine_Closed.VB_MemberFlags = "40"
+Public Sub Fury2VideoEventSink_Closed()
+Attribute Fury2VideoEventSink_Closed.VB_MemberFlags = "40"
 On Error Resume Next
     If Running = True Then
         Running = False
@@ -2555,22 +2559,27 @@ On Error Resume Next
     TerminateEngine = True
 End Sub
 
-Public Sub GFXEngine_DblClick()
+Public Sub Fury2VideoEventSink_DblClick()
 On Error Resume Next
     If Not (MouseDblClickHook Is Nothing) Then
         MouseDblClickHook.Invoke g_lngMouseX, g_lngMouseY
     End If
 End Sub
 
-Public Sub GFXEngine_GotFocus()
+Public Sub Fury2VideoEventSink_GotFocus()
 On Error Resume Next
     If Not GotFocusHook Is Nothing Then
         GotFocusHook.Invoke
     End If
 End Sub
 
-Public Sub GFXEngine_KeyDown(ByVal KeyCode As Integer, ByVal Shift As Integer, Optional ByVal Force As Boolean = False)
-Attribute GFXEngine_KeyDown.VB_MemberFlags = "40"
+Private Sub Fury2VideoEventSink_KeyDown(ByVal KeyCode As Integer, ByVal Shift As Integer)
+On Error Resume Next
+    Fury2VideoEventSink_KeyDown2 KeyCode, Shift
+End Sub
+
+Public Sub Fury2VideoEventSink_KeyDown2(ByVal KeyCode As Integer, ByVal Shift As Integer, Optional ByVal Force As Boolean = False)
+Attribute Fury2VideoEventSink_KeyDown2.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_lngType As Long
 Dim l_evtBinding As Fury2Event, l_booActive As Boolean
@@ -2663,7 +2672,12 @@ Dim l_evtBinding As Fury2Event, l_booActive As Boolean
     End If
 End Sub
 
-Public Sub GFXEngine_KeyPress(ByVal KeyAscii As Integer, Optional ByVal Force As Boolean = False)
+Private Sub Fury2VideoEventSink_KeyPress(ByVal KeyAscii As Integer)
+On Error Resume Next
+    Fury2VideoEventSink_KeyPress2 KeyAscii
+End Sub
+
+Public Sub Fury2VideoEventSink_KeyPress2(ByVal KeyAscii As Integer, Optional ByVal Force As Boolean = False)
 On Error Resume Next
 Dim l_strInput As String
 Dim l_strBuffer As String
@@ -2733,22 +2747,32 @@ Dim l_strTemp As String
     End If
 End Sub
 
-Public Sub GFXEngine_KeyUp(ByVal KeyCode As Integer, ByVal Shift As Integer, Optional ByVal Force As Boolean = False)
-Attribute GFXEngine_KeyUp.VB_MemberFlags = "40"
+Private Sub Fury2VideoEventSink_KeyUp(ByVal KeyCode As Integer, ByVal Shift As Integer)
+On Error Resume Next
+    Fury2VideoEventSink_KeyUp2 KeyCode, Shift
+End Sub
+
+Public Sub Fury2VideoEventSink_KeyUp2(ByVal KeyCode As Integer, ByVal Shift As Integer, Optional ByVal Force As Boolean = False)
+Attribute Fury2VideoEventSink_KeyUp2.VB_MemberFlags = "40"
 On Error Resume Next
     If DisableUserInput Then Exit Sub
     QueueEvent 1, , , CLng(KeyCode), CLng(Shift)
 End Sub
 
-Public Sub GFXEngine_LostFocus()
+Public Sub Fury2VideoEventSink_LostFocus()
 On Error Resume Next
     If Not LostFocusHook Is Nothing Then
         LostFocusHook.Invoke
     End If
 End Sub
 
-Public Sub GFXEngine_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single, Optional ByVal Force As Boolean = False)
-Attribute GFXEngine_MouseDown.VB_MemberFlags = "40"
+Private Sub Fury2VideoEventSink_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+On Error Resume Next
+    Fury2VideoEventSink_MouseDown2 Button, Shift, X, Y
+End Sub
+
+Public Sub Fury2VideoEventSink_MouseDown2(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single, Optional ByVal Force As Boolean = False)
+Attribute Fury2VideoEventSink_MouseDown2.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_lngX As Long, m_lngY As Long
     If (DisableUserInput) And (Not Force) Then Exit Sub
@@ -2760,8 +2784,13 @@ Dim m_lngX As Long, m_lngY As Long
     QueueEvent 2, X, Y, CLng(Button), CLng(Shift), m_lngX, m_lngY
 End Sub
 
-Public Sub GFXEngine_MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single, Optional ByVal Force As Boolean = False)
-Attribute GFXEngine_MouseMove.VB_MemberFlags = "40"
+Private Sub Fury2VideoEventSink_MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+On Error Resume Next
+    Fury2VideoEventSink_MouseMove2 Button, Shift, X, Y
+End Sub
+
+Public Sub Fury2VideoEventSink_MouseMove2(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single, Optional ByVal Force As Boolean = False)
+Attribute Fury2VideoEventSink_MouseMove2.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_lngX As Long, m_lngY As Long
     If (DisableUserInput) And (Not Force) Then Exit Sub
@@ -2773,8 +2802,13 @@ Dim m_lngX As Long, m_lngY As Long
     QueueEvent 3, X, Y, CLng(Button), CLng(Shift), m_lngX, m_lngY
 End Sub
 
-Public Sub GFXEngine_MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single, Optional ByVal Force As Boolean = False)
-Attribute GFXEngine_MouseUp.VB_MemberFlags = "40"
+Private Sub Fury2VideoEventSink_MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+On Error Resume Next
+    Fury2VideoEventSink_MouseUp2 Button, Shift, X, Y
+End Sub
+
+Public Sub Fury2VideoEventSink_MouseUp2(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single, Optional ByVal Force As Boolean = False)
+Attribute Fury2VideoEventSink_MouseUp2.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_lngX As Long, m_lngY As Long
     If (DisableUserInput) And (Not Force) Then Exit Sub
@@ -2786,15 +2820,11 @@ Dim m_lngX As Long, m_lngY As Long
     QueueEvent 4, X, Y, CLng(Button), CLng(Shift), m_lngX, m_lngY
 End Sub
 
-Public Sub GFXEngine_Paint()
-Attribute GFXEngine_Paint.VB_MemberFlags = "40"
+Public Sub Fury2VideoEventSink_Paint()
+Attribute Fury2VideoEventSink_Paint.VB_MemberFlags = "40"
 On Error Resume Next
-    If m_imgBackbuffer Is Nothing Then
-        m_objOutputPlugin.ClearScreen 0
-    Else
-        m_imgBackbuffer.Dirty = True
-        m_objOutputPlugin.Flip
-    End If
+'    m_imgBackbuffer.Dirty = True
+'    m_objOutputPlugin.Flip
 End Sub
 
 Sub GoFullscreen()
@@ -3233,7 +3263,9 @@ Friend Sub InitScriptEngine()
 On Error Resume Next
     Set m_ScriptEngine = New ScriptEngine
     Set m_ScriptEngine.Language = m_ScriptEngine.LoadLanguage(ScriptLanguage)
-    m_ScriptEngine.Init 0
+    Load frmScriptSink
+    frmScriptSink.Visible = False
+    m_ScriptEngine.Init frmScriptSink.hWnd
     m_ScriptEngine.AddObject "Engine", Me
     m_ScriptEngine.AddObject "Graphics", m_Graphics
     m_ScriptEngine.AddObject "Constants", m_objConstants
@@ -3273,6 +3305,9 @@ End Function
 Public Sub iTerminate()
 On Error Resume Next
     Class_Terminate
+End Sub
+
+Private Sub Fury2VideoEventSink_Resize()
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
@@ -3525,9 +3560,6 @@ Dim l_objObject As Object, l_varTest As Variant
             ContextLevelRemove
             Exit Function
         End If
-        If m_objOutputPlugin.SupportsGamma Then
-        Else
-        End If
         Dim l_newMap As Fury2Map
         Set l_newMap = New Fury2Map
         l_newMap.SetEngine Me
@@ -3765,7 +3797,7 @@ On Error Resume Next
     SavedMaps.Remove Name
 End Sub
 
-Function LoadOutputPlugin(ByRef NewPlugin As String)
+Function LoadOutputPlugin(ByRef NewPlugin As String) As Object
 On Error Resume Next
 Dim l_objTemp As Object
     Err.Clear
@@ -4260,9 +4292,9 @@ On Error Resume Next
         Set CurrentBGM = Filename
     Else
         Set CurrentBGM = SoundEngine.Load(CStr(Filename))
-        CurrentBGM.LoopMode = LoopMode_Normal
-        CurrentBGM.LoopCount = -1
     End If
+    CurrentBGM.LoopMode = LoopMode_Normal
+    CurrentBGM.LoopCount = -1
     Set CurrentBGMChannel = CurrentBGM.Play(True)
     CurrentBGMChannel.Priority = 0
     If Fade Then
@@ -4281,14 +4313,19 @@ On Error Resume Next
     Set Player = Party.Item(Party.Leader)
 End Property
 
-Sub PlaySample(ByVal Filename As String)
+Function LoadSample(ByRef Filename As String) As Sound
+On Error Resume Next
+    Set LoadSample = SoundEngine.Load(Filename, "Sample")
+    LoadSample.Volume = DefaultSampleVolume
+End Function
+
+Function PlaySample(ByRef Filename As String) As Channel
 On Error Resume Next
 Dim l_sndSample As Sound
-    Set l_sndSample = SoundEngine.Load(Filename)
-    l_sndSample.Volume = DefaultSampleVolume
-    l_sndSample.Play
+    Set l_sndSample = LoadSample(Filename)
+    Set PlaySample = l_sndSample.Play
     Err.Clear
-End Sub
+End Function
 
 Sub PopBGM(Optional ByVal Crossfade As Boolean = True)
 On Error Resume Next
@@ -4402,7 +4439,7 @@ Public Sub Quit()
 Attribute Quit.VB_Description = "Shuts down the engine and unloads it from memory."
 On Error Resume Next
     ContextLevelAdd "Quit"
-    GFXEngine_Closed
+    Fury2VideoEventSink_Closed
     ContextLevelRemove
 End Sub
 
@@ -4437,7 +4474,7 @@ Dim PObj As Fury2Plugin, Obj As Object
     ProfileStart "Redraw"
     ContextLevelAdd "Redraw"
     If ClearEveryFrame Then m_imgBackbuffer.Clear BackgroundColor
-    Set m_imgBackbuffer.ClipRectangle = m_imgBackbuffer.Rectangle
+    m_imgBackbuffer.ResetClipRectangle
     RedrawCameras
     If m_colReversePluginStack.Count > 0 Then
         For Each Obj In m_colReversePluginStack
@@ -4495,7 +4532,7 @@ Dim l_rctConsole As Fury2Rect, l_rctTextbox As Fury2Rect
     ConsoleCaretPos = ClipValue(ConsoleCaretPos, 1, Len(ConsoleText) + 1)
     With Backbuffer
         Set l_rctConsole = F2Rect(0, -ConsoleOffset, ScreenWidth, ConsoleHeight, False)
-        Set .ClipRectangle = .Rectangle
+        .ResetClipRectangle
         .ClippedSetClipRectangle l_rctConsole
         l_lngHeight = ClipValue(Font.TextHeight(ConsoleText, .Width - 2) + (Font.FullHeight - Font.Height), Font.FullHeight, ConsoleHeight) + 2
         l_lngTopColor = F2RGB(180, 180, 180, 192)
@@ -4512,11 +4549,11 @@ Dim l_rctConsole As Fury2Rect, l_rctTextbox As Fury2Rect
             Next l_lngItems
         End If
         Set l_rctTextbox = F2Rect(l_rctConsole.left, l_rctConsole.bottom - l_lngHeight - 2, l_rctConsole.right, l_rctConsole.bottom, True)
-        Set .ClipRectangle = .Rectangle
+        .ResetClipRectangle
         .ClippedSetClipRectangle l_rctTextbox
         .GradientFill l_rctTextbox, Array(F2RGB(0, 0, 0, 32), F2RGB(0, 0, 0, 32), F2RGB(0, 0, 0, 96), F2RGB(0, 0, 0, 96)), RenderMode_SourceAlpha
         Font.Draw Backbuffer, ConsoleText, F2Rect(2, l_rctConsole.bottom - l_lngHeight, .Width - 4, l_lngHeight + (Font.FullHeight - Font.Height) - 2, False), , , Font.Options(0, 0, 0, 0, 0, ConsoleCaretPos, F2White)
-        Set .ClipRectangle = .Rectangle
+        .ResetClipRectangle
     End With
 End Sub
 
@@ -4566,8 +4603,8 @@ End Function
 Sub ReleaseScriptEngine()
 Attribute ReleaseScriptEngine.VB_MemberFlags = "40"
 On Error Resume Next
-    m_ScriptEngine.Obj.Timeout = 250
-    Sleep 250
+    Set m_ScriptEngine = Nothing
+    Unload frmScriptSink
 End Sub
 
 Public Function ReloadGame() As Boolean
@@ -5122,7 +5159,7 @@ Dim l_sndBGM As Sound
     Err.Clear
 End Sub
 
-Public Sub SwitchMap(ByRef Filename As String, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
+Public Sub SwitchMap(ByVal Filename As String, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
 Attribute SwitchMap.VB_Description = "Switches from the current map to a new one."
 On Error Resume Next
 Dim m_imgOld As Fury2Image
@@ -5148,17 +5185,18 @@ On Error Resume Next
         m_objOutputPlugin.HookEvents Nothing
         m_objOutputPlugin.Shutdown
         Set m_objOutputPlugin = Nothing
+        Set m_objVideoDriver = Nothing
     End If
     OutputPlugin = NewPlugin
-    Set m_objOutputPlugin = LoadOutputPlugin(OutputPlugin)
+    Set m_objVideoDriver = LoadOutputPlugin(OutputPlugin)
+    Set m_objOutputPlugin = m_objVideoDriver
     If m_objOutputPlugin Is Nothing Then
         CriticalError "SwitchOutputPlugin", "SwitchOutputPlugin """ + CStr(OutputPlugin) + """", "Unable to load output plugin": Exit Sub
     End If
     Err.Clear
     m_objOutputPlugin.HookEvents Me
     m_objOutputPlugin.ScaleRatio = ScreenScaleRatio
-    m_objOutputPlugin.Init ScreenWidth, ScreenHeight, 32, IIf(ShowTitlebar, WindowCaption, ""), Not Fullscreen, ScreenWidth, ScreenHeight, 0
-    m_objOutputPlugin.VSync = VSync
+    m_objOutputPlugin.Init ScreenWidth, ScreenHeight, IIf(ShowTitlebar, WindowCaption, ""), Not Fullscreen
     If Trim(CStr(Icon)) = "" Then
     Else
         Icon = Icon
@@ -5202,7 +5240,7 @@ On Error Resume Next
 Dim l_strCBoard As String
 Dim l_strText As String
     If Debugger Is Nothing Then Else Debugger.DebugTextOut ToString(Text)
-    l_strText = CStr(Text)
+    l_strText = ToString(Text)
     If LogToClipboard Then
         l_strCBoard = Clipboard.GetText
         Clipboard.Clear
@@ -5422,17 +5460,17 @@ Dim l_sngMultiplier As Single
     l_sngMultiplier = (m_objOutputPlugin.Window.ScaleWidth / ScreenWidth)
     Select Case LCase(Trim(EventName))
     Case "mousedown"
-        GFXEngine_MouseDown CInt(Args(0)), CInt(Args(1)), CSng(Args(2)) * l_sngMultiplier, CSng(Args(3)) * l_sngMultiplier, True
+        Fury2VideoEventSink_MouseDown2 CInt(Args(0)), CInt(Args(1)), CSng(Args(2)) * l_sngMultiplier, CSng(Args(3)) * l_sngMultiplier, True
     Case "mousemove"
-        GFXEngine_MouseMove CInt(Args(0)), CInt(Args(1)), CSng(Args(2)) * l_sngMultiplier, CSng(Args(3)) * l_sngMultiplier, True
+        Fury2VideoEventSink_MouseMove2 CInt(Args(0)), CInt(Args(1)), CSng(Args(2)) * l_sngMultiplier, CSng(Args(3)) * l_sngMultiplier, True
     Case "mouseup"
-        GFXEngine_MouseUp CInt(Args(0)), CInt(Args(1)), CSng(Args(2)) * l_sngMultiplier, CSng(Args(3)) * l_sngMultiplier, True
+        Fury2VideoEventSink_MouseUp2 CInt(Args(0)), CInt(Args(1)), CSng(Args(2)) * l_sngMultiplier, CSng(Args(3)) * l_sngMultiplier, True
     Case "keydown"
-        GFXEngine_KeyDown CInt(Args(0)), CInt(Args(1)), True
+        Fury2VideoEventSink_KeyDown2 CInt(Args(0)), CInt(Args(1)), True
     Case "keypress"
-        GFXEngine_KeyPress CInt(Args(0)), True
+        Fury2VideoEventSink_KeyPress2 CInt(Args(0)), True
     Case "keyup"
-        GFXEngine_KeyUp CInt(Args(0)), CInt(Args(1)), True
+        Fury2VideoEventSink_KeyUp2 CInt(Args(0)), CInt(Args(1)), True
     Case Else
     End Select
     UpdateEvents
@@ -5544,7 +5582,7 @@ Dim m_lngMaps As Long, l_mapMap As Fury2Map
 Static m_sngLastTimer As Single
     If Running Then Else Exit Sub
     If Halted Then Exit Sub
-    If m_objOutputPlugin.Closed Then GFXEngine_Closed
+    If m_objOutputPlugin.Closed Then Fury2VideoEventSink_Closed
     ContextLevelAdd "Update"
     ProfileStart "Update"
     FrameCount = FrameCount + 1
@@ -5867,9 +5905,9 @@ Dim l_lngWindow As Long, l_lngGameWindow
     If l_lngWindow <> m_lngLastWindow Then
         m_lngLastWindow = l_lngWindow
         If l_lngWindow <> l_lngGameWindow Then
-            GFXEngine_LostFocus
+            Fury2VideoEventSink_LostFocus
         Else
-            GFXEngine_GotFocus
+            Fury2VideoEventSink_GotFocus
         End If
     End If
 End Sub
@@ -6093,7 +6131,7 @@ End Function
 
 Public Property Get VideoDriver() As Object
 On Error Resume Next
-    Set VideoDriver = GFXEngine
+    Set VideoDriver = m_objVideoDriver
 End Property
 
 Public Function GenerateScriptObject(ByRef Source As String) As Object

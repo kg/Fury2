@@ -17,6 +17,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "memcpy_amd.hpp"
+
 namespace Processor {
     extern unsigned int Features;
     extern bool MMX;
@@ -33,37 +35,39 @@ namespace Processor {
 };
 
 float inline NormalizeAngle(float Angle) {
-  float n = Angle / 360;
-  return Angle - (floor(n) * 360);
+  float n = Angle / 360.0f;
+  return Angle - (floor(n) * 360.0f);
 }
 
 template <class TA, class TB> float inline AngleBetween(TA a, TB b) {
-  float Rx = 0, Ry = 0;
+  float Rx = 0.0f, Ry = 0.0f;
   Rx = (b.X - a.X);
   Ry = (b.Y - a.Y);
-  if ((Rx == 0) && (Ry == 0)) {
+  if ((Rx == 0.0f) && (Ry == 0.0f)) {
     return 0;
-  } else if (Ry == 0) {
+  } else if (Ry == 0.0f) {
     if (Rx > 0) {
-      return 90;
+      return 90.0f;
     } else {
-      return 270;
+      return 270.0f;
     }
-  } else if (Rx == 0) {
+  } else if (Rx == 0.0f) {
     if (Ry > 0) {
-      return 180;
+      return 180.0f;
     } else {
-      return 0;
+      return 0.0f;
     }
   }
-  if ((Ry < 0) && (Rx < 0)) {
-    return (atan(Ry / Rx) / Radian) + 270;
-  } else if ((Ry >= 0) && (Rx < 0)) {
-    return (atan(Ry / Rx) / Radian) + 270;
-  } else if ((Ry < 0) && (Rx >= 0)) {
-    return (atan(Ry / Rx) / Radian) + 90;
+  bool xl = (Rx < 0.0f);
+  bool yl = (Ry < 0.0f);
+  if (yl && xl) {
+    return (atan(Ry / Rx) / Radian) + 270.0f;
+  } else if ((!yl) && xl) {
+    return (atan(Ry / Rx) / Radian) + 270.0f;
+  } else if (yl && (!xl)) {
+    return (atan(Ry / Rx) / Radian) + 90.0f;
   } else {
-    return (atan(Ry / Rx) / Radian) + 90;
+    return (atan(Ry / Rx) / Radian) + 90.0f;
   }
 }
 
@@ -150,83 +154,20 @@ template <class T> void inline _Pack(void* dest, const DoubleWord bytes, const T
 #endif
 }
 
+void inline _SmallCopy(void* dest, void* source, DoubleWord bytes) {
+  memcpy(dest, source, bytes);
+}
+
 template <class T> void inline _Copy(void* dest, void* source, DoubleWord count) {
 #if (defined(ASSEMBLY))
-    DoubleWord sz = sizeof(T);
-    DoubleWord bcount = count * sz;
-    if ((bcount >= 128) && ((bcount % 128) == 0) && (Processor::SSE)) {
-        if (((DoubleWord)dest % 16 == 0) && ((DoubleWord)source % 16 == 0)) {
-            _asm {
-                cld
-                mov edi, dest
-                mov esi, source
-                mov ecx, bcount
-                shr ecx, 7
-                
-            loop128:
-                movaps xmm0,[esi]
-                movaps xmm1,[esi+16]
-                movaps xmm2,[esi+32]
-                movaps xmm3,[esi+48]
-                movaps xmm4,[esi+64]
-                movaps xmm5,[esi+80]
-                movaps xmm6,[esi+96]
-                movaps xmm7,[esi+112]
-
-                movaps [edi], xmm0
-                movaps [edi+16], xmm1
-                movaps [edi+32], xmm2
-                movaps [edi+48], xmm3
-                movaps [edi+64], xmm4
-                movaps [edi+80], xmm5
-                movaps [edi+96], xmm6
-                movaps [edi+112], xmm7
-
-                add edi, 128
-                add esi, 128
-                loop loop128
-                emms
-            }
-        } else {
-            _asm {
-                cld
-                mov edi, dest
-                mov esi, source
-                mov ecx, bcount
-                shr ecx, 7
-                
-            loop128u:
-                movups xmm0,[esi]
-                movups xmm1,[esi+16]
-                movups xmm2,[esi+32]
-                movups xmm3,[esi+48]
-                movups xmm4,[esi+64]
-                movups xmm5,[esi+80]
-                movups xmm6,[esi+96]
-                movups xmm7,[esi+112]
-
-                movups [edi], xmm0
-                movups [edi+16], xmm1
-                movups [edi+32], xmm2
-                movups [edi+48], xmm3
-                movups [edi+64], xmm4
-                movups [edi+80], xmm5
-                movups [edi+96], xmm6
-                movups [edi+112], xmm7
-
-                add edi, 128
-                add esi, 128
-                loop loop128u
-                emms
-            }
-        }
+    if ((Processor::SSE)) {
+        memcpy_amd(dest, source, count * sizeof(T));
     } else {
         // screw writing my own copy, pfft
         memcpy(dest, source, count * sizeof(T));
     }
 #else
-    T *d = (T *)dest, *s = (T *)source;
-    while(count--) *d++ = *s++;
+    memcpy(dest, source, count * sizeof(T));
 #endif
     return;
 }
@@ -244,17 +185,17 @@ template <class T> void inline _Fill(void* dest, const T& value, DoubleWord coun
                 mov edi, dest
                 mov ecx, bcount
                 shr ecx, 7
-                movaps xmm0, [v]
+                movdqa xmm0, [v]
                 
             loop128:
-                movaps [edi], xmm0
-                movaps [edi+16], xmm0
-                movaps [edi+32], xmm0
-                movaps [edi+48], xmm0
-                movaps [edi+64], xmm0
-                movaps [edi+80], xmm0
-                movaps [edi+96], xmm0
-                movaps [edi+112], xmm0
+                movntdq [edi], xmm0
+                movntdq [edi+16], xmm0
+                movntdq [edi+32], xmm0
+                movntdq [edi+48], xmm0
+                movntdq [edi+64], xmm0
+                movntdq [edi+80], xmm0
+                movntdq [edi+96], xmm0
+                movntdq [edi+112], xmm0
 
                 add edi, 128
                 loop loop128
@@ -266,17 +207,17 @@ template <class T> void inline _Fill(void* dest, const T& value, DoubleWord coun
                 mov edi, dest
                 mov ecx, bcount
                 shr ecx, 7
-                movaps xmm0, [v]
+                movdqa xmm0, [v]
                 
             loop128u:
-                movups [edi], xmm0
-                movups [edi+16], xmm0
-                movups [edi+32], xmm0
-                movups [edi+48], xmm0
-                movups [edi+64], xmm0
-                movups [edi+80], xmm0
-                movups [edi+96], xmm0
-                movups [edi+112], xmm0
+                movdqu [edi], xmm0
+                movdqu [edi+16], xmm0
+                movdqu [edi+32], xmm0
+                movdqu [edi+48], xmm0
+                movdqu [edi+64], xmm0
+                movdqu [edi+80], xmm0
+                movdqu [edi+96], xmm0
+                movdqu [edi+112], xmm0
 
                 add edi, 128
                 loop loop128u
@@ -339,23 +280,23 @@ template <class T> void inline _Swap(void* dest, void* source, DoubleWord count)
                 shr ecx, 6
                 
             loop64:
-                movaps xmm0,[esi]
-                movaps xmm1,[esi+16]
-                movaps xmm2,[esi+32]
-                movaps xmm3,[esi+48]
-                movaps xmm4,[edi]
-                movaps xmm5,[edi+16]
-                movaps xmm6,[edi+32]
-                movaps xmm7,[edi+48]
+                movdqa xmm0,[esi]
+                movdqa xmm1,[esi+16]
+                movdqa xmm2,[esi+32]
+                movdqa xmm3,[esi+48]
+                movdqa xmm4,[edi]
+                movdqa xmm5,[edi+16]
+                movdqa xmm6,[edi+32]
+                movdqa xmm7,[edi+48]
 
-                movaps [edi], xmm0
-                movaps [edi+16], xmm1
-                movaps [edi+32], xmm2
-                movaps [edi+48], xmm3
-                movaps [esi], xmm4
-                movaps [esi+16], xmm5
-                movaps [esi+32], xmm6
-                movaps [esi+48], xmm7
+                movdqa [edi], xmm0
+                movdqa [edi+16], xmm1
+                movdqa [edi+32], xmm2
+                movdqa [edi+48], xmm3
+                movdqa [esi], xmm4
+                movdqa [esi+16], xmm5
+                movdqa [esi+32], xmm6
+                movdqa [esi+48], xmm7
 
                 add edi, 64
                 add esi, 64
@@ -371,23 +312,23 @@ template <class T> void inline _Swap(void* dest, void* source, DoubleWord count)
                 shr ecx, 6
                 
             loop64u:
-                movups xmm0,[esi]
-                movups xmm1,[esi+16]
-                movups xmm2,[esi+32]
-                movups xmm3,[esi+48]
-                movups xmm4,[edi]
-                movups xmm5,[edi+16]
-                movups xmm6,[edi+32]
-                movups xmm7,[edi+48]
+                movdqu xmm0,[esi]
+                movdqu xmm1,[esi+16]
+                movdqu xmm2,[esi+32]
+                movdqu xmm3,[esi+48]
+                movdqu xmm4,[edi]
+                movdqu xmm5,[edi+16]
+                movdqu xmm6,[edi+32]
+                movdqu xmm7,[edi+48]
 
-                movups [edi], xmm0
-                movups [edi+16], xmm1
-                movups [edi+32], xmm2
-                movups [edi+48], xmm3
-                movups [esi], xmm4
-                movups [esi+16], xmm5
-                movups [esi+32], xmm6
-                movups [esi+48], xmm7
+                movdqu [edi], xmm0
+                movdqu [edi+16], xmm1
+                movdqu [edi+32], xmm2
+                movdqu [edi+48], xmm3
+                movdqu [esi], xmm4
+                movdqu [esi+16], xmm5
+                movdqu [esi+32], xmm6
+                movdqu [esi+48], xmm7
 
                 add edi, 64
                 add esi, 64
@@ -455,46 +396,46 @@ Export inline Byte ClipByteHigh(int value) {
 #endif
 }
 
-inline int ClipValue(int value, int max) {
+inline int ClipValue(int value, int maximum) {
 #ifdef USEIFS
-  if (value > max) {
-    return max;
+  if (value > maximum) {
+    return maximum;
   } else {
     return value;
   }
 #else
 int iClipped;
     value = (value & (-(int)!(value < 0)));
-    iClipped = -(int)(value > max);
-    return (max & iClipped) | (value & ~iClipped);
+    iClipped = -(int)(value > maximum);
+    return (maximum & iClipped) | (value & ~iClipped);
 #endif
 }
 
-Export inline int ClipValue(int value, int min, int max) {
+Export inline int ClipValue(int value, int minimum, int maximum) {
 #ifdef USEIFS
-  if (value < min) {
-    return min;
-  } else if (value > max) {
-    return max;
+  if (value < minimum) {
+    return minimum;
+  } else if (value > maximum) {
+    return maximum;
   } else {
     return value;
   }
 #else
 int iClipped;
-    iClipped = -(int)(value < min);
-    value = (min & iClipped) | (value & ~iClipped);
-    iClipped = -(int)(value > max);
-    return (max & iClipped) | (value & ~iClipped);
+    iClipped = -(int)(value < minimum);
+    value = (minimum & iClipped) | (value & ~iClipped);
+    iClipped = -(int)(value > maximum);
+    return (maximum & iClipped) | (value & ~iClipped);
 #endif
 }
 
-Export inline int WrapValue(int value, int min, int max) {
-	if (value < min) {
-		int v = ((min - value) % ((max - min) + 1));
-		return max + 1 - v;
+Export inline int WrapValue(int value, int minimum, int maximum) {
+	if (value < minimum) {
+		int v = ((minimum - value) % ((maximum - minimum) + 1));
+		return maximum + 1 - v;
 	} else {
-		int v = ((value - min) % ((max - min) + 1));
-		return min + v;
+		int v = ((value - minimum) % ((maximum - minimum) + 1));
+		return minimum + v;
 	}
 }
 

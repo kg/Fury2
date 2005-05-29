@@ -57,6 +57,10 @@ namespace SoftFX {
 	defImport(int, GetDefaultSampleFunction, () , 0) \
 	defImport(int, GetLinearScaler, () , 0) \
 	defImport(int, GetBilinearScaler, () , 0) \
+	defImport(int, GetLinearWrapScaler, () , 0) \
+	defImport(int, GetBilinearWrapScaler, () , 0) \
+	defImport(int, GetLinearClampScaler, () , 0) \
+	defImport(int, GetBilinearClampScaler, () , 0) \
 	defImport(int, GetMergeRenderer, () , 0) \
 	defImport(int, GetSourceAlphaRenderer, () , 0) \
 	defImport(int, GetAdditiveRenderer, () , 0) \

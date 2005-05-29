@@ -118,3 +118,27 @@ inline Pixel MultiplyAlpha(Pixel Color, int Alpha) {
   Color[::Alpha] = Color[::Alpha] * Alpha / 255;
   return Color;
 }
+
+struct MeshPoint {
+  float X, Y;
+};
+
+struct MeshParam {
+  int Width;
+  int Height;
+  MeshPoint *pData;
+
+  inline MeshPoint* getPoint(int X, int Y) {
+    X = ClipValue(X, 0, Width - 1);
+    Y = ClipValue(Y, 0, Height - 1);
+    return &(pData[X + (Y * Width)]);
+  }
+
+  inline void get4Points(int X, int Y, MeshPoint** Points) {
+    Points[0] = &(pData[ClipValue(X, 0, Width - 1) + (ClipValue(Y, 0, Height - 1) * Width)]);
+    Points[1] = &(pData[ClipValue(X+1, 0, Width - 1) + (ClipValue(Y, 0, Height - 1) * Width)]);
+    Points[2] = &(pData[ClipValue(X, 0, Width - 1) + (ClipValue(Y+1, 0, Height - 1) * Width)]);
+    Points[3] = &(pData[ClipValue(X+1, 0, Width - 1) + (ClipValue(Y+1, 0, Height - 1) * Width)]);
+    return;
+  }
+};

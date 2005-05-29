@@ -168,13 +168,11 @@ End Sub
 Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect
-Dim l_rctOld As Fury2Rect
 Dim l_strState As String
 Dim l_rctText As Fury2Rect
     If m_staState Is Nothing Then RefreshState
     If Visible = False Then Exit Sub
     With Surface
-        Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
         Set l_rctText = m_staState.Font.GetTextRectangle(Text, IIf(AutoSize, -1, Rectangle.Width))
         l_rctText.Translate l_rctNew.Left, l_rctNew.Top
@@ -182,13 +180,13 @@ Dim l_rctText As Fury2Rect
             l_rctText.Translate (l_rctNew.Width - l_rctText.Width) / 2, (l_rctNew.Height - l_rctText.Height) / 2
         End If
         m_staState.WindowSkin.Draw Surface, l_rctNew, 1
-        .ClippedSetClipRectangle l_rctNew
+        .PushClipRectangle l_rctNew
         m_staState.Font.Draw Surface, Engine.ParseString(Text), l_rctText, SetAlpha(m_staState.TextColor, GetAlpha(m_staState.TextColor) * Opacity)
         If AutoSize Then
             Rectangle.Width = l_rctText.Width
             Rectangle.Height = l_rctText.Height
         End If
-        Set .ClipRectangle = l_rctOld
+        .PopClipRectangle
     End With
 End Sub
 

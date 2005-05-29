@@ -329,8 +329,7 @@ Dim m_lngEffects As Long
     If mvarY < 0 Then mvarY = 0
     If mvarWidth > Engine.Backbuffer.Width - mvarX Then mvarWidth = Engine.Backbuffer.Width - mvarX
     If mvarHeight > Engine.Backbuffer.Height - mvarY Then mvarHeight = Engine.Backbuffer.Height - mvarY
-'    Set Engine.Backbuffer.ClipRectangle = F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False)
-    Set Engine.Backbuffer.ClipRectangle = Engine.Backbuffer.Rectangle
+    Engine.Backbuffer.ResetClipRectangle
     If mvarAlpha = 0 Then
     ElseIf mvarAlpha = 1 Then
         'If (mvarGamma = 0) Or (Engine.SpecialFX = False) Then
@@ -344,7 +343,7 @@ Dim m_lngEffects As Long
         Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer.Rectangle, Buffer, mvarAlpha, BlitMode_Normal
         If Err.Number <> 0 Then Engine.Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2RGB(0, 0, 0, mvarAlpha * 255)
     End If
-    Set Engine.Backbuffer.ClipRectangle = Engine.Backbuffer.Rectangle
+    Engine.Backbuffer.ResetClipRectangle
 End Sub
 
 Public Sub Render(Optional ByVal Area As Fury2Rect = Nothing, Optional ByVal Output As Fury2Image = Nothing)
@@ -571,7 +570,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                 If Err.Number <> 0 Then Engine.CriticalError "Fury2Camera.Redraw", "Layers(" + CStr(Layers) + ").Sprites.Sort Me": Exit Sub
             End If
             If EnableLighting And .Layers(Layers).Lighting.ResetLight Then
-                Set Lightmap.ClipRectangle = Lightmap.Rectangle
+                Lightmap.ResetClipRectangle
                 Lightmap.Clear .Layers(Layers).Lighting.AmbientLight
             End If
             If EnableLighting And .Layers(Layers).Lit Then
@@ -591,8 +590,8 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                 .Layers(Layers).Lighting.Render l_lcaCamera
             End If
             If EnableLighting And .Layers(Layers).Lighting.RenderLight Then
-                Set Lightmap.ClipRectangle = Lightmap.Rectangle
-                Set ScratchBuffer.ClipRectangle = Lightmap.Rectangle
+                Lightmap.ResetClipRectangle
+                ScratchBuffer.ResetClipRectangle
                 If Gamma <> 255 Then
                     Lightmap.AdjustGamma mvarGamma
                 End If

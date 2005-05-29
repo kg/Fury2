@@ -52,6 +52,7 @@ Private m_strFilename As String
 Private m_booUpperCaseOnly As Boolean
 Private m_lngTabStops() As Long
 Private m_engEngine As Fury2Engine
+Private m_rctText As Fury2Rect
 
 Friend Sub SetEngine(Engine As Fury2Engine)
     Set m_engEngine = Engine
@@ -160,6 +161,7 @@ On Error Resume Next
 Dim l_lngMaxWidth As Long
 Dim l_rctArea As Rectangle
 Dim l_optOptions As TextParam
+Dim l_lngRefCount As Long
     ProfileStart "Measure Text"
     l_lngMaxWidth = MaximumWidth
     If l_lngMaxWidth < 1 Then l_lngMaxWidth = 32767
@@ -172,7 +174,17 @@ Dim l_optOptions As TextParam
     Else
         Call SoftFX.RenderText(m_Globals.ToString(Text), 0, l_rctArea, m_fpmFontParam, l_optOptions)
     End If
-    Set GetTextRectangle = F2Rect(0, 0, l_optOptions.Width, (l_optOptions.Height - Height + FullHeight), False)
+    If m_rctText Is Nothing Then
+        Set m_rctText = F2Rect(0, 0, l_optOptions.Width, (l_optOptions.Height - Height + FullHeight), False)
+    Else
+        l_lngRefCount = m_engEngine.GetReferenceCount(m_rctText)
+        If l_lngRefCount > 4 Then
+            Set m_rctText = F2Rect(0, 0, l_optOptions.Width, (l_optOptions.Height - Height + FullHeight), False)
+        Else
+            m_rctText.SetValues 0, 0, l_optOptions.Width, (l_optOptions.Height - Height + FullHeight)
+        End If
+    End If
+    Set GetTextRectangle = m_rctText
     ProfileStop "Measure Text"
 End Function
 

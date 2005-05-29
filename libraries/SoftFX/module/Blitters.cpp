@@ -53,10 +53,12 @@ BLITTERSIMPLE_END
 BLITTERSIMPLE_SIGNATURE(Channel)
     , int DestChannel, int SourceChannel) {
 BLITTERSIMPLE_INIT
+	ColorChannels dch = (ColorChannels)ClipValue(DestChannel, 0, 3);
+	ColorChannels sch = (ColorChannels)ClipValue(SourceChannel, 0, 3);
     _BOS(BlitSimple_Channel, 2) , DestChannel, SourceChannel _BOE
 BLITTERSIMPLE_BEGIN
 BLITTERSIMPLE_LOOPBEGIN
-    (*pDest)[DestChannel] = (*pSource)[SourceChannel];
+    (*pDest)[dch] = (*pSource)[sch];
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
 
@@ -902,7 +904,7 @@ BLITTERSIMPLE_INIT
 BLITTERSIMPLE_BEGIN
     AlphaLevel *aMask[4], *aSource, *aDest;
     for (int i = 0; i < 4; i++) {
-      aMask[i] = AlphaLevelLookup(Mask[i]);
+      aMask[i] = AlphaLevelLookup(Mask[(ColorChannels)i]);
     }
 BLITTERSIMPLE_LOOPBEGIN
     if ((*pSource)[::Alpha]) {
@@ -1918,19 +1920,19 @@ Export int BlitMask_Normal_Opacity(Image *Dest, Image *Source, Image *Mask,
 #endif
     }
 
-    if (!Dest->Unlocked) {
-        return Failure;
-    }
-    if (!Source->Unlocked) {
-        return Failure;
-    }
-    if (!Mask->Unlocked) {
-        return Failure;
-    }
-
     int DSX = SX, DSY = SY, MSX = MX, MSY = MY;
 
-    Rectangle rCoordinates;
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    ImageLockManager ilMask(lockingMode, Source);
+    if (!ilDest.performUnlock())
+        return Failure;
+    if (!ilSource.performUnlock())
+        return Failure;
+    if (!ilMask.performUnlock())
+        return Failure;
+
+	Rectangle rCoordinates;
     if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
         Rect, DSX, DSY)) {
           return Trivial_Success;
@@ -1958,7 +1960,7 @@ Export int BlitMask_Normal_Opacity(Image *Dest, Image *Source, Image *Mask,
     DoubleWord iDestRowOffset =
         (Dest->Width - rCoordinates.Width) + Dest->Pitch;
     
-    AlphaLevel *aScale, *aMask, *aSource, *aDest;
+    AlphaLevel *aScale, *aSource, *aDest;
     aScale = AlphaLevelLookup( ClipByte(Opacity) );
     int sa;
 
@@ -2018,19 +2020,19 @@ Export int BlitMask_SourceAlpha_Opacity(Image *Dest, Image *Source, Image *Mask,
 #endif
     }
 
-    if (!Dest->Unlocked) {
-        return Failure;
-    }
-    if (!Source->Unlocked) {
-        return Failure;
-    }
-    if (!Mask->Unlocked) {
-        return Failure;
-    }
-
     int DSX = SX, DSY = SY, MSX = MX, MSY = MY;
 
-    Rectangle rCoordinates;
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    ImageLockManager ilMask(lockingMode, Source);
+    if (!ilDest.performUnlock())
+        return Failure;
+    if (!ilSource.performUnlock())
+        return Failure;
+    if (!ilMask.performUnlock())
+        return Failure;
+
+	Rectangle rCoordinates;
     if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
         Rect, DSX, DSY)) {
           return Trivial_Success;
@@ -2121,15 +2123,15 @@ Export int BlitMask_Merge_Opacity(Image *Dest, Image *Source, Image *Mask,
 #endif
     }
 
-    if (!Dest->Unlocked) {
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    ImageLockManager ilMask(lockingMode, Source);
+    if (!ilDest.performUnlock())
         return Failure;
-    }
-    if (!Source->Unlocked) {
+    if (!ilSource.performUnlock())
         return Failure;
-    }
-    if (!Mask->Unlocked) {
+    if (!ilMask.performUnlock())
         return Failure;
-    }
 
     int DSX = SX, DSY = SY, MSX = MX, MSY = MY;
 
@@ -2214,7 +2216,14 @@ Export int BlitConvolve_Normal(Image *Dest, Image *Source, Convolution::Filter *
 
     int DSX = SX, DSY = SY;
 
-    Rectangle rCoordinates;
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    if (!ilDest.performUnlock())
+        return Failure;
+    if (!ilSource.performUnlock())
+        return Failure;
+
+	Rectangle rCoordinates;
     if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
          Rect, DSX, DSY)) return Trivial_Success;
 
@@ -2320,7 +2329,14 @@ Export int BlitConvolve_Additive(Image *Dest, Image *Source, Convolution::Filter
 
     int DSX = SX, DSY = SY;
 
-    Rectangle rCoordinates;
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    if (!ilDest.performUnlock())
+        return Failure;
+    if (!ilSource.performUnlock())
+        return Failure;
+
+	Rectangle rCoordinates;
     if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
          Rect, DSX, DSY)) return Trivial_Success;
 
@@ -2424,7 +2440,14 @@ Export int BlitConvolve_Subtractive(Image *Dest, Image *Source, Convolution::Fil
 
     int DSX = SX, DSY = SY;
 
-    Rectangle rCoordinates;
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    if (!ilDest.performUnlock())
+        return Failure;
+    if (!ilSource.performUnlock())
+        return Failure;
+
+	Rectangle rCoordinates;
     if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
          Rect, DSX, DSY)) return Trivial_Success;
 
@@ -2532,7 +2555,14 @@ Export int BlitConvolve_Shadow(Image *Dest, Image *Source, Convolution::Filter *
 
     int DSX = SX, DSY = SY;
 
-    Rectangle rCoordinates;
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    if (!ilDest.performUnlock())
+        return Failure;
+    if (!ilSource.performUnlock())
+        return Failure;
+
+	Rectangle rCoordinates;
     if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
          Rect, DSX, DSY)) return Trivial_Success;
 
@@ -2643,7 +2673,14 @@ Export int BlitConvolve_SourceAlpha(Image *Dest, Image *Source, Convolution::Fil
 
     int DSX = SX, DSY = SY;
 
-    Rectangle rCoordinates;
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    if (!ilDest.performUnlock())
+        return Failure;
+    if (!ilSource.performUnlock())
+        return Failure;
+
+	Rectangle rCoordinates;
     if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
          Rect, DSX, DSY)) return Trivial_Success;
 
@@ -2740,11 +2777,7 @@ signed char *cxo, *cyo;
     return Success;
 }
 
-
-Export int BlitDeform_Normal(Image *Dest, Image *Source, MeshParam *Mesh,
-                          Rectangle *Rect, Coordinate SX, Coordinate SY)
-{
-  /*
+Export int BlitDeform(Image *Dest, Image *Source, MeshParam *Mesh, Rectangle *DestRect, Rectangle *SourceRect, Pixel RenderArgument, RenderFunction *Renderer, ScalerFunction *Scaler) {
     if (!Dest || !Source || !Mesh) {
       return Failure;
     }
@@ -2757,56 +2790,116 @@ Export int BlitDeform_Normal(Image *Dest, Image *Source, MeshParam *Mesh,
     if (Mesh->Width < 2) return Failure;
     if (Mesh->Height < 2) return Failure;
 
-    int DSX = SX, DSY = SY;
 
-    Rectangle rCoordinates;
-    if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
-         Rect, DSX, DSY)) return Trivial_Success;
+    {
+        int overrideresult = Override::EnumOverrides(Override::BlitDeform, 9, Dest, Source, Mesh, DestRect, SourceRect, RenderArgument, Renderer, Scaler);
+#ifdef OVERRIDES
+        if (overrideresult != 0) return overrideresult;
+#endif
+    }
+
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    if (!ilDest.performUnlock())
+      return Failure;
+    if (!ilSource.performUnlock())
+      return Failure;
+
+    Rectangle rCoordinates, rSourceCoordinates;
+        rCoordinates = *DestRect;
+        rSourceCoordinates = *SourceRect;
+        if (!ClipRectangle_Image(&rCoordinates,
+         Dest)) return Trivial_Success;
 
     Pixel *pDest = Dest->pointer(
         rCoordinates.Left, rCoordinates.Top);
-    Pixel pSource;
     if ((!pDest)) return Failure;
 
     Dest->dirty();
-
-    SX = DSX; SY = DSY;
     
     DoubleWord iCX = 0, iCY = rCoordinates.Height;
     
     DoubleWord iDestRowOffset =
         (Dest->Width - rCoordinates.Width) + Dest->Pitch;
     
+    int segmentWidth = rCoordinates.Width, pixelsToDraw = 0;
     int cx = 0, cy = 0;
-    FixedPoint cxw = 0, cyw = 0;
-    FixedPoint cxi = (1 / (rCoordinates.Width / (float)Mesh->Width)), cyi = (1 / (rCoordinates.Width / (float)Mesh->Height));
+    int mw = Mesh->Width - 1, mh = Mesh->Height - 1;
+    float bx = rSourceCoordinates.Left, by = rSourceCoordinates.Top;
+    float bxi = (1 / (rCoordinates.Width / (float)(rSourceCoordinates.Width))), byi = (1 / (rCoordinates.Height / (float)(rSourceCoordinates.Height)));
+    float cxw = 0, cyw = 0, sx = 0, sy = 0, lsx = 0, lsy = 0;
+    float cxi = (mw / (float)rCoordinates.Width), cyi = (mh / (float)rCoordinates.Height);
+    float xd, yd;
+    Pixel *rowTable = StaticAllocate<Pixel>(BlitterBuffer, segmentWidth);
+    bool update_points = true, first_update = true, perform_draw = false;
+    MeshPoint p[4];
 
     while (iCY--) {
       iCX = (DoubleWord)rCoordinates.Width;
-      cxw.setI(0);
+      cxw = 0;
       cx = 0;
+      bx = rSourceCoordinates.Left;
+      update_points = true;
+      first_update = true;
+      pixelsToDraw = 0;
       while (iCX--) {
-        pDest++;
         cxw += cxi;
-        if (cxw.H >= 1) {
-          cxw.setI(0);
+        pixelsToDraw++;
+        while (cxw >= 1.0f) {
+          cxw -= 1.0f;
           cx++;
+          update_points = true;
         }
+        if (update_points || (iCX == 0)) {
+          update_points = false;
+          lsx = sx;
+          lsy = sy;
+          /* sometimes i hate that inline is just a hint
+          Mesh->get4Points(cx, cy, p);
+          this is one of those times */
+          
+          p[0] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
+          p[1] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
+          p[2] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+          p[3] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+
+          sx = bx + ((p[0].X * (1 - cxw) + p[1].X * cxw) * (1 - cyw) + (p[2].X * (1 - cxw) + p[3].X * cxw) * cyw);
+          sy = by + ((p[0].Y * (1 - cxw) + p[1].Y * cxw) * (1 - cyw) + (p[2].Y * (1 - cxw) + p[3].Y * cxw) * cyw);
+          if (first_update) {
+            first_update = false;
+            bx += bxi;
+          }
+          else
+            perform_draw = true;
+        }
+        if (perform_draw) {
+          perform_draw = false;
+          xd = (sx - lsx) / pixelsToDraw;
+          yd = (sy - lsy) / pixelsToDraw;
+          Scaler(Source, lsx, lsy, (int)(lsx * 65536.0) % 65536, (int)(lsy * 65536.0) % 65536,
+            xd, yd, (int)(xd * 65536.0) % 65536, (int)(yd * 65536.0) % 65536, pixelsToDraw, rowTable);
+          if (Renderer) {
+            Renderer(pDest, rowTable, pixelsToDraw, 0, RenderArgument.V);
+            pDest += pixelsToDraw;
+          } else {
+            Pixel *pSource = rowTable;
+            while (pixelsToDraw--) {
+              *pDest++ = *pSource++;
+            }
+          }
+          pixelsToDraw = 0;
+        }
+        bx += bxi;
       }
       pDest += iDestRowOffset;
+      by += byi;
       cyw += cyi;
-      if (cyw.H >= 1) {
-        cyw.setI(0);
+      while (cyw >= 1.0f) {
+        cyw -= 1.0f;
         cy++;
+        update_points = true;
       }
     }
-
-    for (DoubleWord i = 0; i < cells; i++) {
-      LookupDeallocate(cellTables[i]);
-    }
-    LookupDeallocate(cellTables);
-    LookupDeallocate(cxo);
-    LookupDeallocate(cyo);
-  */
+  
     return Success;
 }

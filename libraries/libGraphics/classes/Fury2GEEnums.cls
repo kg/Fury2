@@ -27,6 +27,7 @@ Public Enum SFXRenderModes
     RenderMode_Subtractive = 3
     RenderMode_Merge = 4
     RenderMode_Shadow = 5
+    RenderMode_Screen = 6
 End Enum
 
 Public Enum SFXResampleModes
@@ -35,9 +36,10 @@ Public Enum SFXResampleModes
     ResampleMode_Linear = 1
     ResampleMode_Bilinear = 2
     ResampleMode_Bilinear_High_Quality = 3
-    ResampleMode_Bicubic = 4
-    ResampleMode_Gaussian = 5
-    ResampleMode_2xSaI = 6
+    ResampleMode_Linear_Wrap = 4
+    ResampleMode_Bilinear_Wrap = 5
+    ResampleMode_Linear_Clamp = 6
+    ResampleMode_Bilinear_Clamp = 7
 End Enum
 
 Public Enum SFXBlitModes

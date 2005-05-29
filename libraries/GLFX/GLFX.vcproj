@@ -6,7 +6,6 @@
 	ProjectGUID="{3A410C42-E439-4191-B1E9-186A3971A4F4}"
 	RootNamespace="GLFX"
 	Keyword="Win32Proj"
-	SignManifests="true"
 	>
 	<Platforms>
 		<Platform
@@ -242,6 +241,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalOptions=" /PROFILE"
 				AdditionalDependencies="opengl32.lib glu32.lib user32.lib gdi32.lib kernel32.lib"
 				OutputFile="$(OutDir)/GLFX.dll"
 				LinkIncremental="1"

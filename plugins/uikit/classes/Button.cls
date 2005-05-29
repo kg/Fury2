@@ -286,7 +286,6 @@ End Sub
 Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect
-Dim l_rctOld As Fury2Rect
 Dim l_objImage As Object
 Dim l_imgImage As Fury2Image
 Dim l_gphImage As Fury2Graphic
@@ -294,7 +293,6 @@ Dim l_sngAlpha As Single
     If m_staState Is Nothing Then RefreshState
     If Visible = False Then Exit Sub
     With Surface
-        Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
         If ((MousePressed And MouseHovering) Or KeyboardPressed Or Value) Then
             l_sngAlpha = PressedAlpha * Opacity
@@ -304,7 +302,7 @@ Dim l_sngAlpha As Single
             l_sngAlpha = Alpha * Opacity
         End If
         If Not ImageOnly Then m_staState.WindowSkin.Draw Surface, l_rctNew, l_sngAlpha
-        .ClippedSetClipRectangle l_rctNew
+        .PushClipRectangle l_rctNew
         If Not ImageOnly Then
             m_staState.Font.DrawCentered Surface, Text, l_rctNew, m_staState.TextColor, l_sngAlpha
         End If
@@ -329,6 +327,6 @@ Dim l_sngAlpha As Single
             Set l_gphImage = l_objImage
             l_gphImage.Draw Surface, l_rctNew.Left + (l_rctNew.Width / 2), l_rctNew.Top + (l_rctNew.Height / 2), l_sngAlpha
         End If
-        Set .ClipRectangle = l_rctOld
+        .PopClipRectangle
     End With
 End Sub

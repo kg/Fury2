@@ -37,7 +37,6 @@ Option Explicit
 
 Implements IInspectable
 Implements Fury2Object
-Implements Fury2TrackedObject
 Implements IVirtualFileSaveable
 
 Private mvarEngine As Fury2Engine
@@ -45,7 +44,6 @@ Public EditMode As Boolean
 Attribute EditMode.VB_VarDescription = "Indicates whether or not the map is in editing mode. In editing mode, certain automatic behaviors are disabled (for example, AI)"
 Private m_mobObjects As Fury2MapObjects
 Private m_strSettings() As String
-Private m_revRevision As Fury2RevisionData
 Private m_lyrLayers As Fury2MapLayers
 Private m_strFilename As String
 Private m_strName As String
@@ -166,7 +164,6 @@ On Error Resume Next
     m_mobObjects.SetParent Me
     Set m_lyrLayers = New Fury2MapLayers
     Set m_lyrLayers.Parent = Me
-    Set m_revRevision = New Fury2RevisionData
     Set m_tmrTimerEvents = New Fury2TimerEvents
 End Sub
 
@@ -261,10 +258,6 @@ Dim m_lyrLayer As Fury2MapLayer
     Set m_sprSprites = Nothing
     Class_Initialize
 End Sub
-
-Private Property Get Fury2TrackedObject_Revision() As Fury2RevisionData
-    Set Fury2TrackedObject_Revision = m_revRevision
-End Property
 
 Function GetSetting(Setting) As String
 Attribute GetSetting.VB_Description = "Retrieves a setting."
@@ -592,11 +585,6 @@ Dim m_lyrLayer As Fury2MapLayer
         Next m_lyrLayer
     End If
 End Sub
-
-Public Property Get Revision() As Fury2RevisionData
-Attribute Revision.VB_MemberFlags = "40"
-    Set Revision = m_revRevision
-End Property
 
 Sub SaveSetting(Setting, Value)
 Attribute SaveSetting.VB_Description = "Saves a setting."

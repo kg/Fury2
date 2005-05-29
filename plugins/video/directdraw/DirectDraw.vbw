@@ -1,5 +1,5 @@
-DirectDrawEngine = 54, 103, 978, 710, 
-mdlDirectDraw = 198, 261, 1122, 868, 
+DirectDrawEngine = 54, 103, 978, 710, Z
+mdlDirectDraw = 198, 261, 1122, 868, C
 frmDirectDrawFullscreen = 276, 276, 1197, 879, C, 39, 65, 985, 576, C
 frmDirectDraw = 66, 72, 887, 583, C, 0, 0, 823, 497, C
 mdlXPIcon = 0, 0, 0, 0, C

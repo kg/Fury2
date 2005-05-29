@@ -31,7 +31,7 @@ Public Property Get Engine() As Fury2Engine
     Set Engine = m_engEngine
 End Property
 
-Public Sub Bind(ByRef Meth As String, Optional ByRef Obj = Nothing, Optional BindParameters As Variant = Nothing)
+Public Sub Bind(ByRef Meth As String, Optional ByVal Obj = Nothing, Optional ByRef BindParameters As Variant = Nothing)
 On Error Resume Next
     Method = Meth
     If VarType(Obj) = vbString Then

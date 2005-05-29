@@ -1,7 +1,8 @@
 VERSION 5.00
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#9.0#0"; "ngUI.ocx"
 Begin VB.UserControl TilePicker 
+   AutoRedraw      =   -1  'True
    BackColor       =   &H80000014&
    ClientHeight    =   4125
    ClientLeft      =   0
@@ -19,35 +20,11 @@ Begin VB.UserControl TilePicker
    Begin ngUI.ngToolbar tbrTileset 
       Height          =   360
       Left            =   0
-      TabIndex        =   3
+      TabIndex        =   2
       Top             =   0
       Width           =   765
       _ExtentX        =   1349
       _ExtentY        =   635
-   End
-   Begin VB.PictureBox picTilesetCache 
-      AutoRedraw      =   -1  'True
-      AutoSize        =   -1  'True
-      BackColor       =   &H00000000&
-      BorderStyle     =   0  'None
-      BeginProperty Font 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      Height          =   240
-      Left            =   285
-      ScaleHeight     =   16
-      ScaleMode       =   3  'Pixel
-      ScaleWidth      =   17
-      TabIndex        =   2
-      Top             =   1815
-      Visible         =   0   'False
-      Width           =   255
    End
    Begin cFScroll.FlatScrollBar hsScrollbar 
       Height          =   255
@@ -105,12 +82,15 @@ Public Event TilesetModified()
 Public Editor As Object
 Public ResourceFile As ngResourceFile
 Public Clipboard As cCustomClipboard
+Public BlitMode As SFXBlitModes
 Private m_lngClipboardFormat As Long
+Private m_imgBuffer As Fury2Image
 Private m_lngBuffer As Long
 Private m_lngWidth As Long, m_lngHeight As Long
 Private m_lngStartX As Long, m_lngStartY As Long
 Private m_tstTileset As Fury2Tileset
 Private m_booPreserveRows As Boolean
+Private m_booTileIsSelected() As Boolean
 Private m_intSelectedTiles() As Integer
 
 Friend Sub CutTile(ByVal Index As Long)
@@ -163,68 +143,88 @@ Friend Sub TilesetModified()
 On Error Resume Next
     m_lngBuffer = 0
     RebuildCache
-    Cls
+    UserControl_Resize
     Redraw
     RaiseEvent TilesetModified
 End Sub
 
 Public Sub RebuildCache()
 On Error Resume Next
-Dim l_imgTilesetCache As Fury2Image
-    m_lngBuffer = m_tstTileset.Handle
-    Set l_imgTilesetCache = m_tstTileset.GenerateBuffer
-    With l_imgTilesetCache
-        If .AlphaChannel Then
-            .Composite SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Blue, Red)
-        Else
-            .ReplaceColor .Rectangle, m_tstTileset.MaskColor, SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Blue, Red)
-        End If
-    End With
-    Set picTilesetCache.Picture = l_imgTilesetCache.Picture
+'Dim l_imgTilesetCache As Fury2Image
+'    m_lngBuffer = m_tstTileset.Handle
+'    Set l_imgTilesetCache = m_tstTileset.GenerateBuffer
+'    With l_imgTilesetCache
+'        If .AlphaChannel Then
+'            .Composite SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Blue, Red)
+'        Else
+'            .ReplaceColor .Rectangle, m_tstTileset.MaskColor, SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Blue, Red)
+'        End If
+'    End With
+'    Set picTilesetCache.Picture = l_imgTilesetCache.Picture
 End Sub
 
 Public Function HitTest(ByVal X As Long, ByVal Y As Long) As Integer
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long
 Dim l_lngSX As Long, l_lngSY As Long
+Dim l_lngHeight As Long, l_lngMax As Long
+Dim l_lngWidth As Long
 Dim l_lngTile As Long
-Dim l_lngSelectedTiles As Long
-Dim l_booSelected As Boolean
-    Y = Y - IIf(tbrTileset.Visible, tbrTileset.Height, 0)
-    l_lngY = -vsScrollbar.Value
-    l_lngX = -hsScrollbar.Value
+Dim l_lngRowWidth As Long
     HitTest = -1
-    
     If Not (m_tstTileset Is Nothing) Then
-        Do Until ((l_lngSY + m_tstTileset.TileHeight) > picTilesetCache.Height)
-            If (Y >= l_lngY) And (Y < (l_lngY + m_tstTileset.TileHeight)) Then
-                If (X >= l_lngX) And (X < (l_lngX + m_tstTileset.TileWidth)) Then
-                    HitTest = l_lngTile
-                    Exit Do
-                End If
-            End If
-        
-            l_lngSX = l_lngSX + m_tstTileset.TileWidth
-            If (l_lngSX + m_tstTileset.TileWidth) > picTilesetCache.ScaleWidth Then
-                l_lngSX = 0
-                l_lngSY = l_lngSY + m_tstTileset.TileHeight
-                If m_booPreserveRows Then
-                    l_lngX = -hsScrollbar.Value - m_tstTileset.TileWidth
-                    l_lngY = l_lngY + m_tstTileset.TileHeight
-                End If
-            End If
-            
-            l_lngX = l_lngX + m_tstTileset.TileWidth
-            If m_booPreserveRows Then
+        If (m_tstTileset.TileWidth > 0) And (m_tstTileset.TileHeight > 0) Then
+            l_lngY = -vsScrollbar.Value + tbrTileset.Height
+            l_lngX = -hsScrollbar.Value
+            If PreserveRows Then
+                l_lngRowWidth = m_tstTileset.RowWidth
             Else
-                If (l_lngX + m_tstTileset.TileWidth) > (m_lngWidth) Then
-                    l_lngX = -hsScrollbar.Value
-                    l_lngY = l_lngY + m_tstTileset.TileHeight
-                End If
+                l_lngRowWidth = m_lngWidth \ m_tstTileset.TileWidth
             End If
-            l_lngTile = l_lngTile + 1
-        Loop
+            If (X > (l_lngRowWidth * m_tstTileset.TileWidth)) Then Exit Function
+            l_lngWidth = l_lngRowWidth * m_tstTileset.TileWidth
+            l_lngHeight = m_tstTileset.TileCount / (l_lngWidth \ m_tstTileset.TileWidth) * m_tstTileset.TileHeight
+            l_lngTile = ((X - l_lngX) \ m_tstTileset.TileWidth) + (((Y - l_lngY) \ m_tstTileset.TileHeight) * (l_lngRowWidth))
+            If (l_lngTile >= 0) And (l_lngTile < m_tstTileset.TileCount) Then HitTest = l_lngTile
+        End If
     End If
+'    #If 0 Then
+'    Y = Y - IIf(tbrTileset.Visible, tbrTileset.Height, 0)
+'    l_lngY = -vsScrollbar.Value
+'    l_lngX = -hsScrollbar.Value
+'    HitTest = -1
+'
+'    If Not (m_tstTileset Is Nothing) Then
+'        Do Until ((l_lngSY + m_tstTileset.TileHeight) > picTilesetCache.Height)
+'            If (Y >= l_lngY) And (Y < (l_lngY + m_tstTileset.TileHeight)) Then
+'                If (X >= l_lngX) And (X < (l_lngX + m_tstTileset.TileWidth)) Then
+'                    HitTest = l_lngTile
+'                    Exit Do
+'                End If
+'            End If
+'
+'            l_lngSX = l_lngSX + m_tstTileset.TileWidth
+'            If (l_lngSX + m_tstTileset.TileWidth) > picTilesetCache.ScaleWidth Then
+'                l_lngSX = 0
+'                l_lngSY = l_lngSY + m_tstTileset.TileHeight
+'                If m_booPreserveRows Then
+'                    l_lngX = -hsScrollbar.Value - m_tstTileset.TileWidth
+'                    l_lngY = l_lngY + m_tstTileset.TileHeight
+'                End If
+'            End If
+'
+'            l_lngX = l_lngX + m_tstTileset.TileWidth
+'            If m_booPreserveRows Then
+'            Else
+'                If (l_lngX + m_tstTileset.TileWidth) > (m_lngWidth) Then
+'                    l_lngX = -hsScrollbar.Value
+'                    l_lngY = l_lngY + m_tstTileset.TileHeight
+'                End If
+'            End If
+'            l_lngTile = l_lngTile + 1
+'        Loop
+'    End If
+'    #End If
 End Function
 
 Public Property Get hwnd() As Long
@@ -264,17 +264,25 @@ Dim l_lngY As Long, l_lngX As Long, l_lngI As Long
     Else
         m_intSelectedTiles = Tiles
     End If
+    ReDim m_booTileIsSelected(0 To m_tstTileset.TileCount - 1)
+    For l_lngI = LBound(m_intSelectedTiles) To UBound(m_intSelectedTiles)
+        m_booTileIsSelected(m_intSelectedTiles(l_lngI)) = True
+    Next l_lngI
     Redraw
 End Sub
 
 Private Sub AllocateBackbuffer()
 On Error Resume Next
-'    Set m_imgBuffer = F2Image(UserControl.ScaleWidth, UserControl.ScaleHeight)
+    DeallocateBackbuffer
+    Set m_imgBuffer = F2DIBSection(UserControl.ScaleWidth, UserControl.ScaleHeight, UserControl.hdc)
+    m_lngBuffer = SelectObject(UserControl.hdc, m_imgBuffer.DIBHandle)
 End Sub
 
 Private Sub DeallocateBackbuffer()
 On Error Resume Next
-'    Set m_imgBuffer = Nothing
+    SelectObject UserControl.hdc, m_lngBuffer
+    m_lngBuffer = 0
+    Set m_imgBuffer = Nothing
 End Sub
 
 Public Sub Redraw()
@@ -283,72 +291,111 @@ Dim l_lngX As Long, l_lngY As Long
 Dim l_lngSX As Long, l_lngSY As Long
 Dim l_lngHeight As Long, l_lngMax As Long
 Dim l_lngWidth As Long
-Dim l_lngTile As Long
+Dim l_lngTile As Long, l_lngOffset As Long
 Dim l_lngMaxX As Long, l_lngMaxY As Long
 Dim l_lngSelectedTiles As Long
+Dim l_lngRowWidth As Long
 Dim l_booSelected As Boolean
-Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
-    l_lngY = -vsScrollbar.Value
-    l_lngX = -hsScrollbar.Value
+Dim l_imgTile As Fury2Image
+Dim l_rctTile As Fury2Rect
+Dim l_lngBackgroundColor As Long, l_lngHighlightColor As Long
     
+    l_lngBackgroundColor = SwapChannels(GetSystemColor(SystemColor_Button_Face), Blue, Red)
+    l_lngHighlightColor = SetAlpha(SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Blue, Red), 127)
+    m_imgBuffer.Clear l_lngBackgroundColor
     If Not (m_tstTileset Is Nothing) Then
         l_lngMaxX = m_tstTileset.TileWidth
         l_lngMaxY = m_tstTileset.TileHeight
-        If m_lngBuffer <> m_tstTileset.Handle Then RebuildCache
+        If UBound(m_booTileIsSelected) <> (m_tstTileset.TileCount - 1) Then
+            ReDim Preserve m_booTileIsSelected(0 To m_tstTileset.TileCount - 1)
+        End If
         If (m_tstTileset.TileWidth > 0) And (m_tstTileset.TileHeight > 0) Then
-            Set l_imgTile = F2Image(m_tstTileset.TileWidth, m_tstTileset.TileHeight)
-            l_lngBackgroundColor = SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Blue, Red)
-            Do Until ((l_lngSY + m_tstTileset.TileHeight) > picTilesetCache.Height)
-                If l_lngMaxX < (l_lngX + m_tstTileset.TileWidth) Then l_lngMaxX = (l_lngX + m_tstTileset.TileWidth)
-                If l_lngMaxY < (l_lngY + m_tstTileset.TileHeight) Then l_lngMaxY = (l_lngY + m_tstTileset.TileHeight)
-                If (l_lngSY + m_tstTileset.TileHeight) > 0 Then
-                    l_booSelected = False
-                    For l_lngSelectedTiles = 0 To UBound(m_intSelectedTiles)
-                        If m_intSelectedTiles(l_lngSelectedTiles) = l_lngTile Then
-                            l_booSelected = True
-                            Exit For
-                        End If
-                    Next l_lngSelectedTiles
-                    If l_booSelected Then
-                        l_imgTile.Copy m_tstTileset.Tile(l_lngTile + 1)
-                        l_imgTile.Composite l_lngBackgroundColor
-                        l_imgTile.Box l_imgTile.Rectangle.Adjust(-1, -1), F2RGB(0, 0, 0, 160), RenderMode_SourceAlpha
-                        l_imgTile.Box l_imgTile.Rectangle, F2RGB(255, 255, 255, 160), RenderMode_SourceAlpha
-                        CopyImageToDC UserControl.hdc, F2Rect(l_lngX, l_lngY + IIf(tbrTileset.Visible, tbrTileset.Height, 0), m_tstTileset.TileWidth, m_tstTileset.TileHeight, False), l_imgTile
-                    Else
-                        BitBlt UserControl.hdc, l_lngX, l_lngY + IIf(tbrTileset.Visible, tbrTileset.Height, 0), m_tstTileset.TileWidth, m_tstTileset.TileHeight, picTilesetCache.hdc, l_lngSX, l_lngSY, vbSrcCopy
-                    End If
-                    'm_imgBuffer.Blit F2Rect(l_lngX, l_lngY, m_tstTileset.TileWidth, m_tstTileset.TileHeight, False), F2Rect(l_lngSX, l_lngSY, m_tstTileset.TileWidth, m_tstTileset.TileHeight, False), m_imgTilesetCache
-                End If
-                      
-                l_lngSX = l_lngSX + m_tstTileset.TileWidth
-                If (l_lngSX + m_tstTileset.TileWidth) > (picTilesetCache.ScaleWidth) Then
-                    l_lngSX = 0
-                    l_lngSY = l_lngSY + m_tstTileset.TileHeight
-                    If m_booPreserveRows Then
-                        l_lngX = -hsScrollbar.Value - m_tstTileset.TileWidth
-                        l_lngY = l_lngY + m_tstTileset.TileHeight
-                        l_lngHeight = l_lngHeight + m_tstTileset.TileHeight
-                    End If
-                End If
-                
-                l_lngX = l_lngX + m_tstTileset.TileWidth
-                If m_booPreserveRows Then
-                    If (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth) > l_lngWidth Then
-                        l_lngWidth = (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth)
-                    End If
+            Set l_imgTile = New Fury2Image
+            Set l_rctTile = F2Rect(0, 0, m_tstTileset.TileWidth, m_tstTileset.TileHeight, False)
+            l_imgTile.Deallocate
+            l_lngOffset = (vsScrollbar.Value \ m_tstTileset.TileHeight)
+            l_lngY = -vsScrollbar.Value + (l_lngOffset * m_tstTileset.TileHeight) + tbrTileset.Height
+            l_lngX = -hsScrollbar.Value
+            If PreserveRows Then
+                l_lngRowWidth = m_tstTileset.RowWidth
+            Else
+                l_lngRowWidth = m_lngWidth \ m_tstTileset.TileWidth
+            End If
+            l_lngOffset = l_lngOffset * l_lngRowWidth
+            l_lngWidth = l_lngRowWidth * m_tstTileset.TileWidth
+            l_lngHeight = m_tstTileset.TileCount / (l_lngWidth \ m_tstTileset.TileWidth) * m_tstTileset.TileHeight
+            For l_lngTile = l_lngOffset To m_tstTileset.TileCount - 1
+                l_imgTile.SetHandle GetTile(m_tstTileset.Handle, l_lngTile)
+                l_rctTile.RelLeft = l_lngX
+                l_rctTile.RelTop = l_lngY
+                If m_booTileIsSelected(l_lngTile) Then
+                    m_imgBuffer.Blit l_rctTile, Nothing, l_imgTile, , BlitMode
+                    m_imgBuffer.Fill l_rctTile, l_lngHighlightColor, RenderMode_SourceAlpha
+                    m_imgBuffer.Box l_rctTile.Adjust(-1, -1), F2White
+                    m_imgBuffer.Box l_rctTile.Adjust(1, 1), F2Black
                 Else
-                    If (l_lngX + m_tstTileset.TileWidth) > (m_lngWidth) Then
-                        l_lngX = -hsScrollbar.Value
-                        l_lngY = l_lngY + m_tstTileset.TileHeight
-                        l_lngHeight = l_lngHeight + m_tstTileset.TileHeight
-                    End If
-                    If (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth) > l_lngWidth Then
-                        l_lngWidth = (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth)
-                    End If
+                    m_imgBuffer.Blit l_rctTile, Nothing, l_imgTile, , BlitMode
                 End If
-                l_lngTile = l_lngTile + 1
-            Loop
+                l_lngX = l_lngX + m_tstTileset.TileWidth
+                If (l_lngX + m_tstTileset.TileWidth) > (l_lngRowWidth * m_tstTileset.TileWidth) Then
+                    l_lngX = -hsScrollbar.Value
+                    l_lngY = l_lngY + m_tstTileset.TileHeight
+                End If
+                If (l_lngY) > (m_lngHeight + m_tstTileset.TileHeight + tbrTileset.Height) Then
+                    Exit For
+                End If
+            Next l_lngTile
+'            Do Until ((l_lngSY + m_tstTileset.TileHeight) > picTilesetCache.Height)
+'                If l_lngMaxX < (l_lngX + m_tstTileset.TileWidth) Then l_lngMaxX = (l_lngX + m_tstTileset.TileWidth)
+'                If l_lngMaxY < (l_lngY + m_tstTileset.TileHeight) Then l_lngMaxY = (l_lngY + m_tstTileset.TileHeight)
+'                If (l_lngSY + m_tstTileset.TileHeight) > 0 Then
+'                    l_booSelected = False
+'                    For l_lngSelectedTiles = 0 To UBound(m_intSelectedTiles)
+'                        If m_intSelectedTiles(l_lngSelectedTiles) = l_lngTile Then
+'                            l_booSelected = True
+'                            Exit For
+'                        End If
+'                    Next l_lngSelectedTiles
+'                    If l_booSelected Then
+'                        l_imgTile.Copy m_tstTileset.Tile(l_lngTile + 1)
+'                        l_imgTile.Composite l_lngBackgroundColor
+'                        l_imgTile.Box l_imgTile.Rectangle.Adjust(-1, -1), F2RGB(0, 0, 0, 160), RenderMode_SourceAlpha
+'                        l_imgTile.Box l_imgTile.Rectangle, F2RGB(255, 255, 255, 160), RenderMode_SourceAlpha
+'                        CopyImageToDC UserControl.hdc, F2Rect(l_lngX, l_lngY + IIf(tbrTileset.Visible, tbrTileset.Height, 0), m_tstTileset.TileWidth, m_tstTileset.TileHeight, False), l_imgTile
+'                    Else
+'                        BitBlt UserControl.hdc, l_lngX, l_lngY + IIf(tbrTileset.Visible, tbrTileset.Height, 0), m_tstTileset.TileWidth, m_tstTileset.TileHeight, picTilesetCache.hdc, l_lngSX, l_lngSY, vbSrcCopy
+'                    End If
+'                    'm_imgBuffer.Blit F2Rect(l_lngX, l_lngY, m_tstTileset.TileWidth, m_tstTileset.TileHeight, False), F2Rect(l_lngSX, l_lngSY, m_tstTileset.TileWidth, m_tstTileset.TileHeight, False), m_imgTilesetCache
+'                End If
+'
+'                l_lngSX = l_lngSX + m_tstTileset.TileWidth
+'                If (l_lngSX + m_tstTileset.TileWidth) > (picTilesetCache.ScaleWidth) Then
+'                    l_lngSX = 0
+'                    l_lngSY = l_lngSY + m_tstTileset.TileHeight
+'                    If m_booPreserveRows Then
+'                        l_lngX = -hsScrollbar.Value - m_tstTileset.TileWidth
+'                        l_lngY = l_lngY + m_tstTileset.TileHeight
+'                        l_lngHeight = l_lngHeight + m_tstTileset.TileHeight
+'                    End If
+'                End If
+'
+'                l_lngX = l_lngX + m_tstTileset.TileWidth
+'                If m_booPreserveRows Then
+'                    If (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth) > l_lngWidth Then
+'                        l_lngWidth = (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth)
+'                    End If
+'                Else
+'                    If (l_lngX + m_tstTileset.TileWidth) > (m_lngWidth) Then
+'                        l_lngX = -hsScrollbar.Value
+'                        l_lngY = l_lngY + m_tstTileset.TileHeight
+'                        l_lngHeight = l_lngHeight + m_tstTileset.TileHeight
+'                    End If
+'                    If (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth) > l_lngWidth Then
+'                        l_lngWidth = (l_lngX + hsScrollbar.Value + m_tstTileset.TileWidth)
+'                    End If
+'                End If
+'                l_lngTile = l_lngTile + 1
+'            Loop
             Set l_imgTile = Nothing
         End If
     End If
@@ -377,8 +424,8 @@ Dim l_imgTile As Fury2Image, l_lngBackgroundColor As Long
         hsScrollbar.Value = 0
         hsScrollbar.Enabled = False
     End If
-    UserControl.Line (l_lngMaxX, IIf(tbrTileset.Visible, tbrTileset.Height, 0))-(m_lngWidth, m_lngHeight + IIf(tbrTileset.Visible, tbrTileset.Height, 0)), UserControl.BackColor, BF
-    UserControl.Line (0, l_lngMaxY + IIf(tbrTileset.Visible, tbrTileset.Height, 0))-(l_lngMaxX, m_lngHeight + IIf(tbrTileset.Visible, tbrTileset.Height, 0)), UserControl.BackColor, BF
+    'UserControl.Line (l_lngMaxX, IIf(tbrTileset.Visible, tbrTileset.Height, 0))-(m_lngWidth, m_lngHeight + IIf(tbrTileset.Visible, tbrTileset.Height, 0)), UserControl.BackColor, BF
+    'UserControl.Line (0, l_lngMaxY + IIf(tbrTileset.Visible, tbrTileset.Height, 0))-(l_lngMaxX, m_lngHeight + IIf(tbrTileset.Visible, tbrTileset.Height, 0)), UserControl.BackColor, BF
     If UserControl.AutoRedraw Then UserControl.Refresh
     vsScrollbar.Visible = vsScrollbar.Enabled
     hsScrollbar.Visible = hsScrollbar.Enabled
@@ -397,6 +444,7 @@ End Property
 
 Public Property Set Tileset(NewTileset As Fury2Tileset)
     Set m_tstTileset = NewTileset
+    ReDim m_booTileIsSelected(0 To m_tstTileset.TileCount - 1)
     RebuildCache
     Redraw
 End Property
@@ -478,6 +526,7 @@ On Error Resume Next
     tbrTileset.Visible = False
     ReDim m_intSelectedTiles(0 To 0)
     m_intSelectedTiles(0) = -1
+    BlitMode = BlitMode_Normal
 End Sub
 
 Private Sub UserControl_KeyDown(KeyCode As Integer, Shift As Integer)
@@ -583,6 +632,8 @@ End Sub
 
 Private Sub UserControl_Resize()
 On Error Resume Next
+    DeallocateBackbuffer
+    AllocateBackbuffer
     tbrTileset.Move 0, 0, UserControl.ScaleWidth, tbrTileset.IdealHeight
     vsScrollbar.Move UserControl.ScaleWidth - (GetScrollbarSize(vsScrollbar) + 1), tbrTileset.Height, GetScrollbarSize(vsScrollbar) + 1, UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0) - IIf(tbrTileset.Visible, tbrTileset.Height, 0)
     hsScrollbar.Move 0, UserControl.ScaleHeight - (GetScrollbarSize(hsScrollbar) + 1), UserControl.ScaleWidth - IIf(vsScrollbar.Visible, vsScrollbar.Width, 0), GetScrollbarSize(hsScrollbar) + 1

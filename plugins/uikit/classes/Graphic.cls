@@ -154,14 +154,12 @@ End Sub
 Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect
-Dim l_rctOld As Fury2Rect
 Dim l_imgImage As Fury2Image
 Dim l_gphImage As Fury2Graphic
     If Visible = False Then Exit Sub
     With Surface
-        Set l_rctOld = .ClipRectangle
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
-        .ClippedSetClipRectangle l_rctNew
+        .PushClipRectangle l_rctNew
         If TypeOf Image Is Fury2Image Then
             Set l_imgImage = Image
             l_rctNew.Translate (Rectangle.Width - l_imgImage.Width) / 2, (Rectangle.Height - l_imgImage.Height) / 2
@@ -178,6 +176,6 @@ Dim l_gphImage As Fury2Graphic
             Set l_gphImage = Image
             l_gphImage.Draw Surface, l_rctNew.Left + (l_rctNew.Width / 2), l_rctNew.Top + (l_rctNew.Height / 2), Opacity
         End If
-        Set .ClipRectangle = l_rctOld
+        .PopClipRectangle
     End With
 End Sub

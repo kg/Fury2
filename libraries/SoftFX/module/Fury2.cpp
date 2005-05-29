@@ -71,7 +71,7 @@ Image* Tileset::tile(int i, short* mapTable) {
 void Tileset::setTile(int i, Image *newTile) {
     if (this->Initialized) {
       if (i < 0) return;
-      if (i >= this->Tiles->size()) return;
+      if (i >= (int)this->Tiles->size()) return;
       if (this->Tiles->at(i)) {
         if (this->Tiles->at(i)->Tags[3] == (DoubleWord)this) {
           delete (this->Tiles->at(i));
@@ -85,7 +85,7 @@ void Tileset::setTile(int i, Image *newTile) {
 void Tileset::replaceTile(int i, Image *newTile) {
     if (this->Initialized) {
     if (i < 0) return;
-    if (i >= this->Tiles->size()) return;
+    if (i >= (int)this->Tiles->size()) return;
       if (this->Tiles->at(i)) {
         if (this->Tiles->at(i)->Tags[3] == (DoubleWord)this) {
           delete (this->Tiles->at(i));
@@ -129,7 +129,7 @@ void Tileset::addTile(Image *newTile, int i) {
 void Tileset::removeTile(int i) {
   if (this->Initialized) {
     if (i < 0) return;
-    if (i >= this->Tiles->size()) return;
+    if (i >= (int)this->Tiles->size()) return;
     if (this->Tiles->at(i)) {
       if (this->Tiles->at(i)->Tags[3] == (DoubleWord)this) {
         delete (this->Tiles->at(i));

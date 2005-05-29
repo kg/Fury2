@@ -48,10 +48,11 @@ FILTERSIMPLE_END
 FILTERSIMPLE_SIGNATURE(Invert_Channel)
     , int Channel) {
 FILTERSIMPLE_INIT
+	ColorChannels ch = (ColorChannels)ClipValue(Channel, 0, 3);
     _FOS(FilterSimple_Invert_Channel, 1) , Channel _FOE
 FILTERSIMPLE_BEGIN
 FILTERSIMPLE_LOOPBEGIN
-    (*pCurrent)[Channel] = ~(*pCurrent)[Channel];
+    (*pCurrent)[ch] = ~(*pCurrent)[ch];
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 
@@ -70,11 +71,12 @@ FILTERSIMPLE_END
 FILTERSIMPLE_SIGNATURE(Fill_Channel)
     , int Channel, int Value) {
 FILTERSIMPLE_INIT
+	ColorChannels ch = (ColorChannels)ClipValue(Channel, 0, 3);
     _FOS(FilterSimple_Fill_Channel, 2) , Channel, Value _FOE
 FILTERSIMPLE_BEGIN
     Byte value = ClipByte(Value);
 FILTERSIMPLE_LOOPBEGIN
-    (*pCurrent)[Channel] = value;
+    (*pCurrent)[ch] = value;
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 
@@ -288,10 +290,12 @@ FILTERSIMPLE_END
 FILTERSIMPLE_SIGNATURE(Swap_Channels)
     , int Channel1, int Channel2) {
 FILTERSIMPLE_INIT
+	ColorChannels ch1 = (ColorChannels)ClipValue(Channel1, 0, 3);
+	ColorChannels ch2 = (ColorChannels)ClipValue(Channel2, 0, 3);
     _FOS(FilterSimple_Swap_Channels, 2) , Channel1, Channel2 _FOE
 FILTERSIMPLE_BEGIN
 FILTERSIMPLE_LOOPBEGIN
-    _Swap<Byte>((*pCurrent)[Channel1], (*pCurrent)[Channel2]);
+    _Swap<Byte>((*pCurrent)[ch1], (*pCurrent)[ch2]);
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 
@@ -577,7 +581,7 @@ FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
     if (i == 0) v.V = mersenne.randInt();
-    (*pCurrent)[::Blue] = (*pCurrent)[::Green] = (*pCurrent)[::Red] = v[i];
+    (*pCurrent)[::Blue] = (*pCurrent)[::Green] = (*pCurrent)[::Red] = v[(ColorChannels)i];
     i = iteratorTable[i];
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
@@ -599,7 +603,7 @@ FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
     if (i == 0) v.V = mersenne.randInt();
-    cv = AlphaFromLevel(aSource, v[i]);
+    cv = AlphaFromLevel(aSource, v[(ColorChannels)i]);
     (*pCurrent)[::Blue] = AlphaFromLevel(aDest, (*pCurrent)[::Blue]) + cv;
     (*pCurrent)[::Green] = AlphaFromLevel(aDest, (*pCurrent)[::Green]) + cv;
     (*pCurrent)[::Red] = AlphaFromLevel(aDest, (*pCurrent)[::Red]) + cv;
@@ -622,9 +626,9 @@ FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
     if (i == 0) v.V = mersenne.randInt();
-    (*pCurrent)[::Blue] = ClipByteLow((*pCurrent)[::Blue] - v[i]);
-    (*pCurrent)[::Green] = ClipByteLow((*pCurrent)[::Green] - v[i]);
-    (*pCurrent)[::Red] = ClipByteLow((*pCurrent)[::Red] - v[i]);
+    (*pCurrent)[::Blue] = ClipByteLow((*pCurrent)[::Blue] - v[(ColorChannels)i]);
+    (*pCurrent)[::Green] = ClipByteLow((*pCurrent)[::Green] - v[(ColorChannels)i]);
+    (*pCurrent)[::Red] = ClipByteLow((*pCurrent)[::Red] - v[(ColorChannels)i]);
     i = iteratorTable[i];
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
@@ -646,7 +650,7 @@ FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
     if (i == 0) v.V = mersenne.randInt();
-    cv = AlphaFromLevel(aSource, v[i]);
+    cv = AlphaFromLevel(aSource, v[(ColorChannels)i]);
     (*pCurrent)[::Blue] = ClipByteLow((*pCurrent)[::Blue] - cv);
     (*pCurrent)[::Green] = ClipByteLow((*pCurrent)[::Green] - cv);
     (*pCurrent)[::Red] = ClipByteLow((*pCurrent)[::Red] - cv);
@@ -664,11 +668,12 @@ FILTERSIMPLE_BEGIN
     Pixel v;
     // Seed the random number generator using the current time
     MTRand mersenne = MTRand();
+	ColorChannels ch = (ColorChannels)ClipValue(Channel, 0, 3);
 FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
     if (i == 0) v.V = mersenne.randInt();
-    (*pCurrent)[Channel] = v[i];
+    (*pCurrent)[ch] = v[(ColorChannels)i];
     i = iteratorTable[i];
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
@@ -692,7 +697,7 @@ FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
     if (i == 0) v.V = mersenne.randInt();
-    d = scaleTable[v[i]];
+    d = scaleTable[v[(ColorChannels)i]];
     if (d) {
       (*pCurrent)[::Blue] = ((*pCurrent)[::Blue] / d) * d;
       (*pCurrent)[::Green] = ((*pCurrent)[::Green] / d) * d;
@@ -761,8 +766,9 @@ FILTERSIMPLE_BEGIN
     for (int i = 0; i < 256; i++) {
         lookupTable[i] = ClipByte(i + Amount);
     }
+	ColorChannels ch = (ColorChannels)ClipValue(Channel, 0, 3);
 FILTERSIMPLE_LOOPBEGIN
-    (*pCurrent)[Channel] = lookupTable[(*pCurrent)[Channel]];
+    (*pCurrent)[ch] = lookupTable[(*pCurrent)[ch]];
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 
@@ -809,8 +815,9 @@ FILTERSIMPLE_BEGIN
     for (int i = 0; i < 256; i++) {
         lookupTable[i] = ClipByte((i * Gamma) / 255);
     }
+	ColorChannels ch = (ColorChannels)ClipValue(Channel, 0, 3);
 FILTERSIMPLE_LOOPBEGIN
-    (*pCurrent)[Channel] = lookupTable[(*pCurrent)[Channel]];
+    (*pCurrent)[ch] = lookupTable[(*pCurrent)[ch]];
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 

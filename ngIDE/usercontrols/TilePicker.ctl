@@ -301,7 +301,7 @@ Dim l_rctTile As Fury2Rect
 Dim l_lngBackgroundColor As Long, l_lngHighlightColor As Long
     
     l_lngBackgroundColor = SwapChannels(GetSystemColor(SystemColor_Button_Face), Blue, Red)
-    l_lngHighlightColor = SetAlpha(SwapChannels(GetSystemColor(SystemColor_Button_Highlight), Blue, Red), 127)
+    l_lngHighlightColor = SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Blue, Red), 127)
     m_imgBuffer.Clear l_lngBackgroundColor
     If Not (m_tstTileset Is Nothing) Then
         l_lngMaxX = m_tstTileset.TileWidth

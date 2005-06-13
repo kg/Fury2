@@ -210,7 +210,6 @@ On Error Resume Next
 Dim l_imgSurface As Fury2Image
 Dim l_rctRectangle As Fury2Rect
 Dim l_rctArea As Rectangle
-    ProfileStart "Draw Windows"
     Set l_imgSurface = Surface
     If Err <> 0 Then Exit Sub
     Set l_rctRectangle = Rectangle.Copy
@@ -225,7 +224,6 @@ Dim l_rctArea As Rectangle
     m_wspParam.Alpha = ClipValue(Alpha * 255, 0, 255)
     SoftFX.RenderWindow l_imgSurface.Handle, l_rctArea, m_wspParam, CLng(SectionFlags)
     l_imgSurface.Dirty = True
-    ProfileStop "Draw Windows"
 End Sub
 
 Sub Create(ByVal Width As Long, ByVal Height As Long, ByVal MiddleWidth As Long, ByVal MiddleHeight As Long)

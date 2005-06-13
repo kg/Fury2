@@ -79,17 +79,18 @@ On Error Resume Next
         DoEvents
     End If
     g_edEditor.LogOutput "Loading game """ & Path & """"
-    frmMain.CloseAllChildren g_edEditor.Options.PromptWhenSwitchingGames
-    SetBusyState True
-    ShutdownEngine
-    InitEngine Path
-    g_edEditor.GamePath = Path
-    g_edEditor.Event_FilesystemChanged
-    frmMain.Caption = "Editor² - " & g_edEditor.Engine.GameName
-    frmMain.RefreshGameState
-    frmMain.RefreshPluginToolbar
-    AddRecentGame Path
-    SetBusyState False
+    If frmMain.CloseAllChildren(g_edEditor.Options.PromptWhenSwitchingGames) Then
+        SetBusyState True
+        ShutdownEngine
+        InitEngine Path
+        g_edEditor.GamePath = Path
+        g_edEditor.Event_FilesystemChanged
+        frmMain.Caption = "Editor² - " & g_edEditor.Engine.GameName
+        frmMain.RefreshGameState
+        frmMain.RefreshPluginToolbar
+        AddRecentGame Path
+        SetBusyState False
+    End If
 End Sub
 
 Public Sub PlayGame()

@@ -246,6 +246,29 @@ namespace GL {
     }
   }
 
+  void drawArray(GLenum type, Vertex* pointer, int count) {
+    if (drawMode != -1) {
+      endDraw();
+    }
+    glVertexPointer(2, GL_FLOAT, 8, pointer);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glDrawArrays(type, 0, count);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+
+  void drawArray(GLenum type, Vertex1T* pointer, int count) {
+    if (drawMode != -1) {
+      endDraw();
+    }
+    glVertexPointer(2, GL_FLOAT, 16, pointer);
+    glTexCoordPointer(2, GL_FLOAT, 16, ((Byte*)pointer) + 8);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDrawArrays(type, 0, count);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+
   void enableTextures() {
     enableTexture<0>();
   }

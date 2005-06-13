@@ -192,9 +192,9 @@ Dim l_strScript As String
             With Engine.ScriptEngine.Language
                 l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                 .GenerateClassVariable("Map") & .LineTerminator & _
-                .GenerateClassMethod("F2OInit", Array("T", "M"), _
-                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
-                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
+                .GenerateClassMethod("F2OInit", Array("newThis", "newMap"), _
+                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "newThis", True) & .LineTerminator & _
+                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "newMap", True) _
                 ) & .LineTerminator & ScriptSource
                 Set m_objScript = Engine.GenerateScriptObject(l_strScript)
             End With

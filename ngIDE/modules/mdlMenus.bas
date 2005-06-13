@@ -136,6 +136,9 @@ Public Function Menus(ParamArray Values() As Variant) As Variant
 On Error Resume Next
 Dim l_lngItems As Long
 Dim l_varValue As Variant
+    Err.Clear
+    If UBound(Values) < LBound(Values) Then Exit Function
+    If Err <> 0 Then Exit Function
     ReDim l_varValue(LBound(Values) To UBound(Values))
     For l_lngItems = LBound(Values) To UBound(Values)
         l_varValue(l_lngItems) = Values(l_lngItems)
@@ -147,6 +150,9 @@ Public Function MenusFromStringArray(ByRef Values() As String) As Variant
 On Error Resume Next
 Dim l_lngItems As Long
 Dim l_varValue As Variant
+    Err.Clear
+    If UBound(Values) < LBound(Values) Then Exit Function
+    If Err <> 0 Then Exit Function
     ReDim l_varValue(LBound(Values) To UBound(Values))
     For l_lngItems = LBound(Values) To UBound(Values)
         l_varValue(l_lngItems) = Values(l_lngItems)
@@ -162,6 +168,9 @@ End Function
 Public Function ParseMenu(Menu As cMenuManager, Items As Variant, Optional ByVal Parent As Long = -1, Optional ByRef InsertionPoint As Long = -1)
 On Error Resume Next
 Dim l_lngItems As Long, l_varItem As Variant, l_varParameters As Variant
+    Err.Clear
+    If UBound(Items) < LBound(Items) Then Exit Function
+    If Err <> 0 Then Exit Function
     With Menu.Menu
         For l_lngItems = LBound(Items) To UBound(Items)
             l_varItem = Items(l_lngItems)

@@ -586,13 +586,13 @@ Dim l_booInspectorType As Boolean
                         End If
                     End Select
                 End If
-                If (.DataType And VT_BOOL) = VT_BOOL Then
+                If VarType(.Value) = vbBoolean Then
                     ReDim .DropdownValues(0 To 1)
                     .DropdownValues(0) = False
                     .DropdownValues(1) = True
                     ReDim .DropdownText(0 To 1)
-                    .DropdownText(0) = "False"
-                    .DropdownText(1) = "True"
+                    .DropdownText(0) = CStr(False)
+                    .DropdownText(1) = CStr(True)
                 End If
             End If
         End With
@@ -1330,6 +1330,7 @@ Dim l_itValue As IInspectorType
 Dim l_vtType As VbVarType
 Dim l_strText As String
 Dim l_lngValues As Long
+Dim l_booError As Boolean
     l_strText = txtEdit.Text
     If l_strText = "{Multiple Values}" Then Exit Sub
     If l_strText = m_oiItems(m_lngSelectedItem).ValueText Then Exit Sub
@@ -1337,11 +1338,16 @@ Dim l_lngValues As Long
     Case OIT_Color, OIT_Hex
         l_strText = "&H" & l_strText
     Case OIT_Enum
-        For l_lngValues = LBound(m_oiItems(m_lngSelectedItem).DropdownText) To UBound(m_oiItems(m_lngSelectedItem).DropdownText)
-            If Trim(LCase(l_strText)) = Trim(LCase(m_oiItems(m_lngSelectedItem).DropdownText(l_lngValues))) Then
-                l_strText = CStr(m_oiItems(m_lngSelectedItem).DropdownValues(l_lngValues))
-            End If
-        Next l_lngValues
+        Err.Clear
+        l_booError = UBound(m_oiItems(m_lngSelectedItem).DropdownText) < LBound(m_oiItems(m_lngSelectedItem).DropdownText)
+        If Err <> 0 Then l_booError = True
+        If Not l_booError Then
+            For l_lngValues = LBound(m_oiItems(m_lngSelectedItem).DropdownText) To UBound(m_oiItems(m_lngSelectedItem).DropdownText)
+                If Trim(LCase(l_strText)) = Trim(LCase(m_oiItems(m_lngSelectedItem).DropdownText(l_lngValues))) Then
+                    l_strText = CStr(m_oiItems(m_lngSelectedItem).DropdownValues(l_lngValues))
+                End If
+            Next l_lngValues
+        End If
     Case Else
     End Select
     RaiseEvent BeforeItemChange(l_booCancel)

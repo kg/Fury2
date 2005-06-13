@@ -123,7 +123,6 @@ typedef int (eofp)(Override::OverrideParameters* p);
 int Override::EnumOverrides(Override::OverrideIndex index, int parameter_count, ...) {
   if (!Override::EnableOverrides) return 0;
   if (Override::BypassOverrides > 0) return 0;
-  ProfileStart("EnumOverrides");
   SS_Start
   Override::OverrideList* KeyOverrides;
   KeyOverrides = ResolveOverrides(index);
@@ -132,7 +131,6 @@ int Override::EnumOverrides(Override::OverrideIndex index, int parameter_count, 
   if (parameter_count > Max_Override_Parameters) parameter_count = Max_Override_Parameters;
   if (KeyOverrides) {
     if (KeyOverrides->empty()) {
-      ProfileStop("EnumOverrides");
       return 0;
     }
     va_list parameter_list;
@@ -162,7 +160,6 @@ int Override::EnumOverrides(Override::OverrideIndex index, int parameter_count, 
           result = fpv(&ps);
         }
         if (result != 0) {
-          ProfileStop("EnumOverrides");
           return result;
         }
       }
@@ -170,7 +167,6 @@ int Override::EnumOverrides(Override::OverrideIndex index, int parameter_count, 
     }
   }
   SS_End
-  ProfileStop("EnumOverrides");
   return 0;
 }
 

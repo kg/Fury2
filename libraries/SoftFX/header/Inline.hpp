@@ -44,15 +44,15 @@ template <class TA, class TB> float inline AngleBetween(TA a, TB b) {
   Rx = (b.X - a.X);
   Ry = (b.Y - a.Y);
   if ((Rx == 0.0f) && (Ry == 0.0f)) {
-    return 0;
+    return 0.0f;
   } else if (Ry == 0.0f) {
-    if (Rx > 0) {
+    if (Rx > 0.0f) {
       return 90.0f;
     } else {
       return 270.0f;
     }
   } else if (Rx == 0.0f) {
-    if (Ry > 0) {
+    if (Ry > 0.0f) {
       return 180.0f;
     } else {
       return 0.0f;

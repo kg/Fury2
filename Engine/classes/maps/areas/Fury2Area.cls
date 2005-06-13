@@ -141,7 +141,6 @@ On Error Resume Next
         If Script Is Nothing Then Else CallByName Script, ActionName, VbMethod
         If Err.Number <> 0 Then Action = False
     End If
-    mvarMap.Engine.TextOut mvarMap.Engine.ToString(Me) & "_Enter(" & mvarMap.Engine.ToString(Activator) & ")"
     mvarMap.Engine.ContextLevelRemove
 End Function
 
@@ -156,9 +155,9 @@ Dim l_strScript As String
             With mvarMap.Engine.ScriptEngine.Language
                 l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                 .GenerateClassVariable("Map") & .LineTerminator & _
-                .GenerateClassMethod("F2OInit", Array("T", "M"), _
-                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
-                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
+                .GenerateClassMethod("F2OInit", Array("newThis", "newMap"), _
+                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "newThis", True) & .LineTerminator & _
+                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "newMap", True) _
                 ) & .LineTerminator & ScriptSource
                 mvarScript_Load = .ImplementsMethod(l_strScript, "Load")
                 mvarScript_Activate = .ImplementsMethod(l_strScript, "Activate")

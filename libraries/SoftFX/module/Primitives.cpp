@@ -1124,16 +1124,13 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
       return Trivial_Success;
     }
 
-    ProfileStart("ConvexPolygon()");
     Poly = ClipPolygon(InPoly, &(Image->ClipRectangle));
 
     if (Poly == Null) {
-      ProfileStop("ConvexPolygon()");
       return Trivial_Success;
     }
     if (Poly->Count() < 2) {
       delete Poly;
-      ProfileStop("ConvexPolygon()");
       return Trivial_Success;
     }
 
@@ -1156,18 +1153,10 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
     int cy = 0;
     if (SpanCount < 1) {
       delete Poly;
-//      DeleteArray(Edges);
-//      LookupDeallocate(Edges);
-      ProfileStop("ConvexPolygon()");
       return Trivial_Success;
     }
 
-    ProfileStart("ConvexPolygon() Scan Conversion");
 
-//    ProfileStart("ConvexPolygon() AllocateArray");
-//    ISpan *Spans = AllocateArray(ISpan, SpanCount);
-//    ProfileStop("ConvexPolygon() AllocateArray");
-//    ISpan *Spans = LookupAllocate<ISpan>(SpanCount);
     ISpan *Spans = StaticAllocate<ISpan>(PolyBuffer, SpanCount);
     for (int i = 0; i < SpanCount; i++) {
         Spans[i].S = 99999;
@@ -1187,7 +1176,6 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
         TRACELINE_END
     }
 
-    ProfileStop("ConvexPolygon() Scan Conversion");
 
     Pixel *Pointer;
     int X, Y;
@@ -1216,7 +1204,6 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
 //    LookupDeallocate(Edges);
 //    LookupDeallocate(Spans);
 
-    ProfileStop("ConvexPolygon()");
 
     return Success;
 }

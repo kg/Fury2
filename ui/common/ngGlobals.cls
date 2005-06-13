@@ -14,6 +14,11 @@ Attribute VB_Exposed = True
 Option Explicit
 Private m_colResourceCache As Collection
 
+Public Function CreateMenu() As ngMenuItems
+On Error Resume Next
+    Set CreateMenu = New ngMenuItems
+End Function
+
 Public Sub SetTheme(ByRef ResourceFile As ngResourceFile, Optional Pattern As String = "*.png")
 On Error Resume Next
     Set g_rfThemeFile = ResourceFile

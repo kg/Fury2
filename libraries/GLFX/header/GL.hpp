@@ -8,6 +8,14 @@ namespace GL {
   extern Pixel fogColor;
   extern Pixel blendColor;
 
+  struct Vertex1T {
+    float X, Y, U, V;
+  };
+
+  struct Vertex {
+    float X, Y;
+  };
+
   inline Texture* getTexture(int Image) {
     return reinterpret_cast<Texture*>(getNamedTag(Image, Texture));
   }
@@ -55,6 +63,8 @@ namespace GL {
     }
   }
 
+  extern void drawArray(GLenum type, Vertex* pointer, int count);
+  extern void drawArray(GLenum type, Vertex1T* pointer, int count);
   extern void drawLine(FPoint& start, FPoint& end);
   extern void drawGradientLine(FPoint& start, FPoint& end, Pixel startColor, Pixel endColor);
   extern void drawTexturedLineF(float X1, float Y1, float X2, float Y2, float U1, float V1, float U2, float V2);

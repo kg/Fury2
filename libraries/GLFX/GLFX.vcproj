@@ -6,6 +6,7 @@
 	ProjectGUID="{3A410C42-E439-4191-B1E9-186A3971A4F4}"
 	RootNamespace="GLFX"
 	Keyword="Win32Proj"
+	SignManifests="true"
 	>
 	<Platforms>
 		<Platform

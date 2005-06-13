@@ -162,7 +162,6 @@ Dim l_lngMaxWidth As Long
 Dim l_rctArea As Rectangle
 Dim l_optOptions As TextParam
 Dim l_lngRefCount As Long
-    ProfileStart "Measure Text"
     l_lngMaxWidth = MaximumWidth
     If l_lngMaxWidth < 1 Then l_lngMaxWidth = 32767
     l_rctArea.Width = l_lngMaxWidth
@@ -185,7 +184,6 @@ Dim l_lngRefCount As Long
         End If
     End If
     Set GetTextRectangle = m_rctText
-    ProfileStop "Measure Text"
 End Function
 
 Public Function TextWidth(Text, Optional ByVal MaxWidth As Long = -1) As Long
@@ -197,7 +195,6 @@ Dim l_lngTotalWidth As Long
 Dim l_optOptions As TextParam
     If m_lngCharCount < 1 Then Exit Function
     If Err <> 0 Then Exit Function
-    ProfileStart "Measure Text"
     l_lngMaxWidth = MaxWidth ' + 1
     If l_lngMaxWidth < 1 Then l_lngMaxWidth = 32767
     l_lngMaxHeight = 32767
@@ -210,9 +207,7 @@ Dim l_optOptions As TextParam
     Else
         Call SoftFX.RenderText(m_Globals.ToString(Text), 0, l_rctArea, m_fpmFontParam, l_optOptions)
     End If
-    'Call SoftFX.RenderFont(Text, 0, l_rctArea, m_fpmFontParam, 0, VarPtr(l_lngTotalWidth))
     TextWidth = l_optOptions.Width
-    ProfileStop "Measure Text"
 End Function
 
 Public Function TextHeight(Text, Optional ByVal MaxWidth As Long = -1) As Long
@@ -223,7 +218,6 @@ Dim l_lngMaxWidth As Long, l_lngMaxHeight As Long
 Dim l_optOptions As TextParam
     If m_lngCharCount < 1 Then Exit Function
     If Err <> 0 Then Exit Function
-    ProfileStart "Measure Text"
     l_lngMaxWidth = MaxWidth ' + 1
     If l_lngMaxWidth < 1 Then l_lngMaxWidth = 32767
     l_lngMaxHeight = 32767
@@ -236,9 +230,7 @@ Dim l_optOptions As TextParam
     Else
         Call SoftFX.RenderText(m_Globals.ToString(Text), 0, l_rctArea, m_fpmFontParam, l_optOptions)
     End If
-'    TextHeight = SoftFX.RenderFont(Text, 0, l_rctArea, m_fpmFontParam, 0, 0)
     TextHeight = l_optOptions.Height
-    ProfileStop "Measure Text"
 End Function
 
 Public Property Get Height() As Long
@@ -343,7 +335,6 @@ Dim l_optOptions As TextParam
     If Err <> 0 Then Exit Function
     Set l_rctRectangle = Rectangle
     If Err <> 0 Then Exit Function
-    ProfileStart "IndexFromPoint"
     ParseOptions Options, l_optOptions
     l_optOptions.CharFromPoint = 1
     l_optOptions.CharFromPoint_X = X
@@ -351,7 +342,6 @@ Dim l_optOptions As TextParam
     If SoftFX.RenderText(l_strText, 0, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions) Then
         IndexFromPoint = l_optOptions.CharFromPoint
     End If
-    ProfileStop "IndexFromPoint"
 End Function
 
 Public Function Draw(ByVal Surface As Fury2Image, ByRef Text, ByVal Rectangle As Fury2Rect, Optional ByVal Color, Optional ByVal Alpha As Single = 1, Optional Options As Variant, Optional ByRef HeightOut) As Long
@@ -375,7 +365,6 @@ Dim l_optOptions As TextParam
     Set l_rctRectangle = Rectangle
     If Err <> 0 Then Exit Function
     l_lngColor = m_fpmFontParam.FillColor
-    ProfileStart "Draw Text"
     If IsMissing(Color) Then
     Else
         m_fpmFontParam.FillColor = CLng(Color)
@@ -401,7 +390,6 @@ Dim l_optOptions As TextParam
     End If
     l_imgSurface.Dirty = True
     m_fpmFontParam.FillColor = l_lngColor
-    ProfileStop "Draw Text"
 End Function
 
 Public Function DrawCentered(ByVal Surface As Fury2Image, ByRef Text, ByVal Rectangle As Fury2Rect, Optional ByVal Color, Optional ByVal Alpha As Single = 1, Optional Options As Variant, Optional HeightOut) As Long
@@ -435,7 +423,6 @@ Dim l_lngXO As Long, l_lngYO As Long
         Set l_rctRectangle = F2Rect(.left + l_lngXO, .top + l_lngYO, .right, .bottom)
     End With
     l_lngColor = m_fpmFontParam.FillColor
-    ProfileStart "Draw Text"
     If IsMissing(Color) Then
     Else
         m_fpmFontParam.FillColor = CLng(Color)
@@ -461,7 +448,6 @@ Dim l_lngXO As Long, l_lngYO As Long
     DrawCentered = l_optOptions.Lines
     l_imgSurface.Dirty = True
     m_fpmFontParam.FillColor = l_lngColor
-    ProfileStop "Draw Text"
 End Function
 
 Public Property Get Alpha() As Single

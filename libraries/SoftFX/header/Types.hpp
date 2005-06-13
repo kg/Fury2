@@ -173,11 +173,11 @@ struct FLine {
 		  // Based on the 2d line intersection method from "comp.graphics.algorithms Frequently Asked Questions"
 		  float q = (this->Start.Y - that.Start.Y) * (that.End.X - that.Start.X) - (this->Start.X - that.Start.X) * (that.End.Y - that.Start.Y);
 		  float d = (this->End.X - this->Start.X) * (that.End.Y - that.Start.Y) - (this->End.Y - this->Start.Y) * (that.End.X - that.Start.X);
-		  if( d == 0 ) return false;
+		  if( d == 0.0f ) return false;
 		  float r = q / d;
 		  q = (this->Start.Y - that.Start.Y) * (this->End.X - this->Start.X) - (this->Start.X - that.Start.X) * (this->End.Y - this->Start.Y);
 		  float s = q / d;
-		  if( r < 0 || r > 1 || s < 0 || s > 1 ) return false;
+		  if( r < 0.0f || r > 1.0f || s < 0.0f || s > 1.0f ) return false;
 		  point.X = this->Start.X + (0.5f + r * (this->End.X - this->Start.X));
 		  point.Y = this->Start.Y + (0.5f + r * (this->End.Y - this->Start.Y));
 		  return true;

@@ -140,7 +140,6 @@ Dim l_sprSprite As Fury2Sprite, l_sprNext As Fury2Sprite
     If mvarParent Is Nothing Then Exit Sub
     If mvarIndex < 1 Then Exit Sub
     If mCol.Count < 1 Then Exit Sub
-    ProfileStart "RefreshList"
     mvarDirty = False
     l_lngFillSprites = 1
     mvarFirst = mCol.Item(1).Pointer
@@ -159,7 +158,6 @@ Dim l_sprSprite As Fury2Sprite, l_sprNext As Fury2Sprite
         l_lngFillSprites = l_lngFillSprites + 1
     Next l_sprSprite
     mvarFirst = mCol.Item(1).Pointer
-    ProfileStop "RefreshList"
     Err.Clear
 End Sub
 
@@ -443,7 +441,6 @@ Dim l_lngSprites As Long
     With Map.Layers(CLayer)
         SoftFX.UpdateSprites mvarFirst, .CollisionMatrix
     End With
-    ProfileStart "Sprite.Update"
     For Each l_sprSprite In mCol
         With l_sprSprite
             .SetAttributes l_lngSprites, CLayer, Me, Map
@@ -451,7 +448,6 @@ Dim l_lngSprites As Long
             l_lngSprites = l_lngSprites + 1
         End With
     Next l_sprSprite
-    ProfileStop "Sprite.Update"
 End Sub
 
 Public Sub Render(Surface As Fury2Image, Optional ByVal XOffset As Long = 0, Optional ByVal YOffset As Long = 0)

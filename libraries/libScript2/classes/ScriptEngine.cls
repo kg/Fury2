@@ -129,6 +129,8 @@ On Error Resume Next
         Set LoadLanguage = New VBScriptLanguage
     Case "python", "py"
         Set LoadLanguage = New PythonLanguage
+    Case "ruby", "rb", "rubyscript", "rs"
+        Set LoadLanguage = New RubyLanguage
     Case "jscript", "javascript", "js", "java script", "ecmascript"
         Set LoadLanguage = New JScriptLanguage
     Case Else

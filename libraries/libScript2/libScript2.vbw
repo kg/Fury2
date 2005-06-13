@@ -1,5 +1,6 @@
 ScriptEngine = 207, 207, 1112, 811, 
 IScriptLanguage = 0, 0, 821, 509, C
-PythonLanguage = 22, 24, 843, 533, Z
+RubyLanguage = 22, 24, 843, 533, Z
 JScriptLanguage = 23, 23, 928, 627, C
 VBScriptLanguage = 0, 0, 0, 0, C
+PythonLanguage = 0, 0, 0, 0, C

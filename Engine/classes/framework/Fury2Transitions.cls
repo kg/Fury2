@@ -58,7 +58,6 @@ Dim m_sngVolume As Single
         Exit Sub
     End If
     If m_booTransitioning Then Exit Sub
-    ProfileStart "Transitions.FadeOut"
     Engine.FrameBuildup = 0
     m_booTransitioning = True
     Engine.ContextLevelAdd "Transitions.FadeOut"
@@ -85,7 +84,6 @@ Dim m_sngVolume As Single
     Engine.ResetTiming
     m_booTransitioning = False
     Err.Clear
-    ProfileStop "Transitions.FadeOut"
 End Sub
 
 Sub FadeIn(Optional ByVal Length As Double = 1, Optional ByVal BackColor As Long = 0)
@@ -100,7 +98,6 @@ Dim m_lngBackColor As Long
         Exit Sub
     End If
     If m_booTransitioning Then Exit Sub
-    ProfileStart "Transitions.FadeIn"
     Engine.FrameBuildup = 0
     m_booTransitioning = True
     Engine.ContextLevelAdd "Transitions.FadeIn"
@@ -127,7 +124,6 @@ Dim m_lngBackColor As Long
     Engine.ResetTiming
     m_booTransitioning = False
     Err.Clear
-    ProfileStop "Transitions.FadeIn"
 End Sub
 
 Sub Crossfade(Optional ByVal Length As Double = 1, Optional OldImage = Nothing)
@@ -140,7 +136,6 @@ Dim m_imgOld As Fury2Image
     If Length <= 0 Then Exit Sub
     If Engine.SpecialFX = False Then Exit Sub
     If m_booTransitioning Then Exit Sub
-    ProfileStart "Transitions.Crossfade"
     Engine.FrameBuildup = 0
     m_booTransitioning = True
     Engine.ContextLevelAdd "Transitions.Crossfade"
@@ -165,7 +160,6 @@ Dim m_imgOld As Fury2Image
     Engine.ContextLevelRemove
     Engine.ResetTiming
     m_booTransitioning = False
-    ProfileStop "Transitions.Crossfade"
     Err.Clear
 End Sub
 

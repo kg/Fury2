@@ -359,7 +359,6 @@ Sub Poll()
 On Error Resume Next
 Dim m_lngItem As Long
 Dim m_booDone As Boolean
-    ProfileStart "Joystick Update"
     m_devDevice.Poll
     m_devDevice.GetDeviceStateJoystick2 m_djsState
     If m_lngBindIndex = 0 Then
@@ -408,7 +407,6 @@ Dim m_booDone As Boolean
         m_mnuBindings.Active = True
         UpdateConfig
     End If
-    ProfileStop "Joystick Update"
 End Sub
 
 Public Function POVName(ByVal Direction As Long) As String

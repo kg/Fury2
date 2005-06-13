@@ -1287,16 +1287,16 @@ Dim l_strName As String
                         l_strScript = Mid(l_strScript, 3, Len(l_strScript) - 3)
                         l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                         .GenerateClassVariable("Map") & .LineTerminator & _
-                        .GenerateClassMethod("F2OInit", Array("T", "M"), _
-                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
-                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) & .LineTerminator _
+                        .GenerateClassMethod("F2OInit", Array("newThis", "newMap"), _
+                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "newThis", True) & .LineTerminator & _
+                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "newMap", True) & .LineTerminator _
                         ) & .LineTerminator & mvarEngine.GetFile(l_strScript)
                     Else
                         l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                         .GenerateClassVariable("Map") & .LineTerminator & _
-                        .GenerateClassMethod("F2OInit", Array("T", "M"), _
-                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
-                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) & .LineTerminator _
+                        .GenerateClassMethod("F2OInit", Array("newThis", "newMap"), _
+                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "newThis", True) & .LineTerminator & _
+                        .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "newMap", True) & .LineTerminator _
                         ) & .LineTerminator & m_strScript
                     End If
                     m_booScript_Update = .ImplementsMethod(l_strScript, "Update")
@@ -1502,7 +1502,6 @@ Dim l_sprCollided As Fury2Sprite
     
     UpdatePath
        
-    ProfileStart "Sprite Scripts"
     If (CLng(m_spParam.Position.X) <> CLng(m_spOldParam.Position.X)) Or (CLng(m_spParam.Position.Y) <> CLng(m_spOldParam.Position.Y)) Then
         If m_booScript_Step Then
             mvarEngine.ContextLevelAdd "Sprite_Step"
@@ -1558,9 +1557,7 @@ Dim l_sprCollided As Fury2Sprite
         Err.Clear
         mvarEngine.ContextLevelRemove
     End If
-    ProfileStop "Sprite Scripts"
     
-    ProfileStart "Attached Update / State Copy"
     If m_sprAttached Is Nothing Then
     Else
         With m_sprAttached
@@ -1578,7 +1575,6 @@ Dim l_sprCollided As Fury2Sprite
     End If
     
     m_spOldParam = m_spParam
-    ProfileStop "Attached Update / State Copy"
 End Sub
 
 Private Sub UpdatePath()
@@ -1586,7 +1582,6 @@ On Error Resume Next
 Dim l_sngPathDistance As Single
 Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
     If m_pthPath.Count > 0 Then
-        ProfileStart "Sprite.UpdatePath"
         If m_pthPath(1).WaitRemainder > 0 Then
             m_pthPath(1).WaitRemainder = m_pthPath(1).WaitRemainder - 1
         Else
@@ -1630,7 +1625,6 @@ Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
                 End If
             End With
         End If
-        ProfileStop "Sprite.UpdatePath"
     Else
     End If
 End Sub
@@ -1639,7 +1633,6 @@ Private Sub UpdateAnimation()
 On Error Resume Next
 Dim l_lngOldFrame As Long
 Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
-    ProfileStart "Sprite.UpdateAnimation"
     l_lngOldFrame = m_lngFrame
     If m_fraFrame Is Nothing Then
     Else
@@ -1655,7 +1648,6 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
                 l_lngPreState = m_lngState
                 m_posPose.Frames(m_lngFrame).RunScript
                 If (l_lngPreFrame <> m_lngFrame) Or (l_lngPrePose <> m_lngPose) Or (l_lngPreState <> m_lngState) Then
-                    ProfileStop "Sprite.UpdateAnimation"
                     Exit Sub
                 End If
                 If m_posPose.Frames.Count = 1 Then
@@ -1697,7 +1689,6 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
     If m_lngFrame <> l_lngOldFrame Then
         UpdateFrame
     End If
-    ProfileStop "Sprite.UpdateAnimation"
 End Sub
 
 Private Sub UpdateAreas()
@@ -1706,7 +1697,6 @@ Dim l_rctCurrent As Rectangle, l_rctOld As Rectangle
 Dim l_araArea As Fury2Area, l_booWasIn As Boolean, l_booIsIn As Boolean
     If m_booAreasUpdated Then Exit Sub
     m_booAreasUpdated = True
-    ProfileStart "Sprite.UpdateAreas"
     With l_rctCurrent
         .left = CLng(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2))
         .top = CLng(m_spParam.Position.Y - (m_spParam.Obstruction.Height))
@@ -1744,7 +1734,6 @@ Dim l_araArea As Fury2Area, l_booWasIn As Boolean, l_booIsIn As Boolean
         Err.Clear
     Next l_araArea
     m_booAreasUpdated = False
-    ProfileStop "Sprite.UpdateAreas"
 End Sub
 
 Private Sub InitAreas()
@@ -1757,11 +1746,9 @@ Dim l_araArea As Fury2Area
     For Each l_araArea In m_mapMap.Areas
         If (l_araArea.Rectangle.Intersect(l_rctMe)) Then
             ' Enter
-            ProfileStart "Area Scripts"
             If Me.Name Like l_araArea.NamePattern Then
                 l_araArea.Action Me, "Enter"
             End If
-            ProfileStop "Area Scripts"
         End If
         
         Err.Clear

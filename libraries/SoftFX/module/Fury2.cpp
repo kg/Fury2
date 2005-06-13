@@ -224,7 +224,6 @@ if (!Layer) return Failure;
     if (!Camera) return Failure;
     if (!Camera->pImage()) return Failure;
     if (!Layer->pTileset) return Failure;
-    ProfileStart("RenderTilemapLayer()");
     pTarget = Camera->pImage();
     if (Layer->RenderTarget < Camera->RenderTargetCount) {
       pTarget = Camera->pRenderTargets[Layer->RenderTarget];
@@ -333,14 +332,12 @@ if (!Layer) return Failure;
       if (TintBlitter == Null) {
         enableClipping = true;
         pTarget->ClipRectangle = oldRect;
-        ProfileStop("RenderTilemapLayer()");
         return Failure;
       }
     } else {
       if (Blitter == Null) {
         enableClipping = true;
         pTarget->ClipRectangle = oldRect;
-        ProfileStop("RenderTilemapLayer()");
         return Failure;
       }
     }
@@ -352,7 +349,6 @@ if (!Layer) return Failure;
       }
       enableClipping = true;
       pTarget->ClipRectangle = oldRect;
-      ProfileStop("RenderTilemapLayer()");
       return result;
     }
 
@@ -442,7 +438,6 @@ if (!Layer) return Failure;
     }
     enableClipping = true;
     pTarget->ClipRectangle = oldRect;
-    ProfileStop("RenderTilemapLayer()");
     return Success;
 }
 
@@ -454,7 +449,6 @@ FRect rSource = {0, 0, 0, 0}, rDest = {0, 0, 0, 0};
     if (!first) return 0;
     if (!check) return 0;
     if (!first->pNext) return 0;
-    ProfileStart("CollisionCheck()");
     sw = (check->Obstruction.W) / 2;
     rSource.X1 = (check->Position.X) - (sw);
     rSource.X2 = (check->Position.X) + (sw);
@@ -473,7 +467,6 @@ FRect rSource = {0, 0, 0, 0}, rDest = {0, 0, 0, 0};
                     if (rSource.Y1 > rDest.Y2) goto nevar;
                     if (rSource.X2 < rDest.X1) goto nevar;
                     if (rSource.Y2 < rDest.Y1) goto nevar;
-                    ProfileStop("CollisionCheck()");
                     if (out) *out = sCurrent;
                     return sCurrent->Index;
                 }
@@ -482,7 +475,6 @@ FRect rSource = {0, 0, 0, 0}, rDest = {0, 0, 0, 0};
 nevar:
         sCurrent = sCurrent->pNext;
     }
-    ProfileStop("CollisionCheck()");
     return 0;
 }
 
@@ -500,7 +492,6 @@ SpritePosition spOldPosition = Sprite->Position;
 int iCollide = 0;
 float fX = ResolvedSpeed.X, fY = ResolvedSpeed.Y;
 bool resolved = false;
-    ProfileStart("ResolveCollisions()");
     resolved = false;
     Sprite->Position = spOldPosition;
     Sprite->Position.X += ResolvedSpeed.X;
@@ -508,7 +499,6 @@ bool resolved = false;
     _check;
     if (iCollide == 0) {
         Sprite->Position = spOldPosition;
-        ProfileStop("ResolveCollisions()");
         return false;
     } else {
     }
@@ -541,7 +531,6 @@ bool resolved = false;
           Sprite->Position = spOldPosition;
           ResolvedSpeed.X = fX;
           ResolvedSpeed.Y = fY;
-          ProfileStop("ResolveCollisions()");
           return true;
       }
     }
@@ -577,7 +566,6 @@ bool resolved = false;
           Sprite->Position = spOldPosition;
           ResolvedSpeed.X = fX;
           ResolvedSpeed.Y = fY;
-          ProfileStop("ResolveCollisions()");
           return true;
       }
     }
@@ -630,7 +618,6 @@ bool resolved = false;
     }
 
     Sprite->Position = spOldPosition;
-    ProfileStop("ResolveCollisions()");
     return true;
 }
 
@@ -647,7 +634,6 @@ std::vector<ForceEntry>::iterator currentEntry;
 ForceEntry newEntry;
     if (!List) return Failure;
     if (!Matrix) return Failure;
-    ProfileStart("UpdateSprites()");
     // reset
     while (pCurrent) {
         pCurrent->Events.CollidedWith = 0;
@@ -815,7 +801,6 @@ ForceEntry newEntry;
 
         pCurrent = pCurrent->pNext;
     }
-    ProfileStop("UpdateSprites()");
     return Success;
 }
 
@@ -875,9 +860,7 @@ nextsprite:
 
 Export SpriteParam* SortSprites(SpriteParam *List) {
 SpriteParam *result = Null;
-  ProfileStart("SortSprites()");
   result = SortLinkedList<SpriteParam>(List);
-  ProfileStop("SortSprites()");
   return result;
 }
 
@@ -896,7 +879,6 @@ Pixel white = Pixel(255,255,255,255);
     if (!Start) return Failure;
     if (!Camera) return Failure;
     if (!Camera->pImage()) return Failure;
-    ProfileStart("RenderSprites()");
     poly.Allocate(4);
     while (pCurrent) {
       iCount++;
@@ -1088,7 +1070,6 @@ nextsprite:
       pCurrent = pCurrent->pSortedNext;
       if (pCurrent == Start) break;
     }
-    ProfileStop("RenderSprites()");
     poly.Deallocate();
     return iCount;
 }
@@ -1950,30 +1931,33 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
 #else
   float XDistance, YDistance;
 #endif
-  Byte Distance;
+  int Distance;
   float DistanceMultiplier;
+  float ldist;
   bool Obscured, Falloff;
   int mx1 = 0, my1 = 0, mx2 = 0, my2 = 0, mx = 0, my = 0;
   Lighting::Sector *Sector = Null;
   std::vector<Lighting::Obstruction>::iterator Obstruction;
   if (Env->LightCount < 1) return Color;
-  ProfileStart("Raycast");
+  float fsw = (float)Env->Matrix->SectorWidth;
+  float fsh = (float)Env->Matrix->SectorHeight;
   for (int l = 0; l < Env->LightCount; ++l) {
     Obscured = false;
 	  if (((!Env->Lights[l].Culled) || (!Env->Lights[l].PlaneCulled) || (!EnableCulling)) && (Env->Lights[l].Visible)) {
+      ldist = Env->Lights[l].FalloffDistance;
       Falloff = Env->Lights[l].FalloffDistance > 0;
       if (Falloff) {
-        DistanceMultiplier = (255.0F / Env->Lights[l].FalloffDistance);
+        DistanceMultiplier = (255.0F / ldist);
       }
       LightColor = Env->Lights[l].Color;
       LightRay.Start.X = Env->Lights[l].X;
       LightRay.Start.Y = Env->Lights[l].Y;
       LightRay.End.X = X;
       LightRay.End.Y = Y;
-	    mx1 = ClipValue(floor(_Min(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
-  	  my1 = ClipValue(floor(_Min(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), 0, Env->Matrix->Height - 1);
-	    mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
-	    my2 = ClipValue(ceil(_Max(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), 0, Env->Matrix->Height - 1);
+	    mx1 = ClipValue(floor(_Min(LightRay.Start.X, LightRay.End.X) / fsw), 0, Env->Matrix->Width - 1);
+  	  my1 = ClipValue(floor(_Min(LightRay.Start.Y, LightRay.End.Y) / fsh), 0, Env->Matrix->Height - 1);
+	    mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / fsw), 0, Env->Matrix->Width - 1);
+	    my2 = ClipValue(ceil(_Max(LightRay.Start.Y, LightRay.End.Y) / fsh), 0, Env->Matrix->Height - 1);
       if (Falloff) {
         YDistance = abs(LightRay.End.Y - LightRay.Start.Y) * DistanceMultiplier;
         XDistance = abs(LightRay.End.X - LightRay.Start.X) * DistanceMultiplier;
@@ -1988,7 +1972,7 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
       }
       if (Distance < 255) {
         Obscured = false;
-        if ((Env->Lights[l].Spread < 180) && (Distance > 0)) {
+        if ((Env->Lights[l].Spread < 180.0f) && (Distance > 0)) {
           // directional
           float ls = Env->Lights[l].Spread / 2;
           float a_l = NormalizeAngle(AngleBetween(LightRay.Start, LightRay.End));
@@ -2042,24 +2026,24 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
               if (Falloff) {
                 XDistance = Sprite->Position.X - Env->Lights[l].X;
                 YDistance = Sprite->Position.Y - Env->Lights[l].Y;
-                if (sqrt((float)(XDistance*XDistance)+(YDistance*YDistance)) > (Env->Lights[l].FalloffDistance * 1.1)) {
+                if (sqrt((float)(XDistance*XDistance)+(YDistance*YDistance)) > (ldist * 1.1f)) {
                   Sprite = Sprite->pNext;
                   continue;
                 }
               }
               break;
             }
-            float s = (Sprite->Obstruction.W + Sprite->Obstruction.H) / 4;
-            float h = Sprite->Obstruction.H / 2;
+            float s = (Sprite->Obstruction.W + Sprite->Obstruction.H) / 4.0f;
+            float h = Sprite->Obstruction.H / 2.0f;
             float a = Radians(AngleBetween(Sprite->Position, Env->Lights[l]));          
             float sdist = Sprite->ZHeight;
-            if (sdist <= 0) sdist = 10000;
+            if (sdist <= 0) sdist = 10000.0f;
             SpriteLine.Start.X = (sin(a - Radians(90)) * s) + Sprite->Position.X;
             SpriteLine.Start.Y = (-cos(a - Radians(90)) * s) + Sprite->Position.Y - h;
             SpriteLine.End.X = (sin(a + Radians(90)) * s) + Sprite->Position.X;
             SpriteLine.End.Y = (-cos(a + Radians(90)) * s) + Sprite->Position.Y - h;
             if (LightRay.intersect(SpriteLine, IntersectionPoint)) {
-              if (IntersectionPoint.distance(&(LightRay.End)) < 2) {
+              if (IntersectionPoint.distance(&(LightRay.End)) < 2.0f) {
               } else {
                 if (IntersectionPoint.distance(&(LightRay.End)) < sdist) {
                   Obscured = true;
@@ -2087,7 +2071,6 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
       }
     }
   }
-  ProfileStop("Raycast");
   return Color;
 }
 
@@ -2111,7 +2094,8 @@ bool Ignore = false, Scaling = false;
 int SpriteCount = 0;
 Pixel SavedColor, LightColor;
 Image* RenderTarget;
-int OffsetX = 0, OffsetY = 0;
+int iOffsetX = 0, iOffsetY = 0;
+float OffsetX = 0, OffsetY = 0;
 int LightIterations = 0;
 float FuzzyOffset = 0, FlickerAmount = 0;
   if (!Camera) return Failure;
@@ -2124,8 +2108,8 @@ float FuzzyOffset = 0, FlickerAmount = 0;
 
   CameraRect = Camera->OutputRectangle;
   RenderTarget = Camera->ScratchBuffer;
-  OffsetX = Camera->ScrollX;
-  OffsetY = Camera->ScrollY;
+  iOffsetX = OffsetX = Camera->ScrollX;
+  iOffsetY = OffsetY = Camera->ScrollY;
 
   if (Environment->LightCount < 1) return Trivial_Success;
 
@@ -2139,8 +2123,8 @@ float FuzzyOffset = 0, FlickerAmount = 0;
 
     bool Light_Clipped = false;
 
-    OffsetX = Camera->ScrollX;
-    OffsetY = Camera->ScrollY;
+    iOffsetX = OffsetX = Camera->ScrollX;
+    iOffsetY = OffsetY = Camera->ScrollY;
     Light = &(Environment->Lights[l]);
   	Light->Culled = true;
     if (Light->Attached) {
@@ -2160,7 +2144,6 @@ float FuzzyOffset = 0, FlickerAmount = 0;
     }
     RenderTarget->setClipRectangle(RenderTarget->getRectangle());
     if (Light->Visible) {
-      ProfileStart("Render Light Sources");
       LightColor = Light->Color;
       if (Light->FlickerLevel != 0) {
         FlickerAmount = rand() * Light->FlickerLevel / (float)(RAND_MAX);
@@ -2311,7 +2294,6 @@ fuzzyrender:
         }
       }
 
-      ProfileStop("Render Light Sources");
 
 	    Light->Culled = Light_Clipped;
       Light->Rect.setValues(0, 0, 0, 0);
@@ -2326,7 +2308,6 @@ fuzzyrender:
         ShadowPoly.Allocate(4);
         ShadowPoly.SetCount(4);
 
-        ProfileStart("Render Shadows");
 
         if ((Environment->Matrix) && !(Light->CacheValid && (Light->Cache != Null))) {
 			  float vs = 0;
@@ -2457,7 +2438,6 @@ fuzzyrender:
           Sprite = Sprite->pNext;
         }
 
-        ProfileStop("Render Shadows");
 
         if ((Light->Cache != Null)) {
           Light->CacheValid = 1;
@@ -2473,10 +2453,9 @@ fuzzyrender:
     }
   }
 
-  OffsetX = Camera->ScrollX;
-  OffsetY = Camera->ScrollY;
+  iOffsetX = OffsetX = Camera->ScrollX;
+  iOffsetY = OffsetY = Camera->ScrollY;
 
-  ProfileStart("Calculate Sprite Illumination");
   Sprite = Environment->Sprites;
   while (Sprite) {
     if (Sprite->Visible) {
@@ -2486,12 +2465,10 @@ fuzzyrender:
     }
     Sprite = Sprite->pNext;
   }
-  ProfileStop("Calculate Sprite Illumination");
 
   Lighting::sort_entry *SortEntries = Null;
   Lighting::sort_entry *FirstSortEntry = Null;
   int SortEntryCount = 0, SortBufferCount = 0;
-  ProfileStart("Sort Planes & Sprites");
   {
     int y2 = 0;
     SortBufferCount = Environment->PlaneCount + SpriteCount + 1;
@@ -2504,7 +2481,7 @@ fuzzyrender:
           Plane = &(Environment->Planes[i]);
           rctWall = Plane->fullRect();
           y2 = rctWall.bottom();
-          rctWall.translate(-OffsetX, -OffsetY);
+          rctWall.translate(-iOffsetX, -iOffsetY);
           if (ClipRectangle_Rect(&rctWall, &CameraRect)) {
             SortEntries[SortEntryCount].type = Lighting::plane;
             SortEntries[SortEntryCount].y = y2;
@@ -2523,7 +2500,7 @@ fuzzyrender:
           if (Sprite->Params.Alpha != 0) {
             rctSprite = Sprite->getRectangle();
             y2 = rctSprite.bottom();
-            rctSprite.translate(-OffsetX, -OffsetY);
+            rctSprite.translate(-iOffsetX, -iOffsetY);
             if (ClipRectangle_Rect(&rctSprite, &CameraRect)) {
               SortEntries[SortEntryCount].type = Lighting::sprite;
               SortEntries[SortEntryCount].y = y2 + Sprite->Position.Z;
@@ -2539,9 +2516,7 @@ fuzzyrender:
     SortEntries[SortEntryCount - 1].pNext = Null;
     FirstSortEntry = SortLinkedList<Lighting::sort_entry>(&(SortEntries[0]));
   }
-  ProfileStop("Sort Planes & Sprites");
 
-  ProfileStart("Render Planes & Sprites");
   Lighting::sort_entry *SortEntry = FirstSortEntry;
   {
     Rectangle rctDest, rctSource, rctCopy;
@@ -2561,7 +2536,6 @@ fuzzyrender:
 
     while (SortEntry) {
       if (SortEntry->type == Lighting::sprite) {
-        ProfileStart("Render Sprites");
         Sprite = SortEntry->Sprite;
         SavedColor = Sprite->Params.IlluminationLevel;
         SavedColor[::Alpha] = 255;
@@ -2596,14 +2570,12 @@ fuzzyrender:
             }
           }
         }
-        ProfileStop("Render Sprites");
       } else if (SortEntry->type == Lighting::plane) {
-        ProfileStart("Render Planes");
         Plane = SortEntry->Plane;
         rctTop = Plane->topRect();
         rctWall = Plane->bottomRect();
-        rctTop.translate(-OffsetX, -OffsetY);
-        rctWall.translate(-OffsetX, -OffsetY);
+        rctTop.translate(-iOffsetX, -iOffsetY);
+        rctWall.translate(-iOffsetX, -iOffsetY);
         rctFullWall = rctWall;
     		x = rctWall.Left;
 		    ClipRectangle_Image(&rctTop, Camera->OutputBuffer);
@@ -2623,28 +2595,21 @@ fuzzyrender:
             float ex = _Max(Plane->Start.X, Plane->End.X);
             float sx = _Min(Plane->Start.X, Plane->End.X);
 		        Pixel color = Pixel(0, 0, 0, 255);
-		        int i = 0;
+            Pixel *pDest = PlaneTexture->pointer(0, 0);
+		        int i = 0, imax = rctWall.Width;
             for (int l = 0; l < Environment->LightCount; l++) {
-              Environment->Lights[l].PlaneCulled = !(Environment->Lights[l].Rect.intersect(rctFullWall));
+              Environment->Lights[l].PlaneCulled = !(Environment->Lights[l].Rect.intersect(rctWall));
             }
-            for (float x = sx; x <= ex; x += 1.0) {
-      			  if (i >= rctWall.Width) break;
+            for (float x = sx; x <= ex; x += 1.0f) {
+      			  if (i >= imax) break;
 			        color = Raycast(Environment, x + xo, y, Null, true);
-              PlaneTexture->setPixel(i++, 0, color);
+              *pDest = color;
+              pDest++;
+              i++;
             }
             PlaneTexture->dirty();
             BlitResample_Normal(Camera->OutputBuffer, PlaneTexture, &rctWall, &rctSource, DefaultSampleFunction);
-           // for (float x = sx; x <= ex; x += 1.0) {
-      			  //if (i >= rctWall.Width) break;
-           //   rctSource.Left = rctWall.Left + i;
-           //   if ((rctSource.Left >= Camera->OutputBuffer->ClipRectangle.Left) && (rctSource.Left < Camera->OutputBuffer->ClipRectangle.right())) {
-  			      //  color = Raycast(Environment, x + xo, y, Null, true);
-           //     FilterSimple_Fill(Camera->OutputBuffer, &rctSource, color);
-           //   }
-           //   i++;
-           // }
           }
-          ProfileStop("Render Planes");
         }
         SortEntry = SortEntry->pSortedNext;
         n++;
@@ -2653,7 +2618,6 @@ fuzzyrender:
 	    PlaneTexture->Data = Null;
       delete PlaneTexture;
   }
-  ProfileStop("Render Planes & Sprites");
 
   ShadowPoly.Deallocate();
   GradientShadowPoly.Deallocate();

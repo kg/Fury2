@@ -629,16 +629,16 @@ Dim l_strScript As String
                     l_strScript = Mid(l_strScript, 3, Len(l_strScript) - 3)
                     l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                     .GenerateClassVariable("Map") & .LineTerminator & _
-                    .GenerateClassMethod("F2OInit", Array("T", "M"), _
-                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
-                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
+                    .GenerateClassMethod("F2OInit", Array("newThis", "newMap"), _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "newThis", True) & .LineTerminator & _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "newMap", True) _
                     ) & .LineTerminator & mvarEngine.GetFile(l_strScript)
                 Else
                     l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                     .GenerateClassVariable("Map") & .LineTerminator & _
-                    .GenerateClassMethod("F2OInit", Array("T", "M"), _
-                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "T", True) & .LineTerminator & _
-                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "M", True) _
+                    .GenerateClassMethod("F2OInit", Array("newThis", "newMap"), _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "newThis", True) & .LineTerminator & _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "newMap", True) _
                     ) & .LineTerminator & m_strScriptSource
                 End If
                 m_booScript_Update = .ImplementsMethod(l_strScript, "Update")
@@ -739,9 +739,7 @@ Dim l_mobObject As Fury2MapObject
     Err.Clear
     If m_booScript_Update = True Then
         Engine.ContextLevelAdd "Map_Update"
-        ProfileStart "Map_Update"
         If m_objScript Is Nothing Then Else m_objScript.Update
-        ProfileStop "Map_Update"
         Engine.ContextLevelRemove
     End If
     If m_lyrLayers.Count > 0 Then
@@ -749,14 +747,10 @@ Dim l_mobObject As Fury2MapObject
         For Each l_lyrLayer In m_lyrLayers
             Engine.ContextLevelAdd "Layers(" + CStr(l_lngLayers) + ")"
             l_lyrLayer.Sprites.Update Me, CLng(l_lngLayers), True
-            ProfileStart "Map.Lights.Update"
             l_lyrLayer.Lighting.Update
-            ProfileStop "Map.Lights.Update"
             If l_lyrLayer.TileAnimations Is Nothing Then
             Else
-                ProfileStart "Map.TileAnimations.Update"
                 l_lyrLayer.TileAnimations.Update
-                ProfileStop "Map.TileAnimations.Update"
             End If
             Engine.ContextLevelRemove
             l_lngLayers = l_lngLayers + 1

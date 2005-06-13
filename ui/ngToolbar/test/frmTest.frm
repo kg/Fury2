@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.10#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#9.0#0"; "ngUI.ocx"
 Begin VB.Form frmTest 
    BackColor       =   &H000000FF&
    Caption         =   "ngToolbar Test"
@@ -22,6 +22,23 @@ Begin VB.Form frmTest
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   419
    StartUpPosition =   3  'Windows Default
+   Begin VB.CommandButton cmdMenu 
+      Caption         =   "Show Menu"
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   630
+      Left            =   4215
+      TabIndex        =   3
+      Top             =   4755
+      Width           =   1995
+   End
    Begin ngUI.ngTabStrip tsTabs 
       Height          =   765
       Left            =   60
@@ -69,6 +86,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
+Dim m_mnuTest As ngMenuItems
 
 Private Sub Form_Load()
 On Error Resume Next
@@ -115,5 +133,6 @@ Dim l_lngIndex As Long
     tsTabs.Tabs.AddNew "Tab 8"
     tsTabs.Tabs.AddNew "Tab 9"
     tsTabs.Tabs.AddNew "Tab 10"
+    Set m_mnuTest = CreateMenu()
 End Sub
 

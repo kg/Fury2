@@ -80,7 +80,7 @@ Public Keyboard As Fury2Keyboard
 Public Joysticks As Fury2Collection
 
 Private m_lngInterruptTimer As Long
-Private m_dblCPUFrequency As Double
+Private m_curCPUFrequency As Currency
 Private m_dxDirectX As DirectX8
 Private m_devDeviceirectInput As DirectInput8
 
@@ -983,6 +983,7 @@ End Function
 
 Private Sub Class_Initialize()
 On Error Resume Next
+    Call QueryPerformanceFrequency(m_curCPUFrequency)
     m_dblTimeOffset = 0
     m_booFresh = True
     m_booIDE = InIDE
@@ -1844,6 +1845,7 @@ Dim Obj As Object
 Dim m_lngX As Long, m_lngY As Long
 Dim m_varX As Variant, m_varY As Variant
 Dim l_lngHotspots As Long, l_booInside As Boolean
+    If Not Mouse.Enabled Then Exit Sub
     ContextLevelAdd "MouseMove"
     m_lngX = Evt.LParam3
     m_lngY = Evt.LParam4
@@ -2332,17 +2334,9 @@ Dim l_lngThreadID As Long
     If LastFrameEnd = 0 Then LastFrameEnd = HiTimer
     If LastSecond = 0 Then LastSecond = HiTimer
     UpdateMaxLength = 0.8 / DesiredFramerate
-    Profiler.ProfileReset
     If l_lngThreadID = 0 Then
-        ProfileStart "Game"
         ContextLevelAdd "Game"
     Else
-        If l_lngThreadID = 1 Then
-            ProfileStop "Game"
-        Else
-            ProfileStop "Subthread #" & l_lngThreadID - 1
-        End If
-        ProfileStart "Subthread #" & l_lngThreadID
         ContextLevelAdd "Subthread #" & l_lngThreadID
     End If
     If Not RanStartEvent Then
@@ -2440,20 +2434,8 @@ Dim l_lngThreadID As Long
         
         If (FrameEnd - LastSecond) >= 1# Then
             UpdateOverflowCount = 0
-            If l_lngThreadID = 0 Then
-                ProfileStop "Game"
-            Else
-                ProfileStop "Subthread #" & l_lngThreadID
-            End If
-            Profiler.ProfileUpdate
-            Profiler.ProfileReset
             frmProfile.ProfileTextHeight = ProfileTextCurrentHeight
             frmProfile.Form_Resize
-            If l_lngThreadID = 0 Then
-                ProfileStart "Game"
-            Else
-                ProfileStart "Subthread #" & l_lngThreadID
-            End If
             LastSecond = FrameEnd
             FPS = NextFPS
             NextFPS = 0
@@ -2913,10 +2895,9 @@ End Sub
 Public Function HiTimer() As Double
 Attribute HiTimer.VB_Description = "Returns an extremely accurate timer value."
 On Error Resume Next
-Dim PCounter As Currency, PFrequency As Currency
-    Call QueryPerformanceFrequency(PFrequency)
+Dim PCounter As Currency
     Call QueryPerformanceCounter(PCounter)
-    HiTimer = (PCounter / PFrequency) - m_dblTimeOffset
+    HiTimer = (PCounter / m_curCPUFrequency) - m_dblTimeOffset
 End Function
 
 Public Sub AdjustGameClock(ByVal Amount As Double)
@@ -3154,7 +3135,7 @@ On Error Resume Next
     End If
 End Sub
 
-Friend Sub InitDefaultControls()
+Public Sub InitDefaultControls()
 On Error Resume Next
     Set Controls = F2Collection()
     Controls.Add F2Control("OK"), "OK"
@@ -3446,7 +3427,7 @@ On Error Resume Next
 Dim l_varScripts As Variant, l_lngScripts As Long
 Dim l_varPackages As Variant, l_lngPackages As Long
 Dim l_objObject As Object, l_varTest As Variant
-    ContextLevelAdd "LoadGame(""" & Game & """)"
+    ContextLevelAdd "LoadGame"
     DebugOut "Loading game """ & Game & """"
     Set ConsoleItems = F2Collection()
     If Not m_booFresh Then
@@ -4471,7 +4452,6 @@ Dim l_lngCount As Long
 Dim PObj As Fury2Plugin, Obj As Object
     If Running Then Else Exit Sub
     If Halted Then Exit Sub
-    ProfileStart "Redraw"
     ContextLevelAdd "Redraw"
     If ClearEveryFrame Then m_imgBackbuffer.Clear BackgroundColor
     m_imgBackbuffer.ResetClipRectangle
@@ -4509,7 +4489,6 @@ Dim PObj As Fury2Plugin, Obj As Object
         RedrawHook.Invoke
     End If
     RedrawConsole
-    ProfileStop "Redraw"
     ContextLevelRemove
 End Sub
 
@@ -4560,7 +4539,6 @@ End Sub
 Public Sub RedrawPictures()
 On Error Resume Next
 Dim l_lngPictures As Long, l_objPic As Fury2Image, l_objGraph As Fury2Graphic
-    ProfileStart "RedrawPictures"
     If ActivePictureSlots > 0 Then
         For l_lngPictures = 0 To ActivePictureSlots - 1
             With OnscreenPictures(l_lngPictures)
@@ -4591,7 +4569,6 @@ Dim l_lngPictures As Long, l_objPic As Fury2Image, l_objGraph As Fury2Graphic
             End With
         Next l_lngPictures
     End If
-    ProfileStop "RedrawPictures"
 End Sub
 
 Public Function RegisterDLL(ByVal Filename As String) As Boolean
@@ -5584,7 +5561,6 @@ Static m_sngLastTimer As Single
     If Halted Then Exit Sub
     If m_objOutputPlugin.Closed Then Fury2VideoEventSink_Closed
     ContextLevelAdd "Update"
-    ProfileStart "Update"
     FrameCount = FrameCount + 1
     UpdateKeyboard
     Mouse.Update
@@ -5595,30 +5571,24 @@ Static m_sngLastTimer As Single
             If GameTimePaused Then
             Else
                 ContextLevelAdd "Engine_Tick"
-                ProfileStart "Engine_Tick"
                 GameTime = GameTime + 1
                 ScriptEngine.Exec "Engine_Tick"
-                ProfileStop "Engine_Tick"
                 ContextLevelRemove
             End If
         End If
-        ProfileStart "Timer Events"
         m_colTimerEvents.Update
         If Terminating Then Exit Sub
         For Each l_mapMap In Maps
             l_mapMap.TimerEvents.Update
             If Terminating Then Exit Sub
         Next l_mapMap
-        ProfileStop "Timer Events"
         If Maps.Count > 0 Then
             Set Map = Maps(1)
             m_lngMaps = 1
             For Each Map In Maps
                 If Map.Layers.Count > 0 Then
                     ContextLevelAdd "Maps(" + CStr(m_lngMaps) + ")"
-                    ProfileStart "Map.Update"
                     Map.Update
-                    ProfileStop "Map.Update"
                     ContextLevelRemove
                 End If
                 m_lngMaps = m_lngMaps + 1
@@ -5633,7 +5603,6 @@ Static m_sngLastTimer As Single
         End If
         If m_colPluginStack.Count > 0 Then
             m_lngHooks = 1
-            ProfileStart "EventHooks.Update"
             For Each Obj In m_colPluginStack
                 If Not (Obj Is Nothing) Then
                     Set PObj = Nothing
@@ -5648,7 +5617,6 @@ Static m_sngLastTimer As Single
                     If Terminating Then Exit Sub
                 End If
             Next Obj
-            ProfileStop "EventHooks.Update"
         End If
         If Not (UpdateHook Is Nothing) Then
             UpdateHook.Invoke
@@ -5666,7 +5634,6 @@ Static m_sngLastTimer As Single
             ConsoleSliding = False
         End If
     End If
-    ProfileStop "Update"
     ContextLevelRemove
 End Sub
 
@@ -5682,7 +5649,6 @@ Dim l_hosHost As VBENetHost, l_lngIndex As Long
 Dim l_lngCount As Long
     If Not m_booENetInitialized Then Exit Sub
     ContextLevelAdd "ENet"
-    ProfileStart "ENet"
         For Each l_hosHost In Hosts
             l_hosHost.Poll
             l_lngCount = (l_hosHost.Peers.Count + IIf(l_hosHost.TimeSynchronizer Is Nothing, 0, 1))
@@ -5696,7 +5662,6 @@ Dim l_lngCount As Long
                 Hosts.Remove l_lngIndex
             End If
         Next l_hosHost
-    ProfileStop "ENet"
     ContextLevelRemove
 End Sub
 
@@ -5708,14 +5673,12 @@ Dim l_lngBindings As Long, l_lngType As Long
 Dim l_lngProcessedCount As Long
 Dim m_ctlControl As Fury2InputControl
 Dim l_evtEvent As Fury2QueueEvent
-    ProfileStart "Process Input"
     ContextLevelAdd "Controls"
         For Each m_ctlControl In Controls
             m_ctlControl.TriggerRepeat
         Next m_ctlControl
     ContextLevelRemove
     If EventQueueLength < 1 Then
-        ProfileStop "Process Input"
         Exit Sub
     End If
     ContextLevelAdd "Events"
@@ -5755,7 +5718,6 @@ Dim l_evtEvent As Fury2QueueEvent
     EventQueueLength = EventQueueLength - l_lngProcessedCount
     ContextLevelRemove
     Err.Clear
-    ProfileStop "Process Input"
 End Sub
 
 Public Sub UpdateKeyboard()
@@ -5769,11 +5731,10 @@ End Sub
 Public Sub UpdatePictures()
 Attribute UpdatePictures.VB_MemberFlags = "40"
 On Error Resume Next
-    If ActivePictureSlots < 1 Then Exit Sub
 Dim m_sngX As Single, m_sngY As Single, m_sngW As Single, m_sngH As Single
 Dim m_sngProgress As Single, m_sngProgress2 As Single
 Dim m_lngPictures As Long, l_objGraph As Fury2Graphic
-    ProfileStart "UpdatePictures"
+    If ActivePictureSlots < 1 Then Exit Sub
     For m_lngPictures = 0 To ActivePictureSlots
         With OnscreenPictures(m_lngPictures)
             If .Picture Is Nothing Then
@@ -5840,7 +5801,6 @@ Dim m_lngPictures As Long, l_objGraph As Fury2Graphic
             End If
         End With
     Next m_lngPictures
-    ProfileStop "UpdatePictures"
 End Sub
 
 Public Sub UpdateTimers()
@@ -5855,7 +5815,6 @@ Dim l_vidVideo As Fury2Video
     If EnableTimers Then
         If Timers.Count > 0 Then
             ContextLevelAdd "Timers"
-            ProfileStart "Timers"
             m_lngTimers = 1
             For Each m_tmrTimer In Timers
                 With m_tmrTimer
@@ -5868,7 +5827,6 @@ Dim l_vidVideo As Fury2Video
                 End With
                 m_lngTimers = m_lngTimers + 1
             Next m_tmrTimer
-            ProfileStop "Timers"
             ContextLevelRemove
         End If
     End If
@@ -5880,7 +5838,6 @@ Dim l_vidVideo As Fury2Video
     Next l_vidVideo
     If m_colPluginStack.Count > 0 Then
         ContextLevelAdd "SyncUpdate"
-        ProfileStart "EventHooks.SyncUpdate"
         For Each Obj In m_colPluginStack
             Err.Clear
             Set PObj = Nothing
@@ -5891,7 +5848,6 @@ Dim l_vidVideo As Fury2Video
                 PObj.SyncUpdate
             End If
         Next Obj
-        ProfileStop "EventHooks.SyncUpdate"
         ContextLevelRemove
     End If
     Err.Clear

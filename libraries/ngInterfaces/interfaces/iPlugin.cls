@@ -34,7 +34,7 @@ End Property
 Public Property Get ToolbarIcon() As Fury2Image
 End Property
 
-Public Property Get Icon() As IPictureDisp
+Public Property Get Icon() As Fury2Image
 End Property
 
 Public Property Set Editor(NewEditor As Object)

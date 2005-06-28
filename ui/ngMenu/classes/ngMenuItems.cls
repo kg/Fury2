@@ -16,17 +16,16 @@ Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
 Attribute VB_Ext_KEY = "Collection" ,"Obj"
 Attribute VB_Ext_KEY = "Member0" ,"Obj"
 Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
-#If 0 Then
 Option Explicit
 Implements IVirtualFileSaveable
 
-Private m_miParent As ngMenuParent
+Private m_mnuParent As ngMenu
 Private m_colCollection As Collection
 
 Friend Sub Free()
 On Error Resume Next
 Dim l_miMenuItem As ngMenuItem
-    Set m_miParent = Nothing
+    Set m_mnuParent = Nothing
     For Each l_miMenuItem In m_colCollection
         l_miMenuItem.Free
     Next l_miMenuItem
@@ -43,12 +42,16 @@ Dim l_lngIndex As Long
     Next l_miMenuItem
 End Sub
 
-Friend Sub SetParent(Parent As ngMenuParent)
+Friend Sub SetParent(Parent As ngMenu)
 On Error Resume Next
-    Set m_miParent = Parent
+Dim l_miItem As ngMenuItem
+    Set m_mnuParent = Parent
+    For Each l_miItem In m_colCollection
+        l_miItem.SetParent Parent
+    Next l_miItem
 End Sub
 
-Public Function AddNew(Optional ByRef Text As String = "", Optional ByRef Key As String = "", Optional ByRef Image As Variant = Nothing, Optional ByRef Tooltip As String = "", Optional ByVal Style As ngMenuItemStyles = msyNormal, Optional ByVal TextAlignment As ngMenuItemTextAlignment = mtaRight, Optional ByVal Enabled As Boolean = True, Optional ByVal Checked As Boolean = False, Optional ByVal AtIndex As Long = -1) As ngMenuItem
+Public Function AddNew(Optional ByRef Text As String = "", Optional ByRef Accelerator As String = "", Optional ByRef Key As String = "", Optional ByRef Image As Variant = Nothing, Optional ByVal Style As ngMenuItemStyles = msyNormal, Optional ByVal TextAlignment As ngMenuItemTextAlignment = mtaLeft, Optional ByVal Enabled As Boolean = True, Optional ByVal Checked As Boolean = False, Optional ByRef ClickEvent As ngEvent = Nothing, Optional ByRef HoverEvent As ngEvent = Nothing, Optional ByVal AtIndex As Long = -1) As ngMenuItem
 On Error Resume Next
 Dim l_miNew As ngMenuItem
 Dim l_imgImage As Fury2Image
@@ -61,11 +64,11 @@ Dim l_resFile As ngResource
             .Style = bsySeparator
         Else
             .Text = Text
+            .Accelerator = Accelerator
             .Style = Style
         End If
-        .Tooltip = Tooltip
         If VarType(Image) = vbString Then
-            Set l_resFile = m_miParent.ResourceFile(Replace(m_miParent.ResourcePattern, "*", Image))
+            Set l_resFile = m_mnuParent.ResourceFile(Replace(m_mnuParent.ResourcePattern, "*", Image))
             If Not (l_resFile Is Nothing) Then
                 Set .Image = l_resFile.LoadImage()
             End If
@@ -78,6 +81,9 @@ Dim l_resFile As ngResource
         .TextAlignment = TextAlignment
         .Enabled = Enabled
         .Checked = Checked
+        Set .ClickEvent = ClickEvent
+        Set .HoverEvent = HoverEvent
+        .SetParent m_mnuParent
     End With
     Add l_miNew
     Set AddNew = l_miNew
@@ -116,9 +122,9 @@ Dim l_strKey As String
             End If
         End If
     End If
-    Obj.SetParent m_miParent
+    Obj.SetParent m_mnuParent
     Reindex
-    m_miParent.Reflow
+    m_mnuParent.Reflow
     Err.Clear
 End Sub
 
@@ -132,6 +138,21 @@ On Error Resume Next
     Set Item = m_colCollection(IndexOrKey)
     Err.Clear
 End Property
+
+Public Function FindKey(ByVal Key As String) As Long
+On Error Resume Next
+Dim l_lngItems As Long, l_miItem As ngMenuItem
+    Key = LCase(Trim(Key))
+    If m_colCollection.Count <= 0 Then Exit Function
+    l_lngItems = 1
+    For Each l_miItem In m_colCollection
+        If LCase(Trim(l_miItem.Key)) = Key Then
+            FindKey = l_lngItems
+            Exit Function
+        End If
+        l_lngItems = l_lngItems + 1
+    Next l_miItem
+End Function
 
 Public Function Find(ByVal Obj As ngMenuItem) As Long
 On Error Resume Next
@@ -163,7 +184,7 @@ On Error Resume Next
     End If
     m_colCollection.Remove IndexOrKey
     Reindex
-    m_miParent.Reflow
+    m_mnuParent.Reflow
 End Sub
 
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)
@@ -222,5 +243,3 @@ On Error Resume Next
         .WriteSegment_End
     End With
 End Sub
-
-#End If

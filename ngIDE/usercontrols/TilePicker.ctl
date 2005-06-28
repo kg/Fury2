@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#9.0#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.1#0"; "ngUI.ocx"
 Begin VB.UserControl TilePicker 
    AutoRedraw      =   -1  'True
    BackColor       =   &H80000014&
@@ -337,7 +337,7 @@ Dim l_lngBackgroundColor As Long, l_lngHighlightColor As Long
                     m_imgBuffer.Blit l_rctTile, Nothing, l_imgTile, , BlitMode
                 End If
                 l_lngX = l_lngX + m_tstTileset.TileWidth
-                If (l_lngX + m_tstTileset.TileWidth) > (l_lngRowWidth * m_tstTileset.TileWidth) Then
+                If (l_lngX + m_tstTileset.TileWidth + hsScrollbar.Value) > (l_lngRowWidth * m_tstTileset.TileWidth) Then
                     l_lngX = -hsScrollbar.Value
                     l_lngY = l_lngY + m_tstTileset.TileHeight
                 End If
@@ -561,7 +561,7 @@ Dim l_intSelectedTiles() As Integer
     ElseIf Button = 2 Then
         l_lngTile = HitTest(X, Y)
         l_booEmbed = m_tstTileset.Embed
-        Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+        Select Case QuickShowMenu2(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
             Menus(MenuString("Preserve Rows", , , , , m_booPreserveRows), "-", _
             MenuString("Cu&t", , , "CUT", , , l_booEmbed), MenuString("&Copy", , , "COPY"), MenuString("&Paste", , , "PASTE", , , CanPaste And l_booEmbed), MenuString("&Delete", , , "DELETE", , , l_booEmbed)) _
             , frmIcons.ilContextMenus)

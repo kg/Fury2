@@ -11,28 +11,41 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
-#If 0 Then
 Option Explicit
-Implements ngMenuParent
 Public Tag As Variant
-Private m_miParent As ngMenuParent
+Private m_mnuParent As ngMenu
+Private m_mnuChild As ngMenu
 Private m_strText As String
+Private m_strDisplayText As String
+Private m_strAccelerator As String
+Private m_lngHotkey As Long
 Private m_strKey As String
 Private m_lngIndex As Long
+Private m_lngImageColumnWidth As Long
 Private m_imgImage As Fury2Image
 Private m_imgGlow As Fury2Image
+Private m_evtHover As ngEvent
 Private m_evtClick As ngEvent
 Private m_booPressed As Boolean
 Private m_booHovering As Boolean
 Private m_booChecked As Boolean
 Private m_booEnabled As Boolean
 Private m_booVisible As Boolean
-Private m_oriOrientation As ngToolButtonOrientations
-Private m_tbsStyle As ngToolButtonStyles
-Private m_txaTextAlignment As ngToolButtonTextAlignment
+Private m_tbsStyle As ngMenuItemStyles
+Private m_txaTextAlignment As ngMenuItemTextAlignment
 Private m_lngLeft As Long
 Private m_lngTop As Long
 Private m_fntFont As StdFont
+
+Public Property Get ImageColumnWidth() As Long
+On Error Resume Next
+    ImageColumnWidth = m_lngImageColumnWidth
+End Property
+
+Public Property Let ImageColumnWidth(ByVal Value As Long)
+On Error Resume Next
+    m_lngImageColumnWidth = Value
+End Property
 
 Public Property Get Font() As StdFont
 On Error Resume Next
@@ -42,7 +55,7 @@ End Property
 Public Property Set Font(ByVal NewFont As StdFont)
 On Error Resume Next
     Set m_fntFont = NewFont
-    If Not (m_miParent Is Nothing) Then m_miParent.Reflow
+    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
 End Property
 
 Public Property Get Index() As Long
@@ -51,15 +64,6 @@ End Property
 
 Friend Property Let Index(ByVal NewValue As Long)
     m_lngIndex = NewValue
-End Property
-
-Public Property Get Orientation() As ngToolButtonOrientations
-    Orientation = m_oriOrientation
-End Property
-
-Friend Property Let Orientation(ByVal NewValue As ngToolButtonOrientations)
-On Error Resume Next
-    m_oriOrientation = NewValue
 End Property
 
 Private Sub GenerateGlow()
@@ -102,37 +106,56 @@ End Sub
 
 Friend Sub MouseEnter()
 On Error Resume Next
+    If m_booHovering Then Exit Sub
     m_booHovering = True
+    If Not (m_evtHover Is Nothing) Then m_evtHover.Invoke
 End Sub
 
 Friend Sub MouseLeave()
 On Error Resume Next
+    If (m_booHovering = False) And (m_booPressed = False) Then Exit Sub
     m_booHovering = False
+    m_booPressed = False
 End Sub
 
 Friend Sub Free()
 On Error Resume Next
-    Set m_miParent = Nothing
+    Set m_mnuParent = Nothing
     Set m_imgImage = Nothing
     Set m_imgGlow = Nothing
     Set m_evtClick = Nothing
     Set m_fntFont = Nothing
 End Sub
 
-Public Property Get Parent() As ngMenuItems
-    Set Parent = m_miParent
+Public Property Get ChildMenu() As ngMenu
+    Set ChildMenu = m_mnuChild
 End Property
 
-Friend Sub SetParent(ByRef NewParent As ngMenuItems)
-    Set m_miParent = NewParent
+Public Property Set ChildMenu(ByRef NewMenu As ngMenu)
+On Error Resume Next
+    Set m_mnuChild = NewMenu
+    Set NewMenu.Parent = Me.Parent
+    Set NewMenu.ParentItem = Me
+End Property
+
+Public Property Get Parent() As ngMenu
+    Set Parent = m_mnuParent
+End Property
+
+Friend Sub SetParent(ByRef NewParent As ngMenu)
+    Set m_mnuParent = NewParent
 End Sub
 
 Public Property Get Rectangle() As Fury2Rect
 On Error Resume Next
-    Set Rectangle = F2Rect(m_lngLeft, m_lngTop, Width, Height, False)
+    If Parent.Host Is Nothing Then
+        Set Rectangle = F2Rect(m_lngLeft, m_lngTop, Width, Height, False)
+    Else
+        Set Rectangle = F2Rect(m_lngLeft, m_lngTop, Parent.Host.Width, Height, False)
+    End If
 End Property
 
-Public Property Get State() As ngToolButtonStates
+Public Property Get State() As ngMenuItemStates
 On Error Resume Next
     If Enabled Then
         If Checked Then
@@ -177,23 +200,20 @@ Public Property Get Width() As Long
 On Error Resume Next
 Dim l_lngImageWidth As Long
 Dim l_lngTextWidth As Long
-    If m_miParent Is Nothing Then Exit Property
+    If m_mnuParent Is Nothing Then Exit Property
     If Len(m_strText) > 0 Then
-        l_lngTextWidth = m_miParent.TextWidth(Font, m_strText) + (m_miParent.Metrics(tbmTextMargin) * 2)
+        l_lngTextWidth = GetTextWidth(m_strDisplayText, IIf(Font Is Nothing, m_mnuParent.Font, Font)) + IIf(Len(m_strAccelerator) = 0, 0, GetTextWidth(m_strAccelerator, IIf(Font Is Nothing, m_mnuParent.Font, Font)) + 8) + (GetTextWidth("4", g_fntMarlett) + 2) + (m_mnuParent.Metrics(mnmTextMargin) * 2)
     End If
     If Not (m_imgImage Is Nothing) Then
-        l_lngImageWidth = m_imgImage.Width + (m_miParent.Metrics(tbmImageMargin) * 2)
+        l_lngImageWidth = ClipValue(m_imgImage.Width + (m_mnuParent.Metrics(mnmImageMargin) * 2), m_lngImageColumnWidth, 999999)
+    Else
+        l_lngImageWidth = m_lngImageColumnWidth
     End If
     Select Case m_tbsStyle
     Case bsyNormal, bsyCheck, bsyGroup
-        Select Case m_txaTextAlignment
-        Case btaLeft, btaRight
-            Width = l_lngTextWidth + l_lngImageWidth + (m_miParent.Metrics(tbmButtonMargin) * 2)
-        Case btaTop, btaBottom
-            Width = IIf(l_lngTextWidth > l_lngImageWidth, l_lngTextWidth, l_lngImageWidth) + (m_miParent.Metrics(tbmButtonMargin) * 2)
-        End Select
+        Width = l_lngTextWidth + l_lngImageWidth + (m_mnuParent.Metrics(mnmItemMargin) * 2)
     Case bsySeparator
-        Width = m_miParent.Metrics(tbmSeparatorSize) + (m_miParent.Metrics(tbmSeparatorMargin) * 2)
+        Width = m_mnuParent.Metrics(mnmSeparatorSize) + (m_mnuParent.Metrics(mnmSeparatorMargin) * 2)
     End Select
 End Property
 
@@ -201,38 +221,19 @@ Public Property Get Height() As Long
 On Error Resume Next
 Dim l_lngImageHeight As Long
 Dim l_lngTextHeight As Long
-    If m_miParent Is Nothing Then Exit Property
+    If m_mnuParent Is Nothing Then Exit Property
     If Len(m_strText) > 0 Then
-        l_lngTextHeight = m_miParent.TextHeight(Font, m_strText) + (m_miParent.Metrics(tbmTextMargin) * 2)
+        l_lngTextHeight = GetTextHeight(m_strDisplayText, IIf(Font Is Nothing, m_mnuParent.Font, Font)) + (m_mnuParent.Metrics(mnmTextMargin) * 2)
     End If
     If Not (m_imgImage Is Nothing) Then
-        l_lngImageHeight = m_imgImage.Height + (m_miParent.Metrics(tbmImageMargin) * 2)
+        l_lngImageHeight = m_imgImage.Height + (m_mnuParent.Metrics(mnmImageMargin) * 2)
     End If
     Select Case m_tbsStyle
     Case bsyNormal, bsyCheck, bsyGroup
-        Select Case m_txaTextAlignment
-        Case btaLeft, btaRight
-            Height = IIf(l_lngTextHeight > l_lngImageHeight, l_lngTextHeight, l_lngImageHeight) + (m_miParent.Metrics(tbmButtonMargin) * 2)
-        Case btaTop, btaBottom
-            Height = l_lngTextHeight + l_lngImageHeight + (m_miParent.Metrics(tbmButtonMargin) * 2)
-        End Select
+        Height = IIf(l_lngTextHeight > l_lngImageHeight, l_lngTextHeight, l_lngImageHeight) + (m_mnuParent.Metrics(mnmItemMargin) * 2)
     Case bsySeparator
-        Select Case m_oriOrientation
-        Case borHorizontal
-            Height = m_miParent.Metrics(tbmSeparatorSize) + (m_miParent.Metrics(tbmSeparatorMargin) * 2)
-        Case borVertical
-            Height = m_miParent.Metrics(tbmSeparatorSize) + (m_miParent.Metrics(tbmSeparatorMargin) * 2)
-        End Select
+        Height = m_mnuParent.Metrics(mnmSeparatorSize) + (m_mnuParent.Metrics(mnmSeparatorMargin) * 2)
     End Select
-End Property
-
-Public Property Get Tooltip() As String
-    Tooltip = m_strTooltip
-End Property
-
-Public Property Let Tooltip(ByRef NewValue As String)
-On Error Resume Next
-    m_strTooltip = NewValue
 End Property
 
 Public Property Get Text() As String
@@ -241,8 +242,37 @@ End Property
 
 Public Property Let Text(ByRef NewValue As String)
 On Error Resume Next
+Dim l_strTemp As String
     m_strText = NewValue
-    If Not (m_miParent Is Nothing) Then m_miParent.Reflow
+    m_strDisplayText = Replace(Replace(Replace(m_strText, "&&", "*^^*"), "&", ""), "*^^*", "&")
+    l_strTemp = Replace(m_strText, "&&", "")
+    If InStr(l_strTemp, "&") Then
+        m_lngHotkey = Asc(UCase(Mid(l_strTemp, InStr(l_strTemp, "&") + 1, 1)))
+    End If
+    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
+End Property
+
+Public Property Get DisplayText() As String
+    DisplayText = m_strDisplayText
+End Property
+
+Public Property Get Accelerator() As String
+    Accelerator = m_strAccelerator
+End Property
+
+Public Property Let Accelerator(ByRef NewValue As String)
+On Error Resume Next
+    m_strAccelerator = NewValue
+    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
+End Property
+
+Public Property Get FullKey() As String
+On Error Resume Next
+    If m_mnuParent.ParentItem Is Nothing Then
+        FullKey = m_strKey
+    Else
+        FullKey = m_mnuParent.ParentItem.FullKey & "\" & m_strKey
+    End If
 End Property
 
 Public Property Get Key() As String
@@ -261,7 +291,7 @@ Public Property Set Image(ByVal NewValue As Fury2Image)
 On Error Resume Next
     Set m_imgImage = NewValue
     Set m_imgGlow = Nothing
-    If Not (m_miParent Is Nothing) Then m_miParent.Reflow
+    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
 End Property
 
 Public Property Get ClickEvent() As ngEvent
@@ -272,6 +302,14 @@ Public Property Set ClickEvent(ByVal NewValue As ngEvent)
     Set m_evtClick = NewValue
 End Property
 
+Public Property Get HoverEvent() As ngEvent
+    Set HoverEvent = m_evtHover
+End Property
+
+Public Property Set HoverEvent(ByVal NewValue As ngEvent)
+    Set m_evtHover = NewValue
+End Property
+
 Public Property Get Checked() As Boolean
     Checked = m_booChecked
 End Property
@@ -280,7 +318,7 @@ Public Property Let Checked(ByVal NewValue As Boolean)
 On Error Resume Next
     If NewValue = m_booChecked Then Exit Property
     m_booChecked = NewValue
-    If Not (m_miParent Is Nothing) Then m_miParent.Redraw Me.Rectangle
+    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Host.Redraw Me.Rectangle
 End Property
 
 Public Property Get Enabled() As Boolean
@@ -295,7 +333,7 @@ Public Property Let Enabled(ByVal NewValue As Boolean)
 On Error Resume Next
     If NewValue = m_booEnabled Then Exit Property
     m_booEnabled = NewValue
-    If Not (m_miParent Is Nothing) Then m_miParent.Redraw Me.Rectangle
+    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Host.Redraw Me.Rectangle
 End Property
 
 Public Property Get Visible() As Boolean
@@ -306,69 +344,50 @@ Public Property Let Visible(ByVal NewValue As Boolean)
 On Error Resume Next
     If NewValue = m_booVisible Then Exit Property
     m_booVisible = NewValue
-    If Not (m_miParent Is Nothing) Then m_miParent.Reflow
+    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
 End Property
 
 Public Property Get Pressed() As Boolean
-    Pressed = m_booPressed
+On Error Resume Next
+    If ChildMenu Is Nothing Then
+        Pressed = m_booPressed
+    Else
+        If ChildMenu.Visible Then Exit Property
+        Pressed = m_booPressed
+    End If
 End Property
 
 Public Property Get Hovering() As Boolean
     Hovering = m_booHovering
 End Property
 
-Public Property Get Style() As ngToolButtonStyles
+Public Property Get Hotkey() As Long
+    Hotkey = m_lngHotkey
+End Property
+
+Public Property Get Style() As ngMenuItemStyles
     Style = m_tbsStyle
 End Property
 
-Public Property Let Style(ByVal NewValue As ngToolButtonStyles)
+Public Property Let Style(ByVal NewValue As ngMenuItemStyles)
 On Error Resume Next
     m_tbsStyle = NewValue
-    If Not (m_miParent Is Nothing) Then m_miParent.Reflow
+    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
 End Property
 
-Public Property Get TextAlignment() As ngToolButtonTextAlignment
+Public Property Get TextAlignment() As ngMenuItemTextAlignment
     TextAlignment = m_txaTextAlignment
 End Property
 
-Public Property Let TextAlignment(ByVal NewValue As ngToolButtonTextAlignment)
+Public Property Let TextAlignment(ByVal NewValue As ngMenuItemTextAlignment)
 On Error Resume Next
     m_txaTextAlignment = NewValue
-    If Not (m_miParent Is Nothing) Then m_miParent.Reflow
+    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
 End Property
 
 Private Sub Class_Initialize()
 On Error Resume Next
-    m_txaTextAlignment = btaRight
+    m_txaTextAlignment = mtaRight
     m_booVisible = True
     m_booEnabled = True
 End Sub
-
-Private Property Get ngMenuParent_Children() As ngMenuItems
-
-End Property
-
-Private Property Get ngMenuParent_Form() As Object
-
-End Property
-
-Private Property Get ngMenuParent_MenuItem() As ngMenuItem
-
-End Property
-
-Private Sub ngMenuParent_Redraw()
-
-End Sub
-
-Private Sub ngMenuParent_Reflow()
-
-End Sub
-
-Private Property Get ngMenuParent_TextHeight() As Long
-
-End Property
-
-Private Property Get ngMenuParent_TextWidth() As Long
-
-End Property
-#End If

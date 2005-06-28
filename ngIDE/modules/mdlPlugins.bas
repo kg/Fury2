@@ -141,6 +141,7 @@ Dim l_plgPlugin As iPlugin
         InstallPlugin "ngPlugins.TilesetAssembler", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.ImageGridRemover", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.SpriteImporter", GetPath(App.Path) & "\ng.dll"
+        InstallPlugin "ngPlugins.ImageMapImporter", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.AudioFile", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.MapEditor", GetPath(App.Path) & "\ng.dll"
         InstallPlugin "ngPlugins.ScriptFile", GetPath(App.Path) & "\ng.dll"

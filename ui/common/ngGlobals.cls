@@ -14,10 +14,18 @@ Attribute VB_Exposed = True
 Option Explicit
 Private m_colResourceCache As Collection
 
-Public Function CreateMenu() As ngMenuItems
+Public Function CreateMenu() As ngMenu
 On Error Resume Next
-    Set CreateMenu = New ngMenuItems
+    Set CreateMenu = New ngMenu
+    Set CreateMenu.ResourceFile = g_rfMenuThemeFile
+    CreateMenu.ResourcePattern = g_strMenuThemePattern
 End Function
+
+Public Sub SetMenuTheme(ByRef ResourceFile As ngResourceFile, Optional Pattern As String = "*.png")
+On Error Resume Next
+    Set g_rfMenuThemeFile = ResourceFile
+    g_strMenuThemePattern = Pattern
+End Sub
 
 Public Sub SetTheme(ByRef ResourceFile As ngResourceFile, Optional Pattern As String = "*.png")
 On Error Resume Next
@@ -71,6 +79,9 @@ End Function
 Private Sub Class_Initialize()
 On Error Resume Next
     Set m_colResourceCache = New Collection
+    Set g_fntMarlett = New StdFont
+    g_fntMarlett.Name = "Marlett"
+    g_fntMarlett.Size = 9
 End Sub
 
 Private Sub Class_Terminate()

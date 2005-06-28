@@ -47,6 +47,16 @@ Private mvarDelay As Long
 Private mvarImage As Fury2Image
 Private mvarScript As String
 Private mvarParent As Fury2Pose
+Private mvarIndex As Long
+
+Friend Sub SetIndex(ByVal Index As Long)
+On Error Resume Next
+    mvarIndex = Index
+End Sub
+
+Public Property Get Index() As Long
+    Index = mvarIndex
+End Property
 
 Public Property Get Parent() As Fury2Pose
     Set Parent = mvarParent
@@ -80,16 +90,23 @@ End Property
 
 Public Sub LoadGraphics()
 On Error Resume Next
+Dim l_varVariables As Variant
+Dim l_strFilename As String
+    l_varVariables = Array(Array("i", mvarIndex), Array("index", mvarIndex), _
+        Array("p", mvarParent.Index), Array("pose", mvarParent.Index), _
+        Array("pn", mvarParent.Name), Array("posename", mvarParent.Name), _
+        Array("n", mvarParent.Parent.Name), Array("name", mvarParent.Parent.Name))
+    l_strFilename = mvarParent.Parent.Engine.ParseString(mvarFilename, l_varVariables)
     If Not mvarImage Is Nothing Then
         If mvarImage.Name <> Filename Then
             Set mvarImage = Nothing
         End If
     End If
     If mvarImage Is Nothing Then
-        Set mvarImage = mvarParent.Parent.Engine.LoadImage(mvarFilename)
+        Set mvarImage = mvarParent.Parent.Engine.LoadImage(l_strFilename)
     End If
     If mvarImage Is Nothing Then
-        mvarParent.Parent.Engine.CriticalError "Fury2PoseFrame.LoadGraphics", "Unable to load frame: " + mvarFilename
+        mvarParent.Parent.Engine.CriticalError "Fury2PoseFrame.LoadGraphics", "Unable to load frame: " + l_strFilename
     Else
         mvarImage.MatteColor = mvarMatteColor
     End If

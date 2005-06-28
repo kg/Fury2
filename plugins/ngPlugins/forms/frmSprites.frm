@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.1#0"; "ngUI.ocx"
 Begin VB.Form frmSprites 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -386,7 +386,7 @@ Private m_lngCurrentView As SpriteEditorViews
 
 Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
 On Error Resume Next
-    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\sprite.png")
+    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\sprites.png")
 End Property
 
 Private Sub InspectListItems(Inspector As ObjectInspector, Items() As ngListItem)
@@ -644,7 +644,7 @@ Dim l_vfFile As VirtualFile
                 l_fraFrame.LoadGraphics
             Next l_lngIndex
         End If
-        lstPoses.SelectItems AtIndex, AtIndex + l_lngCount - 1
+        lstFrames.SelectItems AtIndex, AtIndex + l_lngCount - 1
     Else
         CustomClipboard.ClipboardClose
     End If
@@ -1603,15 +1603,15 @@ End Sub
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DefineMenu "Reload Images", "ReloadGraphics"
+    With Handler.GetMenu
+        ' .DefineMenu "Reload Images", "ReloadGraphics"
     End With
 End Sub
 
 Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DestroyMenu "ReloadGraphics"
+    With Handler.GetMenu
+        ' .DestroyMenu "ReloadGraphics"
     End With
 End Sub
 
@@ -1967,7 +1967,7 @@ Dim l_ptMouse As PointAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstFrames.hwnd, l_ptMouse
-    Select Case QuickShowMenu(lstFrames, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
+    Select Case QuickShowMenu2(lstFrames, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
     ListContext(Not (Item Is Nothing)), _
     frmIcons.ilContextMenus)
     Case 1
@@ -2016,7 +2016,7 @@ Dim l_ptMouse As PointAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstPoses.hwnd, l_ptMouse
-    Select Case QuickShowMenu(lstPoses, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
+    Select Case QuickShowMenu2(lstPoses, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
     ListContext(Not (Item Is Nothing)), _
     frmIcons.ilContextMenus)
     Case 1
@@ -2117,7 +2117,7 @@ Dim l_ptMouse As PointAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstStates.hwnd, l_ptMouse
-    Select Case QuickShowMenu(lstStates, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
+    Select Case QuickShowMenu2(lstStates, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
     ListContext(Not (Item Is Nothing)), _
     frmIcons.ilContextMenus)
     Case 1
@@ -2243,7 +2243,7 @@ Dim l_lngIndex As Long
     Next l_sprSprite
     Editor.ActionUpdate
     If Button = 2 Then
-        Select Case QuickShowMenu(picSprites, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+        Select Case QuickShowMenu2(picSprites, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
         ListContext(), _
         frmIcons.ilContextMenus)
         Case 1

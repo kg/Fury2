@@ -178,15 +178,15 @@ End Sub
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DestroyMenu "Filters"
+    With Handler.GetMenu
+        ' .DestroyMenu "Filters"
     End With
 End Sub
 
 Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DefineMenu "Filters", "Filters"
+    With Handler.GetMenu
+        ' .DefineMenu "Filters", "Filters"
     End With
 End Sub
 

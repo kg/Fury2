@@ -4210,37 +4210,57 @@ Dim l_varValues, l_strSetting As String
     End With
 End Sub
 
-Public Function ParseString(ByRef Str)
+Public Function ParseString(ByRef Str, Optional ByRef Variables = Nothing)
 Attribute ParseString.VB_Description = "Parses inline scripts in a string."
 On Error Resume Next
-Dim m_strText As String, m_strConstant As String, m_strValue As String
-Dim m_strOldText As String
-Dim m_lngStartPos As Long, m_lngLength As Long, m_lngPos As Long, m_lngRelPos
-Dim m_lngRelStartPos As Long
+Dim l_strText As String, l_strConstant As String, l_strValue As String
+Dim l_strOldText As String
+Dim l_lngStartPos As Long, l_lngLength As Long, l_lngPos As Long, l_lngRelPos
+Dim l_lngRelStartPos As Long
+Dim l_varVariables As Variant, l_lngVariables As Long, l_booFound As Boolean
     ContextLevelAdd "ParseString"
-    m_strText = ToString(Str)
-    m_strOldText = m_strText
-    m_lngPos = 1
-    m_lngRelPos = 1
-    m_lngStartPos = InStr(m_lngPos, m_strOldText, "<%=")
-    m_lngRelStartPos = InStr(m_lngRelPos, m_strText, "<%=")
-    If m_lngStartPos <> 0 Then
-        Do While m_lngStartPos <> 0
-            If m_lngRelPos > Len(m_strText) Then Exit Do
-            If InStr(m_lngRelPos, m_strText, "%>") = 0 Then Exit Do
-            m_lngLength = InStr(m_lngPos, m_strOldText, "%>") - (m_lngStartPos + 3)
-            m_strConstant = Mid(m_strOldText, m_lngStartPos + 3, m_lngLength)
-            m_strValue = "<error>"
-            m_strValue = ToString(m_ScriptEngine.Eval(m_strConstant))
-            If (Err.Number <> 0) Then m_strValue = "<error>"
-            m_strText = left(m_strText, m_lngRelStartPos - 1) + m_strValue + Mid(m_strText, m_lngRelStartPos + m_lngLength + 5)
-            m_lngPos = m_lngStartPos + m_lngLength + 5
-            m_lngRelPos = m_lngRelStartPos + Len(m_strValue)
-            m_lngStartPos = InStr(m_lngPos, m_strOldText, "<%=")
-            m_lngRelStartPos = InStr(m_lngRelPos, m_strText, "<%=")
+    If (VarType(Variables) And vbArray) = vbArray Then
+        l_varVariables = Variables
+    Else
+        l_varVariables = Array()
+    End If
+    l_strText = ToString(Str)
+    l_strOldText = l_strText
+    l_lngPos = 1
+    l_lngRelPos = 1
+    l_lngStartPos = InStr(l_lngPos, l_strOldText, "<%=")
+    l_lngRelStartPos = InStr(l_lngRelPos, l_strText, "<%=")
+    If l_lngStartPos <> 0 Then
+        Do While l_lngStartPos <> 0
+            If l_lngRelPos > Len(l_strText) Then Exit Do
+            If InStr(l_lngRelPos, l_strText, "%>") = 0 Then Exit Do
+            l_lngLength = InStr(l_lngPos, l_strOldText, "%>") - (l_lngStartPos + 3)
+            l_strConstant = Mid(l_strOldText, l_lngStartPos + 3, l_lngLength)
+            l_strValue = "<error>"
+            l_booFound = False
+            Err.Clear
+            For l_lngVariables = LBound(Variables) To UBound(Variables)
+                If LCase(Trim(Variables(l_lngVariables)(0))) = LCase(Trim(l_strConstant)) Then
+                    l_strValue = Variables(l_lngVariables)(1)
+                    l_booFound = True
+                    Exit For
+                End If
+            Next l_lngVariables
+            If l_booFound Then
+                If (Err.Number <> 0) Then l_strValue = "<error>"
+            Else
+                Err.Clear
+                l_strValue = ToString(m_ScriptEngine.Eval(l_strConstant))
+                If (Err.Number <> 0) Then l_strValue = "<error>"
+            End If
+            l_strText = left(l_strText, l_lngRelStartPos - 1) + l_strValue + Mid(l_strText, l_lngRelStartPos + l_lngLength + 5)
+            l_lngPos = l_lngStartPos + l_lngLength + 5
+            l_lngRelPos = l_lngRelStartPos + Len(l_strValue)
+            l_lngStartPos = InStr(l_lngPos, l_strOldText, "<%=")
+            l_lngRelStartPos = InStr(l_lngRelPos, l_strText, "<%=")
         Loop
     End If
-    ParseString = m_strText
+    ParseString = l_strText
     ContextLevelRemove
 End Function
 

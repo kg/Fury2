@@ -1,4 +1,4 @@
-Fury2Engine = 5, -11, 951, 596, 
+Fury2Engine = 5, -11, 951, 596, C
 Fury2Globals = -16, 201, 908, 808, C
 Fury2Camera = 63, 68, 987, 675, C
 Fury2Cameras = 106, 102, 1060, 757, C
@@ -18,7 +18,7 @@ Fury2Transitions = 132, 174, 1056, 780, C
 Fury2WindowSkin = -8, 80, 916, 687, C
 Fury2Object = 154, 203, 1130, 849, C
 Fury2Plugin = 122, 57, 1032, 700, C
-Fury2Map = 51, 74, 1024, 719, 
+Fury2Map = 51, 74, 1024, 719, C
 Fury2MapLayers = -132, 120, 904, 766, C
 Fury2MapLayer = -298, 47, 626, 654, C
 Fury2Maps = 198, 207, 1108, 850, C

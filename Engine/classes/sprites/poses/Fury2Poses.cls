@@ -89,6 +89,16 @@ Dim l_posPose As Fury2Pose
     Next l_posPose
 End Sub
 
+Friend Sub Reindex()
+On Error Resume Next
+Dim l_lngIndex As Long
+Dim l_posPose As Fury2Pose
+    For Each l_posPose In mCol
+        l_lngIndex = l_lngIndex + 1
+        l_posPose.SetIndex l_lngIndex
+    Next l_posPose
+End Sub
+
 Sub Free()
 On Error Resume Next
 Dim l_posPose As Fury2Pose
@@ -232,6 +242,7 @@ On Error Resume Next
         End If
     End If
     Err.Clear
+    Reindex
 End Sub
 
 Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2Pose
@@ -248,6 +259,7 @@ End Property
 Public Sub Remove(vntIndexKey As Variant)
 On Error Resume Next
     mCol.Remove vntIndexKey
+    Reindex
 End Sub
 
 Public Property Get NewEnum() As IUnknown
@@ -272,6 +284,7 @@ End Sub
 Private Sub IVirtualFileCollection_AddItem(Item As Object)
 On Error Resume Next
     Add Item
+    Reindex
 End Sub
 
 Private Property Get IVirtualFileCollection_Count() As Long

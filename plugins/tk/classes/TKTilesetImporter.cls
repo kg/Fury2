@@ -48,7 +48,7 @@ Private Property Set iPlugin_Editor(RHS As Object)
     Set m_objEditor = RHS
 End Property
 
-Private Property Get iPlugin_Icon() As stdole.Picture
+Private Property Get iPlugin_Icon() As Fury2Image
     Set iPlugin_Icon = LoadResPicture("TILESET", vbResIcon)
 End Property
 

@@ -131,7 +131,7 @@ Dim l_lngX As Long, l_lngY As Long
         Set m_tleTile = m_colTiles(m_lngTiles)
         Image.Blit F2Rect(l_lngX, l_lngY, m_lngTileWidth, m_lngTileHeight, False), , m_tleTile.Image()
         l_lngX = l_lngX + m_lngTileWidth
-        If l_lngX > Image.Width Then
+        If l_lngX >= Image.Width Then
             l_lngX = 0
             l_lngY = l_lngY + m_lngTileHeight
         End If

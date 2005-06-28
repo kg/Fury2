@@ -701,6 +701,23 @@ On Error Resume Next
     End If
 End Function
 
+Public Function FindTile(ByVal Image As Fury2Image) As Long
+On Error Resume Next
+Dim l_lngIndex As Long
+Dim l_lngTile As Long
+Dim l_lngResult As Long
+Dim l_lngCount As Long
+    l_lngCount = GetTileCount(Handle)
+    For l_lngIndex = 1 To l_lngCount
+        l_lngTile = SoftFX.GetTile(Handle, l_lngIndex - 1)
+        l_lngResult = SoftFX.Blit_Compare(Image.Handle, l_lngTile, Image.Rectangle.GetRectangle, 0, 0)
+        If l_lngResult Then
+            FindTile = l_lngIndex
+            Exit For
+        End If
+    Next l_lngIndex
+End Function
+
 Public Sub RemoveAll()
 On Error Resume Next
     If Handle <> 0 Then

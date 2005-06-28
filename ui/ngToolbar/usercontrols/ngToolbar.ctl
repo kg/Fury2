@@ -42,9 +42,10 @@ Option Explicit
 Private Declare Function InvalidateRect Lib "user32" (ByVal hwnd As Long, lpRect As Rect, ByVal bErase As Long) As Long
 Private Declare Function UpdateWindow Lib "user32" (ByVal hwnd As Long) As Long
 
-Event MouseDown(ByRef Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
-Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
-Event MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+Event MouseDown(ByRef Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
+Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
+Event MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
+Event ButtonHover(Button As ngToolButton)
 Event ButtonPress(Button As ngToolButton, ByRef Cancel As Boolean)
 Event ButtonClick(Button As ngToolButton)
 Event Reflow()
@@ -549,7 +550,7 @@ Dim l_rctText As Rect
     Set m_imgSurface.ClipRectangle = l_rctClip
 End Sub
 
-Friend Sub DrawSegment(ByVal X As Long, ByVal Y As Long, ByRef Image As Fury2Image, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal BlitMode As SFXBlitModes = BlitMode_SourceAlpha, Optional ByVal Color As Long = -1, Optional ByVal Alpha As Single = 1, Optional ByVal Vertical As Boolean = False)
+Friend Sub DrawSegment(ByVal x As Long, ByVal y As Long, ByRef Image As Fury2Image, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal BlitMode As SFXBlitModes = BlitMode_SourceAlpha, Optional ByVal Color As Long = -1, Optional ByVal Alpha As Single = 1, Optional ByVal Vertical As Boolean = False)
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long
 Dim l_rctStrip As Fury2Rect, l_rctDest As Fury2Rect
@@ -562,13 +563,13 @@ Dim l_rctClip As Fury2Rect
     End If
     With m_imgSurface
         If Vertical Then
-            l_lngY = Y
-            Do While (l_lngY < (Y + Height))
+            l_lngY = y
+            Do While (l_lngY < (y + Height))
                 Set l_rctClip = .ClipRectangle
                 .Blit F2Rect(0, l_lngY, 11, Image.Height, False), , Image, Alpha, BlitMode, Color
-                .ClippedSetClipRectangle F2Rect(X + 11, l_lngY, .Width, l_lngY + Image.Height)
+                .ClippedSetClipRectangle F2Rect(x + 11, l_lngY, .Width, l_lngY + Image.Height)
                 .Blit F2Rect(.Width - 12, l_lngY, 12, Image.Height, False), F2Rect(12, 0, 10, Image.Height, False), Image, Alpha, BlitMode, Color
-                .ClippedSetClipRectangle F2Rect(X, l_lngY, .Width - 12, l_lngY + Image.Height)
+                .ClippedSetClipRectangle F2Rect(x, l_lngY, .Width - 12, l_lngY + Image.Height)
                 Set l_rctDest = F2Rect(0, l_lngY, 1, Image.Height, False)
                 Set l_rctStrip = F2Rect(11, 0, 1, Image.Height, False)
                 For l_lngX = 0 To .Width
@@ -579,16 +580,16 @@ Dim l_rctClip As Fury2Rect
                 l_lngY = l_lngY + Image.Height
             Loop
         Else
-            l_lngX = X
-            Do While (l_lngX < (X + Width))
+            l_lngX = x
+            Do While (l_lngX < (x + Width))
                 Set l_rctClip = .ClipRectangle
-                .Blit F2Rect(l_lngX, Y, Image.Width, 13, False), , Image, Alpha, BlitMode, Color
-                .ClippedSetClipRectangle F2Rect(l_lngX, Y + 13, l_lngX + Image.Width, Y + Height)
-                .Blit F2Rect(l_lngX, Y + Height - 10, Image.Width, 10, False), F2Rect(0, 14, Image.Width, 10, False), Image, Alpha, BlitMode, Color
-                .ClippedSetClipRectangle F2Rect(l_lngX, Y, l_lngX + Image.Width, Y + Height - 10)
-                Set l_rctDest = F2Rect(l_lngX, Y, Image.Width, 1, False)
+                .Blit F2Rect(l_lngX, y, Image.Width, 13, False), , Image, Alpha, BlitMode, Color
+                .ClippedSetClipRectangle F2Rect(l_lngX, y + 13, l_lngX + Image.Width, y + Height)
+                .Blit F2Rect(l_lngX, y + Height - 10, Image.Width, 10, False), F2Rect(0, 14, Image.Width, 10, False), Image, Alpha, BlitMode, Color
+                .ClippedSetClipRectangle F2Rect(l_lngX, y, l_lngX + Image.Width, y + Height - 10)
+                Set l_rctDest = F2Rect(l_lngX, y, Image.Width, 1, False)
                 Set l_rctStrip = F2Rect(0, 13, Image.Width, 1, False)
-                For l_lngY = Y To .Height
+                For l_lngY = y To .Height
                     l_rctDest.RelTop = l_lngY
                     .Blit l_rctDest, l_rctStrip, Image, Alpha, BlitMode, Color
                 Next l_lngY
@@ -688,18 +689,19 @@ Dim l_btnNewHover As ngToolButton
         End If
         Redraw m_btnHover.Rectangle
         Set m_btnHover = l_btnNewHover
+        RaiseEvent ButtonHover(m_btnHover)
         Redraw m_btnHover.Rectangle
     End If
 End Sub
 
-Public Function ButtonFromPoint(ByVal X As Long, ByVal Y As Long) As ngToolButton
+Public Function ButtonFromPoint(ByVal x As Long, ByVal y As Long) As ngToolButton
 On Error Resume Next
 Dim l_btnButton As ngToolButton
     If m_imgSurface Is Nothing Then Exit Function
     If m_tbcButtons Is Nothing Then Exit Function
     For Each l_btnButton In m_tbcButtons
         With l_btnButton
-            If .Rectangle.PointInside(X, Y) Then
+            If .Rectangle.PointInside(x, y) Then
                 Set ButtonFromPoint = l_btnButton
                 Exit For
             End If
@@ -727,19 +729,19 @@ On Error Resume Next
     End If
 End Sub
 
-Private Sub imgCurrentButton_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub imgCurrentButton_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    UserControl_MouseDown Button, Shift, (X / Screen.TwipsPerPixelX) + imgCurrentButton.Left, (Y / Screen.TwipsPerPixelY) + imgCurrentButton.Top
+    UserControl_MouseDown Button, Shift, (x / Screen.TwipsPerPixelX) + imgCurrentButton.Left, (y / Screen.TwipsPerPixelY) + imgCurrentButton.Top
 End Sub
 
-Private Sub imgCurrentButton_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub imgCurrentButton_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    UserControl_MouseMove Button, Shift, (X / Screen.TwipsPerPixelX) + imgCurrentButton.Left, (Y / Screen.TwipsPerPixelY) + imgCurrentButton.Top
+    UserControl_MouseMove Button, Shift, (x / Screen.TwipsPerPixelX) + imgCurrentButton.Left, (y / Screen.TwipsPerPixelY) + imgCurrentButton.Top
 End Sub
 
-Private Sub imgCurrentButton_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub imgCurrentButton_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    UserControl_MouseUp Button, Shift, (X / Screen.TwipsPerPixelX) + imgCurrentButton.Left, (Y / Screen.TwipsPerPixelY) + imgCurrentButton.Top
+    UserControl_MouseUp Button, Shift, (x / Screen.TwipsPerPixelX) + imgCurrentButton.Left, (y / Screen.TwipsPerPixelY) + imgCurrentButton.Top
 End Sub
 
 Private Sub tmrMouseTracker_Timer()
@@ -747,11 +749,13 @@ On Error Resume Next
 Dim l_ptMouse As PointAPI
     GetCursorPos l_ptMouse
     ScreenToClient UserControl.hwnd, l_ptMouse
-    m_lngMouseX = l_ptMouse.X
-    m_lngMouseY = l_ptMouse.Y
-    If (m_lngMouseX < 0) Or (m_lngMouseX >= UserControl.ScaleWidth) Or (m_lngMouseY < 0) Or (m_lngMouseY >= UserControl.ScaleHeight) Then
-        m_booMouseOver = False
-        tmrMouseTracker.Interval = 100
+    If m_lngMouseX <> l_ptMouse.x Or m_lngMouseY <> l_ptMouse.y Then
+        m_lngMouseX = l_ptMouse.x
+        m_lngMouseY = l_ptMouse.y
+        If (m_lngMouseX < 0) Or (m_lngMouseX >= UserControl.ScaleWidth) Or (m_lngMouseY < 0) Or (m_lngMouseY >= UserControl.ScaleHeight) Then
+            m_booMouseOver = False
+            tmrMouseTracker.Interval = 100
+        End If
         UpdateMouse
     End If
 End Sub
@@ -770,15 +774,15 @@ On Error Resume Next
     ResourcePattern = "*"
 End Sub
 
-Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
 Dim l_booCancel As Boolean
-    RaiseEvent MouseDown(Button, Shift, X, Y)
-    m_lngMouseX = X
-    m_lngMouseY = Y
+    RaiseEvent MouseDown(Button, Shift, x, y)
+    m_lngMouseX = x
+    m_lngMouseY = y
     If m_btnPressed Is Nothing Then UpdateMouse
     If Button = 1 Then
-        Set m_btnPressed = ButtonFromPoint(X, Y)
+        Set m_btnPressed = ButtonFromPoint(x, y)
         If m_btnPressed Is Nothing Then Exit Sub
         If m_btnPressed.Enabled Then
             RaiseEvent ButtonPress(m_btnPressed, l_booCancel)
@@ -799,21 +803,21 @@ Dim l_booCancel As Boolean
     End If
 End Sub
 
-Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
     MouseEntered
-    RaiseEvent MouseMove(Button, Shift, X, Y)
-    m_lngMouseX = X
-    m_lngMouseY = Y
+    RaiseEvent MouseMove(Button, Shift, x, y)
+    m_lngMouseX = x
+    m_lngMouseY = y
     If m_btnPressed Is Nothing Then UpdateMouse
 End Sub
 
-Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
 Dim m_btnHover As ngToolButton
-    RaiseEvent MouseUp(Button, Shift, X, Y)
+    RaiseEvent MouseUp(Button, Shift, x, y)
     If Not (m_btnPressed Is Nothing) Then
-        Set m_btnHover = ButtonFromPoint(X, Y)
+        Set m_btnHover = ButtonFromPoint(x, y)
         If m_btnHover Is m_btnPressed Then RaiseEvent ButtonClick(m_btnPressed)
         m_btnPressed.MouseUp
         Set m_btnPressed = Nothing

@@ -122,17 +122,17 @@ End Sub
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DestroyMenu "Find"
-        .DestroyMenu "Replace"
+    With Handler.GetMenu
+        .Items.Remove "Find"
+        .Items.Remove "Replace"
     End With
 End Sub
 
 Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DefineMenu "&Find...", "Find", , "Ctrl+F", ContextMenuIcon("FIND")
-        .DefineMenu "R&eplace...", "Replace", , "Ctrl+H", ContextMenuIcon("REPLACE")
+    With Handler.GetMenu
+        .Items.AddNew "&Find...", "Ctrl+F", "Find", "find"
+        .Items.AddNew "&Replace...", "Ctrl+H", "Replace", "replace"
     End With
 End Sub
 

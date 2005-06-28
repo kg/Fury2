@@ -94,8 +94,9 @@ Private Property Set iPlugin_Editor(RHS As Object)
     Set m_objEditor = RHS
 End Property
 
-Private Property Get iPlugin_Icon() As stdole.Picture
-    Set iPlugin_Icon = LoadResPicture("AUDIO", vbResIcon)
+Private Property Get iPlugin_Icon() As Fury2Image
+On Error Resume Next
+    Set iPlugin_Icon = m_objEditor.LoadResources("ng").ItemData("icons\audio.png")
 End Property
 
 Private Sub iPlugin_Initialize()

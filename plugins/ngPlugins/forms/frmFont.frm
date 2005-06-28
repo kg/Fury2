@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.1#0"; "ngUI.ocx"
 Begin VB.Form frmFont 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -209,7 +209,7 @@ End Property
 Private Sub picImage_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
     Editor.ActionUpdate
-    Select Case QuickShowMenu(picImage, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+    Select Case QuickShowMenu2(picImage, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
         Menus(MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
         frmIcons.ilContextMenus)
     Case 1
@@ -664,23 +664,23 @@ End Sub
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DestroyMenu "Tools"
-        .DestroyMenu "AddDropShadow"
-        .DestroyMenu "AddOutline"
-        .DestroyMenu "Recolor"
-        .DestroyMenu "ToolsEndSeparator"
+    With Handler.GetMenu
+        ' .DestroyMenu "Tools"
+        ' .DestroyMenu "AddDropShadow"
+        ' .DestroyMenu "AddOutline"
+        ' .DestroyMenu "Recolor"
+        ' .DestroyMenu "ToolsEndSeparator"
     End With
 End Sub
 
 Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DefineMenu "&Tools", "Tools"
-        .DefineMenu "Add Drop Shadow", "AddDropShadow", "Tools"
-        .DefineMenu "Add Outline", "AddOutline", "Tools"
-        .DefineMenu "Recolor", "Recolor", "Tools"
-        .DefineMenu "-", "ToolsEndSeparator", "Tools"
+    With Handler.GetMenu
+        ' .DefineMenu "&Tools", "Tools"
+        ' .DefineMenu "Add Drop Shadow", "AddDropShadow", "Tools"
+        ' .DefineMenu "Add Outline", "AddOutline", "Tools"
+        ' .DefineMenu "Recolor", "Recolor", "Tools"
+        ' .DefineMenu "-", "ToolsEndSeparator", "Tools"
     End With
 End Sub
 
@@ -910,7 +910,7 @@ Dim l_rctCharacter As Fury2Rect
                 RedrawSelectedCharacter
                 If Button = 2 Then
                     Editor.ActionUpdate
-                    Select Case QuickShowMenu(picCharacterList, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+                    Select Case QuickShowMenu2(picCharacterList, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
                         Menus(MenuString("&Insert New"), "-", MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
                         frmIcons.ilContextMenus)
                     Case 1
@@ -933,7 +933,7 @@ Dim l_rctCharacter As Fury2Rect
     Next l_lngCharacter
     If Button = 2 Then
         Editor.ActionUpdate
-        Select Case QuickShowMenu(picCharacterList, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+        Select Case QuickShowMenu2(picCharacterList, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
             Menus(MenuString("&Insert New"), "-", MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
             frmIcons.ilContextMenus)
         Case 1

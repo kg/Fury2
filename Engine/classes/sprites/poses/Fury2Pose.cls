@@ -43,6 +43,15 @@ Private mvarYVelocity As Single
 Private mvarFrames As Fury2PoseFrames
 Private mvarBlocking As Fury2Blocking
 Private mvarName As String
+Private mvarIndex As Long
+
+Friend Sub SetIndex(ByVal Index As Long)
+    mvarIndex = Index
+End Sub
+
+Public Property Get Index() As Long
+    Index = mvarIndex
+End Property
 
 Public Property Get Parent() As Fury2Sprite
 On Error Resume Next
@@ -200,7 +209,9 @@ Attribute Name.VB_Description = "The Pose's name."
 End Property
 
 Public Property Let Name(NewName As String)
+On Error Resume Next
     mvarName = NewName
+    LoadGraphics
 End Property
 
 Private Sub Class_Initialize()

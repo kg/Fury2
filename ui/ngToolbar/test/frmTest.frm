@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#9.0#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#10.11#0"; "ngUI.ocx"
 Begin VB.Form frmTest 
    BackColor       =   &H000000FF&
    Caption         =   "ngToolbar Test"
@@ -86,7 +86,22 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
-Dim m_mnuTest As ngMenuItems
+Dim m_mnuTest As ngMenu
+Dim m_mnuChild As ngMenu
+Dim m_mnuSubChild As ngMenu
+
+Public Sub ItemClicked(Item)
+    Debug.Print "ItemClicked(" & Item.Key & ")"
+End Sub
+
+Private Sub cmdMenu_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+Dim l_ptPoint As PointAPI
+    ClientToScreen cmdMenu.hWnd, l_ptPoint
+    With m_mnuTest.Show(l_ptPoint.X, l_ptPoint.Y + (cmdMenu.Height))
+        Me.Caption = "Selected " & .FullKey
+    End With
+End Sub
 
 Private Sub Form_Load()
 On Error Resume Next
@@ -134,5 +149,21 @@ Dim l_lngIndex As Long
     tsTabs.Tabs.AddNew "Tab 9"
     tsTabs.Tabs.AddNew "Tab 10"
     Set m_mnuTest = CreateMenu()
+    m_mnuTest.Items.AddNew "&Item 1", "Alt+F4", "Item1", F2ImageFromPicture(Me.Icon)
+    m_mnuTest.Items.AddNew "I&tem 2", "None", "Item2", F2Image(4, 4), , , False
+    m_mnuTest.Items.AddNew "-"
+    m_mnuTest.Items.AddNew "Item &Number Three", "Ctrl+Alt+Del", "Item3"
+    Set m_mnuTest.SelectEvent = BindEvent(Me, "ItemClicked")
+    Set m_mnuChild = CreateMenu()
+    m_mnuChild.Items.AddNew "Item 1", , "Item1"
+    m_mnuChild.Items.AddNew "Item 2", , "Item2"
+    m_mnuChild.Items.AddNew "-"
+    m_mnuChild.Items.AddNew "Item 3", , "Item3"
+    m_mnuChild.Items.AddNew "Item 4", , "Item4"
+    Set m_mnuTest.Items(1).ChildMenu = m_mnuChild
+    Set m_mnuSubChild = CreateMenu()
+    m_mnuSubChild.Items.AddNew "Item 1", , "Item1"
+    m_mnuSubChild.Items.AddNew "Item 2", , "Item2"
+    Set m_mnuChild.Items(2).ChildMenu = m_mnuSubChild
 End Sub
 

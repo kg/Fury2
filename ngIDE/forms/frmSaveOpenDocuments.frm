@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.5#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#10.9#0"; "ngUI.ocx"
 Begin VB.Form frmSaveOpenDocuments 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Confirm Close"
@@ -93,6 +93,18 @@ Begin VB.Form frmSaveOpenDocuments
          Width           =   4125
          _ExtentX        =   7276
          _ExtentY        =   4763
+         BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+            Name            =   "Tahoma"
+            Size            =   8.25
+            Charset         =   0
+            Weight          =   400
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
+         AllowReorder    =   0   'False
+         AllowMultiSelect=   0   'False
+         AllowNullSelection=   0   'False
       End
    End
 End
@@ -127,7 +139,7 @@ Public Sub RefreshDocumentList()
 On Error Resume Next
 Dim l_docDocument As cChildManager, l_lngDocumentIndex As Long
 Dim l_plgPlugin As iPlugin, l_lngIcon As Long
-Dim l_icnIcon As IPictureDisp
+Dim l_icnIcon As IPictureDisp, l_imgIcon As Fury2Image
     With lstDocuments
         .ListItems.Clear
         l_lngDocumentIndex = 1
@@ -137,8 +149,8 @@ Dim l_icnIcon As IPictureDisp
                     Set l_icnIcon = Nothing
                     Set l_plgPlugin = Nothing
                     Set l_plgPlugin = .Document.Plugin
-                    Set l_icnIcon = l_plgPlugin.Icon
-                    Set lstDocuments.ListItems.AddNew(IIf(Trim(.Document.Filename) = "", .Form.Caption, GetTitle(.Document.Filename)), , F2ImageFromPicture(l_icnIcon).Resample(16, 16, ResampleMode_Bilinear), ltaLeft).Tag = l_docDocument
+                    Set l_imgIcon = l_plgPlugin.Icon
+                    Set lstDocuments.ListItems.AddNew(IIf(Trim(.Document.Filename) = "", .Form.Caption, GetTitle(.Document.Filename)), , l_imgIcon.Resample(16, 16, ResampleMode_Bilinear), ltaLeft).Tag = l_docDocument
                 End If
             End With
         Next l_docDocument

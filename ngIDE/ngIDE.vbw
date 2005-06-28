@@ -1,4 +1,4 @@
-frmMain = -189, 53, 847, 660, C, 44, 46, 975, 650, C
+frmMain = 74, 41, 1110, 648, C, 44, 46, 975, 650, C
 cEditor = 88, 92, 1019, 696, C
 mdlEditor = 10, 105, 941, 709, C
 frmIcons = 176, 184, 1178, 791, C, 54, 123, 985, 727, C
@@ -34,7 +34,7 @@ ObjectInspector = 110, 125, 951, 645, C, 132, 150, 973, 670, C
 cSplitter = 0, 0, 781, 518, C
 mdlScrollbars = 110, 125, 891, 643, C
 frmPluginManager = 154, 175, 935, 693, C, 22, 25, 803, 543, C
-mdlMenus = 0, 0, 0, 0, C
+mdlMenus = 0, 0, 821, 463, C
 frmChangelog = 198, 225, 979, 743, C, 176, 200, 957, 718, C
 cNotice = 0, 0, 0, 0, C
 frmTerminate = 0, 0, 0, 0, C, 22, 25, 822, 538, C

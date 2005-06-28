@@ -161,13 +161,13 @@ Dim l_picPicture As Picture
     EndProcess
 End Function
 
-Public Function PictureFromPoint(ByVal X As Long, ByVal Y As Long) As Picture
+Public Function PictureFromPoint(ByVal x As Long, ByVal y As Long) As Picture
 On Error Resume Next
 Dim l_lngPictures As Long
 Dim l_picPicture As Picture
     For l_lngPictures = Design.Pictures.Count To 1 Step -1
         Set l_picPicture = Design.Pictures(l_lngPictures)
-        If l_picPicture.Rectangle.PointInside(X, Y) Then
+        If l_picPicture.Rectangle.PointInside(x, y) Then
             Set PictureFromPoint = l_picPicture
             Exit For
         End If
@@ -505,17 +505,15 @@ End Sub
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DestroyMenu "ExportImage"
-        .DestroyMenu "ExportScript"
+    With Handler.GetMenu
     End With
 End Sub
 
 Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DefineMenu "Export Image", "ExportImage"
-        .DefineMenu "Export Script", "ExportScript"
+    With Handler.GetMenu
+        ' .DefineMenu "Export Image", "ExportImage"
+        ' .DefineMenu "Export Script", "ExportScript"
     End With
 End Sub
 
@@ -735,16 +733,16 @@ Private Sub insProperties_AfterItemChange(ByVal OldValue As Variant, ByVal NewVa
     Redraw
 End Sub
 
-Private Sub picViewport_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub picViewport_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    m_lngStartMouseX = X
-    m_lngStartMouseY = Y
-    m_lngSelectedPicture = Design.Pictures.Find(PictureFromPoint(X, Y))
+    m_lngStartMouseX = x
+    m_lngStartMouseY = y
+    m_lngSelectedPicture = Design.Pictures.Find(PictureFromPoint(x, y))
     Redraw
     RefreshInspector
     Editor.ActionUpdate
     If Button = 2 Then
-        Select Case QuickShowMenu(picViewport, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+        Select Case QuickShowMenu2(picViewport, x * Screen.TwipsPerPixelX, y * Screen.TwipsPerPixelY, _
         ListContext(), _
         frmIcons.ilContextMenus)
         Case 1
@@ -765,20 +763,20 @@ On Error Resume Next
     End If
 End Sub
 
-Private Sub picViewport_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub picViewport_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    m_lngMouseX = X
-    m_lngMouseY = Y
+    m_lngMouseX = x
+    m_lngMouseY = y
     RefreshMouse
     If Button = 1 Then
         If m_booDraggingPicture Then
-            Set SelectedPicture.Rectangle = m_rctPictureStart.Copy.Translate(X - m_lngStartMouseX, Y - m_lngStartMouseY)
+            Set SelectedPicture.Rectangle = m_rctPictureStart.Copy.Translate(x - m_lngStartMouseX, y - m_lngStartMouseY)
             Redraw
         End If
     End If
 End Sub
 
-Private Sub picViewport_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub picViewport_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
     m_booDraggingPicture = False
     RefreshInspector

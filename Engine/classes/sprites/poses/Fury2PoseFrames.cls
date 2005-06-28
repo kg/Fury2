@@ -71,6 +71,16 @@ On Error Resume Next
     Set m_posParent = Pose
 End Sub
 
+Friend Sub Reindex()
+On Error Resume Next
+Dim l_lngIndex As Long
+Dim l_fraFrame As Fury2PoseFrame
+    For Each l_fraFrame In mCol
+        l_lngIndex = l_lngIndex + 1
+        l_fraFrame.SetIndex l_lngIndex
+    Next l_fraFrame
+End Sub
+
 Public Sub ModifyGraphics(ByVal FunctionName As String, Optional ByRef Parameters As Variant)
 On Error Resume Next
 Dim l_fraFrame As Fury2PoseFrame, l_lngParameterCount As Long
@@ -219,7 +229,7 @@ Dim m_fraFrame As Fury2PoseFrame
         .MaskColor = CLng(MaskColor)
         Set .Parent = m_posParent
     End With
-    mCol.Add m_fraFrame
+    Add m_fraFrame
 End Sub
 
 Public Sub Add(Obj As Fury2PoseFrame, Optional ByVal sKey, Optional ByVal AtIndex)
@@ -256,6 +266,7 @@ On Error Resume Next
         End If
     End If
     Err.Clear
+    Reindex
 End Sub
 
 Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2PoseFrame
@@ -273,6 +284,7 @@ End Property
 Public Sub Remove(vntIndexKey As Variant)
 On Error Resume Next
     mCol.Remove vntIndexKey
+    Reindex
 End Sub
 
 Public Property Get NewEnum() As IUnknown
@@ -291,6 +303,7 @@ End Sub
 Private Sub IVirtualFileCollection_AddItem(Item As Object)
 On Error Resume Next
     Add Item
+    Reindex
 End Sub
 
 Private Property Get IVirtualFileCollection_Count() As Long

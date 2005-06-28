@@ -86,15 +86,15 @@ Private m_fpgPlugin As iFileTypePlugin
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-'        .DestroyMenu "Word Wrap"
+    With Handler.GetMenu
+'        ' .DestroyMenu "Word Wrap"
     End With
 End Sub
 
 Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-'        .DefineMenu "Word &Wrap", "Word Wrap"
+    With Handler.GetMenu
+'        ' .DefineMenu "Word &Wrap", "Word Wrap"
     End With
 End Sub
 

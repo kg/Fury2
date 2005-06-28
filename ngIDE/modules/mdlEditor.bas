@@ -65,6 +65,7 @@ Dim l_varFiles As Variant
     Err.Clear
     Load frmIcons
     
+    SetMenuTheme g_edEditor.Resources, "menu\*.png"
     DefineMenus
     
     Load frmMain
@@ -77,7 +78,7 @@ Dim l_varFiles As Variant
     
     g_edEditor.InitClipboard
     
-    SetMenuHandler "Main Menu", frmMain
+    SetMenuHandler2 "Main Menu", frmMain
     
     InitFilesystem App.Path
     InitAccelerators

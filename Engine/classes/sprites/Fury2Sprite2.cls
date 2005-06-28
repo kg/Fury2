@@ -230,6 +230,10 @@ Attribute WalkState.VB_Description = "The state used while the sprite is in moti
 End Property
 
 Public Property Let WalkState(ByVal NewState As Long)
+On Error Resume Next
+    If State = m_lngWalkState Then
+        State = NewState
+    End If
     m_lngWalkState = NewState
 End Property
 
@@ -239,6 +243,10 @@ Attribute IdleState.VB_Description = "The state used when the sprite is not in m
 End Property
 
 Public Property Let IdleState(ByVal NewState As Long)
+On Error Resume Next
+    If State = m_lngIdleState Then
+        State = NewState
+    End If
     m_lngIdleState = NewState
 End Property
 
@@ -1017,7 +1025,9 @@ End Sub
 
 Public Property Let Name(NewName As String)
 Attribute Name.VB_Description = "The sprite's name."
+On Error Resume Next
     m_strName = NewName
+    m_posPoses.LoadGraphics
 End Property
 
 Public Property Get Name() As String

@@ -893,7 +893,7 @@ Dim l_lngSelection As Long
 Dim l_varItems As Variant
     ReleaseCapture
     l_varItems = MenusFromStringArray(m_oiItems(m_lngSelectedItem).DropdownText)
-    l_lngSelection = QuickShowMenu(picItems, cmdDropDown.Left * Screen.TwipsPerPixelX, (cmdDropDown.Top + cmdDropDown.Height) * Screen.TwipsPerPixelY, l_varItems, LeftButtonOnly:=True)
+    l_lngSelection = QuickShowMenu2(picItems, cmdDropDown.Left * Screen.TwipsPerPixelX, (cmdDropDown.Top + cmdDropDown.Height) * Screen.TwipsPerPixelY, l_varItems, LeftButtonOnly:=True)
     txtEdit.Text = CStr(m_oiItems(m_lngSelectedItem).DropdownValues(l_lngSelection - 1))
     EditBoxChanged
 End Sub
@@ -937,8 +937,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -949,8 +949,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged

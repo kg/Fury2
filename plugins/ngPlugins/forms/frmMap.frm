@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#9.0#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.1#0"; "ngUI.ocx"
 Begin VB.Form frmMap 
    BorderStyle     =   0  'None
    ClientHeight    =   5580
@@ -346,7 +346,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As PointAPI) As Long
 Implements iExtendedForm
 Implements iEditingCommands
 Implements iCustomMenus
@@ -615,7 +615,7 @@ Public Sub AutoScroll(Optional ByVal X As Long = -32767, Optional ByVal Y As Lon
 On Error Resume Next
 Dim l_lngX1 As Long, l_lngY1 As Long, l_lngX2 As Long, l_lngY2 As Long
 Dim l_lngScrollX As Long, l_lngScrollY As Long
-Dim l_ptCursor As POINTAPI
+Dim l_ptCursor As PointAPI
 Dim l_lngCapture As Long
     If Not m_voViewOptions.AutoScroll Then Exit Sub
     hsMap.Tag = "lock"
@@ -1317,9 +1317,8 @@ Private Sub elAreas_ContextMenu(ByVal X As Long, ByVal Y As Long)
 On Error Resume Next
     elAreas.SetFocus
     Editor.ActionUpdate
-    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-        Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
-        frmIcons.ilContextMenus)
+    Select Case QuickShowMenu2(Me, X, Y, _
+        Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)))
     Case 1
         PasteArea
     Case Else
@@ -1331,9 +1330,8 @@ On Error Resume Next
     elAreas.SetFocus
     elAreas.SelectedItem = Item
     Editor.ActionUpdate
-    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-        Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-        frmIcons.ilContextMenus)
+    Select Case QuickShowMenu2(Me, X, Y, _
+        Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)))
     Case 1
         CutArea
     Case 2
@@ -1363,9 +1361,8 @@ Private Sub elLayers_ContextMenu(ByVal X As Long, ByVal Y As Long)
 On Error Resume Next
     elLayers.SetFocus
     Editor.ActionUpdate
-    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-        Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
-        frmIcons.ilContextMenus)
+    Select Case QuickShowMenu2(Me, X, Y, _
+        Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)))
     Case 1
         PasteLayer
     Case Else
@@ -1377,11 +1374,10 @@ On Error Resume Next
     elLayers.SetFocus
     elLayers.SelectedItem = Item
     Editor.ActionUpdate
-    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+    Select Case QuickShowMenu2(Me, X, Y, _
         Menus(MenuString("Visible", , , , , m_mapMap.Layers(Item).Visible), _
         MenuString("-"), _
-        MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Duplicate", , , "DUPLICATE", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-        frmIcons.ilContextMenus)
+        MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Duplicate", , , "DUPLICATE", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)))
     Case 1
         ToggleLayerVisibility Item
     Case 3
@@ -1439,9 +1435,8 @@ Private Sub elLights_ContextMenu(ByVal X As Long, ByVal Y As Long)
 On Error Resume Next
     elLights.SetFocus
     Editor.ActionUpdate
-    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-        Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
-        frmIcons.ilContextMenus)
+    Select Case QuickShowMenu2(Me, X, Y, _
+        Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)))
     Case 1
         PasteLight
     Case Else
@@ -1453,9 +1448,8 @@ On Error Resume Next
     elLights.SetFocus
     elLights.SelectedItem = Item
     Editor.ActionUpdate
-    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-        Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-        frmIcons.ilContextMenus)
+    Select Case QuickShowMenu2(Me, X, Y, _
+        Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)))
     Case 1
         CutLight
     Case 2
@@ -1513,9 +1507,8 @@ Private Sub elSprites_ContextMenu(ByVal X As Long, ByVal Y As Long)
 On Error Resume Next
     elSprites.SetFocus
     Editor.ActionUpdate
-    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-        Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
-        frmIcons.ilContextMenus)
+    Select Case QuickShowMenu2(Me, X, Y, _
+        Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)))
     Case 1
         PasteSprite
     Case Else
@@ -1527,11 +1520,10 @@ On Error Resume Next
     elSprites.SetFocus
     elSprites.SelectedItem = Item
     Editor.ActionUpdate
-    Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+    Select Case QuickShowMenu2(Me, X, Y, _
         Menus(MenuString("Visible", , , , , m_mapMap.Layers(m_lngSelectedLayer).Sprites(Item).Visible), _
         MenuString("-"), _
-        MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-        frmIcons.ilContextMenus)
+        MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)))
     Case 1
         With m_mapMap.Layers(m_lngSelectedLayer).Sprites(Item)
             .Visible = Not .Visible
@@ -1656,48 +1648,48 @@ End Sub
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DestroyMenu "ResizeMap"
-        .DestroyMenu "Zoom"
-        .DestroyMenu "SetZoom(25)"
-        .DestroyMenu "SetZoom(50)"
-        .DestroyMenu "SetZoom(100)"
-        .DestroyMenu "SetZoom(200)"
-        .DestroyMenu "SetZoom(400)"
-        .DestroyMenu "SetZoom(800)"
-        .DestroyMenu "SetZoom(1600)"
-        .DestroyMenu "ZoomEndSeparator"
-        .DestroyMenu "Tools"
-        .DestroyMenu "BlockingTools"
-        .DestroyMenu "ToolsEndSeparator"
-        .DestroyMenu "AddEdgeBlocking"
-        .DestroyMenu "BlockingToolsEndSeparator"
-        .DestroyMenu "RunMacro"
+    With Handler.GetMenu
+        ' .DestroyMenu "ResizeMap"
+        ' .DestroyMenu "Zoom"
+        ' .DestroyMenu "SetZoom(25)"
+        ' .DestroyMenu "SetZoom(50)"
+        ' .DestroyMenu "SetZoom(100)"
+        ' .DestroyMenu "SetZoom(200)"
+        ' .DestroyMenu "SetZoom(400)"
+        ' .DestroyMenu "SetZoom(800)"
+        ' .DestroyMenu "SetZoom(1600)"
+        ' .DestroyMenu "ZoomEndSeparator"
+        ' .DestroyMenu "Tools"
+        ' .DestroyMenu "BlockingTools"
+        ' .DestroyMenu "ToolsEndSeparator"
+        ' .DestroyMenu "AddEdgeBlocking"
+        ' .DestroyMenu "BlockingToolsEndSeparator"
+        ' .DestroyMenu "RunMacro"
     End With
 End Sub
 
 Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler
-        .DefineMenu "&Resize...", "ResizeMap", , , ContextMenuIcon("RESIZE MAP")
-        .DefineMenu "&Zoom", "Zoom", , , ContextMenuIcon("ZOOM")
-        .DefineMenu "25%", "SetZoom(25)", "Zoom", , , , Zoom <= 0.25
-        .DefineMenu "50%", "SetZoom(50)", "Zoom", , , , Zoom = 0.5
-        .DefineMenu "100%", "SetZoom(100)", "Zoom", , , , Zoom = 1
-        .DefineMenu "200%", "SetZoom(200)", "Zoom", , , , Zoom = 2
-        .DefineMenu "400%", "SetZoom(400)", "Zoom", , , , Zoom = 4
-        .DefineMenu "800%", "SetZoom(800)", "Zoom", , , , Zoom = 8
-        .DefineMenu "1600%", "SetZoom(1600)", "Zoom", , , , Zoom >= 16
-        .DefineMenu "-", "ZoomEndSeparator", "Zoom"
-        .DefineMenu "&Tools", "Tools"
-        .DefineMenu "&Tiles", "TileTools", "Tools"
-        .DefineMenu "&Blocking", "BlockingTools", "Tools"
-        .DefineMenu "-", "ToolsEndSeparator", "Tools"
-        .DefineMenu "Reload all tilesets", "ReloadTilesets", "TileTools"
-        .DefineMenu "-", "TileToolsEndSeparator", "TileTools"
-        .DefineMenu "Place blocking around edges", "AddEdgeBlocking", "BlockingTools"
-        .DefineMenu "-", "BlockingToolsEndSeparator", "BlockingTools"
-        .DefineMenu "Run &Macro...", "RunMacro"
+    With Handler.GetMenu
+        ' .DefineMenu "&Resize...", "ResizeMap", , , ContextMenuIcon("RESIZE MAP")
+        ' .DefineMenu "&Zoom", "Zoom", , , ContextMenuIcon("ZOOM")
+        ' .DefineMenu "25%", "SetZoom(25)", "Zoom", , , , Zoom <= 0.25
+        ' .DefineMenu "50%", "SetZoom(50)", "Zoom", , , , Zoom = 0.5
+        ' .DefineMenu "100%", "SetZoom(100)", "Zoom", , , , Zoom = 1
+        ' .DefineMenu "200%", "SetZoom(200)", "Zoom", , , , Zoom = 2
+        ' .DefineMenu "400%", "SetZoom(400)", "Zoom", , , , Zoom = 4
+        ' .DefineMenu "800%", "SetZoom(800)", "Zoom", , , , Zoom = 8
+        ' .DefineMenu "1600%", "SetZoom(1600)", "Zoom", , , , Zoom >= 16
+        ' .DefineMenu "-", "ZoomEndSeparator", "Zoom"
+        ' .DefineMenu "&Tools", "Tools"
+        ' .DefineMenu "&Tiles", "TileTools", "Tools"
+        ' .DefineMenu "&Blocking", "BlockingTools", "Tools"
+        ' .DefineMenu "-", "ToolsEndSeparator", "Tools"
+        ' .DefineMenu "Reload all tilesets", "ReloadTilesets", "TileTools"
+        ' .DefineMenu "-", "TileToolsEndSeparator", "TileTools"
+        ' .DefineMenu "Place blocking around edges", "AddEdgeBlocking", "BlockingTools"
+        ' .DefineMenu "-", "BlockingToolsEndSeparator", "BlockingTools"
+        ' .DefineMenu "Run &Macro...", "RunMacro"
     End With
 End Sub
 
@@ -2639,7 +2631,7 @@ End Sub
 Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     With m_mapMap.Layers(m_lngSelectedLayer).Sprites
         BeginProcess "Performing Paste..."
         If AtIndex < 1 Then
@@ -2720,9 +2712,8 @@ Private Sub picBrush_MouseDown(Button As Integer, Shift As Integer, X As Single,
 On Error Resume Next
     picBrush.SetFocus
     Editor.ActionUpdate
-    Select Case QuickShowMenu(picBrush, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-        Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-        frmIcons.ilContextMenus)
+    Select Case QuickShowMenu2(picBrush, X, Y, _
+        Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)))
     Case 1
         CutBrush
     Case 2
@@ -3249,6 +3240,7 @@ End Sub
 
 Public Sub RefreshAll()
 On Error Resume Next
+    picMapViewport_Resize
     Set tpkTiles.ResourceFile = Editor.LoadResources("ng")
     tpkTiles.InitToolbar
     ViewChanged
@@ -3915,9 +3907,8 @@ Dim l_araNew As Fury2Area
             picMapViewport.SetFocus
             Editor.ActionUpdate
             If m_lngSelectedArea > 0 Then
-                Select Case QuickShowMenu(picMapViewport, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-                    Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-                    frmIcons.ilContextMenus)
+                Select Case QuickShowMenu2(picMapViewport, X, Y, _
+                    Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)))
                 Case 1
                     CutArea
                 Case 2
@@ -3932,9 +3923,8 @@ Dim l_araNew As Fury2Area
                 Case Else
                 End Select
             Else
-                Select Case QuickShowMenu(picMapViewport, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-                    Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
-                    frmIcons.ilContextMenus)
+                Select Case QuickShowMenu2(picMapViewport, X, Y, _
+                    Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)))
                 Case 1
                     With PasteArea(m_lngSelectedArea, False)
                         .X = m_lngMouseX - (.Width \ 2)
@@ -4012,9 +4002,8 @@ On Error Resume Next
     If Button = 2 Then
         m_lngPoint = 0
         Redraw
-        Select Case QuickShowMenu(picMapViewport, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-            Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-            frmIcons.ilContextMenus)
+        Select Case QuickShowMenu2(picMapViewport, X, Y, _
+            Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)))
         Case 1
             CutCollisionLines
         Case 2
@@ -4187,9 +4176,8 @@ On Error Resume Next
 Dim l_litOld As Fury2LightSource
 Dim l_litNew As Fury2LightSource
     If Button = 2 Then
-        Select Case QuickShowMenu(picMapViewport, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-            Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-            frmIcons.ilContextMenus)
+        Select Case QuickShowMenu2(picMapViewport, X, Y, _
+            Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)))
         Case 1
             Select Case Tool_Lighting
             Case LightingTool_Cursor, LightingTool_Light
@@ -4502,9 +4490,8 @@ Dim l_sndSound As Fury2SoundObject
 Dim l_mobOld As Fury2MapObject
 Dim l_mobNew As Fury2MapObject
     If Button = 2 Then
-        Select Case QuickShowMenu(picMapViewport, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-            Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-            frmIcons.ilContextMenus)
+        Select Case QuickShowMenu2(picMapViewport, X, Y, _
+            Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)))
         Case 1
         Case 2
         Case 3
@@ -4585,11 +4572,10 @@ Dim l_sprNew As Fury2Sprite
             picMapViewport.SetFocus
             Editor.ActionUpdate
             If m_lngSelectedSprite > 0 Then
-                Select Case QuickShowMenu(picMapViewport, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+                Select Case QuickShowMenu2(picMapViewport, X, Y, _
                     Menus(MenuString("Visible", , , , , l_sprNew.Visible), _
                     MenuString("-"), _
-                    MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
-                    frmIcons.ilContextMenus)
+                    MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)))
                 Case 1
                     With l_sprNew
                         PropertyUndoPush l_sprNew, "Visible", l_sprNew.Visible
@@ -4608,9 +4594,8 @@ Dim l_sprNew As Fury2Sprite
                 Case Else
                 End Select
             Else
-                Select Case QuickShowMenu(picMapViewport, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
-                    Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
-                    frmIcons.ilContextMenus)
+                Select Case QuickShowMenu2(picMapViewport, X, Y, _
+                    Menus(MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)))
                 Case 1
                     With PasteSprite(m_lngSelectedSprite, False)
                         .X = m_lngMouseX
@@ -5088,6 +5073,7 @@ End Sub
 Public Sub ViewChanged()
 On Error Resume Next
 Dim l_objObject As Object
+    Me.Caption = IIf(Trim(m_strFilename) = "", "Untitled.f2map", GetTitle(m_strFilename))
     Screen.MousePointer = 11
     ResetOverlay
     picSidebar.Visible = Not ((m_lngCurrentView = View_Script) Or (m_lngCurrentView = View_Properties))

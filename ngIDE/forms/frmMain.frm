@@ -3,7 +3,7 @@ Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
 Object = "{4F11FEBA-BBC2-4FB6-A3D3-AA5B5BA087F4}#1.0#0"; "vbalSbar6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{EF59A10B-9BC4-11D3-8E24-44910FC10000}#11.0#0"; "vbalEdit.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#9.0#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.1#0"; "ngUI.ocx"
 Begin VB.MDIForm frmMain 
    AutoShowChildren=   0   'False
    BackColor       =   &H8000000C&
@@ -338,14 +338,43 @@ Option Explicit
 Implements iCustomMenuHandler
 
 Private Const WM_MDIGETACTIVE = &H229
-Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
-Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
 
 Private m_colNoticeQueue As Engine.Fury2Collection
 Private m_notNotice As cNotice
 Private m_imgNotice As Fury2Image
 Private m_booNoticeFocused As Boolean
 Private m_aclMenus As cAcceleratorManager
+Private m_colMenus As Engine.Fury2Collection
+Private WithEvents m_mnuFile As ngMenu
+Attribute m_mnuFile.VB_VarHelpID = -1
+Private WithEvents m_mnuEdit As ngMenu
+Attribute m_mnuEdit.VB_VarHelpID = -1
+Private WithEvents m_mnuView As ngMenu
+Attribute m_mnuView.VB_VarHelpID = -1
+Private WithEvents m_mnuDocument As ngMenu
+Attribute m_mnuDocument.VB_VarHelpID = -1
+Private WithEvents m_mnuGame As ngMenu
+Attribute m_mnuGame.VB_VarHelpID = -1
+Private WithEvents m_mnuTools As ngMenu
+Attribute m_mnuTools.VB_VarHelpID = -1
+Private WithEvents m_mnuMacros As ngMenu
+Attribute m_mnuMacros.VB_VarHelpID = -1
+Private WithEvents m_mnuWindow As ngMenu
+Attribute m_mnuWindow.VB_VarHelpID = -1
+Private WithEvents m_mnuHelp As ngMenu
+Attribute m_mnuHelp.VB_VarHelpID = -1
+Private WithEvents m_mnuRecentFiles As ngMenu
+Attribute m_mnuRecentFiles.VB_VarHelpID = -1
+Private WithEvents m_mnuRecentGames As ngMenu
+Attribute m_mnuRecentGames.VB_VarHelpID = -1
+Private WithEvents m_mnuNew As ngMenu
+Attribute m_mnuNew.VB_VarHelpID = -1
+Private WithEvents m_mnuToolbars As ngMenu
+Attribute m_mnuToolbars.VB_VarHelpID = -1
+Private WithEvents m_mnuPanels As ngMenu
+Attribute m_mnuPanels.VB_VarHelpID = -1
 Private m_booNonClientFocus As Boolean
 Private m_colChildWindows As Engine.Fury2Collection
 Private m_sngProgress As Single
@@ -405,7 +434,7 @@ End Sub
 
 Private Function GetToolbarX(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
+Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0))) * Screen.TwipsPerPixelX
@@ -413,7 +442,7 @@ End Function
 
 Private Function GetToolbarY(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
+Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0))) * Screen.TwipsPerPixelY
@@ -611,15 +640,15 @@ Dim l_strAccel As String, l_strCaption As String
     tbrMenus.DisableUpdates = True
     With tbrMenus.Buttons
         .Clear
-        .AddNew " &File ", "FileMenu"
-        .AddNew " &Edit ", "EditMenu"
-        .AddNew " &View ", "ViewMenu"
-        .AddNew " &Document ", "DocumentMenu"
-        .AddNew " &Game ", "GameMenu"
-        .AddNew " &Tools ", "ToolMenu"
-        .AddNew " &Macros ", "MacroMenu"
-        .AddNew " &Window ", "WindowMenu"
-        .AddNew " &Help ", "HelpMenu"
+        .AddNew " &File ", "File"
+        .AddNew " &Edit ", "Edit"
+        .AddNew " &View ", "View"
+        .AddNew " &Document ", "Document"
+        .AddNew " &Game ", "Game"
+        .AddNew " &Tools ", "Tools"
+        .AddNew " &Macros ", "Macros"
+        .AddNew " &Window ", "Window"
+        .AddNew " &Help ", "Help"
     End With
     tbrMenus.DisableUpdates = False
     tbrMenus.Reflow
@@ -768,10 +797,85 @@ End Sub
 
 Public Sub InitMenus()
 On Error Resume Next
-Dim l_mnuMenu As cPopupMenu
-    Set l_mnuMenu = GetMenu("Main Menu")
-    With l_mnuMenu
+    Set m_colMenus = New Engine.Fury2Collection
+    Set m_mnuFile = CreateMenu()
+    Set m_mnuEdit = CreateMenu()
+    Set m_mnuView = CreateMenu()
+    Set m_mnuDocument = CreateMenu()
+    Set m_mnuGame = CreateMenu()
+    Set m_mnuTools = CreateMenu()
+    Set m_mnuMacros = CreateMenu()
+    Set m_mnuWindow = CreateMenu()
+    Set m_mnuHelp = CreateMenu()
+    Set m_mnuNew = CreateMenu()
+    Set m_mnuRecentFiles = CreateMenu()
+    Set m_mnuRecentGames = CreateMenu()
+    Set m_mnuPanels = CreateMenu()
+    Set m_mnuToolbars = CreateMenu()
+    m_colMenus.Add m_mnuFile, "File"
+    m_colMenus.Add m_mnuEdit, "Edit"
+    m_colMenus.Add m_mnuView, "View"
+    m_colMenus.Add m_mnuDocument, "Document"
+    m_colMenus.Add m_mnuGame, "Game"
+    m_colMenus.Add m_mnuTools, "Tools"
+    m_colMenus.Add m_mnuMacros, "Macros"
+    m_colMenus.Add m_mnuWindow, "Window"
+    m_colMenus.Add m_mnuHelp, "Help"
+    
+    With m_mnuFile.Items
+        Set .AddNew("&New", , , "new").ChildMenu = m_mnuNew
+        With m_mnuNew.Items
+            .AddNew "&Game", , "Game:New", "new game"
+            .AddNew "-"
+        End With
+        .AddNew "&Open...", "Ctrl+O", "File:Open", "open"
+        Set .AddNew("Open &Recent").ChildMenu = m_mnuRecentFiles
+        .AddNew "&Save", "Ctrl+S", "File:Save", "save"
+        .AddNew "Save As...", "", "File:SaveAs", "save as"
+        .AddNew "Save All", "Ctrl+Shift+S", "File:SaveAll", "save all"
+        .AddNew "-"
+        .AddNew "E&xit", "Alt+F4", "Editor:Exit", "exit"
     End With
+    With m_mnuEdit.Items
+        .AddNew "&Undo", "Ctrl+Z", "Action:Undo", "undo"
+        .AddNew "&Redo", "Shift+Ctrl+Z", "Action:Redo", "redo"
+        .AddNew "-"
+        .AddNew "Cu&t", "Ctrl+X", "Action:Cut", "cut"
+        .AddNew "&Copy", "Ctrl+C", "Action:Copy", "copy"
+        .AddNew "&Paste", "Ctrl+V", "Action:Paste", "paste"
+        .AddNew "&Delete", "Del", "Action:Delete", "delete"
+        .AddNew "-"
+        .AddNew "Select &All", "Ctrl+A", "Action:SelectAll", "select all"
+        .AddNew "Select &None", "Ctrl+D", "Action:SelectNone", "select none"
+    End With
+    With m_mnuView.Items
+        Set .AddNew("&Panels").ChildMenu = m_mnuPanels
+        Set .AddNew("&Toolbars").ChildMenu = m_mnuToolbars
+        With m_mnuPanels.Items
+            .AddNew "&Filesystem", "F8", "Show:FileSidebar"
+            .AddNew "&Log", , "Show:Log"
+        End With
+        With m_mnuToolbars.Items
+            .AddNew "&Main", , "Show:MainToolbar"
+            .AddNew "&Game", , "Show:GameToolbar"
+            .AddNew "&Plugins", , "Show:PluginToolbar"
+        End With
+    End With
+'    DefineMenu2 "Main Menu", _
+'        Menus(MenuString("&File", , "FileMenu"), Menus(MenuString("&New", "", "NewMenu", "NEW"), _
+'                Menus(MenuString("Game", , "Game:New", "NEW GAME"), "-"), _
+'            , MenuString("&Open...", "Ctrl+O", "File:Open", "OPEN"), MenuString("Open &Recent", , "RecentFiles"), Array(), MenuString("&Save", "Ctrl+S", "File:Save", "SAVE", , , False), MenuString("Save As...", "", "File:SaveAs", "SAVE AS", , , False), MenuString("Save All", "Ctrl+Shift+S", "File:SaveAll", , , , False), "-", _
+'            MenuString("E&xit", "Alt+F4", "Editor:Exit", "EXIT")), _
+'        MenuString("&Edit", , "EditMenu"), Menus(MenuString("&Undo", "Ctrl+Z", "Action:Undo", "UNDO", , , False), MenuString("&Redo", "Shift+Ctrl+Z", "Action:Redo", "REDO", , , False), "-", _
+'            MenuString("Cu&t", "Ctrl+X", "Action:Cut", "CUT", , , False), MenuString("&Copy", "Ctrl+C", "Action:Copy", "COPY", , , False), MenuString("&Paste", "Ctrl+V", "Action:Paste", "PASTE"), _
+'            MenuString("&Delete", "Del", "Action:Delete", "DELETE", , , False), "-", MenuString("Select &All", "Ctrl+A", "Action:SelectAll", "SELECT ALL", , , False), MenuString("Select &None", "Ctrl+D", "Action:SelectNone", "SELECT NONE", , , False)), _
+'        MenuString("&View", , "ViewMenu"), Menus("-", MenuString("&Filesystem", "F8", "Show:FileSidebar", , , False, True), MenuString("&Log", , "Show:Log", , , False, True), "-", MenuString("&Main", "", "Show:MainToolbar", , , True, True), MenuString("&Game", "", "Show:GameToolbar", , , True, True), MenuString("&Plugins", "", "Show:PluginToolbar", , , True, True)), _
+'        MenuString("&Document", , "DocumentMenu"), Menus(MenuString("-", , "DocumentEndSeparator"), MenuString("&Close", "Ctrl+F4", "Action:CloseWindow", "CLOSE WINDOW"), MenuString("&Previous", "Shift+Ctrl+F6", "Action:PreviousWindow", "PREVIOUS WINDOW"), MenuString("&Next", "Ctrl+F6", "Action:NextWindow", "NEXT WINDOW")), _
+'        MenuString("&Game", , "GameMenu"), Menus(MenuString("&Open...", , "Game:Open", "OPEN GAME"), MenuString("Open &Recent", , "RecentGames"), Array(), "-", MenuString("&Play", "F9", "Game:Play", "PLAY")), _
+'        MenuString("&Tools", , "ToolMenu"), Menus(, MenuString("-", , "PluginsEndSeparator"), MenuString("Manage Plugins...", , "Plugins:Manage", "PLUGIN"), MenuString("Options...", , "Show:Options", "PROPERTIES")), _
+'        MenuString("&Macros", , "MacroMenu"), Menus(MenuString("Run Macro...", , "Macro:Run"), MenuString("Enter Macro...", , "Macro:RunCustom")), _
+'        MenuString("&Window", , "WindowMenu"), Menus(MenuString("-", , "WindowsEndSeparator"), MenuString("Close All", , "Action:CloseAllWindows", "CLOSE ALL WINDOWS", , , False)), _
+'        MenuString("&Help", , "HelpMenu"), Menus(MenuString("Online &Documentation", , "Help:OnlineDocs", "HELP"), MenuString("Online &Tutorials", , "Help:OnlineTutorials", "HELP"), "-", MenuString("&About...", , "Help:About", "HELP"), MenuString("View ChangeLog", , "Help:ChangeLog", "HELP")))
 End Sub
 
 Private Sub iCustomMenuHandler_DefineMenu(Caption As String, key As String, Optional ParentKey As String, Optional AcceleratorString As String = "", Optional Icon As stdole.Picture = Nothing, Optional HelpText As String = "", Optional ByVal Checked As Boolean = False, Optional ByVal Enabled As Boolean = True)
@@ -803,6 +907,11 @@ On Error Resume Next
     End With
     Err.Clear
 End Sub
+
+Private Function iCustomMenuHandler_GetMenu() As ngUI.ngMenu
+On Error Resume Next
+    Set iCustomMenuHandler_GetMenu = m_mnuDocument
+End Function
 
 Private Sub MDIForm_Activate()
 On Error Resume Next
@@ -984,7 +1093,7 @@ End Sub
 
 Private Sub sbStatus_DrawItem(ByVal lhDC As Long, ByVal iPanel As Long, ByVal lLeftPixels As Long, ByVal lTopPixels As Long, ByVal lRightPixels As Long, ByVal lBottomPixels As Long)
 On Error Resume Next
-Dim l_rctProgress As Rect
+Dim l_rctProgress As RECT
 Dim l_lngBrush As Long
     If LCase(sbStatus.PanelKey(iPanel)) = "progress" Then
         With l_rctProgress
@@ -1036,7 +1145,7 @@ Dim l_lngX As Long, l_lngY As Long
         Cancel = True
         ReleaseCapture
         SetForegroundWindow Me.hwnd
-        ShowMenu Me, l_lngX, l_lngY, "Main Menu", "RecentGames"
+        'ShowMenu Me, l_lngX, l_lngY, "Main Menu", "RecentGames"
     End If
 End Sub
 
@@ -1060,30 +1169,34 @@ End Sub
 Private Sub tbrMain_ButtonPress(Button As ngUI.ngToolButton, Cancel As Boolean)
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long
-    l_lngX = GetToolbarX(tbrMain) + ((Button.Left) * Screen.TwipsPerPixelX)
-    l_lngY = GetToolbarY(tbrMain) + ((Button.Top + Button.Height) * Screen.TwipsPerPixelY)
+    l_lngX = GetToolbarX(tbrMain) + ((Button.Left))
+    l_lngY = GetToolbarY(tbrMain) + ((Button.Top + Button.Height))
     If Button.key = "File:New" Then
         Cancel = True
         ReleaseCapture
-        SetForegroundWindow Me.hwnd
-        ShowMenu Me, l_lngX, l_lngY, "Main Menu", "NewMenu"
+        'SetForegroundWindow Me.hwnd
+        ShowMenu2 Me, l_lngX, l_lngY, "Main Menu", "NewMenu"
     ElseIf Button.key = "File:OpenMenu" Then
         Cancel = True
         ReleaseCapture
-        SetForegroundWindow Me.hwnd
-        ShowMenu Me, l_lngX, l_lngY, "Main Menu", "RecentFiles"
+        'SetForegroundWindow Me.hwnd
+        ShowMenu2 Me, l_lngX, l_lngY, "Main Menu", "RecentFiles"
     End If
 End Sub
 
 Private Sub tbrMenus_ButtonPress(Button As ngUI.ngToolButton, Cancel As Boolean)
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long
-    l_lngX = GetToolbarX(tbrMenus) + ((Button.Left) * Screen.TwipsPerPixelX)
-    l_lngY = GetToolbarY(tbrMenus) + ((Button.Top + Button.Height) * Screen.TwipsPerPixelY)
+Dim l_mnuMenu As ngMenu
+    Button.Checked = True
+    l_lngX = (Button.Left)
+    l_lngY = (Button.Top + Button.Height)
     Cancel = True
     ReleaseCapture
-    SetForegroundWindow Me.hwnd
-    ShowMenu Me, l_lngX, l_lngY, "Main Menu", Button.key
+    Set l_mnuMenu = m_colMenus(Button.key)
+    l_mnuMenu.Show l_lngX, l_lngY, tbrMenus.hwnd, True, False
+    Debug.Print "Hidden"
+    Button.Checked = False
 End Sub
 
 Private Sub tbrNotice_ButtonClick(Button As ngUI.ngToolButton)
@@ -1118,32 +1231,255 @@ On Error Resume Next
     RefreshWindows
     RefreshActiveDocument
 End Sub
+'
+'Public Sub Menu_Click(Menu As cPopupMenu, Index As Long)
+'On Error Resume Next
+'    Err.Clear
+'    If DoCommand(Menu.ItemKey(Index)) Then
+'    Else
+'        Debug.Print "Menu: " & Menu.ItemKey(Index) & " has no command handler."
+'    End If
+'End Sub
+'
+'Public Sub Menu_Initialize(Menu As cPopupMenu, Index As Long)
+'On Error Resume Next
+'Dim l_lngIndex As Long
+'Dim l_frmForm As Form, l_lngForm As Long, l_lngWindowsAdded As Long, l_strName As String
+'Dim l_fpgPlugin As iFileTypePlugin, l_lngPluginIndex As Long, l_strKey As String
+'Dim l_plgPlugin As iPlugin, l_icnIcon As IPictureDisp, l_mgrForm As cChildManager
+'Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l_strFilename As String
+'    Select Case LCase(Trim(Replace(Menu.Caption(Index), "&", "")))
+'    Case "new"
+'        l_lngIndex = Index
+'        Do While l_lngIndex <= Menu.Count
+'            If InStr(Menu.ItemKey(l_lngIndex), "File:New(") Then
+'                If Menu.ItemIcon(l_lngIndex) > 0 Then
+'                    frmIcons.ilIcons.RemoveImage frmIcons.ilIcons.ItemIndex(Menu.ItemKey(l_lngIndex))
+'                End If
+'                Menu.RemoveItem l_lngIndex
+'            Else
+'                l_lngIndex = l_lngIndex + 1
+'            End If
+'        Loop
+'        l_lngPluginIndex = 1
+'        For Each l_fpgPlugin In g_colFileTypePlugins
+'            Set l_plgPlugin = l_fpgPlugin
+'            If l_fpgPlugin.ShowInNewMenu Then
+'                If ReadRegSetting("Plugins\Show In New Menu\" & TypeName(l_fpgPlugin), 1) Then
+'                    Set l_icnIcon = l_plgPlugin.Icon
+'                    l_strName = "File:New(" & l_lngPluginIndex & ")"
+'                    If l_icnIcon Is Nothing Then
+'                        Menu.InsertItem l_fpgPlugin.FileTypeName, "NewEndSeparator", , , , , GameIsLoaded, l_strName
+'                    Else
+'                        frmIcons.ilIcons.AddFromHandle l_icnIcon.Handle, Image_Icon, l_strName
+'                        Menu.InsertItem l_fpgPlugin.FileTypeName, "NewEndSeparator", , , frmIcons.ilIcons.ItemIndex(l_strName) - 1, , GameIsLoaded, l_strName
+'                    End If
+'                End If
+'            End If
+'            l_lngPluginIndex = l_lngPluginIndex + 1
+'        Next l_fpgPlugin
+'    Case "open recent"
+'        Select Case LCase(Trim(Menu.ItemKey(Index)))
+'        Case "recentfiles"
+'            l_lngIndex = Index
+'            Do While l_lngIndex <= Menu.Count
+'                If InStr(Menu.ItemKey(l_lngIndex), "File:Open(") Then
+'                    frmIcons.ilIcons.RemoveImage frmIcons.ilIcons.ItemIndex(Menu.ItemKey(l_lngIndex))
+'                    Menu.RemoveItem l_lngIndex
+'                Else
+'                    l_lngIndex = l_lngIndex + 1
+'                End If
+'            Loop
+'            l_lngFileCount = ReadRegSetting("Recent\Files\Count", 0)
+'            If l_lngFileCount Then
+'                For l_lngFiles = 1 To l_lngFileCount
+'                    l_strFilename = ReadRegSetting("Recent\Files\File " & l_lngFiles, "")
+'                    If Trim(l_strFilename) <> "" Then
+'                        Set l_icnIcon = Nothing
+'                        Set l_plgPlugin = Nothing
+'                        Set l_plgPlugin = g_edEditor.FindCapablePlugin(l_strFilename)
+'                        Set l_icnIcon = l_plgPlugin.Icon
+'                        l_strName = "File:Open(""" & l_strFilename & """)"
+'                        If l_icnIcon Is Nothing Then
+'                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , , , True, l_strName
+''                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , , , GameIsLoaded, l_strName
+'                        Else
+'                            frmIcons.ilIcons.AddFromHandle l_icnIcon.Handle, Image_Icon, l_strName
+'                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , frmIcons.ilIcons.ItemIndex(l_strName) - 1, , True, l_strName
+''                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , frmIcons.ilIcons.ItemIndex(l_strName) - 1, , GameIsLoaded, l_strName
+'                        End If
+'                    End If
+'                Next l_lngFiles
+'            End If
+'        Case "recentgames"
+'            l_lngIndex = Index
+'            Do While l_lngIndex <= Menu.Count
+'                If InStr(Menu.ItemKey(l_lngIndex), "Game:Open(") Then
+'                    Menu.RemoveItem l_lngIndex
+'                Else
+'                    l_lngIndex = l_lngIndex + 1
+'                End If
+'            Loop
+'            l_lngFileCount = ReadRegSetting("Recent\Games\Count", 0)
+'            If l_lngFileCount Then
+'                For l_lngFiles = 1 To l_lngFileCount
+'                    l_strFilename = ReadRegSetting("Recent\Games\Game " & l_lngFiles, "")
+'                    If Trim(l_strFilename) <> "" Then
+'                        Menu.InsertItem l_strFilename, "RecentGamesEndSeparator", , , , , , "Game:Open(""" & l_strFilename & """)"
+'                    End If
+'                Next l_lngFiles
+'            End If
+'        Case Else
+'        End Select
+'    Case "file"
+'        g_edEditor.ActionUpdate
+'        With Menu
+'            .Enabled(.IndexForKey("File:Open")) = True
+''            .Enabled(.IndexForKey("File:Open")) = GameIsLoaded
+'        End With
+'    Case "edit"
+'        g_edEditor.ActionUpdate
+'        With Menu
+'            .Enabled(.IndexForKey("Action:Cut")) = g_edEditor.CanCut
+'            .Enabled(.IndexForKey("Action:Copy")) = g_edEditor.CanCopy
+'            .Enabled(.IndexForKey("Action:Paste")) = g_edEditor.CanPaste
+'            .Enabled(.IndexForKey("Action:Delete")) = g_edEditor.CanDelete
+'            .Enabled(.IndexForKey("Action:Undo")) = g_edEditor.CanUndo
+'            .Enabled(.IndexForKey("Action:Redo")) = g_edEditor.CanRedo
+'            .Enabled(.IndexForKey("Action:SelectAll")) = g_edEditor.CanSelectAll
+'        End With
+'    Case "document"
+'        If m_cmnLastDocument Is Nothing Then
+'        Else
+'            m_cmnLastDocument.DestroyMenus Me
+'        End If
+'        Set m_cmnLastDocument = Nothing
+'        With Menu
+'            .Enabled(.IndexForKey("Action:CloseWindow")) = Not (Me.ActiveChild Is Nothing)
+'            .Enabled(.IndexForKey("Action:PreviousWindow")) = (Me.Documents.Count > 1)
+'            .Enabled(.IndexForKey("Action:NextWindow")) = (Me.Documents.Count > 1)
+'        End With
+'        Set l_cmnDocument = Me.ActiveChild.Form
+'        If l_cmnDocument Is Nothing Then
+'        Else
+'            l_cmnDocument.InitializeMenus Me
+'        End If
+'        Set m_cmnLastDocument = l_cmnDocument
+'    Case "tools"
+'        l_lngIndex = Index
+'        Do While l_lngIndex <= Menu.Count
+'            If InStr(Menu.ItemKey(l_lngIndex), "Plugins:Activate(") Then
+'                frmIcons.ilIcons.RemoveImage frmIcons.ilIcons.ItemIndex(Menu.ItemKey(l_lngIndex))
+'                Menu.RemoveItem l_lngIndex
+'            Else
+'                l_lngIndex = l_lngIndex + 1
+'            End If
+'        Loop
+'        l_lngPluginIndex = 1
+'        For Each l_plgPlugin In g_colPlugins
+'            If l_plgPlugin.ShowInPluginMenu Then
+'                If CLng(ReadRegSetting("Plugins\Show In Menu\" & TypeName(l_plgPlugin), 1)) Then
+'                    l_strName = "Plugins:Activate(" & l_lngPluginIndex & ")"
+'                    Set l_icnIcon = l_plgPlugin.Icon
+'                    If l_icnIcon Is Nothing Then
+'                        Menu.InsertItem l_plgPlugin.PluginName, "PluginsEndSeparator", , , , , , l_strName
+'                    Else
+'                        frmIcons.ilIcons.AddFromHandle l_icnIcon.Handle, Image_Icon, l_strName
+'                        Menu.InsertItem l_plgPlugin.PluginName, "PluginsEndSeparator", , , frmIcons.ilIcons.ItemIndex(l_strName) - 1, , , l_strName
+'                    End If
+'                End If
+'            End If
+'            l_lngPluginIndex = l_lngPluginIndex + 1
+'        Next l_plgPlugin
+'    Case "view"
+'        Menu.Checked(Menu.IndexForKey("Show:FileSidebar")) = picFileSidebar.Visible
+'        Menu.Checked(Menu.IndexForKey("Show:Log")) = picLog.Visible
+'        Menu.Checked(Menu.IndexForKey("Show:MainToolbar")) = tbrMain.Visible
+'        Menu.Checked(Menu.IndexForKey("Show:GameToolbar")) = tbrGame.Visible
+'        Menu.Checked(Menu.IndexForKey("Show:PluginToolbar")) = tbrPlugins.Visible
+'    Case "window"
+'        l_lngIndex = Index
+'        Do While l_lngIndex <= Menu.Count
+'            l_strKey = Menu.ItemKey(l_lngIndex)
+'            If InStr(l_strKey, "Action:ActivateWindow(") Then
+'                frmIcons.ilIcons.RemoveImage frmIcons.ilIcons.ItemIndex("ICON_" & Menu.ItemData(l_lngIndex))
+'                Menu.RemoveItem l_lngIndex
+'            Else
+'                l_lngIndex = l_lngIndex + 1
+'            End If
+'        Loop
+'        Menu.RemoveItem "Show:WindowList"
+'        l_lngForm = 1
+'        For Each l_mgrForm In m_colChildWindows
+'            Set l_frmForm = l_mgrForm.Form
+'            l_strName = "Action:ActivateWindow(" & l_lngForm & ")"
+'            If l_frmForm.Icon Is Nothing Then
+'            Else
+'                frmIcons.ilIcons.AddFromHandle l_frmForm.Icon.Handle, Image_Icon, "ICON_" & l_frmForm.Icon.Handle
+'                Menu.InsertItem "&" & (l_lngWindowsAdded) & ": " & EscapeAmpersands(l_frmForm.Caption), "WindowsEndSeparator", , l_frmForm.Icon.Handle, frmIcons.ilIcons.ImageCount - 1, , , l_strName
+'            End If
+'            l_lngWindowsAdded = l_lngWindowsAdded + 1
+'            l_lngForm = l_lngForm + 1
+'            If l_lngWindowsAdded = 10 Then
+'                Menu.InsertItem "&More Windows...", "WindowsEndSeparator", , , frmIcons.ilIcons.ItemIndex("WINDOW LIST") - 1, , , "Show:WindowList"
+'                Exit For
+'            End If
+'        Next l_mgrForm
+'        If l_lngWindowsAdded = 0 Then
+'            Menu.InsertItem "No Windows Open", "WindowsEndSeparator", , , , , False, "Action:ActivateWindow(-1)"
+'        End If
+'        Menu.Enabled(Menu.IndexForKey("Action:CloseAllWindows")) = l_lngWindowsAdded > 0
+'    Case "help"
+'        With Menu
+'            .Enabled(.IndexForKey("Help:About")) = GameIsLoaded
+'        End With
+'    Case Else
+'    End Select
+'End Sub
+'
+'Public Sub Menu_UnInitialize(Menu As cPopupMenu, Index As Long)
+'On Error Resume Next
+'Dim l_lngIndex As Long
+'Dim l_frmForm As Form, l_lngForm As Long, l_lngWindowsAdded As Long, l_strName As String
+'Dim l_fpgPlugin As iFileTypePlugin, l_lngPluginIndex As Long, l_strKey As String
+'Dim l_plgPlugin As iPlugin, l_icnIcon As IPictureDisp, l_mgrForm As cChildManager
+'Dim l_cmnDocument As iCustomMenus
+'    Select Case LCase(Trim(Replace(Menu.Caption(Index), "&", "")))
+'    Case "new"
+'    Case "open recent"
+'    Case "edit"
+'    Case "document"
+'    Case "tools"
+'    Case "view"
+'    Case "window"
+'    Case Else
+'    End Select
+'End Sub
 
-Public Sub Menu_Click(Menu As cPopupMenu, Index As Long)
+Public Sub Menu_Click(Item)
 On Error Resume Next
     Err.Clear
-    If DoCommand(Menu.ItemKey(Index)) Then
+    If DoCommand(Item.key) Then
     Else
-        Debug.Print "Menu: " & Menu.ItemKey(Index) & " has no command handler."
+        Debug.Print "Menu: " & Item.key & " has no command handler."
     End If
 End Sub
 
-Public Sub Menu_Initialize(Menu As cPopupMenu, Index As Long)
+Public Sub Menu_Initialize(Menu)
 On Error Resume Next
 Dim l_lngIndex As Long
 Dim l_frmForm As Form, l_lngForm As Long, l_lngWindowsAdded As Long, l_strName As String
 Dim l_fpgPlugin As iFileTypePlugin, l_lngPluginIndex As Long, l_strKey As String
-Dim l_plgPlugin As iPlugin, l_icnIcon As IPictureDisp, l_mgrForm As cChildManager
+Dim l_plgPlugin As iPlugin, l_icnIcon As IPictureDisp, l_mgrForm As cChildManager, l_imgIcon As Fury2Image
 Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l_strFilename As String
-    Select Case LCase(Trim(Replace(Menu.Caption(Index), "&", "")))
-    Case "new"
-        l_lngIndex = Index
-        Do While l_lngIndex <= Menu.Count
-            If InStr(Menu.ItemKey(l_lngIndex), "File:New(") Then
-                If Menu.ItemIcon(l_lngIndex) > 0 Then
-                    frmIcons.ilIcons.RemoveImage frmIcons.ilIcons.ItemIndex(Menu.ItemKey(l_lngIndex))
-                End If
-                Menu.RemoveItem l_lngIndex
+Dim l_mnuMenu As ngMenu
+    Set l_mnuMenu = Menu
+    Select Case LCase(Trim(l_mnuMenu.Tag))
+    Case "newmenu"
+        l_lngIndex = 1
+        Do While l_lngIndex <= l_mnuMenu.Items.Count
+            If InStr(l_mnuMenu.Items(l_lngIndex).key, "File:New(") Then
+                l_mnuMenu.Items.Remove l_lngIndex
             Else
                 l_lngIndex = l_lngIndex + 1
             End If
@@ -1153,78 +1489,62 @@ Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l
             Set l_plgPlugin = l_fpgPlugin
             If l_fpgPlugin.ShowInNewMenu Then
                 If ReadRegSetting("Plugins\Show In New Menu\" & TypeName(l_fpgPlugin), 1) Then
-                    Set l_icnIcon = l_plgPlugin.Icon
+                    Set l_imgIcon = Nothing
+                    Set l_imgIcon = l_plgPlugin.Icon
                     l_strName = "File:New(" & l_lngPluginIndex & ")"
-                    If l_icnIcon Is Nothing Then
-                        Menu.InsertItem l_fpgPlugin.FileTypeName, "NewEndSeparator", , , , , GameIsLoaded, l_strName
-                    Else
-                        frmIcons.ilIcons.AddFromHandle l_icnIcon.Handle, Image_Icon, l_strName
-                        Menu.InsertItem l_fpgPlugin.FileTypeName, "NewEndSeparator", , , frmIcons.ilIcons.ItemIndex(l_strName) - 1, , GameIsLoaded, l_strName
-                    End If
+                    l_mnuMenu.Items.AddNew l_fpgPlugin.FileTypeName, , l_strName, l_imgIcon, , , GameIsLoaded
                 End If
             End If
             l_lngPluginIndex = l_lngPluginIndex + 1
         Next l_fpgPlugin
-    Case "open recent"
-        Select Case LCase(Trim(Menu.ItemKey(Index)))
-        Case "recentfiles"
-            l_lngIndex = Index
-            Do While l_lngIndex <= Menu.Count
-                If InStr(Menu.ItemKey(l_lngIndex), "File:Open(") Then
-                    frmIcons.ilIcons.RemoveImage frmIcons.ilIcons.ItemIndex(Menu.ItemKey(l_lngIndex))
-                    Menu.RemoveItem l_lngIndex
-                Else
-                    l_lngIndex = l_lngIndex + 1
-                End If
-            Loop
-            l_lngFileCount = ReadRegSetting("Recent\Files\Count", 0)
-            If l_lngFileCount Then
-                For l_lngFiles = 1 To l_lngFileCount
-                    l_strFilename = ReadRegSetting("Recent\Files\File " & l_lngFiles, "")
-                    If Trim(l_strFilename) <> "" Then
-                        Set l_icnIcon = Nothing
-                        Set l_plgPlugin = Nothing
-                        Set l_plgPlugin = g_edEditor.FindCapablePlugin(l_strFilename)
-                        Set l_icnIcon = l_plgPlugin.Icon
-                        l_strName = "File:Open(""" & l_strFilename & """)"
-                        If l_icnIcon Is Nothing Then
-                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , , , True, l_strName
-'                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , , , GameIsLoaded, l_strName
-                        Else
-                            frmIcons.ilIcons.AddFromHandle l_icnIcon.Handle, Image_Icon, l_strName
-                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , frmIcons.ilIcons.ItemIndex(l_strName) - 1, , True, l_strName
-'                            Menu.InsertItem GetTitle(l_strFilename), "RecentFilesEndSeparator", , , frmIcons.ilIcons.ItemIndex(l_strName) - 1, , GameIsLoaded, l_strName
-                        End If
-                    End If
-                Next l_lngFiles
+    Case "recentfiles"
+        l_lngIndex = 1
+        Do While l_lngIndex <= l_mnuMenu.Items.Count
+            If InStr(l_mnuMenu.Items(l_lngIndex).key, "File:Open(") Then
+                l_mnuMenu.Items.Remove l_lngIndex
+            Else
+                l_lngIndex = l_lngIndex + 1
             End If
-        Case "recentgames"
-            l_lngIndex = Index
-            Do While l_lngIndex <= Menu.Count
-                If InStr(Menu.ItemKey(l_lngIndex), "Game:Open(") Then
-                    Menu.RemoveItem l_lngIndex
-                Else
-                    l_lngIndex = l_lngIndex + 1
+        Loop
+        l_lngFileCount = ReadRegSetting("Recent\Files\Count", 0)
+        If l_lngFileCount Then
+            For l_lngFiles = 1 To l_lngFileCount
+                l_strFilename = ReadRegSetting("Recent\Files\File " & l_lngFiles, "")
+                If Trim(l_strFilename) <> "" Then
+                    Set l_imgIcon = Nothing
+                    Set l_plgPlugin = Nothing
+                    Set l_plgPlugin = g_edEditor.FindCapablePlugin(l_strFilename)
+                    Set l_imgIcon = l_plgPlugin.Icon
+                    l_strName = "File:Open(""" & l_strFilename & """)"
+                    l_mnuMenu.Items.AddNew GetTitle(l_strFilename), , l_strName, l_imgIcon, , , GameIsLoaded
                 End If
-            Loop
-            l_lngFileCount = ReadRegSetting("Recent\Games\Count", 0)
-            If l_lngFileCount Then
-                For l_lngFiles = 1 To l_lngFileCount
-                    l_strFilename = ReadRegSetting("Recent\Games\Game " & l_lngFiles, "")
-                    If Trim(l_strFilename) <> "" Then
-                        Menu.InsertItem l_strFilename, "RecentGamesEndSeparator", , , , , , "Game:Open(""" & l_strFilename & """)"
-                    End If
-                Next l_lngFiles
+            Next l_lngFiles
+        End If
+    Case "recentgames"
+        l_lngIndex = 1
+        Do While l_lngIndex <= l_mnuMenu.Items.Count
+            If InStr(l_mnuMenu.Items(l_lngIndex).key, "Game:Open(") Then
+                l_mnuMenu.Items.Remove l_lngIndex
+            Else
+                l_lngIndex = l_lngIndex + 1
             End If
-        Case Else
-        End Select
-    Case "file"
+        Loop
+        l_lngFileCount = ReadRegSetting("Recent\Games\Count", 0)
+        If l_lngFileCount Then
+            For l_lngFiles = 1 To l_lngFileCount
+                l_strFilename = ReadRegSetting("Recent\Games\Game " & l_lngFiles, "")
+                If Trim(l_strFilename) <> "" Then
+                    'Menu.InsertItem l_strFilename, "RecentGamesEndSeparator", , , , , , "Game:Open(""" & l_strFilename & """)"
+                End If
+            Next l_lngFiles
+        End If
+    Case "filemenu"
         g_edEditor.ActionUpdate
         With Menu
             .Enabled(.IndexForKey("File:Open")) = True
 '            .Enabled(.IndexForKey("File:Open")) = GameIsLoaded
         End With
-    Case "edit"
+    Case "editmenu"
         g_edEditor.ActionUpdate
         With Menu
             .Enabled(.IndexForKey("Action:Cut")) = g_edEditor.CanCut
@@ -1253,11 +1573,12 @@ Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l
         End If
         Set m_cmnLastDocument = l_cmnDocument
     Case "tools"
-        l_lngIndex = Index
+        l_lngIndex = 1
         Do While l_lngIndex <= Menu.Count
+            Exit Do
             If InStr(Menu.ItemKey(l_lngIndex), "Plugins:Activate(") Then
                 frmIcons.ilIcons.RemoveImage frmIcons.ilIcons.ItemIndex(Menu.ItemKey(l_lngIndex))
-                Menu.RemoveItem l_lngIndex
+                'Menu.RemoveItem l_lngIndex
             Else
                 l_lngIndex = l_lngIndex + 1
             End If
@@ -1285,8 +1606,9 @@ Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l
         Menu.Checked(Menu.IndexForKey("Show:GameToolbar")) = tbrGame.Visible
         Menu.Checked(Menu.IndexForKey("Show:PluginToolbar")) = tbrPlugins.Visible
     Case "window"
-        l_lngIndex = Index
+        l_lngIndex = 1
         Do While l_lngIndex <= Menu.Count
+            Exit Do
             l_strKey = Menu.ItemKey(l_lngIndex)
             If InStr(l_strKey, "Action:ActivateWindow(") Then
                 frmIcons.ilIcons.RemoveImage frmIcons.ilIcons.ItemIndex("ICON_" & Menu.ItemData(l_lngIndex))
@@ -1320,25 +1642,6 @@ Dim l_cmnDocument As iCustomMenus, l_lngFileCount As Long, l_lngFiles As Long, l
         With Menu
             .Enabled(.IndexForKey("Help:About")) = GameIsLoaded
         End With
-    Case Else
-    End Select
-End Sub
-
-Public Sub Menu_UnInitialize(Menu As cPopupMenu, Index As Long)
-On Error Resume Next
-Dim l_lngIndex As Long
-Dim l_frmForm As Form, l_lngForm As Long, l_lngWindowsAdded As Long, l_strName As String
-Dim l_fpgPlugin As iFileTypePlugin, l_lngPluginIndex As Long, l_strKey As String
-Dim l_plgPlugin As iPlugin, l_icnIcon As IPictureDisp, l_mgrForm As cChildManager
-Dim l_cmnDocument As iCustomMenus
-    Select Case LCase(Trim(Replace(Menu.Caption(Index), "&", "")))
-    Case "new"
-    Case "open recent"
-    Case "edit"
-    Case "document"
-    Case "tools"
-    Case "view"
-    Case "window"
     Case Else
     End Select
 End Sub
@@ -1491,7 +1794,7 @@ Dim l_fsFilesystem As Fury2Filesystem
         Set l_nodNode = tvFileTree.hitTest(X, Y)
         If l_nodNode Is Nothing Then
             ' Blank
-            Select Case QuickShowMenu(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+            Select Case QuickShowMenu2(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
                 Menus("Explore", "-", "New Folder"))
             Case 1
                 Shell "explorer """ & Replace(l_fsFilesystem.Root, "/", "\") & """", vbNormalFocus
@@ -1504,7 +1807,7 @@ Dim l_fsFilesystem As Fury2Filesystem
         Else
             If Right(l_nodNode.key, 1) = "/" Then
                 ' Folder
-                Select Case QuickShowMenu(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+                Select Case QuickShowMenu2(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
                     Menus("Expand", "Explore", "-", "Rename", "Delete", "-", "New Folder"))
                 Case 1
                     l_nodNode.Expanded = True
@@ -1524,7 +1827,7 @@ Dim l_fsFilesystem As Fury2Filesystem
                 End Select
             Else
                 ' File
-                Select Case QuickShowMenu(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+                Select Case QuickShowMenu2(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
                     Menus("Open", "-", "Rename", "Delete"))
                 Case 1
                     g_edEditor.File_Open l_fsFilesystem.File(l_nodNode.key).GetRealFilename
@@ -1556,9 +1859,9 @@ Dim l_lngLeftSpace As Long, l_lngRightSpace As Long
 Dim l_lngTopSpace As Long, l_lngBottomSpace As Long
 Dim l_lngTextHeight As Long, l_lngTitleHeight As Long
 Dim l_lngWidth As Long, l_lngHeight As Long
-Dim l_rctWindow As Win32.Rect
+Dim l_rctWindow As Win32.RECT
 Dim l_lngWindowWidth As Long, l_lngWindowHeight As Long
-Dim l_rctTextSize As Win32.Rect, l_rctText As Win32.Rect
+Dim l_rctTextSize As Win32.RECT, l_rctText As Win32.RECT
 Dim l_sngCloseTime As Single
 Dim l_strWaitingNotices As String
     GetClientRect Me.hwnd, l_rctWindow

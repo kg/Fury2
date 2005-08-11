@@ -59,6 +59,15 @@ Private m_lngNullBitmap As Long
 Private m_booMouseOver As Boolean
 Private m_imgSurface As Fury2Image
 
+Public Sub Release()
+On Error Resume Next
+    Debug.Print "frmMenu.Release"
+    FreeSurface
+    Set Menu = Nothing
+    Set ChildMenu = Nothing
+    Set m_imgSurface = Nothing
+End Sub
+
 Public Sub SetParent(ByVal Parent As Long)
 On Error Resume Next
     m_lngOldParent = SetWindowLong(Me.hwnd, GWL_HWNDPARENT, Parent)
@@ -86,6 +95,7 @@ End Sub
 
 Private Sub FreeSurface()
 On Error Resume Next
+    If m_lngDC = 0 Then Exit Sub
     SelectObject m_lngDC, m_lngNullBitmap
     Set m_imgSurface = Nothing
     DeleteDC m_lngDC
@@ -395,15 +405,19 @@ End Sub
 
 Private Sub Form_Hide()
 On Error Resume Next
+    tmrMouseTracker.Enabled = False
+    tmrFocusTracker.Enabled = False
     FreeSurface
 End Sub
 
 Private Sub Form_Initialize()
 On Error Resume Next
+    g_lngMenuHosts = g_lngMenuHosts + 1
     Me.ScaleMode = 1
     BorderWidth = ScaleX((Me.Width - Me.ScaleWidth) / 2, vbTwips, vbPixels)
     Me.ScaleMode = 3
     F2Init
+    Debug.Print "frmMenu_Initiaize"
 End Sub
 
 Private Sub Form_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
@@ -441,8 +455,10 @@ End Sub
 
 Private Sub Form_Terminate()
 On Error Resume Next
+    g_lngMenuHosts = g_lngMenuHosts - 1
     Set Menu = Nothing
     FreeSurface
+    Debug.Print "frmMenu_Terminate"
 End Sub
 
 Private Property Get ngMenuHost_Height() As Long

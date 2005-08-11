@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #define UNICODE
-//#define ASSEMBLY
+#define ASSEMBLY
 #define VISUALBASIC
 #define OVERRIDES
 #ifdef _DEBUG

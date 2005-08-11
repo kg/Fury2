@@ -1,5 +1,5 @@
 Type=OleDll
-Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\WINDOWS\system32\STDOLE2.TLB#OLE Automation
+Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\WINDOWS\system32\stdole2.tlb#OLE Automation
 Reference=*\G{3F64DBD2-28A9-4F12-B781-A444F0474AB2}#232.0#0#..\..\..\binary\sys\engine.dll#Fury² Game Creation System
 Reference=*\G{3B10323B-FEC1-4FAA-9A62-89666AC5A420}#41.2#0#..\..\..\binary\sys\graphics.dll#Fury² Game Creation System Graphics Engine
 Reference=*\G{3CB89DD9-2E5A-45D3-A6FF-E87B0081CDCC}#1.0#409#..\..\..\libraries\tlb\SoftFX.tlb#Fury² Game Creation System SoftFX library

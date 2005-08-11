@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
-Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.7#0"; "ngUI.ocx"
 Begin VB.Form frmUserData 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -35,7 +35,7 @@ Begin VB.Form frmUserData
    Begin ngPlugins.ObjectInspector insProperties 
       Height          =   3600
       Left            =   2190
-      TabIndex        =   2
+      TabIndex        =   1
       Top             =   1860
       Width           =   4800
       _ExtentX        =   8467
@@ -48,7 +48,7 @@ Begin VB.Form frmUserData
       ScaleHeight     =   95
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   143
-      TabIndex        =   1
+      TabIndex        =   0
       Top             =   0
       Visible         =   0   'False
       Width           =   2205
@@ -59,36 +59,14 @@ Begin VB.Form frmUserData
       _ExtentX        =   847
       _ExtentY        =   794
    End
-   Begin vbalDTab6.vbalDTabControl dtViews 
-      Height          =   7290
-      Left            =   1725
-      TabIndex        =   0
-      Top             =   540
-      Width           =   9150
-      _ExtentX        =   16140
-      _ExtentY        =   12859
-      AllowScroll     =   0   'False
-      TabAlign        =   0
-      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   700
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      ShowCloseButton =   0   'False
-      MoveableTabs    =   0   'False
+   Begin ngUI.ngTabStrip tsViews 
+      Height          =   4665
+      Left            =   1860
+      TabIndex        =   2
+      Top             =   1530
+      Width           =   5550
+      _ExtentX        =   9790
+      _ExtentY        =   8229
    End
 End
 Attribute VB_Name = "frmUserData"
@@ -152,7 +130,7 @@ Private m_lngCurrentView As UserDataEditorViews
 
 Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
 On Error Resume Next
-    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\userdata.png")
+    Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\user data.png")
 End Property
 
 Public Property Set Data(ByRef NewData As Object)
@@ -364,8 +342,8 @@ End Sub
 
 Public Sub InitViews()
 On Error Resume Next
-    dtViews.Tabs.Add "t" & CStr(View_Properties), , "Properties"
-    dtViews.Tabs.Add "t" & CStr(View_Custom), , "Custom"
+    tsViews.Tabs.AddNew "Properties", "t" & CStr(View_Properties)
+    tsViews.Tabs.AddNew "Custom", "t" & CStr(View_Custom)
 End Sub
 
 Public Sub RefreshAll()
@@ -380,7 +358,7 @@ Dim l_objObject As Object
     Screen.MousePointer = 11
     insProperties.Visible = False
     picUI.Visible = False
-    dtViews_Resize
+    tsViews_Resize
     Select Case m_lngCurrentView
     Case View_Properties
         insProperties.Visible = True
@@ -454,18 +432,18 @@ Dim l_objPlugin As UserDataEditor
     Set Editor = l_objPlugin.Editor
 End Function
 
-Private Sub dtViews_Resize()
+Private Sub tsViews_Resize()
 On Error Resume Next
     Select Case m_lngCurrentView
     Case View_Properties
-        insProperties.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
+        insProperties.Move (2) + tsViews.Left, tsViews.Top + tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - tsViews.IdealHeight - 3
     Case View_Custom
-        picUI.Move (2) + dtViews.Left, dtViews.Top + 24, dtViews.Width - 4, dtViews.Height - 26
+        picUI.Move (2) + tsViews.Left, tsViews.Top + tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - tsViews.IdealHeight - 3
     Case Else
     End Select
 End Sub
 
-Private Sub dtViews_TabSelected(TheTab As vbalDTab6.cTab)
+Private Sub tsViews_TabSelected(TheTab As ngTab)
 On Error Resume Next
     m_lngCurrentView = CLng(Mid(TheTab.key, 2))
     ViewChanged
@@ -476,7 +454,7 @@ On Error Resume Next
     Set insProperties.Editor = Editor
     AllocateBuffers
     Form_Resize
-    dtViews_Resize
+    tsViews_Resize
     ViewChanged
     Redraw
 End Sub
@@ -504,7 +482,7 @@ On Error GoTo 0
         m_booVisible = True
         RefreshAll
     End If
-    dtViews.Move 2, 2, Me.ScaleWidth - 4, Me.ScaleHeight - 4
+    tsViews.Move 2, 2, Me.ScaleWidth - 4, Me.ScaleHeight - 4
 End Sub
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)

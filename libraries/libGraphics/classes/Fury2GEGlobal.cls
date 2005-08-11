@@ -344,24 +344,46 @@ Public Sub F2SetGray(ByRef Color, ByVal NewValue As Long)
     Color = SoftFX.SetGray(Color, NewValue)
 End Sub
 
-Public Function F2GetRed(Color) As Long
-    F2GetRed = SoftFX.GetRed(CLng(Color))
+Public Function F2GetRed(ByVal Color As Long) As Long
+    F2GetRed = SoftFX.GetRed(Color)
 End Function
 
-Public Function F2GetGreen(Color) As Long
-    F2GetGreen = SoftFX.GetGreen(CLng(Color))
+Public Function F2GetGreen(ByVal Color As Long) As Long
+    F2GetGreen = SoftFX.GetGreen(Color)
 End Function
 
-Public Function F2GetBlue(Color) As Long
-    F2GetBlue = SoftFX.GetBlue(CLng(Color))
+Public Function F2GetBlue(ByVal Color As Long) As Long
+    F2GetBlue = SoftFX.GetBlue(Color)
 End Function
 
-Public Function F2GetAlpha(Color) As Long
-    F2GetAlpha = SoftFX.GetAlpha(CLng(Color))
+Public Function F2GetAlpha(ByVal Color As Long) As Long
+    F2GetAlpha = SoftFX.GetAlpha(Color)
 End Function
 
-Public Function F2GetGray(Color) As Long
-    F2GetGray = SoftFX.GetGray(CLng(Color))
+Public Function F2GetGray(ByVal Color As Long) As Long
+    F2GetGray = SoftFX.GetGray(Color)
+End Function
+
+Public Function F2GetRGBA(ByVal Color As Long)
+On Error Resume Next
+    F2GetRGBA = Array(SoftFX.GetRed(Color), SoftFX.GetGreen(Color), SoftFX.GetBlue(Color), SoftFX.GetAlpha(Color))
+End Function
+
+Public Function F2GetHSVA(ByVal Color As Long)
+On Error Resume Next
+    F2GetHSVA = Array(SoftFX.GetHue(Color) / 10, SoftFX.GetSaturation(Color) / 2550, SoftFX.GetHSVAValue(Color) / 2550, SoftFX.GetAlpha(Color))
+End Function
+
+Public Function F2GetHue(ByVal Color As Long) As Single
+    F2GetHue = SoftFX.GetHue(Color) / 10
+End Function
+
+Public Function F2GetSaturation(ByVal Color As Long) As Single
+    F2GetSaturation = SoftFX.GetSaturation(Color) / 2550
+End Function
+
+Public Function F2GetValue(ByVal Color As Long) As Single
+    F2GetValue = SoftFX.GetHSVAValue(Color) / 2550
 End Function
 
 ' Deprecated
@@ -742,6 +764,47 @@ Dim newImage As Fury2Image
     Err.Clear
 End Function
 
+Public Function F2ImageToGDIPicture(ByVal Image As Fury2Image) As Long
+On Error Resume Next
+Dim l_lngPicture As Long
+Dim hOldBmp As Long
+Dim hdcMem As Long
+Dim deskWnd As Long, deskDC As Long
+    If Image Is Nothing Then Exit Function
+    
+    deskWnd = GetDesktopWindow
+    deskDC = GetDC(deskWnd)
+    
+    hdcMem = CreateCompatibleDC(deskDC)
+    If hdcMem = 0 Then
+        Exit Function
+    End If
+    l_lngPicture = CreateCompatibleBitmap(deskDC, Image.Width, Image.Height)
+    If l_lngPicture = 0 Then
+        DeleteDC hdcMem
+        ReleaseDC deskWnd, deskDC
+        Exit Function
+    End If
+    DeleteDC hdcMem
+    ReleaseDC deskWnd, deskDC
+    
+    With Image.Duplicate
+        .Composite F2White
+        PixelsToPictureHandle l_lngPicture, .Pointer(0, 0)
+    End With
+    F2ImageToGDIPicture = l_lngPicture
+End Function
+
+Public Function F2ImageFromGDIPicture(ByVal Pic As Long) As Fury2Image
+On Error Resume Next
+Dim l_lngWidth As Long, l_lngHeight As Long
+    l_lngWidth = GetPictureHandleWidth(Pic)
+    l_lngHeight = GetPictureHandleHeight(Pic)
+    Set F2ImageFromGDIPicture = F2Image(l_lngWidth, l_lngHeight)
+    PixelsFromPictureHandle Pic, F2ImageFromGDIPicture.Pointer(0, 0)
+    F2ImageFromGDIPicture.FillChannel F2ImageFromGDIPicture.Rectangle, 3, 255
+End Function
+
 Public Function F2Image(ByVal X As Long, ByVal Y As Long) As Fury2Image
 On Error Resume Next
 Dim newImage As Fury2Image
@@ -760,46 +823,15 @@ Dim newImage As Fury2Image
     Set newImage = Nothing
 End Function
 
-'Public Function F2PalettedImage(ByVal x As Long, ByVal y As Long) As Fury2PalettedImage
-'On Error Resume Next
-'Dim newImage As Fury2PalettedImage
-'    Set newImage = New Fury2PalettedImage
-'    newImage.Resize x, y
-'    Set F2PalettedImage = newImage
-'    Set newImage = Nothing
-'End Function
-
-Public Function F2RGB(ByVal Red, ByVal Green, ByVal Blue, Optional ByVal Alpha = 255) As Long
+Public Function F2RGB(ByVal Red As Long, ByVal Green As Long, ByVal Blue As Long, Optional ByVal Alpha As Long = 255) As Long
 On Error Resume Next
-    F2RGB = BGRA(CLng(Red), CLng(Green), CLng(Blue), CLng(Alpha))
+    F2RGB = BGRA(Red, Green, Blue, Alpha)
 End Function
 
-'Public Function F2HSB(ByVal Hue, ByVal Saturation, ByVal Brightness, Optional ByVal Alpha = 255) As Fury2Color
-'On Error Resume Next
-'Dim NewColor As Fury2Color
-'Dim m_lngHue As Long, m_lngSaturation As Long, m_lngBrightness As Long
-'Dim m_bytRed As Byte, m_bytGreen As Byte, m_bytBlue As Byte
-'    Set NewColor = New Fury2Color
-'    Set F2HSB = NewColor
-'    m_lngHue = CSng(Hue) * 4096!
-'    m_lngSaturation = (CSng(Saturation) / 360!) * 4096!
-'    m_lngBrightness = (CSng(Brightness) / 360!) * 4096!
-'    HSBtoRGB m_lngHue, m_lngSaturation, m_lngBrightness, m_bytRed, m_bytGreen, m_bytBlue
-'    NewColor.BGRAColor = BGRA(CLng(m_bytRed), CLng(m_bytGreen), CLng(m_bytBlue), CLng(Alpha))
-'    Set NewColor = Nothing
-'End Function
-
-'Public Function F2ImageFromDC(ByVal hdc As Long, SourceRect As Fury2Rect) As Fury2Image
-'On Error Resume Next
-'Dim newImage As Fury2Image, newPic As IPictureDisp
-'    Set newImage = New Fury2Image
-'    newImage.Resize SourceRect.Width, SourceRect.Height
-'    Set newPic = CapturePicture(CLng(hdc), CLng(SourceRect.left), CLng(SourceRect.top), CLng(SourceRect.Width), CLng(SourceRect.Height))
-'    Set newImage.Picture = newPic
-'    Set newPic = Nothing
-'    Set F2ImageFromDC = newImage
-'    Set newImage = Nothing
-'End Function
+Public Function F2HSV(ByVal Hue As Single, ByVal Saturation As Single, ByVal Value As Single, Optional ByVal Alpha As Long = 255) As Long
+On Error Resume Next
+    F2HSV = HSVA(Floor(Hue * 10), Floor(Saturation * 2550), Floor(Value * 2550), Alpha)
+End Function
 
 Public Function F2ImageFromPicture(ByRef Picture As IPictureDisp) As Fury2Image
 On Error Resume Next

@@ -189,7 +189,7 @@ On Error Resume Next
     AdjustmentHeight = (vbMax(m_lngHeights(WS_TopLeft), m_lngHeights(WS_Top), m_lngHeights(WS_TopRight)) - m_lngEdgeOverlap) + (vbMax(m_lngHeights(WS_BottomLeft), m_lngHeights(WS_Bottom), m_lngHeights(WS_BottomRight)) + m_lngEdgeOverlap)
 End Property
 
-Public Function AdjustRectangle(Rectangle) As Fury2Rect
+Public Function AdjustRectangle(ByVal Rectangle As Fury2Rect) As Fury2Rect
 On Error Resume Next
 Dim l_rctRectangle As Fury2Rect
 Dim l_lngMax As Long
@@ -203,6 +203,22 @@ Dim l_lngMax As Long
     End With
     Err.Clear
     Set AdjustRectangle = l_rctRectangle
+End Function
+
+Public Function UnadjustRectangle(ByVal Rectangle As Fury2Rect) As Fury2Rect
+On Error Resume Next
+Dim l_rctRectangle As Fury2Rect
+Dim l_lngMax As Long
+    Set l_rctRectangle = Rectangle
+    If Err <> 0 Then Exit Function
+    With l_rctRectangle
+        .left = .left - vbMax(m_lngWidths(WS_TopLeft), m_lngWidths(WS_Left), m_lngWidths(WS_BottomLeft)) - m_lngEdgeOverlap
+        .right = .right + vbMax(m_lngWidths(WS_TopRight), m_lngWidths(WS_Right), m_lngWidths(WS_BottomRight)) + m_lngEdgeOverlap
+        .top = .top - vbMax(m_lngHeights(WS_TopLeft), m_lngHeights(WS_Top), m_lngHeights(WS_TopRight)) - m_lngEdgeOverlap
+        .bottom = .bottom + vbMax(m_lngHeights(WS_BottomLeft), m_lngHeights(WS_Bottom), m_lngHeights(WS_BottomRight)) + m_lngEdgeOverlap
+    End With
+    Err.Clear
+    Set UnadjustRectangle = l_rctRectangle
 End Function
 
 Public Sub Draw(Surface, Rectangle, Optional ByVal Alpha As Single = 1, Optional ByVal SectionFlags As Long = 0)

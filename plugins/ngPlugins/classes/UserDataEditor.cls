@@ -98,33 +98,29 @@ On Error Resume Next
 End Function
 
 Private Function iFileTypePlugin_CreateNew(Optional ByVal EnableWizard As Boolean = True) As iDocument
-'On Error Resume Next
-'Dim l_frmNew As New frmTileset
-'Dim l_fntTileset As Fury2Tileset
-'    If EnableWizard Then
-'        Load frmImportTTF
-'        m_objEditor.LoadSettings "TilesetEditor\DefaultSettings", frmImportTTF.Options
-'        frmImportTTF.RefreshSettings
-'        frmImportTTF.Show vbModal
-'        If Not (frmImportTTF.Options Is Nothing) Then
-'            m_objEditor.SaveSettings "TilesetEditor\DefaultSettings", frmImportTTF.Options
-'            With frmImportTTF.Options
-'                l_frmNew.SetFilename ""
-'                l_frmNew.RefreshAll
-'                Set l_fntTileset = DefaultEngine.F2Tileset()
-'                l_fntTileset.ImportTTF DefaultEngine.TTTileset(.Name, .Size, .Bold, .Italic)
-'                l_frmNew.SetTileset l_fntTileset
-'                Set iFileTypePlugin_CreateNew = l_frmNew
-'                Set iFileTypePlugin_CreateNew.Plugin = Me
-'            End With
-'        End If
-'        Unload frmImportTTF
-'        Err.Clear
-'    Else
-'        Set iFileTypePlugin_CreateNew = l_frmNew
-'        Set iFileTypePlugin_CreateNew.Plugin = Me
-'        Err.Clear
-'    End If
+On Error Resume Next
+Dim l_frmNew As New frmUserData
+Dim l_objNew As Object
+    If EnableWizard Then
+        Load frmCreateUserData
+        Set frmCreateUserData.Engine = Engine
+        frmCreateUserData.RefreshClassList
+        frmCreateUserData.Show vbModal
+        If Not (frmCreateUserData.Cancelled) Then
+            l_frmNew.SetFilename ""
+            l_frmNew.RefreshAll
+            Set l_objNew = Engine.ScriptEngine.Eval(frmCreateUserData.Expression)
+            Set iFileTypePlugin_CreateNew = l_frmNew
+            Set iFileTypePlugin_CreateNew.Plugin = Me
+            Set l_frmNew.Data = l_objNew
+        End If
+        Unload frmCreateUserData
+        Err.Clear
+    Else
+        Set iFileTypePlugin_CreateNew = l_frmNew
+        Set iFileTypePlugin_CreateNew.Plugin = Me
+        Err.Clear
+    End If
 End Function
 
 Private Property Get iFileTypePlugin_FileTypeName() As String
@@ -152,7 +148,7 @@ End Function
 
 Private Property Get iFileTypePlugin_ShowInNewMenu() As Boolean
 On Error Resume Next
-    iFileTypePlugin_ShowInNewMenu = False
+    iFileTypePlugin_ShowInNewMenu = True
 End Property
 
 Private Sub iPlugin_Activate()
@@ -199,6 +195,7 @@ End Property
 
 Private Property Get iPlugin_ToolbarIcon() As libGraphics.Fury2Image
 On Error Resume Next
+    Set iPlugin_ToolbarIcon = m_objEditor.LoadResources("ng").ItemData("icons\user data.png")
 End Property
 
 Private Property Get iFileTypePlugin_SupportedExtensions() As Variant

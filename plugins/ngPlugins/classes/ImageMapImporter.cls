@@ -48,9 +48,6 @@ Dim l_plgPlugin As iFileTypePlugin
 Dim l_docMap As frmMap
 Dim l_mapNew As Fury2Map
 Dim l_tstTileset As Fury2Tileset
-    Set l_plgPlugin = m_objEditor.FindFileTypePlugin("Map")
-    Set l_docMap = l_plgPlugin.CreateNew(False)
-    m_objEditor.NewDocument l_docMap
     With Options
 '        Set l_imgImage = F2LoadImage(Options.Image)
         Set l_imgImage = DefaultEngine.LoadImage(Options.Image, True)
@@ -60,47 +57,81 @@ Dim l_tstTileset As Fury2Tileset
         End If
         l_lngWidth = l_imgImage.Width - .MarginLeft - .MarginRight
         l_lngHeight = l_imgImage.Height - .MarginTop - .MarginBottom
-        l_lngTilesX = Ceil(l_lngWidth / (.TileWidth))
-        l_lngTilesY = Ceil(l_lngHeight / (.TileHeight))
-        Set l_tstTileset = DefaultEngine.F2Tileset(, .TileWidth, .TileHeight)
-        With l_tstTileset
-            .TileWidth = .TileWidth
-            .TileHeight = .TileHeight
-            .HasAlpha = True
-            .TransparentTile = -1
-            .Embed = True
-        End With
-        Set l_mapNew = DefaultEngine.F2Map()
-        l_mapNew.EditMode = True
-        l_mapNew.CreateNew "Imported Map", l_lngTilesX, l_lngTilesY, 1, l_tstTileset
-        For l_lngY = 0 To l_lngTilesY - 1
-            For l_lngX = 0 To l_lngTilesX - 1
-                Set l_rctTile = F2Rect(l_lngX * (.TileWidth) + .MarginLeft, l_lngY * (.TileHeight) + .MarginTop, .TileWidth, .TileHeight, False)
-                If l_imgTile Is Nothing Then
-                    Set l_imgTile = l_imgImage.Subimage(l_rctTile)
-                Else
-                    l_imgTile.Blit , l_rctTile, l_imgImage
-                End If
-                With l_mapNew.Layers(1)
-                    l_lngIndex = l_tstTileset.FindTile(l_imgTile)
-                    If l_lngIndex = 0 Then
-                        l_tstTileset.Add l_imgTile
-                        l_lngIndex = l_tstTileset.TileCount
-                        Set l_imgTile = Nothing
+        If .GenerateTileset Then
+            l_lngTilesX = Ceil(l_lngWidth / (.TileWidth))
+            l_lngTilesY = Ceil(l_lngHeight / (.TileHeight))
+            Set l_tstTileset = DefaultEngine.F2Tileset(, .TileWidth, .TileHeight)
+            With l_tstTileset
+                .TileWidth = .TileWidth
+                .TileHeight = .TileHeight
+                .HasAlpha = True
+                .TransparentTile = -1
+                .Embed = True
+            End With
+        Else
+            l_lngTilesX = 1
+            l_lngTilesY = 1
+            Set l_tstTileset = DefaultEngine.F2Tileset(.Image, l_lngWidth, l_lngHeight)
+            With l_tstTileset
+                .Filename = Options.Image
+                .TileWidth = l_lngWidth
+                .TileHeight = l_lngHeight
+                .HasAlpha = True
+                .TransparentTile = -1
+                .Embed = False
+            End With
+        End If
+        Set l_docMap = m_objEditor.ActiveDocument
+        If l_docMap Is Nothing Then
+            Set l_plgPlugin = m_objEditor.FindFileTypePlugin("Map")
+            Set l_docMap = l_plgPlugin.CreateNew(False)
+            m_objEditor.NewDocument l_docMap
+            Set l_mapNew = DefaultEngine.F2Map()
+            l_mapNew.EditMode = True
+            l_mapNew.CreateNew "Imported Map", l_lngTilesX, l_lngTilesY, 1, l_tstTileset
+            l_mapNew.Layers(1).Name = "Imported Layer"
+            l_docMap.SetFilename ""
+            l_docMap.SetMap l_mapNew
+            m_objEditor.LoadSettings "MapEditor\View", l_docMap.ViewOptions
+        Else
+            Set l_mapNew = l_docMap.Map
+            l_mapNew.Layers.Add l_mapNew.Layers(l_mapNew.Layers.Count).Duplicate
+            With l_mapNew.Layers(l_mapNew.Layers.Count)
+                .Width = l_lngTilesX
+                .Height = l_lngTilesY
+                .Clear -1
+                Set .Tileset = l_tstTileset
+                .Name = "Imported Layer"
+            End With
+        End If
+        If .GenerateTileset Then
+            For l_lngY = 0 To l_lngTilesY - 1
+                For l_lngX = 0 To l_lngTilesX - 1
+                    Set l_rctTile = F2Rect(l_lngX * (.TileWidth) + .MarginLeft, l_lngY * (.TileHeight) + .MarginTop, .TileWidth, .TileHeight, False)
+                    If l_imgTile Is Nothing Then
+                        Set l_imgTile = l_imgImage.Subimage(l_rctTile)
+                    Else
+                        l_imgTile.Blit , l_rctTile, l_imgImage
                     End If
-                    .Tile(l_lngX, l_lngY) = l_lngIndex - 1
-                End With
-            Next l_lngX
-        Next l_lngY
-        l_mapNew.Layers(1).Effect = F2LE_Alpha
+                    With l_mapNew.Layers(l_mapNew.Layers.Count)
+                        l_lngIndex = l_tstTileset.FindTile(l_imgTile)
+                        If l_lngIndex = 0 Then
+                            l_tstTileset.Add l_imgTile
+                            l_lngIndex = l_tstTileset.TileCount
+                            Set l_imgTile = Nothing
+                        End If
+                        .Tile(l_lngX, l_lngY) = l_lngIndex - 1
+                    End With
+                Next l_lngX
+            Next l_lngY
+        Else
+            l_mapNew.Layers(l_mapNew.Layers.Count).Tile(0, 0) = 0
+            l_mapNew.Layers(l_mapNew.Layers.Count).Prerendered = Not Options.GenerateTileset
+        End If
+        l_mapNew.Layers(l_mapNew.Layers.Count).Effect = F2LE_Alpha
     End With
-    l_docMap.SetFilename ""
-    l_docMap.RefreshAll
-    l_docMap.SetMap l_mapNew
-    m_objEditor.LoadSettings "MapEditor\View", l_docMap.ViewOptions
     l_docMap.RefreshAll
     l_docMap.ViewChanged
-    l_docMap.SetFilename ""
 End Sub
 
 Private Sub iPlugin_ShowConfiguration()

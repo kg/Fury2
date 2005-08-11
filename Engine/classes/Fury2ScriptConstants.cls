@@ -42,25 +42,35 @@ On Error Resume Next
     End If
     Select Case LCase(Trim(KeyCode))
     Case "esc", "escape"
-        Key = 27
+        Key = vbKeyEscape
     Case "bksp", "back", "backspace"
-        Key = 8
+        Key = vbKeyBack
     Case "ret", "return", "enter"
-        Key = 13
+        Key = vbKeyReturn
     Case "ctl", "ctrl", "control"
-        Key = 17
+        Key = vbKeyControl
     Case "tab"
-        Key = 9
+        Key = vbKeyTab
     Case "pause"
-        Key = 19
+        Key = vbKeyPause
     Case "shift"
         Key = vbKeyShift
+    Case "caps", "caps lock", "capslock", "cap lock", "cap"
+        Key = vbKeyCapital
     Case "spc", "space", "space bar", "spacebar"
-        Key = 32
+        Key = vbKeySpace
     Case "pgup", "pg up", "pageup", "page up"
-        Key = 33
+        Key = vbKeyPageUp
     Case "pgdn", "pg dn", "pagedown", "page down"
-        Key = 34
+        Key = vbKeyPageDown
+    Case "end"
+        Key = vbKeyEnd
+    Case "home"
+        Key = vbKeyHome
+    Case "ins", "insert"
+        Key = vbKeyInsert
+    Case "del", "delete"
+        Key = vbKeyDelete
     Case "left", "left arrow"
         Key = 37
     Case "up", "up arrow"
@@ -70,6 +80,9 @@ On Error Resume Next
     Case "down", "down arrow"
         Key = 40
     Case Else
+        If LCase(left(KeyCode, 1)) = "f" Then
+            Key = vbKeyF1 + CLng(Mid(KeyCode, 2)) - 1
+        End If
     End Select
 End Property
 

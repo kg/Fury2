@@ -211,6 +211,7 @@ End Property
 Public Property Let Name(NewName As String)
 On Error Resume Next
     mvarName = NewName
+    If mvarParent Is Nothing Then Exit Property
     LoadGraphics
 End Property
 

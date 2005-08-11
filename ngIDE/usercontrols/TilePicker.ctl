@@ -101,27 +101,22 @@ End Sub
 
 Friend Sub CopyTile(ByVal Index As Long)
 On Error Resume Next
-    If m_lngClipboardFormat = 0 Then
-        m_lngClipboardFormat = Clipboard.AddFormat("Fury2Image")
-    End If
-    Clipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize Clipboard, m_lngClipboardFormat, m_tstTileset.Tile(Index + 1)
-    Clipboard.ClipboardClose
+    ClipboardSerializeImage Clipboard, Me.hwnd, m_tstTileset.Tile(Index + 1)
 End Sub
 
 Friend Sub PasteTile(ByVal AtIndex As Long)
 On Error Resume Next
 Dim l_imgTile As Fury2Image
-    If m_lngClipboardFormat = 0 Then
-        m_lngClipboardFormat = Clipboard.AddFormat("Fury2Image")
+    Set l_imgTile = ClipboardDeserializeImage(Clipboard, Me.hwnd)
+    If Not (l_imgTile Is Nothing) Then
+        Set l_imgTile = l_imgTile.Resample(Tileset.TileWidth, Tileset.TileHeight, ResampleMode_Bilinear_High_Quality)
+        If l_imgTile Is Nothing Then
+        ElseIf l_imgTile.Handle = 0 Or l_imgTile.Handle = -1 Then
+        Else
+            SoftFX.InsertTile m_tstTileset.Handle, l_imgTile.Handle, AtIndex
+            TilesetModified
+        End If
     End If
-    Clipboard.ClipboardOpen Me.hwnd
-    Set l_imgTile = New Fury2Image
-    If ClipboardDeserialize(Clipboard, m_lngClipboardFormat, l_imgTile) Then
-        SoftFX.InsertTile m_tstTileset.Handle, l_imgTile.Handle, AtIndex
-        TilesetModified
-    End If
-    Clipboard.ClipboardClose
 End Sub
 
 Friend Sub DeleteTile(ByVal Index As Long)
@@ -132,11 +127,7 @@ End Sub
 
 Private Property Get CanPaste() As Boolean
 On Error Resume Next
-    If m_lngClipboardFormat = 0 Then
-        m_lngClipboardFormat = Clipboard.AddFormat("Fury2Image")
-    End If
-    Clipboard.GetCurrentFormats UserControl.hwnd
-    CanPaste = Clipboard.HasCurrentFormat(m_lngClipboardFormat)
+    CanPaste = ClipboardContainsImage(Clipboard, UserControl.hwnd)
 End Property
 
 Friend Sub TilesetModified()

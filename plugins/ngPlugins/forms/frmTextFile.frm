@@ -157,7 +157,7 @@ Private Function iDocument_Save(Filename As String) As Boolean
 On Error Resume Next
 Dim l_lngFileHandle As Long
     m_strFilename = Filename
-    Kill Filename
+    Name Filename As Filename & "~"
     Err.Clear
     l_lngFileHandle = FreeFile
     Open Filename For Binary Access Write As #l_lngFileHandle
@@ -166,6 +166,10 @@ Dim l_lngFileHandle As Long
     iDocument_Save = (Err.Number = 0)
     If iDocument_Save Then
         SetFilename Filename
+        Kill Filename & "~"
+    Else
+        Kill Filename
+        Name Filename & "~" As Filename
     End If
 End Function
 

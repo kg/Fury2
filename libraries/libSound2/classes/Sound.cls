@@ -95,57 +95,57 @@ End Property
 Public Property Get Volume() As Single
 On Error Resume Next
 Dim l_sngVolume As Single, l_sngFrequency As Single, l_sngPan As Single, l_lngPriority As Long
-    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, ByVal 0, l_lngPriority
+    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, l_lngPriority
     Volume = l_sngVolume
 End Property
 
 Public Property Get Frequency() As Single
 On Error Resume Next
 Dim l_sngVolume As Single, l_sngFrequency As Single, l_sngPan As Single, l_lngPriority As Long
-    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, ByVal 0, l_lngPriority
+    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, l_lngPriority
     Volume = l_sngFrequency
 End Property
 
 Public Property Get Pan() As Single
 On Error Resume Next
 Dim l_sngVolume As Single, l_sngFrequency As Single, l_sngPan As Single, l_lngPriority As Long
-    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, ByVal 0, l_lngPriority
+    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, l_lngPriority
     Pan = l_sngPan
 End Property
 
 Public Property Get Priority() As Long
 On Error Resume Next
 Dim l_sngVolume As Single, l_sngFrequency As Single, l_sngPan As Single, l_lngPriority As Long
-    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, ByVal 0, l_lngPriority
+    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, l_lngPriority
     Priority = l_lngPriority
 End Property
 
 Public Property Let Volume(ByVal NewValue As Single)
 On Error Resume Next
 Dim l_sngVolume As Single, l_sngFrequency As Single, l_sngPan As Single, l_lngPriority As Long
-    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, ByVal 0, l_lngPriority
-    fmodex.FMOD_Sound_SetDefaults m_lngHandle, l_sngFrequency, NewValue, l_sngPan, ByVal 0, l_lngPriority
+    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, l_lngPriority
+    fmodex.FMOD_Sound_SetDefaults m_lngHandle, l_sngFrequency, NewValue, l_sngPan, l_lngPriority
 End Property
 
 Public Property Let Frequency(ByVal NewValue As Single)
 On Error Resume Next
 Dim l_sngVolume As Single, l_sngFrequency As Single, l_sngPan As Single, l_lngPriority As Long
-    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, ByVal 0, l_lngPriority
-    fmodex.FMOD_Sound_SetDefaults m_lngHandle, NewValue, l_sngVolume, l_sngPan, ByVal 0, l_lngPriority
+    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, l_lngPriority
+    fmodex.FMOD_Sound_SetDefaults m_lngHandle, NewValue, l_sngVolume, l_sngPan, l_lngPriority
 End Property
 
 Public Property Let Pan(ByVal NewValue As Single)
 On Error Resume Next
 Dim l_sngVolume As Single, l_sngFrequency As Single, l_sngPan As Single, l_lngPriority As Long
-    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, ByVal 0, l_lngPriority
-    fmodex.FMOD_Sound_SetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, NewValue, ByVal 0, l_lngPriority
+    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, l_lngPriority
+    fmodex.FMOD_Sound_SetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, NewValue, l_lngPriority
 End Property
 
 Public Property Let Priority(ByVal NewValue As Long)
 On Error Resume Next
 Dim l_sngVolume As Single, l_sngFrequency As Single, l_sngPan As Single, l_lngPriority As Long
-    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, ByVal 0, l_lngPriority
-    fmodex.FMOD_Sound_SetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, ByVal 0, NewValue
+    fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, l_lngPriority
+    fmodex.FMOD_Sound_SetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, NewValue
 End Property
 
 Public Property Get VolumeVariation() As Single
@@ -197,17 +197,18 @@ Dim l_lngValue As Long
     Length = CDbl(l_lngValue) / 1000#
 End Property
 
-Public Property Get name() As String
+Public Property Get Name() As String
 On Error Resume Next
 Dim l_bytName() As Byte
 Dim l_strName As String
     ReDim l_bytName(0 To 512)
-    fmodex.FMOD_Sound_GetName m_lngHandle, l_bytName(0), 512
+    fmodex.FMOD_Sound_GetName m_lngHandle, ByVal VarPtr(l_bytName(0)), 511
     l_strName = StrConv(l_bytName, vbUnicode)
-    name = Left(l_strName, InStr(l_strName, Chr(0)) - 1)
+    Name = Left(l_strName, InStr(l_strName, Chr(0)) - 1)
+    Err.Clear
 End Property
 
-Public Function Play(Optional ByVal Paused As Boolean = False) As Channel
+Public Function Play(Optional ByVal Paused As Boolean = False) As channel
 On Error Resume Next
 Dim l_lngChannel As Long
     Call fmodex.FMOD_System_PlaySound(m_seEngine.Handle, FMOD_CHANNEL_FREE, m_lngHandle, Paused, l_lngChannel)

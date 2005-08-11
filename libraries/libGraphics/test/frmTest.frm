@@ -59,6 +59,7 @@ Attribute VB_Exposed = False
 Option Explicit
 Private m_lngOldBitmap As Long
 Private m_filFilter As Fury2ConvolutionFilter
+Dim m_imgMask As Fury2Image
 Dim m_imgPattern As Fury2Image
 Dim m_imgTexture() As Fury2Image
 Dim m_imgTextureBlend As Fury2Image
@@ -111,7 +112,7 @@ Dim l_mshMesh As Fury2DeformationMesh
 '    glClear clrColorBufferBit
 ''    m_imgBuffer.ConvexPolygon Array(Array(10, 10), Array(50, 10), Array(50, 50), Array(25, 75), Array(10, 50)), F2White
 '    m_imgBuffer.Adjust -16
-    m_imgBuffer.Clear 0
+    m_imgBuffer.Clear F2RGB(32, 48, 64, 0)
 '    m_imgTexture.Draw m_imgBuffer, m_imgBuffer.Width / 2, m_imgBuffer.Height / 2, 1, 1, l_sngR, BlitMode_Additive, , ResampleMode_Bilinear
 '    m_imgBuffer.Blit f2rect(50, 50, 100, 100, False), , m_imgBuffer
 '    m_imgBuffer.Blit , , m_imgTexture, 1, BlitMode_SourceAlpha_Tint, F2RGB(0, 255, 0, 255)
@@ -150,7 +151,8 @@ Dim l_mshMesh As Fury2DeformationMesh
     'm_imgPattern.DeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgTextureBlend, l_mshMesh, RenderMode_Normal, ResampleMode_Bilinear_Wrap
 '    m_imgPattern.Box m_imgPattern.Rectangle, F2White
     m_imgBuffer.Locked = UseHardware
-    m_imgBuffer.DeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgTextureBlend, l_mshMesh, RenderMode_Normal, ResampleMode_Bilinear_Wrap
+'    m_imgBuffer.DeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgTextureBlend, l_mshMesh, RenderMode_Normal, ResampleMode_Bilinear_Wrap
+    m_imgBuffer.MaskDeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgMask.Rectangle, m_imgTextureBlend, m_imgMask, l_mshMesh, 0.66, RenderMode_SourceAlpha, ResampleMode_Bilinear_Wrap
     m_imgBuffer.Locked = True
     GLFlip ' Me.HDC
     l_sngS = l_sngS + 0.075
@@ -203,6 +205,8 @@ On Error Resume Next
     m_imgTexture() = F2LoadImage("J:\water.png").Split(32, 32)
     Set m_imgTextureBlend = F2Image(32, 32)
     Set m_imgPattern = F2Image(256, 256)
+    Set m_imgMask = F2Image(256, 256)
+    m_imgMask.RadialGradientFill m_imgMask.Rectangle, Array(F2RGB(0, 0, 0, 0), F2RGB(0, 0, 0, 255)), RenderMode_Normal
 '    m_imgBuffer.Clear F2Black
 '    m_lngTexture = CreateTextureFromImage(m_imgTexture.Handle)
 '    m_imgInFrontTexture.Box m_imgInFrontTexture.Rectangle, F2RGB(255, 255, 255, 0)

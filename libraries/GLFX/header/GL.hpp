@@ -89,6 +89,11 @@ namespace GL {
     drawBox(*box);
   }
 
+  template <int Stage> void setTextureColorN(Pixel Color) {
+    switchTextureStage<Stage>();
+    setTextureColor(Color);
+  }
+
   template <int Stage> void selectImageAsTextureN(int image) {
     switchTextureStage<Stage>();
     Texture* tex = 0;

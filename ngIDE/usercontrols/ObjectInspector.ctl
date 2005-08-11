@@ -18,6 +18,12 @@ Begin VB.UserControl ObjectInspector
    ScaleHeight     =   240
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   320
+   Begin VB.Timer tmrDoRedraw 
+      Enabled         =   0   'False
+      Interval        =   1
+      Left            =   1800
+      Top             =   1560
+   End
    Begin VB.PictureBox picSplit 
       BorderStyle     =   0  'None
       Height          =   3570
@@ -1292,6 +1298,15 @@ Dim l_lngNameWidth As Long
     picItems.Line (0, l_lngY + 1)-(picItems.ScaleWidth - vsScroll.Width, picItems.ScaleHeight), vbButtonFace, BF
 End Sub
 
+Private Sub tmrDoRedraw_Timer()
+On Error Resume Next
+    tmrDoRedraw.Enabled = False
+    txtEdit.Top = m_lngEditY - vsScroll.Value + 2 + picHierarchy.Height
+    cmdDropDown.Top = m_lngEditY - vsScroll.Value + 1 + picHierarchy.Height
+    cmdElipsis.Top = m_lngEditY - vsScroll.Value + 1 + picHierarchy.Height
+    picItems_Paint
+End Sub
+
 Private Sub txtEdit_Change()
 On Error Resume Next
 End Sub
@@ -1362,6 +1377,17 @@ Dim l_booError As Boolean
     End If
     l_varOldValue = m_oiItems(m_lngSelectedItem).Value
     l_vtType = VarType(l_varOldValue)
+    If l_vtType = vbEmpty Or l_vtType = vbNull Or l_vtType = vbVariant Then
+        If Left(Trim(l_strText), 1) = """" Then
+            l_vtType = vbString
+        ElseIf Trim(l_strText) = CStr(True) Or Trim(l_strText) = CStr(False) Then
+            l_vtType = vbBoolean
+        ElseIf InStr(l_strText, ".") Then
+            l_vtType = vbSingle
+        Else
+            l_vtType = vbLong
+        End If
+    End If
     Err.Clear
     If m_booMultiple Then
         Select Case l_vtType
@@ -1572,10 +1598,7 @@ End Sub
 
 Private Sub vsScroll_Change()
 On Error Resume Next
-    txtEdit.Top = m_lngEditY - vsScroll.Value + 2 + picHierarchy.Height
-    cmdDropDown.Top = m_lngEditY - vsScroll.Value + 1 + picHierarchy.Height
-    cmdElipsis.Top = m_lngEditY - vsScroll.Value + 1 + picHierarchy.Height
-    picItems_Paint
+    tmrDoRedraw.Enabled = True
 End Sub
 
 

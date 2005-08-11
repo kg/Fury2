@@ -387,7 +387,12 @@ End Property
 
 Private Sub Class_Initialize()
 On Error Resume Next
+    g_lngMenuItems = g_lngMenuItems + 1
     m_txaTextAlignment = mtaRight
     m_booVisible = True
     m_booEnabled = True
+End Sub
+
+Private Sub Class_Terminate()
+    g_lngMenuItems = g_lngMenuItems - 1
 End Sub

@@ -308,7 +308,7 @@ Dim lR As Long
         sBuf = String$(lSize, 0)
         lR = GetClipboardFormatName(lFormatId, sBuf, lSize)
         If (lR <> 0) Then
-            FormatName = left$(sBuf, lR)
+            FormatName = Left$(sBuf, lR)
         End If
     End If
 End Property
@@ -354,6 +354,15 @@ Dim lR As Long
     lR = IsClipboardFormatAvailable(lFormatId)
     IsDataAvailableForFormat = (lR <> 0)
 End Property
+
+Public Function GetData(ByVal lFormatId As Long) As Long
+On Error Resume Next
+    GetData = GetClipboardData(lFormatId)
+End Function
+
+Public Sub SetData(ByVal lFormatId As Long, ByVal Data As Long)
+    SetClipboardData lFormatId, Data
+End Sub
 
 Public Function GetBinaryData( _
         ByVal lFormatId As Long, _
@@ -545,7 +554,7 @@ Dim iPos As Long
             DragQueryFile hDrop, iFile - 1, sFileName, Len(sFileName)
             iPos = InStr(sFileName, vbNullChar)
             If (iPos <> 0) Then
-               sFiles(iFile) = left$(sFileName, iPos - 1)
+               sFiles(iFile) = Left$(sFileName, iPos - 1)
             Else
                sFiles(iFile) = sFileName
             End If

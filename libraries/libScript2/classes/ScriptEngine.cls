@@ -24,6 +24,8 @@ Attribute m_Engine.VB_VarHelpID = -1
 Private m_Language As IScriptLanguage
 Private m_booScriptInterrupted As Boolean
 
+Public State As ScriptEngineState
+
 Public Event Error(ByVal LineNumber As Long, ByVal Character As Long, ByRef Description As String)
 Public Event InterruptPoll(ByRef Interrupt As Boolean)
 Public Event ExecutionBegin()
@@ -150,12 +152,12 @@ End Function
 Public Sub CreateModule(ByRef Name As String, ByRef Code As String)
 On Error Resume Next
     m_Engine.AddNamespace Name
-    m_Engine.ParseScriptText Code, Name
+    AddCode Code, Name
 End Sub
 
 Public Function ParseCodes(ByRef Str As String) As String
 On Error Resume Next
-    ParseCodes = Language.ParseCode(Str)
+    ParseCodes = Language.ParseCode(Str, State)
 End Function
 
 Public Property Get Obj() As Object
@@ -167,9 +169,15 @@ On Error Resume Next
     m_Engine.AddObject Name, AddMembers, AddEvents, Visible, Obj
 End Sub
 
-Sub AddCode(Code As String)
+Sub AddCode(Code As String, Optional ByRef Module As String = "")
 On Error Resume Next
-    m_Engine.ParseScriptText ParseCodes(Code)
+Dim l_strCode As String
+    l_strCode = ParseCodes(Code)
+    If Len(Module) > 0 Then
+        m_Engine.ParseScriptText l_strCode, Module
+    Else
+        m_Engine.ParseScriptText l_strCode
+    End If
 End Sub
 
 Sub Init(Optional ByVal hWnd As Long = 0)
@@ -179,6 +187,7 @@ On Error Resume Next
         m_Engine.SetScriptState SS_DISCONNECTED
         Set m_Engine = Nothing
     End If
+    Set State = New ScriptEngineState
     Set m_Engine = New Host
     m_Engine.hWnd = hWnd
     m_Engine.InitEngineByName Language.Name
@@ -188,7 +197,6 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error Resume Next
-    Set m_Engine = Nothing
 End Sub
 
 Private Sub Class_Terminate()

@@ -107,8 +107,8 @@ Dim l_strKey As String
     End If
     If m_lstParent Is Nothing Then Exit Sub
     Obj.SetParent m_lstParent
+    Reindex
     If Not m_booDisableEvents Then
-        Reindex
         m_lstParent.Reflow
     End If
     Err.Clear
@@ -154,8 +154,8 @@ On Error Resume Next
         IndexOrKey = CLng(IndexOrKey)
     End If
     m_colCollection.Remove IndexOrKey
+    Reindex
     If Not m_booDisableEvents Then
-        Reindex
         m_lstParent.Reflow
     End If
 End Sub
@@ -186,7 +186,13 @@ Dim l_liItem As ngListItem
     For Each l_liItem In m_colCollection
         l_liItem.Free
     Next l_liItem
+    Do While m_colCollection.Count > 0
+        m_colCollection.Remove 1
+    Loop
     Set m_colCollection = New Collection
+    If Not m_booDisableEvents Then
+        m_lstParent.Reflow
+    End If
 End Sub
 
 Friend Sub FastClear()

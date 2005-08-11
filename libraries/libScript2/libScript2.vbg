@@ -1,0 +1,3 @@
+VBGROUP 5.0
+Project=libScript2.vbp
+StartupProject=test\ScriptTest.vbp

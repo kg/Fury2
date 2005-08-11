@@ -17,13 +17,38 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 '
 '   ::fury² sound engine::
 '
-Private Const c_lngMaxChannels = 512
-Private Const c_lngMaxSoftwareChannels = 32
+Private Const c_lngMaxChannels = 1024
+Private Const c_lngMaxSoftwareChannels = 64
 
+Private m_colGroups As Collection
 Private m_colSounds As Collection
 Private m_lngFMod As Long
+Private m_cgMaster As ChannelGroup
 Public Enabled As Boolean
 Public m_Engine As Object
+
+Friend Function CreateChannelGroupH(ByVal Handle As Long) As ChannelGroup
+On Error Resume Next
+Dim l_cgNew As ChannelGroup
+    If Handle = 0 Then Exit Function
+    For Each l_cgNew In m_colGroups
+        If l_cgNew.Handle = Handle Then
+            Set CreateChannelGroup = l_cgNew
+            Exit Function
+        End If
+    Next l_cgNew
+    Set l_cgNew = New ChannelGroup
+    l_cgNew.Init Me, Handle
+    m_colGroups.Add l_cgNew
+    Set CreateChannelGroupH = l_cgNew
+End Function
+
+Public Function CreateChannelGroup(Optional ByRef Name As String = "Channel Group") As ChannelGroup
+On Error Resume Next
+Dim l_lngHandle As Long
+    Call FMOD_System_CreateChannelGroup(m_lngFMod, Name, l_lngHandle)
+    Set CreateChannelGroup = CreateChannelGroupH(l_lngHandle)
+End Function
 
 Friend Function CreateChannel(ByVal Handle As Long, ByVal Sound As Sound) As Channel
 On Error Resume Next
@@ -70,10 +95,13 @@ End Sub
 
 Public Sub Init()
 On Error Resume Next
+Dim l_lngHandle As Long
     Set m_colSounds = New Collection
     If Enabled = False Then Exit Sub
     fmodex.FMOD_System_Create m_lngFMod
-    fmodex.FMOD_System_Init m_lngFMod, c_lngMaxChannels, c_lngMaxSoftwareChannels, FMOD_INIT_NORMAL, 0
+    fmodex.FMOD_System_Init m_lngFMod, c_lngMaxSoftwareChannels, FMOD_INIT_NORMAL, 0
+    Debug.Print fmodex.FMOD_System_GetMasterChannelGroup(m_lngFMod, l_lngHandle)
+    Set m_cgMaster = CreateChannelGroupH(l_lngHandle)
 End Sub
 
 Public Sub Update()
@@ -141,16 +169,17 @@ Dim l_strFilename As String
             If m_Engine.FileSystem.FileExists(Filename) Then
                 l_strFilename = m_Engine.FileSystem.File(Filename).GetRealFilename
                 For Each l_sndSound In m_colSounds
-                    If l_sndSound.name = l_strFilename Then
+                    If l_sndSound.Name = l_strFilename Then
                         Set Load = l_sndSound
                         Exit Function
                     End If
                 Next l_sndSound
+                ' todo: FMOD_UNICODE? Not sure if this works on win9x/FAT32 so i'm not adding it yet
                 Select Case LCase(Trim(soundtype))
                 Case "stream"
-                    Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_2D Or FMOD_CREATESTREAM, ByVal 0, l_lngHandle)
+                    Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_2D Or FMOD_CREATESTREAM Or FMOD_ACCURATETIME, l_lngHandle)
                 Case "sample"
-                    Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_2D Or FMOD_CREATESAMPLE, ByVal 0, l_lngHandle)
+                    Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_2D Or FMOD_CREATESAMPLE, l_lngHandle)
                 Case Else
                 End Select
                 If l_lngHandle Then
@@ -172,18 +201,24 @@ On Error Resume Next
     If m_lngFMod Then Initialized = False Else Initialized = True
 End Property
 
+Public Property Get Master() As ChannelGroup
+On Error Resume Next
+    Set Master = m_cgMaster
+End Property
+
 Public Property Let MasterVolume(ByVal NewValue As Single)
 On Error Resume Next
-    If Not Initialized Then Exit Property
-    fmodex.FMOD_System_SetMasterVolume m_lngFMod, NewValue
+    Master.Volume = NewValue
 End Property
 
 Public Property Get MasterVolume() As Single
 On Error Resume Next
-Dim l_sngVolume As Single
-    If Not Initialized Then Exit Property
-    fmodex.FMOD_System_GetMasterVolume m_lngFMod, l_sngVolume
-    MasterVolume = l_sngVolume
+    MasterVolume = Master.Volume
+End Property
+
+Public Property Get ChannelGroups() As Collection
+On Error Resume Next
+    Set ChannelGroups = m_colGroups
 End Property
 
 Public Property Get Sounds() As Collection
@@ -195,6 +230,7 @@ Private Sub Class_Initialize()
 On Error Resume Next
     Enabled = True
     Set m_colSounds = New Collection
+    Set m_colGroups = New Collection
 End Sub
 
 Private Sub Class_Terminate()

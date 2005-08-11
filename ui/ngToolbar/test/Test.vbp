@@ -1,10 +1,10 @@
 Type=Exe
-Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\WINDOWS\system32\STDOLE2.TLB#OLE Automation
+Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\WINDOWS\system32\stdole2.tlb#OLE Automation
 Reference=*\G{3B10323B-FEC1-4FAA-9A62-89666AC5A420}#41.14#0#..\..\..\..\binary\sys\graphics.dll#Fury² Game Creation System Graphics Engine
 Reference=*\G{3CB89DD9-2E5A-45D3-A6FF-E87B0081CDCC}#1.0#409#..\..\..\..\libraries\tlb\SoftFX.tlb#Fury² Game Creation System SoftFX library
 Reference=*\G{64651516-73E5-402B-B989-94EAE4C6A049}#1.0#409#..\..\..\..\libraries\tlb\Win32.tlb#Win32 API
 Form=frmTest.frm
-Object={DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.1#0; ngUI.ocx
+Object={DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.11#0; ngUI.ocx
 Startup="frmTest"
 ExeName32="Test.exe"
 Command32=""

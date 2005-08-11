@@ -58,6 +58,28 @@ void setRenderer(int Renderer, Pixel RenderArgument) {
   }
 }
 
+void setMaskRenderer(int Renderer, Pixel RenderArgument) {
+  if ((Renderer == GetSourceAlphaRenderer()) || (Renderer == GetMergeRenderer())) {
+    setBlendMode<Mask_SourceAlpha>();
+    if (RenderArgument[::Alpha] > 0) {
+      setFogColor(RenderArgument);
+      enableFog();
+      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
+    } else {
+      disableFog();
+    }
+  } else {
+    setBlendMode<Mask_Normal>();
+    if (RenderArgument[::Alpha] > 0) {
+      setFogColor(RenderArgument);
+      enableFog();
+      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
+    } else {
+      disableFog();
+    }
+  }
+}
+
 defOverride(Allocate) {
 	readParam(int, Image, 0);
 	readParam(int, Width, 1);
@@ -351,6 +373,7 @@ defOverride(BlitSimple_Normal) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Normal>();
+  setTextureColor(White);
   setVertexColor(White);
   setBlendColor(White);
   BlitSimple_Core(Parameters);
@@ -365,6 +388,7 @@ defOverride(BlitSimple_Normal_Opacity) {
   selectContext(Dest);
   setBlendMode<Normal>();
   setVertexColor(White);
+  setTextureColor(White);
   setBlendColor(Pixel(255, 255, 255, Opacity));
   BlitSimple_Core(Parameters);
   return Success;
@@ -376,6 +400,7 @@ defOverride(BlitSimple_Subtractive) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Subtractive>();
+  setTextureColor(White);
   setVertexColor(White);
   setBlendColor(White);
   BlitSimple_Core(Parameters);
@@ -389,6 +414,7 @@ defOverride(BlitSimple_Subtractive_Opacity) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Subtractive>();
+  setTextureColor(White);
   setVertexColor(White);
   setBlendColor(Pixel(255, 255, 255, Opacity));
   BlitSimple_Core(Parameters);
@@ -401,6 +427,7 @@ defOverride(BlitSimple_Additive) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Additive>();
+  setTextureColor(White);
   setVertexColor(White);
   setBlendColor(White);
   BlitSimple_Core(Parameters);
@@ -414,6 +441,7 @@ defOverride(BlitSimple_Additive_Opacity) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Additive>();
+  setTextureColor(White);
   setVertexColor(White);
   setBlendColor(Pixel(255, 255, 255, Opacity));
   BlitSimple_Core(Parameters);
@@ -426,6 +454,7 @@ defOverride(BlitSimple_Subtractive_SourceAlpha) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Subtractive_SourceAlpha>();
+  setTextureColor(White);
   setVertexColor(White);
   BlitSimple_Core(Parameters);
   return Success;
@@ -438,6 +467,7 @@ defOverride(BlitSimple_Subtractive_SourceAlpha_Opacity) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Subtractive_SourceAlpha>();
+  setTextureColor(White);
   setVertexColor(Pixel(255, 255, 255, Opacity));
   BlitSimple_Core(Parameters);
   return Success;
@@ -449,6 +479,7 @@ defOverride(BlitSimple_Additive_SourceAlpha) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Additive_SourceAlpha>();
+  setTextureColor(White);
   setVertexColor(White);
   BlitSimple_Core(Parameters);
   return Success;
@@ -461,6 +492,7 @@ defOverride(BlitSimple_Additive_SourceAlpha_Opacity) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Additive_SourceAlpha>();
+  setTextureColor(White);
   setVertexColor(Pixel(255, 255, 255, Opacity));
   BlitSimple_Core(Parameters);
   return Success;
@@ -473,8 +505,8 @@ defOverride(BlitSimple_Multiply) {
   selectContext(Dest);
   enableTextures();
   setBlendMode<Multiply>();
-  setVertexColor(White);
   setTextureColor(White);
+  setVertexColor(White);
   BlitSimple_Core(Parameters);
   return Success;
 }
@@ -653,6 +685,7 @@ defOverride(BlitSimple_SourceAlpha) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<SourceAlpha>();
+  setTextureColor(White);
   setVertexColor(White);
   BlitSimple_Core(Parameters);
   return Success;
@@ -665,6 +698,7 @@ defOverride(BlitSimple_SourceAlpha_Opacity) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<SourceAlpha>();
+  setTextureColor(White);
   setVertexColor(Pixel(255, 255, 255, Opacity));
   BlitSimple_Core(Parameters);
   return Success;
@@ -685,6 +719,7 @@ defOverride(BlitSimple_SourceAlpha_Tint) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<SourceAlpha>();
+  setTextureColor(White);
   setVertexColor(White);
   setFogColor(Color);
   setFogOpacity(Color[::Alpha] / 255.0f);
@@ -704,6 +739,7 @@ defOverride(BlitSimple_SourceAlpha_Tint_Opacity) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<SourceAlpha>();
+  setTextureColor(White);
   setVertexColor(Pixel(255, 255, 255, Opacity));
   setFogColor(Color);
   setFogOpacity(Color[::Alpha] / 255.0f);
@@ -720,6 +756,7 @@ defOverride(BlitSimple_Font_SourceAlpha) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Font_SourceAlpha>();
+  setTextureColor(White);
   setVertexColor(Color);
   BlitSimple_Core(Parameters);
   return Success;
@@ -735,6 +772,7 @@ defOverride(BlitSimple_Font_SourceAlpha_Opacity) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Font_SourceAlpha>();
+  setTextureColor(White);
   setVertexColor(MultiplyAlpha(Color, Opacity));
   BlitSimple_Core(Parameters);
   return Success;
@@ -1806,11 +1844,13 @@ defOverride(BlitDeform) {
   //clipCheck(Dest, DestRect);
   enableTextures();
   selectImageAsIsolatedTexture(Source);
+  selectImageAsIsolatedTexture(Source);
   setRenderer(Renderer, RenderArgument);
   setScaler(Scaler);
   DoubleWord iCX = 0, iCY = DestRect.Height + 1;  
   int pixelsToDraw = 0;
   int mw = Mesh->Width - 1, mh = Mesh->Height - 1;
+  if ((mw < 1) || (mh < 1)) return Failure;
   int cx = 0, cy = 0;
   float cxw = 0, cyw = 0, sx = 0, sy = 0, lsx = 0, lsy = 0;
   float cxi = (mw / (float)DestRect.Width), cyi = (mh / (float)DestRect.Height);
@@ -1883,6 +1923,120 @@ defOverride(BlitDeform) {
     }
   }
   endDraw();
+  setTextureColorN<0>(White);
+  setTextureColorN<1>(White);
+  disableTextures();
+  return Success;
+}
+
+defOverride(BlitDeformMask) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(int, Mask, 2);
+  readParam(MeshParam*, Mesh, 3);
+  readParamRect(DestRect, 4, Null);
+  readParamRect(SourceRect, 5, Null);
+  readParamRect(MaskRect, 6, Null);
+  readParam(Pixel, RenderArgument, 7);
+  readParam(int, Opacity, 8);
+  readParam(int, Renderer, 9);
+  readParam(int, Scaler, 10);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  //clipCheck(Dest, DestRect);
+  enableTexture<0>();
+  enableTexture<1>();
+  selectImageAsIsolatedTextureN<0>(Source);
+  selectImageAsTextureN<1>(Mask);
+  selectImageAsIsolatedTextureN<0>(Source);
+  setTextureColor(Pixel(255, 255, 255, Opacity));
+  selectImageAsTextureN<1>(Mask);
+  setTextureColor(Pixel(255, 255, 255, Opacity));
+  setMaskRenderer(Renderer, RenderArgument);
+  setScaler(Scaler);
+  DoubleWord iCX = 0, iCY = DestRect.Height + 1;  
+  int pixelsToDraw = 0;
+  int mw = Mesh->Width - 1, mh = Mesh->Height - 1;
+  if ((mw < 1) || (mh < 1)) return Failure;
+  int cx = 0, cy = 0;
+  float cxw = 0, cyw = 0, sx = 0, sy = 0, lsx = 0, lsy = 0;
+  float cxi = (mw / (float)DestRect.Width), cyi = (mh / (float)DestRect.Height);
+  float dx = DestRect.Left, dy = DestRect.Top;
+  bool update_points = true, first_update = true, perform_draw = false;
+  Texture* tex = getTexture(Source);
+  Texture* mtex = getTexture(Mask);
+  if (tex->IsolatedTexture != 0) tex = tex->IsolatedTexture;
+  float bx = SourceRect.Left, by = SourceRect.Top;
+  float bxi = (1 / (DestRect.Width / (float)(SourceRect.Width))), byi = (1 / (DestRect.Height / (float)(SourceRect.Height)));
+  MeshPoint p[4];
+  beginDraw(GL_LINES);
+  while (iCY--) {
+    iCX = (DoubleWord)DestRect.Width + 1;
+    cxw = 0;
+    cx = 0;
+    bx = SourceRect.Left;
+    dx = DestRect.Left;
+    update_points = true;
+    first_update = true;
+    pixelsToDraw = 0;
+    while (iCX--) {
+      cxw += cxi;
+      pixelsToDraw++;
+      while (cxw >= 1.0f) {
+        cxw -= 1.0f;
+        cx++;
+        update_points = true;
+      }
+      if ((update_points) || (iCX == 0)) {
+        update_points = false;
+        lsx = sx;
+        lsy = sy;
+        /* sometimes i hate that inline is just a hint
+        Mesh->get4Points(cx, cy, p);
+        this is one of those times */
+        
+        p[0] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
+        p[1] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
+        p[2] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+        p[3] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+
+        sx = bx + (((p[0].X * (1 - cxw) + p[1].X * cxw) * (1 - cyw) + (p[2].X * (1 - cxw) + p[3].X * cxw) * cyw));
+        sy = by + (((p[0].Y * (1 - cxw) + p[1].Y * cxw) * (1 - cyw) + (p[2].Y * (1 - cxw) + p[3].Y * cxw) * cyw)) - 0.5;
+        if (first_update) {
+          first_update = false;
+          bx += bxi;
+        }
+        else
+          perform_draw = true;
+      }
+      if (perform_draw) {
+        if (iCX == 0) pixelsToDraw--;
+        perform_draw = false;
+        glMultiTexCoord2fARB(GL_TEXTURE0_ARB, tex->U(lsx), tex->V(lsy));
+        glMultiTexCoord2fARB(GL_TEXTURE1_ARB, mtex->U(dx + MaskRect.Left), mtex->V(dy + MaskRect.Top - 1));
+        glVertex2f(dx, dy);
+        glMultiTexCoord2fARB(GL_TEXTURE0_ARB, tex->U(sx), tex->V(sy));
+        glMultiTexCoord2fARB(GL_TEXTURE1_ARB, mtex->U(dx + pixelsToDraw + MaskRect.Left), mtex->V(dy + MaskRect.Top - 1));
+        glVertex2f(dx + pixelsToDraw, dy);
+        dx += pixelsToDraw;
+        pixelsToDraw = 0;
+      }
+      bx += bxi;
+    }
+    by += byi;
+    cyw += cyi;
+    dy += 1.0f;
+    while (cyw >= 1.0f) {
+      cyw -= 1.0f;
+      cy++;
+      update_points = true;
+    }
+  }
+  endDraw();
+  setTextureColorN<0>(White);
+  setTextureColorN<1>(White);
+  disableTextures();
   return Success;
 }
 
@@ -1949,6 +2103,7 @@ void InstallOverrides() {
   addOverride(BlitMask_SourceAlpha_Opacity);
   addOverride(BlitMask_Merge_Opacity);
   addOverride(BlitDeform);
+  addOverride(BlitDeformMask);
   addOverride(FilterSimple_Gradient_4Point);
   addOverride(FilterSimple_Gradient_4Point_SourceAlpha);
   addOverride(FilterSimple_Gradient_Vertical);
@@ -2035,6 +2190,7 @@ void UninstallOverrides() {
   removeOverride(BlitMask_SourceAlpha_Opacity);
   removeOverride(BlitMask_Merge_Opacity);
   removeOverride(BlitDeform);
+  removeOverride(BlitDeformMask);
   removeOverride(FilterSimple_Gradient_4Point);
   removeOverride(FilterSimple_Gradient_4Point_SourceAlpha);
   removeOverride(FilterSimple_Gradient_Vertical);

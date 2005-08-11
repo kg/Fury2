@@ -72,7 +72,7 @@ Dim l_resFile As ngResource
         .TextAlignment = TextAlignment
         .Enabled = Enabled
     End With
-    Add l_tabNew
+    Add l_tabNew, AtIndex
     Set AddNew = l_tabNew
 End Function
 
@@ -160,6 +160,22 @@ On Error Resume Next
     m_colCollection.Remove IndexOrKey
     Reindex
     m_tbsParent.Reflow
+End Sub
+
+Public Sub RemoveByKeys(ByVal KeyPattern As String)
+On Error Resume Next
+Dim l_lngIndex As Long
+Dim l_tabTab As ngTab
+    Do Until l_lngIndex > m_colCollection.Count
+        l_lngIndex = 1
+        Set l_tabTab = m_colCollection(l_lngIndex)
+        If l_tabTab.Key Like KeyPattern Then
+            m_colCollection.Remove l_lngIndex
+        Else
+            l_lngIndex = l_lngIndex + 1
+        End If
+    Loop
+    Reindex
 End Sub
 
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)

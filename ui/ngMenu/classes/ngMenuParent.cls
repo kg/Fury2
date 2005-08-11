@@ -35,3 +35,4 @@ End Sub
 
 Public Sub Redraw(Optional ByVal Area As Fury2Rect = Nothing)
 End Sub
+

@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "../header/SoftFX Main.hpp"
+#include "../header/Hue.hpp"
 
 Export int GetRed(Pixel Color) {
     return Color[::Red];
@@ -144,4 +145,51 @@ Export DoubleWord InvertColorRGB(Pixel Color) {
 Export DoubleWord InvertChannel(Pixel Color, int Channel) {
     Color[(ColorChannels)ClipValue(Channel, 0, 3)] ^= 0xFF;
     return Color.V;
+}
+
+Export void ColorToHSVA(Pixel Color, HSVA* Out) {
+  *Out = HSVA(Color);
+  return;
+}
+
+Export DoubleWord HSVAToColor(HSVA* In) {
+  return In->getPixel().V;
+}
+
+Export int GetHue(Pixel Color) {
+  HSVA TheColor = HSVA(Color);
+  return TheColor.Hue;
+}
+
+Export int GetSaturation(Pixel Color) {
+  HSVA TheColor = HSVA(Color);
+  return TheColor.Saturation;
+}
+
+Export int GetHSVAValue(Pixel Color) {
+  HSVA TheColor = HSVA(Color);
+  return TheColor.Value;
+}
+
+Export DoubleWord SetHue(Pixel Color, int NewValue) {
+  HSVA TheColor = HSVA(Color);
+  TheColor.setHue(NewValue);
+  return TheColor.getPixel().V;
+}
+
+Export DoubleWord SetSaturation(Pixel Color, int NewValue) {
+  HSVA TheColor = HSVA(Color);
+  TheColor.setSaturation(NewValue);
+  return TheColor.getPixel().V;
+}
+
+Export DoubleWord SetHSVAValue(Pixel Color, int NewValue) {
+  HSVA TheColor = HSVA(Color);
+  TheColor.setValue(NewValue);
+  return TheColor.getPixel().V;
+}
+
+Export DoubleWord HSVAColor(int H, int S, int V, int A) {
+  HSVA TheColor = HSVA(H, S, V, A);
+  return TheColor.getPixel().V;
 }

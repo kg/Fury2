@@ -706,7 +706,7 @@ Private Sub iEditingCommands_CanPaste(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Tiles"
-        NewValue = ClipboardContainsFormat(TCF_Tile)
+        NewValue = ClipboardContainsImage(CustomClipboard, Me.hwnd)
     Case Else
     End Select
 End Sub
@@ -896,18 +896,15 @@ End Sub
 
 Public Sub CopyTile()
 On Error Resume Next
-    CustomClipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize CustomClipboard, ClipboardFormat(TCF_Tile), SelectedTile
-    CustomClipboard.ClipboardClose
+    ClipboardSerializeImage CustomClipboard, Me.hwnd, SelectedTile
 End Sub
 
 Public Function PasteTile() As Fury2Image
 On Error Resume Next
 Dim l_imgTile As Fury2Image
 Dim l_imgTiles() As Fury2Image, l_lngIndex As Long
-    Set l_imgTile = New Fury2Image
-    CustomClipboard.ClipboardOpen Me.hwnd
-    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(TCF_Tile), l_imgTile) Then
+    Set l_imgTile = ClipboardDeserializeImage(CustomClipboard, Me.hwnd)
+    If Not (l_imgTile Is Nothing) Then
         If (l_imgTile.Width > m_tsTileset.TileWidth) Or (l_imgTile.Height > m_tsTileset.TileHeight) Then
             l_imgTiles = l_imgTile.Split(m_tsTileset.TileWidth, m_tsTileset.TileHeight)
             For l_lngIndex = LBound(l_imgTiles) To UBound(l_imgTiles)
@@ -920,13 +917,10 @@ Dim l_imgTiles() As Fury2Image, l_lngIndex As Long
         Else
             m_lngSelectedTile = m_tsTileset.Add(l_imgTile)
         End If
-        CustomClipboard.ClipboardClose
         RedrawTileList
         RedrawSelectedTile
         Editor.ToolbarUpdate
         Set PasteTile = l_imgTile
-    Else
-        CustomClipboard.ClipboardClose
     End If
 End Function
 

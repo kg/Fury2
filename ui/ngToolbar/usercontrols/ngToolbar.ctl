@@ -18,9 +18,15 @@ Begin VB.UserControl ngToolbar
    ScaleHeight     =   31
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   162
+   Begin VB.Timer tmrUpdateMouse 
+      Enabled         =   0   'False
+      Interval        =   1
+      Left            =   615
+      Top             =   0
+   End
    Begin VB.Timer tmrMouseTracker 
       Enabled         =   0   'False
-      Interval        =   100
+      Interval        =   200
       Left            =   615
       Top             =   0
    End
@@ -135,7 +141,7 @@ End Property
 Private Sub MouseEntered()
 On Error Resume Next
     If m_booMouseOver Then Exit Sub
-    tmrMouseTracker.Interval = 1
+    tmrMouseTracker.Interval = 50
 End Sub
 
 Public Property Get hwnd() As Long
@@ -689,8 +695,8 @@ Dim l_btnNewHover As ngToolButton
         End If
         Redraw m_btnHover.Rectangle
         Set m_btnHover = l_btnNewHover
-        RaiseEvent ButtonHover(m_btnHover)
         Redraw m_btnHover.Rectangle
+        RaiseEvent ButtonHover(m_btnHover)
     End If
 End Sub
 
@@ -754,19 +760,28 @@ Dim l_ptMouse As PointAPI
         m_lngMouseY = l_ptMouse.y
         If (m_lngMouseX < 0) Or (m_lngMouseX >= UserControl.ScaleWidth) Or (m_lngMouseY < 0) Or (m_lngMouseY >= UserControl.ScaleHeight) Then
             m_booMouseOver = False
-            tmrMouseTracker.Interval = 100
+            tmrMouseTracker.Interval = 200
         End If
-        UpdateMouse
+        tmrUpdateMouse.Enabled = True
     End If
+End Sub
+
+Private Sub tmrUpdateMouse_Timer()
+On Error Resume Next
+    tmrUpdateMouse.Enabled = False
+    UpdateMouse
 End Sub
 
 Private Sub UserControl_Hide()
 On Error Resume Next
+    tmrMouseTracker.Enabled = False
     FreeSurface
 End Sub
 
 Private Sub UserControl_Initialize()
 On Error Resume Next
+    m_lngMouseX = -32767
+    m_lngMouseY = -32767
     F2Init
     InitMetrics
     InitColors
@@ -822,7 +837,7 @@ Dim m_btnHover As ngToolButton
         m_btnPressed.MouseUp
         Set m_btnPressed = Nothing
     End If
-    tmrMouseTracker.Interval = IIf(m_booMouseOver, 1, 100)
+    tmrMouseTracker.Interval = IIf(m_booMouseOver, 50, 200)
     UpdateMouse
     Redraw
 End Sub
@@ -867,8 +882,10 @@ Private Sub UserControl_Show()
 On Error Resume Next
 Dim l_rfOld As ngResourceFile
 Dim l_strOldPattern As String
+    m_lngMouseX = -32767
+    m_lngMouseY = -32767
+    tmrMouseTracker.Enabled = True
     If Ambient.UserMode Then
-        tmrMouseTracker.Enabled = True
         If g_strToolbarTheme <> "" Then
             Set l_rfOld = Me.ResourceFile
             l_strOldPattern = Me.ResourcePattern

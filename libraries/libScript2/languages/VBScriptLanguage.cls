@@ -109,10 +109,15 @@ Private Property Get IScriptLanguage_Name() As String
     IScriptLanguage_Name = "VBScript"
 End Property
 
-Private Function IScriptLanguage_ParseCode(Code As String) As String
+Private Function IScriptLanguage_ParseCode(Code As String, State As ScriptEngineState) As String
+On Error Resume Next
 Dim m_strText As String, m_strSeg As String
 Dim m_lngStart As Long, m_lngEnd As Long
 Dim m_lngPos As Long
+Dim l_varLines As Variant, l_lngLines As Long, l_varTokens As Variant
+Dim l_strToken As String, l_strToken2 As String, l_varVariables As Variant
+Dim l_clsClass As ScriptClass, l_fnFunction As ScriptFunction, l_varVariable As ScriptVariable, l_argArgument As ScriptArgument
+Dim l_lngVariable As Long
     '   Strip smart quotes and other idiocies
     If Len(Code) < 2 Then IScriptLanguage_ParseCode = Code: Exit Function
     m_strText = Replace(Replace(Replace(Replace(Replace(Code, "”", """"), "“", """"), "…", "..."), "’", "'"), "‘", "'")
@@ -131,6 +136,66 @@ Dim m_lngPos As Long
         m_lngPos = m_lngStart + (Len(m_strSeg))
     Loop
     m_lngPos = 1
+    l_varLines = IScriptLanguage_SplitLines(m_strText)
+    For l_lngLines = LBound(l_varLines) To UBound(l_varLines)
+        l_varTokens = Split(Trim(l_varLines(l_lngLines)), " ")
+        Select Case LCase(Trim(l_varTokens(0)))
+        Case "class"
+            Set l_clsClass = New ScriptClass
+            l_clsClass.Name = Trim(l_varTokens(1))
+            State.Classes.Add l_clsClass
+        Case "sub", "function", "dim", "public", "private"
+            l_strToken = LCase(Trim(l_varTokens(0)))
+            l_strToken2 = l_varTokens(1)
+            If l_strToken = "public" Or l_strToken = "private" Or l_strToken = "dim" Then
+                l_strToken = l_varTokens(1)
+                l_strToken2 = l_varTokens(2)
+            End If
+            Select Case l_strToken
+            Case "sub", "function"
+                ' Sub/Function
+                Set l_fnFunction = New ScriptFunction
+                l_fnFunction.Name = Trim(Split(l_strToken2, "(")(0))
+                l_varVariables = Split(Replace(Mid(l_varLines(l_lngLines), InStr(l_varLines(l_lngLines), "(") + 1), ")", ""), ",")
+                For l_lngVariable = LBound(l_varVariables) To UBound(l_varVariables)
+                    Set l_argArgument = New ScriptArgument
+                    l_argArgument.Name = Trim(l_varVariables(l_lngVariable))
+                    l_fnFunction.Arguments.Add l_argArgument
+                Next l_lngVariable
+                l_fnFunction.ReturnsValue = (l_strToken = "function")
+                If l_clsClass Is Nothing Then
+                    State.Functions.Add l_fnFunction, l_fnFunction.Name
+                Else
+                    l_clsClass.Functions.Add l_fnFunction, l_fnFunction.Name
+                End If
+            Case Else
+                ' Variable
+                l_varTokens = Split(l_varLines(l_lngLines), ",")
+                l_varTokens(0) = Mid(Trim(l_varTokens(0)), InStr(Trim(l_varTokens(0)), " ") + 1)
+                For l_lngVariable = LBound(l_varTokens) To UBound(l_varTokens)
+                    Set l_varVariable = New ScriptVariable
+                    l_varVariable.Name = Trim(l_varTokens(l_lngVariable))
+                    If Not (l_fnFunction Is Nothing) Then
+                        l_fnFunction.Variables.Add l_varVariable
+                    ElseIf Not (l_clsClass Is Nothing) Then
+                        l_clsClass.Variables.Add l_varVariable
+                    Else
+                        State.Variables.Add l_varVariable
+                    End If
+                Next l_lngVariable
+            End Select
+        Case "end"
+            l_strToken = LCase(Trim(l_varTokens(1)))
+            Select Case l_strToken
+            Case "class"
+                Set l_clsClass = Nothing
+                Set l_fnFunction = Nothing
+            Case "sub", "function"
+                Set l_fnFunction = Nothing
+            End Select
+        End Select
+    Next l_lngLines
+    State.LinesOfCode = State.LinesOfCode + UBound(l_varLines) + 1
     IScriptLanguage_ParseCode = m_strText
 End Function
 
@@ -155,7 +220,60 @@ Private Function IScriptLanguage_ReadStringLiteral(Text As String) As String
 End Function
 
 Private Function IScriptLanguage_SplitLines(Text As String) As Variant
-    IScriptLanguage_SplitLines = Split(Text, vbCrLf)
+On Error Resume Next
+Dim l_lngChar As Long
+Dim l_strLine As String
+Dim l_strChar As String
+Dim l_varLines As Variant
+Dim l_lngLineCount As Long
+Dim l_lngLineChar As Long
+Dim l_lngLength As Long
+Dim l_booLineBreak As Boolean
+Dim l_booContinueLine As Boolean
+    ReDim l_varLines(0 To 31)
+    l_lngLength = Len(Text)
+    l_lngChar = 1
+    l_lngLineChar = 1
+    l_strLine = String(256, " ")
+    Do
+        l_strChar = Mid(Text, l_lngChar, 1)
+        If l_strChar = "_" Then
+            l_booContinueLine = True
+        ElseIf l_strChar = vbCr Then
+            If l_booContinueLine Then
+                l_booContinueLine = False
+                l_booLineBreak = False
+            Else
+                l_booLineBreak = True
+            End If
+        ElseIf l_strChar = vbLf Then
+            If l_booLineBreak Then
+                l_varLines(l_lngLineCount) = Left(l_strLine, l_lngLineChar - 1)
+                l_lngLineChar = 1
+                l_lngLineCount = l_lngLineCount + 1
+                If l_lngLineCount > UBound(l_varLines) Then
+                    ReDim Preserve l_varLines(0 To UBound(l_varLines) + 32)
+                End If
+            Else
+                l_booContinueLine = False
+            End If
+        Else
+            If l_lngLineChar > Len(l_strLine) Then
+                l_strLine = l_strLine & String(256, " ")
+            End If
+            Mid(l_strLine, l_lngLineChar, 1) = l_strChar
+            l_lngLineChar = l_lngLineChar + 1
+            l_booContinueLine = False
+            l_booLineBreak = False
+        End If
+        l_lngChar = l_lngChar + 1
+    Loop Until l_lngChar > l_lngLength
+    If (l_lngLineChar > 1) Then
+        l_varLines(l_lngLineCount) = Left(l_strLine, l_lngLineChar - 1)
+        l_lngLineCount = l_lngLineCount + 1
+    End If
+    ReDim Preserve l_varLines(0 To l_lngLineCount - 1)
+    IScriptLanguage_SplitLines = l_varLines
 End Function
 
 Private Property Get IScriptLanguage_ThisKeyword() As String

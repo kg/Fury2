@@ -37,6 +37,7 @@ Implements IInspectable
 Implements IVirtualFileSaveable
 Private mvarAngle As Single 'local copy
 Private mvarAttachedSprite As Fury2Sprite 'local copy
+Private mvarAttachX As Single, mvarAttachY As Single, mvarAttachH As Single, mvarAttachV As Single
 Private mvarAlpha As Single
 Private mvarColor As Long 'local copy
 Private mvarFalloffDistance As Long 'local copy
@@ -143,6 +144,10 @@ On Error Resume Next
         .Fuzziness = mvarFuzziness
         .X = mvarX
         .Y = mvarY
+        .AttachX = mvarAttachX
+        .AttachY = mvarAttachY
+        .AttachH = mvarAttachH
+        .AttachV = mvarAttachV
         If mvarEnableCache Then
             .Cache = mvarCache.Handle
         Else
@@ -177,6 +182,42 @@ End Property
 
 Public Property Get Y() As Single
     Y = mvarY
+End Property
+
+Public Property Let AttachX(ByVal vData As Single)
+    mvarAttachX = vData
+    UpdateCache
+End Property
+
+Public Property Get AttachX() As Single
+    AttachX = mvarAttachX
+End Property
+
+Public Property Let AttachY(ByVal vData As Single)
+    mvarAttachY = vData
+    UpdateCache
+End Property
+
+Public Property Get AttachY() As Single
+    AttachY = mvarAttachY
+End Property
+
+Public Property Let AttachH(ByVal vData As Single)
+    mvarAttachH = vData
+    UpdateCache
+End Property
+
+Public Property Get AttachH() As Single
+    AttachH = mvarAttachH
+End Property
+
+Public Property Let AttachV(ByVal vData As Single)
+    mvarAttachV = vData
+    UpdateCache
+End Property
+
+Public Property Get AttachV() As Single
+    AttachV = mvarAttachV
 End Property
 
 Public Property Let X(ByVal vData As Single)

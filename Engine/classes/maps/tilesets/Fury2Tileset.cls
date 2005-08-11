@@ -258,7 +258,7 @@ End Property
 Public Property Let TileHeight(ByVal vData As Long)
 Attribute TileHeight.VB_Description = "The height of a tile."
 On Error Resume Next
-    mvarTileHeight = ClipValue(vData, 2, 256)
+    mvarTileHeight = ClipValue(vData, 2, 10240)
     If ImageBased Then
         RecalculateSizes
         DeallocateTileset
@@ -280,7 +280,7 @@ End Property
 Public Property Let TileWidth(ByVal vData As Long)
 Attribute TileWidth.VB_Description = "The width of a tile."
 On Error Resume Next
-    mvarTileWidth = ClipValue(vData, 2, 256)
+    mvarTileWidth = ClipValue(vData, 2, 10240)
     If ImageBased Then
         RecalculateSizes
         DeallocateTileset
@@ -311,17 +311,17 @@ On Error Resume Next
     Set Buffer = mvarBuffer
 End Property
 
-Public Function GenerateBuffer() As Fury2Image
+Public Function GetBuffer() As Fury2Image
 On Error Resume Next
 Dim l_imgTile As Fury2Image, l_rctDest As Fury2Rect
 Dim l_lngX As Long, l_lngY As Long, l_lngIndex As Long
     If ImageBased Then
-        Set GenerateBuffer = mvarBuffer.Duplicate
+        Set GetBuffer = mvarBuffer
     Else
         If (mvarBuffer Is Nothing) Then
-            m_lngRowWidth = ClipValue(m_lngRowWidth, 1, 64)
-            Set GenerateBuffer = F2Image(TileWidth * m_lngRowWidth, TileHeight * Ceil(TileCount / m_lngRowWidth))
-            GenerateBuffer.AlphaChannel = True
+            m_lngRowWidth = ClipValue(m_lngRowWidth, 1, 512)
+            Set GetBuffer = F2Image(TileWidth * m_lngRowWidth, TileHeight * Ceil(TileCount / m_lngRowWidth))
+            GetBuffer.AlphaChannel = True
             Set l_imgTile = New Fury2Image
             l_imgTile.Deallocate
             Set l_rctDest = F2Rect(0, 0, TileWidth, TileHeight)
@@ -329,18 +329,23 @@ Dim l_lngX As Long, l_lngY As Long, l_lngIndex As Long
                 l_rctDest.RelLeft = l_lngX
                 l_rctDest.RelTop = l_lngY
                 l_imgTile.SetHandle GetTile(Handle, l_lngIndex)
-                GenerateBuffer.Blit l_rctDest, , l_imgTile
+                GetBuffer.Blit l_rctDest, , l_imgTile
                 l_lngX = l_lngX + TileWidth
-                If ((l_lngX + TileWidth) > GenerateBuffer.Width) Then
+                If ((l_lngX + TileWidth) > GetBuffer.Width) Then
                     l_lngX = 0
                     l_lngY = l_lngY + TileHeight
                 End If
             Next l_lngIndex
-            Set mvarBuffer = GenerateBuffer
+            Set mvarBuffer = GetBuffer
         Else
-            Set GenerateBuffer = mvarBuffer.Duplicate
+            Set GetBuffer = mvarBuffer
         End If
     End If
+End Function
+
+Public Function GenerateBuffer() As Fury2Image
+On Error Resume Next
+    Set GenerateBuffer = GetBuffer.Duplicate()
 End Function
 
 Sub Reload()

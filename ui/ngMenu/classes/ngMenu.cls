@@ -152,7 +152,7 @@ End Sub
 Private Sub InitItems()
 On Error Resume Next
     Set m_miItems = New ngMenuItems
-    m_miItems.SetParent Me
+    Set m_miItems.Parent = Me
 End Sub
 
 Private Sub FreeItems()
@@ -270,6 +270,7 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error Resume Next
+    g_lngMenus = g_lngMenus + 1
     F2Init
     InitMetrics
     InitColors
@@ -278,6 +279,7 @@ On Error Resume Next
     Font.Name = "Tahoma"
     Font.Size = 9
     ResourcePattern = "*"
+    Debug.Print "ngMenu_Initialize"
 End Sub
 
 Friend Sub Event_KeyDown(KeyCode As Integer, Shift As Integer)
@@ -394,21 +396,33 @@ End Sub
 
 Public Sub Hide()
 On Error Resume Next
-    If GetCapture = Host.hwnd Then
-        ReleaseCapture
+    If m_booVisible Then
+        m_evtHide.Invoke
+        RaiseEvent Hide
+        If GetCapture = Host.hwnd Then
+            ReleaseCapture
+        End If
+        Host.This.Hide
+        Host.This.Release
+        Unload Host.This
+        Set Host.This = Nothing
+        SetFocus Parent.Host.hwnd
     End If
-    Host.This.Hide
-    SetFocus Parent.Host.hwnd
     m_booVisible = False
 End Sub
 
 Friend Sub DoClose()
 On Error Resume Next
+Dim l_frmHost As frmMenu
     m_booClosed = True
     ReleaseCapture
     Hide
     Parent.DoClose
     ResetItems
+    Set l_frmHost = Host.This
+    l_frmHost.Tag = "Unload"
+    Unload l_frmHost
+    Set Host = Nothing
 End Sub
 
 Friend Sub DoShowChildMenu()
@@ -501,7 +515,9 @@ End Sub
 
 Private Sub Class_Terminate()
 On Error Resume Next
+    g_lngMenus = g_lngMenus - 1
     FreeItems
+    Debug.Print "ngMenu_Terminate"
 End Sub
 
 Friend Sub DoStealCapture()
@@ -536,6 +552,9 @@ Dim l_ptMouse As PointAPI
 Dim l_lngWindow As Long
 Dim l_lngOldParent As Long
 Dim l_mnuMenu As ngMenu
+Dim l_lngIndex As Long
+Dim l_frmHost As Form
+    m_miItems.SetParent Me
     If m_booVisible Then Exit Function
     If CloseOtherMenus Then
         For Each l_mnuMenu In g_colOpenMenus
@@ -603,27 +622,38 @@ Dim l_mnuMenu As ngMenu
         DoEvents
         Sleep 1
     Loop
+    Set l_frmHost = Host.This
+    l_frmHost.Tag = "Unload"
     Set Show = m_miSelected
     Set m_miSelected = Nothing
     If Show.Parent Is Me Then
         m_evtSelect.Invoke Show
     End If
-    m_evtHide.Invoke
-    RaiseEvent Hide
     Set Me.Parent.Host.This.ChildMenu = Nothing
     Host.This.ChildMenu.Hide
     Hide
     m_lngParentWindow = 0
     Set Host.This.Menu = Nothing
+    Unload l_frmHost
+    Unload l_frmHost
     Set Host = Nothing
+    Set l_frmHost = Nothing
     If Me.Parent Is Nothing Then
     ElseIf Not m_booClosed Then
         Me.Parent.Host.This.HasFocus = True
         SetFocus Me.Parent.Host.hwnd
         SetCapture Me.Parent.Host.hwnd
     End If
-    m_booVisible = False
     ResetItems
+    For Each l_mnuMenu In g_colOpenMenus
+        l_lngIndex = l_lngIndex + 1
+        If l_mnuMenu Is Me Then
+            g_colOpenMenus.Remove l_lngIndex
+            Exit For
+        End If
+    Next l_mnuMenu
+    m_miItems.SetParent Nothing
+    FlushForms
 End Function
 
 Friend Sub Tick()

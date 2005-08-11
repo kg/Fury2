@@ -20,6 +20,7 @@ Private m_strKey As String
 Private m_lngIndex As Long
 Private m_imgImage As Fury2Image
 Private m_booSelected As Boolean
+Private m_booEnabled As Boolean
 Private m_booVisible As Boolean
 Private m_txaTextAlignment As ngListItemTextAlignment
 Private m_lngTop As Long
@@ -130,7 +131,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Selected() As Boolean
-    Selected = m_booSelected
+    Selected = m_booSelected And m_booEnabled
 End Property
 
 Public Property Let Selected(ByVal NewValue As Boolean)
@@ -151,6 +152,17 @@ On Error Resume Next
     If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
 End Property
 
+Public Property Get Enabled() As Boolean
+    Enabled = m_booEnabled
+End Property
+
+Public Property Let Enabled(ByVal NewValue As Boolean)
+On Error Resume Next
+    If NewValue = m_booEnabled Then Exit Property
+    m_booEnabled = NewValue
+    If Not (m_lstParent Is Nothing) Then m_lstParent.Reflow
+End Property
+
 Public Property Get TextAlignment() As ngListItemTextAlignment
     TextAlignment = m_txaTextAlignment
 End Property
@@ -165,5 +177,6 @@ Private Sub Class_Initialize()
 On Error Resume Next
     m_txaTextAlignment = ltaRight
     m_booVisible = True
+    m_booEnabled = True
 End Sub
 

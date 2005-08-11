@@ -62,6 +62,7 @@ namespace Lighting {
     float Angle, Spread, SpinRate, FlickerLevel;
     Byte NoiseOpacity, Visible, Culled, PlaneCulled;
     SpriteParam *Attached;
+    float AttachX, AttachY, AttachH, AttachV;
     Image *Cache;
     Byte CacheValid;
     Byte Fuzziness;

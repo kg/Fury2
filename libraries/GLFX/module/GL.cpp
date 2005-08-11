@@ -275,6 +275,7 @@ namespace GL {
 
   void disableTextures() {
     disableTexture<0>();
+    disableTexture<1>();
   }
 
   void enableFog() {

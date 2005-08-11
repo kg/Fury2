@@ -12,6 +12,11 @@ Begin VB.Form frmFont
    ScaleWidth      =   59
    ShowInTaskbar   =   0   'False
    Visible         =   0   'False
+   Begin VB.Timer tmrFlushForms 
+      Interval        =   10000
+      Left            =   180
+      Top             =   315
+   End
 End
 Attribute VB_Name = "frmFont"
 Attribute VB_GlobalNameSpace = False
@@ -22,4 +27,8 @@ Option Explicit
 
 Private Sub Form_Load()
 
+End Sub
+
+Private Sub tmrFlushForms_Timer()
+    FlushForms
 End Sub

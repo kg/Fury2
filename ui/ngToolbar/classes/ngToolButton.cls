@@ -22,6 +22,7 @@ Private m_lngIndex As Long
 Private m_imgImage As Fury2Image
 Private m_imgGlow As Fury2Image
 Private m_evtClick As ngEvent
+Private m_evtHover As ngEvent
 Private m_booPressed As Boolean
 Private m_booHovering As Boolean
 Private m_booChecked As Boolean
@@ -110,7 +111,9 @@ End Sub
 
 Friend Sub MouseEnter()
 On Error Resume Next
+    If m_booHovering Then Exit Sub
     m_booHovering = True
+    m_evtHover.Invoke
 End Sub
 
 Friend Sub MouseLeave()
@@ -280,6 +283,14 @@ Public Property Set ClickEvent(ByVal NewValue As ngEvent)
     Set m_evtClick = NewValue
 End Property
 
+Public Property Get HoverEvent() As ngEvent
+    Set HoverEvent = m_evtHover
+End Property
+
+Public Property Set HoverEvent(ByVal NewValue As ngEvent)
+    Set m_evtHover = NewValue
+End Property
+
 Public Property Get Checked() As Boolean
     Checked = m_booChecked
 End Property
@@ -321,8 +332,16 @@ Public Property Get Pressed() As Boolean
     Pressed = m_booPressed
 End Property
 
+Public Property Let Pressed(ByVal Value As Boolean)
+    m_booPressed = Value
+End Property
+
 Public Property Get Hovering() As Boolean
     Hovering = m_booHovering
+End Property
+
+Public Property Let Hovering(ByVal Value As Boolean)
+    m_booHovering = Value
 End Property
 
 Public Property Get Style() As ngToolButtonStyles

@@ -5,6 +5,7 @@
 	Name="SoftFX"
 	ProjectGUID="{ED4A2B1F-A8EB-4F0D-BE84-D29D90FFBA34}"
 	RootNamespace="SoftFX"
+	SignManifests="true"
 	>
 	<Platforms>
 		<Platform
@@ -867,6 +868,10 @@
 			</File>
 			<File
 				RelativePath=".\header\Heap.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\header\Hue.hpp"
 				>
 			</File>
 			<File

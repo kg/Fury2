@@ -151,46 +151,57 @@ Export Tileset* AllocateEmptyTileset(int TileCount, int TileWidth, int TileHeigh
 }
 
 Export void SetTile(Tileset *pTileset, int Index, Image* NewImage) {
+    if (!pTileset) return;
     return pTileset->setTile(Index, NewImage);
 }
 
 Export void ReplaceTile(Tileset *pTileset, int Index, Image* NewImage) {
+    if (!pTileset) return;
     return pTileset->replaceTile(Index, NewImage);
 }
 
 Export Image* GetTile(Tileset *pTileset, int Index) {
+    if (!pTileset) return 0;
     return pTileset->tile(Index);
 }
 
 Export Image* GetTileFast(Tileset *pTileset, unsigned int Index, short* MapTable) {
+    if (!pTileset) return 0;
     return pTileset->fastTile(Index, MapTable);
 }
 
 Export Image* CreateTile(Tileset *pTileset) {
+    if (!pTileset) return 0;
     return pTileset->createTile();
 }
 
 Export int GetTileCount(Tileset *pTileset) {
+    if (!pTileset) return -1;
     return pTileset->TileCount;
 }
 
 Export int GetTileWidth(Tileset *pTileset) {
+    if (!pTileset) return -1;
     return pTileset->TileWidth;
 }
 
 Export int GetTileHeight(Tileset *pTileset) {
+    if (!pTileset) return -1;
     return pTileset->TileHeight;
 }
 
 Export void AddTile(Tileset *pTileset, Image* Tile) {
+    if (!pTileset) return;
     pTileset->addTile(Tile);
 }
 
 Export void InsertTile(Tileset *pTileset, Image* Tile, int Index) {
+    if (!pTileset) return;
     pTileset->addTile(Tile, Index);
 }
 
 Export void RemoveTile(Tileset *pTileset, int Index) {
+    if (!pTileset) return;
     pTileset->removeTile(Index);
 }
 
@@ -2128,9 +2139,9 @@ float FuzzyOffset = 0, FlickerAmount = 0;
     Light = &(Environment->Lights[l]);
   	Light->Culled = true;
     if (Light->Attached) {
-      Light->X = Light->Attached->Position.X;
-      Light->Y = Light->Attached->Position.Y;
       Light->Angle = Light->Attached->Velocity.B;
+      Light->X = Light->Attached->Position.X + Light->AttachX + (sin(Light->Angle * Radian) * Light->AttachV) + (sin((Light->Angle + 90) * Radian) * Light->AttachH);
+      Light->Y = Light->Attached->Position.Y + Light->AttachY + (-cos(Light->Angle * Radian) * Light->AttachV) + (-cos((Light->Angle + 90) * Radian) * Light->AttachH);
     }
     Light->Angle = NormalizeAngle(Light->Angle);
     if ((Light->Cache != Null) && (Light->CacheValid == false)) {

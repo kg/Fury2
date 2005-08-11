@@ -1,4 +1,4 @@
-frmMain = 74, 41, 1110, 648, C, 44, 46, 975, 650, C
+frmMain = -53, -11, 983, 596, C, 44, 46, 975, 650, C
 cEditor = 88, 92, 1019, 696, C
 mdlEditor = 10, 105, 941, 709, C
 frmIcons = 176, 184, 1178, 791, C, 54, 123, 985, 727, C
@@ -11,7 +11,7 @@ cUnknownFileType = 0, 0, 931, 604, C
 mdlFilesystem = 44, 46, 975, 650, C
 mdlGame = 66, 69, 997, 673, C
 cVBALSysImageList = 44, 46, 975, 650, C
-frmSaveOpenDocuments = -73, 160, 858, 764, C, 117, 162, 1048, 766, C
+frmSaveOpenDocuments = -73, 160, 858, 764, C, -84, 108, 847, 712, C
 mdlRegistry = 66, 69, 997, 673, C
 mdlDLL = 103, 120, 1030, 724, C
 frmWindowList = 22, 23, 953, 627, C, 44, 46, 975, 650, C

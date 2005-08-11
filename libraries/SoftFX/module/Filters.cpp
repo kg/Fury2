@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "../header/2D Filter.hpp"
 #include "../header/MersenneTwister.h"
 #include "../header/Blitters.hpp"
+#include "../header/Hue.hpp"
 #include <sys/timeb.h>
 
 FILTERSIMPLE_SIGNATURE(Invert)
@@ -754,6 +755,19 @@ FILTERSIMPLE_LOOPBEGIN
     (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
     (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
     (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Adjust_HSV)
+    , int HueAmount, int SaturationAmount, int ValueAmount) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Adjust_HSV, 3) , HueAmount, SaturationAmount, ValueAmount _FOE
+FILTERSIMPLE_BEGIN
+    HSVA HSVA;
+FILTERSIMPLE_LOOPBEGIN
+    HSVA.setPixel(*pCurrent);
+    HSVA.setValues(HSVA.Hue + HueAmount, HSVA.Saturation + SaturationAmount, HSVA.Value + ValueAmount, HSVA.Alpha);
+    *pCurrent = HSVA.getPixel();
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 

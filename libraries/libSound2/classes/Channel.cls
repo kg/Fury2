@@ -17,6 +17,13 @@ Private m_sndSound As Sound
 Private m_seEngine As SoundEngine
 Private m_lngHandle As Long
 
+Public Property Get ChannelGroup() As ChannelGroup
+On Error Resume Next
+Dim l_lngGroup As Long
+    ResultCheck fmodex.FMOD_Channel_GetChannelGroup(m_lngHandle, l_lngGroup)
+    Set ChannelGroup = m_seEngine.CreateChannelGroupH(l_lngGroup)
+End Property
+
 Public Property Get Disposed() As Boolean
 On Error Resume Next
     Disposed = m_booDisposed
@@ -58,9 +65,9 @@ On Error Resume Next
     m_booDisposed = True
 End Sub
 
-Friend Sub ResultCheck(ByVal Result As FMOD_RESULT)
+Friend Sub ResultCheck(ByVal result As FMOD_RESULT)
 On Error Resume Next
-    If Result = FMOD_ERR_CHANNEL_STOLEN Then Free
+    If result = FMOD_ERR_CHANNEL_STOLEN Then Free
 End Sub
 
 Public Property Get Playing() As Boolean

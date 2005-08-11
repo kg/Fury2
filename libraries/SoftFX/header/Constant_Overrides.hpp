@@ -54,6 +54,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(FilterSimple_Adjust) \
   defItem(FilterSimple_Adjust_Channel) \
   defItem(FilterSimple_Adjust_RGB) \
+  defItem(FilterSimple_Adjust_HSV) \
   defItem(FilterSimple_Box) \
   defItem(FilterSimple_Box_SourceAlpha) \
   defItem(FilterSimple_ColorFilter) \
@@ -190,6 +191,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(BlitMask_Merge_Opacity) \
   defItem(BlitMask_) \
   defItem(BlitDeform) \
+  defItem(BlitDeformMask) \
   defItem(RenderTilemapLayer) \
   defItem(RenderWindow) \
   defItem(RenderText) \

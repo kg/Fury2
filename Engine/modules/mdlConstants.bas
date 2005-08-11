@@ -40,12 +40,12 @@ Global Const c_sngDefaultVelocityDecay As Single = 0.33!
 Global Const c_sngDefaultMaxVelocity As Single = 2!
 Global Const c_lngDefaultRepeatDelay As Long = 175
 
-Global Const c_lngMinimumMapWidth As Long = 2
-Global Const c_lngMinimumMapHeight As Long = 2
-Global Const c_lngMaximumMapWidth As Long = 1024
-Global Const c_lngMaximumMapHeight As Long = 1024
+Global Const c_lngMinimumMapWidth As Long = 1
+Global Const c_lngMinimumMapHeight As Long = 1
+Global Const c_lngMaximumMapWidth As Long = 4096
+Global Const c_lngMaximumMapHeight As Long = 4096
 Global Const c_lngMinimumMapLayers As Long = 1
-Global Const c_lngMaximumMapLayers As Long = 32
+Global Const c_lngMaximumMapLayers As Long = 64
 Global Const c_lngWindowSkinSegmentSize As Long = 16
 
 Global Const c_lngSFXChannelCount As Long = 64&

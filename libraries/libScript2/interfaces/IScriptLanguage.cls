@@ -25,7 +25,6 @@ End Property
 Public Property Get MethodOperator() As String
 End Property
 
-
 Public Function GenerateSubCall(Name As String, Args As Variant) As String
 End Function
 
@@ -59,7 +58,6 @@ End Function
 Public Function GenerateStringLiteral(Text As String) As String
 End Function
 
-
 Public Function ReadStringLiteral(Text As String) As String
 End Function
 
@@ -78,9 +76,8 @@ End Function
 Public Function SplitLines(Text As String) As Variant
 End Function
 
-
 Public Function ImplementsMethod(Code As String, Method As String) As Boolean
 End Function
 
-Public Function ParseCode(Code As String) As String
+Public Function ParseCode(Code As String, State As ScriptEngineState) As String
 End Function

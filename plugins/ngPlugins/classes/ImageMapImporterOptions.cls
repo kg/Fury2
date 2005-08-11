@@ -42,7 +42,16 @@ Private mvarMarginBottom As Long
 Private mvarTileWidth As Long
 Private mvarTileHeight As Long
 Private mvarImage As String
+Private mvarGenerateTileset As Boolean
 Private mvarMatteColor As Long
+
+Public Property Let GenerateTileset(ByVal vData As Boolean)
+    mvarGenerateTileset = vData
+End Property
+
+Public Property Get GenerateTileset() As Boolean
+    GenerateTileset = mvarGenerateTileset
+End Property
 
 Public Property Let MarginBottom(ByVal vData As Long)
     mvarMarginBottom = vData
@@ -117,6 +126,7 @@ On Error Resume Next
     TileWidth = 16
     TileHeight = 16
     MatteColor = 0
+    GenerateTileset = True
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
@@ -130,6 +140,7 @@ On Error Resume Next
         .Load mvarMarginTop
         .Load mvarMarginRight
         .Load mvarMarginBottom
+        .Load mvarGenerateTileset
     End With
 End Sub
 
@@ -144,6 +155,7 @@ On Error Resume Next
         .Save mvarMarginTop
         .Save mvarMarginRight
         .Save mvarMarginBottom
+        .Save mvarGenerateTileset
     End With
 End Sub
 

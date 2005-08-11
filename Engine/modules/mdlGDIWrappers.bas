@@ -157,30 +157,6 @@ Dim DC As Long
     Set GetIconMask = CreatePictureFromHandle(l_infInfo.MaskBitmap, PicType_Bitmap)
 End Function
 
-Function GetPictureWidth(ByRef Pic As IPictureDisp) As Long
-On Error Resume Next
-Dim bmiDest As BitmapInfo
-Dim DC As Long
-   
-    DC = CreateMemoryDC
-  
-    With bmiDest.Header
-        .Size = Len(bmiDest.Header)
-        .Planes = 1
-    End With
-    
-    ' Get header information (interested mainly in size)
-    If 0 = GetDIBits(DC, Pic.Handle, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
-        DeleteMemoryDC DC
-        Exit Function
-    End If
-    
-    GetPictureWidth = CLng(bmiDest.Header.Width)
-    
-    DeleteMemoryDC DC
-    
-End Function
-
 Function GetIconHeight(ByRef Icon As IPictureDisp) As Long
 On Error Resume Next
 Dim bmiDest As BitmapInfo
@@ -210,6 +186,30 @@ Dim l_infInfo As IconInfo
     DeleteObject l_infInfo.ColorBitmap
 End Function
 
+Function GetPictureWidth(ByRef Pic As IPictureDisp) As Long
+On Error Resume Next
+Dim bmiDest As BitmapInfo
+Dim DC As Long
+   
+    DC = CreateMemoryDC
+  
+    With bmiDest.Header
+        .Size = Len(bmiDest.Header)
+        .Planes = 1
+    End With
+    
+    ' Get header information (interested mainly in size)
+    If 0 = GetDIBits(DC, Pic.Handle, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
+        DeleteMemoryDC DC
+        Exit Function
+    End If
+    
+    GetPictureWidth = CLng(bmiDest.Header.Width)
+    
+    DeleteMemoryDC DC
+    
+End Function
+
 Function GetPictureHeight(ByRef Pic As IPictureDisp) As Long
 On Error Resume Next
 Dim bmiDest As BitmapInfo
@@ -229,6 +229,54 @@ Dim DC As Long
     End If
     
     GetPictureHeight = CLng(bmiDest.Header.Height)
+    
+    DeleteMemoryDC DC
+    
+End Function
+
+Function GetPictureHandleWidth(ByVal Pic As Long) As Long
+On Error Resume Next
+Dim bmiDest As BitmapInfo
+Dim DC As Long
+   
+    DC = CreateMemoryDC
+  
+    With bmiDest.Header
+        .Size = Len(bmiDest.Header)
+        .Planes = 1
+    End With
+    
+    ' Get header information (interested mainly in size)
+    If 0 = GetDIBits(DC, Pic, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
+        DeleteMemoryDC DC
+        Exit Function
+    End If
+    
+    GetPictureHandleWidth = CLng(bmiDest.Header.Width)
+    
+    DeleteMemoryDC DC
+    
+End Function
+
+Function GetPictureHandleHeight(ByVal Pic As Long) As Long
+On Error Resume Next
+Dim bmiDest As BitmapInfo
+Dim DC As Long
+    
+    DC = CreateMemoryDC
+    
+    With bmiDest.Header
+        .Size = Len(bmiDest.Header)
+        .Planes = 1
+    End With
+    
+    ' Get header information (interested mainly in size)
+    If 0 = GetDIBits(DC, Pic, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
+        DeleteMemoryDC DC
+        Exit Function
+    End If
+    
+    GetPictureHandleHeight = CLng(bmiDest.Header.Height)
     
     DeleteMemoryDC DC
     
@@ -294,73 +342,12 @@ End Sub
 
 Sub PixelsFromPicture(ByRef Pic As IPictureDisp, ByVal Pointer As Long)
 On Error Resume Next
-    Dim bmiDest As BitmapInfo
-    Dim hdcMem As Long
-    Dim deskWnd As Long, deskDC As Long
-    
-    deskWnd = GetDesktopWindow
-    deskDC = GetDC(deskWnd)
-    hdcMem = CreateCompatibleDC(deskDC)
-    
-    With bmiDest.Header
-        .Size = Len(bmiDest.Header)
-        .Planes = 1
-    End With
-   
-    ' Get header information (interested mainly in size)
-    If GetDIBits(hdcMem, Pic.Handle, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) = 0 Then
-        DeleteDC hdcMem
-        ReleaseDC deskWnd, deskDC
-        Exit Sub
-    End If
-
-    With bmiDest.Header
-        .BitCount = 32
-        .Compression = DIBCompression_RGB
-        .Height = -(bmiDest.Header.Height)
-    End With
-     
-    If GetDIBits(hdcMem, Pic.Handle, 0, Abs(bmiDest.Header.Height), ByVal Pointer, bmiDest, DIBMode_RGB) = 0 Then
-    End If
-   
-    DeleteDC hdcMem
-    ReleaseDC deskWnd, deskDC
-   
+    PixelsFromPictureHandle Pic.Handle, Pointer
 End Sub
 
 Sub PixelsToPicture(ByRef Pic As IPictureDisp, ByVal Pointer As Long)
 On Error Resume Next
-    Dim bmiDest As BitmapInfo
-    Dim hdcMem As Long
-    Dim deskWnd As Long, deskDC As Long
-    
-    deskWnd = GetDesktopWindow
-    deskDC = GetDC(deskWnd)
-    hdcMem = CreateCompatibleDC(deskDC)
-   
-   With bmiDest.Header
-       .Size = Len(bmiDest.Header)
-       .Planes = 1
-   End With
-   
-   ' Get header information (interested mainly in size)
-   If 0 = GetDIBits(hdcMem, Pic.Handle, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
-        DeleteDC hdcMem
-        ReleaseDC deskWnd, deskDC
-       Exit Sub
-   End If
-
-   With bmiDest.Header
-       .BitCount = 32
-       .Compression = DIBCompression_RGB
-       .Height = -(bmiDest.Header.Height)
-   End With
-     
-   Call SetDIBits(hdcMem, Pic.Handle, 0, Abs(bmiDest.Header.Height), ByVal Pointer, bmiDest, DIBMode_RGB)
-   
-   DeleteDC hdcMem
-   ReleaseDC deskWnd, deskDC
-   
+    PixelsToPictureHandle Pic.Handle, Pointer
 End Sub
 
 Public Function CreatePictureFromHandle(ByVal Handle As Long, ByVal PicType As PicTypes) As IPictureDisp
@@ -486,3 +473,75 @@ On Error Resume Next
         Target.PaintPicture Picture, X, Y
     End Select
 End Sub
+
+Sub PixelsFromPictureHandle(ByVal Pic As Long, ByVal Pointer As Long)
+On Error Resume Next
+    Dim bmiDest As BitmapInfo
+    Dim hdcMem As Long
+    Dim deskWnd As Long, deskDC As Long
+    
+    deskWnd = GetDesktopWindow
+    deskDC = GetDC(deskWnd)
+    hdcMem = CreateCompatibleDC(deskDC)
+    
+    With bmiDest.Header
+        .Size = Len(bmiDest.Header)
+        .Planes = 1
+    End With
+   
+    ' Get header information (interested mainly in size)
+    If GetDIBits(hdcMem, Pic, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) = 0 Then
+        DeleteDC hdcMem
+        ReleaseDC deskWnd, deskDC
+        Exit Sub
+    End If
+
+    With bmiDest.Header
+        .BitCount = 32
+        .Compression = DIBCompression_RGB
+        .Height = -(bmiDest.Header.Height)
+    End With
+     
+    If GetDIBits(hdcMem, Pic, 0, Abs(bmiDest.Header.Height), ByVal Pointer, bmiDest, DIBMode_RGB) = 0 Then
+    End If
+   
+    DeleteDC hdcMem
+    ReleaseDC deskWnd, deskDC
+   
+End Sub
+
+Sub PixelsToPictureHandle(ByVal Pic As Long, ByVal Pointer As Long)
+On Error Resume Next
+    Dim bmiDest As BitmapInfo
+    Dim hdcMem As Long
+    Dim deskWnd As Long, deskDC As Long
+    
+    deskWnd = GetDesktopWindow
+    deskDC = GetDC(deskWnd)
+    hdcMem = CreateCompatibleDC(deskDC)
+   
+   With bmiDest.Header
+       .Size = Len(bmiDest.Header)
+       .Planes = 1
+   End With
+   
+   ' Get header information (interested mainly in size)
+   If 0 = GetDIBits(hdcMem, Pic, 0, 0, ByVal 0&, bmiDest, DIBMode_RGB) Then
+        DeleteDC hdcMem
+        ReleaseDC deskWnd, deskDC
+       Exit Sub
+   End If
+
+   With bmiDest.Header
+       .BitCount = 32
+       .Compression = DIBCompression_RGB
+       .Height = -(bmiDest.Header.Height)
+   End With
+     
+   Call SetDIBits(hdcMem, Pic, 0, Abs(bmiDest.Header.Height), ByVal Pointer, bmiDest, DIBMode_RGB)
+   
+   DeleteDC hdcMem
+   ReleaseDC deskWnd, deskDC
+   
+End Sub
+

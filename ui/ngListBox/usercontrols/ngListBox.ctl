@@ -40,17 +40,17 @@ Option Explicit
 Private Declare Function UpdateWindow Lib "user32" (ByVal hwnd As Long) As Long
 Private Declare Function InvalidateRect Lib "user32" (ByVal hwnd As Long, lpRect As Rect, ByVal bErase As Long) As Long
 
-Event OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
-Event OLEDragOver(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single, State As Integer)
+Event OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, y As Single)
+Event OLEDragOver(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, y As Single, State As Integer)
 Event SelectionChange()
 Event ItemContextMenu(ByRef Item As ngListItem)
 Event ItemSelect(ByRef Item As ngListItem)
 Event DragBegin(ByRef Cancel As Boolean)
 Event DragMoveItem(ByRef Item As ngListItem, ByVal OldIndex As Long, ByVal NewIndex As Long)
 Event DragComplete()
-Event MouseDown(ByRef Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
-Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
-Event MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+Event MouseDown(ByRef Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
+Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
+Event MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
 Event Reflow()
 Event Resize()
 Event Redraw()
@@ -182,7 +182,7 @@ Dim l_lngTemp As Long
             End If
         Else
             l_liItem.Selected = True
-            RaiseEvent ItemSelect(l_liItem)
+            If l_liItem.Selected Then RaiseEvent ItemSelect(l_liItem)
         End If
     Next l_lngIndex
     RaiseEvent SelectionChange
@@ -198,7 +198,7 @@ Dim l_booOldState As Boolean
     DisableUpdates = True
     For Each l_liItem In m_licListItems
         l_liItem.Selected = True
-        RaiseEvent ItemSelect(l_liItem)
+        If l_liItem.Selected Then RaiseEvent ItemSelect(l_liItem)
     Next l_liItem
     RaiseEvent SelectionChange
     DisableUpdates = l_booOldState
@@ -378,7 +378,11 @@ Dim l_rctFocus As Rect
             m_imgSurface.Box l_rctItem, Colors(lbcBorder + l_lngOffset), RenderMode_SourceAlpha
             Set l_rctItem = .Rectangle
             l_rctItem.Adjust -Metrics(lbmItemMargin), -Metrics(lbmItemMargin)
-            SetTextColor m_lngDC, SwapChannels(SetAlpha(Colors(lbcText + l_lngOffset), 0), Red, Blue)
+            If .Enabled Then
+                SetTextColor m_lngDC, SwapChannels(SetAlpha(Colors(lbcText + l_lngOffset), 0), Red, Blue)
+            Else
+                SetTextColor m_lngDC, GetSystemColor(SystemColor_Button_Shadow)
+            End If
             SetBackgroundMode m_lngDC, BackgroundMode_Transparent
             If .Image Is Nothing Then
                 l_lngImageWidth = 0
@@ -465,15 +469,15 @@ Dim l_fntOld As StdFont
     End If
 End Sub
 
-Public Function ItemFromPoint(ByVal X As Long, ByVal Y As Long) As ngListItem
+Public Function ItemFromPoint(ByVal x As Long, ByVal y As Long) As ngListItem
 On Error Resume Next
 Dim l_liItem As ngListItem
     If m_imgSurface Is Nothing Then Exit Function
     If m_licListItems Is Nothing Then Exit Function
-    Y = Y + vsScroll.Value
+    y = y + vsScroll.Value
     For Each l_liItem In m_licListItems
         With l_liItem
-            If Y >= .Top And Y < (.Top + .Height) Then
+            If y >= .Top And y < (.Top + .Height) Then
                 Set ItemFromPoint = l_liItem
                 Exit For
             End If
@@ -569,17 +573,17 @@ On Error Resume Next
     Set m_fntFont = UserControl.Ambient.Font
 End Sub
 
-Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
 Dim l_booCancel As Boolean
 Dim l_booOldState As Boolean
 Dim l_booToggle As Boolean
 Dim l_liNew As ngListItem
-    RaiseEvent MouseDown(Button, Shift, X, Y)
-    m_lngStartX = X
-    m_lngStartY = Y
+    RaiseEvent MouseDown(Button, Shift, x, y)
+    m_lngStartX = x
+    m_lngStartY = y
 '    If m_liFocus Is Nothing Then UpdateMouse
-    Set l_liNew = ItemFromPoint(X, Y)
+    Set l_liNew = ItemFromPoint(x, y)
     If Button = 1 Then
         If l_liNew Is Nothing Then Exit Sub
         l_booToggle = (Shift And vbCtrlMask) = vbCtrlMask
@@ -598,22 +602,22 @@ Dim l_liNew As ngListItem
     End If
 End Sub
 
-Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
 Dim l_lngY As Long
 Dim l_liTarget As ngListItem, l_liItem As ngListItem
 Dim l_lngItems As Long
 Dim l_lngOldIndex As Long, l_lngNewIndex As Long
 Dim l_lngDragTarget As Long
-    RaiseEvent MouseMove(Button, Shift, X, Y)
-    If (Abs(X - m_lngStartX) > 2) Or (Abs(Y - m_lngStartY) > 2) Then
+    RaiseEvent MouseMove(Button, Shift, x, y)
+    If (Abs(x - m_lngStartX) > 2) Or (Abs(y - m_lngStartY) > 2) Then
         m_booDragged = True
     End If
     If (Button = 1) Then
         If m_licDragItems.Count < 1 Then
         Else
-            Set l_liTarget = ItemFromPoint(X, Y)
-            l_lngY = Y + vsScroll.Value
+            Set l_liTarget = ItemFromPoint(x, y)
+            l_lngY = y + vsScroll.Value
             If l_liTarget Is Nothing Then
                 If l_lngY <= 0 Then
                     l_lngDragTarget = 1
@@ -648,14 +652,14 @@ Dim l_lngDragTarget As Long
     End If
 End Sub
 
-Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
 Dim l_liHover As ngListItem
 Dim l_booToggle As Boolean
-    RaiseEvent MouseUp(Button, Shift, X, Y)
+    RaiseEvent MouseUp(Button, Shift, x, y)
     EndDrag
     If Not m_booDragged Then
-        Set l_liHover = ItemFromPoint(X, Y)
+        Set l_liHover = ItemFromPoint(x, y)
         If l_liHover.Selected Then
             If Shift = 0 Then
                 SelectItems l_liHover.Index
@@ -666,14 +670,14 @@ Dim l_booToggle As Boolean
     Reflow
 End Sub
 
-Private Sub UserControl_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub UserControl_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    RaiseEvent OLEDragDrop(Data, Effect, Button, Shift, X, Y)
+    RaiseEvent OLEDragDrop(Data, Effect, Button, Shift, x, y)
 End Sub
 
-Private Sub UserControl_OLEDragOver(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single, State As Integer)
+Private Sub UserControl_OLEDragOver(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, y As Single, State As Integer)
 On Error Resume Next
-    RaiseEvent OLEDragOver(Data, Effect, Button, Shift, X, Y, State)
+    RaiseEvent OLEDragOver(Data, Effect, Button, Shift, x, y, State)
 End Sub
 
 Private Sub UserControl_Paint()

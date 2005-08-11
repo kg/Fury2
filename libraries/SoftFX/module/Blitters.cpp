@@ -2790,9 +2790,10 @@ Export int BlitDeform(Image *Dest, Image *Source, MeshParam *Mesh, Rectangle *De
     if (Mesh->Width < 2) return Failure;
     if (Mesh->Height < 2) return Failure;
 
+    if (Scaler == 0) Scaler = DefaultSampleFunction;
 
     {
-        int overrideresult = Override::EnumOverrides(Override::BlitDeform, 9, Dest, Source, Mesh, DestRect, SourceRect, RenderArgument, Renderer, Scaler);
+        int overrideresult = Override::EnumOverrides(Override::BlitDeform, 8, Dest, Source, Mesh, DestRect, SourceRect, RenderArgument, Renderer, Scaler);
 #ifdef OVERRIDES
         if (overrideresult != 0) return overrideresult;
 #endif
@@ -2891,6 +2892,161 @@ Export int BlitDeform(Image *Dest, Image *Source, MeshParam *Mesh, Rectangle *De
         }
         bx += bxi;
       }
+      pDest += iDestRowOffset;
+      by += byi;
+      cyw += cyi;
+      while (cyw >= 1.0f) {
+        cyw -= 1.0f;
+        cy++;
+        update_points = true;
+      }
+    }
+  
+    return Success;
+}
+
+Export int BlitDeformMask(Image *Dest, Image *Source, Image *Mask, MeshParam *Mesh, Rectangle *DestRect, Rectangle *SourceRect, Rectangle *MaskRect, Pixel RenderArgument, int Opacity, RenderFunction *Renderer, ScalerFunction *Scaler) {
+    if (!Dest || !Source || !Mask || !Mesh) {
+      return Failure;
+    }
+    if (!Dest->initialized()) {
+      return Failure;
+    }
+    if (!Source->initialized()) {
+      return Failure;
+    }
+    if (!Mask->initialized()) {
+      return Failure;
+    }
+    if (Mesh->Width < 2) return Failure;
+    if (Mesh->Height < 2) return Failure;
+
+    if (Scaler == 0) Scaler = DefaultSampleFunction;
+
+    {
+        int overrideresult = Override::EnumOverrides(Override::BlitDeformMask, 11, Dest, Source, Mask, Mesh, DestRect, SourceRect, MaskRect, RenderArgument, Opacity, Renderer, Scaler);
+#ifdef OVERRIDES
+        if (overrideresult != 0) return overrideresult;
+#endif
+    }
+
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    ImageLockManager ilMask(lockingMode, Source);
+    if (!ilDest.performUnlock())
+      return Failure;
+    if (!ilSource.performUnlock())
+      return Failure;
+    if (!ilMask.performUnlock())
+        return Failure;
+
+    Rectangle rCoordinates, rSourceCoordinates;
+        rCoordinates = *DestRect;
+        rSourceCoordinates = *SourceRect;
+        if (!ClipRectangle_Image(&rCoordinates,
+         Dest)) return Trivial_Success;
+
+    rCoordinates.Width = ClipValue(rCoordinates.Width, 0, Mask->Width - MaskRect->Left);
+    rCoordinates.Height = ClipValue(rCoordinates.Height, 0, Mask->Height - MaskRect->Top);
+
+    Pixel *pDest = Dest->pointer(
+        rCoordinates.Left, rCoordinates.Top),
+        *pMask = Mask->pointer(MaskRect->Left, MaskRect->Top);
+
+    if ((!pDest) || (!pMask)) {
+      return Failure;
+    }
+    
+    Dest->dirty();
+    
+    DoubleWord iCX = 0 , iCY = rCoordinates.Height;
+    
+    DoubleWord iMaskRowOffset =
+        (Mask->Width - rCoordinates.Width) + Mask->Pitch;
+    DoubleWord iDestRowOffset =
+        (Dest->Width - rCoordinates.Width) + Dest->Pitch;
+    
+    AlphaLevel *aMask, *aScale;
+    aScale = AlphaLevelLookup(Opacity);
+
+    int segmentWidth = rCoordinates.Width, pixelsToDraw = 0;
+    int cx = 0, cy = 0;
+    int mw = Mesh->Width - 1, mh = Mesh->Height - 1;
+    if ((mw < 1) || (mh < 1)) return Failure;
+    float bx = rSourceCoordinates.Left, by = rSourceCoordinates.Top;
+    float bxi = (1 / (rCoordinates.Width / (float)(rSourceCoordinates.Width))), byi = (1 / (rCoordinates.Height / (float)(rSourceCoordinates.Height)));
+    float cxw = 0, cyw = 0, sx = 0, sy = 0, lsx = 0, lsy = 0;
+    float cxi = (mw / (float)rCoordinates.Width), cyi = (mh / (float)rCoordinates.Height);
+    float xd, yd;
+    Pixel *rowTable = StaticAllocate<Pixel>(BlitterBuffer, segmentWidth);
+    bool update_points = true, first_update = true, perform_draw = false;
+    MeshPoint p[4];
+
+    while (iCY--) {
+      iCX = (DoubleWord)rCoordinates.Width;
+      cxw = 0;
+      cx = 0;
+      bx = rSourceCoordinates.Left;
+      update_points = true;
+      first_update = true;
+      pixelsToDraw = 0;
+      while (iCX--) {
+        cxw += cxi;
+        pixelsToDraw++;
+        while (cxw >= 1.0f) {
+          cxw -= 1.0f;
+          cx++;
+          update_points = true;
+        }
+        if (update_points || (iCX == 0)) {
+          update_points = false;
+          lsx = sx;
+          lsy = sy;
+          /* sometimes i hate that inline is just a hint
+          Mesh->get4Points(cx, cy, p);
+          this is one of those times */
+          
+          p[0] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
+          p[1] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
+          p[2] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+          p[3] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+
+          sx = bx + ((p[0].X * (1 - cxw) + p[1].X * cxw) * (1 - cyw) + (p[2].X * (1 - cxw) + p[3].X * cxw) * cyw);
+          sy = by + ((p[0].Y * (1 - cxw) + p[1].Y * cxw) * (1 - cyw) + (p[2].Y * (1 - cxw) + p[3].Y * cxw) * cyw);
+          if (first_update) {
+            first_update = false;
+            bx += bxi;
+          }
+          else
+            perform_draw = true;
+        }
+        if (perform_draw) {
+          perform_draw = false;
+          xd = (sx - lsx) / pixelsToDraw;
+          yd = (sy - lsy) / pixelsToDraw;
+          Scaler(Source, lsx, lsy, (int)(lsx * 65536.0) % 65536, (int)(lsy * 65536.0) % 65536,
+            xd, yd, (int)(xd * 65536.0) % 65536, (int)(yd * 65536.0) % 65536, pixelsToDraw, rowTable);
+          Pixel *pSource = rowTable;
+          for (int i = 0; i < pixelsToDraw; i++) {
+            aMask = AlphaLevelLookup(AlphaFromLevel(aScale, (*pMask)[::Alpha]));
+            (*pSource)[::Alpha] = AlphaFromLevel(aMask, (*pSource)[::Alpha]);
+            pMask++;
+            pSource++;
+          }
+          if (Renderer) {
+            Renderer(pDest, rowTable, pixelsToDraw, 0, RenderArgument.V);
+            pDest += pixelsToDraw;
+          } else {
+            Pixel *pSource = rowTable;
+            while (pixelsToDraw--) {
+              *pDest++ = *pSource++;
+            }
+          }
+          pixelsToDraw = 0;
+        }
+        bx += bxi;
+      }
+      pMask += iMaskRowOffset;
       pDest += iDestRowOffset;
       by += byi;
       cyw += cyi;

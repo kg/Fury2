@@ -14,6 +14,30 @@ Attribute VB_Exposed = True
 Option Explicit
 Private m_colResourceCache As Collection
 
+Public Function ConvertSystemColor(ByVal Index As SystemColors) As Long
+On Error Resume Next
+    ConvertSystemColor = SetAlpha(SwapChannels(GetSystemColor(Index), Red, Blue), 255)
+End Function
+
+Public Sub DisplayMenuStats()
+    MsgBox "Menus: " & g_lngMenus & vbCrLf & _
+            "Menu Hosts: " & g_lngMenuHosts & vbCrLf & _
+            "Menu Items: " & g_lngMenuItems
+End Sub
+
+Public Sub CloseAllMenus()
+On Error Resume Next
+Dim l_mnuMenu As ngMenu
+    For Each l_mnuMenu In g_colOpenMenus
+        l_mnuMenu.DoClose
+    Next l_mnuMenu
+    Set g_colOpenMenus = New Collection
+End Sub
+
+Public Property Get MenuIsOpen() As Boolean
+    MenuIsOpen = g_colOpenMenus.Count > 0
+End Property
+
 Public Function CreateMenu() As ngMenu
 On Error Resume Next
     Set CreateMenu = New ngMenu

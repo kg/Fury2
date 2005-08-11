@@ -131,8 +131,8 @@ End Sub
 Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
     With Handler.GetMenu
-        .Items.AddNew "&Find...", "Ctrl+F", "Find", "find"
-        .Items.AddNew "&Replace...", "Ctrl+H", "Replace", "replace"
+        .Items.AddNew "&Find...", "Ctrl+F", "Find", "find", , , , , , , .Items("Separator").Index
+        .Items.AddNew "&Replace...", "Ctrl+H", "Replace", "replace", , , , , , , .Items("Separator").Index
     End With
 End Sub
 

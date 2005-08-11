@@ -38,7 +38,7 @@ Implements IVirtualFileSaveable
 Implements Fury2Object
 
 Private m_sprAttached As Fury2Sprite
-Private m_sngAttachX As Single, m_sngAttachY As Single
+Private m_sngAttachX As Single, m_sngAttachY As Single, m_sngAttachH As Single, m_sngAttachV As Single
 
 Private m_lngLayer As Long
 Private m_mapMap As Fury2Map
@@ -191,12 +191,46 @@ Attribute Attached.VB_Description = "*"
     Set Attached = m_sprAttached
 End Property
 
-Public Sub Attach(ByRef Sprite, Optional ByVal XOffset As Single = 0, Optional ByVal YOffset As Single = 0)
+Public Sub Attach(ByRef Sprite, Optional ByVal XOffset As Single = 0, Optional ByVal YOffset As Single = 0, Optional ByVal HOffset As Single = 0, Optional ByVal VOffset As Single = 0)
 On Error Resume Next
     Set m_sprAttached = Sprite
     m_sngAttachX = XOffset
     m_sngAttachY = YOffset
+    m_sngAttachH = HOffset
+    m_sngAttachV = VOffset
 End Sub
+
+Public Property Let AttachX(ByVal vData As Single)
+    m_sngAttachX = vData
+End Property
+
+Public Property Get AttachX() As Single
+    AttachX = m_sngAttachX
+End Property
+
+Public Property Let AttachY(ByVal vData As Single)
+    m_sngAttachY = vData
+End Property
+
+Public Property Get AttachY() As Single
+    AttachY = m_sngAttachY
+End Property
+
+Public Property Let AttachH(ByVal vData As Single)
+    m_sngAttachH = vData
+End Property
+
+Public Property Get AttachH() As Single
+    AttachH = m_sngAttachH
+End Property
+
+Public Property Let AttachV(ByVal vData As Single)
+    m_sngAttachV = vData
+End Property
+
+Public Property Get AttachV() As Single
+    AttachV = m_sngAttachV
+End Property
 
 Public Sub AttachGraphic(Graphic)
 On Error Resume Next
@@ -706,7 +740,6 @@ Public Sub Initialize()
 On Error Resume Next
 Dim l_objScript As Object
 Dim l_posPose As Fury2Pose
-    LoadTemplate
     Set l_objScript = Script
 
     l_objScript.Init
@@ -874,7 +907,7 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
         VelocityMultiplier = 1
         AnimationMultiplier = 1
         m_spOldParam = m_spParam
-        DoEvents
+        LoadTemplate
     End With
 End Sub
 
@@ -1013,12 +1046,15 @@ On Error Resume Next
 Dim l_sprTemplate As Fury2Sprite, l_strTemplateSprite As String, l_strTemplateIndex As String
     If Trim(m_strTemplate) = "" Then
     Else
+        Debug.Print m_strTemplate
         l_strTemplateSprite = left(m_strTemplate, InStrRev(m_strTemplate, ":") - 1)
         l_strTemplateIndex = Mid(m_strTemplate, InStrRev(m_strTemplate, ":") + 1)
         Set l_sprTemplate = mvarEngine.LoadSprite(l_strTemplateSprite, l_strTemplateIndex)
         If l_sprTemplate Is Nothing Then
         Else
             l_sprTemplate.CopyTo Me, True
+            Initialize
+            Load
         End If
     End If
 End Sub
@@ -1027,7 +1063,6 @@ Public Property Let Name(NewName As String)
 Attribute Name.VB_Description = "The sprite's name."
 On Error Resume Next
     m_strName = NewName
-    m_posPoses.LoadGraphics
 End Property
 
 Public Property Get Name() As String
@@ -1469,7 +1504,9 @@ End Sub
 
 Public Property Let Template(NewTemplate As String)
 Attribute Template.VB_Description = "{Path}The template to sync the sprite with."
+On Error Resume Next
     m_strTemplate = NewTemplate
+    LoadTemplate
 End Property
 
 Public Property Get Template() As String
@@ -1571,8 +1608,8 @@ Dim l_sprCollided As Fury2Sprite
     If m_sprAttached Is Nothing Then
     Else
         With m_sprAttached
-            m_spParam.Position.X = .X + m_sngAttachX
-            m_spParam.Position.Y = .Y + m_sngAttachY
+            m_spParam.Position.X = .X + m_sngAttachX + (Sin(.Angle * c_dblRadian) * m_sngAttachV) + (Sin((.Angle + 90) * c_dblRadian) * m_sngAttachH)
+            m_spParam.Position.Y = .Y + m_sngAttachY + (-Cos(.Angle * c_dblRadian) * m_sngAttachV) + (-Cos((.Angle + 90) * c_dblRadian) * m_sngAttachH)
             If LinkProperties Then Me.Angle = .Angle
             If LinkProperties Then Me.RotationAngle = .RotationAngle
             If LinkProperties Then Me.ScaleLevel = .ScaleLevel

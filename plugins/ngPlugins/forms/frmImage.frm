@@ -335,7 +335,7 @@ End Sub
 
 Private Sub iEditingCommands_CanPaste(NewValue As Boolean)
 On Error Resume Next
-    NewValue = ClipboardContainsFormat(CF_Image)
+    NewValue = ClipboardContainsImage(CustomClipboard, Me.hwnd)
 End Sub
 
 Private Sub iEditingCommands_CanRedo(NewValue As Boolean)
@@ -356,9 +356,7 @@ End Sub
 
 Private Sub iEditingCommands_Copy()
 On Error Resume Next
-    CustomClipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize CustomClipboard, ClipboardFormat(CF_Image), m_imgImage
-    CustomClipboard.ClipboardClose
+    ClipboardSerializeImage CustomClipboard, Me.hwnd, m_imgImage
 End Sub
 
 Private Sub iEditingCommands_Cut()
@@ -371,11 +369,7 @@ End Sub
 
 Private Sub iEditingCommands_Paste()
 On Error Resume Next
-    CustomClipboard.ClipboardOpen Me.hwnd
-    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(CF_Image), m_imgImage) Then
-    Else
-        CustomClipboard.ClipboardClose
-    End If
+    SetImage ClipboardDeserializeImage(CustomClipboard, Me.hwnd)
     picImage_Paint
 End Sub
 

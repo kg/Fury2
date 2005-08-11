@@ -78,7 +78,7 @@ Dim l_resFile As ngResource
         .Enabled = Enabled
         .Checked = Checked
     End With
-    Add l_btnNew
+    Add l_btnNew, AtIndex
     Set AddNew = l_btnNew
 End Function
 
@@ -163,6 +163,22 @@ On Error Resume Next
     m_colCollection.Remove IndexOrKey
     Reindex
     m_tbrParent.Reflow
+End Sub
+
+Public Sub RemoveByKeys(ByVal KeyPattern As String)
+On Error Resume Next
+Dim l_lngIndex As Long
+Dim l_btnButton As ngToolButton
+    l_lngIndex = 1
+    Do Until l_lngIndex > m_colCollection.Count
+        Set l_btnButton = m_colCollection(l_lngIndex)
+        If l_btnButton.Key Like KeyPattern Then
+            m_colCollection.Remove l_lngIndex
+        Else
+            l_lngIndex = l_lngIndex + 1
+        End If
+    Loop
+    Reindex
 End Sub
 
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)

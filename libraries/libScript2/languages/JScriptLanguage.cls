@@ -105,7 +105,7 @@ Private Property Get IScriptLanguage_Name() As String
     IScriptLanguage_Name = "JScript"
 End Property
 
-Private Function IScriptLanguage_ParseCode(Code As String) As String
+Private Function IScriptLanguage_ParseCode(Code As String, State As ScriptEngineState) As String
 On Error Resume Next
 Dim l_strCode As String, l_strSeg As String
 Dim l_lngPos As Long

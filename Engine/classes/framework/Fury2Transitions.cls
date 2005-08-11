@@ -58,7 +58,6 @@ Dim m_sngVolume As Single
         Exit Sub
     End If
     If m_booTransitioning Then Exit Sub
-    Engine.FrameBuildup = 0
     m_booTransitioning = True
     Engine.ContextLevelAdd "Transitions.FadeOut"
     m_lngBackColor = CLng(BackColor)
@@ -98,7 +97,6 @@ Dim m_lngBackColor As Long
         Exit Sub
     End If
     If m_booTransitioning Then Exit Sub
-    Engine.FrameBuildup = 0
     m_booTransitioning = True
     Engine.ContextLevelAdd "Transitions.FadeIn"
     m_lngBackColor = CLng(BackColor)
@@ -136,7 +134,6 @@ Dim m_imgOld As Fury2Image
     If Length <= 0 Then Exit Sub
     If Engine.SpecialFX = False Then Exit Sub
     If m_booTransitioning Then Exit Sub
-    Engine.FrameBuildup = 0
     m_booTransitioning = True
     Engine.ContextLevelAdd "Transitions.Crossfade"
     m_dblStart = HiResTimer

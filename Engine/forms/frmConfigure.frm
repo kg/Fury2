@@ -38,7 +38,7 @@ Begin VB.Form frmConfigure
       EndProperty
       Height          =   405
       Left            =   3450
-      TabIndex        =   7
+      TabIndex        =   6
       Top             =   1380
       Width           =   1200
    End
@@ -56,7 +56,7 @@ Begin VB.Form frmConfigure
       EndProperty
       Height          =   405
       Left            =   30
-      TabIndex        =   6
+      TabIndex        =   5
       Top             =   1380
       Width           =   1200
    End
@@ -73,7 +73,7 @@ Begin VB.Form frmConfigure
       EndProperty
       Height          =   270
       Left            =   30
-      TabIndex        =   4
+      TabIndex        =   3
       Top             =   1080
       Width           =   4620
       Begin VB.PictureBox picEnableSound 
@@ -82,7 +82,7 @@ Begin VB.Form frmConfigure
          Left            =   3765
          ScaleHeight     =   195
          ScaleWidth      =   780
-         TabIndex        =   10
+         TabIndex        =   9
          Top             =   0
          Width           =   780
          Begin VB.CheckBox chkEnableSound 
@@ -90,7 +90,7 @@ Begin VB.Form frmConfigure
             Caption         =   "Enable"
             Height          =   195
             Left            =   0
-            TabIndex        =   5
+            TabIndex        =   4
             Top             =   0
             Value           =   1  'Checked
             Width           =   780
@@ -113,33 +113,22 @@ Begin VB.Form frmConfigure
       TabIndex        =   0
       Top             =   0
       Width           =   4620
-      Begin VB.ComboBox cmbBitDepth 
-         Enabled         =   0   'False
-         Height          =   315
-         ItemData        =   "frmConfigure.frx":492A
-         Left            =   3255
-         List            =   "frmConfigure.frx":493A
-         Style           =   2  'Dropdown List
-         TabIndex        =   3
-         Top             =   615
-         Width           =   1260
-      End
       Begin VB.ComboBox cmbDisplayMode 
          Enabled         =   0   'False
          Height          =   315
-         ItemData        =   "frmConfigure.frx":495F
+         ItemData        =   "frmConfigure.frx":492A
          Left            =   1470
-         List            =   "frmConfigure.frx":497E
+         List            =   "frmConfigure.frx":4949
          Style           =   2  'Dropdown List
          TabIndex        =   2
          Top             =   615
-         Width           =   1755
+         Width           =   3045
       End
       Begin VB.ComboBox cmbGraphicsPlugin 
          Height          =   315
-         ItemData        =   "frmConfigure.frx":49CF
+         ItemData        =   "frmConfigure.frx":499A
          Left            =   1470
-         List            =   "frmConfigure.frx":49D6
+         List            =   "frmConfigure.frx":49A1
          Style           =   2  'Dropdown List
          TabIndex        =   1
          Top             =   255
@@ -152,7 +141,7 @@ Begin VB.Form frmConfigure
          Enabled         =   0   'False
          Height          =   195
          Left            =   435
-         TabIndex        =   9
+         TabIndex        =   8
          Top             =   675
          Width           =   1005
       End
@@ -162,7 +151,7 @@ Begin VB.Form frmConfigure
          Caption         =   "Output Plugin:"
          Height          =   195
          Left            =   405
-         TabIndex        =   8
+         TabIndex        =   7
          Top             =   315
          Width           =   1035
       End
@@ -233,15 +222,6 @@ On Error Resume Next
             .Fullscreen = True
             .ScreenScaleRatio = CSng(Replace(cmbDisplayMode.Text, "x", ""))
         End If
-        Select Case cmbBitDepth.ListIndex
-        Case 1
-            .BitDepth = 16
-        Case 2
-            .BitDepth = 24
-        Case 3
-            .BitDepth = 32
-        Case Else
-        End Select
         .DisableSound = Not CBool(chkEnableSound.Value)
     End With
 End Sub
@@ -249,11 +229,9 @@ End Sub
 Private Sub cmbGraphicsPlugin_Change()
     If cmbGraphicsPlugin.Text = "GDI" Then
         cmbDisplayMode.Enabled = False
-        cmbBitDepth.Enabled = False
         lblDisplayMode.Enabled = False
     Else
         cmbDisplayMode.Enabled = True
-        cmbBitDepth.Enabled = True
         lblDisplayMode.Enabled = True
     End If
 End Sub

@@ -42,6 +42,15 @@ Dim l_lngIndex As Long
     Next l_miMenuItem
 End Sub
 
+Friend Property Set Parent(ByRef NewValue As ngMenu)
+On Error Resume Next
+    Set m_mnuParent = NewValue
+End Property
+
+Public Property Get Parent() As ngMenu
+    Set Parent = m_mnuParent
+End Property
+
 Friend Sub SetParent(Parent As ngMenu)
 On Error Resume Next
 Dim l_miItem As ngMenuItem
@@ -85,7 +94,7 @@ Dim l_resFile As ngResource
         Set .HoverEvent = HoverEvent
         .SetParent m_mnuParent
     End With
-    Add l_miNew
+    Add l_miNew, AtIndex
     Set AddNew = l_miNew
 End Function
 
@@ -185,6 +194,22 @@ On Error Resume Next
     m_colCollection.Remove IndexOrKey
     Reindex
     m_mnuParent.Reflow
+End Sub
+
+Public Sub RemoveByKeys(ByVal KeyPattern As String)
+On Error Resume Next
+Dim l_lngIndex As Long
+Dim l_miItem As ngMenuItem
+    l_lngIndex = 1
+    Do Until l_lngIndex > m_colCollection.Count
+        Set l_miItem = m_colCollection(l_lngIndex)
+        If l_miItem.Key Like KeyPattern Then
+            m_colCollection.Remove l_lngIndex
+        Else
+            l_lngIndex = l_lngIndex + 1
+        End If
+    Loop
+    Reindex
 End Sub
 
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)

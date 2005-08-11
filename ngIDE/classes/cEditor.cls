@@ -330,6 +330,13 @@ Dim l_booResult As Boolean
     Err.Clear
 End Function
 
+Public Sub View_Refresh()
+On Error Resume Next
+Dim l_objDocument As Object
+    Set l_objDocument = m_docChild.Form
+    l_objDocument.RefreshAll
+End Sub
+
 Public Sub ActionUpdate()
 On Error Resume Next
 Dim l_edcDocument As iEditingCommands, l_ctlControl As Control
@@ -515,9 +522,9 @@ On Error Resume Next
 Dim l_plgPlugin As iFileTypePlugin
 Dim l_docDocument As iDocument
     If PluginIndex = -1 Then Exit Sub
-    SetBusyState True
     Set l_plgPlugin = g_colFileTypePlugins(CLng(PluginIndex))
     Set l_docDocument = l_plgPlugin.CreateNew
+    SetBusyState True
     If l_docDocument Is Nothing Then
     Else
         frmMain.ShowChild l_docDocument

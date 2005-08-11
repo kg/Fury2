@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{9DC93C3A-4153-440A-88A7-A10AEDA3BAAA}#3.7#0"; "vbalDTab6.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.7#0"; "ngUI.ocx"
 Begin VB.Form frmSpriteImporter 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Sprite Importer"
@@ -32,7 +32,7 @@ Begin VB.Form frmSpriteImporter
       ScaleHeight     =   315
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   384
-      TabIndex        =   4
+      TabIndex        =   3
       Top             =   390
       Width           =   5820
    End
@@ -79,36 +79,14 @@ Begin VB.Form frmSpriteImporter
       Top             =   30
       Width           =   1500
    End
-   Begin vbalDTab6.vbalDTabControl dtViews 
-      Height          =   5205
+   Begin ngUI.ngTabStrip tsViews 
+      Height          =   5190
       Left            =   30
-      TabIndex        =   3
-      Top             =   15
+      TabIndex        =   4
+      Top             =   30
       Width           =   5910
       _ExtentX        =   10425
-      _ExtentY        =   9181
-      AllowScroll     =   0   'False
-      TabAlign        =   0
-      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      BeginProperty SelectedFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   700
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      ShowCloseButton =   0   'False
-      MoveableTabs    =   0   'False
+      _ExtentY        =   9155
    End
 End
 Attribute VB_Name = "frmSpriteImporter"
@@ -182,9 +160,9 @@ On Error Resume Next
     Me.Hide
 End Sub
 
-Private Sub dtViews_TabSelected(theTab As vbalDTab6.cTab)
+Private Sub tsViews_TabSelected(TheTab As ngTab)
 On Error Resume Next
-    Select Case theTab.Index
+    Select Case TheTab.Index
     Case 1
         picPreview.Visible = False
         insSettings.Visible = True
@@ -201,8 +179,10 @@ End Sub
 Private Sub Form_Load()
 On Error Resume Next
     Set Options = New SpriteImporterOptions
-    dtViews.Tabs.Add "Options", , "Options"
-    dtViews.Tabs.Add "Preview", , "Preview"
+    tsViews.Tabs.AddNew "Options"
+    tsViews.Tabs.AddNew "Preview"
+    picPreview.Move tsViews.Left + 2, tsViews.Top + tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - tsViews.IdealHeight - 3
+    insSettings.Move tsViews.Left + 2, tsViews.Top + tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - tsViews.IdealHeight - 3
 End Sub
 
 Private Sub picPreview_Paint()

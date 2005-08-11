@@ -110,6 +110,13 @@ On Error Resume Next
     SoftFX.Filter_Adjust_RGB m_lngImage, Area.GetRectangle, RedAmount, GreenAmount, BlueAmount
 End Sub
 
+Public Sub AdjustHSV(ByVal HueAmount As Single, ByVal SaturationAmount As Single, ByVal ValueAmount As Single, Optional ByVal Area As Fury2Rect = Nothing)
+On Error Resume Next
+    If Not Initialized Then Exit Sub
+    If Area Is Nothing Then Set Area = Me.ClipRectangle
+    SoftFX.Filter_Adjust_HSV m_lngImage, Area.GetRectangle, Floor(HueAmount * 10), Floor(SaturationAmount * 2550), Floor(ValueAmount * 2550)
+End Sub
+
 Public Sub AdjustRGBGamma(ByVal RedGamma As Long, ByVal GreenGamma As Long, ByVal BlueGamma As Long, Optional ByVal Area As Fury2Rect = Nothing)
 On Error Resume Next
     If Not Initialized Then Exit Sub
@@ -298,6 +305,28 @@ Dim l_imgSource As Fury2Image
     If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
     If ResampleMode = ResampleMode_Default Then ResampleMode = m_smdResampleMode
     SoftFX.Blit_Deform m_lngImage, l_imgSource.Handle, Mesh.GetParam, l_rctDest.GetRectangle, l_rctSource.GetRectangle, Color, GetRenderer(Mode), GetScaler(ResampleMode)
+End Sub
+
+Public Sub MaskDeformBlit(Optional ByVal DestRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal MaskRectangle As Fury2Rect = Nothing, Optional ByVal Source As Fury2Image = Nothing, Optional ByVal Mask As Fury2Image = Nothing, Optional ByVal Mesh As Fury2DeformationMesh = Nothing, Optional ByVal Alpha As Single = 1#, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default, Optional ByVal Color As Long = 0)
+On Error Resume Next
+Dim l_rctDest As Fury2Rect, l_rctSource As Fury2Rect
+Dim l_imgSource As Fury2Image
+    Set l_rctDest = DestRectangle
+    Set l_rctSource = SourceRectangle
+    Set l_imgSource = Source
+    If Err <> 0 Then
+        Err.Clear
+        Exit Sub
+    End If
+    If Mesh Is Nothing Then Exit Sub
+    If l_imgSource Is Nothing Then Exit Sub
+    If Mask Is Nothing Then Exit Sub
+    If l_rctDest Is Nothing Then Set l_rctDest = Me.Rectangle
+    If l_rctSource Is Nothing Then Set l_rctSource = l_imgSource.Rectangle
+    If MaskRectangle Is Nothing Then Set MaskRectangle = Mask.Rectangle
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    If ResampleMode = ResampleMode_Default Then ResampleMode = m_smdResampleMode
+    SoftFX.Blit_Mask_Deform m_lngImage, l_imgSource.Handle, Mask.Handle, Mesh.GetParam, l_rctDest.GetRectangle, l_rctSource.GetRectangle, MaskRectangle.GetRectangle, Color, CLng(Alpha * 255), GetRenderer(Mode), GetScaler(ResampleMode)
 End Sub
 
 Public Function Compare(Optional ByVal DestRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal Source As Fury2Image = Nothing) As Long

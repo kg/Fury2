@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.1#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.11#0"; "ngUI.ocx"
 Begin VB.Form frmMap 
    BorderStyle     =   0  'None
    ClientHeight    =   5580
@@ -3448,7 +3448,7 @@ Dim l_lngButtons As Long
             Case View_Sprites
                 m_tbrToolbar.ResourcePattern = "map editor\tools\sprites\*.png"
                 .AddNew , "Tool(0)", "cursor", "Cursor", bsyGroup
-                .AddNew , "Tool(1)", "insert", "Insert Sprite", bsyGroup, , False
+                .AddNew , "Tool(1)", "insert", "Insert Sprite", bsyGroup
                 .AddNew "-"
                 .AddNew , "Tool(2)", "add path node", "Add Path Node", bsyGroup
                 .AddNew , "Tool(3)", "select path nodes", "Select Path Nodes", bsyGroup
@@ -4610,6 +4610,7 @@ Dim l_sprNew As Fury2Sprite
     Case SpriteTool_Select_Path
         m_booSelectingPathNodes = True
     Case SpriteTool_Add_Path
+    Case SpriteTool_Insert
     Case Else
     End Select
 End Sub
@@ -4659,6 +4660,7 @@ Public Sub Tool_Sprites_Up(Button As Integer, Shift As Integer, X As Single, Y A
 On Error Resume Next
 Dim l_wpNode As Fury2Waypoint, l_lngNode As Long
 Dim l_rctArea As Fury2Rect
+Dim l_sprSprite As Fury2Sprite
     Select Case Tool_Sprites
     Case SpriteTool_Cursor
         If (m_booDraggingSprite) Then
@@ -4705,6 +4707,27 @@ Dim l_rctArea As Fury2Rect
             Redraw
         End With
         Redraw
+    Case SpriteTool_Insert
+        If Button = 1 Then
+            Load frmInsertSprite
+            Set frmInsertSprite.Engine = Engine
+            Set frmInsertSprite.Sprite = Nothing
+            frmInsertSprite.Show vbModal
+            If frmInsertSprite.Cancelled Then
+            Else
+                Set l_sprSprite = frmInsertSprite.Sprite
+                l_sprSprite.X = m_lngMouseX
+                l_sprSprite.Y = m_lngMouseY
+                ObjectUndoPush m_mapMap.Layers(m_lngSelectedLayer).Sprites, l_sprSprite, m_mapMap.Layers(m_lngSelectedLayer).Sprites.Count + 1, OUO_Remove
+                m_mapMap.Layers(m_lngSelectedLayer).Sprites.Add l_sprSprite
+                m_lngSelectedSprite = m_mapMap.Layers(m_lngSelectedLayer).Sprites.Count
+                RefreshSprites
+                Redraw
+                Editor.ToolbarUpdate
+                m_lngCurrentTool(m_lngCurrentView) = SpriteTool_Cursor
+                ToolChanged
+            End If
+        End If
     Case Else
     End Select
     m_booDraggingSprite = False

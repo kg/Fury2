@@ -784,7 +784,7 @@ On Error Resume Next
     Case "Characters"
         NewValue = ClipboardContainsFormat(FCF_Character)
     Case "Image"
-        NewValue = ClipboardContainsFormat(FCF_Image)
+        NewValue = ClipboardContainsImage(CustomClipboard, Me.hwnd)
     Case Else
     End Select
 End Sub
@@ -995,9 +995,7 @@ End Sub
 
 Public Sub CopyImage()
 On Error Resume Next
-    CustomClipboard.ClipboardOpen Me.hwnd
-    ClipboardSerialize CustomClipboard, ClipboardFormat(FCF_Image), SelectedCharacter.Image
-    CustomClipboard.ClipboardClose
+    ClipboardSerializeImage CustomClipboard, Me.hwnd, SelectedCharacter.Image
 End Sub
 
 Public Function PasteCharacter() As CharacterProxy
@@ -1023,16 +1021,12 @@ End Function
 Public Sub PasteImage()
 On Error Resume Next
 Dim l_imgImage As Fury2Image
-    Set l_imgImage = New Fury2Image
-    CustomClipboard.ClipboardOpen Me.hwnd
-    If ClipboardDeserialize(CustomClipboard, ClipboardFormat(FCF_Image), l_imgImage) Then
+    Set l_imgImage = ClipboardDeserializeImage(CustomClipboard, Me.hwnd)
+    If Not (l_imgImage Is Nothing) Then
         Set SelectedCharacter.Image = l_imgImage
-        CustomClipboard.ClipboardClose
         RedrawCharacterList
         RedrawSelectedCharacter
         Editor.ToolbarUpdate
-    Else
-        CustomClipboard.ClipboardClose
     End If
 End Sub
 

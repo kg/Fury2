@@ -453,10 +453,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
         If (.Layers(Layers).Tileset.Buffer.Width > 0) And .Layers(Layers).Visible Then
             If .Layers(Layers).Prerendered = True Then
                 With .Layers(Layers)
-                    Set l_imgTileset = .Tileset.Buffer
-                    If l_imgTileset Is Nothing Then
-                        Set l_imgTileset = .Tileset.GenerateBuffer
-                    End If
+                    Set l_imgTileset = .Tileset.GetBuffer
                     If Not (l_imgTileset Is Nothing) Then
                         If EnableParallax Then
                             m_lngVPX = (mvarViewportX * .ParallaxX)
@@ -465,26 +462,8 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                             m_lngVPX = (mvarViewportX)
                             m_lngVPY = (mvarViewportY)
                         End If
-                        With CameraParam
-                            .ViewportX = m_lngVPX
-                            .ViewportY = m_lngVPY
-                        End With
-                        m_lngViewX = ClipValue(l_imgTileset.Width - m_lngVPX, 0, mvarWidth)
-                        m_lngViewY = ClipValue(l_imgTileset.Height - m_lngVPY, 0, mvarHeight)
-                        If m_lngVPX < 0 Then
-                            m_lngXOff = Abs(m_lngVPX)
-                            m_lngVPX = 0
-                        End If
-                        If m_lngVPY < 0 Then
-                            m_lngYOff = Abs(m_lngVPY)
-                            m_lngVPY = 0
-                        End If
-                        m_lngViewX = ClipValue(m_lngViewX, 0, mvarWidth - m_lngXOff)
-                        m_lngViewY = ClipValue(m_lngViewY, 0, mvarHeight - m_lngYOff)
-                        m_lngViewX = ClipValue(m_lngViewX, 0, (.Width * .Tileset.TileWidth) - (m_lngXOff + m_lngVPX))
-                        m_lngViewY = ClipValue(m_lngViewY, 0, (.Height * .Tileset.TileHeight) - (m_lngYOff + m_lngVPY))
-                        Set DestTileRect = F2Rect((m_lngXOff), (m_lngYOff), m_lngViewX, m_lngViewY, False)
-                        Set SourceTileRect = F2Rect(m_lngVPX, m_lngVPY, m_lngViewX + m_lngBGX, m_lngViewY + m_lngBGY, False)
+                        Set DestTileRect = F2Rect(-m_lngVPX, -m_lngVPY, (.Width * .Tileset.TileWidth), (.Height * .Tileset.TileHeight), False)
+                        Set SourceTileRect = l_imgTileset.Rectangle
                         If ShowTiles Then
                             If .RenderTarget = 1 Then
                                 Set l_imgTarget = l_imgBuffer

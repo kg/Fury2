@@ -115,7 +115,7 @@ Private Property Get IScriptLanguage_Name() As String
     IScriptLanguage_Name = "RubyScript"
 End Property
 
-Private Function IScriptLanguage_ParseCode(Code As String) As String
+Private Function IScriptLanguage_ParseCode(Code As String, State As ScriptEngineState) As String
 Dim m_strText As String
     '   Strip smart quotes and other idiocies
     If Len(Code) < 2 Then IScriptLanguage_ParseCode = Code: Exit Function

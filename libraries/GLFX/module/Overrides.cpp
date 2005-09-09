@@ -40,11 +40,21 @@ void setRenderer(int Renderer, Pixel RenderArgument) {
     } else {
       disableFog();
     }
+  } else if (Renderer == GetFontSourceAlphaRenderer()) {
+    setBlendMode<Font_SourceAlpha>();
+    disableFog();
+    setVertexColor(RenderArgument);
   } else if (Renderer == GetAdditiveRenderer()) {
     setBlendMode<Additive>();
     disableFog();
   } else if (Renderer == GetSubtractiveRenderer()) { 
     setBlendMode<Subtractive>();
+    disableFog();
+  } else if (Renderer == GetAdditiveSourceAlphaRenderer()) {
+    setBlendMode<Additive_SourceAlpha>();
+    disableFog();
+  } else if (Renderer == GetSubtractiveSourceAlphaRenderer()) { 
+    setBlendMode<Subtractive_SourceAlpha>();
     disableFog();
   } else {
     setBlendMode<Normal>();
@@ -756,7 +766,8 @@ defOverride(BlitSimple_Font_SourceAlpha) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Font_SourceAlpha>();
-  setTextureColor(White);
+  setBlendColor(White);
+  setTextureColorN<0>(White);
   setVertexColor(Color);
   BlitSimple_Core(Parameters);
   return Success;
@@ -772,7 +783,8 @@ defOverride(BlitSimple_Font_SourceAlpha_Opacity) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<Font_SourceAlpha>();
-  setTextureColor(White);
+  setBlendColor(White);
+  setTextureColorN<0>(White);
   setVertexColor(MultiplyAlpha(Color, Opacity));
   BlitSimple_Core(Parameters);
   return Success;
@@ -1330,7 +1342,7 @@ defOverride(FilterSimple_ConvexPolygon) {
   selectContext(Image);
   disableTextures();
   setRenderer(Renderer, RenderArgument);
-  setVertexColor(White);
+  setVertexColor(Color);
   setBlendColor(White);
   FPoint* ptr = GetPolygonVertexPointer(Polygon, 0);
   int vertex_count = GetPolygonVertexCount(Polygon);
@@ -1345,6 +1357,34 @@ defOverride(FilterSimple_ConvexPolygon) {
   return Success;
 }
 
+defOverride(FilterSimple_ConvexPolygon_Gradient) {
+  readParam(int, Image, 0);
+  readParam(int, Polygon, 1);
+  readParam(Pixel, Color, 2);
+  readParam(int, Renderer, 3);
+  readParam(Pixel, RenderArgument, 4);
+  contextCheck(Image);
+  lockCheck(Image);
+  selectContext(Image);
+  disableTextures();
+  setRenderer(Renderer, RenderArgument);
+  setVertexColor(Color);
+  setBlendColor(White);
+  GradientVertex* ptr = GetGradientPolygonVertexPointer(Polygon, 0);
+  int vertex_count = GetGradientPolygonVertexCount(Polygon);
+  beginDraw(GL_POLYGON);
+  for (int i = 0; i < vertex_count; ++i) {
+    setVertexColor(ptr->Color);
+    glVertex2f(ptr->X, ptr->Y);
+    ptr++;
+  }
+  endDraw();
+  disableFog();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+passOverride(FilterSimple_ConvexPolygon_AntiAlias, FilterSimple_ConvexPolygon);
 
 defOverride(FilterSimple_ConvexPolygon_Textured) {
   readParam(int, Image, 0);
@@ -1376,6 +1416,8 @@ defOverride(FilterSimple_ConvexPolygon_Textured) {
   SetImageDirty(Image, 1);
   return Success;
 }
+
+passOverride(FilterSimple_ConvexPolygon_Textured_AntiAlias, FilterSimple_ConvexPolygon_Textured);
 
 defOverride(Copy) {
   readParam(int, Dest, 0);
@@ -2040,6 +2082,40 @@ defOverride(BlitDeformMask) {
   return Success;
 }
 
+Export void GLRenderFunction(int Dest, int X, int Y, void *Source, int Count) {
+  if (Global->RenderTexture) {
+    endDraw();
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Count, 1, GL_BGRA_EXT, GL_UNSIGNED_BYTE, Source);
+    GL::drawTexturedLine(X, Y + 1, X + Count, Y + 1, Global->RenderTexture->U(0), Global->RenderTexture->V(0), Global->RenderTexture->U(Count), Global->RenderTexture->V(0));
+  }
+}
+
+defOverride(GetScanlineRenderer) {
+  readParam(int, Dest, 0);
+  readParam(int, Renderer, 1);
+  readParam(int, Count, 2);
+  readParam(Pixel, Argument, 3);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  if (Global->RenderTexture) {
+    if (Global->RenderTexture->Width < Count) {
+      delete Global->RenderTexture;
+      Global->RenderTexture = 0;
+    }
+  }
+  if (Global->RenderTexture) {
+  } else {
+    Global->RenderTexture = GL::createTexture(Count + 1, 2, false);
+  }
+  Global->RenderFunction = Renderer;
+  setRenderer(Renderer, Argument);
+  setVertexColor(White);
+  enableTextures();
+  selectTexture(Global->RenderTexture->Handle);
+  return reinterpret_cast<int>(GLRenderFunction);
+}
+
 void InstallOverrides() {
 	addOverride(Deallocate);
   addOverride(Clear);
@@ -2123,8 +2199,12 @@ void InstallOverrides() {
   addOverride(FilterSimple_Adjust_Channel);
   addOverride(FilterSimple_ConvexPolygon);
   addOverride(FilterSimple_ConvexPolygon_Textured);
+  addOverride(FilterSimple_ConvexPolygon_Gradient);
+//  addOverride(FilterSimple_ConvexPolygon_AntiAlias);
+//  addOverride(FilterSimple_ConvexPolygon_Textured_AntiAlias);
   addOverride(RenderTilemapLayer);
   addOverride(RenderWindow);
+  addOverride(GetScanlineRenderer);
 }
 
 void UninstallOverrides() {
@@ -2210,8 +2290,12 @@ void UninstallOverrides() {
   removeOverride(FilterSimple_Adjust_Channel);
   removeOverride(FilterSimple_ConvexPolygon);
   removeOverride(FilterSimple_ConvexPolygon_Textured);
+  removeOverride(FilterSimple_ConvexPolygon_Gradient);
+//  removeOverride(FilterSimple_ConvexPolygon_AntiAlias);
+//  removeOverride(FilterSimple_ConvexPolygon_Textured_AntiAlias);
   removeOverride(RenderTilemapLayer);
   removeOverride(RenderWindow);
+  removeOverride(GetScanlineRenderer);
 }
 
 Export void GLInstallAllocateHook() {

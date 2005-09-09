@@ -104,6 +104,13 @@ public:
     Alpha = ClipByte(a);
   }
 
+  inline void clip() {
+    Hue = WrapValue(Hue, Hue_Min, Hue_Max);
+    Saturation = ClipValue(Saturation, Saturation_Min, Saturation_Max);
+    Value = ClipValue(Value, Value_Min, Value_Max);
+    Alpha = ClipByte(Alpha);
+  }
+
   inline void setHue(int h) {
     Hue = WrapValue(h, Hue_Min, Hue_Max);
   }

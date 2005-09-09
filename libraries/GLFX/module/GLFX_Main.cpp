@@ -36,6 +36,10 @@ Export int GLSetScaleMode(int mode) {
 
 Export int GLFlip() {
   if (!Global) return Failure;
+  if (Global->RenderTexture) {
+    delete Global->RenderTexture;
+    Global->RenderTexture = 0;
+  }
   assert(Global->Framebuffer != 0);
   assert(Global->DC != 0);
   bool unlock = false;

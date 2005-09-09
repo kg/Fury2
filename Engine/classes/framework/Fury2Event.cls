@@ -18,6 +18,18 @@ Public BoundParameters As Variant
 Private m_lngBlocked As Long
 Private m_engEngine As Fury2Engine
 
+Public Function Duplicate() As Fury2Event
+On Error Resume Next
+    Set Duplicate = New Fury2Event
+    With Duplicate
+        .SetEngine m_engEngine
+        Set .Object = Object
+        .Method = Method
+        .BoundParameters = BoundParameters
+        .Blocking = Blocking
+    End With
+End Function
+
 Public Property Get Blocked() As Boolean
 On Error Resume Next
     Blocked = m_lngBlocked > 0

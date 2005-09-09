@@ -10,6 +10,7 @@ namespace GL {
   Pixel vertexColor = Pixel(0xFFFFFFFF);
   Pixel fogColor = Pixel(0x0);
   Pixel blendColor = Pixel(0x0);
+  Pixel textureColor = Pixel(0x0);
 
   void init() {
     Global->Context = 0;
@@ -21,6 +22,7 @@ namespace GL {
     for (int i = 0; i < 4; i++) 
       activeTexture[i] = -1;
     drawMode = -1;
+    textureColor = Pixel(0x0);
     vertexColor = Pixel(0xFFFFFFFF);
     fogColor = Pixel(0x0);
     blendColor = Pixel(0x0);
@@ -76,18 +78,22 @@ namespace GL {
     if (height < 1) return 0;
     endDraw();
     GLuint handle = 0;
-    if (enableCache) {
+    if (enableCache && EnableTextureSharing) {
       if ((width <= SmallTextureSize) && (height <= SmallTextureSize)) {
         Texture* tex = createSmallTexture(width, height);
         if (tex) return tex;
       }
     }
     glGenTextures(1, &handle);
-    selectTexture(handle);
+    selectTextureN<0>(handle);
     setScaleMode<ScaleModes::Linear>();
     int texWidth = powerOfTwo(width);
     int texHeight = powerOfTwo(height);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texWidth, texHeight, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, 0);
+    GLenum e = glGetError();
+    if (e) {
+      int x = 0;
+    }
     return new Texture(handle, 0, 0, width, height, 1.0f / texWidth, 1.0f / texHeight);
   }
 
@@ -270,12 +276,13 @@ namespace GL {
   }
 
   void enableTextures() {
+    disableTexture<1>();
     enableTexture<0>();
   }
 
   void disableTextures() {
-    disableTexture<0>();
     disableTexture<1>();
+    disableTexture<0>();
   }
 
   void enableFog() {
@@ -300,6 +307,7 @@ namespace GL {
 
   void setTextureColor(Pixel color) {
     endDraw();
+    textureColor = color;
     float fv[4] = {color[::Red] / 255.0f, color[::Green] / 255.0f, color[::Blue] / 255.0f, color[::Alpha] / 255.0f};
     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, fv);
   }
@@ -400,6 +408,15 @@ namespace GL {
     glVertex2f(X + W, Y + H);
     glTexCoord2f(U1, V2);
     glVertex2f(X, Y + H);
+  }
+
+  void drawTexturedLine(int X1, int Y1, int X2, int Y2, float U1, float V1, float U2, float V2) {
+    beginDraw(GL_LINES);
+    glTexCoord2f(U1, V1);
+    glVertex2i(X1, Y1);
+    glTexCoord2f(U2, V2);
+    glVertex2i(X2, Y2);
+    endDraw();
   }
 
   void drawTexturedLineF(float X1, float Y1, float X2, float Y2, float U1, float V1, float U2, float V2) {

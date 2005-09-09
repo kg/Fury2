@@ -83,7 +83,7 @@ Dim l_varFiles As Variant
     InitFilesystem App.Path
     InitAccelerators
     
-    g_edEditor.AcceleratorManager.Attach frmMain.hwnd
+    g_edEditor.AcceleratorManager.Attach frmMain.hWnd
     g_edEditor.Event_FocusChanged
     
     frmMain.RefreshActiveDocument

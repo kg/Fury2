@@ -35,7 +35,7 @@ Implements Fury2Debugger
 Private Const EM_CANUNDO = &HC6
 Private Const EM_UNDO = &HC7
 
-Private Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+Private Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hWnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
 
 Public CanCut As Boolean, CanCopy As Boolean, CanPaste As Boolean, CanDelete As Boolean, CanSelectAll As Boolean, CanSelectNone As Boolean, CanUndo As Boolean, CanRedo As Boolean
 Private m_strGamePath As String
@@ -316,8 +316,8 @@ Dim l_clpDocument As iEditingCommands, l_ctlControl As Control
     If l_clpDocument Is Nothing Then
         Set l_ctlControl = m_docChild.Form.ActiveControl
         If TypeOf l_ctlControl Is TextBox Then
-            Action_Undo = CBool(SendMessage(l_ctlControl.hwnd, EM_CANUNDO, 0, 0))
-            SendMessage l_ctlControl.hwnd, EM_UNDO, 0, 0
+            Action_Undo = CBool(SendMessage(l_ctlControl.hWnd, EM_CANUNDO, 0, 0))
+            SendMessage l_ctlControl.hWnd, EM_UNDO, 0, 0
             ActionUpdate
         End If
     Else
@@ -364,7 +364,7 @@ Dim l_edcDocument As iEditingCommands, l_ctlControl As Control
                 CanDelete = CanCut
                 CanSelectAll = (Len(l_ctlControl.Text) > 0) And (l_ctlControl.SelLength < Len(l_ctlControl.Text))
                 CanSelectNone = l_ctlControl.SelLength > 0
-                CanUndo = SendMessage(l_ctlControl.hwnd, EM_CANUNDO, 0, 0) <> 0
+                CanUndo = SendMessage(l_ctlControl.hWnd, EM_CANUNDO, 0, 0) <> 0
                 CanRedo = False
             End If
         End If
@@ -571,10 +571,12 @@ End Sub
 
 Public Sub File_SaveAll()
 On Error Resume Next
+Dim l_cmChild As cChildManager
 Dim l_docDocument As iDocument
-    For Each l_docDocument In frmMain.Documents
+    For Each l_cmChild In frmMain.Documents
+        Set l_docDocument = l_cmChild.Document
         File_Save l_docDocument
-    Next l_docDocument
+    Next l_cmChild
 End Sub
 
 Public Sub File_SaveAs(Optional ByRef Document As iDocument = Nothing)
@@ -824,12 +826,12 @@ End Sub
 
 Public Sub Help_OnlineDocs()
 On Error Resume Next
-    Call ShellExecute(frmMain.hwnd, "Open", "http://fury2.luminance.org/wiki/default.aspx/Documentation.Index", "", "", vbNormalFocus)
+    Call ShellExecute(frmMain.hWnd, "Open", "http://fury2.luminance.org/wiki/default.aspx/Documentation.Index", "", "", vbNormalFocus)
 End Sub
 
 Public Sub Help_OnlineTutorials()
 On Error Resume Next
-    Call ShellExecute(frmMain.hwnd, "Open", "http://fury2.luminance.org/wiki/default.aspx/Documentation.Tutorials", "", "", vbNormalFocus)
+    Call ShellExecute(frmMain.hWnd, "Open", "http://fury2.luminance.org/wiki/default.aspx/Documentation.Tutorials", "", "", vbNormalFocus)
 End Sub
 
 Public Sub HideDebugger()
@@ -841,7 +843,7 @@ End Sub
 
 Friend Sub InitClipboard()
 On Error Resume Next
-    m_clpClipboard.InitClipboardChangeNotification frmMain.hwnd
+    m_clpClipboard.InitClipboardChangeNotification frmMain.hWnd
 End Sub
 
 Public Sub LoadOptions()
@@ -1090,6 +1092,11 @@ On Error Resume Next
     frmMain.SetStatus Value
 End Sub
 
+Public Sub SetFocus(ByVal hWnd As Long)
+On Error Resume Next
+    frmMain.FixFocus hWnd
+End Sub
+
 Public Sub Show_FileSidebar()
 On Error Resume Next
     frmMain.picFileSidebar.Visible = Not frmMain.picFileSidebar.Visible
@@ -1176,7 +1183,11 @@ End Sub
 
 Public Sub Macro_RunCustom()
 On Error Resume Next
-    RunMacro PromptForScript
+Dim l_strPrevious As String
+    l_strPrevious = ReadRegSetting("Macros\Previous", "")
+    l_strPrevious = PromptForScript("Enter Macro", l_strPrevious)
+    RunMacro l_strPrevious
+    WriteRegSetting "Macros\Previous", l_strPrevious
 End Sub
 
 Public Property Get Version() As String

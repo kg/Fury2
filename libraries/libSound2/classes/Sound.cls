@@ -15,6 +15,7 @@ Attribute VB_Description = "Fury² Sound Handle"
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
 Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
+Private m_sngFrequency As Single
 Private m_strFilename As String
 Private m_seEngine As SoundEngine
 Private m_lngHandle As Long
@@ -38,6 +39,7 @@ On Error Resume Next
     Set m_seEngine = Parent
     m_lngHandle = Handle
     m_strFilename = Filename
+    m_sngFrequency = Frequency
 End Sub
 
 Public Property Get Parent() As SoundEngine
@@ -50,14 +52,14 @@ On Error Resume Next
     Handle = m_lngHandle
 End Property
 
-Public Property Get LoopCount() As Long
+Public Property Get Loopcount() As Long
 On Error Resume Next
 Dim l_lngValue As Long
     fmodex.FMOD_Sound_GetLoopCount m_lngHandle, l_lngValue
-    LoopCount = l_lngValue
+    Loopcount = l_lngValue
 End Property
 
-Public Property Let LoopCount(ByVal NewCount As Long)
+Public Property Let Loopcount(ByVal NewCount As Long)
 On Error Resume Next
     fmodex.FMOD_Sound_SetLoopCount m_lngHandle, NewCount
 End Property
@@ -97,6 +99,11 @@ On Error Resume Next
 Dim l_sngVolume As Single, l_sngFrequency As Single, l_sngPan As Single, l_lngPriority As Long
     fmodex.FMOD_Sound_GetDefaults m_lngHandle, l_sngFrequency, l_sngVolume, l_sngPan, l_lngPriority
     Volume = l_sngVolume
+End Property
+
+Public Property Get OriginalFrequency() As Single
+On Error Resume Next
+    OriginalFrequency = m_sngFrequency
 End Property
 
 Public Property Get Frequency() As Single
@@ -208,9 +215,13 @@ Dim l_strName As String
     Err.Clear
 End Property
 
-Public Function Play(Optional ByVal Paused As Boolean = False) As channel
+Public Function Play(Optional ByVal Paused As Boolean = False) As Channel
 On Error Resume Next
 Dim l_lngChannel As Long
     Call fmodex.FMOD_System_PlaySound(m_seEngine.Handle, FMOD_CHANNEL_FREE, m_lngHandle, Paused, l_lngChannel)
     Set Play = m_seEngine.CreateChannel(l_lngChannel, Me)
 End Function
+
+Private Sub Class_Terminate()
+    Free
+End Sub

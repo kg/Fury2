@@ -104,6 +104,7 @@ public:
   Rectangle ClipRectangle;
   zeroinit<corona::Image*> CoronaImage;
   zeroinit<int> DIBSection, DIBDC;
+  zeroinit<win32::HANDLE> SharedMapping;
   OptimizationFlags OptimizeData;
   Pixel MatteColor;
   zeroinit<Image*> BrushPattern;
@@ -111,21 +112,25 @@ public:
   autoinit<bool, true> Dirty;
 
   static const int TagCount = 8;
-  DoubleWord Tags[TagCount];
+  DoubleWord StaticTags[TagCount];
+  DoubleWord *Tags;
 
   Image() {
     AddToHeap(this);
+    Tags = StaticTags;
     _Fill<DoubleWord>(this->Tags, 0, TagCount);
   }
 
   Image(Size Width, Size Height) {
     AddToHeap(this);
+    Tags = StaticTags;
     _Fill<DoubleWord>(this->Tags, 0, TagCount);
     this->allocate(Width, Height);
   }
 
   Image(Size Width, Size Height, bool DIB, int DC) {
     AddToHeap(this);
+    Tags = StaticTags;
     _Fill<DoubleWord>(this->Tags, 0, TagCount);
     if (DIB) {
       this->allocateDIB(Width, Height, DC);
@@ -142,6 +147,7 @@ public:
     this->Unlocked = true;
     this->Pitch = Pitch;
     this->setClipRectangle(this->getRectangle());
+    Tags = StaticTags;
     _Fill<DoubleWord>(this->Tags, 0, TagCount);
     this->optimize();
   }
@@ -155,6 +161,7 @@ public:
     this->Unlocked = true;
     this->Pitch = Pitch;
     this->setClipRectangle(this->getRectangle());
+    Tags = StaticTags;
     _Fill<DoubleWord>(this->Tags, 0, TagCount);
     this->optimize();
   }
@@ -162,6 +169,7 @@ public:
   Image(Image *Source) {
     AddToHeap(this);
     this->MatteColor = Source->MatteColor;
+    Tags = StaticTags;
     _Fill<DoubleWord>(this->Tags, 0, TagCount);
     this->copy(Source);
     this->Unlocked = (this->Data != Null);
@@ -171,6 +179,7 @@ public:
   Image(Image *Source, int x, int y, int w, int h) {
     AddToHeap(this);
     this->MatteColor = Source->MatteColor;
+    Tags = StaticTags;
     _Fill<DoubleWord>(this->Tags, 0, TagCount);
     this->copy(Source, x, y, w, h);
     this->Unlocked = (this->Data != Null);
@@ -179,6 +188,7 @@ public:
 
   Image(corona::Image *Img) {
     AddToHeap(this);
+    Tags = StaticTags;
     _Fill<DoubleWord>(this->Tags, 0, TagCount);
     if (Img) {
       if (Img->getFormat() != corona::PF_B8G8R8A8) {
@@ -238,6 +248,7 @@ public:
 
   void allocate(Size Width, Size Height);
   void allocateDIB(Size Width, Size Height, int DC);
+  void allocateShared(Size Width, Size Height, unsigned char *ID);
   void reallocate(Size Width, Size Height);
   void resize(Size Width, Size Height);
   void slide(Coordinate X, Coordinate Y);
@@ -272,6 +283,11 @@ public:
     return this->DIBSection;
   }
 
+  inline int getSharedHandle() {
+    win32::HANDLE sh = this->SharedMapping;
+    return reinterpret_cast<int>(sh);
+  }
+
   inline Pixel* pointer() {
     return Data;
   }
@@ -284,6 +300,12 @@ public:
   inline Pixel* pointer(Coordinate X, Coordinate Y) {
     if (Data == Null) return Null;
     if ((X < 0) || (Y < 0) || (X >= Width) || (Y >= Height)) return Null;
+    return ((Data) + ( (Y * (Width + Pitch)) + (X) ));
+  }
+
+  inline Pixel* pointer_clip(Coordinate X, Coordinate Y) {
+    if (Data == Null) return Null;
+    if ((X < ClipRectangle.Left) || (Y < ClipRectangle.Top) || (X >= ClipRectangle.right()) || (Y >= ClipRectangle.bottom())) return Null;
     return ((Data) + ( (Y * (Width + Pitch)) + (X) ));
   }
 

@@ -30,6 +30,14 @@ Private m_txaTextAlignment As ngTabTextAlignment
 Private m_lngLeft As Long
 Private m_lngTop As Long
 Private m_fntFont As StdFont
+Private m_lngWidth As Long, m_lngHeight As Long
+
+Friend Sub Invalidate()
+On Error Resume Next
+    If Not (m_tbsParent Is Nothing) Then m_tbsParent.Reflow
+    m_lngWidth = 0
+    m_lngHeight = 0
+End Sub
 
 Friend Property Get RowHeight() As Long
     RowHeight = m_lngRowHeight
@@ -47,7 +55,7 @@ End Property
 Public Property Set Font(ByVal NewFont As StdFont)
 On Error Resume Next
     Set m_fntFont = NewFont
-    If Not (m_tbsParent Is Nothing) Then m_tbsParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get Index() As Long
@@ -136,6 +144,10 @@ On Error Resume Next
 Dim l_lngImageWidth As Long
 Dim l_lngTextWidth As Long
     If m_tbsParent Is Nothing Then Exit Property
+    If m_lngWidth <> 0 Then
+        Width = m_lngWidth
+        Exit Function
+    End If
     If Len(m_strText) > 0 Then
         l_lngTextWidth = m_tbsParent.TextWidth(Font, m_strText) + (m_tbsParent.Metrics(tsmTextMargin) * 2)
     End If
@@ -146,6 +158,7 @@ Dim l_lngTextWidth As Long
     If m_tbsParent.ShowCloseButtons Then
         Width = Width + m_tbsParent.CloseButtonWidth
     End If
+    m_lngWidth = Width
 End Property
 
 Public Property Get Height() As Long
@@ -153,6 +166,10 @@ On Error Resume Next
 Dim l_lngImageHeight As Long
 Dim l_lngTextHeight As Long
     If m_tbsParent Is Nothing Then Exit Property
+    If m_lngHeight <> 0 Then
+        Height = m_lngHeight
+        Exit Function
+    End If
     If Len(m_strText) > 0 Then
         l_lngTextHeight = m_tbsParent.TextHeight(Font, m_strText) + (m_tbsParent.Metrics(tsmTextMargin) * 2)
     End If
@@ -163,6 +180,7 @@ Dim l_lngTextHeight As Long
     If m_tbsParent.IdealHeight > Height Then
         Height = m_tbsParent.IdealHeight
     End If
+    m_lngHeight = Height
 End Property
 
 Public Property Get Tooltip() As String
@@ -181,7 +199,7 @@ End Property
 Public Property Let Text(ByRef NewValue As String)
 On Error Resume Next
     m_strText = NewValue
-    If Not (m_tbsParent Is Nothing) Then m_tbsParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get Key() As String
@@ -199,7 +217,7 @@ End Property
 Public Property Set Image(ByVal NewValue As Fury2Image)
 On Error Resume Next
     Set m_imgImage = NewValue
-    If Not (m_tbsParent Is Nothing) Then m_tbsParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get ClickEvent() As ngEvent
@@ -240,7 +258,7 @@ Public Property Let Visible(ByVal NewValue As Boolean)
 On Error Resume Next
     If NewValue = m_booVisible Then Exit Property
     m_booVisible = NewValue
-    If Not (m_tbsParent Is Nothing) Then m_tbsParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get Hovering() As Boolean
@@ -254,7 +272,7 @@ End Property
 Public Property Let TextAlignment(ByVal NewValue As ngTabTextAlignment)
 On Error Resume Next
     m_txaTextAlignment = NewValue
-    If Not (m_tbsParent Is Nothing) Then m_tbsParent.Reflow
+    Invalidate
 End Property
 
 Private Sub Class_Initialize()

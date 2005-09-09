@@ -15,7 +15,7 @@ Attribute VB_Description = "Fury² Sound Engine"
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
 Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 '
-'   ::fury² sound engine::
+'   ::fury² Sound engine::
 '
 Private Const c_lngMaxChannels = 1024
 Private Const c_lngMaxSoftwareChannels = 64
@@ -69,7 +69,7 @@ On Error Resume Next
 Dim m_objObj As IShellFolderEx_TLB.IUnknown, m_lngCount As Long
 Dim m_sndObj As Sound, m_lngObj As Long
     If m_colSounds.Count < 1 Then Exit Sub
-    m_Engine.DebugOut "Flushing sound cache"
+    m_Engine.DebugOut "Flushing Sound cache"
     m_lngObj = 1
     Do While m_lngObj < m_colSounds.Count
         Set m_objObj = Nothing
@@ -102,6 +102,7 @@ Dim l_lngHandle As Long
     fmodex.FMOD_System_Init m_lngFMod, c_lngMaxSoftwareChannels, FMOD_INIT_NORMAL, 0
     Debug.Print fmodex.FMOD_System_GetMasterChannelGroup(m_lngFMod, l_lngHandle)
     Set m_cgMaster = CreateChannelGroupH(l_lngHandle)
+    m_cgMaster.Disposed = True
 End Sub
 
 Public Sub Update()
@@ -114,6 +115,7 @@ Public Sub Shutdown()
 On Error Resume Next
     If m_lngFMod <> 0 Then
         FlushCache
+        Set m_colGroups = Nothing
         Set m_colSounds = Nothing
         fmodex.FMOD_System_Close m_lngFMod
         fmodex.FMOD_System_Release m_lngFMod

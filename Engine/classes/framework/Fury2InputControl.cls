@@ -33,12 +33,13 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 '
 
 Option Explicit
-Public ActivateEvent As String
-Public DeactivateEvent As String
+Public ActivateEvent As Fury2Event
+Public DeactivateEvent As Fury2Event
 Public Repeat As Boolean
 Public Enabled As Boolean
 Public Consumed As Boolean
 Public Handled As Boolean
+Public RepeatDelay As Single
 
 Private m_sngLastActivate As Single
 Private m_booReset As Boolean
@@ -94,11 +95,12 @@ Dim l_sngNow As Single
     If (Repeat) Then
         If (m_lngState > 0) Then
             l_sngNow = Engine.HiTimer
-            If ((l_sngNow - m_sngLastActivate) * 1000) > Engine.RepeatDelay Then
+            If ((l_sngNow - m_sngLastActivate)) > IIf(RepeatDelay = -1, Engine.RepeatDelay, RepeatDelay) Then
                 m_sngLastActivate = Engine.HiTimer
                 m_booReset = False
                 Handled = False
                 Engine.ControlActivate Me
+                ActivateEvent.Invoke
             End If
         End If
     End If
@@ -114,6 +116,7 @@ Dim l_booEvent As Boolean
     If l_booEvent = True Then
         m_sngLastActivate = Engine.HiTimer
         Engine.ControlActivate Me
+        ActivateEvent.Invoke
     End If
 End Sub
 
@@ -124,9 +127,13 @@ Dim l_booEvent As Boolean
     If m_lngState > 0 Then l_booEvent = True
     m_lngState = m_lngState - 1
     If m_lngState < 0 Then m_lngState = 0
-    If l_booEvent Then Engine.ControlDeactivate Me
+    If l_booEvent Then
+        Engine.ControlDeactivate Me
+        DeactivateEvent.Invoke
+    End If
 End Sub
 
 Private Sub Class_Initialize()
     Enabled = True
+    RepeatDelay = -1
 End Sub

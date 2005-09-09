@@ -62,6 +62,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(FilterSimple_ConvexPolygon) \
   defItem(FilterSimple_ConvexPolygon_Gradient) \
   defItem(FilterSimple_ConvexPolygon_Textured) \
+  defItem(FilterSimple_ConvexPolygon_AntiAlias) \
+  defItem(FilterSimple_ConvexPolygon_Textured_AntiAlias) \
   defItem(FilterSimple_Decay) \
   defItem(FilterSimple_Depalettize) \
   defItem(FilterSimple_Fill) \
@@ -104,6 +106,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(FilterSimple_Rotate90) \
   defItem(FilterSimple_Solarize) \
   defItem(FilterSimple_Swap_Channels) \
+  defItem(FilterSimple_RenderStroke) \
   defItem(FilterSimple_) \
   defItem(BlitSimple_Additive) \
   defItem(BlitSimple_Additive_Opacity) \
@@ -195,6 +198,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(RenderTilemapLayer) \
   defItem(RenderWindow) \
   defItem(RenderText) \
+  defItem(GetScanlineRenderer) \
 /* OVERRIDES GO HERE */ \
   defEnd
 

@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "../header/SoftFX Main.hpp"
 #include "../header/Resample.hpp"
+#include "../header/Filters.hpp"
 #define TRANSLATION_TABLE
 #include "../header/Debug_Flags.hpp"
 #include "../header/MersenneTwister.h"
@@ -38,9 +39,6 @@ PythagorasLevel** PythagorasRootTable = Null;
 bool Initialized = false;
 
 MTRand mersenne = MTRand();
-
-int (*_CreateDIBSection) (int hDC, BitmapInfo *pInfo, DoubleWord iFlags, void **pPointer, int FileHandle, int FileOffset);
-int (*_DeleteObject) (int Object);
 
 int __cdecl DllMain( int hModule, int ul_reason_for_call, void* lpReserved )
 {
@@ -219,7 +217,6 @@ Export void Uninitialize() {
     DestroyAlphaTable();
     DestroyPythagorasTable();
     Override::CleanupOverrides();
-
     Initialized = false;
 
     return;
@@ -315,6 +312,15 @@ Export Image* AllocateImage(int Width, int Height) {
     return new Image(Width, Height);
 }
 
+Export Image* AllocateSharedImage(int Width, int Height, unsigned char* ID) {
+
+    if (!Initialized) return Failure;
+
+    Image* newImage = new Image();
+    newImage->allocateShared(Width, Height, ID);
+    return newImage;
+}
+
 Export Image* AllocateImageHandle(int Width, int Height, int Pitch, Pixel* Pointer) {
 
     if (!Initialized) return Failure;
@@ -329,12 +335,34 @@ Export Image* AllocateDIBSection(int Width, int Height, int DC) {
     return new Image(Width, Height, true, DC);
 }
 
+Image* AutoAddAlpha(corona::Image* img) {
+  bool alpha = (img->getFormat() == corona::PF_R8G8B8A8 || img->getFormat() == corona::PF_B8G8R8A8);
+  bool paletted = (img->getFormat() == corona::PF_I8);
+  if (paletted) {
+      alpha = alpha || (img->getPaletteFormat() == corona::PF_R8G8B8A8 || img->getPaletteFormat() == corona::PF_B8G8R8A8);
+  }
+  corona::Image* convertedImage = Null;
+  if (img->getFormat() != corona::PF_B8G8R8A8) {
+    convertedImage = corona::ConvertImage(img, corona::PF_B8G8R8A8);
+    img = Null;
+  } else {
+    convertedImage = img;
+  }
+  Image* newImage = Null;
+  newImage = new Image(convertedImage);
+  if (alpha) {
+  } else {
+    FilterSimple_Fill_Channel(newImage, Null, ::Alpha, 255);
+  }
+  return newImage;
+}
+
 Export Image* AllocateImageFromFile(const Byte* Filename) {
 
     if (!Initialized) return Failure;
     if (!Filename) return Failure;
 
-    return new Image(corona::OpenImage(reinterpret_cast<const char*>(Filename), corona::PF_B8G8R8A8));
+    return AutoAddAlpha(corona::OpenImage(reinterpret_cast<const char*>(Filename), corona::PF_DONTCARE));
 }
 
 Export Image* AllocateImageFromFileBuffer(const void* Buffer, int Size) {
@@ -345,7 +373,7 @@ Export Image* AllocateImageFromFileBuffer(const void* Buffer, int Size) {
 
     corona::File* memFile = corona::CreateMemoryFile(Buffer, Size);
     if (!memFile) return Failure;
-    Image* newImage = new Image(corona::OpenImage(memFile, corona::PF_B8G8R8A8));
+    Image* newImage = AutoAddAlpha(corona::OpenImage(memFile, corona::PF_B8G8R8A8));
     if (!newImage) return Failure;
     return newImage;
 }
@@ -394,6 +422,49 @@ Export int SaveImageToPNG(Image *Source, const Byte* Filename) {
     delete pImg;
     pImg = Null;
     return Success;
+}
+
+Export DoubleWord* AllocateSharedMemory(int Size, unsigned char *ID) {
+  bool isNew = true;
+  win32::HANDLE mapping = 0;
+  DoubleWord* pointer = 0;
+  mapping = win32::CreateFileMappingA(((win32::HANDLE)(win32::LONG_PTR)-1), Null, PAGE_READWRITE, 0, Size + 4, (win32::LPCSTR)ID);
+  if (win32::GetLastError() == ERROR_ALREADY_EXISTS) {
+    isNew = false;
+  }
+  if (mapping) {
+    pointer = reinterpret_cast<DoubleWord*>(win32::MapViewOfFile(mapping, FILE_MAP_ALL_ACCESS, 0, 0, 0));
+    if (pointer) {
+      if (isNew) {
+        *pointer = reinterpret_cast<DoubleWord>(mapping);
+        pointer++;
+      } else {
+        if (*pointer != reinterpret_cast<DoubleWord>(mapping)) {
+          win32::UnmapViewOfFile(pointer);
+          win32::CloseHandle(mapping);
+        }
+        pointer++;
+      }
+      return pointer;
+    } else {
+      win32::CloseHandle(mapping);
+    }
+  }
+  return 0;
+}
+
+Export int DeallocateSharedMemory(DoubleWord* pointer) {
+  win32::HANDLE mapping = 0;
+  if (pointer) {
+    pointer--;
+    mapping = reinterpret_cast<win32::HANDLE>(*pointer);
+    if (mapping) {
+      win32::UnmapViewOfFile(pointer);
+      win32::CloseHandle(mapping);
+      return Success;
+    }
+  }
+  return Failure;
 }
 
 Export Image* AllocateImageCopy(Image *Source) {
@@ -524,13 +595,7 @@ Export int GetImagePitch(Image *Image) {
   return Failure;
 }
 
-Export void SetCallbacks(int (*pDIBSection) (int hDC, BitmapInfo *pInfo, DoubleWord iFlags, void **pPointer, int FileHandle, int FileOffset), 
-                         int (*pDeleteObject) (int Object)) {
-
-  if (!Initialized) return;
-
-  _CreateDIBSection = pDIBSection;
-  _DeleteObject = pDeleteObject;
+Export void SetCallbacks(int reserved1, int reserved2) {
 
   return;
 }
@@ -549,6 +614,15 @@ Export int GetImageDIBHandle(Image *Image) {
   if (!Initialized) return Failure;
 
   if (Image) return Image->getDIB();
+
+  return Failure;
+}
+
+Export int GetImageSharedHandle(Image *Image) {
+
+  if (!Initialized) return Failure;
+
+  if (Image) return Image->getSharedHandle();
 
   return Failure;
 }

@@ -434,12 +434,15 @@ End Function
 Public Sub Update(Map As Fury2Map, Optional CLayer As Long = 1, Optional SetIndex As Boolean = False)
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
+Dim l_seoOptions As SpriteEngineOptions
 Dim l_lngSprites As Long
     If mCol.Count = 0 Then Exit Sub
     l_lngSprites = 1
     If mvarDirty Then RefreshList
     With Map.Layers(CLayer)
-        SoftFX.UpdateSprites mvarFirst, .CollisionMatrix
+        l_seoOptions.CollisionMatrix = .CollisionMatrix
+        l_seoOptions.VelocityMultiplier = Engine.VelocityMultiplier
+        SoftFX.UpdateSprites mvarFirst, l_seoOptions
     End With
     For Each l_sprSprite In mCol
         With l_sprSprite

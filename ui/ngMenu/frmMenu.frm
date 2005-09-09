@@ -417,7 +417,7 @@ On Error Resume Next
     BorderWidth = ScaleX((Me.Width - Me.ScaleWidth) / 2, vbTwips, vbPixels)
     Me.ScaleMode = 3
     F2Init
-    Debug.Print "frmMenu_Initiaize"
+    Debug.Print "frmMenu_Initialize"
 End Sub
 
 Private Sub Form_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
@@ -455,9 +455,8 @@ End Sub
 
 Private Sub Form_Terminate()
 On Error Resume Next
+    Release
     g_lngMenuHosts = g_lngMenuHosts - 1
-    Set Menu = Nothing
-    FreeSurface
     Debug.Print "frmMenu_Terminate"
 End Sub
 

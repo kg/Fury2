@@ -34,6 +34,14 @@ Private m_txaTextAlignment As ngToolButtonTextAlignment
 Private m_lngLeft As Long
 Private m_lngTop As Long
 Private m_fntFont As StdFont
+Private m_lngWidth As Long, m_lngHeight As Long
+
+Friend Sub Invalidate()
+On Error Resume Next
+    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    m_lngWidth = 0
+    m_lngHeight = 0
+End Sub
 
 Friend Property Get RowHeight() As Long
     RowHeight = m_lngRowHeight
@@ -51,7 +59,7 @@ End Property
 Public Property Set Font(ByVal NewFont As StdFont)
 On Error Resume Next
     Set m_fntFont = NewFont
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get Index() As Long
@@ -189,6 +197,10 @@ On Error Resume Next
 Dim l_lngImageWidth As Long
 Dim l_lngTextWidth As Long
     If m_tbrParent Is Nothing Then Exit Property
+    If m_lngWidth <> 0 Then
+        Width = m_lngWidth
+        Exit Function
+    End If
     If Len(m_strText) > 0 Then
         l_lngTextWidth = m_tbrParent.TextWidth(Font, m_strText) + (m_tbrParent.Metrics(tbmTextMargin) * 2)
     End If
@@ -206,6 +218,7 @@ Dim l_lngTextWidth As Long
     Case bsySeparator
         Width = m_tbrParent.Metrics(tbmSeparatorSize) + (m_tbrParent.Metrics(tbmSeparatorMargin) * 2)
     End Select
+    m_lngWidth = Width
 End Property
 
 Public Property Get Height() As Long
@@ -213,6 +226,10 @@ On Error Resume Next
 Dim l_lngImageHeight As Long
 Dim l_lngTextHeight As Long
     If m_tbrParent Is Nothing Then Exit Property
+    If m_lngHeight <> 0 Then
+        Height = m_lngHeight
+        Exit Function
+    End If
     If Len(m_strText) > 0 Then
         l_lngTextHeight = m_tbrParent.TextHeight(Font, m_strText) + (m_tbrParent.Metrics(tbmTextMargin) * 2)
     End If
@@ -235,6 +252,7 @@ Dim l_lngTextHeight As Long
             Height = m_tbrParent.Metrics(tbmSeparatorSize) + (m_tbrParent.Metrics(tbmSeparatorMargin) * 2)
         End Select
     End Select
+    m_lngHeight = Height
 End Property
 
 Public Property Get Tooltip() As String
@@ -253,7 +271,7 @@ End Property
 Public Property Let Text(ByRef NewValue As String)
 On Error Resume Next
     m_strText = NewValue
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get Key() As String
@@ -272,7 +290,7 @@ Public Property Set Image(ByVal NewValue As Fury2Image)
 On Error Resume Next
     Set m_imgImage = NewValue
     Set m_imgGlow = Nothing
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get ClickEvent() As ngEvent
@@ -325,7 +343,7 @@ Public Property Let Visible(ByVal NewValue As Boolean)
 On Error Resume Next
     If NewValue = m_booVisible Then Exit Property
     m_booVisible = NewValue
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get Pressed() As Boolean
@@ -351,7 +369,7 @@ End Property
 Public Property Let Style(ByVal NewValue As ngToolButtonStyles)
 On Error Resume Next
     m_tbsStyle = NewValue
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get TextAlignment() As ngToolButtonTextAlignment
@@ -361,7 +379,7 @@ End Property
 Public Property Let TextAlignment(ByVal NewValue As ngToolButtonTextAlignment)
 On Error Resume Next
     m_txaTextAlignment = NewValue
-    If Not (m_tbrParent Is Nothing) Then m_tbrParent.Reflow
+    Invalidate
 End Property
 
 Private Sub Class_Initialize()

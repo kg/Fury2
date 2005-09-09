@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 statictable staticTables[StaticTableCount];
 
 inline void* vm_alloc(DoubleWord size) {
-  DoubleWord *temp, *result;
+  DoubleWord *temp = 0, *result = 0;
 #ifdef VIRTUALALLOC
   temp = reinterpret_cast<DoubleWord*>(win32::VirtualAlloc(Null, size + 8, MEM_COMMIT, PAGE_READWRITE));
 #else

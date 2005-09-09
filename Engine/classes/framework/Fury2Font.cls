@@ -595,7 +595,7 @@ Dim l_lngCharacter As Long
     For Each l_imgCharacter In m_colCharImages
         Set l_imgClone = l_imgCharacter.Duplicate
         Set l_imgShadow = l_imgCharacter.Duplicate
-        l_imgCharacter.Resize l_imgCharacter.Width + 1, l_imgCharacter.Height + 1
+        l_imgCharacter.Resize l_imgCharacter.Width + (BlurLevel * 2), l_imgCharacter.Height + (BlurLevel * 2)
         l_imgCharacter.Clear 0
         l_imgShadow.Clear 0
         l_fltFilter.Filter l_imgShadow, l_imgClone, , , RenderMode_Normal

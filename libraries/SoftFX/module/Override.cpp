@@ -115,7 +115,7 @@ void Override::CleanupOverrides() {
   return;
 }
 
-static const int Max_Override_Parameters = 15;
+static const int Max_Override_Parameters = 16;
 
 typedef int (eofp)(Override::OverrideParameters* p);
 

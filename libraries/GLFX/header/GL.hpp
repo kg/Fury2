@@ -7,6 +7,7 @@ namespace GL {
   extern Pixel vertexColor;
   extern Pixel fogColor;
   extern Pixel blendColor;
+  extern Pixel textureColor;
 
   struct Vertex1T {
     float X, Y, U, V;
@@ -67,6 +68,7 @@ namespace GL {
   extern void drawArray(GLenum type, Vertex1T* pointer, int count);
   extern void drawLine(FPoint& start, FPoint& end);
   extern void drawGradientLine(FPoint& start, FPoint& end, Pixel startColor, Pixel endColor);
+  extern void drawTexturedLine(int X1, int Y1, int X2, int Y2, float U1, float V1, float U2, float V2);
   extern void drawTexturedLineF(float X1, float Y1, float X2, float Y2, float U1, float V1, float U2, float V2);
   extern void drawRectangle(FX::Rectangle& rect);
   extern void drawGradientRectangle(FX::Rectangle& rect, Pixel colorTL, Pixel colorTR, Pixel colorBL, Pixel colorBR);

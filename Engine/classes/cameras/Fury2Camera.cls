@@ -37,6 +37,7 @@ Option Explicit
 Implements Fury2Object
 Implements IVirtualFileSaveable
 
+Public AntiAliasLighting As Boolean
 Public LightingScaleRatio As Single
 Public EnableParallax As Boolean
 Public EnableWrapping As Boolean
@@ -450,7 +451,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
             l_sngAlpha = IIf(Layers = mvarUnGhostLayer, 1, 0.5)
         End If
         .Layers(Layers).Tileset.RecalculateSizes
-        If (.Layers(Layers).Tileset.Buffer.Width > 0) And .Layers(Layers).Visible Then
+        If .Layers(Layers).Visible Then
             If .Layers(Layers).Prerendered = True Then
                 With .Layers(Layers)
                     Set l_imgTileset = .Tileset.GetBuffer
@@ -462,32 +463,65 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                             m_lngVPX = (mvarViewportX)
                             m_lngVPY = (mvarViewportY)
                         End If
-                        Set DestTileRect = F2Rect(-m_lngVPX, -m_lngVPY, (.Width * .Tileset.TileWidth), (.Height * .Tileset.TileHeight), False)
-                        Set SourceTileRect = l_imgTileset.Rectangle
-                        If ShowTiles Then
-                            If .RenderTarget = 1 Then
-                                Set l_imgTarget = l_imgBuffer
-                            Else
-                                Set l_imgTarget = RenderTargets(.RenderTarget)
+                        If .WrapX Or .WrapY Then
+                            Dim l_lngW As Long, l_lngH As Long
+                            l_lngW = (.Width * .Tileset.TileWidth)
+                            l_lngH = (.Height * .Tileset.TileHeight)
+                            Set DestTileRect = F2Rect(-m_lngVPX, -m_lngVPY, IIf(.WrapX, (Ceil(m_lngVPX / l_lngW) + 1) * l_lngW, l_lngW), IIf(.WrapY, (Ceil(m_lngVPY / l_lngH) + 1) * l_lngH, l_lngH), False)
+                            Set SourceTileRect = l_imgTileset.Rectangle
+                            If ShowTiles Then
+                                If .RenderTarget = 1 Then
+                                    Set l_imgTarget = l_imgBuffer
+                                Else
+                                    Set l_imgTarget = RenderTargets(.RenderTarget)
+                                End If
+                                Select Case .Effect
+                                Case F2LE_Matte
+                                    l_imgTarget.TileBlit DestTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Matte
+                                Case F2LE_Alpha
+                                    l_imgTarget.TileBlit DestTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_SourceAlpha
+                                Case F2LE_Additive
+                                    l_imgTarget.TileBlit DestTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Additive
+                                Case F2LE_Subtractive
+                                    l_imgTarget.TileBlit DestTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Subtractive
+                                Case F2LE_Screen
+                                    l_imgTarget.TileBlit DestTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Screen
+                                Case F2LE_Multiply
+                                    l_imgTarget.TileBlit DestTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Multiply
+                                Case F2LE_Lightmap
+                                    l_imgTarget.TileBlit DestTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Lightmap
+                                Case Else
+                                    l_imgTarget.TileBlit DestTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Normal
+                                End Select
                             End If
-                            Select Case .Effect
-                            Case F2LE_Matte
-                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Matte
-                            Case F2LE_Alpha
-                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_SourceAlpha
-                            Case F2LE_Additive
-                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Additive
-                            Case F2LE_Subtractive
-                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Subtractive
-                            Case F2LE_Screen
-                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Screen
-                            Case F2LE_Multiply
-                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Multiply
-                            Case F2LE_Lightmap
-                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Lightmap
-                            Case Else
-                                l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Normal
-                            End Select
+                        Else
+                            Set DestTileRect = F2Rect(-m_lngVPX, -m_lngVPY, (.Width * .Tileset.TileWidth), (.Height * .Tileset.TileHeight), False)
+                            Set SourceTileRect = l_imgTileset.Rectangle
+                            If ShowTiles Then
+                                If .RenderTarget = 1 Then
+                                    Set l_imgTarget = l_imgBuffer
+                                Else
+                                    Set l_imgTarget = RenderTargets(.RenderTarget)
+                                End If
+                                Select Case .Effect
+                                Case F2LE_Matte
+                                    l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Matte
+                                Case F2LE_Alpha
+                                    l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_SourceAlpha
+                                Case F2LE_Additive
+                                    l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Additive
+                                Case F2LE_Subtractive
+                                    l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Subtractive
+                                Case F2LE_Screen
+                                    l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Screen
+                                Case F2LE_Multiply
+                                    l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Multiply
+                                Case F2LE_Lightmap
+                                    l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Lightmap
+                                Case Else
+                                    l_imgTarget.Blit DestTileRect, SourceTileRect, l_imgTileset, .Alpha * l_sngAlpha, BlitMode_Normal
+                                End Select
+                            End If
                         End If
                     End If
                 End With
@@ -560,6 +594,7 @@ Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
                     .OutputScaleRatio = 1
                     .ScrollX = mvarViewportX
                     .ScrollY = mvarViewportY
+                    .AntiAlias = CByte(IIf(AntiAliasLighting, 255, 0))
                 End With
                 If ShowSprites Then
                     .Layers(Layers).Lighting.SetFirstSprite .Layers(Layers).Sprites.Pointer

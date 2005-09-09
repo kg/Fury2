@@ -19,7 +19,7 @@ Public Enum ResamplingMethods
     [BiLinear] = 1
 End Enum
 
-Private Const RectCacheSize As Long = 32
+Private Const RectCacheSize As Long = 16
 
 Private RectCache As Collection
 Private CPUFreq As Currency
@@ -198,15 +198,13 @@ Dim m_lngSize As Long, m_lngWidth As Long
 Dim m_lngDC As Long
 Dim m_tmMetric As TEXTMETRIC
 Dim m_frmText As frmTextRender
-    Set m_frmText = New frmTextRender
-    Load m_frmText
-    Set m_frmText.Font = Font
+    Set frmTextRender.Font = Font
     For m_lngColors = 0 To 66
         m_lngPalette(m_lngColors) = F2RGB(255, 255, 255, (m_lngColors * 255) \ 65)
     Next m_lngColors
     m_matTransform.H11 = 1
     m_matTransform.H22 = 1
-    m_lngDC = m_frmText.hdc
+    m_lngDC = frmTextRender.hdc
     m_lngSize = GetGlyphOutline(m_lngDC, Character, GGO_Metrics, m_gmMetrics, Len(m_gmMetrics), 0, VarPtr(m_matTransform))
     m_lngSize = GetGlyphOutline(m_lngDC, Character, GGO_Gray8_Bitmap, m_gmMetrics, 0, 0, VarPtr(m_matTransform))
     Call GetTextMetrics(m_lngDC, m_tmMetric)
@@ -224,8 +222,6 @@ Dim m_frmText As frmTextRender
         m_imgChar.Tag = Array(.GlyphOrigin.X, .GlyphOrigin.Y, .BlackBoxX, .BlackBoxY, .CellIncX, .CellIncY, m_tmMetric.tmMaxCharWidth, m_tmMetric.tmHeight)
     End With
     m_imgChar.Name = ChrW(Character)
-    Unload m_frmText
-    Set m_frmText = Nothing
     Set GetGlyphBitmap = m_imgChar
 End Function
 
@@ -658,13 +654,10 @@ Dim l_imgLayer As Fury2Image
     End If
     Extension = Mid(CStr(m_strFilename), InStrRev(CStr(m_strFilename), ".") + 1)
     Select Case LCase(Trim(Extension))
-    Case "pcx", "dib", "rle", "bmp", "jpg", "jpeg"
-        Set F2LoadImage = F2LoadPicture(m_strFilename)
-        F2LoadImage.AlphaChannel = False
-    Case "png", "tga", "gif"
-        Set F2LoadImage = F2LoadPicture(m_strFilename)
     Case "ico", "cur"
         Set F2LoadImage = F2ImageFromPicture(LoadPicture(m_strFilename))
+    Case Else
+        Set F2LoadImage = F2LoadPicture(m_strFilename)
     End Select
     For m_lngParameter = LBound(m_varParameters) To UBound(m_varParameters)
         If InStr(m_varParameters(m_lngParameter), "(") Then
@@ -811,6 +804,15 @@ Dim newImage As Fury2Image
     Set newImage = New Fury2Image
     newImage.Resize X, Y
     Set F2Image = newImage
+    Set newImage = Nothing
+End Function
+
+Public Function F2SharedImage(ByVal X As Long, ByVal Y As Long, ByVal ID As String) As Fury2Image
+On Error Resume Next
+Dim newImage As Fury2Image
+    Set newImage = New Fury2Image
+    newImage.AllocateShared X, Y, ID
+    Set F2SharedImage = newImage
     Set newImage = Nothing
 End Function
 

@@ -358,6 +358,12 @@ Private Const c_lngAutoscrollOffset As Long = 8
 Private Const c_lngUndoStackLength As Long = 50
 Private Const c_lngRedoStackLength As Long = 25
 
+Private Enum SelectionModes
+    SelectionMode_Replace
+    SelectionMode_Add
+    SelectionMode_Remove
+End Enum
+
 Private Enum TileTools
     TileTool_Pen
     TileTool_Line
@@ -441,6 +447,7 @@ Private m_ctlCurrentTool As Control
 
 Private m_lngCurrentView As MapViews
 Private m_lngCurrentTool(View_Tiles To View_Properties) As Long
+Private m_lngSelectionMode As SelectionModes
 Private m_lngViewWidth As Long, m_lngViewHeight As Long
 Private m_lngDisplayWidth As Long, m_lngDisplayHeight As Long
 Private m_booVisible As Boolean
@@ -461,6 +468,7 @@ Private m_lngSelectedArea As Long
 Private m_lngSelectedSprite As Long
 Private m_lngSelectedLight As Long
 Private m_lngSelectedObject As Long
+Private m_bytOldSelection() As Byte
 Private m_bytSelectedCollisionLines() As Byte
 Private m_bytSelectedLightingObstructions() As Byte
 Private m_bytSelectedLightingPlanes() As Byte
@@ -498,6 +506,165 @@ Private m_intLayerCache() As Integer
 
 Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
+
+Public Sub Flip()
+On Error Resume Next
+Dim l_undUndo As cMultiUndoEntry, l_brsBrush As Fury2Brush
+Dim l_undTileUndo As cTileUndoEntry, l_undBlockingUndo As cBlockingUndoEntry, l_undObjectUndo As cObjectUndoEntry, l_undPropertyUndo As cPropertyUndoEntry
+Dim l_lyrLayer As Fury2MapLayer, l_sprSprite As Fury2Sprite, l_araArea As Fury2Area, l_lngLines As Long
+Dim l_lnLines() As FLine, l_intTile As Integer
+Dim l_lngX As Long, l_lngY As Long
+    BeginProcess "Flipping..."
+    Set l_undUndo = New cMultiUndoEntry
+    
+    For Each l_araArea In Map.Areas
+        Set l_undPropertyUndo = New cPropertyUndoEntry
+        With l_undPropertyUndo
+            .MethodName = "Y"
+            Set .Object = l_araArea
+            .Value = l_araArea.Y
+        End With
+        l_undUndo.Entries.Add l_undPropertyUndo
+        l_araArea.Y = Map.MaxY - l_araArea.Y - l_araArea.Height
+    Next l_araArea
+    
+    For Each l_sprSprite In Map.Sprites
+        Set l_undPropertyUndo = New cPropertyUndoEntry
+        With l_undPropertyUndo
+            .MethodName = "Y"
+            Set .Object = l_sprSprite
+            .Value = l_sprSprite.Y
+        End With
+        l_undUndo.Entries.Add l_undPropertyUndo
+        l_sprSprite.Y = Map.MaxY - l_sprSprite.Y
+    Next l_sprSprite
+    
+    For Each l_lyrLayer In Map.Layers
+        Set l_undTileUndo = New cTileUndoEntry
+        With l_undTileUndo
+            .X = 0
+            .Y = 0
+            .Layer = l_lyrLayer.Index
+            Set .Map = Map
+            Set .Brush = New Fury2Brush
+            .Brush.Grab Map, l_lyrLayer.Index, 0, 0, l_lyrLayer.Width, l_lyrLayer.Height, , , True
+        End With
+        l_undUndo.Entries.Add l_undTileUndo
+        With l_lyrLayer
+            For l_lngY = 0 To (.Height - 1) \ 2
+                For l_lngX = 0 To .Width - 1
+                    l_intTile = .Tile(l_lngX, l_lngY)
+                    .Tile(l_lngX, l_lngY) = .Tile(l_lngX, (.Height - 1) - l_lngY)
+                    .Tile(l_lngX, (.Height - 1) - l_lngY) = l_intTile
+                Next l_lngX
+            Next l_lngY
+        End With
+        Set l_undBlockingUndo = New cBlockingUndoEntry
+        With l_undBlockingUndo
+            .Layer = l_lyrLayer.Index
+            .Lines = l_lyrLayer.CollisionLines
+            Set .Map = Map
+        End With
+        l_undUndo.Entries.Add l_undBlockingUndo
+        With l_lyrLayer
+            l_lnLines = .CollisionLines
+            For l_lngLines = LBound(l_lnLines) To UBound(l_lnLines)
+                With l_lnLines(l_lngLines)
+                    .Start.Y = Map.MaxY - .Start.Y
+                    .end.Y = Map.MaxY - .end.Y
+                End With
+            Next l_lngLines
+            .CollisionLines = l_lnLines
+        End With
+    Next l_lyrLayer
+    
+    m_colUndo.Add l_undUndo
+    m_colRedo.Clear
+    If m_colUndo.Count > c_lngUndoStackLength Then
+        m_colUndo.Remove 1
+    End If
+    EndProcess
+    Redraw
+End Sub
+
+Public Sub Mirror()
+On Error Resume Next
+Dim l_undUndo As cMultiUndoEntry, l_brsBrush As Fury2Brush
+Dim l_undTileUndo As cTileUndoEntry, l_undBlockingUndo As cBlockingUndoEntry, l_undObjectUndo As cObjectUndoEntry, l_undPropertyUndo As cPropertyUndoEntry
+Dim l_lyrLayer As Fury2MapLayer, l_sprSprite As Fury2Sprite, l_araArea As Fury2Area, l_lngLines As Long
+Dim l_lnLines() As FLine, l_intTile As Integer
+Dim l_lngX As Long, l_lngY As Long
+    BeginProcess "Mirroring..."
+    Set l_undUndo = New cMultiUndoEntry
+    
+    For Each l_araArea In Map.Areas
+        Set l_undPropertyUndo = New cPropertyUndoEntry
+        With l_undPropertyUndo
+            .MethodName = "X"
+            Set .Object = l_araArea
+            .Value = l_araArea.X
+        End With
+        l_undUndo.Entries.Add l_undPropertyUndo
+        l_araArea.X = Map.MaxX - l_araArea.X - l_araArea.Width
+    Next l_araArea
+    
+    For Each l_sprSprite In Map.Sprites
+        Set l_undPropertyUndo = New cPropertyUndoEntry
+        With l_undPropertyUndo
+            .MethodName = "X"
+            Set .Object = l_sprSprite
+            .Value = l_sprSprite.X
+        End With
+        l_undUndo.Entries.Add l_undPropertyUndo
+    Next l_sprSprite
+    
+    For Each l_lyrLayer In Map.Layers
+        Set l_undTileUndo = New cTileUndoEntry
+        With l_undTileUndo
+            .X = 0
+            .Y = 0
+            .Layer = l_lyrLayer.Index
+            Set .Map = Map
+            Set .Brush = New Fury2Brush
+            .Brush.Grab Map, l_lyrLayer.Index, 0, 0, l_lyrLayer.Width, l_lyrLayer.Height, , , True
+        End With
+        l_undUndo.Entries.Add l_undTileUndo
+        With l_lyrLayer
+            For l_lngY = 0 To .Height - 1
+                For l_lngX = 0 To (.Width - 1) \ 2
+                    l_intTile = .Tile(l_lngX, l_lngY)
+                    .Tile(l_lngX, l_lngY) = .Tile((.Width - 1) - l_lngX, l_lngY)
+                    .Tile((.Width - 1) - l_lngX, l_lngY) = l_intTile
+                Next l_lngX
+            Next l_lngY
+        End With
+        Set l_undBlockingUndo = New cBlockingUndoEntry
+        With l_undBlockingUndo
+            .Layer = l_lyrLayer.Index
+            .Lines = l_lyrLayer.CollisionLines
+            Set .Map = Map
+        End With
+        l_undUndo.Entries.Add l_undBlockingUndo
+        With l_lyrLayer
+            l_lnLines = .CollisionLines
+            For l_lngLines = LBound(l_lnLines) To UBound(l_lnLines)
+                With l_lnLines(l_lngLines)
+                    .Start.X = Map.MaxX - .Start.X
+                    .end.X = Map.MaxX - .end.X
+                End With
+            Next l_lngLines
+            .CollisionLines = l_lnLines
+        End With
+    Next l_lyrLayer
+    
+    m_colUndo.Add l_undUndo
+    m_colRedo.Clear
+    If m_colUndo.Count > c_lngUndoStackLength Then
+        m_colUndo.Remove 1
+    End If
+    EndProcess
+    Redraw
+End Sub
 
 Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
 On Error Resume Next
@@ -1020,6 +1187,20 @@ On Error Resume Next
     RefreshBrush
     Redraw
     EndProcess
+End Sub
+
+Public Sub FlipBrush()
+On Error Resume Next
+    m_brsBrush.Flip
+    RefreshBrush
+    Redraw
+End Sub
+
+Public Sub MirrorBrush()
+On Error Resume Next
+    m_brsBrush.Mirror
+    RefreshBrush
+    Redraw
 End Sub
 
 Public Sub DeleteCollisionLines()
@@ -1648,48 +1829,50 @@ End Sub
 
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler.GetMenu
-        ' .DestroyMenu "ResizeMap"
-        ' .DestroyMenu "Zoom"
-        ' .DestroyMenu "SetZoom(25)"
-        ' .DestroyMenu "SetZoom(50)"
-        ' .DestroyMenu "SetZoom(100)"
-        ' .DestroyMenu "SetZoom(200)"
-        ' .DestroyMenu "SetZoom(400)"
-        ' .DestroyMenu "SetZoom(800)"
-        ' .DestroyMenu "SetZoom(1600)"
-        ' .DestroyMenu "ZoomEndSeparator"
-        ' .DestroyMenu "Tools"
-        ' .DestroyMenu "BlockingTools"
-        ' .DestroyMenu "ToolsEndSeparator"
-        ' .DestroyMenu "AddEdgeBlocking"
-        ' .DestroyMenu "BlockingToolsEndSeparator"
-        ' .DestroyMenu "RunMacro"
+    With Handler.GetMenu.Items
+        .Remove "ResizeMap"
+        .Remove "Zoom"
+        .Remove "Tools"
+        .Remove "RunMacro"
     End With
 End Sub
 
 Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler.GetMenu
-        ' .DefineMenu "&Resize...", "ResizeMap", , , ContextMenuIcon("RESIZE MAP")
-        ' .DefineMenu "&Zoom", "Zoom", , , ContextMenuIcon("ZOOM")
-        ' .DefineMenu "25%", "SetZoom(25)", "Zoom", , , , Zoom <= 0.25
-        ' .DefineMenu "50%", "SetZoom(50)", "Zoom", , , , Zoom = 0.5
-        ' .DefineMenu "100%", "SetZoom(100)", "Zoom", , , , Zoom = 1
-        ' .DefineMenu "200%", "SetZoom(200)", "Zoom", , , , Zoom = 2
-        ' .DefineMenu "400%", "SetZoom(400)", "Zoom", , , , Zoom = 4
-        ' .DefineMenu "800%", "SetZoom(800)", "Zoom", , , , Zoom = 8
-        ' .DefineMenu "1600%", "SetZoom(1600)", "Zoom", , , , Zoom >= 16
-        ' .DefineMenu "-", "ZoomEndSeparator", "Zoom"
-        ' .DefineMenu "&Tools", "Tools"
-        ' .DefineMenu "&Tiles", "TileTools", "Tools"
-        ' .DefineMenu "&Blocking", "BlockingTools", "Tools"
-        ' .DefineMenu "-", "ToolsEndSeparator", "Tools"
-        ' .DefineMenu "Reload all tilesets", "ReloadTilesets", "TileTools"
-        ' .DefineMenu "-", "TileToolsEndSeparator", "TileTools"
-        ' .DefineMenu "Place blocking around edges", "AddEdgeBlocking", "BlockingTools"
-        ' .DefineMenu "-", "BlockingToolsEndSeparator", "BlockingTools"
-        ' .DefineMenu "Run &Macro...", "RunMacro"
+    With Handler.GetMenu.Items
+        .AddNew "&Resize...", , "ResizeMap", "Resize Map", , , , , BindEvent(Me, "ResizeMap"), , 1
+        With .AddNew("&Zoom", , "Zoom", "Zoom", , , , , , , 2)
+            Set .ChildMenu = CreateMenu()
+            With .ChildMenu.Items
+                .AddNew "25%", , , "Zoom", , , , Zoom <= 0.25, BindEvent(Me, "SetZoom", Array(25))
+                .AddNew "50%", , , "Zoom", , , , Zoom = 0.5, BindEvent(Me, "SetZoom", Array(50))
+                .AddNew "100%", , , "Zoom", , , , Zoom = 1, BindEvent(Me, "SetZoom", Array(100))
+                .AddNew "200%", , , "Zoom", , , , Zoom = 2, BindEvent(Me, "SetZoom", Array(200))
+                .AddNew "400%", , , "Zoom", , , , Zoom = 4, BindEvent(Me, "SetZoom", Array(400))
+                .AddNew "800%", , , "Zoom", , , , Zoom = 8, BindEvent(Me, "SetZoom", Array(800))
+                .AddNew "1600%", , , "Zoom", , , , Zoom = 16, BindEvent(Me, "SetZoom", Array(1600))
+            End With
+        End With
+        With .AddNew("&Tools", , "Tools", "Tools", , , , , , , 3)
+            Set .ChildMenu = CreateMenu()
+            With .ChildMenu.Items
+                .AddNew "&Flip", , , "Flip", , , , , BindEvent(Me, "Flip")
+                .AddNew "&Mirror", , , "Mirror", , , , , BindEvent(Me, "Mirror")
+                With .AddNew("&Tiles", , "Tiles", "Tiles")
+                    Set .ChildMenu = CreateMenu()
+                    With .ChildMenu.Items
+                        .AddNew "Reload All Tilesets", , , "Reload All Tilesets", , , , , BindEvent(Me, "ReloadTilesets")
+                    End With
+                End With
+                With .AddNew("&Blocking", , "Blocking", "Blocking")
+                    Set .ChildMenu = CreateMenu()
+                    With .ChildMenu.Items
+                        .AddNew "Place Blocking Around Edges", , , "Place Blocking Around Edges", , , , , BindEvent(Me, "AddEdgeBlocking")
+                    End With
+                End With
+            End With
+        End With
+        .AddNew "Run &Macro...", , "RunMacro", "Run Macro", , , , , BindEvent(Me, "RunMacro"), , 4
     End With
 End Sub
 
@@ -2713,7 +2896,8 @@ On Error Resume Next
     picBrush.SetFocus
     Editor.ActionUpdate
     Select Case QuickShowMenu2(picBrush, X, Y, _
-        Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)))
+        Menus(MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete), "-", _
+            MenuString("&Flip", , , "Flip"), MenuString("&Mirror", , , "Mirror")))
     Case 1
         CutBrush
     Case 2
@@ -2722,6 +2906,10 @@ On Error Resume Next
         PasteBrush
     Case 4
         DeleteBrush
+    Case 6
+        FlipBrush
+    Case 7
+        MirrorBrush
     Case Else
     End Select
 End Sub
@@ -4018,6 +4206,14 @@ On Error Resume Next
         Select Case Tool_Blocking
         Case BlockingTool_Select
             If Button = 1 Then
+                If Shift = vbCtrlMask Then
+                    m_lngSelectionMode = SelectionMode_Remove
+                ElseIf Shift = vbShiftMask Then
+                    m_lngSelectionMode = SelectionMode_Add
+                Else
+                    m_lngSelectionMode = SelectionMode_Replace
+                End If
+                m_bytOldSelection = m_bytSelectedCollisionLines
                 m_booSelectingBlocking = True
                 Redraw
             End If
@@ -4049,6 +4245,15 @@ Dim l_lngLine As Long
             With m_mapMap.Layers(m_lngSelectedLayer)
                 SoftFX.SelectLines F2Rect(m_lngStartMouseX, m_lngStartMouseY, m_lngMouseX, m_lngMouseY).Rationalize().GetRectangle(), .CollisionLinePointer(0), VarPtr(m_bytSelectedCollisionLines(1)), .CollisionLineCount, 0, 0
             End With
+            If m_lngSelectionMode = SelectionMode_Add Then
+                For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                    m_bytSelectedCollisionLines(l_lngLine) = m_bytSelectedCollisionLines(l_lngLine) Or m_bytOldSelection(l_lngLine)
+                Next l_lngLine
+            ElseIf m_lngSelectionMode = SelectionMode_Remove Then
+                For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                    m_bytSelectedCollisionLines(l_lngLine) = m_bytOldSelection(l_lngLine) And IIf(m_bytSelectedCollisionLines(l_lngLine), 0, 255)
+                Next l_lngLine
+            End If
             Redraw
         End If
     Case BlockingTool_Line, BlockingTool_PolyLine, BlockingTool_Rectangle
@@ -4084,6 +4289,7 @@ End Sub
 Public Sub Tool_Blocking_Up(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_rctSelection As Fury2Rect
+Dim l_lngLine As Long
     m_booDraggingCollisionLines = False
     Select Case Tool_Blocking
     Case BlockingTool_Select
@@ -4095,6 +4301,16 @@ Dim l_rctSelection As Fury2Rect
                 End If
                 SoftFX.SelectLines l_rctSelection.GetRectangle(), .CollisionLinePointer(0), VarPtr(m_bytSelectedCollisionLines(1)), .CollisionLineCount, 0, 0
             End With
+            If m_lngSelectionMode = SelectionMode_Add Then
+                For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                    m_bytSelectedCollisionLines(l_lngLine) = m_bytSelectedCollisionLines(l_lngLine) Or m_bytOldSelection(l_lngLine)
+                Next l_lngLine
+            ElseIf m_lngSelectionMode = SelectionMode_Remove Then
+                For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                    m_bytSelectedCollisionLines(l_lngLine) = m_bytOldSelection(l_lngLine) And IIf(m_bytSelectedCollisionLines(l_lngLine), 0, 255)
+                Next l_lngLine
+            End If
+            Erase m_bytOldSelection
             m_booSelectingBlocking = False
             Redraw
         End If
@@ -4251,11 +4467,27 @@ Dim l_litNew As Fury2LightSource
             Redraw
         Case LightingTool_SelectObstructions
             If Button = 1 Then
+                If Shift = vbCtrlMask Then
+                    m_lngSelectionMode = SelectionMode_Remove
+                ElseIf Shift = vbShiftMask Then
+                    m_lngSelectionMode = SelectionMode_Add
+                Else
+                    m_lngSelectionMode = SelectionMode_Replace
+                End If
+                m_bytOldSelection = m_bytSelectedLightingObstructions
                 m_booSelectingLightingObstructions = True
                 Redraw
             End If
         Case LightingTool_SelectPlanes
             If Button = 1 Then
+                If Shift = vbCtrlMask Then
+                    m_lngSelectionMode = SelectionMode_Remove
+                ElseIf Shift = vbShiftMask Then
+                    m_lngSelectionMode = SelectionMode_Add
+                Else
+                    m_lngSelectionMode = SelectionMode_Replace
+                End If
+                m_bytOldSelection = m_bytSelectedLightingPlanes
                 m_booSelectingLightingPlanes = True
                 Redraw
             End If
@@ -4316,6 +4548,15 @@ Dim l_lngLine As Long, l_lngPlane As Long
             With m_mapMap.Layers(m_lngSelectedLayer).Lighting
                 SoftFX.SelectLines F2Rect(m_lngStartMouseX, m_lngStartMouseY, m_lngMouseX, m_lngMouseY).Rationalize().GetRectangle(), .ObstructionPointer(1), VarPtr(m_bytSelectedLightingObstructions(1)), .ObstructionCount, 0, 0
             End With
+            If m_lngSelectionMode = SelectionMode_Add Then
+                For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                    m_bytSelectedLightingObstructions(l_lngLine) = m_bytSelectedLightingObstructions(l_lngLine) Or m_bytOldSelection(l_lngLine)
+                Next l_lngLine
+            ElseIf m_lngSelectionMode = SelectionMode_Remove Then
+                For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                    m_bytSelectedLightingObstructions(l_lngLine) = m_bytOldSelection(l_lngLine) And IIf(m_bytSelectedLightingObstructions(l_lngLine), 0, 255)
+                Next l_lngLine
+            End If
             Redraw
         End If
     Case LightingTool_SelectPlanes
@@ -4323,6 +4564,15 @@ Dim l_lngLine As Long, l_lngPlane As Long
             With m_mapMap.Layers(m_lngSelectedLayer).Lighting
                 SoftFX.SelectPlanes F2Rect(m_lngStartMouseX, m_lngStartMouseY, m_lngMouseX, m_lngMouseY).Rationalize().GetRectangle(), .PlanePointer(1), VarPtr(m_bytSelectedLightingPlanes(1)), .PlaneCount, 0, 0
             End With
+            If m_lngSelectionMode = SelectionMode_Add Then
+                For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                    m_bytSelectedLightingPlanes(l_lngLine) = m_bytSelectedLightingPlanes(l_lngLine) Or m_bytOldSelection(l_lngLine)
+                Next l_lngLine
+            ElseIf m_lngSelectionMode = SelectionMode_Remove Then
+                For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                    m_bytSelectedLightingPlanes(l_lngLine) = m_bytOldSelection(l_lngLine) And IIf(m_bytSelectedLightingPlanes(l_lngLine), 0, 255)
+                Next l_lngLine
+            End If
             Redraw
         End If
     Case LightingTool_Plane, LightingTool_Obstruction, LightingTool_ObstructionRectangle
@@ -4382,6 +4632,7 @@ End Sub
 Public Sub Tool_Lighting_Up(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_rctSelection As Fury2Rect
+Dim l_lngLine As Long
     m_booDraggingLightingObstructions = False
     m_booDraggingLightingPlanes = False
     Select Case Tool_Lighting
@@ -4404,6 +4655,16 @@ Dim l_rctSelection As Fury2Rect
                     Set l_rctSelection = F2Rect(m_lngMouseX - 1, m_lngMouseY - 1, 3, 3, False)
                 End If
                 SoftFX.SelectLines l_rctSelection.GetRectangle(), .ObstructionPointer(1), VarPtr(m_bytSelectedLightingObstructions(1)), .ObstructionCount, 0, 0
+                If m_lngSelectionMode = SelectionMode_Add Then
+                    For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                        m_bytSelectedLightingObstructions(l_lngLine) = m_bytSelectedLightingObstructions(l_lngLine) Or m_bytOldSelection(l_lngLine)
+                    Next l_lngLine
+                ElseIf m_lngSelectionMode = SelectionMode_Remove Then
+                    For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                        m_bytSelectedLightingObstructions(l_lngLine) = m_bytOldSelection(l_lngLine) And IIf(m_bytSelectedLightingObstructions(l_lngLine), 0, 255)
+                    Next l_lngLine
+                End If
+                Erase m_bytOldSelection
             End With
             m_booSelectingLightingObstructions = False
             Redraw
@@ -4416,6 +4677,16 @@ Dim l_rctSelection As Fury2Rect
                     Set l_rctSelection = F2Rect(m_lngMouseX - 1, m_lngMouseY - 1, 3, 3, False)
                 End If
                 SoftFX.SelectPlanes l_rctSelection.GetRectangle(), .PlanePointer(1), VarPtr(m_bytSelectedLightingPlanes(1)), .PlaneCount, 0, 0
+                If m_lngSelectionMode = SelectionMode_Add Then
+                    For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                        m_bytSelectedLightingPlanes(l_lngLine) = m_bytSelectedLightingPlanes(l_lngLine) Or m_bytOldSelection(l_lngLine)
+                    Next l_lngLine
+                ElseIf m_lngSelectionMode = SelectionMode_Remove Then
+                    For l_lngLine = 1 To UBound(m_bytSelectedCollisionLines)
+                        m_bytSelectedLightingPlanes(l_lngLine) = m_bytOldSelection(l_lngLine) And IIf(m_bytSelectedLightingPlanes(l_lngLine), 0, 255)
+                    Next l_lngLine
+                End If
+                Erase m_bytOldSelection
             End With
             m_booSelectingLightingPlanes = False
             Redraw

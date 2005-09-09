@@ -29,6 +29,16 @@ Private m_bmdBlitMode As SFXBlitModes
 Private m_smdResampleMode As SFXResampleModes
 Private m_rmdRenderMode As SFXRenderModes
 
+Public Property Get NumericTags(ByVal Index As Long) As Long
+On Error Resume Next
+    NumericTags = GetImageTag(m_lngImage, ClipValue(Index, 0, 7))
+End Property
+
+Public Property Let NumericTags(ByVal Index As Long, ByVal Value As Long)
+On Error Resume Next
+    Call SetImageTag(m_lngImage, ClipValue(Index, 0, 7), Value)
+End Property
+
 Private Function GetReferenceCount(ByVal Obj As Object) As Long
 On Error Resume Next
 Dim m_objObj As IShellFolderEx_TLB.IUnknown
@@ -72,6 +82,12 @@ On Error Resume Next
         GetRenderer = GetScreenRenderer()
     Case SFXRenderModes.RenderMode_Shadow
         GetRenderer = GetShadowRenderer()
+    Case SFXRenderModes.RenderMode_Additive_SourceAlpha
+        GetRenderer = GetAdditiveSourceAlphaRenderer()
+    Case SFXRenderModes.RenderMode_Subtractive_SourceAlpha
+        GetRenderer = GetSubtractiveSourceAlphaRenderer()
+    Case SFXRenderModes.RenderMode_Font_SourceAlpha
+        GetRenderer = GetFontSourceAlphaRenderer()
     End Select
 End Function
 
@@ -138,6 +154,13 @@ On Error Resume Next
 '    HeapAdd m_lngImage
 End Sub
 
+Public Sub AllocateShared(ByVal Width As Long, ByVal Height As Long, ByVal ID As String)
+On Error Resume Next
+    Deallocate
+    m_lngImage = SoftFX.AllocateSharedImage(Width, Height, ID)
+'    HeapAdd m_lngImages
+End Sub
+
 Public Property Get AlphaChannel() As Boolean
     AlphaChannel = m_booAlphaChannel
 End Property
@@ -178,110 +201,97 @@ End Sub
 
 Public Sub Blit(Optional ByVal DestRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal Source As Fury2Image = Nothing, Optional ByVal Alpha As Single = 1, Optional ByVal Mode As SFXBlitModes = BlitMode_Default, Optional ByVal Color As Long = &HFFFFFFFF, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default)
 On Error Resume Next
-Dim l_rctDest As Fury2Rect, l_rctSource As Fury2Rect
-Dim l_imgSource As Fury2Image
-Dim l_lngColor As Long
-Dim l_sngAlpha As Single
 Dim l_lngAlpha As Long
 Dim l_lngScaler As Long
-    Set l_rctDest = DestRectangle
-    Set l_rctSource = SourceRectangle
-    Set l_imgSource = Source
-    l_lngColor = Color
-    l_sngAlpha = Alpha
-    l_lngAlpha = l_sngAlpha * 255
-    If Err <> 0 Then
-        Err.Clear
-        Exit Sub
-    End If
-    If l_imgSource Is Nothing Then Exit Sub
-    If l_rctDest Is Nothing Then Set l_rctDest = Me.Rectangle
-    If l_rctSource Is Nothing Then Set l_rctSource = l_imgSource.Rectangle
+    l_lngAlpha = Alpha * 255
+    If Source Is Nothing Then Exit Sub
+    If DestRectangle Is Nothing Then Set DestRectangle = Me.Rectangle
+    If SourceRectangle Is Nothing Then Set SourceRectangle = Source.Rectangle
     If Mode = BlitMode_Default Then Mode = m_bmdBlitMode
     If ResampleMode = ResampleMode_Default Then ResampleMode = m_smdResampleMode
-    If ((l_rctSource.Width <> l_rctDest.Width) Or (l_rctSource.Height <> l_rctDest.Height)) Then
+    If ((SourceRectangle.Width <> DestRectangle.Width) Or (SourceRectangle.Height <> DestRectangle.Height)) Then
         l_lngScaler = GetScaler(ResampleMode)
     End If
     If l_lngScaler Then
         Select Case Mode
         Case SFXBlitModes.BlitMode_Normal, SFXBlitModes.BlitMode_Matte
-            SoftFX.Blit_Resample_Normal_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.GetRectangle, l_lngScaler, l_lngAlpha
+            SoftFX.Blit_Resample_Normal_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.GetRectangle, l_lngScaler, l_lngAlpha
         Case SFXBlitModes.BlitMode_SourceAlpha
-            SoftFX.Blit_Resample_SourceAlpha_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.GetRectangle, l_lngScaler, l_lngAlpha
+            SoftFX.Blit_Resample_SourceAlpha_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.GetRectangle, l_lngScaler, l_lngAlpha
         Case SFXBlitModes.BlitMode_SourceAlpha_Tint
-            SoftFX.Blit_Resample_SourceAlpha_Tint_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.GetRectangle, l_lngScaler, l_lngColor, l_lngAlpha
+            SoftFX.Blit_Resample_SourceAlpha_Tint_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.GetRectangle, l_lngScaler, Color, l_lngAlpha
         Case SFXBlitModes.BlitMode_Merge
-            SoftFX.Blit_Resample_Merge_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.GetRectangle, l_lngScaler, l_lngAlpha
+            SoftFX.Blit_Resample_Merge_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.GetRectangle, l_lngScaler, l_lngAlpha
         Case SFXBlitModes.BlitMode_Additive
-            SoftFX.Blit_Resample_Additive_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.GetRectangle, l_lngScaler, l_lngAlpha
+            SoftFX.Blit_Resample_Additive_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.GetRectangle, l_lngScaler, l_lngAlpha
         Case SFXBlitModes.BlitMode_Subtractive
-            SoftFX.Blit_Resample_Subtractive_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.GetRectangle, l_lngScaler, l_lngAlpha
+            SoftFX.Blit_Resample_Subtractive_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.GetRectangle, l_lngScaler, l_lngAlpha
         Case SFXBlitModes.BlitMode_Multiply
-            SoftFX.Blit_Resample_Multiply_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.GetRectangle, l_lngScaler, l_lngAlpha
+            SoftFX.Blit_Resample_Multiply_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.GetRectangle, l_lngScaler, l_lngAlpha
         Case SFXBlitModes.BlitMode_Lightmap
-            SoftFX.Blit_Resample_Lightmap m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.GetRectangle, l_lngScaler
+            SoftFX.Blit_Resample_Lightmap m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.GetRectangle, l_lngScaler
         Case SFXBlitModes.BlitMode_Lightmap_RGB
-            SoftFX.Blit_Resample_Lightmap_RGB m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.GetRectangle, l_lngScaler
+            SoftFX.Blit_Resample_Lightmap_RGB m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.GetRectangle, l_lngScaler
         Case Else
         End Select
     Else
         Select Case Mode
         Case SFXBlitModes.BlitMode_Normal
-            SoftFX.Blit_Normal_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
+            SoftFX.Blit_Normal_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
         Case SFXBlitModes.BlitMode_Matte
-            SoftFX.Blit_Automatic_Matte_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
+            SoftFX.Blit_Automatic_Matte_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
         Case SFXBlitModes.BlitMode_SourceAlpha
-            SoftFX.Blit_Automatic_SourceAlpha_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
-        Case SFXBlitModes.BlitMode_Behind
-            SoftFX.Blit_Behind_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
-        Case SFXBlitModes.BlitMode_Dodge
-            SoftFX.Blit_Dodge_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
-        Case SFXBlitModes.BlitMode_Burn
-            SoftFX.Blit_Burn_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
+            SoftFX.Blit_Automatic_SourceAlpha_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
         Case SFXBlitModes.BlitMode_Additive
-            SoftFX.Blit_Additive_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
+            SoftFX.Blit_Additive_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
         Case SFXBlitModes.BlitMode_Subtractive
-            SoftFX.Blit_Subtractive_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
+            SoftFX.Blit_Subtractive_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
         Case SFXBlitModes.BlitMode_Additive_SourceAlpha
-            SoftFX.Blit_Additive_SourceAlpha_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
+            SoftFX.Blit_Additive_SourceAlpha_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
         Case SFXBlitModes.BlitMode_Subtractive_SourceAlpha
-            SoftFX.Blit_Subtractive_SourceAlpha_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
+            SoftFX.Blit_Subtractive_SourceAlpha_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
         Case SFXBlitModes.BlitMode_Matte_Tint
-            SoftFX.Blit_Matte_Tint_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngColor, l_lngAlpha
+            SoftFX.Blit_Matte_Tint_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, Color, l_lngAlpha
         Case SFXBlitModes.BlitMode_SourceAlpha_Tint
-            SoftFX.Blit_SourceAlpha_Tint_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngColor, l_lngAlpha
+            SoftFX.Blit_SourceAlpha_Tint_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, Color, l_lngAlpha
         Case SFXBlitModes.BlitMode_Normal_Tint
-            SoftFX.Blit_Normal_Tint_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngColor, l_lngAlpha
-        Case SFXBlitModes.BlitMode_AND
-            SoftFX.Blit_AND m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top
-        Case SFXBlitModes.BlitMode_OR
-            SoftFX.Blit_OR m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top
-        Case SFXBlitModes.BlitMode_XOR
-            SoftFX.Blit_XOR m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top
-        Case SFXBlitModes.BlitMode_Dither
-            SoftFX.Blit_Dither m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top
-        Case SFXBlitModes.BlitMode_Lightmap
-            SoftFX.Blit_Lightmap_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
-        Case SFXBlitModes.BlitMode_Lightmap_RGB
-            SoftFX.Blit_Lightmap_RGB_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
-        Case SFXBlitModes.BlitMode_Screen
-            SoftFX.Blit_Screen_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
-        Case SFXBlitModes.BlitMode_Multiply
-            SoftFX.Blit_Multiply_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
-        Case SFXBlitModes.BlitMode_Merge
-            SoftFX.Blit_Merge_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
-        Case SFXBlitModes.BlitMode_Erase
-            SoftFX.Blit_Erase_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
-        Case SFXBlitModes.BlitMode_Unerase
-            SoftFX.Blit_Unerase_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngAlpha
+            SoftFX.Blit_Normal_Tint_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, Color, l_lngAlpha
         Case SFXBlitModes.BlitMode_Font
-            SoftFX.Blit_Font_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngColor, l_lngAlpha
+            SoftFX.Blit_Font_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, Color, l_lngAlpha
         Case SFXBlitModes.BlitMode_Font_SourceAlpha
-            SoftFX.Blit_Font_SourceAlpha_RGB_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngColor, l_lngAlpha
+            SoftFX.Blit_Font_SourceAlpha_RGB_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, Color, l_lngAlpha
         Case SFXBlitModes.BlitMode_Font_Merge
-            SoftFX.Blit_Font_Merge_RGB_Opacity m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, l_lngColor, l_lngAlpha
+            SoftFX.Blit_Font_Merge_RGB_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, Color, l_lngAlpha
+        Case SFXBlitModes.BlitMode_Dodge
+            SoftFX.Blit_Dodge_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
+        Case SFXBlitModes.BlitMode_Burn
+            SoftFX.Blit_Burn_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
+        Case SFXBlitModes.BlitMode_Behind
+            SoftFX.Blit_Behind_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
+        Case SFXBlitModes.BlitMode_AND
+            SoftFX.Blit_AND m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top
+        Case SFXBlitModes.BlitMode_OR
+            SoftFX.Blit_OR m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top
+        Case SFXBlitModes.BlitMode_XOR
+            SoftFX.Blit_XOR m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top
+        Case SFXBlitModes.BlitMode_Dither
+            SoftFX.Blit_Dither m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top
+        Case SFXBlitModes.BlitMode_Lightmap
+            SoftFX.Blit_Lightmap_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
+        Case SFXBlitModes.BlitMode_Lightmap_RGB
+            SoftFX.Blit_Lightmap_RGB_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
+        Case SFXBlitModes.BlitMode_Screen
+            SoftFX.Blit_Screen_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
+        Case SFXBlitModes.BlitMode_Multiply
+            SoftFX.Blit_Multiply_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
+        Case SFXBlitModes.BlitMode_Merge
+            SoftFX.Blit_Merge_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
+        Case SFXBlitModes.BlitMode_Erase
+            SoftFX.Blit_Erase_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
+        Case SFXBlitModes.BlitMode_Unerase
+            SoftFX.Blit_Unerase_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
         Case SFXBlitModes.BlitMode_SourceAlpha_ColorMask
-            SoftFX.Blit_SourceAlpha_ColorMask m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top, SetAlpha(l_lngColor, GetAlpha(l_lngColor) * l_sngAlpha)
+            SoftFX.Blit_SourceAlpha_ColorMask m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, SetAlpha(Color, GetAlpha(Color) * Alpha)
         Case Else
         End Select
     End If
@@ -531,6 +541,128 @@ Dim l_plyPoly As GenericPolygon
     Primitive_ConvexPolygon Handle, l_plyPoly, l_lngColor, GetRenderer(Mode), 0
 End Sub
 
+Public Sub BezierStroke(ByVal Points, Optional ByVal DefaultColor As Long = -1, Optional ByVal DefaultThickness As Single = 1, Optional ByVal Softness As Single = 0.75, Optional ByVal Looping As Boolean = False, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal Accuracy As Single = 0.33)
+On Error Resume Next
+Dim l_strStroke As Stroke
+Dim l_ptPoints() As StrokePoint
+Dim l_lngPoints As Long
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    If (VarType(Points) And vbArray) <> vbArray Then Exit Sub
+    Err.Clear
+    ReDim l_ptPoints(LBound(Points) To UBound(Points))
+    For l_lngPoints = LBound(Points) To UBound(Points)
+        If (VarType(Points(l_lngPoints)) And vbArray) <> vbArray Then Exit Sub
+        l_ptPoints(l_lngPoints).X = CSng(Points(l_lngPoints)(0))
+        l_ptPoints(l_lngPoints).Y = CSng(Points(l_lngPoints)(1))
+        If UBound(Points(l_lngPoints)) >= 2 Then
+            l_ptPoints(l_lngPoints).Color = CLng(Points(l_lngPoints)(2))
+        Else
+            l_ptPoints(l_lngPoints).Color = DefaultColor
+        End If
+        If UBound(Points(l_lngPoints)) = 3 Then
+            l_ptPoints(l_lngPoints).Thickness = CSng(Points(l_lngPoints)(3))
+        Else
+            l_ptPoints(l_lngPoints).Thickness = DefaultThickness
+        End If
+    Next l_lngPoints
+    If Err <> 0 Then Exit Sub
+    l_strStroke.Points = VarPtr(l_ptPoints(0))
+    l_strStroke.Loop = Abs(CLng(Looping))
+    l_strStroke.PointCount = UBound(Points) - LBound(Points) + 1
+    l_strStroke.Softness = Softness
+    Primitive_Stroke_Bezier Handle, l_strStroke, GetRenderer(Mode), 0, Accuracy
+End Sub
+
+Public Sub Stroke(ByVal Points, Optional ByVal DefaultColor As Long = -1, Optional ByVal DefaultThickness As Single = 1, Optional ByVal Softness As Single = 0.75, Optional ByVal Looping As Boolean = False, Optional ByVal Mode As SFXRenderModes = RenderMode_Default)
+On Error Resume Next
+Dim l_strStroke As Stroke
+Dim l_ptPoints() As StrokePoint
+Dim l_lngPoints As Long
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    If (VarType(Points) And vbArray) <> vbArray Then Exit Sub
+    Err.Clear
+    ReDim l_ptPoints(LBound(Points) To UBound(Points))
+    For l_lngPoints = LBound(Points) To UBound(Points)
+        If (VarType(Points(l_lngPoints)) And vbArray) <> vbArray Then Exit Sub
+        l_ptPoints(l_lngPoints).X = CSng(Points(l_lngPoints)(0))
+        l_ptPoints(l_lngPoints).Y = CSng(Points(l_lngPoints)(1))
+        If UBound(Points(l_lngPoints)) >= 2 Then
+            l_ptPoints(l_lngPoints).Color = CLng(Points(l_lngPoints)(2))
+        Else
+            l_ptPoints(l_lngPoints).Color = DefaultColor
+        End If
+        If UBound(Points(l_lngPoints)) = 3 Then
+            l_ptPoints(l_lngPoints).Thickness = CSng(Points(l_lngPoints)(3))
+        Else
+            l_ptPoints(l_lngPoints).Thickness = DefaultThickness
+        End If
+    Next l_lngPoints
+    If Err <> 0 Then Exit Sub
+    l_strStroke.Points = VarPtr(l_ptPoints(0))
+    l_strStroke.Loop = Abs(CLng(Looping))
+    l_strStroke.PointCount = UBound(Points) - LBound(Points) + 1
+    l_strStroke.Softness = Softness
+    Primitive_Stroke Handle, l_strStroke, GetRenderer(Mode), 0
+End Sub
+
+Public Sub FilledPie(ByVal Coordinates, ByVal Color As Long, ByVal XRadius As Single, ByVal YRadius As Single, ByVal StartAngle As Single, ByVal EndAngle As Single, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal Accuracy As Single = 0.66)
+On Error Resume Next
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    Primitive_Pie_Filled Handle, CSng(Coordinates(0)), CSng(Coordinates(1)), XRadius, YRadius, StartAngle, EndAngle, Color, GetRenderer(Mode), Accuracy
+End Sub
+
+Public Sub AntiAliasPie(ByVal Coordinates, ByVal Color As Long, ByVal XRadius As Single, ByVal YRadius As Single, ByVal StartAngle As Single, ByVal EndAngle As Single, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal Accuracy As Single = 0.66, Optional ByVal Thickness As Single = 1, Optional ByVal Softness As Single = 0.75)
+On Error Resume Next
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    Primitive_Pie_AntiAlias Handle, CSng(Coordinates(0)), CSng(Coordinates(1)), XRadius, YRadius, StartAngle, EndAngle, Color, GetRenderer(Mode), Thickness, Softness, Accuracy
+End Sub
+
+Public Sub AntiAliasArc(ByVal Coordinates, ByVal Color As Long, ByVal XRadius As Single, ByVal YRadius As Single, ByVal StartAngle As Single, ByVal EndAngle As Single, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal Accuracy As Single = 0.66, Optional ByVal Thickness As Single = 1, Optional ByVal Softness As Single = 0.75)
+On Error Resume Next
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    Primitive_Arc_AntiAlias Handle, CSng(Coordinates(0)), CSng(Coordinates(1)), XRadius, YRadius, StartAngle, EndAngle, Color, GetRenderer(Mode), Thickness, Softness, Accuracy
+End Sub
+
+Public Sub AntiAliasFilledPie(ByVal Coordinates, ByVal Color As Long, ByVal XRadius As Single, ByVal YRadius As Single, ByVal StartAngle As Single, ByVal EndAngle As Single, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal Accuracy As Single = 0.66)
+On Error Resume Next
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    Primitive_Pie_Filled_AntiAlias Handle, CSng(Coordinates(0)), CSng(Coordinates(1)), XRadius, YRadius, StartAngle, EndAngle, Color, GetRenderer(Mode), Accuracy
+End Sub
+
+Public Sub AntiAliasEllipse(ByVal Coordinates, ByVal Color As Long, ByVal XRadius As Single, ByVal YRadius As Single, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal Accuracy As Single = 0.66, Optional ByVal Thickness As Single = 1, Optional ByVal Softness As Single = 0.75)
+On Error Resume Next
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    Primitive_Circle_AntiAlias Handle, CSng(Coordinates(0)), CSng(Coordinates(1)), XRadius, YRadius, Color, GetRenderer(Mode), Thickness, Softness, Accuracy
+End Sub
+
+Public Sub AntiAliasFilledEllipse(ByVal Coordinates, ByVal Color As Long, ByVal XRadius As Single, ByVal YRadius As Single, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal Accuracy As Single = 0.66)
+On Error Resume Next
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    Primitive_Circle_Filled_AntiAlias Handle, CSng(Coordinates(0)), CSng(Coordinates(1)), XRadius, YRadius, Color, GetRenderer(Mode), Accuracy
+End Sub
+
+Public Sub AntiAliasConvexPolygon(ByVal Points, ByVal Color As Long, Optional ByVal Mode As SFXRenderModes = RenderMode_Default)
+On Error Resume Next
+Dim l_ptPoints() As FPoint
+Dim l_lngColor As Long
+Dim l_lngPoints As Long
+Dim l_plyPoly As GenericPolygon
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    If (VarType(Points) And vbArray) <> vbArray Then Exit Sub
+    Err.Clear
+    ReDim l_ptPoints(LBound(Points) To UBound(Points))
+    For l_lngPoints = LBound(Points) To UBound(Points)
+        If (VarType(Points(l_lngPoints)) And vbArray) <> vbArray Then Exit Sub
+        l_ptPoints(l_lngPoints).X = CSng(Points(l_lngPoints)(0))
+        l_ptPoints(l_lngPoints).Y = CSng(Points(l_lngPoints)(1))
+    Next l_lngPoints
+    l_lngColor = Color
+    If Err <> 0 Then Exit Sub
+    l_plyPoly.VertexPointer = VarPtr(l_ptPoints(0))
+    l_plyPoly.VertexCount = (UBound(Points) - LBound(Points)) + 1
+    Primitive_ConvexPolygon_AntiAlias Handle, l_plyPoly, l_lngColor, GetRenderer(Mode), 0
+End Sub
+
 Public Sub Copy(ByVal Image As Fury2Image)
 On Error Resume Next
     If TypeOf Image Is Fury2Image Then Else Exit Sub
@@ -586,7 +718,7 @@ On Error Resume Next
     DIBHandle = GetImageDIBHandle(m_lngImage)
 End Property
 
-Public Function Draw(ByVal Surface As Fury2Image, ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1, Optional ByVal ScalePercentage As Single = 1, Optional ByVal RotationAngle As Single = 0, Optional ByVal Mode As SFXBlitModes = BlitMode_Default, Optional ByVal Color As Long = &HFFFFFFFF, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default) As Fury2Rect
+Public Function Draw(ByVal Surface As Fury2Image, ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1, Optional ByVal ScalePercentage As Single = 1, Optional ByVal RotationAngle As Single = 0, Optional ByVal Mode As SFXBlitModes = BlitMode_Default, Optional ByVal Color As Long = &HFFFFFFFF, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default, Optional ByVal AntiAlias As Boolean = False) As Fury2Rect
 On Error Resume Next
 Dim l_sngX As Single, l_sngY As Single
 Dim l_sngAlpha As Single, l_sngScale As Single, l_sngAngle As Single
@@ -598,7 +730,7 @@ Dim l_lngMode As Long, l_arrPoints As Variant
     l_sngAlpha = CSng(Alpha)
     l_sngScale = CSng(ScalePercentage)
     l_sngAngle = CSng(RotationAngle)
-    If Abs(l_sngAngle) < 0.1 Then
+    If (Abs(l_sngAngle) < 0.1) And (AntiAlias = False) Then
         If l_sngScale = 1 Then
             Set l_rctRect = F2Rect(Floor(X - (Width / 2)), Floor(Y - (Height / 2)), Width, Height, False)
         Else
@@ -639,7 +771,11 @@ Dim l_lngMode As Long, l_arrPoints As Variant
         Case Else
             l_lngMode = SFXRenderModes.RenderMode_Normal
         End Select
-        l_imgSurface.TexturedQuad l_arrPoints, Me, l_lngMode, ResampleMode
+        If AntiAlias Then
+            l_imgSurface.AntiAliasTexturedConvexPolygon l_arrPoints, Me, l_lngMode, ResampleMode
+        Else
+            l_imgSurface.TexturedConvexPolygon l_arrPoints, Me, l_lngMode, ResampleMode
+        End If
     End If
 End Function
 
@@ -1323,15 +1459,18 @@ Private Function RotatePoint(X As Single, Y As Single, Angle As Single) As Varia
 On Error Resume Next
 Dim l_sngX As Single, l_sngY As Single
 Dim l_sngTheta As Single, l_sngR As Single
-    l_sngX = CSng(X)
-    l_sngY = CSng(Y)
-    l_sngR = Sqr((l_sngX * l_sngX) + (l_sngY * l_sngY))
-    l_sngTheta = Atn(l_sngY / l_sngX)
-    If l_sngX < 0 Then
-        l_sngTheta = l_sngTheta + c_dblPi
+    l_sngR = Sqr((X * X) + (Y * Y))
+    If (X > 0) Then
+        l_sngTheta = Atn(Y / X)
+    ElseIf (X < 0) Then
+        l_sngTheta = Atn(Y / X) + c_dblPi
+    Else
+        l_sngTheta = c_dblPi / 2
     End If
     l_sngTheta = l_sngTheta + CSng(Angle * c_dblRadian)
-    RotatePoint = Array(l_sngR * Cos(l_sngTheta), l_sngR * Sin(l_sngTheta))
+    l_sngX = l_sngR * Cos(l_sngTheta)
+    l_sngY = l_sngR * Sin(l_sngTheta)
+    RotatePoint = Array(Round(l_sngX * 1000) / 1000, Round(l_sngY * 1000) / 1000)
 End Function
 
 Public Function SavePNG(ByVal Filename As String) As Boolean
@@ -1480,6 +1619,59 @@ Dim l_plyPoly As GenericPolygon
     l_plyPoly.VertexCount = (UBound(Points) - LBound(Points)) + 1
     If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
     Primitive_ConvexPolygon_Textured Handle, l_imgTexture.Handle, l_plyPoly, GetScaler(ResampleMode), GetRenderer(Mode), Color
+End Sub
+
+Public Sub AntiAliasTexturedConvexPolygon(ByVal Points, ByVal Texture As Fury2Image, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default, Optional ByVal Color As Long = 0)
+On Error Resume Next
+Dim l_ptPoints() As TexturedVertex
+Dim l_lngColor As Long
+Dim l_imgTexture As Fury2Image
+Dim l_lngPoints As Long
+Dim l_plyPoly As GenericPolygon
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    If (VarType(Points) And vbArray) <> vbArray Then Exit Sub
+    Err.Clear
+    ReDim l_ptPoints(LBound(Points) To UBound(Points))
+    Set l_imgTexture = Texture
+    For l_lngPoints = LBound(Points) To UBound(Points)
+        With l_ptPoints(l_lngPoints)
+            If (VarType(Points(l_lngPoints)) And vbArray) <> vbArray Then Exit Sub
+            .X = CSng(Points(l_lngPoints)(0))
+            .Y = CSng(Points(l_lngPoints)(1))
+            If UBound(Points(l_lngPoints)) > 1 Then
+                .U = CSng(Points(l_lngPoints)(2))
+                .V = CSng(Points(l_lngPoints)(3))
+            Else
+                Select Case l_lngPoints
+                Case 0
+                    .U = 0
+                    .V = 0
+                Case 1
+                    .U = 1
+                    .V = 0
+                Case 2
+                    .U = 1
+                    .V = 1
+                Case 3
+                    .U = 0
+                    .V = 1
+                Case Else ' wtf dude i am not a doctor
+                End Select
+            End If
+        End With
+    Next l_lngPoints
+    For l_lngPoints = LBound(Points) To UBound(Points)
+        With l_ptPoints(l_lngPoints)
+            .U = .U * (l_imgTexture.Width - 1)
+            .V = .V * (l_imgTexture.Height - 1)
+        End With
+    Next l_lngPoints
+    If Err <> 0 Then Exit Sub
+    If ResampleMode = ResampleMode_Default Then ResampleMode = m_smdResampleMode
+    l_plyPoly.VertexPointer = VarPtr(l_ptPoints(0))
+    l_plyPoly.VertexCount = (UBound(Points) - LBound(Points)) + 1
+    If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    Primitive_ConvexPolygon_Textured_AntiAlias Handle, l_imgTexture.Handle, l_plyPoly, GetScaler(ResampleMode), GetRenderer(Mode), Color
 End Sub
 
 Public Sub TexturedQuad(ByVal Points, ByRef Texture, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default)

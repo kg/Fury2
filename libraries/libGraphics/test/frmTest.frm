@@ -70,15 +70,33 @@ Dim m_lngX As Long, m_lngY As Long
 Dim m_varPoly() As Variant
 Public UseHardware As Boolean
 Public EnableDeform As Boolean
+Const c_dblPi As Double = 3.14159265358979
+Const c_dblRadian As Double = 1.74532925199433E-02
+
+Private Function RotatePoint(X As Single, Y As Single, Angle As Single) As Variant
+On Error Resume Next
+Dim l_sngX As Single, l_sngY As Single
+Dim l_sngTheta As Single, l_sngR As Single
+    l_sngX = CSng(X)
+    l_sngY = CSng(Y)
+    l_sngR = Sqr((l_sngX * l_sngX) + (l_sngY * l_sngY))
+    l_sngTheta = Atn(l_sngY / l_sngX)
+    If l_sngX < 0 Then
+        l_sngTheta = l_sngTheta + c_dblPi
+    End If
+    l_sngTheta = l_sngTheta + CSng(Angle * c_dblRadian)
+    RotatePoint = Array(l_sngR * Cos(l_sngTheta), l_sngR * Sin(l_sngTheta))
+End Function
 
 Public Sub Redraw()
 On Error Resume Next
 Dim l_lngWidth As Long, l_lngHeight As Long
 Dim l_lngX As Long, l_lngY As Long
+Dim l_sngX As Single, l_sngY As Single
 Static l_sngS As Single, l_sngR As Single
 Static l_lngFrame As Long
 Dim l_mshMesh As Fury2DeformationMesh
-'    F2LockingMode = LockingMode_Default
+    'F2LockingMode = LockingMode_AutoUnlock_AutoLock
 ''    Set l_devDevice = GetImageDevice(m_imgBuffer)
 '    With m_imgBuffer
 '        Set .ClipRectangle = .Rectangle
@@ -137,27 +155,30 @@ Dim l_mshMesh As Fury2DeformationMesh
 '    m_imgBuffer.Draw m_imgBuffer, m_imgBuffer.Width / 2, m_imgBuffer.Height / 2, 1, 0.5, , , , ResampleMode_Bilinear
     'm_imgBuffer.Blit F2Rect(50, 50, m_imgBuffer.Width, m_imgBuffer.Height, False), , m_imgBuffer, , BlitMode_Normal
     'm_imgBuffer.AdjustRGB 0, 64, -64
-    m_imgTextureBlend.Blit , , m_imgTexture(l_lngFrame), 1
-    m_imgTextureBlend.Blit , , m_imgTexture(WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))), l_sngS
-    Set l_mshMesh = New Fury2DeformationMesh
-    l_mshMesh.Resize 16, 16
-    For l_lngY = 0 To l_mshMesh.Height - 1
-        For l_lngX = 0 To l_mshMesh.Width - 1
-            If EnableDeform Then
-                l_mshMesh.Value(l_lngX, l_lngY) = Array(Sin((l_lngY / 2) + l_sngR) * 2.5, Sin((l_lngX / 2) - l_sngR) * 7.5)
-            End If
-        Next l_lngX
-    Next l_lngY
+'    m_imgTextureBlend.Blit , , m_imgTexture(l_lngFrame), 1
+'    m_imgTextureBlend.Blit , , m_imgTexture(WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))), l_sngS
+'    Set l_mshMesh = New Fury2DeformationMesh
+'    l_mshMesh.Resize 16, 16
+'    For l_lngY = 0 To l_mshMesh.Height - 1
+'        For l_lngX = 0 To l_mshMesh.Width - 1
+'            If EnableDeform Then
+'                l_mshMesh.Value(l_lngX, l_lngY) = Array(Sin((l_lngY / 2) + l_sngR) * 2.5, Sin((l_lngX / 2) - l_sngR) * 7.5)
+'            End If
+'        Next l_lngX
+'    Next l_lngY
     'm_imgPattern.DeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgTextureBlend, l_mshMesh, RenderMode_Normal, ResampleMode_Bilinear_Wrap
 '    m_imgPattern.Box m_imgPattern.Rectangle, F2White
-    m_imgBuffer.Locked = UseHardware
 '    m_imgBuffer.DeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgTextureBlend, l_mshMesh, RenderMode_Normal, ResampleMode_Bilinear_Wrap
-    m_imgBuffer.MaskDeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgMask.Rectangle, m_imgTextureBlend, m_imgMask, l_mshMesh, 0.66, RenderMode_SourceAlpha, ResampleMode_Bilinear_Wrap
+'    m_imgBuffer.MaskDeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgMask.Rectangle, m_imgTextureBlend, m_imgMask, l_mshMesh, 0.66, RenderMode_SourceAlpha, ResampleMode_Bilinear_Wrap
+    m_imgBuffer.Locked = UseHardware
+'    m_imgBuffer.Stroke Array(Array(25, 25), Array(75, 75)), F2White, 3, , , RenderMode_SourceAlpha
+'    m_imgBuffer.AntiAliasFilledEllipse Array(150, 150), F2White, 50, 50, RenderMode_SourceAlpha
+    m_imgBuffer.GradientConvexPolygon Array(Array(75, 75, F2White), Array(75 + (Sin(l_sngR) * l_sngS), 75 + (-Cos(l_sngR) * l_sngS), F2Black), Array(75 + (Sin(l_sngR + (c_dblPi / 2)) * l_sngS), 75 + (-Cos(l_sngR + (c_dblPi / 2)) * l_sngS), F2Black)), RenderMode_Additive
     m_imgBuffer.Locked = True
     GLFlip ' Me.HDC
-    l_sngS = l_sngS + 0.075
-    If (l_sngS >= 1) Then
-        l_sngS = l_sngS - 1
+    l_sngS = l_sngS + 1
+    If (l_sngS >= 125) Then
+        l_sngS = 25
         l_lngFrame = WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))
     End If
     l_sngR = l_sngR + 0.1

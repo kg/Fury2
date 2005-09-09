@@ -211,6 +211,18 @@ Export int DeallocateTileset(Tileset *pTileset) {
     return Success;
 }
 
+Export int DerefTileset(Tileset *pTileset) {
+    if (!pTileset) return Failure;
+    pTileset->RefCount--;
+    if (pTileset->RefCount < 0) return DeallocateTileset(pTileset);
+    return Failure;
+}
+
+Export int RefTileset(Tileset *pTileset) {
+    if (!pTileset) return Failure;
+    return ++pTileset->RefCount;    
+}
+
 typedef int TileBlitter(Image *Dest, Image *Source, Rectangle *DestRect, int SourceX, int SourceY, int Opacity);
 typedef int TintedTileBlitter(Image *Dest, Image *Source, Rectangle *DestRect, int SourceX, int SourceY, Pixel Tint, int Opacity);
 
@@ -634,7 +646,7 @@ bool resolved = false;
 
 #undef _check
 
-Export int UpdateSprites(SpriteParam *List, CollisionMatrix *Matrix) {
+Export int UpdateSprites(SpriteParam *List, SpriteEngineOptions *Options) {
 SpriteParam *pCurrent = List, *pCheck;
 VelocityVector vSpeed, vCheck;
 int iCount = 0;
@@ -644,7 +656,8 @@ std::vector<ForceEntry> forceEntries;
 std::vector<ForceEntry>::iterator currentEntry;
 ForceEntry newEntry;
     if (!List) return Failure;
-    if (!Matrix) return Failure;
+    if (!Options) return Failure;
+    if (!Options->Matrix) return Failure;
     // reset
     while (pCurrent) {
         pCurrent->Events.CollidedWith = 0;
@@ -654,8 +667,14 @@ ForceEntry newEntry;
         pCurrent->Events.Moved = false;
         pCurrent->Velocity.XF = pCurrent->Velocity.CXF;
         pCurrent->Velocity.YF = pCurrent->Velocity.CYF;
-        pCurrent->Velocity.CXF *= pCurrent->Velocity.CFM;
-        pCurrent->Velocity.CYF *= pCurrent->Velocity.CFM;
+        if (Options->VelocityMultiplier != 1) {
+          float cfm = pow(pCurrent->Velocity.CFM, Options->VelocityMultiplier);
+          pCurrent->Velocity.CXF *= cfm;
+          pCurrent->Velocity.CYF *= cfm;
+        } else {
+          pCurrent->Velocity.CXF *= pCurrent->Velocity.CFM;
+          pCurrent->Velocity.CYF *= pCurrent->Velocity.CFM;
+        }
         pCurrent->Velocity.FW = 0;
         pCurrent = pCurrent->pNext;
     }
@@ -676,8 +695,8 @@ ForceEntry newEntry;
             pCurrent->Reserved1 = 1;
             vSpeed.X = pCurrent->Velocity.X + (sin(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V) + pCurrent->Velocity.XF;
             vSpeed.Y = pCurrent->Velocity.Y + (-cos(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V) + pCurrent->Velocity.YF;
-            vSpeed.X *= pCurrent->Velocity.VM;
-            vSpeed.Y *= pCurrent->Velocity.VM;
+            vSpeed.X *= pCurrent->Velocity.getVM(Options->VelocityMultiplier);
+            vSpeed.Y *= pCurrent->Velocity.getVM(Options->VelocityMultiplier);
 
             oldposition = pCurrent->Position;
             pCurrent->Position.X += vSpeed.X;
@@ -703,8 +722,8 @@ ForceEntry newEntry;
                   if (pCheck->Stats.Pushable) {
                     vCheck.X = pCheck->Velocity.X + (sin(pCheck->Velocity.B * fRadian) * pCheck->Velocity.V) + pCheck->Velocity.XF;
                     vCheck.Y = pCheck->Velocity.Y + (-cos(pCheck->Velocity.B * fRadian) * pCheck->Velocity.V) + pCheck->Velocity.YF;
-                    vCheck.X *= pCheck->Velocity.VM;
-                    vCheck.Y *= pCheck->Velocity.VM;
+                    vCheck.X *= pCheck->Velocity.getVM(Options->VelocityMultiplier);
+                    vCheck.Y *= pCheck->Velocity.getVM(Options->VelocityMultiplier);
 
                     oldcheckposition = pCheck->Position;
                     pCheck->Position.X += vCheck.X;
@@ -760,13 +779,13 @@ ForceEntry newEntry;
             vSpeed.X = pCurrent->Velocity.X + (sin(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V) + pCurrent->Velocity.XF;
             vSpeed.Y = pCurrent->Velocity.Y + (-cos(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V) + pCurrent->Velocity.YF;
 
-            vSpeed.X *= pCurrent->Velocity.VM;
-            vSpeed.Y *= pCurrent->Velocity.VM;
+            vSpeed.X *= pCurrent->Velocity.getVM(Options->VelocityMultiplier);
+            vSpeed.Y *= pCurrent->Velocity.getVM(Options->VelocityMultiplier);
 
             pCurrent->Events.Moved = ((abs(vSpeed.X) > 0) || (abs(vSpeed.Y) > 0));
 
             if (pCurrent->Stats.Solid) {
-              bCollided = ResolveCollisions(List, pCurrent, vSpeed, Matrix);
+              bCollided = ResolveCollisions(List, pCurrent, vSpeed, Options->Matrix);
             } else {
               bCollided = false;
             }
@@ -774,10 +793,10 @@ ForceEntry newEntry;
             pCurrent->Events.Changed = ((abs(pCurrent->Velocity.A) > 0) || (abs(pCurrent->Velocity.BR) > 0));
             pCurrent->Position.X += vSpeed.X;
             pCurrent->Position.Y += vSpeed.Y;
-            pCurrent->Position.Z += pCurrent->Velocity.Z;
+            pCurrent->Position.Z += pCurrent->Velocity.Z * pCurrent->Velocity.getVM(Options->VelocityMultiplier);
 
             if (pCurrent->Velocity.A != 0) {
-                pCurrent->Params.Alpha += pCurrent->Velocity.A;
+                pCurrent->Params.Alpha += pCurrent->Velocity.A * pCurrent->Velocity.getVM(Options->VelocityMultiplier);
                 if (pCurrent->Velocity.A < 0) {
                     if (pCurrent->Params.Alpha <= pCurrent->Velocity.AT) {
                         pCurrent->Params.Alpha = pCurrent->Velocity.AT;
@@ -794,12 +813,11 @@ ForceEntry newEntry;
             }
 
             if (pCurrent->Velocity.BR != 0) {
-                pCurrent->Velocity.B += pCurrent->Velocity.BR;
+                pCurrent->Velocity.B += pCurrent->Velocity.BR * pCurrent->Velocity.getVM(Options->VelocityMultiplier);
                 if (pCurrent->Velocity.BR < 0) {
                     if (pCurrent->Velocity.B <= pCurrent->Velocity.BRT) {
                         pCurrent->Velocity.B = pCurrent->Velocity.BRT;
-                        pCurrent->Velocity.BR = 0;
-                    }
+                        pCurrent->Velocity.BR = 0;                    }
                 } else if (pCurrent->Velocity.BR > 0) {
                     if (pCurrent->Velocity.B >= pCurrent->Velocity.BRT) {
                         pCurrent->Velocity.B = pCurrent->Velocity.BRT;
@@ -829,8 +847,8 @@ int iCount = 0;
                 pCurrent->Culled = true;
                 w = pCurrent->Graphic.Rectangle.Width;
                 h = pCurrent->Graphic.Rectangle.Height;
-                x = pCurrent->Position.X - Camera->ViewportX - ((w/2) - pCurrent->Graphic.XCenter);
-                y = pCurrent->Position.Y - Camera->ViewportY + (h - pCurrent->Graphic.YCenter);
+                x = pCurrent->Position.X - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w / 2));
+                y = pCurrent->Position.Y - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
                 if (pCurrent->Params.Scale == 1) {
                     w /= 2;
                     if ((y) < Camera->Rectangle.Top) goto nextsprite;
@@ -902,8 +920,8 @@ Pixel white = Pixel(255,255,255,255);
           if (pCurrent->Graphic.pImage) {
             w = pCurrent->Graphic.Rectangle.Width;
             h = pCurrent->Graphic.Rectangle.Height;
-            x = pCurrent->Position.X - Camera->ViewportX - ((w/2) - pCurrent->Graphic.XCenter);
-            y = pCurrent->Position.Y - Camera->ViewportY + (h - pCurrent->Graphic.YCenter);
+            x = pCurrent->Position.X - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
+            y = pCurrent->Position.Y - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
             switch  (pCurrent->Params.SpecialFX) {
             default:
             case 0:
@@ -1004,8 +1022,8 @@ Pixel white = Pixel(255,255,255,255);
                   renderer = RenderFunction_Merge;
                   break;
                 }
-                x = pCurrent->Position.X - Camera->ViewportX - ((w/2) - pCurrent->Graphic.XCenter);
-                y = pCurrent->Position.Y - Camera->ViewportY + (h - pCurrent->Graphic.YCenter);
+                x = pCurrent->Position.X - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
+                y = pCurrent->Position.Y - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
                 r *= Radian;
                 y -= (h * s / 2);
                 s /= 2;
@@ -1066,7 +1084,7 @@ Pixel white = Pixel(255,255,255,255);
               if (pCurrent->pAttachedGraphic->pFrames) {
                 pImage = pCurrent->pAttachedGraphic->pFrames[ClipValue(pCurrent->pAttachedGraphic->Frame,0,pCurrent->pAttachedGraphic->FrameCount - 1)];
                 if (pImage) {
-                  rctDest.Left = ceil(x - pCurrent->pAttachedGraphic->XCenter);
+                  rctDest.Left = ceil(x - (pCurrent->pAttachedGraphic->XCenter - (pImage->Width/2)));
                   rctDest.Top = ceil(y - (h + (float)pImage->Height) - pCurrent->pAttachedGraphic->YCenter);
                   rctDest.Width = pImage->Width;
                   rctDest.Height = pImage->Height;
@@ -1536,10 +1554,10 @@ FRect rSource = *area, rDest = {0, 0, 0, 0};
         if (sCurrent != exclude) {
             if ((sCurrent->Type != excludedtype) && (((requiredtype >= 0) && (sCurrent->Type == requiredtype)) || (requiredtype < 0))) {
                 if ((sCurrent->Stats.Solid) || (!mustbesolid)) {
-					w = sCurrent->Graphic.Rectangle.Width / 2;
-					h = sCurrent->Graphic.Rectangle.Height;
-					x = sCurrent->Position.X - (w - sCurrent->Graphic.XCenter);
-					y = sCurrent->Position.Y + (h - sCurrent->Graphic.YCenter);
+					          w = sCurrent->Graphic.Rectangle.Width / 2;
+					          h = sCurrent->Graphic.Rectangle.Height;
+					          x = sCurrent->Position.X - (sCurrent->Graphic.XCenter - w);
+					          y = sCurrent->Position.Y + (h) - sCurrent->Graphic.YCenter;
                     rDest.X1 = x - w;
                     rDest.X2 = x + w;
                     rDest.Y1 = (sCurrent->Position.Y) - (h);
@@ -2360,7 +2378,11 @@ fuzzyrender:
 						Vector.Y = afloor(Vector.Y / vs);
 						ShadowPoly.SetVertex(3, FPoint(LinePoint[1].X + Vector.X, LinePoint[1].Y + Vector.Y));
 
-						FilterSimple_ConvexPolygon(RenderTarget, &ShadowPoly, Pixel(0,0,0,255), Null, 0);
+            if (Camera->AntiAlias) {
+						  FilterSimple_ConvexPolygon_AntiAlias(RenderTarget, &ShadowPoly, Pixel(0,0,0,255), RenderFunction_Shadow, 0);
+            } else {
+						  FilterSimple_ConvexPolygon(RenderTarget, &ShadowPoly, Pixel(0,0,0,255), Null, 0);
+            }
 												
 					}
 				}
@@ -2442,7 +2464,11 @@ fuzzyrender:
 
               ShadowPoly.SetVertex(3, LinePoint[1]);
 
-              FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, Pixel(0,0,0,255), Null, 0);
+              if (Camera->AntiAlias) {
+                FilterSimple_ConvexPolygon_AntiAlias(Camera->ScratchBuffer, &ShadowPoly, Pixel(0,0,0,255), RenderFunction_Shadow, 0);
+              } else {
+                FilterSimple_ConvexPolygon(Camera->ScratchBuffer, &ShadowPoly, Pixel(0,0,0,255), Null, 0);
+              }
             }
           }
 
@@ -2551,8 +2577,8 @@ fuzzyrender:
         SavedColor = Sprite->Params.IlluminationLevel;
         SavedColor[::Alpha] = 255;
         w = Sprite->Graphic.Rectangle.Width / 2; h = Sprite->Graphic.Rectangle.Height;
-        x = Sprite->Position.X - OffsetX - ((w) - Sprite->Graphic.XCenter);
-        y = Sprite->Position.Y - OffsetY + (h - Sprite->Graphic.YCenter);
+        x = Sprite->Position.X - OffsetX - (Sprite->Graphic.XCenter - w);
+        y = Sprite->Position.Y - OffsetY + (h) - Sprite->Graphic.YCenter;
         s = Sprite->Params.Scale; r = Sprite->Params.Angle;
         scaled = (s != 1); rotated = (((int)r) % 360) != 0;
         if ((!scaled) && (!rotated)) {

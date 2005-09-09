@@ -36,6 +36,14 @@ Private m_txaTextAlignment As ngMenuItemTextAlignment
 Private m_lngLeft As Long
 Private m_lngTop As Long
 Private m_fntFont As StdFont
+Private m_lngWidth As Long, m_lngHeight As Long
+
+Friend Sub Invalidate()
+On Error Resume Next
+    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
+    m_lngWidth = 0
+    m_lngHeight = 0
+End Sub
 
 Public Property Get ImageColumnWidth() As Long
 On Error Resume Next
@@ -55,7 +63,7 @@ End Property
 Public Property Set Font(ByVal NewFont As StdFont)
 On Error Resume Next
     Set m_fntFont = NewFont
-    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get Index() As Long
@@ -100,8 +108,10 @@ End Sub
 
 Friend Sub MouseUp()
 On Error Resume Next
+    If m_booPressed Then
+        If Not (m_evtClick Is Nothing) Then m_evtClick.Invoke
+    End If
     m_booPressed = False
-    If Not (m_evtClick Is Nothing) Then m_evtClick.Invoke
 End Sub
 
 Friend Sub MouseEnter()
@@ -120,6 +130,8 @@ End Sub
 
 Friend Sub Free()
 On Error Resume Next
+    m_mnuChild.Free
+    Set m_mnuChild = Nothing
     Set m_mnuParent = Nothing
     Set m_imgImage = Nothing
     Set m_imgGlow = Nothing
@@ -201,6 +213,10 @@ On Error Resume Next
 Dim l_lngImageWidth As Long
 Dim l_lngTextWidth As Long
     If m_mnuParent Is Nothing Then Exit Property
+    If m_lngWidth <> 0 Then
+        Width = m_lngWidth
+        Exit Function
+    End If
     If Len(m_strText) > 0 Then
         l_lngTextWidth = GetTextWidth(m_strDisplayText, IIf(Font Is Nothing, m_mnuParent.Font, Font)) + IIf(Len(m_strAccelerator) = 0, 0, GetTextWidth(m_strAccelerator, IIf(Font Is Nothing, m_mnuParent.Font, Font)) + 8) + (GetTextWidth("4", g_fntMarlett) + 2) + (m_mnuParent.Metrics(mnmTextMargin) * 2)
     End If
@@ -215,6 +231,7 @@ Dim l_lngTextWidth As Long
     Case bsySeparator
         Width = m_mnuParent.Metrics(mnmSeparatorSize) + (m_mnuParent.Metrics(mnmSeparatorMargin) * 2)
     End Select
+    m_lngWidth = Width
 End Property
 
 Public Property Get Height() As Long
@@ -222,6 +239,10 @@ On Error Resume Next
 Dim l_lngImageHeight As Long
 Dim l_lngTextHeight As Long
     If m_mnuParent Is Nothing Then Exit Property
+    If m_lngHeight <> 0 Then
+        Height = m_lngHeight
+        Exit Function
+    End If
     If Len(m_strText) > 0 Then
         l_lngTextHeight = GetTextHeight(m_strDisplayText, IIf(Font Is Nothing, m_mnuParent.Font, Font)) + (m_mnuParent.Metrics(mnmTextMargin) * 2)
     End If
@@ -234,6 +255,7 @@ Dim l_lngTextHeight As Long
     Case bsySeparator
         Height = m_mnuParent.Metrics(mnmSeparatorSize) + (m_mnuParent.Metrics(mnmSeparatorMargin) * 2)
     End Select
+    m_lngHeight = Height
 End Property
 
 Public Property Get Text() As String
@@ -249,7 +271,7 @@ Dim l_strTemp As String
     If InStr(l_strTemp, "&") Then
         m_lngHotkey = Asc(UCase(Mid(l_strTemp, InStr(l_strTemp, "&") + 1, 1)))
     End If
-    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get DisplayText() As String
@@ -263,7 +285,7 @@ End Property
 Public Property Let Accelerator(ByRef NewValue As String)
 On Error Resume Next
     m_strAccelerator = NewValue
-    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get FullKey() As String
@@ -291,7 +313,7 @@ Public Property Set Image(ByVal NewValue As Fury2Image)
 On Error Resume Next
     Set m_imgImage = NewValue
     Set m_imgGlow = Nothing
-    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get ClickEvent() As ngEvent
@@ -344,7 +366,7 @@ Public Property Let Visible(ByVal NewValue As Boolean)
 On Error Resume Next
     If NewValue = m_booVisible Then Exit Property
     m_booVisible = NewValue
-    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get Pressed() As Boolean
@@ -372,7 +394,7 @@ End Property
 Public Property Let Style(ByVal NewValue As ngMenuItemStyles)
 On Error Resume Next
     m_tbsStyle = NewValue
-    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
+    Invalidate
 End Property
 
 Public Property Get TextAlignment() As ngMenuItemTextAlignment
@@ -382,7 +404,7 @@ End Property
 Public Property Let TextAlignment(ByVal NewValue As ngMenuItemTextAlignment)
 On Error Resume Next
     m_txaTextAlignment = NewValue
-    If Not (m_mnuParent Is Nothing) Then m_mnuParent.Reflow
+    Invalidate
 End Property
 
 Private Sub Class_Initialize()

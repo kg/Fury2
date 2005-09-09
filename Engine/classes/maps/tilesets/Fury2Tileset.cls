@@ -97,8 +97,8 @@ Public Sub DeallocateTileset()
 Attribute DeallocateTileset.VB_MemberFlags = "40"
 On Error Resume Next
     If (Handle <> 0) Then
+        SoftFX.DerefTileset Handle
         If CLng(mvarBuffer.Tag(1)) <= 1 Then
-            SoftFX.DeallocateTileset Handle
             mvarBuffer.Tag = Array(0, 0)
         Else
             mvarBuffer.Tag = Array(mvarBuffer.Tag(0), mvarBuffer.Tag(1) - 1)
@@ -132,15 +132,18 @@ Dim l_lngLayers As Long
                 Handle = SoftFX.AllocateTileset(mvarBuffer.Handle, mvarTileWidth, mvarTileHeight)
                 If Handle = 0 Then
                 Else
+                    RefTileset Handle
                     mvarBuffer.Tag = Array(Handle, 1, MatteColor)
                 End If
             Else
                 mvarBuffer.Tag = Array(mvarBuffer.Tag(0), mvarBuffer.Tag(1) + 1, mvarBuffer.Tag(2))
                 Handle = CLng(mvarBuffer.Tag(0))
+                RefTileset Handle
             End If
         End If
     Else
         Handle = SoftFX.AllocateEmptyTileset(0, mvarTileWidth, mvarTileHeight)
+        RefTileset Handle
     End If
 End Sub
 
@@ -154,6 +157,7 @@ Public Function Duplicate() As Fury2Tileset
 Attribute Duplicate.VB_Description = "Creates a copy of the tileset."
 On Error Resume Next
 Dim m_tstNew As Fury2Tileset
+Dim l_lngTiles As Long
     Set m_tstNew = New Fury2Tileset
     With m_tstNew
         .SetEngine Engine
@@ -165,9 +169,15 @@ Dim m_tstNew As Fury2Tileset
         .TileWidth = TileWidth
         .TileHeight = TileHeight
         If Embed Then
-            .AddTiles Me.GenerateBuffer
+            .AllocateTileset
+            For l_lngTiles = 0 To TileCount - 1
+                AddTile .Handle, GetTile(Handle, l_lngTiles)
+            Next l_lngTiles
         ElseIf ImageBased Then
             .Load
+        Else
+            .Handle = Handle
+            RefTileset Handle
         End If
     End With
     Set Duplicate = m_tstNew
@@ -395,21 +405,20 @@ On Error Resume Next
 Dim l_vfFile As VirtualFile
 Dim l_tstTileset As Fury2Tileset
     If VarType(Filename) = vbString Then
-        Set l_vfFile = Engine.Filesystem.File(Filename).Load()
+        Set l_tstTileset = Engine.LoadTileset(Filename)
     Else
         Set l_vfFile = Filename
+        If ValidateFileHeader(l_vfFile) Then
+            Set l_tstTileset = New Fury2Tileset
+            l_tstTileset.SetEngine Engine
+            l_vfFile.Load l_tstTileset
+        End If
     End If
-    If ValidateFileHeader(l_vfFile) Then
-        Set l_tstTileset = New Fury2Tileset
-        l_tstTileset.SetEngine Engine
-        l_vfFile.Load l_tstTileset
-        DeallocateTileset
-        Handle = l_tstTileset.Handle
-        RowWidth = l_tstTileset.RowWidth
-        TransparentTile = l_tstTileset.TransparentTile
-        l_tstTileset.Handle = 0
-        Set l_tstTileset = Nothing
-    End If
+    DeallocateTileset
+    Handle = l_tstTileset.Handle
+    RefTileset Handle
+    RowWidth = l_tstTileset.RowWidth
+    TransparentTile = l_tstTileset.TransparentTile
 End Sub
 
 Sub SaveTileset(ByVal Filename)

@@ -100,6 +100,15 @@ struct SpriteVelocity {
     float FW; // force weight
     float CXF, CYF; // constant x and y forces
     float CFM; // constant force multiplier
+
+    inline float getVM(float def) {
+      return (VM == -32767) ? def : VM;
+    }
+};
+
+struct SpriteEngineOptions {
+    CollisionMatrix *Matrix;
+    float VelocityMultiplier;
 };
 
 struct VisualParameters {
@@ -344,6 +353,7 @@ public:
     bool Initialized;
     int TilesPerRow, TilesPerCol, TileCount;
     int TileWidth, TileHeight;
+    int RefCount;
 
     Tileset(Image *pImage, int TileWidth, int TileHeight) {
         if (!pImage) return;
@@ -372,6 +382,7 @@ public:
         }
         this->Initialized = true;
         heapInUse = false;
+        RefCount = 0;
     }
 
     Tileset(int TileCount, int TileWidth, int TileHeight) {
@@ -381,6 +392,7 @@ public:
         this->Tiles = new std::vector<Image*>;
         this->Tiles->resize(this->TileCount);
         this->Initialized = true;
+        RefCount = 0;
     }
 
     inline Image* fastTile(unsigned int i, short* mapTable) {

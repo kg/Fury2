@@ -191,6 +191,7 @@ On Error Resume Next
     Else
         IndexOrKey = CLng(IndexOrKey)
     End If
+    m_colCollection(IndexOrKey).Free
     m_colCollection.Remove IndexOrKey
     Reindex
     m_mnuParent.Reflow

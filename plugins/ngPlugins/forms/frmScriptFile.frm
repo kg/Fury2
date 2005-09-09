@@ -25,6 +25,17 @@ Begin VB.Form frmScriptFile
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   312
    ShowInTaskbar   =   0   'False
+   Begin VB.PictureBox picFocus 
+      Height          =   60
+      Left            =   -750
+      ScaleHeight     =   0
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   0
+      TabIndex        =   1
+      TabStop         =   0   'False
+      Top             =   -750
+      Width           =   60
+   End
    Begin ngPlugins.Script scScript 
       Height          =   3015
       Left            =   0
@@ -74,6 +85,14 @@ Implements iCustomMenus
 Private m_colAccelerators As New Fury2Collection
 Private m_strFilename As String
 Private m_fpgPlugin As iFileTypePlugin
+Private Declare Function W32_SetFocus Lib "user32" (ByVal hwnd As Long) As Long
+
+Public Sub Form_Activate()
+On Error Resume Next
+    picFocus.SetFocus
+    W32_SetFocus scScript.Control.hwnd
+    scScript.Control.SetFocus
+End Sub
 
 Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
 On Error Resume Next
@@ -326,6 +345,10 @@ Private Property Get iExtendedForm_Extender() As Object
 On Error Resume Next
     Set iExtendedForm_Extender = Me.extender
 End Property
+
+Private Sub picFocus_Click()
+
+End Sub
 
 Private Sub scScript_SelectionChange()
 On Error Resume Next

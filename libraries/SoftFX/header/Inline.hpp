@@ -172,8 +172,7 @@ template <class T> void inline _Copy(void* dest, void* source, DoubleWord count)
     return;
 }
 
-template <class T> void inline _Fill(void* dest, const T& value, DoubleWord count) {
-#if (defined(ASSEMBLY))
+/*
     DoubleWord sz = sizeof(T);
     DoubleWord bcount = count * sz;
     Align(16) DoubleWord v[4];
@@ -221,6 +220,73 @@ template <class T> void inline _Fill(void* dest, const T& value, DoubleWord coun
 
                 add edi, 128
                 loop loop128u
+                emms
+            }
+        }
+    } else if ((bcount >= 4) && ((bcount % 4) == 0)) {
+        _asm {
+            cld
+            mov edi, dest
+            mov eax, v[0]
+            mov ecx, bcount
+            shr ecx, 2
+            repnz stosd
+        }
+    } else if ((bcount >= 2) && ((bcount % 2) == 0)) {
+        _asm {
+            cld
+            mov edi, dest
+            mov eax, v[0]
+            mov ecx, bcount
+            shr ecx, 1
+            repnz stosw
+        }
+    } else {
+        _asm {
+            cld
+            mov edi, dest
+            mov eax, v[0]
+            mov ecx, bcount
+            repnz stos
+        }
+    }
+*/
+
+template <class T> void inline _Fill(void* dest, const T& value, DoubleWord count) {
+#if (defined(ASSEMBLY))
+    DoubleWord sz = sizeof(T);
+    DoubleWord bcount = count * sz;
+    Align(16) DoubleWord v[4];
+    _Pack<T>(&v[0], 16, value);
+    if ((bcount >= 16) && ((bcount % 16) == 0) && (Processor::SSE)) {
+        if ((DoubleWord)dest % 16 == 0) {
+            _asm {
+                cld
+                mov edi, dest
+                mov ecx, bcount
+                shr ecx, 4
+                movdqa xmm0, [v]
+                
+            loop16:
+                movntdq [edi], xmm0
+
+                add edi, 16
+                loop loop16
+                emms
+            }
+        } else {
+            _asm {
+                cld
+                mov edi, dest
+                mov ecx, bcount
+                shr ecx, 4
+                movdqa xmm0, [v]
+                
+            loop16u:
+                movdqu [edi], xmm0
+
+                add edi, 16
+                loop loop16u
                 emms
             }
         }

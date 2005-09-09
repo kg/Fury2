@@ -24,10 +24,6 @@ struct PythagorasLevel {
 extern PythagorasLevel *PythagorasTable;
 extern PythagorasLevel **PythagorasRootTable;
 
-Export inline Byte PythagorasLookup(int A, int B) {
-    return PythagorasRootTable[ClipByte(A)]->V[ClipByte(B)];
-}
-
 inline Byte PythagorasLookup(Byte A, Byte B) {
     return PythagorasRootTable[A]->V[B];
 }

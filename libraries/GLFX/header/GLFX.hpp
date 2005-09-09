@@ -21,6 +21,8 @@ typedef Byte Channel;
 
 #define Align(n) __declspec(align(n))
 
+static const bool EnableTextureSharing = true;
+
 static const int SmallTextureSize = 64;
 static const int CacheTextureSize = 512;
 

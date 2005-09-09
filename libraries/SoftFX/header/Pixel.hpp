@@ -69,11 +69,11 @@ public:
     }
 
     inline Pixel(Pixel P1, Pixel P2, float A1) {
-      float A2 = 1 - A1;
-        (*this)[::Blue] = (P1[::Blue] * A1) + (P2[::Blue] * A2);
-        (*this)[::Green] = (P1[::Green] * A1) + (P2[::Green] * A2);
-        (*this)[::Red] = (P1[::Red] * A1) + (P2[::Red] * A2);
-        (*this)[::Alpha] = (P1[::Alpha] * A1) + (P2[::Alpha] * A2);
+        Byte a1 = ClipByte(A1 * 255.0f);
+        (*this)[::Blue] = P1[::Blue] + ((P2[::Blue] - P1[::Blue]) * a1 / 255);
+        (*this)[::Green] = P1[::Green] + ((P2[::Green] - P1[::Green]) * a1 / 255);
+        (*this)[::Red] = P1[::Red] + ((P2[::Red] - P1[::Red]) * a1 / 255);
+        (*this)[::Alpha] = P1[::Alpha] + ((P2[::Alpha] - P1[::Alpha]) * a1 / 255);
     }
 
     inline void setGray(DoubleWord V) {

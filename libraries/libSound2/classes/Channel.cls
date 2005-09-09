@@ -65,9 +65,9 @@ On Error Resume Next
     m_booDisposed = True
 End Sub
 
-Friend Sub ResultCheck(ByVal result As FMOD_RESULT)
+Friend Sub ResultCheck(ByVal Result As FMOD_RESULT)
 On Error Resume Next
-    If result = FMOD_ERR_CHANNEL_STOLEN Then Free
+    If Result = FMOD_ERR_CHANNEL_STOLEN Then Free
 End Sub
 
 Public Property Get Playing() As Boolean

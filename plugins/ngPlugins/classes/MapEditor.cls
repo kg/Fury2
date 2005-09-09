@@ -144,6 +144,7 @@ Dim l_lyrLayer As Fury2MapLayer
                 l_mapMap.Resize .Width, .Height
                 For Each l_lyrLayer In l_mapMap.Layers
                     l_lyrLayer.Effect = .LayerEffect
+                    l_lyrLayer.Tileset.Reload
                 Next l_lyrLayer
                 l_frmNew.SetMap l_mapMap
                 m_objEditor.LoadSettings "MapEditor\View", l_frmNew.ViewOptions

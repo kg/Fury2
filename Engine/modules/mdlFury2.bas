@@ -33,6 +33,16 @@ Public SystemRoot As String
 Public m_booMouseVisible As Boolean, m_booOldMouse As Boolean
 Public g_lngMouseX As Single, g_lngMouseY As Single, g_lngMouseButtons As Long
 
+Public Function PClip(ByVal Value As Single) As Single
+    If Value < 0 Then
+        PClip = 0
+    ElseIf Value > 1 Then
+        PClip = 1
+    Else
+        PClip = Value
+    End If
+End Function
+
 Public Function FRound(ByVal Value As Single) As Long
 On Error Resume Next
     FRound = Floor(Value + 0.5)
@@ -43,7 +53,7 @@ On Error Resume Next
 Dim m_strText As String, m_strStrip As String
     m_strText = Trim(LCase(Fn))
     m_strStrip = Trim(LCase(App.Path))
-    If Right(m_strStrip, 1) = "\" Then Else m_strStrip = m_strStrip + "\"
+    If right(m_strStrip, 1) = "\" Then Else m_strStrip = m_strStrip + "\"
     If InStr(m_strText, m_strStrip) Then
         m_strText = Mid(m_strText, InStr(m_strText, m_strStrip) + Len(m_strStrip))
     End If
@@ -55,7 +65,7 @@ Dim m_strText As String, m_strStrip As String
     m_strText = Replace(m_strText, "\", "_")
     m_strText = Replace(m_strText, ":", "_")
     If Len(m_strText) > c_lngMaxNameLength Then
-        m_strText = Right(m_strText, c_lngMaxNameLength)
+        m_strText = right(m_strText, c_lngMaxNameLength)
     End If
     ValidizeFileName = m_strText
 End Function
@@ -90,13 +100,13 @@ Dim m_lngValue As Long
     Err.Clear
     If Rct Is Nothing Then Set Rct = New Fury2Rect
     Get #FileHandle, , m_lngValue
-    Rct.Left = m_lngValue
+    Rct.left = m_lngValue
     Get #FileHandle, , m_lngValue
-    Rct.Top = m_lngValue
+    Rct.top = m_lngValue
     Get #FileHandle, , m_lngValue
-    Rct.Right = m_lngValue
+    Rct.right = m_lngValue
     Get #FileHandle, , m_lngValue
-    Rct.Bottom = m_lngValue
+    Rct.bottom = m_lngValue
     Err.Clear
 End Sub
 
@@ -112,10 +122,10 @@ Public Function FixPath(ByVal Filename As String) As String
     Filename = Replace(Filename, "/", "\")
     If InStr(Filename, ":") Then
         FixPath = Filename
-    ElseIf Left(Filename, 1) = "\" Then
-        FixPath = Left(App.Path, 3) + Mid(Filename, 2)
+    ElseIf left(Filename, 1) = "\" Then
+        FixPath = left(App.Path, 3) + Mid(Filename, 2)
     Else
-        FixPath = App.Path + IIf(Right(App.Path, 1) = "\", "", "\") + Filename
+        FixPath = App.Path + IIf(right(App.Path, 1) = "\", "", "\") + Filename
     End If
 End Function
 
@@ -154,7 +164,7 @@ Dim FrmWidth As Long, FrmHeight As Long
     If Center = True Then
         Frm.Move (Screen.Width - FrmWidth) \ 2, (Screen.Height - FrmHeight) \ 2, FrmWidth, FrmHeight
     Else
-        Frm.Move Frm.Left, Frm.Top, FrmWidth, FrmHeight
+        Frm.Move Frm.left, Frm.top, FrmWidth, FrmHeight
     End If
     Frm.ScaleMode = OldMode
 End Sub
@@ -235,10 +245,10 @@ On Error Resume Next
 Dim lResult As Long
     If Topmost Then
         Window.ZOrder
-        lResult = SetWindowPos(Window.hwnd, Topmost, 0, 0, 0, 0, NoMove Or NoSize)
+        lResult = SetWindowPos(Window.hWnd, Topmost, 0, 0, 0, 0, NoMove Or NoSize)
         Window.ZOrder
     Else
-        lResult = SetWindowPos(Window.hwnd, NotTopMost, 0, 0, 0, 0, NoMove Or NoSize)
+        lResult = SetWindowPos(Window.hWnd, NotTopMost, 0, 0, 0, 0, NoMove Or NoSize)
     End If
 End Sub
 

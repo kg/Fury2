@@ -1,6 +1,7 @@
 VERSION 5.00
 Begin VB.UserControl ngTabStrip 
    Alignable       =   -1  'True
+   CanGetFocus     =   0   'False
    ClientHeight    =   465
    ClientLeft      =   0
    ClientTop       =   0
@@ -48,9 +49,9 @@ Option Explicit
 Private Declare Function InvalidateRect Lib "user32" (ByVal hwnd As Long, lpRect As Rect, ByVal bErase As Long) As Long
 Private Declare Function UpdateWindow Lib "user32" (ByVal hwnd As Long) As Long
 
-Event MouseDown(ByRef Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
-Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
-Event MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+Event MouseDown(ByRef Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
+Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
+Event MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
 Event TabClick(TheTab As ngTab)
 Event TabClose(TheTab As ngTab)
 Event TabSelected(TheTab As ngTab)
@@ -452,7 +453,7 @@ Dim l_rctText As Rect
     Set m_imgSurface.ClipRectangle = l_rctClip
 End Sub
 
-Friend Sub DrawSegment(ByVal X As Long, ByVal Y As Long, ByRef Image As Fury2Image, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal BlitMode As SFXBlitModes = BlitMode_SourceAlpha, Optional ByVal Color As Long = -1, Optional ByVal Alpha As Single = 1, Optional ByVal Vertical As Boolean = False)
+Friend Sub DrawSegment(ByVal x As Long, ByVal y As Long, ByRef Image As Fury2Image, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal BlitMode As SFXBlitModes = BlitMode_SourceAlpha, Optional ByVal Color As Long = -1, Optional ByVal Alpha As Single = 1, Optional ByVal Vertical As Boolean = False)
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long
 Dim l_rctStrip As Fury2Rect, l_rctDest As Fury2Rect
@@ -464,13 +465,13 @@ Dim l_rctClip As Fury2Rect
         Height = Image.Height
     End If
     With m_imgSurface
-        l_lngX = X
-        Do While (l_lngX < (X + Width))
+        l_lngX = x
+        Do While (l_lngX < (x + Width))
             Set l_rctClip = .ClipRectangle
-            .Blit F2Rect(l_lngX, Y, Image.Width, Height, False), , Image, Alpha, BlitMode, Color
-            Set l_rctDest = F2Rect(l_lngX, Y + Image.Height, Image.Width, 1, False)
+            .Blit F2Rect(l_lngX, y, Image.Width, Height, False), , Image, Alpha, BlitMode, Color
+            Set l_rctDest = F2Rect(l_lngX, y + Image.Height, Image.Width, 1, False)
             Set l_rctStrip = F2Rect(0, Image.Height - 1, Image.Width, 1, False)
-            For l_lngY = Y + Image.Height To Height
+            For l_lngY = y + Image.Height To Height
                 l_rctDest.RelTop = l_lngY
                 .Blit l_rctDest, l_rctStrip, Image, Alpha, BlitMode, Color
             Next l_lngY
@@ -537,14 +538,14 @@ Dim l_tabNewHover As ngTab
     End If
 End Sub
 
-Public Function TabFromPoint(ByVal X As Long, ByVal Y As Long) As ngTab
+Public Function TabFromPoint(ByVal x As Long, ByVal y As Long) As ngTab
 On Error Resume Next
 Dim l_tabTab As ngTab
     If m_imgSurface Is Nothing Then Exit Function
     If m_tscTabs Is Nothing Then Exit Function
     For Each l_tabTab In m_tscTabs
         With l_tabTab
-            If .Rectangle.PointInside(X + m_lngScrollOffset, Y) Then
+            If .Rectangle.PointInside(x + m_lngScrollOffset, y) Then
                 Set TabFromPoint = l_tabTab
                 Exit For
             End If
@@ -576,19 +577,19 @@ On Error Resume Next
     End If
 End Sub
 
-Private Sub imgCurrentTab_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub imgCurrentTab_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    UserControl_MouseDown Button, Shift, (X / Screen.TwipsPerPixelX) + imgCurrentTab.Left, (Y / Screen.TwipsPerPixelY) + imgCurrentTab.Top
+    UserControl_MouseDown Button, Shift, (x / Screen.TwipsPerPixelX) + imgCurrentTab.Left, (y / Screen.TwipsPerPixelY) + imgCurrentTab.Top
 End Sub
 
-Private Sub imgCurrentTab_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub imgCurrentTab_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    UserControl_MouseMove Button, Shift, (X / Screen.TwipsPerPixelX) + imgCurrentTab.Left, (Y / Screen.TwipsPerPixelY) + imgCurrentTab.Top
+    UserControl_MouseMove Button, Shift, (x / Screen.TwipsPerPixelX) + imgCurrentTab.Left, (y / Screen.TwipsPerPixelY) + imgCurrentTab.Top
 End Sub
 
-Private Sub imgCurrentTab_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub imgCurrentTab_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    UserControl_MouseUp Button, Shift, (X / Screen.TwipsPerPixelX) + imgCurrentTab.Left, (Y / Screen.TwipsPerPixelY) + imgCurrentTab.Top
+    UserControl_MouseUp Button, Shift, (x / Screen.TwipsPerPixelX) + imgCurrentTab.Left, (y / Screen.TwipsPerPixelY) + imgCurrentTab.Top
 End Sub
 
 Private Sub tmrEdgeScroll_Timer()
@@ -611,8 +612,8 @@ On Error Resume Next
 Dim l_ptMouse As PointAPI
     GetCursorPos l_ptMouse
     ScreenToClient UserControl.hwnd, l_ptMouse
-    m_lngMouseX = l_ptMouse.X
-    m_lngMouseY = l_ptMouse.Y
+    m_lngMouseX = l_ptMouse.x
+    m_lngMouseY = l_ptMouse.y
     If (m_lngMouseX < 0) Or (m_lngMouseX >= UserControl.ScaleWidth) Or (m_lngMouseY < 0) Or (m_lngMouseY >= UserControl.ScaleHeight) Then
         tmrEdgeScroll.Enabled = False
         m_booMouseOver = False
@@ -635,19 +636,19 @@ On Error Resume Next
     ResourcePattern = "*"
 End Sub
 
-Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
 Dim l_booCancel As Boolean
-    RaiseEvent MouseDown(Button, Shift, X, Y)
-    m_lngMouseX = X
-    m_lngMouseY = Y
+    RaiseEvent MouseDown(Button, Shift, x, y)
+    m_lngMouseX = x
+    m_lngMouseY = y
     If m_tabPressed Is Nothing Then UpdateMouse
     If Button = 1 Then
-        Set m_tabPressed = TabFromPoint(X, Y)
+        Set m_tabPressed = TabFromPoint(x, y)
         If m_tabPressed Is Nothing Then Exit Sub
         If m_tabPressed.Enabled Then
             If ShowCloseButtons Then
-                If ((X - m_tabPressed.Left) > (m_tabPressed.Width - m_imgClose.Width - 5)) And ((X - m_tabPressed.Left) < (m_tabPressed.Width - 5)) Then
+                If ((x - m_tabPressed.Left) > (m_tabPressed.Width - m_imgClose.Width - 5)) And ((x - m_tabPressed.Left) < (m_tabPressed.Width - 5)) Then
                     RaiseEvent TabClose(m_tabPressed)
                     Exit Sub
                 End If
@@ -662,12 +663,12 @@ Dim l_booCancel As Boolean
     End If
 End Sub
 
-Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
-    If (X < 8) Then
+    If (x < 8) Then
         m_lngScrollDirection = -1
         tmrEdgeScroll.Enabled = True
-    ElseIf (X > UserControl.ScaleWidth - 8) Then
+    ElseIf (x > UserControl.ScaleWidth - 8) Then
         m_lngScrollDirection = 1
         tmrEdgeScroll.Enabled = True
     Else
@@ -675,20 +676,20 @@ On Error Resume Next
         tmrEdgeScroll.Enabled = False
     End If
     MouseEntered
-    RaiseEvent MouseMove(Button, Shift, X, Y)
-    m_lngMouseX = X
-    m_lngMouseY = Y
+    RaiseEvent MouseMove(Button, Shift, x, y)
+    m_lngMouseX = x
+    m_lngMouseY = y
     If m_tabPressed Is Nothing Then UpdateMouse
 End Sub
 
-Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
 On Error Resume Next
 Dim m_tabHover As ngTab
-    RaiseEvent MouseUp(Button, Shift, X, Y)
+    RaiseEvent MouseUp(Button, Shift, x, y)
     If Not (m_tabPressed Is Nothing) Then
         m_tabPressed.MouseUp
         Set m_tabPressed = Nothing
-        Set m_tabHover = TabFromPoint(X, Y)
+        Set m_tabHover = TabFromPoint(x, y)
     End If
     tmrMouseTracker.Interval = IIf(m_booMouseOver, 1, 100)
     UpdateMouse

@@ -37,6 +37,41 @@ Implements IVirtualFileSaveable
 Private m_intTiles() As Integer
 Private m_strName As String
 
+Public Sub Flip()
+On Error Resume Next
+Dim l_intTile As Integer
+Dim l_lngX As Long, l_lngY As Long
+    For l_lngY = 0 To (Height - 1) \ 2
+        For l_lngX = 0 To Width - 1
+            l_intTile = Tile(l_lngX, l_lngY)
+            Tile(l_lngX, l_lngY) = Tile(l_lngX, (Height - 1) - l_lngY)
+            Tile(l_lngX, (Height - 1) - l_lngY) = l_intTile
+        Next l_lngX
+    Next l_lngY
+End Sub
+
+Public Sub Mirror()
+On Error Resume Next
+Dim l_intTile As Integer
+Dim l_lngX As Long, l_lngY As Long
+    For l_lngY = 0 To Height - 1
+        For l_lngX = 0 To (Width - 1) \ 2
+            l_intTile = Tile(l_lngX, l_lngY)
+            Tile(l_lngX, l_lngY) = Tile((Width - 1) - l_lngX, l_lngY)
+            Tile((Width - 1) - l_lngX, l_lngY) = l_intTile
+        Next l_lngX
+    Next l_lngY
+End Sub
+
+Public Function Duplicate() As Fury2Brush
+On Error Resume Next
+    Set Duplicate = New Fury2Brush
+    With Duplicate
+        .Tiles = Tiles
+        .Name = Name
+    End With
+End Function
+
 Public Property Get XCenter() As Long
 On Error Resume Next
     XCenter = Floor(Me.Width / 2)
@@ -245,10 +280,10 @@ Dim l_lngTargets(0 To 0) As Long
         .pTileset = Layer.Tileset.Handle
         .Width = Me.Width
         .Height = Me.Height
-        .x1 = 0
-        .y1 = 0
-        .x2 = Me.Width
-        .y2 = Me.Height
+        .X1 = 0
+        .Y1 = 0
+        .X2 = Me.Width
+        .Y2 = Me.Height
     End With
     RenderTilemapLayer l_tmpTilemap, l_camCamera
 End Sub

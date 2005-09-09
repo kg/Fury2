@@ -21,6 +21,11 @@ Public Property Get Disposed() As Boolean
 On Error Resume Next
     Disposed = m_booDisposed
 End Property
+
+Friend Property Let Disposed(ByVal NewValue As Boolean)
+On Error Resume Next
+    m_booDisposed = NewValue
+End Property
 '
 'Public Property Get Sound() As Sound
 'On Error Resume Next
@@ -51,24 +56,28 @@ End Sub
 
 Friend Sub Free()
 On Error Resume Next
+    If Not Disposed Then
+        fmodex.FMOD_ChannelGroup_Release m_lngHandle
+        m_lngHandle = 0
+    End If
     Set m_seEngine = Nothing
     Set m_sndSound = Nothing
     m_lngHandle = 0
     m_booDisposed = True
 End Sub
 
-Friend Sub ResultCheck(ByVal result As FMOD_RESULT)
+Friend Sub ResultCheck(ByVal Result As FMOD_RESULT)
 On Error Resume Next
 End Sub
 
 Public Property Let Muted(ByVal NewValue As Boolean)
 On Error Resume Next
-    ResultCheck fmodex.FMOD_ChannelGroup_SetMute(m_lngHandle, NewValue)
+    ResultCheck fmodex.FMOD_ChannelGroup_OverrideMute(m_lngHandle, NewValue)
 End Property
 
 Public Property Let Paused(ByVal NewValue As Boolean)
 On Error Resume Next
-    ResultCheck fmodex.FMOD_ChannelGroup_SetPaused(m_lngHandle, NewValue)
+    ResultCheck fmodex.FMOD_ChannelGroup_OverridePaused(m_lngHandle, NewValue)
 End Property
 
 Public Property Get Volume() As Single
@@ -83,14 +92,26 @@ On Error Resume Next
     ResultCheck fmodex.FMOD_ChannelGroup_SetVolume(m_lngHandle, NewValue)
 End Property
 
+Public Property Get Pitch() As Single
+On Error Resume Next
+Dim l_sngValue As Single
+    ResultCheck fmodex.FMOD_ChannelGroup_GetPitch(m_lngHandle, l_sngValue)
+    Pitch = l_sngValue
+End Property
+
+Public Property Let Pitch(ByVal NewValue As Single)
+On Error Resume Next
+    ResultCheck fmodex.FMOD_ChannelGroup_SetPitch(m_lngHandle, NewValue)
+End Property
+
 Public Property Let Frequency(ByVal NewValue As Single)
 On Error Resume Next
-    ResultCheck fmodex.FMOD_ChannelGroup_SetFrequency(m_lngHandle, NewValue)
+    ResultCheck fmodex.FMOD_ChannelGroup_OverrideFrequency(m_lngHandle, NewValue)
 End Property
 
 Public Property Let Pan(ByVal NewValue As Single)
 On Error Resume Next
-    ResultCheck fmodex.FMOD_ChannelGroup_SetPan(m_lngHandle, NewValue)
+    ResultCheck fmodex.FMOD_ChannelGroup_OverridePan(m_lngHandle, NewValue)
 End Property
 
 Public Property Get Count() As Long
@@ -123,3 +144,7 @@ On Error Resume Next
     ResultCheck fmodex.FMOD_ChannelGroup_Stop(m_lngHandle)
 End Sub
 
+Private Sub Class_Terminate()
+On Error Resume Next
+    Free
+End Sub

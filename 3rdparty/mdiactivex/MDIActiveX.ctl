@@ -158,6 +158,7 @@ Public Property Let Visible(Value As Boolean)
 End Property
 
 Public Sub SetFocus()
+On Error Resume Next
     If m_booDead Then Exit Sub
     ShowWindow ActiveWindow, 0
     ShowWindow m_hWndParent, 3
@@ -167,6 +168,7 @@ Public Sub SetFocus()
     SendMessage GetParent(m_hWndParent), WM_MDIMAXIMIZE, m_hWndParent, ByVal 0
     SendMessage m_hWndParent, WM_SIZE, 0, ByVal 0
     SendMessage m_lngHWnd, WM_SIZE, 0, ByVal 0
+    APISetFocus myForm.hwnd
 End Sub
 
 'Gibt WindowState des ActiveX Formulars in welchem das Control geladen wurde oder

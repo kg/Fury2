@@ -187,7 +187,51 @@ Attribute CollisionType.VB_MemberFlags = "40"
     CollisionType = 2
 End Property
 
-Sub CreateNew(Name As String, ByVal Width As Long, ByVal Height As Long, ByVal LayerCount As Long, Tileset As Fury2Tileset)
+Sub CopyTo(ByVal Target As Fury2Map, Optional ByVal X As Long = 0, Optional ByVal Y As Long = 0, Optional ByVal Layer As Long = 1)
+On Error Resume Next
+Dim l_lngX As Long, l_lngY As Long, l_lngLayer As Long
+Dim l_sngX1 As Single, l_sngY1 As Single
+Dim l_lyrDest As Fury2MapLayer
+Dim l_sprSprite As Fury2Sprite, l_sprNew As Fury2Sprite
+Dim l_araArea As Fury2Area, l_araNew As Fury2Area
+Dim l_lnLines() As FLine, l_lngLines As Long
+    If Layers.Count = 0 Then Exit Sub
+    For l_lngLayer = 1 To Layers.Count
+        Set l_lyrDest = Target.Layers(l_lngLayer + Layer - 1)
+        With Layers(l_lngLayer)
+            For l_lngY = 0 To .Height - 1
+                CopyMemory ByVal l_lyrDest.TilePointer(X, l_lngY + Y), ByVal .TilePointer(0, l_lngY), .Width * 2
+'                For l_lngX = 0 To .Width - 1
+'                    l_lyrDest.Tile(l_lngX + X, l_lngY + Y) = .Tile(l_lngX, l_lngY)
+'                Next l_lngX
+            Next l_lngY
+            l_sngX1 = X * .Tileset.TileWidth
+            l_sngY1 = Y * .Tileset.TileHeight
+            l_lnLines = .CollisionLines
+            For l_lngLines = LBound(l_lnLines) To UBound(l_lnLines)
+                With l_lnLines(l_lngLines)
+                    l_lyrDest.AddCollisionLine .Start.X + l_sngX1, .Start.Y + l_sngY1, .end.X + l_sngX1, .end.Y + l_sngY1
+                End With
+            Next l_lngLines
+            For Each l_sprSprite In .Sprites
+                Set l_sprNew = l_sprSprite.Duplicate()
+                l_sprNew.X = l_sprNew.X + l_sngX1
+                l_sprNew.Y = l_sprNew.Y + l_sngY1
+                l_lyrDest.Sprites.Add l_sprNew
+            Next l_sprSprite
+        End With
+    Next l_lngLayer
+    l_sngX1 = X * Layers(1).Tileset.TileWidth
+    l_sngY1 = Y * Layers(1).Tileset.TileHeight
+    For Each l_araArea In Areas
+        Set l_araNew = l_araArea.Duplicate
+        l_araNew.X = l_araNew.X + l_sngX1
+        l_araNew.Y = l_araNew.Y + l_sngY1
+        Target.Areas.Add l_araNew
+    Next l_araArea
+End Sub
+
+Sub CreateNew(ByVal Name As String, ByVal Width As Long, ByVal Height As Long, ByVal LayerCount As Long, ByVal Tileset As Fury2Tileset)
 Attribute CreateNew.VB_Description = "Creates a new map."
 On Error Resume Next
 Dim m_CreateLayers As Long, m_NewLayer As Fury2MapLayer, cX As Long, cY As Long
@@ -339,7 +383,7 @@ Dim l_sngProgMul As Single
                 .TileAnimations.RedimMapTable .Tileset.TileCount
                 .Lighting.Init Me.MaxX, Me.MaxY
             End With
-            Engine.LoadProgress "Map", 10 + ((80 / m_lyrLayers.Count) * l_lngLayers)
+            Engine.LoadProgress "Map", 10 + ((30 / m_lyrLayers.Count) * l_lngLayers)
         Next l_lngLayers
     End If
     If m_araAreas.Count > 0 Then
@@ -352,10 +396,10 @@ Dim l_sngProgMul As Single
                     l_objScript.Initialize
                 Set l_objScript = Nothing
             End With
-            Engine.LoadProgress "Map", 90 + ((10 / m_araAreas.Count) * l_lngAreas)
+            Engine.LoadProgress "Map", 40 + ((10 / m_araAreas.Count) * l_lngAreas)
         Next l_lngAreas
     End If
-    Engine.LoadProgress "Map", 100
+    Engine.LoadProgress "Map", 50
     Engine.ContextLevelRemove
 End Sub
 
@@ -447,6 +491,7 @@ Dim l_araArea As Fury2Area
 Dim l_mobObject As Fury2MapObject
 Dim l_lngIndex As Long
     Engine.ContextLevelAdd "Map.Load"
+    Engine.LoadProgress "Map", 50
     Set m_sprSprites = New Fury2Sprites
     m_sprSprites.SetEngine Me.Engine
     For Each l_lyrLayer In m_lyrLayers
@@ -475,6 +520,7 @@ Dim l_lngIndex As Long
         Engine.ContextLevelRemove
     End If
     Engine.ContextLevelAdd "Sprites"
+    Engine.LoadProgress "Map", 60
     For Each l_lyrLayer In m_lyrLayers
         l_lyrLayer.Sprites.Loaded = True
         l_lngIndex = 0
@@ -486,6 +532,7 @@ Dim l_lngIndex As Long
             l_sprSprite.Load
         Next l_sprSprite
     Next l_lyrLayer
+    Engine.LoadProgress "Map", 70
     Engine.ContextLevelRemove
     If Engine.EditMode Then
     Else
@@ -496,6 +543,7 @@ Dim l_lngIndex As Long
         Err.Clear
         Engine.ContextLevelRemove
     End If
+    Engine.LoadProgress "Map", 80
     Set m_sprSprites = New Fury2Sprites
     m_sprSprites.SetEngine Me.Engine
     For Each l_lyrLayer In m_lyrLayers
@@ -507,10 +555,12 @@ Dim l_lngIndex As Long
         l_lyrLayer.Sprites.Sort
     Next l_lyrLayer
     Engine.ContextLevelAdd "Objects"
+    Engine.LoadProgress "Map", 90
     For Each l_mobObject In m_mobObjects
         l_mobObject.Load Engine, Me
     Next l_mobObject
     Engine.ContextLevelRemove
+    Engine.LoadProgress "Map", 100
     Engine.ContextLevelRemove
 End Sub
 

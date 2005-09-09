@@ -68,6 +68,26 @@ struct IRect {
 struct ISpan {
     int S;
     int E;
+    inline bool intersection(ISpan& other) {
+      if ((S <= other.E) && (E >= other.S)) {
+        S = other.S < S ? other.S : S;
+        E = other.E < E ? other.E : E;
+        return true;
+      }
+      return false;
+    }
+};
+
+struct AASpan {
+    int S;
+    int E;
+    Byte A1, A2;
+};
+
+struct AAColSpan {
+    int S;
+    int E;
+    Byte A1, A2;
 };
 
 struct ILine {
@@ -263,6 +283,68 @@ struct GradientVertex : FPoint {
   inline void setColor(Pixel V);
 };
 
+struct StrokePoint {
+    float X, Y;
+    float Thickness;
+    DoubleWord Color;
+};
+
+struct Stroke {
+    StrokePoint *Points;
+    int PointCount;
+    float Softness;
+    Byte Loop;
+
+    inline float MinimumX() {
+      StrokePoint *CurrentPoint = Points;
+      float Result = 99999999;
+        for (int i = 0; i < PointCount; i++) {
+          if ((CurrentPoint->X - CurrentPoint->Thickness) < Result) Result = CurrentPoint->X - CurrentPoint->Thickness;
+          CurrentPoint++;
+        }
+        return Result;
+    }
+    inline float MinimumY() {
+      StrokePoint *CurrentPoint = Points;
+      float Result = 99999999;
+        for (int i = 0; i < PointCount; i++) {
+          if ((CurrentPoint->Y - CurrentPoint->Thickness) < Result) Result = CurrentPoint->Y - CurrentPoint->Thickness;
+          CurrentPoint++;
+        }
+        return Result;
+    }
+    inline float MaximumX() {
+      StrokePoint *CurrentPoint = Points;
+      float Result = 0;
+        for (int i = 0; i < PointCount; i++) {
+          if (CurrentPoint->X + CurrentPoint->Thickness > Result) Result = CurrentPoint->X + CurrentPoint->Thickness;
+          CurrentPoint++;
+        }
+        return Result;
+    }
+    inline float MaximumY() {
+      StrokePoint *CurrentPoint = Points;
+      float Result = 0;
+        for (int i = 0; i < PointCount; i++) {
+          if (CurrentPoint->Y + CurrentPoint->Thickness > Result) Result = CurrentPoint->Y + CurrentPoint->Thickness;
+          CurrentPoint++;
+        }
+        return Result;
+    }
+
+};
+
+struct StrokeSegment {
+    StrokePoint* Start;
+    StrokePoint* End;
+    float XL, YL, L;
+};
+
+struct StrokeSector {
+    int *Segments;
+    int SegmentCount;
+};
+
 struct ColorFilter {
     DoubleWord Length;
     Byte Red[256];
@@ -275,3 +357,5 @@ typedef void SpriteIterator(int Sprite);
 typedef void ScalerFunction(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest);
 
 typedef void RenderFunction(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
+
+typedef void LockedRenderFunction(Image *Dest, int X, int Y, Pixel *Source, int Count);

@@ -32,7 +32,6 @@ public:
     operator T&() { return _value; }
     operator const T&() const { return _value; }
 
-private:
     T _value;
 };
 
@@ -45,6 +44,5 @@ public:
     operator T&() { return _value; }
     operator const T&() const { return _value; }
 
-private:
     T _value;
 };

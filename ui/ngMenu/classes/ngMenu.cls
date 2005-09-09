@@ -149,6 +149,11 @@ On Error Resume Next
     ' TODO: Initialize other colors
 End Sub
 
+Friend Sub Free()
+On Error Resume Next
+    FreeItems
+End Sub
+
 Private Sub InitItems()
 On Error Resume Next
     Set m_miItems = New ngMenuItems
@@ -575,6 +580,7 @@ Dim l_frmHost As Form
     End If
     m_lngParentWindow = Parent
     Set m_miSelected = Nothing
+    Set m_miHover = Nothing
     GetCursorPos l_ptMouse
     If x = -32767 Then x = l_ptMouse.x
     If y = -32767 Then y = l_ptMouse.y

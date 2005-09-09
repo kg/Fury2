@@ -283,9 +283,11 @@ Dim m_lngFileHandle As Long
     Close #m_lngFileHandle
     If Err <> 0 Then
         Kill Filename
+        Err.Clear
         Name Filename & "~" As Filename
     Else
         Kill Filename & "~"
+        Err.Clear
     End If
 End Sub
 
@@ -351,6 +353,12 @@ Dim m_bytTemp() As Byte, m_lngLength As Long
     m_bytTemp = zlibDecompressBytesP(VarPtr(m_bytData(m_lngCursorPos - 1)), m_lngLength, Length)
     memcpyvb ByVal DataPointer, m_bytTemp(LBound(m_bytTemp)), Length
     m_lngCursorPos = m_lngCursorPos + m_lngLength
+End Sub
+
+Public Sub SaveVariant(ByRef Data)
+On Error Resume Next
+    Save CInt(VarType(Data))
+    Save Data
 End Sub
 
 Public Sub Save(ByRef Data)
@@ -514,25 +522,58 @@ Dim m_bytText() As Byte
     Loop
 End Sub
 
+Friend Function GetTypeId(ByVal TypeName As String) As VbVarType
+On Error Resume Next
+Dim l_booArray As Boolean
+    l_booArray = InStr(TypeName, "()")
+    Select Case LCase(Trim(Replace(TypeName, "()", "")))
+    Case "string", "s", "str"
+        GetTypeId = vbString
+    Case "long", "l"
+        GetTypeId = vbLong
+    Case "integer", "short", "int", "i"
+        GetTypeId = vbInteger
+    Case "single", "number", "float", "f"
+        GetTypeId = vbSingle
+    Case "double", "dbl", "d"
+        GetTypeId = vbDouble
+    Case "date", "time", "datetime", "dt"
+        GetTypeId = vbDate
+    Case "boolean", "bool", "b"
+        GetTypeId = vbBoolean
+    Case "byte"
+        GetTypeId = vbByte
+    Case "currency", "cur", "c"
+        GetTypeId = vbCurrency
+    Case "decimal", "dec"
+        GetTypeId = vbDecimal
+    Case Else
+    End Select
+    If l_booArray Then GetTypeId = GetTypeId Or vbArray
+End Function
+
 Public Sub LoadGeneric(ByRef Data, ByVal VarType As String)
 On Error Resume Next
     ' Fills the data type so that the proper type is loaded. Used for VBscript.
-    Select Case LCase(Trim(VarType))
-    Case "string", "s"
+    Select Case GetTypeId(VarType)
+    Case vbString
         Data = CStr(Data)
-    Case "long", "int", "i"
+    Case vbLong
         Data = CLng(Data)
-    Case "integer", "short"
+    Case vbInteger
         Data = CInt(Data)
-    Case "single", "number", "float", "f"
+    Case vbSingle
         Data = CSng(Data)
-    Case "double", "dbl"
+    Case vbDouble
         Data = CDbl(Data)
-    Case "date", "Date", "time", "datetime", "d"
+    Case vbDate
         Data = CDate(Data)
-    Case "boolean", "bool", "b"
+    Case vbBoolean
         Data = CBool(Data)
-    Case Else
+    Case vbDecimal
+        Data = CDec(Data)
+    Case vbCurrency
+        Data = CCur(Data)
     End Select
     Load Data
 End Sub
@@ -713,6 +754,38 @@ Dim m_colData As IVirtualFileCollection
     End Select
     Err.Clear
 End Sub
+
+Public Function LoadVariant(Optional ByVal ForceType As VbVarType = vbVariant) As Variant
+On Error Resume Next
+Dim l_intType As Integer
+Dim l_varData As Variant
+    If ForceType = vbVariant Then
+        Load l_intType
+        ForceType = l_intType
+    End If
+    Select Case ForceType
+    Case vbString
+        l_varData = ""
+    Case vbLong
+        l_varData = CLng(0)
+    Case vbInteger
+        l_varData = CInt(0)
+    Case vbSingle
+        l_varData = CSng(0)
+    Case vbDouble
+        l_varData = CDbl(0)
+    Case vbDate
+        l_varData = Now
+    Case vbBoolean
+        l_varData = False
+    Case vbDecimal
+        l_varData = CDec(0)
+    Case vbCurrency
+        l_varData = CCur(0)
+    End Select
+    Load l_varData
+    LoadVariant = l_varData
+End Function
 
 Public Function ReadString(Optional ByVal EndOfString As String = vbCrLf) As String
 On Error Resume Next

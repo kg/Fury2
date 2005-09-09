@@ -33,6 +33,8 @@ Attribute VB_Exposed = False
 ' Handles notifying the main form of child changes
 
 Option Explicit
+Private Declare Function SetFocus Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function SetForegroundWindow Lib "user32" (ByVal hwnd As Long) As Long
 Private WithEvents m_frmForm As Form
 Attribute m_frmForm.VB_VarHelpID = -1
 
@@ -49,15 +51,15 @@ End Property
 Public Sub Activate()
 On Error Resume Next
 Dim l_objForm As Object
-    SetBusyState True
     Err.Clear
     With extender
         .SetFocus
     End With
+    SetForegroundWindow m_frmForm.hwnd
+    SetFocus m_frmForm.hwnd
     m_frmForm.Form_Activate
     g_edEditor.Event_DocumentActivate Me
     If g_booMainWindowLoaded Then frmMain.RefreshWindows
-    SetBusyState False
 End Sub
 
 Public Sub Hide()
@@ -114,6 +116,16 @@ Public Sub Detach()
 On Error Resume Next
     Set m_frmForm = Nothing
     If g_booMainWindowLoaded Then frmMain.DereferenceChildManager Me
+End Sub
+
+Private Sub Class_Initialize()
+On Error Resume Next
+    Debug.Print "cChildManager_Initialize"
+End Sub
+
+Private Sub Class_Terminate()
+On Error Resume Next
+    Debug.Print "cChildManager_Terminate"
 End Sub
 
 Private Sub m_frmForm_Activate()

@@ -12,7 +12,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
-Private Const c_dblMaxAge As Double = 5 * 60
+Private Const c_dblMaxAge As Double = 10 * 60
 Private Declare Function GetTempPath Lib "kernel32" Alias "GetTempPathA" (ByVal nBufferLength As Long, ByVal lpBuffer As String) As Long
 Private m_colCollection As Collection
 Private m_strFilename As String
@@ -82,6 +82,13 @@ Dim l_lngLength As Long
     End If
 End Property
 
+Friend Sub Reopen()
+On Error Resume Next
+    m_dblOpenedAt = Timer
+    m_szaArchive.Close
+    m_szaArchive.Open m_strFilename, OM_READONLY
+End Sub
+
 Friend Sub Refresh()
 On Error Resume Next
 Dim l_lngFiles As Long
@@ -132,7 +139,7 @@ Public Property Get Item(ByVal IndexOrKey) As ngResource
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
     If (Timer - m_dblOpenedAt) > c_dblMaxAge Then
-        Refresh
+        Reopen
     End If
     If VarType(IndexOrKey) = vbString Then
         IndexOrKey = CStr(IndexOrKey)
@@ -145,7 +152,7 @@ End Property
 Public Property Get Count() As Long
 On Error Resume Next
     If (Timer - m_dblOpenedAt) > c_dblMaxAge Then
-        Refresh
+        Reopen
     End If
     Count = m_colCollection.Count
 End Property

@@ -102,6 +102,7 @@ Private Function MyWndProc(ByVal hwnd As Long, ByVal message As Long, ByVal wPar
     Case WM_SETFOCUS
         hChild = GetWindow(hwnd, GW_CHILD)
         If hChild = 0 Then
+            APISetFocus hwnd
         Else
             APISetFocus hChild
         End If
@@ -116,7 +117,12 @@ Private Function MyWndProc(ByVal hwnd As Long, ByVal message As Long, ByVal wPar
         If wParam <> 0 Then
             'activate activex form ans set focus
             SendMessage hChild, WM_NCACTIVATE, 1, ByVal lParam
-            APISetFocus hwnd
+            hChild = GetWindow(hwnd, GW_CHILD)
+            If hChild = 0 Then
+                APISetFocus hwnd
+            Else
+                APISetFocus hChild
+            End If
         Else
             'deactivate activex form
             SendMessage hChild, WM_NCACTIVATE, 0, ByVal lParam

@@ -38,7 +38,7 @@ Global Const c_lngDefaultMaxPathWait As Long = 60&
 Global Const c_lngDefaultActivationDistance As Long = 12&
 Global Const c_sngDefaultVelocityDecay As Single = 0.33!
 Global Const c_sngDefaultMaxVelocity As Single = 2!
-Global Const c_lngDefaultRepeatDelay As Long = 175
+Global Const c_sngDefaultRepeatDelay As Single = 0.166
 
 Global Const c_lngMinimumMapWidth As Long = 1
 Global Const c_lngMinimumMapHeight As Long = 1

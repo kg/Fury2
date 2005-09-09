@@ -161,16 +161,6 @@ Dim l_miItem As ngMenuItem
     Next l_miItem
 End Sub
 
-Public Function GetMenu(Name As String) As cPopupMenu
-On Error Resume Next
-'    Set GetMenu = l_colMenus(LCase(Trim(Name))).Menu
-End Function
-
-Public Function GetMenuManager(Name As String) As cMenuManager
-On Error Resume Next
-'    Set GetMenuManager = l_colMenus(LCase(Trim(Name)))
-End Function
-
 Public Function GetMenu2(Name As String) As ngMenu
 On Error Resume Next
 '    Set GetMenu2 = l_colMenus2(LCase(Trim(Name)))
@@ -181,24 +171,24 @@ On Error Resume Next
 '    l_colMenus(LCase(Trim(Name))).Menu.hWndOwner = hwnd
 End Sub
 
-Public Function DefineMenu(Name As String, Items As Variant, Optional Icons As vbalImageList = Nothing) As cPopupMenu
-On Error Resume Next
-Dim l_mnuNew As cPopupMenu
-Dim l_mgrNew As cMenuManager
-    Set l_mnuNew = New cPopupMenu
-    Set l_mgrNew = New cMenuManager
-    Set l_mgrNew.Menu = l_mnuNew
-    Set l_mgrNew.ImageList = Icons
-    l_mnuNew.ImageList = Icons.hIml
-'    l_colMenus.Add l_mgrNew, LCase(Trim(Name))
-    Set DefineMenu = l_mnuNew
-    With l_mnuNew
-        .hWndOwner = frmIcons.hwnd
-        .HeaderStyle = ecnmHeaderSeparator
-        .OfficeXpStyle = True
-    End With
-    ParseMenu l_mgrNew, Items
-End Function
+'Public Function DefineMenu(Name As String, Items As Variant, Optional Icons As vbalImageList = Nothing) As cPopupMenu
+'On Error Resume Next
+'Dim l_mnuNew As cPopupMenu
+''Dim l_mgrNew As cMenuManager
+'    Set l_mnuNew = New cPopupMenu
+'    Set l_mgrNew = New cMenuManager
+'    Set l_mgrNew.Menu = l_mnuNew
+'    Set l_mgrNew.ImageList = Icons
+'    l_mnuNew.ImageList = Icons.hIml
+''    l_colMenus.Add l_mgrNew, LCase(Trim(Name))
+'    Set DefineMenu = l_mnuNew
+'    With l_mnuNew
+'        .hWndOwner = frmIcons.hwnd
+'        .HeaderStyle = ecnmHeaderSeparator
+'        .OfficeXpStyle = True
+'    End With
+'    ParseMenu l_mgrNew, Items
+'End Function
 
 Public Function DefineMenu2(Name As String, Items As Variant) As ngMenu
 On Error Resume Next
@@ -242,53 +232,53 @@ On Error Resume Next
     MenuString = Name & "·" & Accelerator & "·" & ItemData & "·" & CStr(Icon) & "·" & Checked & "·" & Enabled & "·" & key
 End Function
 
-Public Function ParseMenu(Menu As cMenuManager, Items As Variant, Optional ByVal Parent As Long = -1, Optional ByRef InsertionPoint As Long = -1)
-On Error Resume Next
-Dim l_lngItems As Long, l_varItem As Variant, l_varParameters As Variant
-    Err.Clear
-    If UBound(Items) < LBound(Items) Then Exit Function
-    If Err <> 0 Then Exit Function
-    With Menu.Menu
-        For l_lngItems = LBound(Items) To UBound(Items)
-            l_varItem = Items(l_lngItems)
-            Select Case VarType(l_varItem)
-            Case vbString
-                If InStr(l_varItem, "·") Then
-                    l_varParameters = Split(l_varItem, "·")
-                    If VarType(l_varParameters(3)) = vbString Then
-                        Err.Clear
-                        l_varParameters(3) = CLng(Menu.ImageList.ItemIndex(CStr(l_varParameters(3)))) - 1
-                        If Err <> 0 Then
-                            l_varParameters(3) = -1
-                        End If
-                    End If
-                    If InsertionPoint = -1 Then
-                        If Parent = -1 Then
-                            .AddItem l_varParameters(0), l_varParameters(1), l_varParameters(2), , l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6)
-                        Else
-                            .AddItem l_varParameters(0), l_varParameters(1), l_varParameters(2), Parent, l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6)
-                        End If
-                    Else
-                        .InsertItem l_varParameters(0), InsertionPoint, l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6)
-                    End If
-                Else
-                    If InsertionPoint = -1 Then
-                        If Parent = -1 Then
-                            .AddItem l_varItem
-                        Else
-                            .AddItem l_varItem, , , Parent
-                        End If
-                    Else
-                        .InsertItem l_varItem, InsertionPoint
-                    End If
-                End If
-            Case vbVariant Or vbArray
-                ParseMenu Menu, l_varItem, .Count
-            Case Else
-            End Select
-        Next l_lngItems
-    End With
-End Function
+'Public Function ParseMenu(Menu As cMenuManager, Items As Variant, Optional ByVal Parent As Long = -1, Optional ByRef InsertionPoint As Long = -1)
+'On Error Resume Next
+'Dim l_lngItems As Long, l_varItem As Variant, l_varParameters As Variant
+'    Err.Clear
+'    If UBound(Items) < LBound(Items) Then Exit Function
+'    If Err <> 0 Then Exit Function
+'    With Menu.Menu
+'        For l_lngItems = LBound(Items) To UBound(Items)
+'            l_varItem = Items(l_lngItems)
+'            Select Case VarType(l_varItem)
+'            Case vbString
+'                If InStr(l_varItem, "·") Then
+'                    l_varParameters = Split(l_varItem, "·")
+'                    If VarType(l_varParameters(3)) = vbString Then
+'                        Err.Clear
+'                        l_varParameters(3) = CLng(Menu.ImageList.ItemIndex(CStr(l_varParameters(3)))) - 1
+'                        If Err <> 0 Then
+'                            l_varParameters(3) = -1
+'                        End If
+'                    End If
+'                    If InsertionPoint = -1 Then
+'                        If Parent = -1 Then
+'                            .AddItem l_varParameters(0), l_varParameters(1), l_varParameters(2), , l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6)
+'                        Else
+'                            .AddItem l_varParameters(0), l_varParameters(1), l_varParameters(2), Parent, l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6)
+'                        End If
+'                    Else
+'                        .InsertItem l_varParameters(0), InsertionPoint, l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6)
+'                    End If
+'                Else
+'                    If InsertionPoint = -1 Then
+'                        If Parent = -1 Then
+'                            .AddItem l_varItem
+'                        Else
+'                            .AddItem l_varItem, , , Parent
+'                        End If
+'                    Else
+'                        .InsertItem l_varItem, InsertionPoint
+'                    End If
+'                End If
+'            Case vbVariant Or vbArray
+'                ParseMenu Menu, l_varItem, .Count
+'            Case Else
+'            End Select
+'        Next l_lngItems
+'    End With
+'End Function
 
 Public Function ParseMenu2(Menu As ngMenu, Items As Variant, Optional ByRef InsertionPoint As Long = -1)
 On Error Resume Next

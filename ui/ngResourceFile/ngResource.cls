@@ -15,10 +15,12 @@ Option Explicit
 Private m_rcfParent As ngResourceFile
 Private m_strFilename As String
 Private m_rtyType As ngResourceTypes
+Private m_objData As Object
 
 Friend Sub Free()
 On Error Resume Next
     Set m_rcfParent = Nothing
+    Set m_objData = Nothing
 End Sub
 
 Public Property Get Parent() As ngResourceFile
@@ -61,9 +63,17 @@ Public Function Load() As Variant
 On Error Resume Next
     Select Case m_rtyType
     Case rtyImage
-        Set Load = Me.LoadImage()
+        Set Load = m_objData
+        If Load Is Nothing Then
+            Set Load = Me.LoadImage()
+            Set m_objData = Load
+        End If
     Case rtyIcon
-        Set Load = Me.LoadIcon()
+        Set Load = m_objData
+        If Load Is Nothing Then
+            Set Load = Me.LoadIcon()
+            Set m_objData = Load
+        End If
     Case rtyText, rtyScript
         Load = Me.LoadText()
     End Select

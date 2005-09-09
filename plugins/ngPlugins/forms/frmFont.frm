@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.1#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.11#0"; "ngUI.ocx"
 Begin VB.Form frmFont 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -665,22 +665,21 @@ End Sub
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
     With Handler.GetMenu
-        ' .DestroyMenu "Tools"
-        ' .DestroyMenu "AddDropShadow"
-        ' .DestroyMenu "AddOutline"
-        ' .DestroyMenu "Recolor"
-        ' .DestroyMenu "ToolsEndSeparator"
+        .Items.Remove "Tools"
     End With
 End Sub
 
 Private Sub iCustomMenus_InitializeMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
-    With Handler.GetMenu
-        ' .DefineMenu "&Tools", "Tools"
-        ' .DefineMenu "Add Drop Shadow", "AddDropShadow", "Tools"
-        ' .DefineMenu "Add Outline", "AddOutline", "Tools"
-        ' .DefineMenu "Recolor", "Recolor", "Tools"
-        ' .DefineMenu "-", "ToolsEndSeparator", "Tools"
+    With Handler.GetMenu.Items
+        With .AddNew("&Tools", , "Tools", , , , , , , , 1)
+            Set .ChildMenu = CreateMenu()
+            With .ChildMenu.Items
+                .AddNew "Add Drop Shadow", , , , , , , , BindEvent(Me, "AddDropShadow")
+                .AddNew "Add Outline", , , , , , , , BindEvent(Me, "AddOutline")
+                .AddNew "Recolor", , , , , , , , BindEvent(Me, "Recolor")
+            End With
+        End With
     End With
 End Sub
 

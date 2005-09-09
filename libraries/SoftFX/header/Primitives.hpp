@@ -67,8 +67,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
     }
 
 #define TRACELINE_INIT(Line)                                                               \
-          int delta[2] = {floor(abs((double)Line.End.X - (double)Line.Start.X)),           \
-          floor(abs((double)Line.End.Y - (double)Line.Start.Y))};                          \
+          int delta[2] = {abs(floor((float)Line.End.X) - floor((float)Line.Start.X)),           \
+          abs(floor((float)Line.End.Y) - floor((float)Line.Start.Y))};                          \
                                                                                            \
           bool alternate = (delta[1] > delta[0]);                                          \
           if (alternate) _Swap(delta[0], delta[1]);                                        \
@@ -108,18 +108,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
                   x += xinc[t];                                                            \
                   y += yinc[t];                                                            \
               }                                                                            \
-          }
+          }                                                                                
 
-#define TRACELINEFP_INIT(Line)                                                             \
-          float delta[2] = {abs(Line.End.X - Line.Start.X), abs(Line.End.Y - Line.Start.Y)};\
+#define TRACELINEFP_INIT(Line, Accuracy)                                                   \
+          float delta[2] = {Line.End.X - Line.Start.X, Line.End.Y - Line.Start.Y};\
                                                                                            \
-          bool alternate = (delta[1] > delta[0]);                                          \
-          if (alternate) _Swap(delta[0], delta[1]);                                        \
-                                                                                           \
-          int numpixels = floor(delta[0]) + 1;                                             \
+          int numpixels = ceil(_Max(abs(delta[0]), abs(delta[1]))) * Accuracy - 1;         \
           float x = Line.Start.X, y = Line.Start.Y;                                        \
-          float xinc = delta[0] / numpixels;                                               \
-          float yinc = delta[1] / numpixels;                                               \
+          float xinc = delta[0] / (float)(numpixels);                                      \
+          float yinc = delta[1] / (float)(numpixels);                                      \
 
 #define TRACELINEFP_BEGIN                                                                  \
           {                                                                                \

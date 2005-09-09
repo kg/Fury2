@@ -88,12 +88,7 @@ Private Function iFileTypePlugin_LoadFromFilename(Filename As String) As iDocume
 On Error Resume Next
 Dim l_frmNew As New frmTextFile
 Dim l_lngFileHandle As Long, l_strText As String
-    l_lngFileHandle = FreeFile
-    Open Filename For Binary Access Read As #l_lngFileHandle
-        l_strText = Space(LOF(l_lngFileHandle))
-        Get #1, 1, l_strText
-    Close #l_lngFileHandle
-    l_frmNew.txtText.Text = l_strText
+    l_frmNew.txtText.Text = ReadTextFile(Filename)
     l_frmNew.SetFilename Filename
     Set iFileTypePlugin_LoadFromFilename = l_frmNew
     Set iFileTypePlugin_LoadFromFilename.Plugin = Me

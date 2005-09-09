@@ -38,6 +38,7 @@ namespace Lighting {
     Image *ScratchBuffer;
     float OutputScaleRatio;
     Byte SaturationMode;
+    Byte AntiAlias;
   };
 
   class Environment {
@@ -51,7 +52,7 @@ namespace Lighting {
     Pixel AmbientLight;
     SpriteParam *Sprites;
     Byte ForceRaycasting;
-	Matrix *Matrix;
+	  Matrix *Matrix;
   };
 
   class LightSource {

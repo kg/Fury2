@@ -40,12 +40,12 @@ template <class T> inline T Intersection(T& a, T& b, Rectangle *Area, int Edge) 
     c.Y = Area->Top;
     break;
   case 2: // right
-    c.X = Area->right_exclusive();
-    c.Y = a.Y + ((b.Y - a.Y) * (Area->right_exclusive() - a.X) / (b.X - a.X));
+    c.X = Area->right();
+    c.Y = a.Y + ((b.Y - a.Y) * (Area->right() - a.X) / (b.X - a.X));
     break;
   case 3: // bottom
-    c.X = a.X + ((b.X - a.X) * (Area->bottom_exclusive() - a.Y) / (b.Y - a.Y));
-    c.Y = Area->bottom_exclusive();
+    c.X = a.X + ((b.X - a.X) * (Area->bottom() - a.Y) / (b.Y - a.Y));
+    c.Y = Area->bottom();
     break;
   }
   return c;
@@ -62,25 +62,25 @@ inline GradientVertex Intersection(GradientVertex& a, GradientVertex& b, Rectang
     d = (Area->Left - a.X) / (b.X - a.X);
     c.X = Area->Left;
     c.Y = a.Y + ((b.Y - a.Y) * d);
-    c.setColor(Pixel(b.color(), a.color(), abs(d)));
+    c.setColor(Pixel(a.color(), b.color(), d));
     break;
   case 1:
     d = (Area->Top - a.Y) / (b.Y - a.Y);
     c.X = a.X + ((b.X - a.X) * d);
     c.Y = Area->Top;
-    c.setColor(Pixel(b.color(), a.color(), abs(d)));
+    c.setColor(Pixel(a.color(), b.color(), d));
     break;
   case 2:
-    d = (Area->right_exclusive() - a.X) / (b.X - a.X);
-    c.X = Area->right_exclusive();
+    d = (Area->right() - a.X) / (b.X - a.X);
+    c.X = Area->right();
     c.Y = a.Y + ((b.Y - a.Y) * d);
-    c.setColor(Pixel(b.color(), a.color(), abs(d)));
+    c.setColor(Pixel(a.color(), b.color(), d));
     break;
   case 3:
-    d = (Area->bottom_exclusive() - a.Y) / (b.Y - a.Y);
+    d = (Area->bottom() - a.Y) / (b.Y - a.Y);
     c.X = a.X + ((b.X - a.X) * d);
-    c.Y = Area->bottom_exclusive();
-    c.setColor(Pixel(b.color(), a.color(), abs(d)));
+    c.Y = Area->bottom();
+    c.setColor(Pixel(a.color(), b.color(), d));
     break;
   }
   return c;
@@ -108,16 +108,16 @@ inline TexturedVertex Intersection(TexturedVertex& a, TexturedVertex& b, Rectang
     c.V = a.V + ((b.V - a.V) * d);
     break;
   case 2:
-    d = (Area->right_exclusive() - a.X) / (b.X - a.X);
-    c.X = Area->right_exclusive();
+    d = (Area->right() - a.X) / (b.X - a.X);
+    c.X = Area->right();
     c.Y = a.Y + ((b.Y - a.Y) * d);
     c.U = a.U + ((b.U - a.U) * d);
     c.V = a.V + ((b.V - a.V) * d);
     break;
   case 3:
-    d = (Area->bottom_exclusive() - a.Y) / (b.Y - a.Y);
+    d = (Area->bottom() - a.Y) / (b.Y - a.Y);
     c.X = a.X + ((b.X - a.X) * d);
-    c.Y = Area->bottom_exclusive();
+    c.Y = Area->bottom();
     c.U = a.U + ((b.U - a.U) * d);
     c.V = a.V + ((b.V - a.V) * d);
     break;

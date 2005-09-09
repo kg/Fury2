@@ -161,7 +161,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.Rect, ByVal wFormat As Long) As Long
+Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.RECT, ByVal wFormat As Long) As Long
 Private Const DT_WORDBREAK = &H10
 Private Const DT_NOPREFIX = &H800
 Private Const MinimumEditWidth As Long = 60
@@ -899,7 +899,7 @@ Dim l_lngSelection As Long
 Dim l_varItems As Variant
     ReleaseCapture
     l_varItems = MenusFromStringArray(m_oiItems(m_lngSelectedItem).DropdownText)
-    l_lngSelection = QuickShowMenu2(picItems, cmdDropDown.Left * Screen.TwipsPerPixelX, (cmdDropDown.Top + cmdDropDown.Height) * Screen.TwipsPerPixelY, l_varItems, LeftButtonOnly:=True)
+    l_lngSelection = QuickShowMenu2(picItems, cmdDropDown.Left, (cmdDropDown.Top + cmdDropDown.Height), l_varItems, LeftButtonOnly:=True)
     txtEdit.Text = CStr(m_oiItems(m_lngSelectedItem).DropdownValues(l_lngSelection - 1))
     EditBoxChanged
 End Sub
@@ -943,8 +943,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -955,8 +955,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -1051,7 +1051,7 @@ End Sub
 
 Private Sub picInfo_Paint()
 On Error Resume Next
-Dim l_rcRect As Win32.Rect
+Dim l_rcRect As Win32.RECT
 Dim l_lngLength As Long
     picInfo.Line (0, 0)-(picInfo.ScaleWidth - 1, picInfo.ScaleHeight - 1), vbButtonShadow, B
     picInfo.Line (1, 1)-(picInfo.ScaleWidth - 2, picInfo.ScaleHeight - 2), vbButtonFace, BF

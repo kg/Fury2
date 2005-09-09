@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //#define ACCURATE_PYTHAGORAS
 //#define LOOKUPCACHE
 //#define LIBMNG
+//#define PYTHAGORAS_AA
 
 /*
     End Configuration
@@ -57,6 +58,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #pragma warning( 4 : 4142 )             // benign redefinition of type (ex: unsigned char to char)   
 #pragma warning( disable : 4311 )
 #pragma warning( disable : 4312 )
+#pragma warning( disable : 4996 ) // $WORTHLESS$ was declared deprecated (shut up, VC++)
 
 #include <string>
 #include <vector>
@@ -159,7 +161,4 @@ const double Radian = 1.74532925199433E-02;
 
 #include "Profiler_Configuration.hpp"
 #include "Profiler.hpp"
-
-extern int (*_CreateDIBSection) (int hDC, BitmapInfo *pInfo, DoubleWord iFlags, void **pPointer, int FileHandle, int FileOffset);
-extern int (*_DeleteObject) (int Object);
 #endif

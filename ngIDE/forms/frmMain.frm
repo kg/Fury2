@@ -1,9 +1,8 @@
 VERSION 5.00
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
-Object = "{4F11FEBA-BBC2-4FB6-A3D3-AA5B5BA087F4}#1.0#0"; "vbalSbar6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{EF59A10B-9BC4-11D3-8E24-44910FC10000}#11.0#0"; "vbalEdit.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.7#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.11#0"; "ngUI.ocx"
 Begin VB.MDIForm frmMain 
    AutoShowChildren=   0   'False
    BackColor       =   &H8000000C&
@@ -17,6 +16,28 @@ Begin VB.MDIForm frmMain
    LinkTopic       =   "Main"
    OLEDropMode     =   1  'Manual
    StartUpPosition =   3  'Windows Default
+   Begin VB.PictureBox picStatus 
+      Align           =   2  'Align Bottom
+      BorderStyle     =   0  'None
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   9
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   330
+      Left            =   0
+      ScaleHeight     =   22
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   555
+      TabIndex        =   7
+      TabStop         =   0   'False
+      Top             =   6270
+      Width           =   8325
+   End
    Begin VB.PictureBox picLog 
       Align           =   2  'Align Bottom
       BorderStyle     =   0  'None
@@ -35,14 +56,16 @@ Begin VB.MDIForm frmMain
       ScaleHeight     =   80
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   555
-      TabIndex        =   12
-      Top             =   5100
+      TabIndex        =   2
+      TabStop         =   0   'False
+      Top             =   5070
       Visible         =   0   'False
       Width           =   8325
       Begin vbalEdit.vbalRichEdit reLog 
          Height          =   945
          Left            =   0
-         TabIndex        =   13
+         TabIndex        =   3
+         TabStop         =   0   'False
          Top             =   255
          Width           =   8325
          _ExtentX        =   14684
@@ -68,13 +91,12 @@ Begin VB.MDIForm frmMain
    End
    Begin ngUI.ngToolbar tbrLeft 
       Align           =   3  'Align Left
-      Height          =   2940
+      Height          =   2910
       Left            =   0
-      TabIndex        =   9
       Top             =   2160
       Width           =   720
       _ExtentX        =   1270
-      _ExtentY        =   5186
+      _ExtentY        =   5133
    End
    Begin VB.PictureBox picFileSidebar 
       Align           =   4  'Align Right
@@ -89,19 +111,21 @@ Begin VB.MDIForm frmMain
          Strikethrough   =   0   'False
       EndProperty
       ForeColor       =   &H80000013&
-      Height          =   2940
+      Height          =   2910
       Left            =   6330
-      ScaleHeight     =   196
+      ScaleHeight     =   194
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   133
-      TabIndex        =   7
+      TabIndex        =   6
+      TabStop         =   0   'False
       Top             =   2160
       Visible         =   0   'False
       Width           =   2000
       Begin vbalTreeViewLib6.vbalTreeView tvFileTree 
          Height          =   2655
          Left            =   15
-         TabIndex        =   8
+         TabIndex        =   4
+         TabStop         =   0   'False
          Top             =   255
          Width           =   1920
          _ExtentX        =   3387
@@ -144,13 +168,13 @@ Begin VB.MDIForm frmMain
       ScaleHeight     =   61
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   555
-      TabIndex        =   2
+      TabIndex        =   1
+      TabStop         =   0   'False
       Top             =   1245
       Width           =   8325
       Begin ngUI.ngToolbar tbrMain 
          Height          =   360
          Left            =   1890
-         TabIndex        =   3
          Top             =   0
          Width           =   1860
          _ExtentX        =   3281
@@ -159,7 +183,6 @@ Begin VB.MDIForm frmMain
       Begin ngUI.ngToolbar tbrGame 
          Height          =   360
          Left            =   5670
-         TabIndex        =   4
          Top             =   0
          Width           =   1860
          _ExtentX        =   3281
@@ -168,7 +191,6 @@ Begin VB.MDIForm frmMain
       Begin ngUI.ngToolbar tbrPlugins 
          Height          =   360
          Left            =   3780
-         TabIndex        =   5
          Top             =   0
          Width           =   1860
          _ExtentX        =   3281
@@ -177,7 +199,6 @@ Begin VB.MDIForm frmMain
       Begin ngUI.ngToolbar tbrMenus 
          Height          =   360
          Left            =   0
-         TabIndex        =   6
          Top             =   0
          Width           =   1860
          _ExtentX        =   3281
@@ -186,7 +207,6 @@ Begin VB.MDIForm frmMain
       Begin ngUI.ngTabStrip tsDocuments 
          Height          =   525
          Left            =   0
-         TabIndex        =   14
          Top             =   570
          Width           =   8325
          _ExtentX        =   14684
@@ -211,10 +231,17 @@ Begin VB.MDIForm frmMain
       ScaleHeight     =   83
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   555
-      TabIndex        =   1
+      TabIndex        =   0
+      TabStop         =   0   'False
       Top             =   0
       Visible         =   0   'False
       Width           =   8325
+      Begin VB.Timer tmrFixFocus 
+         Enabled         =   0   'False
+         Interval        =   1
+         Left            =   465
+         Top             =   930
+      End
       Begin VB.Timer tmrOpenMenu 
          Enabled         =   0   'False
          Interval        =   1
@@ -249,13 +276,13 @@ Begin VB.MDIForm frmMain
          ScaleHeight     =   77
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   380
-         TabIndex        =   10
+         TabIndex        =   5
+         TabStop         =   0   'False
          Top             =   30
          Width           =   5700
          Begin ngUI.ngToolbar tbrNotice 
             Height          =   240
             Left            =   0
-            TabIndex        =   11
             Top             =   915
             Width           =   5700
             _ExtentX        =   10054
@@ -293,28 +320,6 @@ Begin VB.MDIForm frmMain
       _ExtentX        =   847
       _ExtentY        =   794
    End
-   Begin vbalSbar6.vbalStatusBar sbStatus 
-      Align           =   2  'Align Bottom
-      Height          =   300
-      Left            =   0
-      TabIndex        =   0
-      Top             =   6300
-      Width           =   8325
-      _ExtentX        =   14684
-      _ExtentY        =   529
-      SizeGrip        =   0   'False
-      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      BackColor       =   -2147483633
-      SimpleStyle     =   0
-   End
 End
 Attribute VB_Name = "frmMain"
 Attribute VB_GlobalNameSpace = False
@@ -344,9 +349,14 @@ Option Explicit
 Implements iCustomMenuHandler
 
 Private Const WM_MDIGETACTIVE = &H229
-Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
-Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
+Private Declare Function W32SetFocus Lib "user32" (ByVal hWnd As Long) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hWnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function GetClientRect Lib "user32" (ByVal hWnd As Long, lpRect As Win32.RECT) As Long
 
+Private m_lngFocus As Long
+Private m_strStatusText As String
+Private m_strProgressText As String
+Private m_sngProgress As Single
 Private m_lngMenusVisible As Long
 Private m_btnActiveMenu As ngToolButton
 Private m_colNoticeQueue As Engine.Fury2Collection
@@ -385,9 +395,14 @@ Private WithEvents m_mnuPanels As ngMenu
 Attribute m_mnuPanels.VB_VarHelpID = -1
 Private m_booNonClientFocus As Boolean
 Private m_colChildWindows As Engine.Fury2Collection
-Private m_sngProgress As Single
 Private m_cmnLastDocument As iCustomMenus
 Private m_btnMenuToOpen As ngToolButton
+
+Sub FixFocus(ByVal hWnd As Long)
+On Error Resume Next
+    m_lngFocus = hWnd
+    tmrFixFocus.Enabled = True
+End Sub
 
 Public Sub InitTabs()
 On Error Resume Next
@@ -443,17 +458,17 @@ End Sub
 
 Private Function GetToolbarX(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
-    ClientToScreen Me.hwnd, l_ptWindow
-    ClientToScreen Toolbar.hwnd, l_ptToolbar
+Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
+    ClientToScreen Me.hWnd, l_ptWindow
+    ClientToScreen Toolbar.hWnd, l_ptToolbar
     GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0)))
 End Function
 
 Private Function GetToolbarY(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
-    ClientToScreen Me.hwnd, l_ptWindow
-    ClientToScreen Toolbar.hwnd, l_ptToolbar
+Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
+    ClientToScreen Me.hWnd, l_ptWindow
+    ClientToScreen Toolbar.hWnd, l_ptToolbar
     GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0)))
 End Function
 
@@ -477,9 +492,9 @@ Dim l_lnghWnd As Long
 Dim l_mgrForm As cChildManager
     l_lnghWnd = maxContainer.ActiveWindow
     For Each l_mgrForm In m_colChildWindows
-        If (l_mgrForm.Form.hwnd = l_lnghWnd) Then
+        If (l_mgrForm.Form.hWnd = l_lnghWnd) Then
             l_mgrForm.Visible = True
-        ElseIf (l_mgrForm.Form.extender.hwnd = l_lnghWnd) Then
+        ElseIf (l_mgrForm.Form.extender.hWnd = l_lnghWnd) Then
             l_mgrForm.Visible = True
         Else
             l_mgrForm.Visible = False
@@ -498,10 +513,10 @@ Dim l_lnghWnd As Long
 Dim l_mgrForm As cChildManager
     l_lnghWnd = maxContainer.ActiveWindow
     For Each l_mgrForm In m_colChildWindows
-        If (l_mgrForm.Form.hwnd = l_lnghWnd) Then
+        If (l_mgrForm.Form.hWnd = l_lnghWnd) Then
             Set ActiveChild = l_mgrForm
             Exit For
-        ElseIf (l_mgrForm.Form.extender.hwnd = l_lnghWnd) Then
+        ElseIf (l_mgrForm.Form.extender.hWnd = l_lnghWnd) Then
             Set ActiveChild = l_mgrForm
             Exit For
         End If
@@ -577,28 +592,20 @@ End Sub
 
 Public Sub SetStatus(Optional ByRef Status As String = "Ready")
 On Error Resume Next
-    sbStatus.PanelText("Status") = Status
-    sbStatus.RedrawPanel "Status"
-    'DoEvents
+    m_strStatusText = Status
+    picStatus_Paint
 End Sub
 
 Public Sub SetLocation(Optional ByRef Value As String = "")
 On Error Resume Next
-    sbStatus.PanelText("Progress") = Value
-    sbStatus.RedrawPanel "Progress"
-    'DoEvents
+    m_strProgressText = Value
+    picStatus_Paint
 End Sub
 
 Public Sub SetProgress(Optional ByVal Progress As Single = 0)
 On Error Resume Next
     m_sngProgress = Progress
-    If Progress = 0 Then
-        sbStatus.PanelStyle("Progress") = estbrStandard Or estbrNoBorders
-    Else
-        sbStatus.PanelStyle("Progress") = estbrOwnerDraw
-    End If
-    sbStatus.RedrawPanel "Progress"
-    'DoEvents
+    picStatus_Paint
 End Sub
 
 Public Sub ShowChild(ByRef Child As Object)
@@ -663,7 +670,7 @@ Dim l_btnButton As ngToolButton
     tbrMenus.DisableUpdates = False
     tbrMenus.Reflow
     Set m_aclMenus = New cAcceleratorManager
-    m_aclMenus.Attach Me.hwnd
+    m_aclMenus.Attach Me.hWnd
     For l_lngButtons = 1 To tbrMenus.Buttons.Count
         l_strCaption = tbrMenus.Buttons(l_lngButtons).Text
         If InStr(l_strCaption, "&") Then
@@ -795,9 +802,6 @@ End Sub
 
 Public Sub InitStatus()
 On Error Resume Next
-    sbStatus.AddPanel estbrStandard Or estbrNoBorders, "Ready", , , 4, True, False, , "Status"
-    sbStatus.AddPanel estbrStandard Or estbrNoBorders, , "Progress", , 150, False, False, , "Progress"
-    sbStatus.AddPanel estbrStandard Or estbrNoBorders, CStr(Now), , , 4, False, True, , "Time"
 End Sub
 
 Public Sub InitSidebars()
@@ -922,35 +926,35 @@ Dim l_mnuMenu As ngMenu
     Next l_mnuMenu
 End Sub
 
-Private Sub iCustomMenuHandler_DefineMenu(Caption As String, key As String, Optional ParentKey As String, Optional AcceleratorString As String = "", Optional Icon As stdole.Picture = Nothing, Optional HelpText As String = "", Optional ByVal Checked As Boolean = False, Optional ByVal Enabled As Boolean = True)
-On Error Resume Next
-    With GetMenu("Main Menu")
-        If Icon Is Nothing Then
-            If IsMissing(ParentKey) Or Trim(ParentKey) = "" Then
-                .InsertItem Caption & IIf(AcceleratorString <> "", vbTab & AcceleratorString, ""), "DocumentEndSeparator", HelpText, , , Checked, Enabled, "CustomMenu(""" & key & """)"
-            Else
-                .AddItem Caption & IIf(AcceleratorString <> "", vbTab & AcceleratorString, ""), HelpText, , .IndexForKey("CustomMenu(""" & ParentKey & """)"), , Checked, Enabled, "CustomMenu(""" & key & """)"
-            End If
-        Else
-            frmIcons.ilIcons.AddFromHandle Icon.Handle, Image_Icon, "Child_" & key
-            If IsMissing(ParentKey) Or Trim(ParentKey) = "" Then
-                .InsertItem Caption & IIf(AcceleratorString <> "", vbTab & AcceleratorString, ""), "DocumentEndSeparator", HelpText, , frmIcons.ilIcons.ImageCount - 1, Checked, Enabled, "CustomMenu(""" & key & """)"
-            Else
-                .AddItem Caption & IIf(AcceleratorString <> "", vbTab & AcceleratorString, ""), HelpText, , .IndexForKey("CustomMenu(""" & ParentKey & """)"), frmIcons.ilIcons.ImageCount - 1, Checked, Enabled, "CustomMenu(""" & key & """)"
-            End If
-        End If
-    End With
-    Err.Clear
-End Sub
+'Private Sub iCustomMenuHandler_DefineMenu(Caption As String, key As String, Optional ParentKey As String, Optional AcceleratorString As String = "", Optional Icon As stdole.Picture = Nothing, Optional HelpText As String = "", Optional ByVal Checked As Boolean = False, Optional ByVal Enabled As Boolean = True)
+'On Error Resume Next
+'    With GetMenu("Main Menu")
+'        If Icon Is Nothing Then
+'            If IsMissing(ParentKey) Or Trim(ParentKey) = "" Then
+'                .InsertItem Caption & IIf(AcceleratorString <> "", vbTab & AcceleratorString, ""), "DocumentEndSeparator", HelpText, , , Checked, Enabled, "CustomMenu(""" & key & """)"
+'            Else
+'                .AddItem Caption & IIf(AcceleratorString <> "", vbTab & AcceleratorString, ""), HelpText, , .IndexForKey("CustomMenu(""" & ParentKey & """)"), , Checked, Enabled, "CustomMenu(""" & key & """)"
+'            End If
+'        Else
+'            frmIcons.ilIcons.AddFromHandle Icon.Handle, Image_Icon, "Child_" & key
+'            If IsMissing(ParentKey) Or Trim(ParentKey) = "" Then
+'                .InsertItem Caption & IIf(AcceleratorString <> "", vbTab & AcceleratorString, ""), "DocumentEndSeparator", HelpText, , frmIcons.ilIcons.ImageCount - 1, Checked, Enabled, "CustomMenu(""" & key & """)"
+'            Else
+'                .AddItem Caption & IIf(AcceleratorString <> "", vbTab & AcceleratorString, ""), HelpText, , .IndexForKey("CustomMenu(""" & ParentKey & """)"), frmIcons.ilIcons.ImageCount - 1, Checked, Enabled, "CustomMenu(""" & key & """)"
+'            End If
+'        End If
+'    End With
+'    Err.Clear
+'End Sub
 
-Private Sub iCustomMenuHandler_DestroyMenu(key As String)
-On Error Resume Next
-    frmIcons.ilIcons.RemoveImage frmIcons.ilIcons.ItemIndex("Child_" & key)
-    With GetMenu("Main Menu")
-        .RemoveItem "CustomMenu(""" & key & """)"
-    End With
-    Err.Clear
-End Sub
+'Private Sub iCustomMenuHandler_DestroyMenu(key As String)
+'On Error Resume Next
+'    frmIcons.ilIcons.RemoveImage frmIcons.ilIcons.ItemIndex("Child_" & key)
+'    With GetMenu("Main Menu")
+'        .RemoveItem "CustomMenu(""" & key & """)"
+'    End With
+'    Err.Clear
+'End Sub
 
 Private Function iCustomMenuHandler_GetMenu() As ngUI.ngMenu
 On Error Resume Next
@@ -1090,6 +1094,10 @@ On Error Resume Next
     tvFileTree.Move 2, 16, picFileSidebar.ScaleWidth - 4, picFileSidebar.ScaleHeight - 18
 End Sub
 
+Private Sub picHiddenControls_KeyDown(KeyCode As Integer, Shift As Integer)
+    MsgBox "pichiddencontrols what"
+End Sub
+
 Private Sub picLog_Paint()
 On Error Resume Next
     picLog.Cls
@@ -1129,45 +1137,39 @@ Private Sub picNotice_Resize()
 On Error Resume Next
 End Sub
 
+Private Sub picStatus_KeyDown(KeyCode As Integer, Shift As Integer)
+    MsgBox "picstatus what"
+End Sub
+
+Private Sub picStatus_Paint()
+On Error Resume Next
+Dim l_rctStatus As RECT
+    picStatus.Line (0, 0)-(picStatus.ScaleWidth - 1, picStatus.ScaleHeight - 1), picStatus.BackColor, BF
+    SetBackgroundMode picStatus.hdc, BackgroundMode_Opaque
+    SetBackgroundColor picStatus.hdc, GetSystemColor(SystemColor_Button_Face)
+    SetTextColor picStatus.hdc, GetSystemColor(SystemColor_Button_Text)
+    l_rctStatus.Left = 1
+    l_rctStatus.Top = 1
+    l_rctStatus.Right = picStatus.ScaleWidth - 102
+    l_rctStatus.Bottom = picStatus.ScaleHeight - 2
+    DrawText picStatus.hdc, m_strStatusText, Len(m_strStatusText), l_rctStatus, DrawText_Align_Left Or DrawText_Align_Center_Vertical Or DrawText_NoPrefix Or DrawText_Wrap_None
+    l_rctStatus.Left = l_rctStatus.Right + 1
+    l_rctStatus.Right = picStatus.ScaleWidth - 2
+    If m_sngProgress < 1 Then
+        DrawText picStatus.hdc, m_strProgressText, Len(m_strProgressText), l_rctStatus, DrawText_Align_Left Or DrawText_Align_Center_Vertical Or DrawText_NoPrefix Or DrawText_Wrap_None
+    Else
+        picStatus.Line (l_rctStatus.Left, l_rctStatus.Top)-(l_rctStatus.Left + (100 * m_sngProgress), l_rctStatus.Bottom), GetSystemColor(SystemColor_Highlight), BF
+    End If
+End Sub
+
+Private Sub picToolbarsTop_KeyDown(KeyCode As Integer, Shift As Integer)
+    MsgBox "pictoolbarstop what"
+End Sub
+
 Private Sub picToolbarsTop_Resize()
 On Error Resume Next
     tbrMenus.Width = picToolbarsTop.ScaleWidth
     tsDocuments.Width = picToolbarsTop.ScaleWidth
-End Sub
-
-Private Sub sbStatus_DrawItem(ByVal lhDC As Long, ByVal iPanel As Long, ByVal lLeftPixels As Long, ByVal lTopPixels As Long, ByVal lRightPixels As Long, ByVal lBottomPixels As Long)
-On Error Resume Next
-Dim l_rctProgress As Rect
-Dim l_lngBrush As Long
-    If LCase(sbStatus.PanelKey(iPanel)) = "progress" Then
-        With l_rctProgress
-            .Left = lLeftPixels
-            .Top = lTopPixels
-            .Right = lRightPixels
-            .Bottom = lBottomPixels
-        End With
-        l_lngBrush = gdi32.CreateSolidBrush(GetSystemColor(SystemColor_Button_Face))
-        user32.FillRect lhDC, l_rctProgress, l_lngBrush
-        DeleteObject l_lngBrush
-        With l_rctProgress
-            .Right = ClipValue(lLeftPixels + ((lRightPixels - lLeftPixels) * m_sngProgress), lLeftPixels, lRightPixels)
-        End With
-        l_lngBrush = gdi32.CreateSolidBrush(GetSystemColor(SystemColor_Highlight))
-        user32.FillRect lhDC, l_rctProgress, l_lngBrush
-        DeleteObject l_lngBrush
-    End If
-End Sub
-
-Private Sub sbStatus_GotFocus()
-On Error Resume Next
-    m_booNonClientFocus = True
-    g_edEditor.ActionUpdate
-End Sub
-
-Private Sub sbStatus_LostFocus()
-On Error Resume Next
-    m_booNonClientFocus = False
-    g_edEditor.ActionUpdate
 End Sub
 
 Private Sub tbrGame_ButtonClick(Button As ngToolButton)
@@ -1188,7 +1190,7 @@ Dim l_lngX As Long, l_lngY As Long
     If Button.key = "Game:OpenMenu" Then
         Cancel = True
         ReleaseCapture
-        m_mnuRecentGames.Show l_lngX, l_lngY, Me.hwnd, , False
+        m_mnuRecentGames.Show l_lngX, l_lngY, Me.hWnd, , False
     End If
 End Sub
 
@@ -1217,11 +1219,11 @@ Dim l_lngX As Long, l_lngY As Long
     If Button.key = "File:New" Then
         Cancel = True
         ReleaseCapture
-        m_mnuNew.Show l_lngX, l_lngY, Me.hwnd, , False
+        m_mnuNew.Show l_lngX, l_lngY, Me.hWnd, , False
     ElseIf Button.key = "File:OpenMenu" Then
         Cancel = True
         ReleaseCapture
-        m_mnuRecentFiles.Show l_lngX, l_lngY, Me.hwnd, , False
+        m_mnuRecentFiles.Show l_lngX, l_lngY, Me.hWnd, , False
     End If
 End Sub
 
@@ -1234,7 +1236,7 @@ Dim l_mnuMenu As ngMenu
 '    Cancel = True
     ReleaseCapture
     Set l_mnuMenu = m_colMenus(Button.key)
-    l_mnuMenu.Show l_lngX, l_lngY, tbrMenus.hwnd, True, False
+    l_mnuMenu.Show l_lngX, l_lngY, tbrMenus.hWnd, True, False
 End Sub
 
 Private Sub tbrMenus_ButtonHover(Button As ngUI.ngToolButton)
@@ -1285,7 +1287,6 @@ End Sub
 
 Private Sub tmrClock_Timer()
 On Error Resume Next
-    sbStatus.PanelText("Time") = CStr(Now)
     RefreshWindows
     RefreshActiveDocument
 End Sub
@@ -1708,6 +1709,12 @@ Dim l_objObject As Object
 '    End Select
 End Sub
 
+Private Sub tmrFixFocus_Timer()
+On Error Resume Next
+    tmrFixFocus.Enabled = False
+    W32SetFocus m_lngFocus
+End Sub
+
 Private Sub tmrFocusTracker_Timer()
 On Error Resume Next
 Static s_lngLastDocument As Long
@@ -1797,11 +1804,6 @@ Dim l_mgrChild As cChildManager
     End If
 End Sub
 
-Private Sub tsFileTabs_TabClick(theTab As vbalDTab6.cTab, ByVal iButton As MouseButtonConstants, ByVal Shift As ShiftConstants, ByVal X As Single, ByVal Y As Single)
-On Error Resume Next
-    RefreshFileSidebar
-End Sub
-
 Private Sub tvFileTree_AfterLabelEdit(node As vbalTreeViewLib6.cTreeViewNode, NewString As String, Cancel As Boolean)
 On Error Resume Next
 Dim l_strPath As String, l_strNewPath As String
@@ -1866,7 +1868,7 @@ Dim l_fsFilesystem As Fury2Filesystem
         Set l_nodNode = tvFileTree.hitTest(X, Y)
         If l_nodNode Is Nothing Then
             ' Blank
-            Select Case QuickShowMenu2(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+            Select Case QuickShowMenu2(tvFileTree, X, Y, _
                 Menus("Explore", "-", "New Folder"))
             Case 1
                 Shell "explorer """ & Replace(l_fsFilesystem.Root, "/", "\") & """", vbNormalFocus
@@ -1879,7 +1881,7 @@ Dim l_fsFilesystem As Fury2Filesystem
         Else
             If Right(l_nodNode.key, 1) = "/" Then
                 ' Folder
-                Select Case QuickShowMenu2(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+                Select Case QuickShowMenu2(tvFileTree, X, Y, _
                     Menus("Expand", "Explore", "-", "Rename", "Delete", "-", "New Folder"))
                 Case 1
                     l_nodNode.Expanded = True
@@ -1899,7 +1901,7 @@ Dim l_fsFilesystem As Fury2Filesystem
                 End Select
             Else
                 ' File
-                Select Case QuickShowMenu2(tvFileTree, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+                Select Case QuickShowMenu2(tvFileTree, X, Y, _
                     Menus("Open", "-", "Rename", "Delete"))
                 Case 1
                     g_edEditor.File_Open l_fsFilesystem.File(l_nodNode.key).GetRealFilename
@@ -1931,12 +1933,12 @@ Dim l_lngLeftSpace As Long, l_lngRightSpace As Long
 Dim l_lngTopSpace As Long, l_lngBottomSpace As Long
 Dim l_lngTextHeight As Long, l_lngTitleHeight As Long
 Dim l_lngWidth As Long, l_lngHeight As Long
-Dim l_rctWindow As Win32.Rect
+Dim l_rctWindow As Win32.RECT
 Dim l_lngWindowWidth As Long, l_lngWindowHeight As Long
-Dim l_rctTextSize As Win32.Rect, l_rctText As Win32.Rect
+Dim l_rctTextSize As Win32.RECT, l_rctText As Win32.RECT
 Dim l_sngCloseTime As Single
 Dim l_strWaitingNotices As String
-    GetClientRect Me.hwnd, l_rctWindow
+    GetClientRect Me.hWnd, l_rctWindow
     l_lngWindowWidth = (l_rctWindow.Right - l_rctWindow.Left)
     l_lngWindowHeight = (l_rctWindow.Bottom - l_rctWindow.Top)
     l_lngLeftSpace = 4
@@ -1979,9 +1981,9 @@ Dim l_strWaitingNotices As String
     l_lngHeight = (l_lngTextHeight + l_lngTitleHeight + l_lngTopSpace + l_lngBottomSpace)
     
     If Reposition Then
-        SetParent picNotice.hwnd, picHiddenControls.hwnd
-        picNotice.Move (l_lngWindowWidth - l_lngWidth) / 2, l_lngWindowHeight - l_lngHeight - (sbStatus.Height / Screen.TwipsPerPixelY), l_lngWidth, l_lngHeight
-        SetParent picNotice.hwnd, GetParent(picFileSidebar.hwnd)
+        SetParent picNotice.hWnd, picHiddenControls.hWnd
+        picNotice.Move (l_lngWindowWidth - l_lngWidth) / 2, l_lngWindowHeight - l_lngHeight - (picStatus.Height / Screen.TwipsPerPixelY), l_lngWidth, l_lngHeight
+        SetParent picNotice.hWnd, GetParent(picFileSidebar.hWnd)
         m_imgNotice.Resize picNotice.ScaleWidth, picNotice.ScaleHeight
     End If
     l_lngBottomColor = SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
@@ -2039,7 +2041,7 @@ On Error Resume Next
     tmrNotice.Enabled = False
     m_booNoticeFocused = False
     picNotice.Visible = False
-    SetParent picNotice.hwnd, picHiddenControls.hwnd
+    SetParent picNotice.hWnd, picHiddenControls.hWnd
     If m_notNotice Is Nothing Then Exit Sub
     RefreshNotice
     With m_notNotice
@@ -2083,7 +2085,7 @@ On Error Resume Next
     tmrNotice.Enabled = False
     m_booNoticeFocused = False
     picNotice.Visible = False
-    SetParent picNotice.hwnd, picHiddenControls.hwnd
+    SetParent picNotice.hWnd, picHiddenControls.hWnd
     Set m_notNotice = Nothing
     If m_colNoticeQueue.Count > 0 Then
         ActivateNotice

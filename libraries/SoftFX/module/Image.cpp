@@ -289,23 +289,23 @@ void Image::getPixelsClip(int X, int Y, int W, int H, Pixel* Target) {
 }
 
 void Image::allocateDIB(Size Width, Size Height, int DC) {
-BitmapInfo bmi;
+  win32::BITMAPINFO bmi;
     
   this->deallocate();
 
-  _Fill<Byte>(&(bmi), 0, sizeof(BitmapInfo));
+  _Fill<Byte>(&(bmi), 0, sizeof(win32::BITMAPINFO));
 
   this->DIBDC = DC;
 
-  bmi.Header.Size = sizeof(BitmapInfoHeader);
-  bmi.Header.Width = Width;
-  bmi.Header.Height = -Height;
-  bmi.Header.BitCount = 32;
-  bmi.Header.Planes = 1;
-  bmi.Header.Compression = 0;
+  bmi.bmiHeader.biSize = sizeof(win32::BITMAPINFOHEADER);
+  bmi.bmiHeader.biWidth = Width;
+  bmi.bmiHeader.biHeight = -Height;
+  bmi.bmiHeader.biBitCount = 32;
+  bmi.bmiHeader.biPlanes = 1;
+  bmi.bmiHeader.biCompression = 0;
   
   if ((Width > 0) && (Height > 0)) {
-    this->DIBSection = _CreateDIBSection(DC, &bmi, 0, reinterpret_cast<void**>(&(this->Data)), Null, 0);
+    this->DIBSection = zeroinit<int>(reinterpret_cast<int>(win32::CreateDIBSection(reinterpret_cast<win32::HDC>(DC), &bmi, 0, reinterpret_cast<void**>(&(this->Data)), Null, 0)));
   }
 
   if (this->Data) {
@@ -320,6 +320,70 @@ BitmapInfo bmi;
   
   this->unlock();
   this->clear();
+
+  return;
+}
+
+void Image::allocateShared(Size Width, Size Height, unsigned char *ID) {
+  bool isNew = true;
+  this->deallocate();
+
+  this->dirty();
+  this->Pitch = 0;
+  int padding = 12;
+
+  if ((Width > 0) && (Height > 0)) {
+      this->DataSize = Width * Height * sizeof(Pixel);
+      this->SharedMapping = win32::CreateFileMappingA(((win32::HANDLE)(win32::LONG_PTR)-1), Null, PAGE_READWRITE, 0, this->DataSize + padding, (win32::LPCSTR)ID);
+      if (win32::GetLastError() == ERROR_ALREADY_EXISTS) {
+        isNew = false;
+      }
+      if (this->SharedMapping) {
+        DoubleWord *ptr = reinterpret_cast<DoubleWord*>(win32::MapViewOfFile(this->SharedMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0));
+        if (ptr) {
+          if (isNew) {
+            *ptr = this->DataSize;
+            ptr++;
+            *ptr = Width;
+            ptr++;
+            *ptr = Height;
+            ptr++;
+            this->Tags = ptr;
+            for (int i = 0; i < Image::TagCount; i++) {
+              *ptr = 0;
+              ptr++;
+            }
+            this->Data = reinterpret_cast<Pixel*>(ptr);
+          } else {
+            DoubleWord sz = *ptr;
+            ptr++;
+            DoubleWord w = *ptr;
+            ptr++;
+            DoubleWord h = *ptr;
+            ptr++;
+            this->Tags = ptr;
+            ptr+=Image::TagCount;
+            if ((sz == this->DataSize) && (w == Width) && (h == Height)) {
+              // valid
+              this->Data = reinterpret_cast<Pixel*>(ptr);
+            }
+          }
+        }
+      }
+  }
+
+  if (this->Data) {
+    this->Width = Width;
+    this->Height = Height;
+  } else {
+    this->DataSize = 0;
+    this->Tags = this->StaticTags;
+  }
+
+  this->unlock();
+
+  this->setClipRectangle(this->getRectangle());
+  if (isNew) this->clear();
 
   return;
 }
@@ -448,12 +512,29 @@ void Image::deallocate() {
     delete this->CoronaImage;
     this->CoronaImage = Null;
     this->Data = Null;
+    this->DataSize = 0;
     this->DIBSection = 0;
+    this->SharedMapping = 0;
 
   } else if ((this->DIBSection != 0) && (this->Data != 0)) {
 
-    _DeleteObject(this->DIBSection);
+    win32::DeleteObject(reinterpret_cast<win32::HGDIOBJ>((int)this->DIBSection));
     this->Data = Null;
+    this->DataSize = 0;
+    this->DIBSection = 0;
+    this->SharedMapping = 0;
+    this->CoronaImage = Null;
+
+  } else if ((this->SharedMapping != 0) && (this->Data != 0)) {
+
+    this->Data -= 3;
+    win32::UnmapViewOfFile(this->Data);
+    this->Data = Null;
+    win32::CloseHandle(this->SharedMapping);
+    this->SharedMapping = 0;
+    this->DataSize = 0;
+    this->DIBSection = 0;
+    this->CoronaImage = Null;
 
   } else if ((this->DataSize > 0) && (this->Data != 0)) {
 
@@ -462,9 +543,9 @@ void Image::deallocate() {
     this->DIBSection = 0;
     this->Data = Null;
     this->DataSize = 0;
+    this->SharedMapping = 0;
 
   }
-
   this->Data = Null;
   this->DataSize = 0;
   this->dirty();
@@ -719,10 +800,10 @@ bool Image::setPixelAA(int xi, int yi, Byte xw, Byte yw, Pixel Color) {
     Pixel *pColor = &Color;
     Pixel *p[4];
     {
-      p[0] = this->pointer(xi,yi);
-      p[1] = this->pointer(xi+1,yi);
-      p[2] = this->pointer(xi,yi+1);
-      p[3] = this->pointer(xi+1,yi+1);
+      p[0] = this->pointer_clip(xi,yi);
+      p[1] = this->pointer_clip(xi+1,yi);
+      p[2] = this->pointer_clip(xi,yi+1);
+      p[3] = this->pointer_clip(xi+1,yi+1);
     }
     AlphaLevel *LevelDest, *LevelSource;
     if ((p[0]) && (w[0])) {

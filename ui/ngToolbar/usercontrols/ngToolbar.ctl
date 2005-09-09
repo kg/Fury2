@@ -1,6 +1,7 @@
 VERSION 5.00
 Begin VB.UserControl ngToolbar 
    Alignable       =   -1  'True
+   CanGetFocus     =   0   'False
    ClientHeight    =   465
    ClientLeft      =   0
    ClientTop       =   0

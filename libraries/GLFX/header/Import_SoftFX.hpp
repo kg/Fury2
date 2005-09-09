@@ -65,7 +65,10 @@ namespace SoftFX {
 	defImport(int, GetSourceAlphaRenderer, () , 0) \
 	defImport(int, GetAdditiveRenderer, () , 0) \
 	defImport(int, GetSubtractiveRenderer, () , 0) \
+	defImport(int, GetAdditiveSourceAlphaRenderer, () , 0) \
+	defImport(int, GetSubtractiveSourceAlphaRenderer, () , 0) \
 	defImport(int, GetScreenRenderer, () , 0) \
+	defImport(int, GetFontSourceAlphaRenderer, () , 0) \
   defImport(int, Clip2D_SimpleRect, (FX::Rectangle *Rect, int Dest, int Source, FX::Rectangle *DestRect, int &CX, int &CY), 24) \
   defImport(int, Clip2D_PairedRect, (FX::Rectangle *Rect, FX::Rectangle *RectS, int Dest, int Source, FX::Rectangle *DestRect, FX::Rectangle *SourceRect, int *CropOutput), 28) \
   defImport(int, ClipRectangle_ImageClipRect, (FX::Rectangle *Rect, int Image), 8) \

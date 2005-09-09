@@ -1140,13 +1140,10 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
     Bounds.X2 = Poly->MaximumX();
     Bounds.Y2 = Poly->MaximumY();
 
-//    FLine *Edges = AllocateArray(FLine, Poly->VertexCount);
-//    FLine *Edges = LookupAllocate<FLine>(Poly->VertexCount);
     FLine *Edges = StaticAllocate<FLine>(EdgeBuffer, Poly->VertexCount);
     for (int e = 0; e < Poly->VertexCount; e++) {
       Edges[e].Start = Poly->Vertexes[e];
       Edges[e].End = Poly->Vertexes[WrapValue(e + 1,0,Poly->VertexCount - 1)];
-//      FilterSimple_Line_AA(Image, Edges[e].Start.X, Edges[e].Start.Y, Edges[e].End.X, Edges[e].End.Y, Pixel(255, 0, 0, 255));
     }
 
     int SpanCount = ceil(abs(Bounds.Y2 - Bounds.Y1)) + 1;
@@ -1155,7 +1152,6 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
       delete Poly;
       return Trivial_Success;
     }
-
 
     ISpan *Spans = StaticAllocate<ISpan>(PolyBuffer, SpanCount);
     for (int i = 0; i < SpanCount; i++) {
@@ -1168,14 +1164,15 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
     for (int l = 0; l < Poly->VertexCount; l++) {
         TRACELINE_INIT(Edges[l])
         TRACELINE_BEGIN
-            cy = y - YOffset;
-            if ((cy >= 0) && (cy < SpanCount)) {
-                Spans[cy].S = _Min(Spans[cy].S, x);
-                Spans[cy].E = _Max(Spans[cy].E, x);
-            }
+          cy = y - YOffset;
+          if (i < numpixels) {
+              if ((cy >= 0) && (cy < SpanCount)) {
+                  Spans[cy].S = _Min(Spans[cy].S, x);
+                  Spans[cy].E = _Max(Spans[cy].E, x);
+              }
+          }
         TRACELINE_END
     }
-
 
     Pixel *Pointer;
     int X, Y;
@@ -1199,11 +1196,6 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
     }
 
     delete Poly;
-//    DeleteArray(Edges);
-//    DeleteArray(Spans);
-//    LookupDeallocate(Edges);
-//    LookupDeallocate(Spans);
-
 
     return Success;
 }
@@ -1287,6 +1279,52 @@ void RenderFunction_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel Sol
     }
 }
 
+void RenderFunction_Font_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
+    AlphaLevel *aSource, *aDest, *aScale;
+    AlphaLevel *aRed, *aGreen, *aBlue;
+	  Pixel arg = Pixel(Argument);
+    int i = Count;
+    Byte a = 0;
+    if (Source) {
+      aScale = AlphaLevelLookup(arg[::Alpha]);
+      while (i--) {
+        a = (*Source)[::Alpha];
+        if (a) {
+          aSource = AlphaLevelLookup( AlphaFromLevel(aScale, a) );
+          aDest = AlphaLevelLookup( AlphaFromLevel(aScale, a ) ^ 0xFF );
+          aBlue = AlphaLevelLookup( (*Source)[::Blue] );
+          aGreen = AlphaLevelLookup( (*Source)[::Green] );
+          aRed = AlphaLevelLookup( (*Source)[::Red] );
+          (*Dest)[::Blue] = AlphaFromLevel2(aDest, (*Dest)[::Blue], aSource, AlphaFromLevel(aBlue, arg[::Blue]));
+          (*Dest)[::Green] = AlphaFromLevel2(aDest, (*Dest)[::Green], aSource, AlphaFromLevel(aGreen, arg[::Green]));
+          (*Dest)[::Red] = AlphaFromLevel2(aDest, (*Dest)[::Red], aSource, AlphaFromLevel(aRed, arg[::Red]));
+        }
+        Dest++;
+        Source++;
+      }
+    } else {
+      SolidColor[::Blue] = SolidColor[::Blue] * arg[::Blue] / 255;
+      SolidColor[::Green] = SolidColor[::Green] * arg[::Green] / 255;
+      SolidColor[::Red] = SolidColor[::Red] * arg[::Red] / 255;
+      SolidColor[::Alpha] = SolidColor[::Alpha] * arg[::Alpha] / 255;
+      a = SolidColor[::Alpha];
+      if (a) {
+        if (a == 255) {
+          _Fill<Pixel>(Dest, SolidColor, Count);
+        } else {          
+          aSource = AlphaLevelLookup( a );
+          aDest = AlphaLevelLookup( a ^ 0xFF );
+          while (i--) {
+            (*Dest)[::Blue] = AlphaFromLevel(aDest, (*Dest)[::Blue]) + SolidColor[::Blue];
+            (*Dest)[::Green] = AlphaFromLevel(aDest, (*Dest)[::Green]) + SolidColor[::Green];
+            (*Dest)[::Red] = AlphaFromLevel(aDest, (*Dest)[::Red]) + SolidColor[::Red];
+            Dest++;
+          }
+        }
+      }
+    }
+}
+
 void RenderFunction_Merge(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
     AlphaLevel *aSource, *aDest;
     int i = Count;
@@ -1319,24 +1357,6 @@ void RenderFunction_Merge(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColo
     }
 }
 
-void RenderFunction_Additive(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
-    int i = Count;
-    if (Source) {
-      while (i--) {
-          BLENDPIXEL_ADDITIVE(Dest, Dest, Source);
-          Dest++;
-          Source++;
-      }
-    } else {
-      while (i--) {
-        (*Dest)[::Blue] = ClipByteHigh((*Dest)[::Blue] + (SolidColor[::Blue]));
-        (*Dest)[::Green] = ClipByteHigh((*Dest)[::Green] + (SolidColor[::Green]));
-        (*Dest)[::Red] = ClipByteHigh((*Dest)[::Red] + (SolidColor[::Red]));
-        Dest++;
-      }
-    }
-}
-
 void RenderFunction_Screen(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
     int i = Count;
     if (Source) {
@@ -1360,6 +1380,24 @@ void RenderFunction_Screen(Pixel *Dest, Pixel *Source, int Count, Pixel SolidCol
     }
 }
 
+void RenderFunction_Additive(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
+    int i = Count;
+    if (Source) {
+      while (i--) {
+          BLENDPIXEL_ADDITIVE(Dest, Dest, Source);
+          Dest++;
+          Source++;
+      }
+    } else {
+      while (i--) {
+        (*Dest)[::Blue] = ClipByteHigh((*Dest)[::Blue] + (SolidColor[::Blue]));
+        (*Dest)[::Green] = ClipByteHigh((*Dest)[::Green] + (SolidColor[::Green]));
+        (*Dest)[::Red] = ClipByteHigh((*Dest)[::Red] + (SolidColor[::Red]));
+        Dest++;
+      }
+    }
+}
+
 void RenderFunction_Subtractive(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
     int i = Count;
     if (Source) {
@@ -1369,6 +1407,48 @@ void RenderFunction_Subtractive(Pixel *Dest, Pixel *Source, int Count, Pixel Sol
           Source++;
       }
     } else {
+      while (i--) {
+        (*Dest)[::Blue] = ClipByteLow((*Dest)[::Blue] - (SolidColor[::Blue]));
+        (*Dest)[::Green] = ClipByteLow((*Dest)[::Green] - (SolidColor[::Green]));
+        (*Dest)[::Red] = ClipByteLow((*Dest)[::Red] - (SolidColor[::Red]));
+        Dest++;
+      }
+    }
+}
+
+void RenderFunction_Additive_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
+    AlphaLevel *aSource;
+    int i = Count;
+    if (Source) {
+      while (i--) {
+        aSource = AlphaLevelLookup((*Source)[::Alpha]);
+        BLENDPIXEL_ADDITIVE_OPACITY(Dest, Dest, Source, aSource);
+        Dest++;
+        Source++;
+      }
+    } else {
+      SolidColor = Premultiply(SolidColor);
+      while (i--) {
+        (*Dest)[::Blue] = ClipByteHigh((*Dest)[::Blue] + (SolidColor[::Blue]));
+        (*Dest)[::Green] = ClipByteHigh((*Dest)[::Green] + (SolidColor[::Green]));
+        (*Dest)[::Red] = ClipByteHigh((*Dest)[::Red] + (SolidColor[::Red]));
+        Dest++;
+      }
+    }
+}
+
+void RenderFunction_Subtractive_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
+    AlphaLevel *aSource;
+    int i = Count;
+    if (Source) {
+      while (i--) {
+        aSource = AlphaLevelLookup((*Source)[::Alpha]);
+        BLENDPIXEL_SUBTRACTIVE_OPACITY(Dest, Dest, Source, aSource);
+        Dest++;
+        Source++;
+      }
+    } else {
+      SolidColor = Premultiply(SolidColor);
       while (i--) {
         (*Dest)[::Blue] = ClipByteLow((*Dest)[::Blue] - (SolidColor[::Blue]));
         (*Dest)[::Green] = ClipByteLow((*Dest)[::Green] - (SolidColor[::Green]));
@@ -1409,16 +1489,28 @@ Export int GetSourceAlphaRenderer() {
   return (int)RenderFunction_SourceAlpha;
 }
 
-Export int GetAdditiveRenderer() {
-  return (int)RenderFunction_Additive;
+Export int GetFontSourceAlphaRenderer() {
+  return (int)RenderFunction_Font_SourceAlpha;
 }
 
 Export int GetScreenRenderer() {
   return (int)RenderFunction_Screen;
 }
 
+Export int GetAdditiveRenderer() {
+  return (int)RenderFunction_Additive;
+}
+
 Export int GetSubtractiveRenderer() {
   return (int)RenderFunction_Subtractive;
+}
+
+Export int GetAdditiveSourceAlphaRenderer() {
+  return (int)RenderFunction_Additive_SourceAlpha;
+}
+
+Export int GetSubtractiveSourceAlphaRenderer() {
+  return (int)RenderFunction_Subtractive_SourceAlpha;
 }
 
 Export int GetShadowRenderer() {
@@ -1540,8 +1632,6 @@ Export int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, Text
 
     for (int l = 0; l < Poly->VertexCount; l++) {
         int ln = WrapValue(l + 1, 0, Poly->VertexCount-1);
-        float fx = 0, fy = 0, fd = 0;
-        float fxd = Edges[l].End.X - Edges[l].Start.X, fyd = Edges[l].End.Y - Edges[l].Start.Y;
         float U = 0, V = 0;
         float UI = 0, VI = 0;
         TRACELINE_INIT(Edges[l])
@@ -1550,24 +1640,19 @@ Export int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, Text
             UI = (Poly->Vertexes[ln].U - U) / (numpixels-1);
             VI = (Poly->Vertexes[ln].V - V) / (numpixels-1);
         TRACELINE_BEGIN
-            fd = ((float)i / (float)numpixels);
-            fx = (Edges[l].Start.X + (fxd * fd)) - x;
-            fy = (Edges[l].Start.Y + (fyd * fd)) - y;
             cy = y - YOffset;
-            if (i <= (numpixels-1)) {
-              if ((cy >= 0) && (cy < SpanCount)) {
-                if (x < Spans[cy].S) {
-                  Spans[cy].S = x;
-                  StartCoords[cy].U.setF(U - fx);
-                  StartCoords[cy].V.setF(V - fy);
-                }
-                if (x > Spans[cy].E) {
-                  Spans[cy].E = x;
-                  EndCoords[cy].U.setF(U - fx);
-                  EndCoords[cy].V.setF(V - fy);
-                }
-                max_span_width = _Max(max_span_width, (Spans[cy].E - Spans[cy].S) + 1);
+            if ((cy >= 0) && (cy < SpanCount)) {
+              if (x < Spans[cy].S) {
+                Spans[cy].S = x;
+                StartCoords[cy].U.setF(U);
+                StartCoords[cy].V.setF(V);
               }
+              if (x > Spans[cy].E) {
+                Spans[cy].E = x;
+                EndCoords[cy].U.setF(U);
+                EndCoords[cy].V.setF(V);
+              }
+              max_span_width = _Max(max_span_width, (Spans[cy].E - Spans[cy].S) + 1);
             }
             U += UI;
             V += VI;
@@ -1787,155 +1872,11 @@ Export int FilterSimple_ConvexPolygon_Gradient(Image *Dest, GradientPolygon *InP
 //    LookupDeallocate<Pixel>(StartColor);
 //    LookupDeallocate<Pixel>(EndColor);
 
+    Dest->dirty();
     delete Poly;
 
     return Success;
 }
-
-/*
-Export int FilterSimple_ConvexPolygon_EdgeTex(Image *Dest, EdgeTexPolygon *InPoly, RenderFunction *Renderer) {
-    if (!InPoly) {
-        return Failure;
-    }
-    if (!Dest) {
-        return Failure;
-    }
-    if (!Dest->initialized()) {
-        return Failure;
-    }
-
-    {
-        int overrideresult = Override::EnumOverrides(Override::FilterSimple_ConvexPolygon_Gradient, 3, Dest, InPoly, Renderer);
-#ifdef OVERRIDES
-        if (overrideresult != 0) return overrideresult;
-#endif
-    }
-
-    ImageLockManager ilDest(lockingMode, Dest);
-    if (!ilDest.performUnlock()) {
-        return Failure;
-    }
-
-    GradientPolygon *Poly;
-    
-    if (InPoly->VertexCount < 2) {
-      return Trivial_Success;
-    }
-
-    Poly = ClipPolygon(InPoly, &(Dest->ClipRectangle));
-
-    if (Poly == Null) {
-      return Trivial_Success;
-    }
-    if (Poly->VertexCount < 2) {
-      delete Poly;
-      return Trivial_Success;
-    }
-
-    FRect Bounds;
-    Bounds.X1 = Poly->MinimumX();
-    Bounds.Y1 = Poly->MinimumY();
-    Bounds.X2 = Poly->MaximumX();
-    Bounds.Y2 = Poly->MaximumY();
-
-//    FLine *Edges = AllocateArray(FLine, Poly->VertexCount);
-    FLine *Edges = StaticAllocate<FLine>(EdgeBuffer, Poly->VertexCount);
-    for (int e = 0; e < Poly->VertexCount; e++) {
-      Edges[e].Start.X = Poly->Vertexes[e].X;
-      Edges[e].Start.Y = Poly->Vertexes[e].Y;
-      Edges[e].End.X = Poly->Vertexes[WrapValue(e + 1,0,Poly->VertexCount-1)].X;
-      Edges[e].End.Y = Poly->Vertexes[WrapValue(e + 1,0,Poly->VertexCount-1)].Y; 
-    }
-
-    int SpanCount = ceil(abs(Bounds.Y2 - Bounds.Y1)) + 1;
-    int cy = 0;
-    int max_span_width = 0;
-    if (SpanCount < 1) {
-      delete Poly;
-//      DeleteArray(Edges);
-      return Trivial_Success;
-    }
-
-//    ISpan *Spans = AllocateArray(ISpan, SpanCount);
-    ISpan *Spans = StaticAllocate<ISpan>(PolyBuffer, SpanCount);
-
-//    Pixel *StartColor = LookupAllocate<Pixel>(SpanCount);
-//    Pixel *EndColor = LookupAllocate<Pixel>(SpanCount);
-    for (int i = 0; i < SpanCount; i++) {
-        Spans[i].S = 99999;
-        Spans[i].E = -99999;
-    }
-
-    int YOffset = _Min(Bounds.Y1, Bounds.Y2);
-
-    for (int l = 0; l < Poly->VertexCount; l++) {
-        int ln = WrapValue(l + 1, 0, Poly->VertexCount-1);
-        float I = 0;
-        float II = 0;
-        TRACELINE_INIT(Edges[l])
-            I = 0;
-            II = Poly->Vertexes[l].Tex->Width / (numpixels-1);
-        TRACELINE_BEGIN
-            cy = y - YOffset;
-            if ((cy >= 0) && (cy < SpanCount)) {
-              if (x <= Spans[cy].S) {
-                Spans[cy].S = x;
-                StartColor[cy] = Pixel(R, G, B, A);
-              }
-              if (x >= Spans[cy].E) {
-                Spans[cy].E = x;
-                EndColor[cy] = Pixel(R, G, B, A);
-              }
-              max_span_width = _Max(max_span_width, (Spans[cy].E - Spans[cy].S) + 1);
-            }
-            B += BI;
-            G += GI;
-            R += RI;
-            A += AI;
-        TRACELINE_END
-    }
-
-    Pixel *Pointer;
-    Pixel *CurrentPixel;
-    Pixel *ScanlineTable = Null;
-    int X, Y, L; // O, LO;
-
-//    ScanlineTable = LookupAllocate<Pixel>(max_span_width + 2);
-    ScanlineTable = StaticAllocate<Pixel>(TextureBuffer, max_span_width + 2);
-    for (int i = 0; i < SpanCount; i++) {
-        Y = i + YOffset;
-        if ((Y >= Dest->ClipRectangle.Top) && (Y < Dest->ClipRectangle.bottom())) {
-            if (Spans[i].E >= Spans[i].S) {
-                L = Spans[i].E - Spans[i].S;
-                X = ClipValue(Spans[i].E, Dest->ClipRectangle.Left, Dest->ClipRectangle.right() - 1) - ClipValue(Spans[i].S, Dest->ClipRectangle.Left, Dest->ClipRectangle.right() - 1);
-                if (X) {
-                    X++;
-                    Pointer = Dest->fast_pointer(ClipValue(Spans[i].S, Dest->ClipRectangle.Left, Dest->ClipRectangle.right() - 1), Y);
-                    CurrentPixel = ScanlineTable;
-                    GenerateGradientTable(ScanlineTable, StartColor[i], EndColor[i], X, 0);
-                    if (Renderer != Null) {
-                        Renderer(Pointer, CurrentPixel, X);
-                    } else {
-                        while (X--) {
-                            *Pointer = *CurrentPixel;
-                            CurrentPixel++;
-                            Pointer++;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-//    LookupDeallocate<Pixel>(ScanlineTable);
-//    LookupDeallocate<Pixel>(StartColor);
-//    LookupDeallocate<Pixel>(EndColor);
-
-    delete Poly;
-
-    return Success;
-}
-*/
 
 /*
 Bresenham's circle algorithm calculates the locations of the pixels in the first 45 degrees. It assumes that the circle is centered on the origin. So for every pixel (x,y) it calculates we draw a pixel in each of the 8 octants of the circle :
@@ -1963,3 +1904,995 @@ else
     y := y - 1;
   end;
 */
+
+Export int FilterSimple_ConvexPolygon_AntiAlias(Image *Image, SimplePolygon *InPoly, Pixel Color, RenderFunction *Renderer, DoubleWord RenderArgument) {
+    if (!Image) {
+        return Failure;
+    }
+    if (!Image->initialized()) {
+        return Failure;
+    }
+    if (!InPoly) {
+        return Failure;
+    }
+
+    {
+        int overrideresult = Override::EnumOverrides(Override::FilterSimple_ConvexPolygon_AntiAlias, 5, Image, InPoly, Color, Renderer, RenderArgument);
+#ifdef OVERRIDES
+        if (overrideresult != 0) return overrideresult;
+#endif
+    }
+
+    SimplePolygon *Poly;
+    
+    if (InPoly->VertexCount < 2) {
+      return Trivial_Success;
+    }
+
+    Poly = ClipPolygon(InPoly, &(Image->ClipRectangle));
+
+    if (Poly == Null) {
+      return Trivial_Success;
+    }
+    if (Poly->Count() < 2) {
+      delete Poly;
+      return Trivial_Success;
+    }
+
+    FRect Bounds;
+    Bounds.X1 = Poly->MinimumX();
+    Bounds.Y1 = Poly->MinimumY();
+    Bounds.X2 = Poly->MaximumX();
+    Bounds.Y2 = Poly->MaximumY();
+
+    FLine *Edges = StaticAllocate<FLine>(EdgeBuffer, Poly->VertexCount);
+    for (int e = 0; e < Poly->VertexCount; e++) {
+      Edges[e].Start = Poly->Vertexes[e];
+      Edges[e].End = Poly->Vertexes[WrapValue(e + 1,0,Poly->VertexCount - 1)];
+    }
+
+    int SpanCount = ceil(abs(Bounds.Y2 - Bounds.Y1)) + 1;
+    int XSpanCount = ceil(abs(Bounds.X2 - Bounds.X1)) + 1;
+    int cy = 0, cx = 0;
+    if ((SpanCount < 1) || (XSpanCount < 1)) {
+      delete Poly;
+      return Trivial_Success;
+    }
+
+    AASpan *Spans = StaticAllocate<AASpan>(PolyBuffer, SpanCount);
+    AAColSpan *XSpans = StaticAllocate<AAColSpan>(EdgeBuffer1, XSpanCount);
+    for (int i = 0; i < SpanCount; i++) {
+        Spans[i].S = 99999;
+        Spans[i].E = -99999;
+        Spans[i].A1 = 0;
+        Spans[i].A2 = 0;
+    }
+    for (int i = 0; i < XSpanCount; i++) {
+        XSpans[i].S = 99999;
+        XSpans[i].E = -99999;
+        XSpans[i].A1 = 0;
+        XSpans[i].A2 = 0;
+    }
+
+    int max_span_width = 0;
+    int XOffset = _Min(Bounds.X1, Bounds.X2);
+    int YOffset = _Min(Bounds.Y1, Bounds.Y2);
+    float fa = 0, xo, yo, xo2;
+    int flx, fly;
+
+    for (int l = 0; l < Poly->VertexCount; l++) {
+        TRACELINEFP_INIT(Edges[l], 2)
+        TRACELINEFP_BEGIN
+            flx = floor(x);
+            fly = floor(y);
+            cx = flx - XOffset;
+            cy = fly - YOffset;
+            if ((cy >= 0) && (cy < SpanCount)) {
+                xo = x - flx;
+                xo2 = 1.0f - xo;
+                if (flx < Spans[cy].S) {
+                    Spans[cy].S = flx;
+                    Spans[cy].A1 = xo2 * 255;
+                } else if (flx == Spans[cy].S) {
+                    Spans[cy].A1 = ((xo2 * 255) + Spans[cy].A1) / 2;
+                }
+                if (flx > Spans[cy].E) {
+                    Spans[cy].E = flx;
+                    Spans[cy].A2 = xo * 255;
+                } else if (flx == Spans[cy].E) {
+                    Spans[cy].A2 = ((xo * 255) + Spans[cy].A2) / 2;
+                }
+                max_span_width = _Max(max_span_width, (Spans[cy].E - Spans[cy].S) + 1);
+            }
+            if ((cx >= 0) && (cx < XSpanCount)) {
+                yo = y - fly;
+                if (fly <= XSpans[cx].S) {
+                    XSpans[cx].S = fly;
+                    fa = 1.0f - yo;
+                    XSpans[cx].A1 = fa * 255;
+                }
+                if (fly >= XSpans[cx].E) {
+                    XSpans[cx].E = fly;
+                    XSpans[cx].A2 = yo * 255;
+                }
+            }
+        TRACELINEFP_END
+    }
+
+    Pixel *Pointer = Null;
+    Pixel *ScanlineTable = Null;
+    Pixel *CurrentPixel = Null;
+    int X, Y, L, s, a, ya, oa = 0;
+    AlphaLevel *ScaleTable = AlphaLevelLookup(0);
+
+    ScanlineTable = StaticAllocate<Pixel>(TextureBuffer, max_span_width + 2);
+
+    LockedRenderFunction *lRenderer = Null;
+    bool needLock = true;
+    {
+        int overrideresult = Override::EnumOverrides(Override::GetScanlineRenderer, 4, Image, Renderer, max_span_width + 2, RenderArgument);
+  #ifdef OVERRIDES
+        if (overrideresult != 0) {
+          lRenderer = reinterpret_cast<LockedRenderFunction*>(overrideresult);
+          needLock = false;
+        }
+  #endif
+    }
+
+    ImageLockManager ilDest(lockingMode, Image);
+    if (needLock) {
+      if (!ilDest.performUnlock()) {
+          return Failure;
+      }
+    }
+
+    for (int i = 0; i < SpanCount; i++) {
+        Y = i + YOffset;
+        if ((Y >= Image->ClipRectangle.Top) && (Y < Image->ClipRectangle.bottom())) {
+            if (Spans[i].E >= Spans[i].S) {
+                L = Spans[i].E - Spans[i].S;
+                X = ClipValue(Spans[i].E, Image->ClipRectangle.Left, Image->ClipRectangle.right() - 1) - ClipValue(Spans[i].S, Image->ClipRectangle.Left, Image->ClipRectangle.right() - 1);
+                if (X) {
+                    X++;
+                    Pointer = Image->fast_pointer(ClipValue(Spans[i].S, Image->ClipRectangle.Left, Image->ClipRectangle.right() - 1), Y);
+                    CurrentPixel = ScanlineTable;
+                    for (s = Spans[i].S; s <= Spans[i].E; s++) {
+                      cx = s - XOffset;
+                      cy = i + YOffset;
+                      if ((cx >= 0) && (cx < XSpanCount)) {
+                        if (XSpans[cx].S > XSpans[cx].E) {
+                          ya = 0;
+                        } else if (cy == XSpans[cx].S) {
+                          ya = XSpans[cx].A1;
+                        } else if (cy == XSpans[cx].E) {
+                          ya = XSpans[cx].A2;
+                        } else if ((cy > XSpans[cx].S) && (cy < XSpans[cx].E)) {
+                          ya = 255;
+                        } else {
+                          ya = 0;
+                        }
+                      } else {
+                        ya = 0;
+                      }
+                      if (s == Spans[i].S) {
+                        a = (ya * Spans[i].A1) / 255;
+                      } else if (s == Spans[i].E) {
+                        a = (ya * Spans[i].A2) / 255;
+                      } else if ((s > Spans[i].S) && (s < Spans[i].E)) {
+                        a = ya;
+                      } else {
+                        a = 0;
+                      }
+                      if (a) {
+                        if (a != 255) {
+                          if (a != oa) {
+                            oa = a;
+                            ScaleTable = AlphaLevelLookup(a);
+                          }
+                          *CurrentPixel = Color;
+                          (*CurrentPixel)[::Alpha] = AlphaFromLevel(ScaleTable, Color[::Alpha]);
+                        } else {
+                          *CurrentPixel = Color;
+                        }
+                      } else {
+                        *CurrentPixel = 0;
+                      }
+                      CurrentPixel++;
+                    }
+                    CurrentPixel = ScanlineTable;
+                    if (Spans[i].S < Image->ClipRectangle.Left) {
+                        CurrentPixel += Image->ClipRectangle.Left - Spans[i].S;
+                    }
+                    if (needLock) {
+                      if (Renderer != Null) {
+                          Renderer(Pointer, CurrentPixel, X, 0, RenderArgument);
+                      } else {
+                          while (X--) {
+                              *Pointer = *CurrentPixel;
+                              CurrentPixel++;
+                              Pointer++;
+                          }
+                      }
+                    } else {
+                      if (lRenderer != Null) {
+                        lRenderer(Image, ClipValue(Spans[i].S, Image->ClipRectangle.Left, Image->ClipRectangle.right() - 1), Y, CurrentPixel, X);
+                      }
+                    }
+                }
+            }
+        }
+    }
+
+    delete Poly;
+
+    Image->dirty();
+    return Success;
+}
+
+Export int FilterSimple_FilledCircle_AntiAlias(Image *Image, float X, float Y, float XRadius, float YRadius, Pixel Color, RenderFunction *Renderer, float Accuracy) {
+  SimplePolygon Poly = SimplePolygon();
+  int v = ClipValue(ceil(2.0f * Pi * sqrt(pow(XRadius / 2.0f, 2.0f) + pow(YRadius / 2.0f, 2.0f)) * Accuracy), 3, 2048);
+  Poly.Allocate(v);
+  float i = Radians((360.0f) / (float)(v));
+  float x, y, r = 0;
+  for (int s = 0; s < v; s++) {
+    x = (sin(r) * XRadius) + X;
+    y = (-cos(r) * YRadius) + Y;
+    Poly.Append(FPoint(x, y));
+    r += i;
+  }
+  return FilterSimple_ConvexPolygon_AntiAlias(Image, &Poly, Color, Renderer, 0);
+}
+
+Export int FilterSimple_FilledPie_AntiAlias(Image *Image, float X, float Y, float XRadius, float YRadius, float Start, float End, Pixel Color, RenderFunction *Renderer, float Accuracy) {
+  if (abs(End - Start) > 180) {
+    float d = (End - Start);
+    FilterSimple_FilledPie_AntiAlias(Image, X, Y, XRadius, YRadius, Start, Start + (d / 2.0f) + 10.0f, Color, Renderer, Accuracy);
+    return FilterSimple_FilledPie_AntiAlias(Image, X, Y, XRadius, YRadius, Start + (d / 2.0f) - 10.0f, End, Color, Renderer, Accuracy);
+  }
+  SimplePolygon Poly = SimplePolygon();
+  int v = ClipValue(ceil(2.0f * Pi * sqrt(pow(XRadius / 2.0f, 2.0f) + pow(YRadius / 2.0f, 2.0f)) * (abs(End-Start) / 360.0f) * Accuracy), 3, 2048);
+  Poly.Allocate(v + 3);
+  Poly.Append(FPoint(X, Y));
+  float i = Radians((End-Start) / (float)(v));
+  float x, y, r = Radians(Start);
+  x = (sin(r) * XRadius) + X;
+  y = (-cos(r) * YRadius) + Y;
+  Poly.Append(FPoint(x, y));
+  for (int s = 0; s < v; s++) {
+    x = (sin(r) * XRadius) + X;
+    y = (-cos(r) * YRadius) + Y;
+    Poly.Append(FPoint(x, y));
+    r += i;
+  }
+  r = Radians(End);
+  x = (sin(r) * XRadius) + X;
+  y = (-cos(r) * YRadius) + Y;
+  Poly.Append(FPoint(x, y));
+  return FilterSimple_ConvexPolygon_AntiAlias(Image, &Poly, Color, Renderer, 0);
+}
+
+Export int FilterSimple_FilledPie(Image *Image, float X, float Y, float XRadius, float YRadius, float Start, float End, Pixel Color, RenderFunction *Renderer, float Accuracy) {
+  if (abs(End - Start) > 180) {
+    float d = (End - Start);
+    FilterSimple_FilledPie(Image, X, Y, XRadius, YRadius, Start, Start + ceil(d / 2), Color, Renderer, Accuracy);
+    return FilterSimple_FilledPie(Image, X, Y, XRadius, YRadius, Start + floor(d / 2), End, Color, Renderer, Accuracy);
+  }
+  SimplePolygon Poly = SimplePolygon();
+  int v = ClipValue(ceil(2.0f * Pi * sqrt(pow(XRadius / 2.0f, 2.0f) + pow(YRadius / 2.0f, 2.0f)) * (abs(End-Start) / 360.0f) * Accuracy), 3, 2048);
+  Poly.Allocate(v + 3);
+  Poly.Append(FPoint(X, Y));
+  float i = Radians((End-Start) / (float)(v));
+  float x, y, r = Radians(Start);
+  x = (sin(r) * XRadius) + X;
+  y = (-cos(r) * YRadius) + Y;
+  Poly.Append(FPoint(x, y));
+  for (int s = 0; s < v; s++) {
+    x = (sin(r) * XRadius) + X;
+    y = (-cos(r) * YRadius) + Y;
+    Poly.Append(FPoint(x, y));
+    r += i;
+  }
+  r = Radians(End);
+  x = (sin(r) * XRadius) + X;
+  y = (-cos(r) * YRadius) + Y;
+  Poly.Append(FPoint(x, y));
+  return FilterSimple_ConvexPolygon(Image, &Poly, Color, Renderer, 0);
+}
+
+Export int FilterSimple_ConvexPolygon_Textured_AntiAlias(Image *Dest, Image *Texture, TexturedPolygon *InPoly, ScalerFunction *Scaler, RenderFunction *Renderer, DoubleWord RenderArgument) {
+    if (!InPoly) {
+        return Failure;
+    }
+    if (!Dest) {
+        return Failure;
+    }
+    if (!Dest->initialized()) {
+        return Failure;
+    }
+    if (!Texture) {
+        return Failure;
+    }
+    if (!Texture->initialized()) {
+        return Failure;
+    }
+    if (!Scaler) {
+        return Failure;
+    }
+
+    {
+        int overrideresult = Override::EnumOverrides(Override::FilterSimple_ConvexPolygon_Textured_AntiAlias, 6, Dest, Texture, InPoly, Scaler, Renderer, RenderArgument);
+#ifdef OVERRIDES
+        if (overrideresult != 0) return overrideresult;
+#endif
+    }
+
+    ImageLockManager ilTexture(lockingMode, Texture);
+    if (!ilTexture.performUnlock()) {
+        return Failure;
+    }
+
+    TexturedPolygon *Poly;
+    
+    if (InPoly->VertexCount < 2) {
+      return Trivial_Success;
+    }
+
+    Poly = ClipPolygon(InPoly, &(Dest->ClipRectangle));
+
+    if (Poly == Null) {
+      return Trivial_Success;
+    }
+    if (Poly->VertexCount < 2) {
+      delete Poly;
+      return Trivial_Success;
+    }
+
+    FRect Bounds;
+    Bounds.X1 = Poly->MinimumX();
+    Bounds.Y1 = Poly->MinimumY();
+    Bounds.X2 = Poly->MaximumX();
+    Bounds.Y2 = Poly->MaximumY();
+
+//    FLine *Edges = new FLine[Poly->VertexCount];
+    FLine *Edges = StaticAllocate<FLine>(EdgeBuffer, Poly->VertexCount);
+    for (int e = 0; e < Poly->VertexCount; e++) {
+      Edges[e].Start.X = Poly->Vertexes[e].X;
+      Edges[e].Start.Y = Poly->Vertexes[e].Y;
+      Edges[e].End.X = Poly->Vertexes[WrapValue(e + 1,0,Poly->VertexCount-1)].X;
+      Edges[e].End.Y = Poly->Vertexes[WrapValue(e + 1,0,Poly->VertexCount-1)].Y; 
+    }
+
+    int SpanCount = ceil(abs(Bounds.Y2 - Bounds.Y1)) + 1;
+    int XSpanCount = ceil(abs(Bounds.X2 - Bounds.X1)) + 1;
+    int cy = 0, cx = 0;
+    if ((SpanCount < 1) || (XSpanCount < 1)) {
+      delete Poly;
+      return Trivial_Success;
+    }
+
+//    ISpan *Spans = AllocateArray(ISpan, SpanCount);
+    AASpan *Spans = StaticAllocate<AASpan>(PolyBuffer, SpanCount);
+    AAColSpan *XSpans = StaticAllocate<AAColSpan>(EdgeBuffer1, XSpanCount);
+    TextureCoordinate *StartCoords = StaticAllocate<TextureCoordinate>(XBuffer, SpanCount);
+    TextureCoordinate *EndCoords = StaticAllocate<TextureCoordinate>(YBuffer, SpanCount);
+    for (int i = 0; i < SpanCount; i++) {
+        Spans[i].S = 99999;
+        Spans[i].E = -99999;
+        Spans[i].A1 = 0;
+        Spans[i].A2 = 0;
+        StartCoords[i].U.setF(0);
+        StartCoords[i].V.setF(0);
+        EndCoords[i].U.setF(0);
+        EndCoords[i].V.setF(0);
+    }
+    for (int i = 0; i < XSpanCount; i++) {
+        XSpans[i].S = 99999;
+        XSpans[i].E = -99999;
+        XSpans[i].A1 = 0;
+        XSpans[i].A2 = 0;
+    }
+
+    int max_span_width = 0;
+    int XOffset = _Min(Bounds.X1, Bounds.X2);
+    int YOffset = _Min(Bounds.Y1, Bounds.Y2);
+    float fa = 0;
+    int flx, fly;
+
+    for (int l = 0; l < Poly->VertexCount; l++) {
+        int ln = WrapValue(l + 1, 0, Poly->VertexCount-1);
+        float U = 0, V = 0;
+        float UI = 0, VI = 0;
+        TRACELINEFP_INIT(Edges[l], 2)
+            U = Poly->Vertexes[l].U;
+            V = Poly->Vertexes[l].V;
+            UI = (Poly->Vertexes[ln].U - U) / (numpixels);
+            VI = (Poly->Vertexes[ln].V - V) / (numpixels);
+        TRACELINEFP_BEGIN
+            flx = floor(x);
+            fly = floor(y);
+            cy = fly - YOffset;
+            if ((cy >= 0) && (cy < SpanCount)) {
+                if (flx < Spans[cy].S) {
+                    Spans[cy].S = flx;
+                    StartCoords[cy].U.setF(U);
+                    StartCoords[cy].V.setF(V);
+                    fa = 1.0f - (x - flx);
+                    Spans[cy].A1 = fa * 255;
+                } else if (flx == Spans[cy].S) {
+                    fa = 1.0f - (x - flx);
+                    Spans[cy].A1 = ((fa * 255) + Spans[cy].A1) / 2;
+                }
+                if (flx > Spans[cy].E) {
+                    Spans[cy].E = flx;
+                    EndCoords[cy].U.setF(U);
+                    EndCoords[cy].V.setF(V);
+                    fa = (x - flx);
+                    Spans[cy].A2 = fa * 255;
+                } else if (flx == Spans[cy].E) {
+                    fa = (x - flx);
+                    Spans[cy].A2 = ((fa * 255) + Spans[cy].A2) / 2;
+                }
+                max_span_width = _Max(max_span_width, (Spans[cy].E - Spans[cy].S) + 1);
+            }
+            cx = flx - XOffset;
+            if ((cx >= 0) && (cx < XSpanCount)) {
+                if (fly <= XSpans[cx].S) {
+                    XSpans[cx].S = fly;
+                    fa = 1.0f - (y - fly);
+                    XSpans[cx].A1 = fa * 255;
+                }
+                if (fly >= XSpans[cx].E) {
+                    XSpans[cx].E = fly;
+                    fa = (y - fly);
+                    XSpans[cx].A2 = fa * 255;
+                }
+            }
+            U += UI;
+            V += VI;
+        TRACELINEFP_END
+    }
+
+    Pixel *Pointer;
+    Pixel *CurrentPixel;
+    Pixel *ScanlineTable = Null;
+    float fXI, fYI;
+    int X, Y, L, s, ya, a, oa = 0;
+    AlphaLevel* ScaleTable = AlphaLevelLookup(0);
+
+    //ScanlineTable = AllocateArray(Pixel, max_span_width + 2);
+    ScanlineTable = StaticAllocate<Pixel>(TextureBuffer, max_span_width + 2);
+
+    LockedRenderFunction *lRenderer = Null;
+    bool needLock = true;
+    {
+        int overrideresult = Override::EnumOverrides(Override::GetScanlineRenderer, 4, Dest, Renderer, max_span_width + 2, RenderArgument);
+  #ifdef OVERRIDES
+        if (overrideresult != 0) {
+          lRenderer = reinterpret_cast<LockedRenderFunction*>(overrideresult);
+          needLock = false;
+        }
+  #endif
+    }
+
+    ImageLockManager ilDest(lockingMode, Dest);
+    if (needLock) {
+      if (!ilDest.performUnlock()) {
+          return Failure;
+      }
+    }
+
+    for (int i = 0; i < SpanCount; i++) {
+        Y = i + YOffset;
+        if ((Y >= Dest->ClipRectangle.Top) && (Y < Dest->ClipRectangle.bottom())) {
+            if (Spans[i].E >= Spans[i].S) {
+                L = Spans[i].E - Spans[i].S;
+                X = ClipValue(Spans[i].E, Dest->ClipRectangle.Left, Dest->ClipRectangle.right() - 1) - ClipValue(Spans[i].S, Dest->ClipRectangle.Left, Dest->ClipRectangle.right() - 1);
+                if (X) {
+                    X++;
+                    Pointer = Dest->fast_pointer(ClipValue(Spans[i].S, Dest->ClipRectangle.Left, Dest->ClipRectangle.right() - 1), Y);
+                    fXI = (EndCoords[i].U.F() - StartCoords[i].U.F()) / L;
+                    fYI = (EndCoords[i].V.F() - StartCoords[i].V.F()) / L;
+                    Scaler(Texture, StartCoords[i].U.H, StartCoords[i].V.H,
+                    StartCoords[i].U.L, StartCoords[i].V.L,
+                    (fXI), (fYI), (int)(fXI * 65535.0) % 65535, (int)(fYI * 65535.0) % 65535,
+                    L + 1, ScanlineTable);
+                    CurrentPixel = ScanlineTable;
+                    for (s = Spans[i].S; s <= Spans[i].E; s++) {
+                      cx = s - XOffset;
+                      cy = i + YOffset;
+                      if ((cx >= 0) && (cx < XSpanCount)) {
+                        if (cy == XSpans[cx].S) {
+                          ya = XSpans[cx].A1;
+                        } else if (cy == XSpans[cx].E) {
+                          ya = XSpans[cx].A2;
+                        } else if ((cy > XSpans[cx].S) && (cy < XSpans[cx].E)) {
+                          ya = 255;
+                        } else {
+                          ya = 0;
+                        }
+                      } else {
+                        ya = 0;
+                      }
+                      if (s == Spans[i].S) {
+                        a = (ya * Spans[i].A1) / 255;
+                      } else if (s == Spans[i].E) {
+                        a = (ya * Spans[i].A2) / 255;
+                      } else if ((s > Spans[i].S) && (s < Spans[i].E)) {
+                        a = ya;
+                      } else {
+                        a = 0;
+                      }
+                      if (a) {
+                        if (a != 255) {
+                          if (a != oa) {
+                            oa = a;
+                            ScaleTable = AlphaLevelLookup(a);
+                          }
+                          (*CurrentPixel)[::Alpha] = AlphaFromLevel(ScaleTable, (*CurrentPixel)[::Alpha]);
+                        }
+                      } else {
+                        *CurrentPixel = 0;
+                      }
+                      CurrentPixel++;
+                    }
+                    CurrentPixel = ScanlineTable;
+                    if (Spans[i].S < Dest->ClipRectangle.Left) {
+                        CurrentPixel += Dest->ClipRectangle.Left - Spans[i].S;
+                    }
+                    if (needLock) {
+                      if (Renderer != Null) {
+                          Renderer(Pointer, CurrentPixel, X, 0, RenderArgument);
+                      } else {
+                          while (X--) {
+                              *Pointer = *CurrentPixel;
+                              CurrentPixel++;
+                              Pointer++;
+                          }
+                      }
+                    } else {
+                      if (lRenderer != Null) {
+                        lRenderer(Dest, ClipValue(Spans[i].S, Dest->ClipRectangle.Left, Dest->ClipRectangle.right() - 1), Y, CurrentPixel, X);
+                      }
+                    }
+                }
+            }
+        }
+    }
+
+//    DeleteArray(StartCoords);
+//    DeleteArray(EndCoords);
+//    DeleteArray(ScanlineTable);
+//    DeleteArray(Spans);
+//    DeleteArray(Edges);
+
+    delete Poly;
+
+    Dest->dirty();
+    return Success;
+}
+
+Export int FilterSimple_RenderStroke(Image *Dest, Stroke *TheStroke, RenderFunction *Renderer, DoubleWord RenderArgument) {
+  if (!Dest) {
+      return Failure;
+  }
+  if (!Dest->initialized()) {
+      return Failure;
+  }
+  if (!TheStroke) {
+      return Failure;
+  }
+
+  {
+      int overrideresult = Override::EnumOverrides(Override::FilterSimple_RenderStroke, 4, Dest, TheStroke, Renderer, RenderArgument);
+#ifdef OVERRIDES
+      if (overrideresult != 0) return overrideresult;
+#endif
+  }
+
+  FRect Bounds;
+  Bounds.X1 = TheStroke->MinimumX();
+  Bounds.Y1 = TheStroke->MinimumY();
+  Bounds.X2 = TheStroke->MaximumX();
+  Bounds.Y2 = TheStroke->MaximumY();
+
+  float xd, yd;
+  float cx, cy;
+  float ix, iy;
+  float u;
+  float pt;
+
+  int x1 = ClipValue(floor(Bounds.X1), Dest->ClipRectangle.Left, Dest->ClipRectangle.right_exclusive());
+  int y1 = ClipValue(floor(Bounds.Y1), Dest->ClipRectangle.Top, Dest->ClipRectangle.bottom_exclusive());
+  int x2 = ClipValue(ceil(Bounds.X2), Dest->ClipRectangle.Left, Dest->ClipRectangle.right_exclusive());
+  int y2 = ClipValue(ceil(Bounds.Y2), Dest->ClipRectangle.Left, Dest->ClipRectangle.bottom_exclusive());
+
+  int r = 0, g = 0, b = 0, a = 0;
+  int d;
+  int pi;
+  float mt = 0;
+
+  Pixel* dest;
+  Pixel* rowTable;
+  rowTable = StaticAllocate<Pixel>(TextureBuffer, x2 - x1 + 1);
+  Pixel pc;
+
+  LockedRenderFunction *lRenderer = Null;
+  bool needLock = true;
+  {
+        int overrideresult = Override::EnumOverrides(Override::GetScanlineRenderer, 4, Dest, Renderer, x2 - x1 + 1, RenderArgument);
+#ifdef OVERRIDES
+      if (overrideresult != 0) {
+        lRenderer = reinterpret_cast<LockedRenderFunction*>(overrideresult);
+        needLock = false;
+      }
+#endif
+  }
+
+  ImageLockManager ilDest(lockingMode, Dest);
+  if (needLock) {
+    if (!ilDest.performUnlock()) {
+        return Failure;
+    }
+  }
+
+  if (TheStroke->PointCount < 2) return Trivial_Success;
+
+  int segmentCount = TheStroke->Loop ? TheStroke->PointCount : TheStroke->PointCount - 1;
+  StrokeSegment* segments = StaticAllocate<StrokeSegment>(EdgeBuffer, segmentCount + 1);
+  for (int i = 0; i < segmentCount; i++) {
+    segments[i].Start = &(TheStroke->Points[i]);
+    segments[i].End = &(TheStroke->Points[WrapValue(i + 1, 0, TheStroke->PointCount - 1)]);
+    segments[i].XL = segments[i].End->X - segments[i].Start->X;
+    segments[i].YL = segments[i].End->Y - segments[i].Start->Y;
+    segments[i].L = (segments[i].XL * segments[i].XL) + (segments[i].YL * segments[i].YL);
+    if (TheStroke->Points[i].Thickness > mt) mt = TheStroke->Points[i].Thickness;
+    if (TheStroke->Points[WrapValue(i + 1, 0, TheStroke->PointCount - 1)].Thickness > mt) mt = TheStroke->Points[WrapValue(i + 1, 0, TheStroke->PointCount - 1)].Thickness;
+  }
+
+  if (mt <= 0) return Trivial_Success;
+
+  ISpan *Spans = StaticAllocate<ISpan>(PolyBuffer, y2 - y1 + 1);
+  for (int i = y1; i <= y2; i++) {
+    Spans[i - y1].S = 999999;
+    Spans[i - y1].E = -999999;
+  }
+  for (int s = 0; s < segmentCount; s++) {
+    FPoint pt[4];
+    FPoint ps, pe;
+    FLine edge;
+    float t = _Max(segments[s].Start->Thickness, segments[s].End->Thickness) + 1.0f;
+    ps.X = segments[s].Start->X;
+    ps.Y = segments[s].Start->Y;
+    pe.X = segments[s].End->X;
+    pe.Y = segments[s].End->Y;
+    float a = Radians(AngleBetween(ps, pe));
+    float sa = sin(a) * t, ca = -cos(a) * t;
+    ps.X -= sa; ps.Y -= ca;
+    pe.X += sa; pe.Y += ca;
+    a -= Radians(90);
+    pt[0].X = ps.X + sin(a) * t; pt[0].Y = ps.Y + -cos(a) * t;
+    a += Radians(180);
+    sa = sin(a) * t; ca = -cos(a) * t;
+    pt[1].X = ps.X + sa; pt[1].Y = ps.Y + ca;
+    pt[2].X = pe.X + sa; pt[2].Y = pe.Y + ca;
+    a -= Radians(180);
+    pt[3].X = pe.X + sin(a) * t; pt[3].Y = pe.Y + -cos(a) * t;
+    for (int e = 0; e < 4; e++) {
+      edge.Start = pt[e];
+      edge.End = pt[WrapValue(e+1, 0, 3)];
+      TRACELINE_INIT(edge)
+      TRACELINE_BEGIN
+        if ((y >= y1) && (y <= y2)) {
+            Spans[y - y1].S = _Min(Spans[y - y1].S, x - 1);
+            Spans[y - y1].E = _Max(Spans[y - y1].E, x + 1);
+        }
+      TRACELINE_END
+    }
+  }
+  for (int i = y1; i <= y2; i++) {
+    Spans[i - y1].S = ClipValue(Spans[i - y1].S, x1, x2);
+    Spans[i - y1].E = ClipValue(Spans[i - y1].E, x1, x2);
+  }
+
+  Byte SoftnessRamp[256];
+  for (int i = 0; i < 256; i++) {
+    SoftnessRamp[i] = ClipByte(ceil(pow(i / 255.0f, TheStroke->Softness) * 255.0f));
+  }
+
+  int SectorWidth = 16, SectorHeight = 16;
+  while (mt >= (SectorWidth / 2)) {
+    SectorWidth *= 2;
+    SectorHeight *= 2;
+  }
+  int XSectors = ceil((Bounds.X2 - Bounds.X1) / ((float)SectorWidth));
+  int YSectors = ceil((Bounds.Y2 - Bounds.Y1) / ((float)SectorHeight));
+  StrokeSector* Sectors = StaticAllocate<StrokeSector>(YBuffer, (XSectors * YSectors));
+  int* Buf = StaticAllocate<int>(XBuffer, (segmentCount) * ((XSectors * YSectors)));
+  for (int y = 0; y < YSectors; y++) {
+    for (int x = 0; x < XSectors; x++) {
+      int s = (y * XSectors) + x;
+      Sectors[s].Segments = Buf;
+      Buf += segmentCount;
+      Sectors[s].SegmentCount = 0;
+      Rectangle rct, ln;
+      rct.Left = (x-1) * SectorWidth + x1;
+      rct.Top = (y-1) * SectorHeight + y1;
+      rct.Width = SectorWidth * 3;
+      rct.Height = SectorHeight * 3;
+      for (int i = 0; i < segmentCount; i++) {
+        ln.Left = _Min(segments[i].Start->X, segments[i].End->X);
+        ln.Top = _Min(segments[i].Start->Y, segments[i].End->Y);
+        ln.setRight(_Max(segments[i].Start->X, segments[i].End->X));
+        ln.setBottom(_Max(segments[i].Start->Y, segments[i].End->Y));
+        if (ln.intersect(rct)) {
+          Sectors[s].Segments[Sectors[s].SegmentCount] = i;
+          Sectors[s].SegmentCount++;
+        }
+      }
+    }
+  }
+
+  cy = y1;
+  int ys, xs, ysi, xsi;
+  ys = 0;
+  ysi = 0;
+  for (int y = y1; y <= y2; y++) {
+    if (Spans[y - y1].E >= Spans[y - y1].S) {
+      cx = Spans[y - y1].S;
+      xs = floor((cx - x1) / (float)SectorWidth);
+      xsi = cx - (xs * SectorWidth) - x1;
+      dest = rowTable;
+      int firstx = 999999, lastx = 0;
+      for (int x = Spans[y - y1].S; x <= Spans[y - y1].E; x++) {
+        pi = 0;
+        r = g = b = a = 0;
+        int s = (ys * XSectors) + xs;
+        if (Sectors[s].SegmentCount) {
+          for(int i = 0; i < Sectors[s].SegmentCount; i++) {
+            StrokeSegment *p = &(segments[Sectors[s].Segments[i]]);
+            if (p->L == 0) { 
+              u = 0;
+            } else {
+              u = (((cx - p->Start->X) * p->XL) + ((cy - p->Start->Y) * p->YL)) / p->L;
+              if (u < 0) u = 0;
+              if (u > 1) u = 1;
+            }
+            ix = p->Start->X + (u * p->XL);
+            iy = p->Start->Y + (u * p->YL);
+            xd = abs(cx - ix);
+            yd = abs(cy - iy);
+            pt = p->Start->Thickness + ((p->End->Thickness - p->Start->Thickness) * u);
+            d = 255 - ClipByte((sqrt(xd*xd + yd*yd) / pt) * 255.0f);
+            if (d) {
+              if (d >= pi) {
+                if (firstx > x) {
+                  firstx = x;
+                }
+                if (lastx < x) {
+                  lastx = x;
+                }
+                if (p->Start->Color == p->End->Color) {
+                  pc = p->Start->Color;
+                } else {
+                  pc = Pixel(Pixel(p->Start->Color), Pixel(p->End->Color), u);
+                }
+                pi = d;
+                r = pc[::Red];
+                g = pc[::Green];
+                b = pc[::Blue];
+                a = pc[::Alpha] * SoftnessRamp[d] / 255;
+              }
+            }
+            ++p;
+          }
+          (*dest)[::Red] = ClipByteHigh(r);
+          (*dest)[::Green] = ClipByteHigh(g);
+          (*dest)[::Blue] = ClipByteHigh(b);
+          (*dest)[::Alpha] = ClipByteHigh(a);
+        } else {
+          dest->V = 0;
+        }
+        dest++;
+        cx += 1.0f;
+        xsi++;
+        if (xsi > SectorWidth) {
+          xsi = 0;
+          xs++;
+        }
+      }
+      
+      if (needLock) {
+        if (Renderer != Null) {
+            Renderer(Dest->pointer(Spans[y - y1].S, y), rowTable, Spans[y - y1].E - Spans[y - y1].S + 1, 0, RenderArgument);
+        } else {
+            int i = Spans[y - y1].E - Spans[y - y1].S + 1;
+            Pixel *ptr = Dest->pointer(Spans[y - y1].S, y), *src = rowTable;
+            while (i--) {
+                *ptr = *src;
+                src++;
+                ptr++;
+            }
+        }
+      } else {
+        if (lRenderer != Null) {
+          lRenderer(Dest, Spans[y - y1].S, y, rowTable, Spans[y - y1].E - Spans[y - y1].S + 1);
+        }
+      }
+      
+    }
+    cy += 1.0f;
+    ysi++;
+    if (ysi > SectorHeight) {
+      ysi = 0;
+      ys++;
+    }
+  }
+
+  Dest->dirty();
+  return Success;
+}
+
+Export int FilterSimple_RenderStroke_Bezier(Image *Dest, Stroke *TheStroke, RenderFunction *Renderer, DoubleWord RenderArgument, float Accuracy) {
+  if (!Dest) {
+      return Failure;
+  }
+  if (!Dest->initialized()) {
+      return Failure;
+  }
+  if (!TheStroke) {
+      return Failure;
+  }
+  if (TheStroke->PointCount < 4) {
+      return Failure;
+  }
+
+  Stroke NewStroke;
+  float d;
+  int count = 0;
+  StrokePoint s, e;
+  s = TheStroke->Points[0];
+  for (int i = 3; i < TheStroke->PointCount; i += 3) {
+    e = TheStroke->Points[i];
+    d = sqrt(pow(e.Y - s.Y, 2) + pow(e.X - s.X, 2));
+    count += ClipValue(ceil(d * Accuracy), 2, 999);
+    s = e;
+  }
+
+  NewStroke.PointCount = count;
+  NewStroke.Softness = TheStroke->Softness;
+  NewStroke.Loop = 0;
+  NewStroke.Points = AllocateArray(StrokePoint, count);
+  s = TheStroke->Points[0];
+  int c, o;
+  float t, a, a2, a3, b, b2, b3;
+  StrokePoint pt, c1, c2;
+  Pixel cN, cA, cB, cC, cD;
+  o = 0;
+  for (int i = 3; i < TheStroke->PointCount; i += 3) {
+    c1 = TheStroke->Points[i-2];
+    c2 = TheStroke->Points[i-1];
+    e = TheStroke->Points[i];
+    d = sqrt(pow(e.Y - s.Y, 2) + pow(e.X - s.X, 2));
+    c = ClipValue(ceil(d * Accuracy), 2, 999);
+    for (int p = 0; p < c; p++) {
+      t = (p / (float)(c - 1));
+      a = t;
+      a2 = a * a;
+      a3 = a2 * a;
+      b = 1 - t;
+      b2 = b * b;
+      b3 = b2 * b;
+      cA.V = s.Color; cB.V = c1.Color; cC.V = c2.Color; cD.V = e.Color;
+      pt.X = (s.X * b3) + (3.0f * c1.X * b2 * a) + (3.0f * c2.X * b * a2) + (e.X * a3);
+      pt.Y = (s.Y * b3) + (3.0f * c1.Y * b2 * a) + (3.0f * c2.Y * b * a2) + (e.Y * a3);
+      /*
+      pt.Thickness = (s.Thickness * b3) + (3.0f * c1.Thickness * b2 * a) + (3.0f * c2.Thickness * b * a2) + (e.Thickness * a3);
+      cN[::Blue] = (cA[::Blue] * b3) + (3.0f * cB[::Blue] * b2 * a) + (3.0f * cC[::Blue] * b * a2) + (cD[::Blue] * a3);
+      cN[::Green] = (cA[::Green] * b3) + (3.0f * cB[::Green] * b2 * a) + (3.0f * cC[::Green] * b * a2) + (cD[::Green] * a3);
+      cN[::Red] = (cA[::Red] * b3) + (3.0f * cB[::Red] * b2 * a) + (3.0f * cC[::Red] * b * a2) + (cD[::Red] * a3);
+      cN[::Alpha] = (cA[::Alpha] * b3) + (3.0f * cB[::Alpha] * b2 * a) + (3.0f * cC[::Alpha] * b * a2) + (cD[::Alpha] * a3);
+      */
+      pt.Thickness = (s.Thickness * b) + (e.Thickness * a);
+      cN = Pixel(cA, cD, a);
+      pt.Color = cN.V;
+      NewStroke.Points[p + o] = pt;
+    }
+    s = e;
+    o += c;
+  }
+
+  int result = FilterSimple_RenderStroke(Dest, &NewStroke, Renderer, RenderArgument);
+
+  DeleteArray(NewStroke.Points);
+  return result;
+}
+
+Export int FilterSimple_Circle_AntiAlias(Image *Image, float X, float Y, float XRadius, float YRadius, Pixel Color, RenderFunction *Renderer, float Thickness, float Softness, float Accuracy) {
+  Stroke Stroke;
+  Stroke.Softness = Softness;
+  int v = ClipValue(ceil(2.0f * Pi * sqrt(pow(XRadius / 2.0f, 2.0f) + pow(YRadius / 2.0f, 2.0f)) * Accuracy), 3, 2048);
+  StrokePoint *Points = AllocateArray(StrokePoint, v);
+  Stroke.Points = Points;
+  Stroke.PointCount = v;
+  Stroke.Loop = 1;
+  float i = Radians((360.0f) / (float)(v));
+  float x, y, r = 0;
+  for (int s = 0; s < v; s++) {
+    x = (sin(r) * XRadius) + X;
+    y = (-cos(r) * YRadius) + Y;
+    Points[s].X = x;
+    Points[s].Y = y;
+    Points[s].Color = Color.V;
+    Points[s].Thickness = Thickness;
+    r += i;
+  }
+  int result = FilterSimple_RenderStroke(Image, &Stroke, Renderer, 0);
+  DeleteArray(Points);
+  return result;
+}
+
+Export int FilterSimple_Pie_AntiAlias(Image *Image, float X, float Y, float XRadius, float YRadius, float Start, float End, Pixel Color, RenderFunction *Renderer, float Thickness, float Softness, float Accuracy) {
+  Stroke Stroke;
+  Stroke.Softness = Softness;
+  int v = ClipValue(ceil(2.0f * Pi * sqrt(pow(XRadius / 2.0f, 2.0f) + pow(YRadius / 2.0f, 2.0f)) * (abs(End-Start) / 360.0f) * Accuracy), 3, 2048);
+  StrokePoint *Points = AllocateArray(StrokePoint, v+3);
+  Stroke.Points = Points;
+  Stroke.PointCount = v+3;
+  Stroke.Loop = 1;
+  Stroke.Points[0].X = X;
+  Stroke.Points[0].Y = Y;
+  Stroke.Points[0].Color = Color.V;
+  Stroke.Points[0].Thickness = Thickness;
+  float i = Radians((End-Start) / (float)(v));
+  float x, y, r = Radians(Start);
+  x = (sin(r) * XRadius) + X;
+  y = (-cos(r) * YRadius) + Y;
+  Stroke.Points[1].X = x;
+  Stroke.Points[1].Y = y;
+  Stroke.Points[1].Color = Color.V;
+  Stroke.Points[1].Thickness = Thickness;
+  for (int s = 0; s < v; s++) {
+    x = (sin(r) * XRadius) + X;
+    y = (-cos(r) * YRadius) + Y;
+    Stroke.Points[s+2].X = x;
+    Stroke.Points[s+2].Y = y;
+    Stroke.Points[s+2].Color = Color.V;
+    Stroke.Points[s+2].Thickness = Thickness;
+    r += i;
+  }
+  r = Radians(End);
+  x = (sin(r) * XRadius) + X;
+  y = (-cos(r) * YRadius) + Y;
+  Stroke.Points[v+2].X = x;
+  Stroke.Points[v+2].Y = y;
+  Stroke.Points[v+2].Color = Color.V;
+  Stroke.Points[v+2].Thickness = Thickness;
+  int result = FilterSimple_RenderStroke(Image, &Stroke, Renderer, 0);
+  DeleteArray(Points);
+  return result;
+}
+
+Export int FilterSimple_Arc_AntiAlias(Image *Image, float X, float Y, float XRadius, float YRadius, float Start, float End, Pixel Color, RenderFunction *Renderer, float Thickness, float Softness, float Accuracy) {
+  Stroke Stroke;
+  Stroke.Softness = Softness;
+  int v = ClipValue(ceil(2.0f * Pi * sqrt(pow(XRadius / 2.0f, 2.0f) + pow(YRadius / 2.0f, 2.0f)) * (abs(End-Start) / 360.0f) * Accuracy), 3, 2048);
+  StrokePoint *Points = AllocateArray(StrokePoint, v);
+  Stroke.Points = Points;
+  Stroke.PointCount = v;
+  Stroke.Loop = 0;
+  float i = Radians((End-Start) / (float)(v - 1));
+  float x, y, r = Radians(Start);
+  for (int s = 0; s < v; s++) {
+    x = (sin(r) * XRadius) + X;
+    y = (-cos(r) * YRadius) + Y;
+    Stroke.Points[s].X = x;
+    Stroke.Points[s].Y = y;
+    Stroke.Points[s].Color = Color.V;
+    Stroke.Points[s].Thickness = Thickness;
+    r += i;
+  }
+  int result = FilterSimple_RenderStroke(Image, &Stroke, Renderer, 0);
+  DeleteArray(Points);
+  return result;
+}

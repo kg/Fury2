@@ -63,6 +63,7 @@ Private m_booAnimateWhileStopped As Boolean, m_booAnimateWhileMoving As Boolean
 
 Private m_booDepthmapOverride As Boolean, m_booPoseOverride As Boolean, m_booScriptOverride As Boolean
 
+Private m_sngRotationOffset As Single
 Private m_booTrueMovement As Boolean, m_booRelativeAnimation As Boolean
 Private m_booDisplayRotation As Boolean
 
@@ -93,7 +94,7 @@ Private m_booAreasUpdated As Boolean
 
 Private m_lngWalkState As Long, m_lngIdleState As Long
 
-Public LinkState As Boolean, LinkPose As Boolean, LinkFrame As Boolean, LinkProperties As Boolean
+Public LinkState As Boolean, LinkPose As Boolean, LinkFrame As Boolean, LinkProperties As Boolean, LinkBearing As Boolean
 
 Public SavedPaths As Fury2Collection
 Attribute SavedPaths.VB_VarDescription = "*"
@@ -401,6 +402,9 @@ Public Property Let Angle(ByVal NewValue As Single)
 On Error Resume Next
     If NewValue = m_spParam.Velocity.B Then Exit Property
     m_spParam.Velocity.B = NewValue
+    If m_booDisplayRotation Then
+        RotationAngle = Angle + RotationOffset
+    End If
     ReselectPose
 End Property
 
@@ -492,8 +496,8 @@ On Error Resume Next
     LinkProperties = True
     Name = "Sprite"
     SpriteType = F2ST_Entity
-    VelocityMultiplier = 1
-    AnimationMultiplier = 1
+    VelocityMultiplier = -32767
+    AnimationMultiplier = -32767
     m_spParam.Obj = ObjPtr(Me)
     m_spOldParam = m_spParam
 End Sub
@@ -546,8 +550,15 @@ Dim l_spOld As SpriteParam
         Else
         End If
         
+        .LinkBearing = Me.LinkBearing
+        .LinkFrame = Me.LinkFrame
+        .LinkPose = Me.LinkPose
+        .LinkProperties = Me.LinkProperties
+        .LinkState = Me.LinkState
+        
         .DisplayRotation = Me.DisplayRotation
         .RotationAngle = Me.RotationAngle
+        .RotationOffset = Me.RotationOffset
         .ScaleLevel = Me.ScaleLevel
         .Solid = Me.Solid
         .SpinTarget = Me.SpinTarget
@@ -561,6 +572,8 @@ Dim l_spOld As SpriteParam
         .XVelocity = Me.XVelocity
         .YVelocity = Me.YVelocity
         .ZVelocity = Me.ZVelocity
+        
+        .Tag = Me.Tag
         
         .IdleState = Me.IdleState
         .WalkState = Me.WalkState
@@ -813,6 +826,13 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 l_booValue = True
                 If Not .EOS Then .Load l_booValue
                 LinkProperties = l_booValue
+                l_booValue = True
+                If Not .EOS Then
+                    .Load l_booValue
+                    LinkBearing = l_booValue
+                Else
+                    LinkBearing = LinkProperties
+                End If
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load l_booValue
@@ -847,6 +867,7 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
                 .Load m_booDisplayRotation
                 .Load l_lngValue
                 m_spParam.Params.RenderTarget = CByte(l_lngValue)
+                .Load m_sngRotationOffset
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load m_strScript
@@ -904,8 +925,8 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
             
             .Load m_staStates
         .ReadSegment_End
-        VelocityMultiplier = 1
-        AnimationMultiplier = 1
+        VelocityMultiplier = -32767
+        AnimationMultiplier = -32767
         m_spOldParam = m_spParam
         LoadTemplate
     End With
@@ -953,6 +974,7 @@ On Error Resume Next
                 .Save LinkPose
                 .Save LinkFrame
                 .Save LinkProperties
+                .Save LinkBearing
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save CBool(m_spParam.Stats.Solid)
@@ -974,6 +996,7 @@ On Error Resume Next
                 .Save DiffuseLight
                 .Save m_booDisplayRotation
                 .Save CLng(m_spParam.Params.RenderTarget)
+                .Save m_sngRotationOffset
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save m_strScript
@@ -1240,8 +1263,9 @@ End Function
 
 Public Property Get Rectangle(Optional ByVal Onscreen As Boolean = True) As Fury2Rect
 Attribute Rectangle.VB_Description = "*Returns a rectangle enclosing the sprite."
+On Error Resume Next
     If Onscreen Then
-        Set Rectangle = F2Rect(Floor(m_spParam.Position.X - (m_spParam.Graphic.Rectangle.Width / 2)), Floor(m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height)), m_spParam.Graphic.Rectangle.Width, m_spParam.Graphic.Rectangle.Height, False)
+        Set Rectangle = F2Rect(Floor(m_spParam.Position.X - m_spParam.Graphic.XCenter), Floor(m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height) + (m_spParam.Graphic.Rectangle.Height - m_spParam.Graphic.YCenter)), m_spParam.Graphic.Rectangle.Width, m_spParam.Graphic.Rectangle.Height, False)
     Else
         Set Rectangle = F2Rect(Floor(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2)), Floor(m_spParam.Position.Y - (m_spParam.Obstruction.Height)), m_spParam.Obstruction.Width, m_spParam.Obstruction.Height, False)
     End If
@@ -1260,8 +1284,8 @@ Dim l_lngTargets(0 To 0) As Long
     m_cpCamera.ViewportX = 0
     m_cpCamera.ViewportY = 0
     m_cpCamera.Alpha = 255
-    m_spSprite.Position.X = X + (m_spSprite.Graphic.Rectangle.Width / 2)
-    m_spSprite.Position.Y = Y + (m_spSprite.Graphic.Rectangle.Height)
+    m_spSprite.Position.X = X + Floor(m_spSprite.Graphic.Rectangle.Width / 2) + (Floor(m_spSprite.Graphic.Rectangle.Width / 2) - m_spSprite.Graphic.XCenter)
+    m_spSprite.Position.Y = Y + m_spSprite.Graphic.Rectangle.Height - (m_spSprite.Graphic.Rectangle.Height - m_spSprite.Graphic.YCenter)
     m_spSprite.SortedNext = 0
     m_spSprite.Next = 0
     RenderSprites VarPtr(m_spSprite), m_cpCamera
@@ -1290,6 +1314,14 @@ End Property
 
 Public Property Let RotationAngle(ByVal NewValue As Single)
     m_spParam.Params.RotationAngle = NewValue
+End Property
+
+Public Property Get RotationOffset() As Single
+    RotationOffset = m_sngRotationOffset
+End Property
+
+Public Property Let RotationOffset(ByVal NewValue As Single)
+    m_sngRotationOffset = NewValue
 End Property
 
 Public Property Get ScaleLevel() As Single
@@ -1335,7 +1367,7 @@ Dim l_strName As String
                         .GenerateClassMethod("F2OInit", Array("newThis", "newMap"), _
                         .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "newThis", True) & .LineTerminator & _
                         .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "newMap", True) & .LineTerminator _
-                        ) & .LineTerminator & mvarEngine.GetFile(l_strScript)
+                        ) & .LineTerminator & mvarEngine.GetFile(mvarEngine.Filesystem.AutoSelectExtension(l_strScript, "f2script"))
                     Else
                         l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
                         .GenerateClassVariable("Map") & .LineTerminator & _
@@ -1534,7 +1566,7 @@ Dim l_sprCollided As Fury2Sprite
     
     'm_spParam.Params.SpecialFX = fxSoftShadow
     If m_booDisplayRotation Then
-        RotationAngle = Angle
+        RotationAngle = Angle + RotationOffset
     End If
         
     If m_spParam.Events.Moved Then
@@ -1608,16 +1640,42 @@ Dim l_sprCollided As Fury2Sprite
     If m_sprAttached Is Nothing Then
     Else
         With m_sprAttached
-            m_spParam.Position.X = .X + m_sngAttachX + (Sin(.Angle * c_dblRadian) * m_sngAttachV) + (Sin((.Angle + 90) * c_dblRadian) * m_sngAttachH)
-            m_spParam.Position.Y = .Y + m_sngAttachY + (-Cos(.Angle * c_dblRadian) * m_sngAttachV) + (-Cos((.Angle + 90) * c_dblRadian) * m_sngAttachH)
-            If LinkProperties Then Me.Angle = .Angle
-            If LinkProperties Then Me.RotationAngle = .RotationAngle
+            Dim l_spAttached As SpriteParam
+            Dim l_varVx As Variant, l_varH As Variant, l_varV As Variant
+            Dim l_sngW As Single, l_sngH As Single
+            Dim l_sngHp As Single, l_sngVp As Single, l_sngVxw As Single, l_sngHw As Single, l_sngVw As Single
+            Dim l_sngAX As Single, l_sngAY As Single
+            Dim l_sngSw As Single, l_sngSh As Single
+            If True Then
+                l_spAttached = .GetParam
+                l_sngSw = (l_spAttached.Graphic.Rectangle.Width)
+                l_sngSh = (l_spAttached.Graphic.Rectangle.Height)
+                l_sngW = (l_sngSw / 2) * Abs(l_spAttached.Params.ScaleLevel)
+                l_sngH = (l_sngSh / 2) * l_spAttached.Params.ScaleLevel
+                l_varVx = Array(0, 0) ' mvarEngine.RotatePoint(0, 0, l_spAttached.Velocity.B) ' -1, -1
+                l_varH = mvarEngine.RotatePoint(l_sngW, 0, l_spAttached.Velocity.B)  ' 1, -1
+                l_varV = mvarEngine.RotatePoint(0, l_sngH, l_spAttached.Velocity.B)  ' -1, 1
+                l_sngHp = (m_sngAttachH) / (l_sngW)
+                l_sngVp = (m_sngAttachV) / (l_sngH)
+                l_sngVxw = (1 - PClip(Abs(l_sngHp))) * (1 - PClip(Abs(l_sngVp)))
+                l_sngHw = (l_sngHp) * (1 - Abs(l_sngVp))
+                l_sngVw = (1 - Abs(l_sngHp)) * (l_sngVp)
+                l_sngAX = (l_varVx(0) * l_sngVxw) + (l_varH(0) * l_sngHp) + (l_varV(0) * l_sngVw)
+                l_sngAY = (l_varVx(1) * l_sngVxw) + (l_varH(1) * l_sngHw) + (l_varV(1) * l_sngVp)
+            End If
+            m_spParam.Position.X = .X + m_sngAttachX + l_sngAX
+            m_spParam.Position.Y = .Y + m_sngAttachY + l_sngAY
+            If LinkBearing Then Me.Angle = .Angle
+            If LinkBearing And Not DisplayRotation Then Me.RotationAngle = .RotationAngle
+            If LinkBearing Then Me.SpinVelocity = .SpinVelocity
+            If LinkBearing Then Me.SpinTarget = .SpinTarget
             If LinkProperties Then Me.ScaleLevel = .ScaleLevel
+            If LinkProperties Then Me.Alpha = .Alpha
+            If LinkProperties Then Me.Visible = .Visible
             If LinkState Then Me.State = .State
             Me.Velocity = .Velocity
             If LinkPose Then Me.Pose = .Pose
             If LinkFrame Then Me.Frame = .Frame
-            If LinkProperties Then Me.Alpha = .Alpha
         End With
     End If
     
@@ -1651,7 +1709,7 @@ Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
                         Velocity = 0
                     End If
                 Else
-                    If (Abs(l_sngPathDistance) >= (Velocity)) Then
+                    If (Abs(l_sngPathDistance) >= (WalkSpeed)) Then
                         Angle = mvarEngine.AngleBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
                         Velocity = Velocity + mvarEngine.VelocityDecay
                         If Velocity < 0 Then Velocity = 0
@@ -1684,7 +1742,7 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
     If m_fraFrame Is Nothing Then
     Else
         If (m_spParam.Events.Moved And m_booAnimateWhileMoving) Or ((Not m_spParam.Events.Moved) And m_booAnimateWhileStopped) Then
-            m_sngAnimationDelay = m_sngAnimationDelay + (1 * AnimationMultiplier)
+            m_sngAnimationDelay = m_sngAnimationDelay + (1 * IIf(AnimationMultiplier = -32767, Engine.AnimationMultiplier, AnimationMultiplier))
             If m_posPose.Frames.Count < 2 Then
                 m_sngAnimationDelay = 0
             End If

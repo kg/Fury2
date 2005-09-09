@@ -60,6 +60,22 @@ Private Type StringUDT
     Text As String
 End Type
 
+Public Function Duplicate() As Fury2Area
+On Error Resume Next
+    Set Duplicate = New Fury2Area
+    With Duplicate
+        .ScriptSource = ScriptSource
+        .X = X
+        .Y = Y
+        .Width = Width
+        .Height = Height
+        .MoveInterval = MoveInterval
+        .RandomChance = RandomChance
+        .NamePattern = NamePattern
+        .Name = Name
+    End With
+End Function
+
 Public Sub Free()
 On Error Resume Next
     Set mvarMap = Nothing

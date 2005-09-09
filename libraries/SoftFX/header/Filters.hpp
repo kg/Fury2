@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define END_FSIGNATURE );
 
 FSIGNATURE(Fill) , Pixel Color END_FSIGNATURE
+FSIGNATURE(Fill_Channel) , int Channel, int Value END_FSIGNATURE
 FSIGNATURE(Fill_Opacity) , Pixel Color, int Opacity END_FSIGNATURE
 FSIGNATURE(Fill_SourceAlpha) , Pixel Color END_FSIGNATURE
 FSIGNATURE(Fill_SourceAlpha_Opacity) , Pixel Color, int Opacity END_FSIGNATURE
@@ -34,15 +35,22 @@ FSIGNATURE(Box) , Pixel Color END_FSIGNATURE
 
 FSIGNATURE(Gradient_Radial) , Pixel Color1, Pixel Color2 END_FSIGNATURE
 
+Export extern int FilterSimple_Line(Image *Image, Rectangle* Area, Pixel Color);
 Export extern int FilterSimple_Line_AA(Image *Image, float X1, float Y1, float X2, float Y2, Pixel Color);
+Export extern int FilterSimple_RenderStroke(Image *Dest, Stroke *TheStroke, RenderFunction *Renderer, DoubleWord RenderArgument);
 #ifdef _POLYGON_HPP_
 Export extern int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel Color, RenderFunction *Renderer, DoubleWord RenderArgument);
 Export extern int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, TexturedPolygon *InPoly, ScalerFunction *Scaler, RenderFunction *Renderer, DoubleWord RenderArgument);
+Export extern int FilterSimple_ConvexPolygon_AntiAlias(Image *Image, SimplePolygon *InPoly, Pixel Color, RenderFunction *Renderer, DoubleWord RenderArgument);
+Export extern int FilterSimple_ConvexPolygon_Textured_AntiAlias(Image *Dest, Image *Texture, TexturedPolygon *InPoly, ScalerFunction *Scaler, RenderFunction *Renderer, DoubleWord RenderArgument);
 Export extern int FilterSimple_ConvexPolygon_Gradient(Image *Image, GradientPolygon *InPoly, RenderFunction *Renderer, DoubleWord RenderArgument);
 extern void RenderFunction_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
+extern void RenderFunction_Font_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
 extern void RenderFunction_Merge(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
 extern void RenderFunction_Additive(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
 extern void RenderFunction_Subtractive(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
 extern void RenderFunction_Shadow(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
 extern void RenderFunction_Screen(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
+extern void RenderFunction_Additive_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
+extern void RenderFunction_Subtractive_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
 #endif

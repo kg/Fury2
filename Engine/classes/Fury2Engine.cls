@@ -131,6 +131,7 @@ Private WithEvents m_ScriptEngine As ScriptEngine
 Attribute m_ScriptEngine.VB_VarHelpID = -1
 Private m_SoundEngine As SoundEngine
 Private m_Images As Collection
+Private m_Tilesets As Collection
 Private mvarMaps As Fury2Maps
 Private mvarCameras As Fury2Cameras
 Private m_Graphics As Fury2GEGlobal
@@ -196,7 +197,7 @@ Public StartLayer As Long
 Public HideConfiguration As Boolean
 Public ClearEveryFrame As Boolean
 Public ClearBackgroundColor As Long
-Public RepeatDelay As Long
+Public RepeatDelay As Single
 Public SpecialFX As Boolean
 Public GameName As String
 Public DesiredFramerate As Long
@@ -2211,9 +2212,12 @@ Public Function RotatePoint(ByVal X As Single, ByVal Y As Single, ByVal Angle As
 On Error Resume Next
 Dim l_sngTheta As Single, l_sngR As Single
     l_sngR = Sqr((X * X) + (Y * Y))
-    l_sngTheta = Atn(Y / X)
-    If X < 0 Then
-        l_sngTheta = l_sngTheta + c_dblPi
+    If (X > 0) Then
+        l_sngTheta = Atn(Y / X)
+    ElseIf (X < 0) Then
+        l_sngTheta = Atn(Y / X) + c_dblPi
+    Else
+        l_sngTheta = c_dblPi / 2
     End If
     l_sngTheta = l_sngTheta + Angle * c_dblRadian
     RotatePoint = Array(l_sngR * Sin(l_sngTheta), l_sngR * -Cos(l_sngTheta))
@@ -2416,7 +2420,7 @@ End Property
 
 Public Property Get BGMVolume() As Single
 On Error Resume Next
-    BGMVolume = CurrentBGM.Volume
+    BGMVolume = CurrentBGMChannel.Volume
 End Property
 
 Public Property Get Camera() As Fury2Camera
@@ -2670,7 +2674,7 @@ Dim m_varNull As Variant
     If (VarType(Value) And vbArray) = vbArray Then
         m_lngUB = m_lngUB + (UBound(Value) - LBound(Value) + 1)
         ReDim Preserve Arr(m_lngLB To m_lngUB) As Variant
-        ArrayCopy Arr, Value, m_lngUB - (UBound(Value) - LBound(Value) + 1), 0, (UBound(Value) - LBound(Value) + 1)
+        ArrayCopy Arr, Value, m_lngUB - (UBound(Value) - LBound(Value)), 0, (UBound(Value) - LBound(Value) + 1)
     Else
         m_lngUB = m_lngUB + 1
         ReDim Preserve Arr(m_lngLB To m_lngUB) As Variant
@@ -3678,30 +3682,56 @@ Public Sub FlushImageCache()
 On Error Resume Next
 Dim m_objObj As IShellFolderEx_TLB.IUnknown, m_lngCount As Long
 Dim m_imgObj As Fury2Image, m_lngObj As Long
-Dim l_lngImagesFlushed As Long
-    If m_Images.Count < 1 Then Exit Sub
-    m_lngObj = 1
-    DebugOut "Flushing image cache"
-    Do While m_lngObj < m_Images.Count
-        Set m_objObj = Nothing
-        Set m_objObj = m_Images(m_lngObj)
-        If m_objObj Is Nothing Then
-            m_lngObj = m_lngObj + 1
-        Else
-            m_objObj.AddRef
-            m_lngCount = m_objObj.Release
+Dim m_tsObj As Fury2Tileset
+Dim l_lngImagesFlushed As Long, l_lngTilesetsFlushed As Long
+    If m_Images.Count > 0 Then
+        m_lngObj = 1
+        DebugOut "Flushing image cache"
+        Do While m_lngObj < m_Images.Count
             Set m_objObj = Nothing
-            If m_lngCount <= 2 Then
-                Set m_imgObj = m_Images(m_lngObj)
-                Set m_imgObj = Nothing
-                m_Images.Remove m_lngObj
-                l_lngImagesFlushed = l_lngImagesFlushed + 1
-            Else
+            Set m_objObj = m_Images(m_lngObj)
+            If m_objObj Is Nothing Then
                 m_lngObj = m_lngObj + 1
+            Else
+                m_objObj.AddRef
+                m_lngCount = m_objObj.Release
+                Set m_objObj = Nothing
+                If m_lngCount <= 2 Then
+                    Set m_imgObj = m_Images(m_lngObj)
+                    Set m_imgObj = Nothing
+                    m_Images.Remove m_lngObj
+                    l_lngImagesFlushed = l_lngImagesFlushed + 1
+                Else
+                    m_lngObj = m_lngObj + 1
+                End If
             End If
-        End If
-    Loop
-    If l_lngImagesFlushed > 0 Then DebugOut "Flushed " & l_lngImagesFlushed & " image(s)"
+        Loop
+        If l_lngImagesFlushed > 0 Then DebugOut "Flushed " & l_lngImagesFlushed & " image(s)"
+    End If
+    If m_Tilesets.Count > 0 Then
+        m_lngObj = 1
+        DebugOut "Flushing tileset cache"
+        Do While m_lngObj < m_Tilesets.Count
+            Set m_objObj = Nothing
+            Set m_objObj = m_Tilesets(m_lngObj)
+            If m_objObj Is Nothing Then
+                m_lngObj = m_lngObj + 1
+            Else
+                m_objObj.AddRef
+                m_lngCount = m_objObj.Release
+                Set m_objObj = Nothing
+                If m_lngCount <= 2 Then
+                    Set m_tsObj = m_Tilesets(m_lngObj)
+                    Set m_tsObj = Nothing
+                    m_Tilesets.Remove m_lngObj
+                    l_lngTilesetsFlushed = l_lngTilesetsFlushed + 1
+                Else
+                    m_lngObj = m_lngObj + 1
+                End If
+            End If
+        Loop
+        If l_lngTilesetsFlushed > 0 Then DebugOut "Flushed " & l_lngTilesetsFlushed & " tileset(s)"
+    End If
 End Sub
 
 Sub FocusWindow()
@@ -4277,14 +4307,12 @@ On Error Resume Next
 Dim l_strText As String
 Dim l_strModule As String
     Err.Clear
-    If Filesystem.FileExists(Filename + ".f2sf") Then
-        Filename = Filename + ".f2sf"
-    ElseIf Filesystem.FileExists(Filename + ".f2script") Then
+    If Filesystem.FileExists(Filename + ".f2script") Then
         Filename = Filename + ".f2script"
+    ElseIf Filesystem.FileExists(Filename + ".f2sf") Then
+        Filename = Filename + ".f2sf"
     ElseIf Filesystem.FileExists(Filename + ".f2cfg") Then
         Filename = Filename + ".f2cfg"
-    ElseIf Filesystem.FileExists(Filename + ".f2config") Then
-        Filename = Filename + ".f2config"
     ElseIf (Filesystem.FileExists(Filename + ".vbs")) And (ScriptEngine.Language.Name = "VBScript") Then
         Filename = Filename + ".vbs"
     ElseIf (Filesystem.FileExists(Filename + ".js")) And (ScriptEngine.Language.Name = "JScript") Then
@@ -4504,6 +4532,7 @@ On Error Resume Next
     Set m_colPluginStack = New Collection
     Set m_colReversePluginStack = New Collection
     Set m_Images = New Collection
+    Set m_Tilesets = New Collection
     Set m_Graphics = New Fury2GEGlobal
     Set m_Globals = New Fury2Globals
     Set mvarMaps = New Fury2Maps
@@ -4548,7 +4577,7 @@ On Error Resume Next
     VelocityMultiplier = 1
     AnimationMultiplier = 1
     VelocityDecay = c_sngDefaultVelocityDecay
-    RepeatDelay = c_lngDefaultRepeatDelay
+    RepeatDelay = c_sngDefaultRepeatDelay
     EnableTimers = True
     ClearMapBG = True
     StartLayer = 1
@@ -4606,7 +4635,26 @@ On Error Resume Next
     End If
 End Sub
 
-Public Sub LoadMap(ByVal Filename As String, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
+Public Function LoadMapFile(ByVal Filename As String) As Fury2Map
+On Error Resume Next
+    Set LoadMapFile = New Fury2Map
+    LoadMapFile.SetEngine Me
+    LoadFromFile LoadMapFile, Filesystem.File(Filename).Load()
+    LoadMapFile.Filename = Filename
+End Function
+
+Public Function LoadTileset(ByVal Filename As String) As Fury2Tileset
+On Error Resume Next
+    Set LoadTileset = m_Tilesets(LCase(Trim(Filename)))
+    If LoadTileset Is Nothing Then
+        Set LoadTileset = New Fury2Tileset
+        LoadTileset.SetEngine Me
+        LoadFromFile LoadTileset, Filesystem.File(Filename).Load()
+        m_Tilesets.Add LoadTileset, LCase(Trim(Filename))
+    End If
+End Function
+
+Public Sub LoadMap(ByVal FilenameOrMap, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
 Attribute LoadMap.VB_Description = "Loads a map."
 On Error Resume Next
 Dim m_gblGlobal As Fury2Globals
@@ -4614,25 +4662,34 @@ Dim m_lngSprites As Long, m_lngLayers As Long
 Dim m_mapNew As Fury2Map
 Dim l_mapOld As Fury2Map
 Dim m_strOldFn As String
+Dim l_strFilename As String
     Set m_gblGlobal = New Fury2Globals
-    DebugOut "Loading map """ & Filename & """"
-    ContextLevelAdd "LoadMap(""" + Filename + """, " + CStr(Index) + ")"
+    DebugOut "Loading map """ & ToString(FilenameOrMap) & """"
+    ContextLevelAdd "LoadMap(""" + ToString(FilenameOrMap) + """, " + CStr(Index) + ")"
     Err.Clear
     Set l_mapOld = Maps(Index)
     Err.Clear
-    m_strOldFn = Trim(CStr(Filename))
-    Filename = (CStr(Filename))
-    Filename = Filesystem.AutoSelectExtension(Filename, "f2m;f2map")
-    If Not Filesystem.FileExists(Filename) Then
-        CriticalError "LoadMap", "Filesystem.FileExists(Filename)", "Map not found: " + CStr(Filename)
-    Else
-        Set m_mapNew = New Fury2Map
-        m_mapNew.SetEngine Me
-        If LoadFromFile(m_mapNew, Filesystem.File(Filename)) Then
+    If VarType(FilenameOrMap) = vbString Then
+        l_strFilename = CStr(FilenameOrMap)
+        m_strOldFn = Trim(CStr(l_strFilename))
+        l_strFilename = Filesystem.AutoSelectExtension(l_strFilename, "f2m;f2map")
+        If Not Filesystem.FileExists(l_strFilename) Then
+            CriticalError "LoadMap", "Filesystem.FileExists(l_strFilename)", "Map not found: " + CStr(l_strFilename)
         Else
-            CriticalError "LoadMap", "LoadFromFile(m_mapNew, Filesystem.File(filename))", "Map Load Failed"
+            Set m_mapNew = New Fury2Map
+            m_mapNew.SetEngine Me
+            If LoadFromFile(m_mapNew, Filesystem.File(l_strFilename)) Then
+            Else
+                CriticalError "LoadMap", "LoadFromFile(m_mapNew, Filesystem.File(filename))", "Map Load Failed"
+            End If
+            m_mapNew.Filename = l_strFilename
         End If
-        m_mapNew.Filename = Filename
+    Else
+        Set m_mapNew = FilenameOrMap
+    End If
+    If m_mapNew Is Nothing Then
+        CriticalError "LoadMap", "", "No valid map provided"
+    Else
         mvarMaps.Remove Index
         mvarMaps.Add m_mapNew, , Index
         If Camera.Map = 0 Then
@@ -4660,8 +4717,8 @@ Dim m_strOldFn As String
         m_ScriptEngine.Exec "Engine_MapLoad", CLng(Index)
         m_ScriptEngine.Exec "Engine_MapLoad"
         MapLoad m_strOldFn
-        DebugOut "Map """ & Filename & """ loaded"
-        If Debugger Is Nothing Then Else Debugger.MapSwitch Filename
+        DebugOut "Map """ & ToString(FilenameOrMap) & """ loaded"
+        If Debugger Is Nothing Then Else Debugger.MapSwitch ToString(FilenameOrMap)
     End If
     Cameras.Dirty
     Set Map = Maps(Index)
@@ -4699,7 +4756,7 @@ Dim l_lngHandle As Long
     End If
     If LogToFile Then
         l_lngHandle = FreeFile
-        Open "fury2.log" For Append As #l_lngHandle
+        Open App.Path & "\fury2.log" For Append As #l_lngHandle
             Print #l_lngHandle, Text
         Close #l_lngHandle
     End If
@@ -4869,7 +4926,7 @@ On Error Resume Next
         Set CurrentBGM = SoundEngine.Load(CStr(Filename))
     End If
     CurrentBGM.LoopMode = LoopMode_Normal
-    CurrentBGM.loopcount = -1
+    CurrentBGM.LoopCount = -1
     Set CurrentBGMChannel = CurrentBGM.Play(True)
     CurrentBGMChannel.Priority = 0
     If Fade Then
@@ -5468,14 +5525,14 @@ Dim l_sndBGM As Sound
     Err.Clear
 End Sub
 
-Public Sub SwitchMap(ByVal Filename As String, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
+Public Sub SwitchMap(ByVal FilenameOrMap, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
 Attribute SwitchMap.VB_Description = "Switches from the current map to a new one."
 On Error Resume Next
 Dim m_imgOld As Fury2Image
-    ContextLevelAdd "SwitchMap(""" + Filename + """, " + CStr(Index) + ")"
+    ContextLevelAdd "SwitchMap(""" + ToString(FilenameOrMap) + """, " + CStr(Index) + ")"
     If DefaultTransition <> TR_None Then Set m_imgOld = m_imgBackbuffer.Duplicate
     Transition DefaultTransition, , 0
-    LoadMap Filename, LoadX, LoadY, Layer, Index
+    LoadMap FilenameOrMap, LoadX, LoadY, Layer, Index
     Sync
     Redraw
     Transition DefaultTransition, , 1
@@ -5544,6 +5601,7 @@ Dim l_imgScreen As Fury2Image
 Dim l_lngIndex As Long
 Dim l_strFilename As String
     Set l_imgScreen = GrabScreen(False)
+    l_imgScreen.FillChannel l_imgScreen.Rectangle, 3, 255
     If ScreenshotOverlay Is Nothing Then
     Else
         l_imgScreen.Blit F2Rect(l_imgScreen.Width - ScreenshotOverlay.Width, l_imgScreen.Height - ScreenshotOverlay.Height, ScreenshotOverlay.Width, ScreenshotOverlay.Height, False), , ScreenshotOverlay, 1, BlitMode_SourceAlpha
@@ -6146,3 +6204,64 @@ On Error Resume Next
     UpdateWindow
 End Sub
 
+Public Function IntegerToBaseN(ByVal Value As Long, ByVal Digits As String) As String
+On Error Resume Next
+Dim l_booNegative As Boolean
+Dim l_bytDigits() As Byte
+Dim l_strOutput As String
+Dim l_lngBase As Long
+    l_booNegative = (Value < 0)
+    Value = Abs(Value)
+    l_bytDigits = StrConv(Digits, vbFromUnicode)
+    l_lngBase = UBound(l_bytDigits) - LBound(l_bytDigits) + 1
+    Do While Value > 0
+        l_strOutput = Chr(l_bytDigits(Value Mod l_lngBase)) & l_strOutput
+        Value = Value \ l_lngBase
+    Loop
+    IntegerToBaseN = IIf(l_booNegative, "-", "") & l_strOutput
+End Function
+
+Public Function BaseNToInteger(ByVal Value As String, ByVal Digits As String) As Long
+On Error Resume Next
+Dim l_bytDigits() As Byte
+Dim l_bytInput() As Byte
+Dim l_lngValue As Long
+Dim l_lngBase As Long
+Dim l_lngChar As Long, l_lngFind As Long
+Dim l_lngNegative As Long
+    l_bytDigits = StrConv(Digits, vbFromUnicode)
+    l_bytInput = StrConv(Value, vbFromUnicode)
+    l_lngBase = UBound(l_bytDigits) - LBound(l_bytDigits) + 1
+    l_lngNegative = 1
+    For l_lngChar = LBound(l_bytInput) To UBound(l_bytInput)
+        If l_bytInput(l_lngChar) = 45 Then
+            l_lngNegative = -1
+        Else
+            For l_lngFind = LBound(l_bytDigits) To UBound(l_bytDigits)
+                If l_bytInput(l_lngChar) = l_bytDigits(l_lngFind) Then
+                    l_lngValue = l_lngValue * l_lngBase
+                    l_lngValue = l_lngValue Or l_lngFind
+                    Exit For
+                End If
+            Next l_lngFind
+        End If
+    Next l_lngChar
+    BaseNToInteger = l_lngValue * l_lngNegative
+End Function
+
+Public Function BaseNToBaseN(ByVal Value As String, ByVal FromDigits As String, ByVal ToDigits As String) As String
+On Error Resume Next
+    BaseNToBaseN = IntegerToBaseN(BaseNToInteger(Value, FromDigits), ToDigits)
+End Function
+
+Public Function BinaryDigits() As String
+    BinaryDigits = "01"
+End Function
+
+Public Function OctalDigits() As String
+    OctalDigits = "01234567"
+End Function
+
+Public Function HexDigits() As String
+    HexDigits = "0123456789ABCDEF"
+End Function

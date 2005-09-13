@@ -17,10 +17,40 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "../header/Polygon.hpp"
+
 const int ParticleListStartSize = 256;
 
-const float ParticleMinimumL = 1.0f / 10000.0f;
+// m^3 * kg^-1 * s^-2
+// * m * m * m / s / s / kg
+// 1 pixel = 1 meter
+// 1 mass = 1 kg
+// 1 elapsed = 1 second
+const double DefaultGravitationalConstant = 6.673e-11;
+//K = (6.6742) (10 ^ -11)
+//G = K m^3 s^-2 kg^-1
+//N = m s^-2 kg
+//G = K N m^2 kg^-2
+//F = G(m1 * m2) / (d^2)
+//F = K N m^2 kg^-2 (m1 * m2) / (d^2)
+//F = K * N * m^2 * m1 * m2 / (d^2)
+//F = K * N * m^2 * C kg * 1 kg / 100 m^2
+//F = G * C kg * 1 kg / 100 m^2
+//C = F / G / 1 kg / 100 m^2
+//C = 1 m/s^2 / G / 1 kg / 100 m^2
+//C = F / G / m2 / d
+//
+//m1 = C kg
+//m1 = 1 Xg
+//m2 = 1 kg
+//d = 100m
+//N = 1
+//F = 1 m/s^2
+const double DefaultXgDistance = 1.0;
 
+const double ParticleMinimumL = 1.0f / 10000.0f;
+
+struct ParticleEngineState;
 struct ParticleType;
 struct Particle;
 struct ParticleModifier;
@@ -28,8 +58,11 @@ struct ParticleGenerator;
 struct ParticleCamera;
 class ParticleEngine;
 
+typedef void (ParticleDieCallback)(ParticleEngine* engine, ParticleType* type, Particle* particle, DoubleWord UserData);
+
 enum ParticleDecayModes {
     pdmNone,
+    pdmSet,
     pdmAdd,
     pdmMultiply,
     pdmExponent,
@@ -86,6 +119,8 @@ struct ParticleType {
     ParticleGraphicParam *Graphic;
     Pixel Color1;
     Pixel Color2;
+    ParticleDieCallback* DieCallback;
+    DoubleWord UserData;
     Byte XVDecayMode;
     Byte YVDecayMode;
     Byte AVDecayMode;
@@ -104,16 +139,18 @@ struct Particle {
     float Frame;
     int Type;
 public:
-    void tick(ParticleEngine& engine, ParticleType& type);
-    void render(ParticleEngine& engine, ParticleType& type, ParticleCamera& camera);
+    bool tick(ParticleEngineState& state);
+    void render(ParticleEngineState& state);
+    inline bool inside(FRect& rect) {
+      return !((this->X < rect.X1) | (this->X > rect.X2) | (this->Y < rect.Y1) | (this->Y > rect.Y2));
+    }
 };
 
 struct ParticleModifier {
     float X, Y;
-    float Range;
-    float RangeScale;
+    float Range, RangeScale;
+    float Mass;
     float Attraction;
-    float MaxAttraction;
     float XVDecay;
     float YVDecay;
     float AVDecay;
@@ -125,21 +162,22 @@ struct ParticleModifier {
     int ExcludeType, RequireType;
     FRect Area;
 public:
-    void tick(ParticleEngine& engine, Particle& particle);
+    void tick(ParticleEngineState& state);
 };
 
 struct ParticleGenerator {
     int Type;
-    int GenerateRate;
+    float GenerateRate;
     float GenerateDelay;
-    float CurrentDelay;
     float NewX, NewY, NewL, NewA, NewR;
     float NewXV, NewYV, NewLV, NewAV, NewRV;
-    float RandomX, RandomY, RandomL, RandomA;
-    float RandomXV, RandomYV, RandomLV, RandomAV;
-    float Rotation, GenerateRotation;
+    float RandomX, RandomY, RandomL, RandomA, RandomR;
+    float RandomXV, RandomYV, RandomLV, RandomAV, RandomRV;
+    float GenerateRotation;
+    float RandomGenerateRotation;
+    float CurrentDelay, CurrentRotation;
 public:
-    void tick(ParticleEngine& engine);
+    void tick(ParticleEngineState& state);
 };
 
 struct ParticleCamera {
@@ -165,7 +203,10 @@ public:
     ParticleTypeList Types;
     ParticleModifierList Modifiers;
     ParticleGeneratorList Generators;
+    FRect Size;
     MTRand RNG;
+    double G;
+    double Xg;
 
     inline ParticleEngine() {
       Particles = ParticleListList();
@@ -173,10 +214,65 @@ public:
       Modifiers = ParticleModifierList();
       Generators = ParticleGeneratorList();
       RNG = MTRand();
+      G = DefaultGravitationalConstant;
+      setXg(DefaultXgDistance);
+      Size.X1 = -99999;
+      Size.Y1 = -99999;
+      Size.X2 = 99999;
+      Size.Y2 = 99999;
+    }
+
+    inline void setXg(double Distance) {
+      Xg = 1.0 / G / 1.0 / Distance;
+    }
+
+    inline float gravity(float m_a_xg, float m_b_kg, float d2) {
+      return G * (m_a_xg * Xg) * (m_b_kg) / d2;
     }
 
     void spawn(Particle& particle, ParticleList& list);
     void spawn(Particle& particle);
-    void tick();
+    void prespawn(ParticleList& list, int count);
+    void tick(float elapsed);
     void render(ParticleCamera& camera);
+};
+
+struct ParticleEngineState {
+    ParticleEngine* engine;
+    ParticleCamera* camera;
+    ParticleType* type;
+    ParticleList* typeList;
+    Particle* particle;
+    float elapsed, theta, distance;
+    Image* renderTarget;
+    RenderFunction* renderer;
+    TexturedPolygon poly;
+
+    inline void clear() {
+      engine = 0;
+      camera = 0;
+      type = 0;
+      particle = 0;
+      elapsed = 0;
+      renderTarget = 0;
+      renderer = 0;
+      theta = 0;
+      distance = 0;
+    }
+
+    ParticleEngineState() {
+      clear();
+    }
+
+    ParticleEngineState(ParticleEngine &Engine, ParticleCamera &Camera) {
+      clear();
+      engine = &Engine;
+      camera = &Camera;
+    }
+
+    ParticleEngineState(ParticleEngine &Engine, float Elapsed) {
+      clear();
+      engine = &Engine;
+      elapsed = Elapsed;
+    }
 };

@@ -61,5 +61,9 @@ namespace Tags {
 #define removeOverride(name) SoftFX::RemoveOverride(#name, _##name)
 #define removeNamedOverride(name, ptr) SoftFX::RemoveOverride(#name, _##ptr)
 
+inline unsigned int va_float(float value) {
+  return *(reinterpret_cast<unsigned int*>(&value));
+}
+
 extern void InstallOverrides();
 extern void UninstallOverrides();

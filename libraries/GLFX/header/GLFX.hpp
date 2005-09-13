@@ -65,6 +65,14 @@ struct IPoint {
 };
 
 struct FPoint {
+  FPoint() {
+    X = 0;
+    Y = 0;
+  }
+  FPoint(float x, float y) {
+    X = x;
+    Y = y;
+  }
   float X, Y;
 };
 

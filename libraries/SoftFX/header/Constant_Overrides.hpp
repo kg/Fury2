@@ -98,6 +98,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(FilterSimple_Line_Subtractive) \
   defItem(FilterSimple_Line_Gradient) \
   defItem(FilterSimple_Line_Gradient_SourceAlpha) \
+  defItem(FilterSimple_Line_AA) \
+  defItem(FilterSimple_Line_Gradient_AA) \
   defItem(FilterSimple_Mirror) \
   defItem(FilterSimple_Noise_Channel) \
   defItem(FilterSimple_Noise_Grayscale_Opacity) \

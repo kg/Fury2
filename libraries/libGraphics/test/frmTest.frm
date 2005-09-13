@@ -171,9 +171,10 @@ Dim l_mshMesh As Fury2DeformationMesh
 '    m_imgBuffer.DeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgTextureBlend, l_mshMesh, RenderMode_Normal, ResampleMode_Bilinear_Wrap
 '    m_imgBuffer.MaskDeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgMask.Rectangle, m_imgTextureBlend, m_imgMask, l_mshMesh, 0.66, RenderMode_SourceAlpha, ResampleMode_Bilinear_Wrap
     m_imgBuffer.Locked = UseHardware
+    m_imgTexture(0).Draw m_imgBuffer, 75, 75, , 2, l_sngR, BlitMode_SourceAlpha, , ResampleMode_Bilinear, True
 '    m_imgBuffer.Stroke Array(Array(25, 25), Array(75, 75)), F2White, 3, , , RenderMode_SourceAlpha
 '    m_imgBuffer.AntiAliasFilledEllipse Array(150, 150), F2White, 50, 50, RenderMode_SourceAlpha
-    m_imgBuffer.GradientConvexPolygon Array(Array(75, 75, F2White), Array(75 + (Sin(l_sngR) * l_sngS), 75 + (-Cos(l_sngR) * l_sngS), F2Black), Array(75 + (Sin(l_sngR + (c_dblPi / 2)) * l_sngS), 75 + (-Cos(l_sngR + (c_dblPi / 2)) * l_sngS), F2Black)), RenderMode_Additive
+    'm_imgBuffer.GradientConvexPolygon Array(Array(75, 75, F2White), Array(75 + (Sin(l_sngR) * l_sngS), 75 + (-Cos(l_sngR) * l_sngS), F2Black), Array(75 + (Sin(l_sngR + (c_dblPi / 2)) * l_sngS), 75 + (-Cos(l_sngR + (c_dblPi / 2)) * l_sngS), F2Black)), RenderMode_Additive
     m_imgBuffer.Locked = True
     GLFlip ' Me.HDC
     l_sngS = l_sngS + 1
@@ -181,7 +182,7 @@ Dim l_mshMesh As Fury2DeformationMesh
         l_sngS = 25
         l_lngFrame = WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))
     End If
-    l_sngR = l_sngR + 0.1
+    l_sngR = l_sngR + 0.25
 End Sub
 
 Private Sub cmdToggleDeform_Click()

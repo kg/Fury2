@@ -274,6 +274,16 @@ Export int FilterSimple_Multiple_Line_AA(Image *Image, FLine *Lines, Pixel Color
 
 Export int FilterSimple_Line_AA(Image *Image, float X1, float Y1, float X2, float Y2, Pixel Color) {
   if (!Image) return Failure;
+  {
+    int overrideresult = Override::EnumOverrides(Override::FilterSimple_Line_AA, 6, Image, va_float(X1), va_float(Y1), va_float(X2), va_float(Y2), Color);
+    #ifdef OVERRIDES
+      if (overrideresult != 0) return overrideresult;
+    #endif
+  }
+  ImageLockManager ilImage(lockingMode, Image);
+  if (!ilImage.performUnlock()) {
+      return Failure;
+  }
   FLine Line;
   Line.Start.X = X1;
   Line.Start.Y = Y1;
@@ -282,12 +292,48 @@ Export int FilterSimple_Line_AA(Image *Image, float X1, float Y1, float X2, floa
   if (ClipFloatLine(&(Image->ClipRectangle), &Line)) {
     int x_distance = X2 - X1, y_distance = Y2 - Y1;
     int pixel_count = (_Max(abs(x_distance), abs(y_distance)));
-    float x_increment = (x_distance / (float)pixel_count), y_increment = (y_distance / (float)pixel_count);
+    float x_increment = ((X2 - X1) / (float)pixel_count), y_increment = ((Y2 - Y1) / (float)pixel_count);
     float current_x = X1, current_y = Y1;
     for (int i = 0; i <= pixel_count; i++) {
       Image->setPixelAA(current_x, current_y, Color);
       current_x += x_increment;
       current_y += y_increment;
+    }
+    return Success;
+  } else {
+    return Trivial_Success;
+  }
+}
+
+Export int FilterSimple_Line_Gradient_AA(Image *Image, float X1, float Y1, float X2, float Y2, Pixel StartColor, Pixel EndColor) {
+  if (!Image) return Failure;
+  {
+    int overrideresult = Override::EnumOverrides(Override::FilterSimple_Line_Gradient_AA, 7, Image, va_float(X1), va_float(Y1), va_float(X2), va_float(Y2), StartColor, EndColor);
+    #ifdef OVERRIDES
+      if (overrideresult != 0) return overrideresult;
+    #endif
+  }
+  ImageLockManager ilImage(lockingMode, Image);
+  if (!ilImage.performUnlock()) {
+      return Failure;
+  }
+  FLine Line;
+  Line.Start.X = X1;
+  Line.Start.Y = Y1;
+  Line.End.X = X2;
+  Line.End.Y = Y2;
+  if (ClipFloatLine(&(Image->ClipRectangle), &Line)) {
+    int x_distance = X2 - X1, y_distance = Y2 - Y1;
+    int pixel_count = (_Max(abs(x_distance), abs(y_distance)));
+    float x_increment = ((X2 - X1) / (float)pixel_count), y_increment = ((Y2 - Y1) / (float)pixel_count);
+    float w_increment = (255.0f / (float)pixel_count);
+    float w = 0;
+    float current_x = X1, current_y = Y1;
+    for (int i = 0; i <= pixel_count; i++) {
+      Image->setPixelAA(current_x, current_y, Pixel(StartColor, EndColor, w));
+      current_x += x_increment;
+      current_y += y_increment;
+      w += w_increment;
     }
     return Success;
   } else {
@@ -1197,6 +1243,8 @@ Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel
 
     delete Poly;
 
+    Image->dirty();
+
     return Success;
 }
 
@@ -1283,29 +1331,30 @@ void RenderFunction_Font_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixe
     AlphaLevel *aSource, *aDest, *aScale;
     AlphaLevel *aRed, *aGreen, *aBlue;
 	  Pixel arg = Pixel(Argument);
+    aBlue = AlphaLevelLookup( arg[::Blue] );
+    aGreen = AlphaLevelLookup( arg[::Green] );
+    aRed = AlphaLevelLookup( arg[::Red] );
     int i = Count;
     Byte a = 0;
     if (Source) {
+      if (arg[::Alpha] == 0) return;
       aScale = AlphaLevelLookup(arg[::Alpha]);
       while (i--) {
-        a = (*Source)[::Alpha];
+        a = AlphaFromLevel(aScale, (*Source)[::Alpha]);
         if (a) {
-          aSource = AlphaLevelLookup( AlphaFromLevel(aScale, a) );
-          aDest = AlphaLevelLookup( AlphaFromLevel(aScale, a ) ^ 0xFF );
-          aBlue = AlphaLevelLookup( (*Source)[::Blue] );
-          aGreen = AlphaLevelLookup( (*Source)[::Green] );
-          aRed = AlphaLevelLookup( (*Source)[::Red] );
-          (*Dest)[::Blue] = AlphaFromLevel2(aDest, (*Dest)[::Blue], aSource, AlphaFromLevel(aBlue, arg[::Blue]));
-          (*Dest)[::Green] = AlphaFromLevel2(aDest, (*Dest)[::Green], aSource, AlphaFromLevel(aGreen, arg[::Green]));
-          (*Dest)[::Red] = AlphaFromLevel2(aDest, (*Dest)[::Red], aSource, AlphaFromLevel(aRed, arg[::Red]));
+          aSource = AlphaLevelLookup( a );
+          aDest = AlphaLevelLookup( a ^ 0xFF );
+          (*Dest)[::Blue] = AlphaFromLevel2(aDest, (*Dest)[::Blue], aSource, AlphaFromLevel(aBlue, (*Source)[::Blue]));
+          (*Dest)[::Green] = AlphaFromLevel2(aDest, (*Dest)[::Green], aSource, AlphaFromLevel(aGreen, (*Source)[::Green]));
+          (*Dest)[::Red] = AlphaFromLevel2(aDest, (*Dest)[::Red], aSource, AlphaFromLevel(aRed, (*Source)[::Red]));
         }
         Dest++;
         Source++;
       }
     } else {
-      SolidColor[::Blue] = SolidColor[::Blue] * arg[::Blue] / 255;
-      SolidColor[::Green] = SolidColor[::Green] * arg[::Green] / 255;
-      SolidColor[::Red] = SolidColor[::Red] * arg[::Red] / 255;
+      SolidColor[::Blue] = AlphaFromLevel(aBlue, SolidColor[::Blue]);
+      SolidColor[::Green] = AlphaFromLevel(aGreen, SolidColor[::Green]);
+      SolidColor[::Red] = AlphaFromLevel(aRed, SolidColor[::Red]);
       SolidColor[::Alpha] = SolidColor[::Alpha] * arg[::Alpha] / 255;
       a = SolidColor[::Alpha];
       if (a) {
@@ -1554,7 +1603,6 @@ Export int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, Text
         SRect.Height = InPoly->Vertexes[2].V - InPoly->Vertexes[0].V + 1;
         if (Renderer == Null) {
           return BlitResample_Normal(Dest, Texture, &DRect, &SRect, Scaler);
-        } else {
         }
       }
     }
@@ -1617,15 +1665,15 @@ Export int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, Text
 
 //    ISpan *Spans = AllocateArray(ISpan, SpanCount);
     ISpan *Spans = StaticAllocate<ISpan>(PolyBuffer, SpanCount);
-    TextureCoordinate *StartCoords = StaticAllocate<TextureCoordinate>(XBuffer, SpanCount);
-    TextureCoordinate *EndCoords = StaticAllocate<TextureCoordinate>(YBuffer, SpanCount);
+    TextureCoordinateF *StartCoords = StaticAllocate<TextureCoordinateF>(XBuffer, SpanCount);
+    TextureCoordinateF *EndCoords = StaticAllocate<TextureCoordinateF>(YBuffer, SpanCount);
     for (int i = 0; i < SpanCount; i++) {
         Spans[i].S = 99999;
         Spans[i].E = -99999;
-        StartCoords[i].U.setF(0);
-        StartCoords[i].V.setF(0);
-        EndCoords[i].U.setF(0);
-        EndCoords[i].V.setF(0);
+        StartCoords[i].U = (0);
+        StartCoords[i].V = (0);
+        EndCoords[i].U = (0);
+        EndCoords[i].V = (0);
     }
 
     int YOffset = _Min(Bounds.Y1, Bounds.Y2);
@@ -1635,22 +1683,22 @@ Export int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, Text
         float U = 0, V = 0;
         float UI = 0, VI = 0;
         TRACELINE_INIT(Edges[l])
-            U = Poly->Vertexes[l].U;
-            V = Poly->Vertexes[l].V;
-            UI = (Poly->Vertexes[ln].U - U) / (numpixels-1);
-            VI = (Poly->Vertexes[ln].V - V) / (numpixels-1);
+            U = (Poly->Vertexes[l].U);
+            V = (Poly->Vertexes[l].V);
+            UI = ((Poly->Vertexes[ln].U - Poly->Vertexes[l].U) / (numpixels-1));
+            VI = ((Poly->Vertexes[ln].V - Poly->Vertexes[l].V) / (numpixels-1));
         TRACELINE_BEGIN
             cy = y - YOffset;
             if ((cy >= 0) && (cy < SpanCount)) {
               if (x < Spans[cy].S) {
                 Spans[cy].S = x;
-                StartCoords[cy].U.setF(U);
-                StartCoords[cy].V.setF(V);
+                StartCoords[cy].U = (U);
+                StartCoords[cy].V = (V);
               }
               if (x > Spans[cy].E) {
                 Spans[cy].E = x;
-                EndCoords[cy].U.setF(U);
-                EndCoords[cy].V.setF(V);
+                EndCoords[cy].U = (U);
+                EndCoords[cy].V = (V);
               }
               max_span_width = _Max(max_span_width, (Spans[cy].E - Spans[cy].S) + 1);
             }
@@ -1676,11 +1724,16 @@ Export int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, Text
                 if (X) {
                     X++;
                     Pointer = Dest->fast_pointer(ClipValue(Spans[i].S, Dest->ClipRectangle.Left, Dest->ClipRectangle.right() - 1), Y);
-                    fXI = (EndCoords[i].U.F() - StartCoords[i].U.F()) / L;
-                    fYI = (EndCoords[i].V.F() - StartCoords[i].V.F()) / L;
-                    Scaler(Texture, StartCoords[i].U.H, StartCoords[i].V.H,
-                    StartCoords[i].U.L, StartCoords[i].V.L,
-                    (fXI), (fYI), (int)(fXI * 65535.0) % 65535, (int)(fYI * 65535.0) % 65535,
+                    float fL = (float)L;
+                    fXI = (EndCoords[i].U - StartCoords[i].U) / fL;
+                    fYI = (EndCoords[i].V - StartCoords[i].V) / fL;
+                    int ifXI = (int)(fXI * 65535.0f);
+                    int ifYI = (int)(fYI * 65535.0f);
+                    int ifX = (int)(StartCoords[i].U * 65535.0f);
+                    int ifY = (int)(StartCoords[i].V * 65535.0f);
+                    Scaler(Texture, ifX / 65535, ifY / 65535,
+                    ifX % 65535, ifY % 65535,
+                    ifXI / 65535, ifYI / 65535, ifXI % 65535, ifYI % 65535,
                     L+1, ScanlineTable);
                     CurrentPixel = ScanlineTable;
                     if (Spans[i].S < Dest->ClipRectangle.Left) {
@@ -1707,6 +1760,8 @@ Export int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, Text
 //    DeleteArray(Edges);
 
     delete Poly;
+
+    Dest->dirty();
 
     return Success;
 }
@@ -2540,6 +2595,7 @@ Export int FilterSimple_RenderStroke(Image *Dest, Stroke *TheStroke, RenderFunct
 
   int segmentCount = TheStroke->Loop ? TheStroke->PointCount : TheStroke->PointCount - 1;
   StrokeSegment* segments = StaticAllocate<StrokeSegment>(EdgeBuffer, segmentCount + 1);
+  if (!segments) return Failure;
   for (int i = 0; i < segmentCount; i++) {
     segments[i].Start = &(TheStroke->Points[i]);
     segments[i].End = &(TheStroke->Points[WrapValue(i + 1, 0, TheStroke->PointCount - 1)]);
@@ -2607,8 +2663,18 @@ Export int FilterSimple_RenderStroke(Image *Dest, Stroke *TheStroke, RenderFunct
   }
   int XSectors = ceil((Bounds.X2 - Bounds.X1) / ((float)SectorWidth));
   int YSectors = ceil((Bounds.Y2 - Bounds.Y1) / ((float)SectorHeight));
+  if (ceil(abs(Bounds.X2 - Bounds.X1)) <= 24) {
+    XSectors = 1;
+    SectorWidth = x2 - x1 + 1;
+  }
+  if (ceil(abs(Bounds.Y2 - Bounds.Y1)) <= 24) {
+    YSectors = 1;
+    SectorHeight = y2 - y1 + 1;
+  }
   StrokeSector* Sectors = StaticAllocate<StrokeSector>(YBuffer, (XSectors * YSectors));
+  if (!Sectors) return Failure;
   int* Buf = StaticAllocate<int>(XBuffer, (segmentCount) * ((XSectors * YSectors)));
+  if (!Buf) return Failure;
   for (int y = 0; y < YSectors; y++) {
     for (int x = 0; x < XSectors; x++) {
       int s = (y * XSectors) + x;

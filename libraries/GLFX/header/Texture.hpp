@@ -5,6 +5,7 @@ struct Texture {
   int Left, Top, Width, Height;
   bool MatteOptimized;
   bool Owner;
+  int ScaleMode;
 
   Texture(GLuint handle = 0, int left = 0, int top = 0, int width = 0, int height = 0, float xs = 0, float ys = 0, bool owner = true) {
     Handle = handle;
@@ -21,6 +22,7 @@ struct Texture {
     V2 = (top + height) * YScale;
     MatteOptimized = false;
     Owner = owner;
+    ScaleMode = -1;
   }
 
   ~Texture() {
@@ -42,6 +44,17 @@ struct Texture {
 
   inline float V(float Y) {
     return V1 + (Y * YScale);
+  }
+
+  bool isInvalid() {
+    glEnd();
+    GLboolean temporary;
+    glAreTexturesResident(1, &Handle, &temporary);
+    GLenum e = glGetError();
+    if (e == GL_INVALID_VALUE) {
+      return true;
+    }
+    return false;
   }
 };
 

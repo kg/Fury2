@@ -21,3 +21,4 @@ IInspectorType = 207, 207, 1102, 805, C
 IInspectable = 0, 0, 0, 0, C
 IInspectableCollection = 22, 25, 822, 538, C
 Fury2ConvolutionFilter = 132, 150, 934, 655, C
+Fury2RasterFont = 88, 100, 903, 563, C

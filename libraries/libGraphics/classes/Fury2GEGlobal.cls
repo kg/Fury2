@@ -418,9 +418,8 @@ Public Function DesktopDC() As Long
 End Function
 
 Public Function HiResTimer() As Double
-Dim PCounter As Currency
-    Call QueryPerformanceCounter(PCounter)
-    HiResTimer = CDbl(PCounter) / CPUFreq
+On Error Resume Next
+    HiResTimer = SoftFX.GetTime()
 End Function
 
 Public Function F2Init()

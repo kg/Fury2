@@ -78,13 +78,13 @@ class ImageLockManager {
     Image *image;
     bool lockOnDestroy;
 
-    ImageLockManager() {
+    inline ImageLockManager() {
       this->mode = lockingMode;
       this->image = Null;
       this->lockOnDestroy = false;
     }
 
-    ImageLockManager(LockingModes LockingMode, Image* Image) {
+    inline ImageLockManager(LockingModes LockingMode, Image* Image) {
       this->mode = LockingMode;
       this->image = Image;
       this->lockOnDestroy = false;
@@ -293,14 +293,12 @@ public:
   }
 
   inline Pixel* fast_pointer(Coordinate X, Coordinate Y) {
-    if (Data == Null) return Null;
-    return ((Data) + ( (Y * (Width + Pitch)) + (X) ));
+    return reinterpret_cast<Pixel*>(InlineIf((Data != Null), (unsigned int)((Data) + ( (Y * (Width + Pitch)) + (X) ))));
   }
 
   inline Pixel* pointer(Coordinate X, Coordinate Y) {
-    if (Data == Null) return Null;
-    if ((X < 0) || (Y < 0) || (X >= Width) || (Y >= Height)) return Null;
-    return ((Data) + ( (Y * (Width + Pitch)) + (X) ));
+    bool clip = (Data == Null) || ((X < 0) || (Y < 0) || (X >= Width) || (Y >= Height));
+    return reinterpret_cast<Pixel*>(InlineIf(clip, (unsigned int)0, (unsigned int)((Data) + ( (Y * (Width + Pitch)) + (X) ))));
   }
 
   inline Pixel* pointer_clip(Coordinate X, Coordinate Y) {
@@ -311,6 +309,10 @@ public:
 
   void getPixels(int X, int Y, int W, int H, Pixel* Target);
   void getPixelsClip(int X, int Y, int W, int H, Pixel* Target);
+
+  inline Pixel getPixelClipNO(Coordinate X, Coordinate Y) {
+    return *(this->fast_pointer(ClipValue(X, 0, Width - 1), ClipValue(Y, 0, Height - 1)));
+  }
 
   inline Pixel getPixelClip(Coordinate X, Coordinate Y) {
     if (X < 0) X = 0;
@@ -359,6 +361,33 @@ public:
       return P;
     } else {
       return this->getPixel(X, Y);
+    }
+  }
+
+  inline Pixel getPixelRolloffNO(int X, int Y) {
+    bool c = false;
+    if (X < 0) {
+      X = 0;
+      c = true;
+    }
+    if (Y < 0) {
+      Y = 0;
+      c = true;
+    }
+    if (X >= Width) {
+      X = Width - 1;
+      c = true;
+    }
+    if (Y >= Height) {
+      Y = Height - 1;
+      c = true;
+    }
+    if (c) {
+      Pixel P = this->getPixelNO(X, Y);
+      P[::Alpha] = 0;
+      return P;
+    } else {
+      return this->getPixelNO(X, Y);
     }
   }
 
@@ -471,6 +500,11 @@ public:
   }
 
   bool setPixelAA(int xi, int yi, Byte xw, Byte yw, Pixel Color);
+
+  inline Pixel getPixelNO(Coordinate X, Coordinate Y) {
+    if ((X < 0) || (Y < 0) || (X >= Width) || (Y >= Height)) return Failure;
+    return *(this->fast_pointer(X, Y));
+  }
 
   inline Pixel getPixel(Coordinate X, Coordinate Y) {
     if ((X < 0) || (Y < 0) || (X >= Width) || (Y >= Height)) return Failure;

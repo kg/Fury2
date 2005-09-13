@@ -126,39 +126,41 @@ int Override::EnumOverrides(Override::OverrideIndex index, int parameter_count, 
   SS_Start
   Override::OverrideList* KeyOverrides;
   KeyOverrides = ResolveOverrides(index);
-  const std::string& key = Override::OverrideIndexToKey(index);
-  if (parameter_count < 0) parameter_count = 0;
-  if (parameter_count > Max_Override_Parameters) parameter_count = Max_Override_Parameters;
   if (KeyOverrides) {
     if (KeyOverrides->empty()) {
       return 0;
     }
+    const std::string& key = Override::OverrideIndexToKey(index);
+    if (parameter_count < 0) parameter_count = 0;
+    if (parameter_count > Max_Override_Parameters) parameter_count = Max_Override_Parameters;
     va_list parameter_list;
     unsigned int parameters[Max_Override_Parameters];
     int result = 0;
     // all shall tremble as the dead dawn rises
     va_start(parameter_list, parameter_count);
     Override::OverrideParameters ps;
-    memset(parameters, 0, Max_Override_Parameters * sizeof(unsigned int));
     if (parameter_count) {
-      for (int p = 0; p < parameter_count; p++) {
-        parameters[p] = va_arg(parameter_list, unsigned int);
+      for (int p = 0; p < Max_Override_Parameters; p++) {
+        if (p < parameter_count) {
+          parameters[p] = va_arg(parameter_list, unsigned int);
+        } else {
+          parameters[p] = 0;
+        }
       }
     }
     va_end(parameter_list);
     Override::OverrideList::iterator OverrideIter = KeyOverrides->begin();
+    Override::OverrideList::iterator iterEnd = KeyOverrides->end();
     eofp *fpv;
-    while (OverrideIter != KeyOverrides->end()) {
-      if (*OverrideIter) {
-        ps.index = index;
-        ps.count = parameter_count;
-        ps.key = key.c_str();
-        memcpy(&(ps.p[0]), &(parameters[0]), Max_Override_Parameters * sizeof(unsigned int));
+    ps.index = index;
+    ps.count = parameter_count;
+    ps.key = key.c_str();
+    memcpy(&(ps.p[0]), &(parameters[0]), Max_Override_Parameters * sizeof(unsigned int));
+    while (OverrideIter != iterEnd) {
+      fpv = (eofp*)*OverrideIter;
+      if (fpv) {
         // may thee rest in peace
-        fpv = (eofp*)*OverrideIter;
-        if (fpv) {
-          result = fpv(&ps);
-        }
+        result = fpv(&ps);
         if (result != 0) {
           return result;
         }

@@ -24,6 +24,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
     Configuration
 */
 
+#define _SECURE_SCL 0
+#define _SECURE_SCL_THROWS 0
 #define UNICODE
 #define ASSEMBLY
 #define VISUALBASIC
@@ -161,4 +163,8 @@ const double Radian = 1.74532925199433E-02;
 
 #include "Profiler_Configuration.hpp"
 #include "Profiler.hpp"
+
+#if _SECURE_SCL
+#error WTF
+#endif
 #endif

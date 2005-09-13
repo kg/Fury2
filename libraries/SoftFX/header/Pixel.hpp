@@ -70,10 +70,13 @@ public:
 
     inline Pixel(Pixel P1, Pixel P2, float A1) {
         Byte a1 = ClipByte(A1 * 255.0f);
-        (*this)[::Blue] = P1[::Blue] + ((P2[::Blue] - P1[::Blue]) * a1 / 255);
-        (*this)[::Green] = P1[::Green] + ((P2[::Green] - P1[::Green]) * a1 / 255);
-        (*this)[::Red] = P1[::Red] + ((P2[::Red] - P1[::Red]) * a1 / 255);
-        (*this)[::Alpha] = P1[::Alpha] + ((P2[::Alpha] - P1[::Alpha]) * a1 / 255);
+        AlphaLevel *al1, *al2;
+        al1 = AlphaLevelLookup(a1 ^ 0xFF);
+        al2 = AlphaLevelLookup(a1);
+        (*this)[::Blue] = AlphaFromLevel2(al1, P1[::Blue], al2, P2[::Blue]);
+        (*this)[::Green] = AlphaFromLevel2(al1, P1[::Green], al2, P2[::Green]);
+        (*this)[::Red] = AlphaFromLevel2(al1, P1[::Red], al2, P2[::Red]);
+        (*this)[::Alpha] = AlphaFromLevel2(al1, P1[::Alpha], al2, P2[::Alpha]);
     }
 
     inline void setGray(DoubleWord V) {

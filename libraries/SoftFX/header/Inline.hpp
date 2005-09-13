@@ -83,6 +83,12 @@ template <class T> T inline _Max(T one, T two) {
     }
 }
 
+template <class T> T inline _One(T value) {
+  if (value < 0) return 0;
+  if (value > 1) return 1;
+  return value;
+}
+
 template <class T> T inline _Min(T one, T two) {
     if (one < two) {
         return one;
@@ -495,7 +501,52 @@ int iClipped;
 #endif
 }
 
+inline int InlineIf(bool condition, int ifTrue, int ifFalse) {
+#ifdef USEIFS
+    return condition ? ifTrue : ifFalse;
+#else
+int iMask;
+    iMask = -(int)(condition);
+    return (ifTrue & iMask) | (ifFalse & ~iMask);
+#endif
+}
+
+inline int InlineIf(bool condition, int ifTrue) {
+#ifdef USEIFS
+    return condition ? ifTrue : 0;
+#else
+int iMask;
+    iMask = -(int)(condition);
+    return (ifTrue & iMask);
+#endif
+}
+
+inline unsigned int InlineIf(bool condition, unsigned int ifTrue, unsigned int ifFalse) {
+#ifdef USEIFS
+    return condition ? ifTrue : ifFalse;
+#else
+int iMask;
+    iMask = -(int)(condition);
+    return (ifTrue & iMask) | (ifFalse & ~iMask);
+#endif
+}
+
+inline unsigned int InlineIf(bool condition, unsigned int ifTrue) {
+#ifdef USEIFS
+    return condition ? ifTrue : 0;
+#else
+int iMask;
+    iMask = -(int)(condition);
+    return (ifTrue & iMask);
+#endif
+}
+
 Export inline int WrapValue(int value, int minimum, int maximum) {
+  bool b = value < minimum;
+  int v = InlineIf(b, minimum - value, value - minimum);
+  v = v % ((maximum - minimum) + 1);
+  return InlineIf(b, maximum + 1 - v, minimum + v);
+  /*
 	if (value < minimum) {
 		int v = ((minimum - value) % ((maximum - minimum) + 1));
 		return maximum + 1 - v;
@@ -503,6 +554,7 @@ Export inline int WrapValue(int value, int minimum, int maximum) {
 		int v = ((value - minimum) % ((maximum - minimum) + 1));
 		return minimum + v;
 	}
+  */
 }
 
 inline float Round(float N)
@@ -511,7 +563,7 @@ inline float Round(float N)
 }
 
 inline void RotatePoint(float &X, float &Y, float AngleInRadians) {
-  float theta = atan(Y / X), distance = sqrt((X * X) + (Y * Y));
+  float theta = atan2(Y, X), distance = sqrt((X * X) + (Y * Y));
   if (X < 0) {
     theta += Pi;
   }
@@ -519,4 +571,53 @@ inline void RotatePoint(float &X, float &Y, float AngleInRadians) {
   X = distance * cos(theta);
   Y = distance * sin(theta);
   return;
+}
+
+inline void Generate4Points(float W, float H, float *X, float *Y) {
+  X[0] = -W;
+  Y[0] = -H;
+  X[1] = W;
+  Y[1] = -H;
+  X[2] = W;
+  Y[2] = H;
+  X[3] = -W;
+  Y[3] = H;
+};
+
+inline void Rotate4Points(float W, float H, float AngleInRadians, float *X, float *Y, float t, float d) {
+  if (AngleInRadians == 0) {
+    Generate4Points(W, H, X, Y);
+    return;
+  }
+  float theta = t, distance = d;
+  if (W < 0) 
+    theta += Pi;
+  theta += AngleInRadians;
+  X[2] = cos(theta) * distance;
+  Y[2] = sin(theta) * distance;
+  theta += Radians(90);
+  X[3] = cos(theta) * distance;
+  Y[3] = sin(theta) * distance;
+  theta += Radians(90);
+  X[0] = cos(theta) * distance;
+  Y[0] = sin(theta) * distance;
+  theta += Radians(90);
+  X[1] = cos(theta) * distance;
+  Y[1] = sin(theta) * distance;
+}
+
+inline void Rotate4Points(float W, float H, float AngleInRadians, float *X, float *Y, float t) {
+  if (AngleInRadians == 0) {
+    Generate4Points(W, H, X, Y);
+    return;
+  }
+  Rotate4Points(W, H, AngleInRadians, X, Y, t, sqrt((W * W) + (H * H)));
+}
+
+inline void Rotate4Points(float W, float H, float AngleInRadians, float *X, float *Y) {
+  if (AngleInRadians == 0) {
+    Generate4Points(W, H, X, Y);
+    return;
+  }
+  Rotate4Points(W, H, AngleInRadians, X, Y, atan2(H, W), sqrt((W * W) + (H * H)));
 }

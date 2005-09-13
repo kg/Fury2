@@ -33,6 +33,8 @@ Byte w[4];
 short b, g, r, a;
 Pixel S;
 AlphaLevel *Level;
+    ImageLockManager ilSource(lockingMode, Source);
+    if (!ilSource.performUnlock()) return;
     X = X;
     Y = Y;
     XW = XW;
@@ -65,28 +67,28 @@ AlphaLevel *Level;
         w[0] = (w[1] + w[2] + w[3]) ^ 0xFF;
 
         Level = AlphaLevelLookup(w[0]);
-        S = Source->getPixelClip(X, Y);
+        S = Source->getPixelClipNO(X, Y);
         b = Level->V[S[::Blue]];
         g = Level->V[S[::Green]];
         r = Level->V[S[::Red]];
         a = Level->V[S[::Alpha]];
 
         Level = AlphaLevelLookup(w[1]);
-        S = Source->getPixelClip(X+1, Y);
+        S = Source->getPixelClipNO(X+1, Y);
         b += Level->V[S[::Blue]];
         g += Level->V[S[::Green]];
         r += Level->V[S[::Red]];
         a += Level->V[S[::Alpha]];
 
         Level = AlphaLevelLookup(w[2]);
-        S = Source->getPixelClip(X, Y+1);
+        S = Source->getPixelClipNO(X, Y+1);
         b += Level->V[S[::Blue]];
         g += Level->V[S[::Green]];
         r += Level->V[S[::Red]];
         a += Level->V[S[::Alpha]];
 
         Level = AlphaLevelLookup(w[3]);
-        S = Source->getPixelClip(X+1, Y+1);    
+        S = Source->getPixelClipNO(X+1, Y+1);    
 
         (*Dest)[::Blue] = ClipByteHigh(b + Level->V[S[::Blue]]);
         (*Dest)[::Green] = ClipByteHigh(g + Level->V[S[::Green]]);
@@ -111,12 +113,14 @@ AlphaLevel *Level;
 
 void SampleRow_Linear(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest) {
 int i;
+  ImageLockManager ilSource(lockingMode, Source);
+  if (!ilSource.performUnlock()) return;
   {
     int wmax = (65535 / Count);
     if ((XI == 1) && (YI == 0) && (XWI < wmax) && (YWI < wmax)) {
       i = Count;
       while (i--) {
-        *Dest++ = Source->getPixelClip(X, Y);
+        *Dest++ = Source->getPixelClipNO(X, Y);
         ++X;
       }
       return;
@@ -124,7 +128,7 @@ int i;
       i = Count;
       X += Count - 1;
       while (i--) {
-        *Dest++ = Source->getPixelClip(X, Y);
+        *Dest++ = Source->getPixelClipNO(X, Y);
         --X;
       }
       return;
@@ -148,7 +152,7 @@ int i;
       YW = 65535 - (-YW % 65535);
     }
 
-    *Dest = Source->getPixelClip(X, Y);
+    *Dest = Source->getPixelClipNO(X, Y);
     Dest++;
 
     X += XI;
@@ -166,6 +170,8 @@ Byte w[4];
 short b, g, r, a;
 Pixel S;
 AlphaLevel *Level;
+    ImageLockManager ilSource(lockingMode, Source);
+    if (!ilSource.performUnlock()) return;
     X = X;
     Y = Y;
     XW = XW;
@@ -198,28 +204,28 @@ AlphaLevel *Level;
         w[0] = (w[1] + w[2] + w[3]) ^ 0xFF;
 
         Level = AlphaLevelLookup(w[0]);
-        S = Source->getPixelRolloff(X, Y);
+        S = Source->getPixelRolloffNO(X, Y);
         b = Level->V[S[::Blue]];
         g = Level->V[S[::Green]];
         r = Level->V[S[::Red]];
         a = Level->V[S[::Alpha]];
 
         Level = AlphaLevelLookup(w[1]);
-        S = Source->getPixelRolloff(X+1, Y);
+        S = Source->getPixelRolloffNO(X+1, Y);
         b += Level->V[S[::Blue]];
         g += Level->V[S[::Green]];
         r += Level->V[S[::Red]];
         a += Level->V[S[::Alpha]];
 
         Level = AlphaLevelLookup(w[2]);
-        S = Source->getPixelRolloff(X, Y+1);
+        S = Source->getPixelRolloffNO(X, Y+1);
         b += Level->V[S[::Blue]];
         g += Level->V[S[::Green]];
         r += Level->V[S[::Red]];
         a += Level->V[S[::Alpha]];
 
         Level = AlphaLevelLookup(w[3]);
-        S = Source->getPixelRolloff(X+1, Y+1);    
+        S = Source->getPixelRolloffNO(X+1, Y+1);    
 
         (*Dest)[::Blue] = ClipByteHigh(b + Level->V[S[::Blue]]);
         (*Dest)[::Green] = ClipByteHigh(g + Level->V[S[::Green]]);
@@ -228,7 +234,7 @@ AlphaLevel *Level;
 
       } else {
 
-        *Dest = Source->getPixelRolloff(X, Y);
+        *Dest = Source->getPixelRolloffNO(X, Y);
 
       }
 
@@ -244,6 +250,8 @@ AlphaLevel *Level;
 
 void SampleRow_Linear_Rolloff(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest) {
 int i;
+    ImageLockManager ilSource(lockingMode, Source);
+    if (!ilSource.performUnlock()) return;
     X = X;
     Y = Y;
     XW = XW;
@@ -266,7 +274,7 @@ int i;
         YW = 65535 - (-YW % 65535);
       }
 
-      *Dest = Source->getPixelRolloff(X, Y);
+      *Dest = Source->getPixelRolloffNO(X, Y);
       Dest++;
 
       X += XI;
@@ -284,6 +292,8 @@ Byte w[4];
 short b, g, r, a;
 Pixel S;
 AlphaLevel *Level;
+    ImageLockManager ilSource(lockingMode, Source);
+    if (!ilSource.performUnlock()) return;
     X = X;
     Y = Y;
     XW = XW;
@@ -362,6 +372,8 @@ AlphaLevel *Level;
 
 void SampleRow_Linear_Wrap(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest) {
 int i;
+    ImageLockManager ilSource(lockingMode, Source);
+    if (!ilSource.performUnlock()) return;
     X = X;
     Y = Y;
     XW = XW;

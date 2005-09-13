@@ -2,10 +2,11 @@
 
 namespace GL {
   int blendMode = -1;
-  int scaleMode = -1;
   bool texturesEnabled[4] = {false, false, false, false};
   bool fogEnabled = false;
   GLuint activeTexture[4] = {-1, -1, -1, -1};
+  int activeTextureStage = 0;
+  int scaleMode[4] = {-1, -1, -1, -1};
   GLenum drawMode = -1;
   Pixel vertexColor = Pixel(0xFFFFFFFF);
   Pixel fogColor = Pixel(0x0);
@@ -15,12 +16,14 @@ namespace GL {
   void init() {
     Global->Context = 0;
     blendMode = -1;
-    scaleMode = -1;
     for (int i = 0; i < 4; i++) 
       texturesEnabled[i] = false;
     fogEnabled = false;
     for (int i = 0; i < 4; i++) 
       activeTexture[i] = -1;
+    for (int i = 0; i < 4; i++) 
+      scaleMode[i] = -1;
+    activeTextureStage = 0;
     drawMode = -1;
     textureColor = Pixel(0x0);
     vertexColor = Pixel(0xFFFFFFFF);
@@ -301,6 +304,7 @@ namespace GL {
   }
 
   void setVertexColor(Pixel color) {
+    if (vertexColor == color) return;
     vertexColor = color;
     glColor4ub(vertexColor[::Red], vertexColor[::Green], vertexColor[::Blue], vertexColor[::Alpha]);
   }
@@ -346,6 +350,11 @@ namespace GL {
       glVertex2f(start.X, start.Y);
       glVertex2f(end.X, end.Y);
     }
+  }
+
+  void drawPixel(float X, float Y) {
+    beginDraw(GL_POINTS);
+    glVertex2f(X, Y);
   }
 
   void drawGradientLine(FPoint& start, FPoint& end, Pixel startColor, Pixel endColor) {

@@ -172,7 +172,6 @@ End Property
 Public Sub AntiAliasLine(ByVal Coordinates, ByVal Color As Long)
 On Error Resume Next
 Dim l_rctArea As Fury2Rect
-Dim l_lngColor As Long
 Dim l_sngX1 As Single, l_sngY1 As Single, l_sngX2 As Single, l_sngY2 As Single
     If Not Initialized Then Exit Sub
     If VarType(Coordinates) = vbObject Then
@@ -194,9 +193,36 @@ Dim l_sngX1 As Single, l_sngY1 As Single, l_sngX2 As Single, l_sngY2 As Single
             l_sngY2 = CSng(Coordinates(3))
         End If
     End If
-    l_lngColor = Color
     If Err <> 0 Then Exit Sub
-    Primitive_Line_AA Handle, l_sngX1, l_sngY1, l_sngX2, l_sngY2, l_lngColor
+    Primitive_Line_AA Handle, l_sngX1, l_sngY1, l_sngX2, l_sngY2, Color
+End Sub
+
+Public Sub AntiAliasGradientLine(ByVal Coordinates, ByVal StartColor As Long, ByVal EndColor As Long)
+On Error Resume Next
+Dim l_rctArea As Fury2Rect
+Dim l_sngX1 As Single, l_sngY1 As Single, l_sngX2 As Single, l_sngY2 As Single
+    If Not Initialized Then Exit Sub
+    If VarType(Coordinates) = vbObject Then
+        Set l_rctArea = Coordinates
+        l_sngX1 = l_rctArea.Left
+        l_sngY1 = l_rctArea.Top
+        l_sngX2 = l_rctArea.Right
+        l_sngY2 = l_rctArea.Bottom
+    ElseIf (VarType(Coordinates) And vbArray) = vbArray Then
+        If VarType(Coordinates(0) And vbArray) = vbArray Then
+            l_sngX1 = CSng(Coordinates(0)(0))
+            l_sngY1 = CSng(Coordinates(0)(1))
+            l_sngX2 = CSng(Coordinates(1)(0))
+            l_sngY2 = CSng(Coordinates(1)(1))
+        Else
+            l_sngX1 = CSng(Coordinates(0))
+            l_sngY1 = CSng(Coordinates(1))
+            l_sngX2 = CSng(Coordinates(2))
+            l_sngY2 = CSng(Coordinates(3))
+        End If
+    End If
+    If Err <> 0 Then Exit Sub
+    Primitive_Line_Gradient_AA Handle, l_sngX1, l_sngY1, l_sngX2, l_sngY2, StartColor, EndColor
 End Sub
 
 Public Sub Blit(Optional ByVal DestRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal Source As Fury2Image = Nothing, Optional ByVal Alpha As Single = 1, Optional ByVal Mode As SFXBlitModes = BlitMode_Default, Optional ByVal Color As Long = &HFFFFFFFF, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default)

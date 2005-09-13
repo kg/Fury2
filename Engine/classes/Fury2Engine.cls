@@ -1117,9 +1117,7 @@ End Function
 Public Function HiTimer() As Double
 Attribute HiTimer.VB_Description = "Returns an extremely accurate timer value."
 On Error Resume Next
-Dim PCounter As Currency
-    Call QueryPerformanceCounter(PCounter)
-    HiTimer = (PCounter / m_curCPUFrequency) - m_dblTimeOffset
+    HiTimer = SoftFX.GetTime() - m_dblTimeOffset
 End Function
 
 Public Function HookEvents(ByVal Obj As Object, Optional ByVal Priority As Boolean = False) As Boolean
@@ -4926,7 +4924,7 @@ On Error Resume Next
         Set CurrentBGM = SoundEngine.Load(CStr(Filename))
     End If
     CurrentBGM.LoopMode = LoopMode_Normal
-    CurrentBGM.LoopCount = -1
+    CurrentBGM.Loopcount = -1
     Set CurrentBGMChannel = CurrentBGM.Play(True)
     CurrentBGMChannel.Priority = 0
     If Fade Then

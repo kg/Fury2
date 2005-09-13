@@ -85,6 +85,10 @@ namespace SoftFX {
   defImport(int, GetTileWidth, (int Tileset), 4) \
   defImport(int, GetTileHeight, (int Tileset), 4) \
   defImport(int, FilterSimple_Replace, (int Image, FX::Rectangle* Area, Pixel Find, Pixel Replace), 16) \
+  defImport(int, FilterSimple_Fill, (int Image, FX::Rectangle* Area, Pixel Color), 12) \
+  defImport(int, FilterSimple_Fill_SourceAlpha, (int Image, FX::Rectangle* Area, Pixel Color), 12) \
+  defImport(int, FilterSimple_Gradient_Radial, (int Image, FX::Rectangle* Area, Pixel Color1, Pixel Color2), 16) \
+  defImport(int, FilterSimple_Gradient_Radial_SourceAlpha, (int Image, FX::Rectangle* Area, Pixel Color1, Pixel Color2), 16) \
 /* IMPORTS GO HERE */ \
 	defEnd
 

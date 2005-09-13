@@ -6,7 +6,6 @@
 	ProjectGUID="{3A410C42-E439-4191-B1E9-186A3971A4F4}"
 	RootNamespace="GLFX"
 	Keyword="Win32Proj"
-	SignManifests="true"
 	>
 	<Platforms>
 		<Platform
@@ -45,6 +44,7 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
+				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="3"
@@ -224,6 +224,7 @@
 				MinimalRebuild="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
+				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="3"

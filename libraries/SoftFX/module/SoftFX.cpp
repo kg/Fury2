@@ -36,6 +36,7 @@ AlphaLevel*       AlphaTable          = Null;
 AlphaLevel**      AlphaRootTable      = Null;
 PythagorasLevel*  PythagorasTable     = Null;
 PythagorasLevel** PythagorasRootTable = Null;
+win32::LARGE_INTEGER CPUFreq;
 bool Initialized = false;
 
 MTRand mersenne = MTRand();
@@ -194,6 +195,7 @@ void InitDebugFlags() {
 Export void Initialize() {
 
     Processor::DetectProcessor();
+    win32::QueryPerformanceFrequency(&CPUFreq);
     LookupInitialize();
     InitAlphaTable();
     InitPythagorasTable();
@@ -220,6 +222,12 @@ Export void Uninitialize() {
     Initialized = false;
 
     return;
+}
+
+Export double GetTime() {
+    win32::LARGE_INTEGER time;
+    win32::QueryPerformanceCounter(&time);
+    return ((double)time.QuadPart) / ((double)CPUFreq.QuadPart);
 }
 
 Export int GetInitialized() {
@@ -801,6 +809,14 @@ Export int GetPixel(Image *Image, int X, int Y) {
   return Image->getPixel(X, Y).V;
 }
 
+Export int GetPixelAA(Image *Image, float X, float Y) {
+
+  if (!Initialized) return Failure;
+  if (!Image) return Failure;
+
+  return Image->getPixelAA(X, Y).V;
+}
+
 Export int SetPixel(Image *Image, int X, int Y, Pixel Value) {
 
   if (!Initialized) return Failure;
@@ -809,14 +825,6 @@ Export int SetPixel(Image *Image, int X, int Y, Pixel Value) {
   if (Image->setPixel(X, Y, Value)) return Success;
 
   return Failure;
-}
-
-Export int GetPixelAA(Image *Image, float X, float Y) {
-
-  if (!Initialized) return Failure;
-  if (!Image) return Failure;
-
-  return Image->getPixelAA(X, Y).V;
 }
 
 Export int SetPixelAA(Image *Image, float X, float Y, Pixel Value) {

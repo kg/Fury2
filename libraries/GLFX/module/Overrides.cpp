@@ -42,8 +42,8 @@ void setRenderer(int Renderer, Pixel RenderArgument) {
     }
   } else if (Renderer == GetFontSourceAlphaRenderer()) {
     setBlendMode<Font_SourceAlpha>();
-    disableFog();
     setVertexColor(RenderArgument);
+    disableFog();
   } else if (Renderer == GetAdditiveRenderer()) {
     setBlendMode<Additive>();
     disableFog();
@@ -66,6 +66,7 @@ void setRenderer(int Renderer, Pixel RenderArgument) {
       disableFog();
     }
   }
+  setBlendColor(White);
 }
 
 void setMaskRenderer(int Renderer, Pixel RenderArgument) {
@@ -136,6 +137,7 @@ defOverride(Allocate) {
   glLoadIdentity();
   glViewport(0, 0, Global->OutputWidth, Global->OutputHeight);
   glScissor(0, 0, Global->OutputWidth, Global->OutputHeight);
+  glLineWidth(1.0f);
   setNamedTagAndKey(Image, Context, Global->Context);
   setNamedTag(Image, DC, Global->DC);
   SetImageWidth(Image, Width);
@@ -1101,6 +1103,103 @@ defOverride(FilterSimple_Gradient_Vertical_SourceAlpha) {
   return Success;
 }
 
+defOverride(FilterSimple_Gradient_Radial) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(Pixel, Color1, 2);
+  readParam(Pixel, Color2, 3);
+  selectContext(Image);
+  disableTextures();
+  setBlendMode<Normal>();
+  setBlendColor(White);
+  setVertexColor(Color2);
+  drawRectangle(Area);
+  enableTextures();
+  Global->GenerateRadialImage();
+  selectImageAsTexture(Global->RadialImage);
+  setBlendMode<SourceAlpha>();
+  setVertexColor(Color1);
+  float w = Area.Width / 2.0f, h = Area.Height / 2.0f;
+  float x1 = Area.Left, y1 = Area.Top;
+  float x2 = Area.Left + w, y2 = Area.Top + h;
+  drawTexturedRectangleF(x1, y1, w, h, 1, 1, 0, 0);
+  drawTexturedRectangleF(x2, y1, w, h, 0, 1, 1, 0);
+  drawTexturedRectangleF(x1, y2, w, h, 1, 0, 0, 1);
+  drawTexturedRectangleF(x2, y2, w, h, 0, 0, 1, 1);
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Gradient_Radial_SourceAlpha) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(Pixel, Color1, 2);
+  readParam(Pixel, Color2, 3);
+  selectContext(Image);
+  disableTextures();
+  setBlendMode<SourceAlpha>();
+  setBlendColor(White);
+  setVertexColor(Color2);
+  drawRectangle(Area);
+  enableTextures();
+  Global->GenerateRadialImage();
+  selectImageAsTexture(Global->RadialImage);
+  setBlendMode<SourceAlpha>();
+  setScaleMode<Linear>();
+  setVertexColor(Color1);
+  float w = Area.Width / 2.0f, h = Area.Height / 2.0f;
+  float x1 = Area.Left, y1 = Area.Top;
+  float x2 = Area.Left + w, y2 = Area.Top + h;
+  drawTexturedRectangleF(x1, y1, w, h, 1, 1, 0, 0);
+  drawTexturedRectangleF(x2, y1, w, h, 0, 1, 1, 0);
+  drawTexturedRectangleF(x1, y2, w, h, 1, 0, 0, 1);
+  drawTexturedRectangleF(x2, y2, w, h, 0, 0, 1, 1);
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(SetPixel) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  lockCheck(Image);
+  readParam(int, X, 1);
+  readParam(int, Y, 2);
+  readParam(Pixel, Color, 3);
+  selectContext(Image);
+  disableTextures();
+  setBlendMode<Normal>();
+  setBlendColor(White);
+  setVertexColor(Color);
+  drawPixel(X, Y);
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(SetPixelAA) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  lockCheck(Image);
+  readParam(int, Xi, 1);
+  readParam(int, Yi, 2);
+  readParam(int, Xf, 3);
+  readParam(int, Yf, 4);
+  readParam(Pixel, Color, 5);
+  selectContext(Image);
+  disableTextures();
+  setBlendMode<SourceAlpha>();
+  setBlendColor(White);
+  setVertexColor(Color);
+  glEnable(GL_POINT_SMOOTH);
+  drawPixel((float)Xi + ((float)Xf / 255.0f) + 0.5f, (float)Yi + ((float)Yf / 255.0f) + 0.5f);
+  glDisable(GL_POINT_SMOOTH);
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
 defOverride(FilterSimple_Line) {
   readParam(int, Image, 0);
   contextCheck(Image);
@@ -1133,6 +1232,48 @@ defOverride(FilterSimple_Line_SourceAlpha) {
   setBlendColor(White);
   setVertexColor(Color);
   drawLine(start, end);
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Line_AA) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  lockCheck(Image);
+  readParam(float, X1, 1);
+  readParam(float, Y1, 2);
+  readParam(float, X2, 3);
+  readParam(float, Y2, 4);
+  readParam(Pixel, Color, 5);
+  selectContext(Image);
+  disableTextures();
+  setBlendMode<SourceAlpha>();
+  setBlendColor(White);
+  setVertexColor(Color);
+  glEnable(GL_LINE_SMOOTH);
+  drawLine(FPoint(X1 + 0.5f, Y1 + 0.5f), FPoint(X2 + 0.5f, Y2 + 0.5f));
+  glDisable(GL_LINE_SMOOTH);
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Line_Gradient_AA) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  lockCheck(Image);
+  readParam(float, X1, 1);
+  readParam(float, Y1, 2);
+  readParam(float, X2, 3);
+  readParam(float, Y2, 4);
+  readParam(Pixel, StartColor, 5);
+  readParam(Pixel, EndColor, 6);
+  selectContext(Image);
+  disableTextures();
+  setBlendMode<SourceAlpha>();
+  setBlendColor(White);
+  glEnable(GL_LINE_SMOOTH);
+  drawGradientLine(FPoint(X1 + 0.5f, Y1 + 0.5f), FPoint(X2 + 0.5f, Y2 + 0.5f), StartColor, EndColor);
+  glDisable(GL_LINE_SMOOTH);
   SetImageDirty(Image, 1);
   return Success;
 }
@@ -1343,15 +1484,20 @@ defOverride(FilterSimple_ConvexPolygon) {
   disableTextures();
   setRenderer(Renderer, RenderArgument);
   setVertexColor(Color);
-  setBlendColor(White);
   FPoint* ptr = GetPolygonVertexPointer(Polygon, 0);
   int vertex_count = GetPolygonVertexCount(Polygon);
-  beginDraw(GL_POLYGON);
+  if (vertex_count == 4) {
+    beginDraw(GL_QUADS);
+  } else if (vertex_count == 3) {
+    beginDraw(GL_TRIANGLES);
+  } else {
+    beginDraw(GL_POLYGON);
+  }
   for (int i = 0; i < vertex_count; ++i) {
     glVertex2f(ptr->X, ptr->Y);
     ptr++;
   }
-  endDraw();
+  if (vertex_count > 4) endDraw();
   disableFog();
   SetImageDirty(Image, 1);
   return Success;
@@ -1368,17 +1514,21 @@ defOverride(FilterSimple_ConvexPolygon_Gradient) {
   selectContext(Image);
   disableTextures();
   setRenderer(Renderer, RenderArgument);
-  setVertexColor(Color);
-  setBlendColor(White);
   GradientVertex* ptr = GetGradientPolygonVertexPointer(Polygon, 0);
   int vertex_count = GetGradientPolygonVertexCount(Polygon);
-  beginDraw(GL_POLYGON);
+  if (vertex_count == 4) {
+    beginDraw(GL_QUADS);
+  } else if (vertex_count == 3) {
+    beginDraw(GL_TRIANGLES);
+  } else {
+    beginDraw(GL_POLYGON);
+  }
   for (int i = 0; i < vertex_count; ++i) {
     setVertexColor(ptr->Color);
     glVertex2f(ptr->X, ptr->Y);
     ptr++;
   }
-  endDraw();
+  if (vertex_count > 4) endDraw();
   disableFog();
   SetImageDirty(Image, 1);
   return Success;
@@ -1400,18 +1550,22 @@ defOverride(FilterSimple_ConvexPolygon_Textured) {
   selectImageAsTexture(TextureImage);
   setRenderer(Renderer, RenderArgument);
   setScaler(Scaler);
-  setVertexColor(White);
-  setBlendColor(White);
   Texture* tex = getTexture(TextureImage);
   TexturedVertex* ptr = GetTexturedPolygonVertexPointer(Polygon, 0);
   int vertex_count = GetTexturedPolygonVertexCount(Polygon);
-  beginDraw(GL_POLYGON);
+  if (vertex_count == 4) {
+    beginDraw(GL_QUADS);
+  } else if (vertex_count == 3) {
+    beginDraw(GL_TRIANGLES);
+  } else {
+    beginDraw(GL_POLYGON);
+  }
   for (int i = 0; i < vertex_count; ++i) {
     glTexCoord2f(tex->U(ptr->U), tex->V(ptr->V));
     glVertex2f(ptr->X, ptr->Y);
     ptr++;
   }
-  endDraw();
+  if (vertex_count > 4) endDraw();
   disableFog();
   SetImageDirty(Image, 1);
   return Success;
@@ -2099,7 +2253,7 @@ defOverride(GetScanlineRenderer) {
   lockCheck(Dest);
   selectContext(Dest);
   if (Global->RenderTexture) {
-    if (Global->RenderTexture->Width < Count) {
+    if ((Global->RenderTexture->Width < Count) || (Global->RenderTexture->isInvalid())) {
       delete Global->RenderTexture;
       Global->RenderTexture = 0;
     }
@@ -2122,6 +2276,8 @@ void InstallOverrides() {
   addOverride(Copy);
   addOverride(Lock);
   addOverride(Unlock);
+  addOverride(SetPixel);
+  addOverride(SetPixelAA);
   addOverride(FilterSimple_Fill);
   addOverride(FilterSimple_Fill_Opacity);
   addOverride(FilterSimple_Fill_SourceAlpha);
@@ -2186,12 +2342,16 @@ void InstallOverrides() {
   addOverride(FilterSimple_Gradient_Vertical_SourceAlpha);
   addOverride(FilterSimple_Gradient_Horizontal);
   addOverride(FilterSimple_Gradient_Horizontal_SourceAlpha);
+  addOverride(FilterSimple_Gradient_Radial);
+  addOverride(FilterSimple_Gradient_Radial_SourceAlpha);
   addOverride(FilterSimple_Line);
   addOverride(FilterSimple_Line_SourceAlpha);
   addOverride(FilterSimple_Line_Additive);
   addOverride(FilterSimple_Line_Subtractive);
   addOverride(FilterSimple_Line_Gradient);
   addOverride(FilterSimple_Line_Gradient_SourceAlpha);
+  addOverride(FilterSimple_Line_AA);
+  addOverride(FilterSimple_Line_Gradient_AA);
   addOverride(FilterSimple_Box);
   addOverride(FilterSimple_Box_SourceAlpha);
   addOverride(FilterSimple_Adjust);
@@ -2213,6 +2373,8 @@ void UninstallOverrides() {
   removeOverride(Copy);
   removeOverride(Lock);
   removeOverride(Unlock);
+  removeOverride(SetPixel);
+  removeOverride(SetPixelAA);
   removeOverride(FilterSimple_Fill);
   removeOverride(FilterSimple_Fill_Opacity);
   removeOverride(FilterSimple_Fill_SourceAlpha);
@@ -2277,12 +2439,16 @@ void UninstallOverrides() {
   removeOverride(FilterSimple_Gradient_Vertical_SourceAlpha);
   removeOverride(FilterSimple_Gradient_Horizontal);
   removeOverride(FilterSimple_Gradient_Horizontal_SourceAlpha);
+  removeOverride(FilterSimple_Gradient_Radial);
+  removeOverride(FilterSimple_Gradient_Radial_SourceAlpha);
   removeOverride(FilterSimple_Line);
   removeOverride(FilterSimple_Line_SourceAlpha);
   removeOverride(FilterSimple_Line_Additive);
   removeOverride(FilterSimple_Line_Subtractive);
   removeOverride(FilterSimple_Line_Gradient);
   removeOverride(FilterSimple_Line_Gradient_SourceAlpha);
+  removeOverride(FilterSimple_Line_AA);
+  removeOverride(FilterSimple_Line_Gradient_AA);
   removeOverride(FilterSimple_Box);
   removeOverride(FilterSimple_Box_SourceAlpha);
   removeOverride(FilterSimple_Adjust);

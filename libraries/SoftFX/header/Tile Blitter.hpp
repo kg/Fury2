@@ -27,7 +27,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
     if (!Dest || !Source) {                                     \
         return Failure;                                         \
     }                                                           \
-                                                                \
+    \
+    if ((Source->Width <= 0) || (Source->Height <= 0)) {        \
+        return Failure;                                         \
+    }                                                           \
+\
     Rectangle rCoordinates, rCopy, rClip;                       \
     rCoordinates = Dest->ClipRectangle;                         \
     rCopy = *Rect;                                              \
@@ -35,9 +39,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
     if (ClipRectangle_ImageClipRect(&rClip, Dest) == 0) {       \
         return Trivial_Success;                                 \
     }                                                           \
-    Dest->ClipRectangle = rClip;                               \
+    Dest->ClipRectangle = rClip;                                \
                                                                 \
-    if (rCopy.empty()) {                                       \
+    if (rCopy.empty()) {                                        \
         return Trivial_Success;                                 \
     }                                                           \
                                                                 \

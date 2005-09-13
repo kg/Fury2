@@ -3,6 +3,8 @@ namespace GL {
   extern bool texturesEnabled[4];
   extern bool fogEnabled;
   extern GLuint activeTexture[4];
+  extern int activeTextureStage;
+  extern int scaleMode[4];
   extern GLenum drawMode;
   extern Pixel vertexColor;
   extern Pixel fogColor;
@@ -67,6 +69,7 @@ namespace GL {
   extern void drawArray(GLenum type, Vertex* pointer, int count);
   extern void drawArray(GLenum type, Vertex1T* pointer, int count);
   extern void drawLine(FPoint& start, FPoint& end);
+  extern void drawPixel(float X, float Y);
   extern void drawGradientLine(FPoint& start, FPoint& end, Pixel startColor, Pixel endColor);
   extern void drawTexturedLine(int X1, int Y1, int X2, int Y2, float U1, float V1, float U2, float V2);
   extern void drawTexturedLineF(float X1, float Y1, float X2, float Y2, float U1, float V1, float U2, float V2);
@@ -193,6 +196,7 @@ namespace GL {
       switchTextureStage<Stage>();
       glBindTexture(GL_TEXTURE_2D, handle);
       activeTexture[Stage] = handle;
+      scaleMode[Stage] = -1;
     }
   }
 
@@ -222,7 +226,11 @@ namespace GL {
 
   template <class Mode> inline void setScaleMode() {
     endDraw();
-    Mode::Set();
+    if (Mode::id == scaleMode[activeTextureStage]) {
+    } else {
+      Mode::Set();
+      scaleMode[activeTextureStage] = Mode::id;
+    }
   }
 
   inline void selectContext(int Image) {
@@ -243,24 +251,28 @@ namespace GL {
   template <> inline void switchTextureStage<0>() {
     if (GLEW_ARB_multitexture) {
       glActiveTextureARB(GL_TEXTURE0_ARB);
+      activeTextureStage = 0;
     }
   }
 
   template <> inline void switchTextureStage<1>() {
     if (GLEW_ARB_multitexture) {
       glActiveTextureARB(GL_TEXTURE1_ARB);
+      activeTextureStage = 1;
     }
   }
 
   template <> inline void switchTextureStage<2>() {
     if (GLEW_ARB_multitexture) {
       glActiveTextureARB(GL_TEXTURE2_ARB);
+      activeTextureStage = 2;
     }
   }
 
   template <> inline void switchTextureStage<3>() {
     if (GLEW_ARB_multitexture) {
       glActiveTextureARB(GL_TEXTURE3_ARB);
+      activeTextureStage = 3;
     }
   }
 }

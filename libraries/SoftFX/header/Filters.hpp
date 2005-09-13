@@ -37,6 +37,8 @@ FSIGNATURE(Gradient_Radial) , Pixel Color1, Pixel Color2 END_FSIGNATURE
 
 Export extern int FilterSimple_Line(Image *Image, Rectangle* Area, Pixel Color);
 Export extern int FilterSimple_Line_AA(Image *Image, float X1, float Y1, float X2, float Y2, Pixel Color);
+Export extern int FilterSimple_Line_Gradient(Image *Image, Rectangle* Area, Pixel StartColor, Pixel EndColor);
+Export extern int FilterSimple_Line_Gradient_AA(Image *Image, float X1, float Y1, float X2, float Y2, Pixel StartColor, Pixel EndColor);
 Export extern int FilterSimple_RenderStroke(Image *Dest, Stroke *TheStroke, RenderFunction *Renderer, DoubleWord RenderArgument);
 #ifdef _POLYGON_HPP_
 Export extern int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel Color, RenderFunction *Renderer, DoubleWord RenderArgument);

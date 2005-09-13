@@ -234,11 +234,11 @@ struct FixedPoint {
     L = 0;
   }
   inline public float F() {
-    return ((float)L / (float)65535.0) + H;
+    return ((float)L / 65535.0f) + (float)H;
   }
   inline void setF(float value) {
-    H = floor(value);
-    L = floor((value - float(H)) * 65535.0);
+    H = (value);
+    L = ((value - float(H)) * 65535.0f);
   }
   inline FixedPoint& operator += (FixedPoint &rhs) {
     V += rhs.V;
@@ -248,6 +248,10 @@ struct FixedPoint {
 
 struct TextureCoordinate {
     FixedPoint U, V;
+};
+
+struct TextureCoordinateF {
+    float U, V;
 };
 
 struct TexturedVertex : FPoint {

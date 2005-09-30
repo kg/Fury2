@@ -1,7 +1,7 @@
 Attribute VB_Name = "mdlClipboard"
 Option Explicit
 
-Public Function ClipboardDeserializeFile(Clipboard As cCustomClipboard, Format As Long, File As VirtualFile) As Boolean
+Public Function ClipboardDeserializeFile(Clipboard As cCustomClipboard, Format As Long, ByVal File As VirtualFile) As Boolean
 On Error Resume Next
 Dim l_lngLength As Long
     l_lngLength = Clipboard.GetBinaryDataSize(Format)
@@ -13,7 +13,7 @@ Dim l_lngLength As Long
     Err.Clear
 End Function
 
-Public Function ClipboardDeserialize(Clipboard As cCustomClipboard, Format As Long, Object As IVirtualFileSaveable) As Boolean
+Public Function ClipboardDeserialize(Clipboard As cCustomClipboard, Format As Long, ByVal Object As IVirtualFileSaveable) As Boolean
 On Error Resume Next
 Dim l_vfData As VirtualFile
 Dim l_lngLength As Long
@@ -29,7 +29,7 @@ Dim l_lngLength As Long
     Err.Clear
 End Function
 
-Public Function ClipboardSerialize(Clipboard As cCustomClipboard, Format As Long, Object As IVirtualFileSaveable) As Boolean
+Public Function ClipboardSerialize(Clipboard As cCustomClipboard, Format As Long, ByVal Object As IVirtualFileSaveable) As Boolean
 On Error Resume Next
 Dim l_vfData As VirtualFile
 Dim l_lngLength As Long
@@ -45,7 +45,7 @@ Dim l_lngLength As Long
     Err.Clear
 End Function
 
-Public Function ClipboardSerializeImage(Clipboard As cCustomClipboard, ByVal hwnd As Long, Image As Fury2Image) As Boolean
+Public Function ClipboardSerializeImage(Clipboard As cCustomClipboard, ByVal hwnd As Long, ByVal Image As Fury2Image) As Boolean
 On Error Resume Next
 Dim l_lngFormat As Long
 Dim l_vfData As VirtualFile

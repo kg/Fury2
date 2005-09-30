@@ -182,7 +182,7 @@ On Error Resume Next
     Count = m_colCollection.Count
 End Property
 
-Public Sub Remove(ByVal IndexOrKey)
+Public Sub Remove(ByVal IndexOrKey, Optional ByVal Free As Boolean = True)
 On Error Resume Next
     If VarType(IndexOrKey) = vbString Then
         IndexOrKey = CStr(IndexOrKey)
@@ -191,13 +191,13 @@ On Error Resume Next
     Else
         IndexOrKey = CLng(IndexOrKey)
     End If
-    m_colCollection(IndexOrKey).Free
+    If Free Then m_colCollection(IndexOrKey).Free
     m_colCollection.Remove IndexOrKey
     Reindex
     m_mnuParent.Reflow
 End Sub
 
-Public Sub RemoveByKeys(ByVal KeyPattern As String)
+Public Sub RemoveByKeys(ByVal KeyPattern As String, Optional ByVal Free As Boolean = True)
 On Error Resume Next
 Dim l_lngIndex As Long
 Dim l_miItem As ngMenuItem
@@ -205,6 +205,7 @@ Dim l_miItem As ngMenuItem
     Do Until l_lngIndex > m_colCollection.Count
         Set l_miItem = m_colCollection(l_lngIndex)
         If l_miItem.Key Like KeyPattern Then
+            If Free Then l_miItem.Free
             m_colCollection.Remove l_lngIndex
         Else
             l_lngIndex = l_lngIndex + 1
@@ -220,7 +221,7 @@ Dim l_miMenuItem As Object
     If ToIndex < 1 Or ToIndex > (m_colCollection.Count + 1) Then Exit Sub
     If FromIndex = ToIndex Then Exit Sub
     Set l_miMenuItem = m_colCollection.Item(FromIndex)
-    Remove FromIndex
+    Remove FromIndex, False
     If (FromIndex < ToIndex) Then
 '        Trust me, this works - even though it doesn't make sense unless you think about it
 '        ToIndex = ToIndex - 1

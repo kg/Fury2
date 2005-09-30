@@ -9,7 +9,9 @@ Global g_strToolbarTheme As String
 Global g_rfMenuThemeFile As ngResourceFile
 Global g_strMenuThemePattern As String
 Global g_colOpenMenus As New Collection
-Global g_lngMenus As Long, g_lngMenuItems As Long, g_lngMenuHosts As Long
+Global g_booEnableThemes As Boolean
+Global g_lngMenus As Long, g_lngMenuItems As Long, g_lngMenuHosts As Long, g_lngFontForms As Long
+Global g_colResourceCache As Collection
 
 Public Function ConvertSystemColor(ByVal Index As SystemColors) As Long
 On Error Resume Next

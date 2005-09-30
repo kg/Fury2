@@ -37,6 +37,7 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 
 Implements Fury2Object
 Implements IVirtualFileCollection
+Implements IVirtualFileSaveable
 Implements IInspectableCollection
 
 Private mCol As Collection
@@ -347,4 +348,10 @@ Dim m_lngItems As Long, m_objItem As Fury2Pose
     Next m_objItem
 End Function
 
+
+Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
+End Sub
+
+Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
+End Sub
 

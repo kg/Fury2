@@ -49,7 +49,7 @@ FILTERSIMPLE_END
 FILTERSIMPLE_SIGNATURE(Invert_Channel)
     , int Channel) {
 FILTERSIMPLE_INIT
-	ColorChannels ch = (ColorChannels)ClipValue(Channel, 0, 3);
+	  ColorChannels ch = (ColorChannels)ClipValue(Channel, 3);
     _FOS(FilterSimple_Invert_Channel, 1) , Channel _FOE
 FILTERSIMPLE_BEGIN
 FILTERSIMPLE_LOOPBEGIN
@@ -72,7 +72,7 @@ FILTERSIMPLE_END
 FILTERSIMPLE_SIGNATURE(Fill_Channel)
     , int Channel, int Value) {
 FILTERSIMPLE_INIT
-	ColorChannels ch = (ColorChannels)ClipValue(Channel, 0, 3);
+	ColorChannels ch = (ColorChannels)ClipValue(Channel, 3);
     _FOS(FilterSimple_Fill_Channel, 2) , Channel, Value _FOE
 FILTERSIMPLE_BEGIN
     Byte value = ClipByte(Value);
@@ -132,6 +132,13 @@ FILTERSIMPLE_INIT
 //    if (Value[::Alpha] == 255) return FilterSimple_Fill(Image, Area, Value);
     _FOS(FilterSimple_Fill_SourceAlpha, 1) , Value _FOE
 FILTERSIMPLE_BEGIN
+  if (Value[::Alpha] == 255) {
+    FILTERSIMPLE_LOOPBEGIN
+        (*pCurrent)[::Blue] = Value[::Blue];
+        (*pCurrent)[::Green] = Value[::Green];
+        (*pCurrent)[::Red] = Value[::Red];
+    FILTERSIMPLE_LOOPEND
+  } else {
     Byte redTable[256], greenTable[256], blueTable[256];
     {
       AlphaLevel *aSource, *aDest;
@@ -147,11 +154,12 @@ FILTERSIMPLE_BEGIN
         blueTable[i] = ClipByteHigh(AlphaFromLevel(aDest, i) + b);
       }
     }
-FILTERSIMPLE_LOOPBEGIN
-    (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
-    (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
-    (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
-FILTERSIMPLE_LOOPEND
+    FILTERSIMPLE_LOOPBEGIN
+        (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
+        (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
+        (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+    FILTERSIMPLE_LOOPEND
+  }
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Fill_SourceAlpha_Opacity)
@@ -291,8 +299,8 @@ FILTERSIMPLE_END
 FILTERSIMPLE_SIGNATURE(Swap_Channels)
     , int Channel1, int Channel2) {
 FILTERSIMPLE_INIT
-	ColorChannels ch1 = (ColorChannels)ClipValue(Channel1, 0, 3);
-	ColorChannels ch2 = (ColorChannels)ClipValue(Channel2, 0, 3);
+	ColorChannels ch1 = (ColorChannels)ClipValue(Channel1, 3);
+	ColorChannels ch2 = (ColorChannels)ClipValue(Channel2, 3);
     _FOS(FilterSimple_Swap_Channels, 2) , Channel1, Channel2 _FOE
 FILTERSIMPLE_BEGIN
 FILTERSIMPLE_LOOPBEGIN
@@ -669,7 +677,7 @@ FILTERSIMPLE_BEGIN
     Pixel v;
     // Seed the random number generator using the current time
     MTRand mersenne = MTRand();
-	ColorChannels ch = (ColorChannels)ClipValue(Channel, 0, 3);
+	ColorChannels ch = (ColorChannels)ClipValue(Channel, 3);
 FILTERSIMPLE_LOOPBEGIN
     // Since we're only generating grayscale, we can use each byte of the random numbers we get
     // This means we should only generate a new number every 4 pixels
@@ -780,20 +788,21 @@ FILTERSIMPLE_BEGIN
     for (int i = 0; i < 256; i++) {
         lookupTable[i] = ClipByte(i + Amount);
     }
-	ColorChannels ch = (ColorChannels)ClipValue(Channel, 0, 3);
+	ColorChannels ch = (ColorChannels)ClipValue(Channel, 3);
 FILTERSIMPLE_LOOPBEGIN
     (*pCurrent)[ch] = lookupTable[(*pCurrent)[ch]];
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Gamma)
-    , int Gamma) {
+    , float Gamma) {
 FILTERSIMPLE_INIT
-    _FOS(FilterSimple_Gamma, 1) , Gamma _FOE
+    _FOS(FilterSimple_Gamma, 1) , va_float(Gamma) _FOE
 FILTERSIMPLE_BEGIN
     Byte lookupTable[256];
+    float g = 1.0f / Gamma;
     for (int i = 0; i < 256; i++) {
-        lookupTable[i] = ClipByte((i * Gamma) / 255);
+        lookupTable[i] = ClipByte(pow(i / 255.0f, g) * 255.0f);
     }
 FILTERSIMPLE_LOOPBEGIN
     (*pCurrent)[::Blue] = lookupTable[(*pCurrent)[::Blue]];
@@ -803,15 +812,18 @@ FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Gamma_RGB)
-    , int RedGamma, int GreenGamma, int BlueGamma) {
+    , float RedGamma, float GreenGamma, float BlueGamma) {
 FILTERSIMPLE_INIT
-    _FOS(FilterSimple_Gamma_RGB, 3) , RedGamma, GreenGamma, BlueGamma _FOE
+    _FOS(FilterSimple_Gamma_RGB, 3) , va_float(RedGamma), va_float(GreenGamma), va_float(BlueGamma) _FOE
 FILTERSIMPLE_BEGIN
     Byte redTable[256], greenTable[256], blueTable[256];
+    float rg = 1.0f / RedGamma;
+    float gg = 1.0f / GreenGamma;
+    float bg = 1.0f / BlueGamma;
     for (int i = 0; i < 256; i++) {
-        redTable[i] = ClipByte((i * RedGamma) / 255);
-        greenTable[i] = ClipByte((i * GreenGamma) / 255);
-        blueTable[i] = ClipByte((i * BlueGamma) / 255);
+        redTable[i] = ClipByte(pow(i / 255.0f, rg) * 255.0f);
+        greenTable[i] = ClipByte(pow(i / 255.0f, gg) * 255.0f);
+        blueTable[i] = ClipByte(pow(i / 255.0f, bg) * 255.0f);
     }
 FILTERSIMPLE_LOOPBEGIN
     (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
@@ -821,15 +833,65 @@ FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Gamma_Channel)
-    , int Channel, int Gamma) {
+    , int Channel, float Gamma) {
 FILTERSIMPLE_INIT
-    _FOS(FilterSimple_Gamma_Channel, 2) , Channel, Gamma _FOE
+    _FOS(FilterSimple_Gamma_Channel, 2) , Channel, va_float(Gamma) _FOE
+FILTERSIMPLE_BEGIN
+    Byte lookupTable[256];
+    float g = 1.0f / Gamma;
+    for (int i = 0; i < 256; i++) {
+        lookupTable[i] = ClipByte(pow(i / 255.0f, g) * 255.0f);
+    }
+  	ColorChannels ch = (ColorChannels)ClipValue(Channel, 3);
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[ch] = lookupTable[(*pCurrent)[ch]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Multiply)
+    , float Multiply) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Multiply, 1) , va_float(Multiply) _FOE
 FILTERSIMPLE_BEGIN
     Byte lookupTable[256];
     for (int i = 0; i < 256; i++) {
-        lookupTable[i] = ClipByte((i * Gamma) / 255);
+        lookupTable[i] = ClipByte(i * Multiply);
     }
-	ColorChannels ch = (ColorChannels)ClipValue(Channel, 0, 3);
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = lookupTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = lookupTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = lookupTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Multiply_RGB)
+    , float RedMultiply, float GreenMultiply, float BlueMultiply) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Multiply_RGB, 3) , va_float(RedMultiply), va_float(GreenMultiply), va_float(BlueMultiply) _FOE
+FILTERSIMPLE_BEGIN
+    Byte redTable[256], greenTable[256], blueTable[256];
+    for (int i = 0; i < 256; i++) {
+        redTable[i] = ClipByte(i * RedMultiply);
+        greenTable[i] = ClipByte(i * GreenMultiply);
+        blueTable[i] = ClipByte(i * BlueMultiply);
+    }
+FILTERSIMPLE_LOOPBEGIN
+    (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
+    (*pCurrent)[::Green] = greenTable[(*pCurrent)[::Green]];
+    (*pCurrent)[::Red] = redTable[(*pCurrent)[::Red]];
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Multiply_Channel)
+    , int Channel, float Multiply) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Multiply_Channel, 2) , Channel, va_float(Multiply) _FOE
+FILTERSIMPLE_BEGIN
+    Byte lookupTable[256];
+    for (int i = 0; i < 256; i++) {
+        lookupTable[i] = ClipByte(i * Multiply);
+    }
+  	ColorChannels ch = (ColorChannels)ClipValue(Channel, 3);
 FILTERSIMPLE_LOOPBEGIN
     (*pCurrent)[ch] = lookupTable[(*pCurrent)[ch]];
 FILTERSIMPLE_LOOPEND

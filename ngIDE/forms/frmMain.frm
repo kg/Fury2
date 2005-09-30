@@ -2,7 +2,7 @@ VERSION 5.00
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{EF59A10B-9BC4-11D3-8E24-44910FC10000}#11.0#0"; "vbalEdit.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.12#0"; "ngUI.ocx"
 Begin VB.MDIForm frmMain 
    AutoShowChildren=   0   'False
    BackColor       =   &H8000000C&
@@ -349,9 +349,9 @@ Option Explicit
 Implements iCustomMenuHandler
 
 Private Const WM_MDIGETACTIVE = &H229
-Private Declare Function W32SetFocus Lib "user32" (ByVal hWnd As Long) As Long
-Private Declare Function GetWindowRect Lib "user32" (ByVal hWnd As Long, lpRect As Win32.RECT) As Long
-Private Declare Function GetClientRect Lib "user32" (ByVal hWnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function W32SetFocus Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
 
 Private m_lngFocus As Long
 Private m_strStatusText As String
@@ -398,9 +398,9 @@ Private m_colChildWindows As Engine.Fury2Collection
 Private m_cmnLastDocument As iCustomMenus
 Private m_btnMenuToOpen As ngToolButton
 
-Sub FixFocus(ByVal hWnd As Long)
+Sub FixFocus(ByVal hwnd As Long)
 On Error Resume Next
-    m_lngFocus = hWnd
+    m_lngFocus = hwnd
     tmrFixFocus.Enabled = True
 End Sub
 
@@ -459,16 +459,16 @@ End Sub
 Private Function GetToolbarX(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
 Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
-    ClientToScreen Me.hWnd, l_ptWindow
-    ClientToScreen Toolbar.hWnd, l_ptToolbar
+    ClientToScreen Me.hwnd, l_ptWindow
+    ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0)))
 End Function
 
 Private Function GetToolbarY(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
 Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
-    ClientToScreen Me.hWnd, l_ptWindow
-    ClientToScreen Toolbar.hWnd, l_ptToolbar
+    ClientToScreen Me.hwnd, l_ptWindow
+    ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0)))
 End Function
 
@@ -492,9 +492,9 @@ Dim l_lnghWnd As Long
 Dim l_mgrForm As cChildManager
     l_lnghWnd = maxContainer.ActiveWindow
     For Each l_mgrForm In m_colChildWindows
-        If (l_mgrForm.Form.hWnd = l_lnghWnd) Then
+        If (l_mgrForm.Form.hwnd = l_lnghWnd) Then
             l_mgrForm.Visible = True
-        ElseIf (l_mgrForm.Form.extender.hWnd = l_lnghWnd) Then
+        ElseIf (l_mgrForm.Form.extender.hwnd = l_lnghWnd) Then
             l_mgrForm.Visible = True
         Else
             l_mgrForm.Visible = False
@@ -513,10 +513,10 @@ Dim l_lnghWnd As Long
 Dim l_mgrForm As cChildManager
     l_lnghWnd = maxContainer.ActiveWindow
     For Each l_mgrForm In m_colChildWindows
-        If (l_mgrForm.Form.hWnd = l_lnghWnd) Then
+        If (l_mgrForm.Form.hwnd = l_lnghWnd) Then
             Set ActiveChild = l_mgrForm
             Exit For
-        ElseIf (l_mgrForm.Form.extender.hWnd = l_lnghWnd) Then
+        ElseIf (l_mgrForm.Form.extender.hwnd = l_lnghWnd) Then
             Set ActiveChild = l_mgrForm
             Exit For
         End If
@@ -670,7 +670,7 @@ Dim l_btnButton As ngToolButton
     tbrMenus.DisableUpdates = False
     tbrMenus.Reflow
     Set m_aclMenus = New cAcceleratorManager
-    m_aclMenus.Attach Me.hWnd
+    m_aclMenus.Attach Me.hwnd
     For l_lngButtons = 1 To tbrMenus.Buttons.Count
         l_strCaption = tbrMenus.Buttons(l_lngButtons).Text
         If InStr(l_strCaption, "&") Then
@@ -1137,10 +1137,6 @@ Private Sub picNotice_Resize()
 On Error Resume Next
 End Sub
 
-Private Sub picStatus_KeyDown(KeyCode As Integer, Shift As Integer)
-    MsgBox "picstatus what"
-End Sub
-
 Private Sub picStatus_Paint()
 On Error Resume Next
 Dim l_rctStatus As RECT
@@ -1160,10 +1156,6 @@ Dim l_rctStatus As RECT
     Else
         picStatus.Line (l_rctStatus.Left, l_rctStatus.Top)-(l_rctStatus.Left + (100 * m_sngProgress), l_rctStatus.Bottom), GetSystemColor(SystemColor_Highlight), BF
     End If
-End Sub
-
-Private Sub picToolbarsTop_KeyDown(KeyCode As Integer, Shift As Integer)
-    MsgBox "pictoolbarstop what"
 End Sub
 
 Private Sub picToolbarsTop_Resize()
@@ -1190,7 +1182,7 @@ Dim l_lngX As Long, l_lngY As Long
     If Button.key = "Game:OpenMenu" Then
         Cancel = True
         ReleaseCapture
-        m_mnuRecentGames.Show l_lngX, l_lngY, Me.hWnd, , False
+        m_mnuRecentGames.Show l_lngX, l_lngY, Me.hwnd, , False
     End If
 End Sub
 
@@ -1219,11 +1211,11 @@ Dim l_lngX As Long, l_lngY As Long
     If Button.key = "File:New" Then
         Cancel = True
         ReleaseCapture
-        m_mnuNew.Show l_lngX, l_lngY, Me.hWnd, , False
+        m_mnuNew.Show l_lngX, l_lngY, Me.hwnd, , False
     ElseIf Button.key = "File:OpenMenu" Then
         Cancel = True
         ReleaseCapture
-        m_mnuRecentFiles.Show l_lngX, l_lngY, Me.hWnd, , False
+        m_mnuRecentFiles.Show l_lngX, l_lngY, Me.hwnd, , False
     End If
 End Sub
 
@@ -1236,7 +1228,7 @@ Dim l_mnuMenu As ngMenu
 '    Cancel = True
     ReleaseCapture
     Set l_mnuMenu = m_colMenus(Button.key)
-    l_mnuMenu.Show l_lngX, l_lngY, tbrMenus.hWnd, True, False
+    l_mnuMenu.Show l_lngX, l_lngY, tbrMenus.hwnd, True, False
 End Sub
 
 Private Sub tbrMenus_ButtonHover(Button As ngUI.ngToolButton)
@@ -1938,7 +1930,7 @@ Dim l_lngWindowWidth As Long, l_lngWindowHeight As Long
 Dim l_rctTextSize As Win32.RECT, l_rctText As Win32.RECT
 Dim l_sngCloseTime As Single
 Dim l_strWaitingNotices As String
-    GetClientRect Me.hWnd, l_rctWindow
+    GetClientRect Me.hwnd, l_rctWindow
     l_lngWindowWidth = (l_rctWindow.Right - l_rctWindow.Left)
     l_lngWindowHeight = (l_rctWindow.Bottom - l_rctWindow.Top)
     l_lngLeftSpace = 4
@@ -1981,9 +1973,9 @@ Dim l_strWaitingNotices As String
     l_lngHeight = (l_lngTextHeight + l_lngTitleHeight + l_lngTopSpace + l_lngBottomSpace)
     
     If Reposition Then
-        SetParent picNotice.hWnd, picHiddenControls.hWnd
+        SetParent picNotice.hwnd, picHiddenControls.hwnd
         picNotice.Move (l_lngWindowWidth - l_lngWidth) / 2, l_lngWindowHeight - l_lngHeight - (picStatus.Height / Screen.TwipsPerPixelY), l_lngWidth, l_lngHeight
-        SetParent picNotice.hWnd, GetParent(picFileSidebar.hWnd)
+        SetParent picNotice.hwnd, GetParent(picFileSidebar.hwnd)
         m_imgNotice.Resize picNotice.ScaleWidth, picNotice.ScaleHeight
     End If
     l_lngBottomColor = SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
@@ -2041,7 +2033,7 @@ On Error Resume Next
     tmrNotice.Enabled = False
     m_booNoticeFocused = False
     picNotice.Visible = False
-    SetParent picNotice.hWnd, picHiddenControls.hWnd
+    SetParent picNotice.hwnd, picHiddenControls.hwnd
     If m_notNotice Is Nothing Then Exit Sub
     RefreshNotice
     With m_notNotice
@@ -2085,7 +2077,7 @@ On Error Resume Next
     tmrNotice.Enabled = False
     m_booNoticeFocused = False
     picNotice.Visible = False
-    SetParent picNotice.hWnd, picHiddenControls.hWnd
+    SetParent picNotice.hwnd, picHiddenControls.hwnd
     Set m_notNotice = Nothing
     If m_colNoticeQueue.Count > 0 Then
         ActivateNotice

@@ -247,6 +247,16 @@ Public Sub FromString(ByVal Data As String)
     IInspectorType_FromString Data
 End Sub
 
+Private Sub Class_Initialize()
+On Error Resume Next
+    g_lngRectCount = g_lngRectCount + 1
+End Sub
+
+Private Sub Class_Terminate()
+On Error Resume Next
+    g_lngRectCount = g_lngRectCount - 1
+End Sub
+
 Private Sub IInspectorType_FromString(ByVal Data As String)
 On Error Resume Next
 Dim l_strStart As String, l_strEnd As String

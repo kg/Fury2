@@ -95,17 +95,24 @@ Private Sub Class_Initialize()
     Name = "Sound"
 End Sub
 
-Private Sub Fury2MapObject_Load(Engine As Fury2Engine, ByRef Map As Fury2Map)
+Private Sub Fury2MapObject_Load(ByVal Engine As Fury2Engine, ByVal Map As Fury2Map)
 On Error Resume Next
     Set Object = Engine.SoundEngine.Load(Sound)
     Object.LoopMode = IIf(Repeat, LoopMode_Normal, LoopMode_None)
-    Object.LoopCount = 1
+    Object.Loopcount = 1
     Set Me.Engine = Engine
     Set Me.Map = Map
     JustLoaded = True
 End Sub
 
-Private Sub Fury2MapObject_Render(Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Private Sub Fury2MapObject_Render(ByVal Camera As Fury2Camera)
+End Sub
+
+Private Property Get Fury2MapObject_RenderLayer() As Long
+
+End Property
+
+Private Sub Fury2MapObject_Unload()
 End Sub
 
 Private Sub Fury2MapObject_Update()

@@ -37,6 +37,14 @@ Export int FillMemoryI32(void* Pointer, int Value, int Count) {
     return Success;
 }
 
+Export int CopyBytes(void* Dest, void* Source, int Count) {
+    if (!Dest) return Failure;
+    if (!Source) return Failure;
+    if (Count < 0) return Failure;
+    _Copy<Byte>(Dest, Source, Count);
+    return Success;
+}
+
 Export int GetStringLength(char* str) {
   return strlen(str);
 }

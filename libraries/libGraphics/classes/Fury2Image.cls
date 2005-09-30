@@ -48,7 +48,7 @@ Dim m_objObj As IShellFolderEx_TLB.IUnknown
     GetReferenceCount = m_objObj.Release
 End Function
 
-Private Function GetScaler(ByVal ResampleMode As SFXResampleModes) As Long
+Friend Function GetScaler(ByVal ResampleMode As SFXResampleModes) As Long
 On Error Resume Next
     Select Case ResampleMode
     Case SFXResampleModes.ResampleMode_Bilinear, SFXResampleModes.ResampleMode_Bilinear_High_Quality
@@ -67,7 +67,7 @@ On Error Resume Next
     End Select
 End Function
 
-Private Function GetRenderer(ByVal RenderMode As SFXRenderModes) As Long
+Friend Function GetRenderer(ByVal RenderMode As SFXRenderModes) As Long
 On Error Resume Next
     Select Case RenderMode
     Case SFXRenderModes.RenderMode_SourceAlpha
@@ -105,18 +105,46 @@ On Error Resume Next
     SoftFX.Filter_Adjust_Channel m_lngImage, Area.GetRectangle, Channel, Amount
 End Sub
 
-Public Sub AdjustChannelGamma(ByVal Channel As Long, ByVal Gamma As Long, Optional ByVal Area As Fury2Rect = Nothing)
+Public Sub AdjustChannelGamma(ByVal Channel As Long, ByVal Gamma As Single, Optional ByVal Area As Fury2Rect = Nothing)
 On Error Resume Next
     If Not Initialized Then Exit Sub
     If Area Is Nothing Then Set Area = Me.ClipRectangle
     SoftFX.Filter_Gamma_Channel m_lngImage, Area.GetRectangle, Channel, Gamma
 End Sub
 
-Public Sub AdjustGamma(ByVal Gamma As Long, Optional ByVal Area As Fury2Rect = Nothing)
+Public Sub Multiply(ByVal Factor As Single, Optional ByVal Area As Fury2Rect = Nothing)
+On Error Resume Next
+    If Not Initialized Then Exit Sub
+    If Area Is Nothing Then Set Area = Me.ClipRectangle
+    SoftFX.Filter_Multiply m_lngImage, Area.GetRectangle, Factor
+End Sub
+
+Public Sub MultiplyRGB(ByVal RedFactor As Single, ByVal GreenFactor As Single, ByVal BlueFactor As Single, Optional ByVal Area As Fury2Rect = Nothing)
+On Error Resume Next
+    If Not Initialized Then Exit Sub
+    If Area Is Nothing Then Set Area = Me.ClipRectangle
+    SoftFX.Filter_Multiply_RGB m_lngImage, Area.GetRectangle, RedFactor, GreenFactor, BlueFactor
+End Sub
+
+Public Sub MultiplyChannel(ByVal Channel As Long, ByVal Factor As Single, Optional ByVal Area As Fury2Rect = Nothing)
+On Error Resume Next
+    If Not Initialized Then Exit Sub
+    If Area Is Nothing Then Set Area = Me.ClipRectangle
+    SoftFX.Filter_Multiply_Channel m_lngImage, Area.GetRectangle, Channel, Factor
+End Sub
+
+Public Sub AdjustGamma(ByVal Gamma As Single, Optional ByVal Area As Fury2Rect = Nothing)
 On Error Resume Next
     If Not Initialized Then Exit Sub
     If Area Is Nothing Then Set Area = Me.ClipRectangle
     SoftFX.Filter_Gamma m_lngImage, Area.GetRectangle, Gamma
+End Sub
+
+Public Sub AdjustRGBGamma(ByVal RedGamma As Single, ByVal GreenGamma As Single, ByVal BlueGamma As Single, Optional ByVal Area As Fury2Rect = Nothing)
+On Error Resume Next
+    If Not Initialized Then Exit Sub
+    If Area Is Nothing Then Set Area = Me.ClipRectangle
+    SoftFX.Filter_Gamma_RGB m_lngImage, Area.GetRectangle, RedGamma, GreenGamma, BlueGamma
 End Sub
 
 Public Sub AdjustRGB(ByVal RedAmount As Long, ByVal GreenAmount As Long, ByVal BlueAmount As Long, Optional ByVal Area As Fury2Rect = Nothing)
@@ -131,13 +159,6 @@ On Error Resume Next
     If Not Initialized Then Exit Sub
     If Area Is Nothing Then Set Area = Me.ClipRectangle
     SoftFX.Filter_Adjust_HSV m_lngImage, Area.GetRectangle, Floor(HueAmount * 10), Floor(SaturationAmount * 2550), Floor(ValueAmount * 2550)
-End Sub
-
-Public Sub AdjustRGBGamma(ByVal RedGamma As Long, ByVal GreenGamma As Long, ByVal BlueGamma As Long, Optional ByVal Area As Fury2Rect = Nothing)
-On Error Resume Next
-    If Not Initialized Then Exit Sub
-    If Area Is Nothing Then Set Area = Me.ClipRectangle
-    SoftFX.Filter_Gamma_RGB m_lngImage, Area.GetRectangle, RedGamma, GreenGamma, BlueGamma
 End Sub
 
 Public Sub Allocate()
@@ -300,6 +321,8 @@ Dim l_lngScaler As Long
             SoftFX.Blit_OR m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top
         Case SFXBlitModes.BlitMode_XOR
             SoftFX.Blit_XOR m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top
+        Case SFXBlitModes.BlitMode_Difference
+            SoftFX.Blit_Difference m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top
         Case SFXBlitModes.BlitMode_Dither
             SoftFX.Blit_Dither m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top
         Case SFXBlitModes.BlitMode_Lightmap
@@ -411,6 +434,7 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error Resume Next
+    g_lngImageCount = g_lngImageCount + 1
     If Initialized Then Allocate
     m_booAlphaChannel = False
     ResetClipRectangleStack
@@ -419,6 +443,7 @@ End Sub
 Private Sub Class_Terminate()
 On Error Resume Next
     Deallocate
+    g_lngImageCount = g_lngImageCount - 1
 End Sub
 
 Public Function Class_ToString() As String

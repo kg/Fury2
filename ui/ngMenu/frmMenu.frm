@@ -416,7 +416,6 @@ On Error Resume Next
     Me.ScaleMode = 1
     BorderWidth = ScaleX((Me.Width - Me.ScaleWidth) / 2, vbTwips, vbPixels)
     Me.ScaleMode = 3
-    F2Init
     Debug.Print "frmMenu_Initialize"
 End Sub
 

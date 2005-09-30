@@ -46,6 +46,7 @@ Public Enum MapEditorClipboardFormats
     CF_MapObstructions
     CF_LightObstructions
     CF_LightPlanes
+    CF_Path
     CF_PathNodes
     CF_Brush
     CF_MAX_
@@ -53,6 +54,7 @@ End Enum
 Private m_lngClipboardFormats(CF_MIN_ To CF_MAX_)
 Private m_objEditor As Object
 Private m_clpClipboard As cCustomClipboard
+Private m_imgIcon As Fury2Image
 
 Friend Property Get CustomClipboard() As cCustomClipboard
 On Error Resume Next
@@ -79,6 +81,7 @@ On Error Resume Next
     m_lngClipboardFormats(CF_MapObstructions) = m_clpClipboard.AddFormat("Fury2MapObstructions")
     m_lngClipboardFormats(CF_LightObstructions) = m_clpClipboard.AddFormat("Fury2LightObstructions")
     m_lngClipboardFormats(CF_LightPlanes) = m_clpClipboard.AddFormat("Fury2LightPlanes")
+    m_lngClipboardFormats(CF_Path) = m_clpClipboard.AddFormat("Fury2Path")
     m_lngClipboardFormats(CF_PathNodes) = m_clpClipboard.AddFormat("Fury2PathNodes")
     m_lngClipboardFormats(CF_Brush) = m_clpClipboard.AddFormat("Fury2Brush")
 End Sub
@@ -197,12 +200,14 @@ Private Sub iPlugin_Activate()
 End Sub
 
 Private Property Set iPlugin_Editor(RHS As Object)
+On Error Resume Next
     Set m_objEditor = RHS
+    Set m_imgIcon = m_objEditor.LoadResources("ng").ItemData("icons\map.png")
 End Property
 
 Private Property Get iPlugin_Icon() As Fury2Image
 On Error Resume Next
-    Set iPlugin_Icon = m_objEditor.LoadResources("ng").ItemData("icons\map.png")
+    Set iPlugin_Icon = m_imgIcon
 End Property
 
 Private Sub iPlugin_Initialize()

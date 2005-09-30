@@ -73,3 +73,39 @@ Export int RandomizeMesh(MeshParam* Mesh, float XOffset, float YOffset, float XS
   }
   return Success;
 }
+
+Export int MeshFromHeightmap(MeshParam* Mesh, Image* Source, float Scale, Rectangle* SourceRect) {
+  if (!Mesh) return Failure;
+  if (!Source) return Failure;
+  if (!SourceRect) return Failure;
+  float pX1 = SourceRect->Left + 1;
+  float pY1 = SourceRect->Top + 1;
+  float pX2 = SourceRect->right_exclusive();
+  float pY2 = SourceRect->bottom_exclusive();
+  float pXi = (pX2 - pX1) / (Mesh->Width);
+  float pYi = (pY2 - pY1) / (Mesh->Height);
+  float pY = pY1;
+  int xOffset, yOffset;
+  int ipX, ipY;
+  Pixel a, b;
+  MeshPoint* pt;
+  Scale *= (1.0f / 255.0f);
+  for (int iY = 0; iY < Mesh->Height; iY++) {
+    ipY = pY;
+    float pX = pX1;
+    for (int iX = 0; iX < Mesh->Width; iX++) {
+      ipX = pX;
+      a = Source->getPixelClipNO(ipX - 1, ipY);
+      b = Source->getPixelClipNO(ipX, ipY);
+      xOffset = -(a[::Red]) + (b[::Red]);
+      a = Source->getPixelClipNO(ipX, ipY - 1);
+      yOffset = -(a[::Red]) + (b[::Red]);
+      pt = Mesh->getPointFast(iX, iY);
+      pt->X += (xOffset) * Scale;
+      pt->Y += (yOffset) * Scale;
+      pX += pXi;
+    }
+    pY += pYi;
+  }
+  return Success;
+}

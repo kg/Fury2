@@ -92,7 +92,7 @@ Dim l_imgTemp As Fury2Image
     l_filFilter.Filter m_imgGlow, l_imgTemp, , , RenderMode_Normal
     Set l_filFilter = F2GaussianBlurFilter(2)
     l_filFilter.Filter m_imgGlow, l_imgTemp, , , RenderMode_Additive
-    m_imgGlow.AdjustChannelGamma Alpha, 400
+    m_imgGlow.AdjustChannelGamma Alpha, 2.1
 End Sub
 
 Friend Property Get GlowImage() As Fury2Image

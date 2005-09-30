@@ -51,6 +51,11 @@ Private m_lngImages() As Long
 Private m_sngLastFrame As Double
 Private m_engEngine As Fury2Engine
 
+Friend Function GetParam() As AnimatedGraphicParam
+On Error Resume Next
+    GetParam = m_parParam
+End Function
+
 Friend Sub SetEngine(Engine As Fury2Engine)
 On Error Resume Next
     Set m_engEngine = Engine

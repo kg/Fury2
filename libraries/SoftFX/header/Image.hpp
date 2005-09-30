@@ -149,7 +149,6 @@ public:
     this->setClipRectangle(this->getRectangle());
     Tags = StaticTags;
     _Fill<DoubleWord>(this->Tags, 0, TagCount);
-    this->optimize();
   }
 
   Image(Pixel* Data, Size Width, Size Height, int Pitch, int DIBSection) {
@@ -297,7 +296,7 @@ public:
   }
 
   inline Pixel* pointer(Coordinate X, Coordinate Y) {
-    bool clip = (Data == Null) || ((X < 0) || (Y < 0) || (X >= Width) || (Y >= Height));
+    bool clip = (Data == Null) | ((X < 0) | (Y < 0) | (X >= Width) | (Y >= Height));
     return reinterpret_cast<Pixel*>(InlineIf(clip, (unsigned int)0, (unsigned int)((Data) + ( (Y * (Width + Pitch)) + (X) ))));
   }
 
@@ -311,7 +310,7 @@ public:
   void getPixelsClip(int X, int Y, int W, int H, Pixel* Target);
 
   inline Pixel getPixelClipNO(Coordinate X, Coordinate Y) {
-    return *(this->fast_pointer(ClipValue(X, 0, Width - 1), ClipValue(Y, 0, Height - 1)));
+    return *(this->fast_pointer(ClipValue(X, Width - 1), ClipValue(Y, Height - 1)));
   }
 
   inline Pixel getPixelClip(Coordinate X, Coordinate Y) {

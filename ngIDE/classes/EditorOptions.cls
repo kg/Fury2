@@ -53,6 +53,7 @@ Public NoticeAutoCloseTime As Single
 Attribute NoticeAutoCloseTime.VB_VarDescription = "The number of seconds a notice will wait before automatically closing."
 Public ScriptTimeout As Single
 Attribute ScriptTimeout.VB_VarDescription = "The number of seconds the editor will wait before assuming that a script has locked up."
+Public EnableThemes As Boolean
 
 Public Function Duplicate() As EditorOptions
 On Error Resume Next
@@ -67,6 +68,7 @@ Dim l_optNew As EditorOptions
         .PromptWhenSwitchingGames = PromptWhenSwitchingGames
         .SaveWindowPositions = SaveWindowPositions
         .NoticeAutoCloseTime = NoticeAutoCloseTime
+        .EnableThemes = EnableThemes
     End With
     Set Duplicate = l_optNew
 End Function
@@ -80,6 +82,7 @@ On Error Resume Next
     AutoSwitchGames = True
     PromptWhenSwitchingGames = True
     PromptSaveWhenClosing = True
+    EnableThemes = True
     NoticeAutoCloseTime = 10
     ScriptTimeout = 2
 End Sub
@@ -96,6 +99,7 @@ On Error Resume Next
         .Load PromptSaveWhenClosing
         .Load NoticeAutoCloseTime
         .Load ScriptTimeout
+        .Load EnableThemes
     End With
 End Sub
 
@@ -111,5 +115,6 @@ On Error Resume Next
         .Save PromptSaveWhenClosing
         .Save NoticeAutoCloseTime
         .Save ScriptTimeout
+        .Save EnableThemes
     End With
 End Sub

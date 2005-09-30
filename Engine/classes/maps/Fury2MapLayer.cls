@@ -460,7 +460,11 @@ End Property
 
 Public Property Let Height(ByVal NewHeight As Long)
     If NewHeight <> mvarHeight Then
-        ResizePreserve mvarWidth, NewHeight
+        If Prerendered Then
+            mvarHeight = NewHeight
+        Else
+            ResizePreserve mvarWidth, NewHeight
+        End If
     End If
 End Property
 
@@ -545,6 +549,9 @@ Dim m_lngLineCount As Long
             mdlFileUtils.Load2DIntArray mvarTiles, File
             If ((UBound(mvarTiles, 1) <> (mvarWidth - 1)) Or (UBound(mvarTiles, 2) <> (mvarHeight - 1))) Then
                 ResizePreserve mvarWidth, mvarHeight
+            End If
+            If Prerendered Then
+                ResizePreserve 1, 1
             End If
             mdlFileUtils.Load2DByteArray mvarBlocking, File
             .Load mvarAnimations
@@ -788,9 +795,15 @@ Public Property Let Prerendered(ByVal NewPrerendered As Boolean)
 On Error Resume Next
     mvarPreRendered = NewPrerendered
     If mvarPreRendered Then
+        mvarWidth = mvarTileset.TileWidth * mvarWidth
+        mvarHeight = mvarTileset.TileHeight * mvarHeight
         mvarTileset.DeallocateTileset
+        ResizePreserve 1, 1
     Else
+        mvarWidth = mvarWidth / mvarTileset.TileWidth
+        mvarHeight = mvarHeight / mvarTileset.TileHeight
         mvarTileset.AllocateTileset
+        ResizePreserve mvarWidth, mvarHeight
     End If
 End Property
 
@@ -884,6 +897,10 @@ Public Sub ResizePreserve(ByVal Width As Long, ByVal Height As Long)
 Attribute ResizePreserve.VB_MemberFlags = "40"
 On Error Resume Next
 Dim mvarOldTiles() As Integer, mvarCopyRows As Long, m_lngRowCount As Long, mvarOldBlocking() As Byte
+    If Prerendered Then
+        Width = 1
+        Height = 1
+    End If
     Err.Clear
     mvarOldTiles() = mvarTiles()
     mvarOldBlocking() = mvarBlocking()
@@ -902,8 +919,11 @@ Dim mvarOldTiles() As Integer, mvarCopyRows As Long, m_lngRowCount As Long, mvar
         ProgressUpdate (m_lngRowCount / mvarCopyRows) * 100
         CopyMemory mvarBlocking(0, mvarCopyRows), mvarOldBlocking(0, mvarCopyRows), ClipValue((UBound(mvarOldBlocking, 1) + 1), 0, UBound(mvarBlocking, 1) + 1)
     Next mvarCopyRows
-    mvarWidth = Width
-    mvarHeight = Height
+    If Prerendered Then
+    Else
+        mvarWidth = Width
+        mvarHeight = Height
+    End If
     ProgressHide
 End Sub
 
@@ -1084,12 +1104,32 @@ End Property
 
 Public Property Let Width(ByVal NewWidth As Long)
     If NewWidth <> mvarWidth Then
-        ResizePreserve NewWidth, mvarHeight
+        If Prerendered Then
+            mvarWidth = NewWidth
+        Else
+            ResizePreserve NewWidth, mvarHeight
+        End If
     End If
 End Property
 
 Public Property Get Width() As Long
     Width = mvarWidth
+End Property
+
+Public Property Get MaxX() As Long
+    If Prerendered Then
+        MaxX = Width
+    Else
+        MaxX = Width * Tileset.TileWidth
+    End If
+End Property
+
+Public Property Get MaxY() As Long
+    If Prerendered Then
+        MaxY = Height
+    Else
+        MaxY = Height * Tileset.TileHeight
+    End If
 End Property
 
 Public Property Get WrapX() As Boolean

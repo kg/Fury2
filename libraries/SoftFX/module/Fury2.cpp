@@ -295,12 +295,12 @@ if (!Layer) return Failure;
     if (Layer->WrapX) {
 		    ex = sx + (Camera->Rectangle.Width / Layer->pTileset->TileWidth) + 2;
     } else {
-        ex = sx + ClipValue(ClipValue(mx, 0, (Camera->Rectangle.Width / Layer->pTileset->TileWidth) + 2), 0, Layer->Width);
+        ex = sx + ClipValue(ClipValue(mx, (Camera->Rectangle.Width / Layer->pTileset->TileWidth) + 2), Layer->Width);
     }
     if (Layer->WrapY) {
 		    ey = sy + (Camera->Rectangle.Height / Layer->pTileset->TileHeight) + 2;
     } else {
-        ey = sy + ClipValue(ClipValue(my, 0, (Camera->Rectangle.Height / Layer->pTileset->TileHeight) + 2), 0, Layer->Height);
+        ey = sy + ClipValue(ClipValue(my, (Camera->Rectangle.Height / Layer->pTileset->TileHeight) + 2), Layer->Height);
     }
 
     // some final clipping
@@ -847,8 +847,8 @@ int iCount = 0;
                 pCurrent->Culled = true;
                 w = pCurrent->Graphic.Rectangle.Width;
                 h = pCurrent->Graphic.Rectangle.Height;
-                x = pCurrent->Position.X - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w / 2));
-                y = pCurrent->Position.Y - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
+                x = (pCurrent->Position.X * Camera->ParallaxX) - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w / 2));
+                y = (pCurrent->Position.Y * Camera->ParallaxY) - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
                 if (pCurrent->Params.Scale == 1) {
                     w /= 2;
                     if ((y) < Camera->Rectangle.Top) goto nextsprite;
@@ -920,8 +920,8 @@ Pixel white = Pixel(255,255,255,255);
           if (pCurrent->Graphic.pImage) {
             w = pCurrent->Graphic.Rectangle.Width;
             h = pCurrent->Graphic.Rectangle.Height;
-            x = pCurrent->Position.X - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
-            y = pCurrent->Position.Y - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
+            x = (pCurrent->Position.X * Camera->ParallaxX) - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
+            y = (pCurrent->Position.Y * Camera->ParallaxY) - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
             switch  (pCurrent->Params.SpecialFX) {
             default:
             case 0:
@@ -1022,8 +1022,8 @@ Pixel white = Pixel(255,255,255,255);
                   renderer = RenderFunction_Merge;
                   break;
                 }
-                x = pCurrent->Position.X - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
-                y = pCurrent->Position.Y - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
+                x = (pCurrent->Position.X * Camera->ParallaxX) - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
+                y = (pCurrent->Position.Y * Camera->ParallaxY) - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
                 r *= Radian;
                 y -= (h * s / 2);
                 s /= 2;
@@ -1879,10 +1879,10 @@ Export int SightCheck(Lighting::Environment *Env, float FromX, float FromY, floa
   LightRay.Start.Y = FromY;
   LightRay.End.X = ToX;
   LightRay.End.Y = ToY;
-	mx1 = ClipValue(floor(_Min(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
-	my1 = ClipValue(floor(_Min(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), 0, Env->Matrix->Height - 1);
-	mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), 0, Env->Matrix->Width - 1);
-	my2 = ClipValue(ceil(_Max(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), 0, Env->Matrix->Height - 1);
+	mx1 = ClipValue(_Min(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth, Env->Matrix->Width - 1);
+	my1 = ClipValue(_Min(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight, Env->Matrix->Height - 1);
+	mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / (float)Env->Matrix->SectorWidth), Env->Matrix->Width - 1);
+	my2 = ClipValue(ceil(_Max(LightRay.Start.Y, LightRay.End.Y) / (float)Env->Matrix->SectorHeight), Env->Matrix->Height - 1);
 	for (my = my1; my <= my2; my++) {
 		for (mx = mx1; mx <= mx2; mx++) {
 			Sector = Env->Matrix->getSector(mx, my);
@@ -1951,18 +1951,21 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
 #endif
   int Distance;
   float DistanceMultiplier;
-  float ldist;
+  float ldist, ldist11;
   bool Obscured, Falloff;
   int mx1 = 0, my1 = 0, mx2 = 0, my2 = 0, mx = 0, my = 0;
   Lighting::Sector *Sector = Null;
   std::vector<Lighting::Obstruction>::iterator Obstruction;
-  if (Env->LightCount < 1) return Color;
+  if (Env->LightCount < 1) {
+    return Color;
+  }
   float fsw = (float)Env->Matrix->SectorWidth;
   float fsh = (float)Env->Matrix->SectorHeight;
   for (int l = 0; l < Env->LightCount; ++l) {
     Obscured = false;
 	  if (((!Env->Lights[l].Culled) || (!Env->Lights[l].PlaneCulled) || (!EnableCulling)) && (Env->Lights[l].Visible)) {
       ldist = Env->Lights[l].FalloffDistance;
+      ldist11 = ldist * 1.1f;
       Falloff = Env->Lights[l].FalloffDistance > 0;
       if (Falloff) {
         DistanceMultiplier = (255.0F / ldist);
@@ -1972,10 +1975,10 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
       LightRay.Start.Y = Env->Lights[l].Y;
       LightRay.End.X = X;
       LightRay.End.Y = Y;
-	    mx1 = ClipValue(floor(_Min(LightRay.Start.X, LightRay.End.X) / fsw), 0, Env->Matrix->Width - 1);
-  	  my1 = ClipValue(floor(_Min(LightRay.Start.Y, LightRay.End.Y) / fsh), 0, Env->Matrix->Height - 1);
-	    mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / fsw), 0, Env->Matrix->Width - 1);
-	    my2 = ClipValue(ceil(_Max(LightRay.Start.Y, LightRay.End.Y) / fsh), 0, Env->Matrix->Height - 1);
+	    mx1 = ClipValue(floor(_Min(LightRay.Start.X, LightRay.End.X) / fsw), Env->Matrix->Width - 1);
+  	  my1 = ClipValue(floor(_Min(LightRay.Start.Y, LightRay.End.Y) / fsh), Env->Matrix->Height - 1);
+	    mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / fsw), Env->Matrix->Width - 1);
+	    my2 = ClipValue(ceil(_Max(LightRay.Start.Y, LightRay.End.Y) / fsh), Env->Matrix->Height - 1);
       if (Falloff) {
         YDistance = abs(LightRay.End.Y - LightRay.Start.Y) * DistanceMultiplier;
         XDistance = abs(LightRay.End.X - LightRay.Start.X) * DistanceMultiplier;
@@ -2034,6 +2037,9 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
               Sprite = Sprite->pNext; 
               continue;
             }
+            FPoint p = FPoint(Sprite->Position.X, Sprite->Position.Y);
+            FPoint vl = FLine(p, FPoint(Env->Lights[l].X, Env->Lights[l].Y)).vector(), vr;
+            float d = vl.length();
             switch (Sprite->Params.SpecialFX) {
             default:
               Sprite = Sprite->pNext;
@@ -2042,28 +2048,31 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
             case fxCastShadow:
             case fxCastGraphicShadow:
               if (Falloff) {
-                XDistance = Sprite->Position.X - Env->Lights[l].X;
-                YDistance = Sprite->Position.Y - Env->Lights[l].Y;
-                if (sqrt((float)(XDistance*XDistance)+(YDistance*YDistance)) > (ldist * 1.1f)) {
+                if (d > ldist11) {
                   Sprite = Sprite->pNext;
                   continue;
                 }
               }
               break;
             }
+            float sdist = Sprite->ZHeight;
+            if (sdist <= 0.0f) sdist = 10000.0f;
             float s = (Sprite->Obstruction.W + Sprite->Obstruction.H) / 4.0f;
             float h = Sprite->Obstruction.H / 2.0f;
-            float a = Radians(AngleBetween(Sprite->Position, Env->Lights[l]));          
-            float sdist = Sprite->ZHeight;
-            if (sdist <= 0) sdist = 10000.0f;
-            SpriteLine.Start.X = (sin(a - Radians(90)) * s) + Sprite->Position.X;
-            SpriteLine.Start.Y = (-cos(a - Radians(90)) * s) + Sprite->Position.Y - h;
-            SpriteLine.End.X = (sin(a + Radians(90)) * s) + Sprite->Position.X;
-            SpriteLine.End.Y = (-cos(a + Radians(90)) * s) + Sprite->Position.Y - h;
+            vl /= d;
+            vl *= s;
+            vr = vl.rotate90r();
+            vl = vl.rotate90l();
+            p.Y -= h;
+            SpriteLine.Start = p;
+            SpriteLine.End = p;
+            SpriteLine.Start += vl;
+            SpriteLine.End += vr;
             if (LightRay.intersect(SpriteLine, IntersectionPoint)) {
-              if (IntersectionPoint.distance(&(LightRay.End)) < 2.0f) {
+              float d = IntersectionPoint.distance(&(LightRay.End));
+              if (d < 2.0f) {
               } else {
-                if (IntersectionPoint.distance(&(LightRay.End)) < sdist) {
+                if (d < sdist) {
                   Obscured = true;
                   break;
                 }
@@ -2134,6 +2143,7 @@ float FuzzyOffset = 0, FlickerAmount = 0;
   Scaling = (Camera->OutputScaleRatio != 1.0);
 
   for (int l = 0; l < Environment->LightCount; l++) {
+    Environment->Lights[l].FalloffDistance2 = Environment->Lights[l].FalloffDistance * Environment->Lights[l].FalloffDistance;
     Environment->Lights[l].Culled = false;
   }
 
@@ -2317,10 +2327,10 @@ fuzzyrender:
       Light->Rect.setValues(0, 0, 0, 0);
       if (!Light_Clipped) {
 
-	      mx1 = ClipValue(floor((Light->X - Light->FalloffDistance) / (float)Environment->Matrix->SectorWidth), 0, Environment->Matrix->Width - 1);
-	      my1 = ClipValue(floor((Light->Y - Light->FalloffDistance) / (float)Environment->Matrix->SectorHeight), 0, Environment->Matrix->Height - 1);
-	      mx2 = ClipValue(ceil((Light->X + Light->FalloffDistance) / (float)Environment->Matrix->SectorWidth), 0, Environment->Matrix->Width - 1);
-	      my2 = ClipValue(ceil((Light->Y + Light->FalloffDistance) / (float)Environment->Matrix->SectorHeight), 0, Environment->Matrix->Height - 1);
+	      mx1 = ClipValue((Light->X - Light->FalloffDistance) / (float)Environment->Matrix->SectorWidth, Environment->Matrix->Width - 1);
+	      my1 = ClipValue((Light->Y - Light->FalloffDistance) / (float)Environment->Matrix->SectorHeight, Environment->Matrix->Height - 1);
+	      mx2 = ClipValue(ceil((Light->X + Light->FalloffDistance) / (float)Environment->Matrix->SectorWidth), Environment->Matrix->Width - 1);
+	      my2 = ClipValue(ceil((Light->Y + Light->FalloffDistance) / (float)Environment->Matrix->SectorHeight), Environment->Matrix->Height - 1);
         Light->Rect.setValues(_Min(mx1, mx2), _Min(my1, my2), _Max(mx1, mx2) - _Min(mx1, mx2), _Max(my1, my2) - _Min(my1, my2));
 
         ShadowPoly.Allocate(4);
@@ -2498,7 +2508,7 @@ fuzzyrender:
   {
     int y2 = 0;
     SortBufferCount = Environment->PlaneCount + SpriteCount + 1;
-    SortEntries = StaticAllocate<Lighting::sort_entry>(ListBuffer, SortBufferCount + 4) + 2;
+    SortEntries = StaticAllocate<Lighting::sort_entry>(ListBuffer, SortBufferCount + 256) + 32;
 	  _Fill<Byte>(SortEntries, 0, sizeof(Lighting::sort_entry) * SortBufferCount);
     if (Environment->Planes) {
       Rectangle rctWall, rctTop;
@@ -2547,8 +2557,8 @@ fuzzyrender:
   {
     Rectangle rctDest, rctSource, rctCopy;
     Rectangle rctWall, rctTop, rctFullWall;
-    float x = 0, y = 0, s = 0, r = 0;
-  	int xo = 0;
+    float x = 0, y = 0, s = 0, r = 0, x2 = 0;
+  	int xo = 0, xo2 = 0;
     DoubleWord n = 0;
     bool scaled = false, rotated = false;
     DoubleWord iTemp = 0;
@@ -2558,7 +2568,8 @@ fuzzyrender:
     FPoint TexPoint[2];
     PlanePoly.Allocate(4);
     PlanePoly.SetCount(4);
-    PlaneTexture = new Image(StaticAllocate<Pixel>(TextureBuffer, 512) + 127, 256, 1, 0);
+//    PlaneTexture = new Image(RenderTarget->Width, 1); 
+    PlaneTexture = new Image(32, 1); 
 
     while (SortEntry) {
       if (SortEntry->type == Lighting::sprite) {
@@ -2604,14 +2615,15 @@ fuzzyrender:
         rctWall.translate(-iOffsetX, -iOffsetY);
         rctFullWall = rctWall;
     		x = rctWall.Left;
+        x2 = rctWall.right();
 		    ClipRectangle_Image(&rctTop, Camera->OutputBuffer);
 		    ClipRectangle_Image(&rctWall, Camera->OutputBuffer);
 		    xo = (rctWall.Left - x);
+        xo2 = (x2 - rctWall.right());
 		    if (Plane->Height != 0) FilterSimple_Fill(Camera->OutputBuffer, &rctTop, Environment->AmbientLight);
           if ((rctWall.Width > 0) && (rctWall.Height > 0)) {
             if (rctWall.Width > PlaneTexture->Width) {
-              PlaneTexture->Data = StaticAllocate<Pixel>(TextureBuffer, rctWall.Width + 256) + 127;
-              PlaneTexture->Width = rctWall.Width;
+              PlaneTexture->resize(rctWall.Width, 1);
             }
             rctSource.Width = rctWall.Width;
             rctSource.Height = 1;
@@ -2641,7 +2653,6 @@ fuzzyrender:
         n++;
       }
       PlanePoly.Deallocate();
-	    PlaneTexture->Data = Null;
       delete PlaneTexture;
   }
 
@@ -2762,6 +2773,10 @@ Export int RenderCollisionLines(Image *Image, FLine *Lines, int Count, float XOf
 
 Export CollisionMatrix* CreateCollisionMatrix(int Width, int Height) {
   return new CollisionMatrix(Width, Height);
+}
+
+Export CollisionMatrix* CreateCollisionMatrixEx(int Width, int Height, int SectorWidth, int SectorHeight) {
+  return new CollisionMatrix(Width, Height, SectorWidth, SectorHeight);
 }
 
 Export int AppendLinesToCollisionMatrix(CollisionMatrix *Matrix, FLine *Lines, int Count) {
@@ -3065,12 +3080,12 @@ bool CollisionMatrix::addLines(FLine *Lines, int Count) {
 }
 
 bool CollisionMatrix::collisionCheck(FRect *Rectangle) {
-  int xMin = floor(Rectangle->X1 / this->SectorWidth), yMin = floor(Rectangle->Y1 / this->SectorHeight), 
-      xMax = floor(Rectangle->X2 / this->SectorWidth), yMax = floor(Rectangle->Y2 / this->SectorHeight);
-  xMin = ClipValue(xMin, 0, this->Width - 1);
-  yMin = ClipValue(yMin, 0, this->Height - 1);
-  xMax = ClipValue(xMax, 0, this->Width - 1);
-  yMax = ClipValue(yMax, 0, this->Height - 1);
+  int xMin = Rectangle->X1 / this->SectorWidth, yMin = Rectangle->Y1 / this->SectorHeight, 
+      xMax = Rectangle->X2 / this->SectorWidth, yMax = Rectangle->Y2 / this->SectorHeight;
+  xMin = ClipValue(xMin, this->Width - 1);
+  yMin = ClipValue(yMin, this->Height - 1);
+  xMax = ClipValue(xMax, this->Width - 1);
+  yMax = ClipValue(yMax, this->Height - 1);
   for (int y = yMin; y <= yMax; y++) {
     for (int x = xMin; x <= xMax; x++) {
       if (this->getSector(x, y)->collisionCheck(Rectangle, x * this->SectorWidth, y * this->SectorHeight)) {
@@ -3101,7 +3116,7 @@ bool CollisionSector::addLines(FLine *Lines, int Count, int XOffset, int YOffset
   if (Lines == Null) return false;
   FLine *Pointer = Lines, CurrentLine;
   Rectangle ThisRectangle;
-  ThisRectangle.setValues(XOffset, YOffset, this->Width, this->Height);
+  ThisRectangle.setValues(XOffset - 1, YOffset - 1, this->Width + 2, this->Height + 2);
   for (int i = 0; i < Count; i++) {
     CurrentLine = *Pointer;
     if (ClipFloatLine(&ThisRectangle, &CurrentLine)) {

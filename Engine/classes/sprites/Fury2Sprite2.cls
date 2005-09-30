@@ -89,6 +89,7 @@ Private m_booScript_AIUpdate As Boolean, m_booScript_Activate As Boolean
 Private m_booScript_Load As Boolean
 Private m_booScript_Died As Boolean, m_booScript_Step As Boolean
 Private m_booScript_FadeOut As Boolean, m_booScript_Collided As Boolean
+Private m_booScript_WaypointReached As Boolean
     
 Private m_booAreasUpdated As Boolean
 
@@ -96,6 +97,8 @@ Private m_lngWalkState As Long, m_lngIdleState As Long
 
 Public LinkState As Boolean, LinkPose As Boolean, LinkFrame As Boolean, LinkProperties As Boolean, LinkBearing As Boolean
 
+Private WithEvents m_colPaths As Fury2Collection
+Public PathIndex As Long
 Public SavedPaths As Fury2Collection
 Attribute SavedPaths.VB_VarDescription = "*"
 Public AttachedGraphic As Fury2Graphic
@@ -477,16 +480,19 @@ End Sub
 Private Sub Class_Initialize()
 On Error Resume Next
     Set SavedPaths = New Fury2Collection
+    Set m_colPaths = New Fury2Collection
     Set m_posPoses = New Fury2Poses
     m_posPoses.SetParent Me
     Set m_staStates = New Fury2States
     Set m_pthPath = New Fury2Path
     m_spParam.Velocity.CFM = 1
     m_pthPath.SetParent Me
+    m_colPaths.Add m_pthPath
     m_lngAnimationDirection = 1
     m_lngState = 1
     m_lngPose = 1
     m_lngFrame = 1
+    PathIndex = 1
     Alpha = 1
     ScaleLevel = 1
     Visible = True
@@ -506,6 +512,7 @@ Public Sub CopyTo(ByVal OtherSprite, Optional ByVal AsTemplate As Boolean = Fals
 On Error Resume Next
 Dim l_sprOther As Fury2Sprite
 Dim l_spOld As SpriteParam
+Dim l_pthPath As Fury2Path
     Set l_sprOther = OtherSprite
     If l_sprOther Is Nothing Then Exit Sub
     With l_sprOther
@@ -579,6 +586,12 @@ Dim l_spOld As SpriteParam
         .WalkState = Me.WalkState
         
         .AIUpdateRate = Me.AIUpdateRate
+        
+        .Paths.Clear
+        For Each l_pthPath In Paths
+            .Paths.Add l_pthPath.Duplicate()
+        Next l_pthPath
+        Set .Path = .Paths(1)
        
         If .ScriptOverride And AsTemplate Then
         Else
@@ -768,10 +781,13 @@ End Sub
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
 Dim l_booValue As Boolean, l_sngValue As Single, l_lngValue As Long, l_bytValue As Byte
+Dim l_lngIndex As Long
 Dim l_sngStateVelocity As Single, l_staState As Fury2State
+Dim l_pthPath As Fury2Path
     With File
         m_booLoaded = False
         DoEvents
+        Paths.Clear
         .ReadSegment_Begin
             .ReadSegment_Begin
                 .Load m_strName
@@ -918,9 +934,20 @@ Dim l_sngStateVelocity As Single, l_staState As Fury2State
             Set m_pthPath = New Fury2Path
             m_pthPath.SetParent Me
             .Load m_pthPath
+            Paths.Add m_pthPath
             
-            ' ai
+            ' paths
             .ReadSegment_Begin
+                l_lngValue = 0
+                .Load l_lngValue
+                If l_lngValue > 0 Then
+                    For l_lngIndex = 1 To l_lngValue
+                        Set l_pthPath = New Fury2Path
+                        l_pthPath.SetParent Me
+                        .Load l_pthPath
+                        Paths.Add l_pthPath
+                    Next l_lngIndex
+                End If
             .ReadSegment_End
             
             .Load m_staStates
@@ -934,6 +961,7 @@ End Sub
 
 Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
 On Error Resume Next
+Dim l_pthPath As Fury2Path
     With File
         .WriteSegment_Begin
             .WriteSegment_Begin
@@ -1028,7 +1056,15 @@ On Error Resume Next
             
             .Save m_pthPath
             
+            ' paths
             .WriteSegment_Begin
+                .Save Paths.Count - 1
+                For Each l_pthPath In Paths
+                    If l_pthPath Is Paths(1) Then
+                    Else
+                        .Save l_pthPath
+                    End If
+                Next l_pthPath
             .WriteSegment_End
             
             .Save m_staStates
@@ -1153,6 +1189,11 @@ On Error Resume Next
     Pointer = VarPtr(m_spParam)
 End Property
 
+Public Property Get Paths() As Fury2Collection
+On Error Resume Next
+    Set Paths = m_colPaths
+End Property
+
 Public Property Get Path() As Fury2Path
 Attribute Path.VB_Description = "The sprite's path."
     Set Path = m_pthPath
@@ -1161,6 +1202,12 @@ End Property
 Public Property Set Path(ByVal NewPath As Fury2Path)
     Set m_pthPath = NewPath
 End Property
+
+Public Sub SwitchPath(ByVal ID As Variant)
+On Error Resume Next
+    PathIndex = CLng(ID)
+    Set m_pthPath = Paths(ID)
+End Sub
 
 Public Property Let Pose(ByVal NewValue As Long)
 Attribute Pose.VB_Description = "The current pose."
@@ -1283,6 +1330,8 @@ Dim l_lngTargets(0 To 0) As Long
     m_cpCamera.RenderTargetCount = 1
     m_cpCamera.ViewportX = 0
     m_cpCamera.ViewportY = 0
+    m_cpCamera.ParallaxX = 1
+    m_cpCamera.ParallaxY = 1
     m_cpCamera.Alpha = 255
     m_spSprite.Position.X = X + Floor(m_spSprite.Graphic.Rectangle.Width / 2) + (Floor(m_spSprite.Graphic.Rectangle.Width / 2) - m_spSprite.Graphic.XCenter)
     m_spSprite.Position.Y = Y + m_spSprite.Graphic.Rectangle.Height - (m_spSprite.Graphic.Rectangle.Height - m_spSprite.Graphic.YCenter)
@@ -1357,6 +1406,7 @@ Dim l_strName As String
                 m_booScript_Died = m_objScript.ImplementsMethod("Died")
                 m_booScript_Step = m_objScript.ImplementsMethod("Step")
                 m_booScript_FadeOut = m_objScript.ImplementsMethod("FadeOut")
+                m_booScript_WaypointReached = m_objScript.ImplementsMethod("WaypointReached")
             Else
                 With mvarEngine.ScriptEngine.Language
                     If left(Trim(m_strScript), 2) = "<#" Then
@@ -1386,6 +1436,7 @@ Dim l_strName As String
                     m_booScript_Died = .ImplementsMethod(l_strScript, "Died")
                     m_booScript_Step = .ImplementsMethod(l_strScript, "Step")
                     m_booScript_FadeOut = .ImplementsMethod(l_strScript, "FadeOut")
+                    m_booScript_WaypointReached = .ImplementsMethod(l_strScript, "WaypointReached")
                     Set m_objScript = mvarEngine.GenerateScriptObject(l_strScript)
                 End With
             End If
@@ -1544,6 +1595,15 @@ End Property
 Public Property Get Template() As String
     Template = m_strTemplate
 End Property
+
+Friend Sub WaypointReached(ByVal Waypoint As Fury2Waypoint)
+On Error Resume Next
+    If m_booScript_WaypointReached Then
+        mvarEngine.ContextLevelAdd "Sprite_WaypointReached"
+        m_objScript.WaypointReached Waypoint
+        mvarEngine.ContextLevelRemove
+    End If
+End Sub
 
 Public Sub Update()
 On Error Resume Next
@@ -1906,8 +1966,13 @@ End Sub
 Private Sub UpdatePose(Optional ByVal Force As Boolean = False)
 On Error Resume Next
 Dim l_posPose As Fury2Pose
-    m_lngPose = ClipValue(m_lngPose, 1, m_posPoses.Count - m_staState.PoseOffset)
-    Set l_posPose = m_posPoses(m_staState.PoseOffset + m_lngPose)
+    If m_staState Is Nothing Then
+        m_lngPose = ClipValue(m_lngPose, 1, m_posPoses.Count)
+        Set l_posPose = m_posPoses(m_lngPose)
+    Else
+        m_lngPose = ClipValue(m_lngPose, 1, m_posPoses.Count - m_staState.PoseOffset)
+        Set l_posPose = m_posPoses(m_staState.PoseOffset + m_lngPose)
+    End If
     If (l_posPose Is m_posPose) And (Not Force) Then
     Else
         Set m_posPose = l_posPose
@@ -2073,4 +2138,15 @@ Public Sub ApplyForce(ByVal X As Single, ByVal Y As Single)
 On Error Resume Next
     m_spParam.Velocity.CXF = m_spParam.Velocity.CXF + X
     m_spParam.Velocity.CYF = m_spParam.Velocity.CYF + Y
+End Sub
+
+Public Function CreatePath() As Fury2Path
+On Error Resume Next
+    Set CreatePath = New Fury2Path
+    CreatePath.SetParent Me
+End Function
+
+Private Sub m_colPaths_Add(ByVal Index As Long)
+On Error Resume Next
+    m_colPaths(Index).SetParent Me
 End Sub

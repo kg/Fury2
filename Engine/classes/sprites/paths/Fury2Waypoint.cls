@@ -43,6 +43,18 @@ Public ReachedEvent As String
 Public FailEvent As String
 Public WaitRemainder As Long
 
+Public Function Duplicate() As Fury2Waypoint
+On Error Resume Next
+Dim l_wpNew As Fury2Waypoint
+    Set l_wpNew = New Fury2Waypoint
+    l_wpNew.X = X
+    l_wpNew.Y = Y
+    l_wpNew.Wait = Wait
+    l_wpNew.WaitRemainder = WaitRemainder
+    l_wpNew.ReachedEvent = ReachedEvent
+    l_wpNew.FailEvent = FailEvent
+End Function
+
 Public Property Let Wait(ByVal vData As Long)
 On Error Resume Next
     mvarWait = vData

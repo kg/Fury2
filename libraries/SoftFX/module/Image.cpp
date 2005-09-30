@@ -239,6 +239,8 @@ void Image::allocate(Size Width, Size Height) {
     this->Pitch = 0;
 
     if (Override::EnumOverrides(Override::Allocate, 3, this, Width, Height)) {
+      this->setClipRectangle(this->getRectangle());
+      this->clear();
     } else {
       if ((Width > 0) && (Height > 0)) {
           this->Data = (Pixel*)vm_alloc(Width * Height * sizeof(Pixel));
@@ -251,10 +253,10 @@ void Image::allocate(Size Width, Size Height) {
       }
     
       this->unlock();
-    }
 
-    this->setClipRectangle(this->getRectangle());
-    this->clear();
+      this->setClipRectangle(this->getRectangle());
+      this->clear();
+    }
 
     return;
 }
@@ -441,27 +443,40 @@ void Image::optimize() {
 }
 
 void Image::resize(Size Width, Size Height) {
-  Image* OldImage = new Image();
-  IfLocked(return);
-    OldImage->steal(this);
+  if (this->Unlocked) {
+      Image* OldImage = new Image();
+      OldImage->steal(this);
 
-    if ((Width > 0) && (Height > 0)) {
-        this->reallocate(Width, Height);
-    }
+      if ((Width > 0) && (Height > 0)) {
+          this->reallocate(Width, Height);
+      }
 
-    this->dirty();
-    this->Pitch = 0;
+      this->dirty();
+      this->Pitch = 0;
 
-    this->setClipRectangle(this->getRectangle());
+      this->setClipRectangle(this->getRectangle());
 
-    if (OldImage) {
-      this->clear();
-      Rectangle oldRect = OldImage->getRectangle();
-      BlitSimple_Normal(this, OldImage, &oldRect, 0, 0);
-      delete OldImage;
-    }
-    
-    return;
+      if (OldImage) {
+        this->clear();
+        Rectangle oldRect = OldImage->getRectangle();
+        BlitSimple_Normal(this, OldImage, &oldRect, 0, 0);
+        delete OldImage;
+      }
+      
+      return;
+  } else {
+      // can't preserve hardware images
+      if ((Width > 0) && (Height > 0)) {
+          this->reallocate(Width, Height);
+      }
+
+      this->dirty();
+      this->Pitch = 0;
+
+      this->setClipRectangle(this->getRectangle());
+      
+      return;
+  }
 }
 
 void Image::slide(Coordinate X, Coordinate Y) {

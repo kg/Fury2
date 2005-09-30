@@ -113,21 +113,23 @@ Dim l_lngColorRight As Long
 Dim l_lngIndex As Long, l_lngOrientation As Long, l_strOrientation As String
 Dim l_booFailed As Boolean
     EnableTheme = False
-    For l_lngOrientation = 0 To 1
-        l_strOrientation = Choose(l_lngOrientation + 1, "horizontal\", "vertical\")
-        For l_lngIndex = 0 To 2
-            Set m_imgShadow(l_lngOrientation, l_lngIndex) = LoadThemeImage(Path, l_strOrientation & "shadow_" & (l_lngIndex + 1), l_booFailed)
-            Set m_imgHighlight(l_lngOrientation, l_lngIndex) = LoadThemeImage(Path, l_strOrientation & "highlight_" & (l_lngIndex + 1), l_booFailed)
-        Next l_lngIndex
-        Set m_imgDivider(l_lngOrientation, 0) = LoadThemeImage(Path, l_strOrientation & "divider_s", l_booFailed)
-        Set m_imgDivider(l_lngOrientation, 1) = LoadThemeImage(Path, l_strOrientation & "divider_h", l_booFailed)
-        Set m_imgAccent(l_lngOrientation) = LoadThemeImage(Path, l_strOrientation & "accent", l_booFailed)
-        Set m_imgTexture(l_lngOrientation) = LoadThemeImage(Path, l_strOrientation & "pattern", l_booFailed)
-    Next l_lngOrientation
-    l_lngColorLeft = BlendColors(m_lngColors(tbcBackground), F2White, 24)
-    l_lngColorRight = BlendColors(m_lngColors(tbcBackground), F2Black, 24)
-    ThemeBackground = Array(l_lngColorLeft, l_lngColorRight, l_lngColorLeft, l_lngColorRight)
-    EnableTheme = Not l_booFailed
+    If g_booEnableThemes Then
+        For l_lngOrientation = 0 To 1
+            l_strOrientation = Choose(l_lngOrientation + 1, "horizontal\", "vertical\")
+            For l_lngIndex = 0 To 2
+                Set m_imgShadow(l_lngOrientation, l_lngIndex) = LoadThemeImage(Path, l_strOrientation & "shadow_" & (l_lngIndex + 1), l_booFailed)
+                Set m_imgHighlight(l_lngOrientation, l_lngIndex) = LoadThemeImage(Path, l_strOrientation & "highlight_" & (l_lngIndex + 1), l_booFailed)
+            Next l_lngIndex
+            Set m_imgDivider(l_lngOrientation, 0) = LoadThemeImage(Path, l_strOrientation & "divider_s", l_booFailed)
+            Set m_imgDivider(l_lngOrientation, 1) = LoadThemeImage(Path, l_strOrientation & "divider_h", l_booFailed)
+            Set m_imgAccent(l_lngOrientation) = LoadThemeImage(Path, l_strOrientation & "accent", l_booFailed)
+            Set m_imgTexture(l_lngOrientation) = LoadThemeImage(Path, l_strOrientation & "pattern", l_booFailed)
+        Next l_lngOrientation
+        l_lngColorLeft = BlendColors(m_lngColors(tbcBackground), F2White, 24)
+        l_lngColorRight = BlendColors(m_lngColors(tbcBackground), F2Black, 24)
+        ThemeBackground = Array(l_lngColorLeft, l_lngColorRight, l_lngColorLeft, l_lngColorRight)
+        EnableTheme = Not l_booFailed
+    End If
 End Sub
 
 Public Property Get Font() As StdFont

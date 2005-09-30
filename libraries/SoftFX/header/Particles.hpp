@@ -50,15 +50,22 @@ const double DefaultXgDistance = 1.0;
 
 const double ParticleMinimumL = 1.0f / 10000.0f;
 
+const double CollisionEpsilon = 0.01;
+
+const double ParticleLineExtension = 0.5;
+
 struct ParticleEngineState;
 struct ParticleType;
 struct Particle;
 struct ParticleModifier;
 struct ParticleGenerator;
 struct ParticleCamera;
+struct ParticleDieEvent;
+struct ParticleCollideEvent;
 class ParticleEngine;
 
-typedef void (ParticleDieCallback)(ParticleEngine* engine, ParticleType* type, Particle* particle, DoubleWord UserData);
+typedef void (ParticleDieCallback)(ParticleDieEvent* evt);
+typedef void (ParticleCollideCallback)(ParticleCollideEvent* evt);
 
 enum ParticleDecayModes {
     pdmNone,
@@ -116,10 +123,12 @@ struct ParticleType {
     float LVDecay;
     float Thickness;
     float Softness;
+    float CollisionResponse;
     ParticleGraphicParam *Graphic;
     Pixel Color1;
     Pixel Color2;
     ParticleDieCallback* DieCallback;
+    ParticleCollideCallback* CollideCallback;
     DoubleWord UserData;
     Byte XVDecayMode;
     Byte YVDecayMode;
@@ -131,6 +140,7 @@ struct ParticleType {
     Byte RenderType;
     Byte RenderMode;
     Byte RenderTarget;
+    Byte EnableCollision;
 };
 
 struct Particle {
@@ -167,6 +177,7 @@ public:
 
 struct ParticleGenerator {
     int Type;
+    int Life;
     float GenerateRate;
     float GenerateDelay;
     float NewX, NewY, NewL, NewA, NewR;
@@ -203,6 +214,8 @@ public:
     ParticleTypeList Types;
     ParticleModifierList Modifiers;
     ParticleGeneratorList Generators;
+    SpriteParam **Sprites;
+    CollisionMatrix *Surfaces;
     FRect Size;
     MTRand RNG;
     double G;
@@ -213,6 +226,8 @@ public:
       Types = ParticleTypeList();
       Modifiers = ParticleModifierList();
       Generators = ParticleGeneratorList();
+      Surfaces = 0;
+      Sprites = 0;
       RNG = MTRand();
       G = DefaultGravitationalConstant;
       setXg(DefaultXgDistance);
@@ -275,4 +290,20 @@ struct ParticleEngineState {
       engine = &Engine;
       elapsed = Elapsed;
     }
+};
+
+struct ParticleDieEvent {
+  ParticleEngine* engine;
+  ParticleType* type;
+  Particle* particle;
+  DoubleWord UserData;
+};
+
+struct ParticleCollideEvent {
+  ParticleEngine* engine;
+  ParticleType* type;
+  Particle* particle;
+  DoubleWord UserData;
+  SpriteParam* sprite;
+  FPoint* vector;
 };

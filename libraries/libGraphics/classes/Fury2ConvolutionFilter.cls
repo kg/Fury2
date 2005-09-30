@@ -75,6 +75,26 @@ Dim l_lngX As Long, l_lngY As Long
     Next l_lngY
 End Sub
 
+Public Sub AdjustAll(ByVal Value As Single)
+On Error Resume Next
+Dim l_lngX As Long, l_lngY As Long
+    For l_lngY = LBound(m_sngWeights, 2) To UBound(m_sngWeights, 2)
+        For l_lngX = LBound(m_sngWeights, 1) To UBound(m_sngWeights, 1)
+            m_sngWeights(l_lngX, l_lngY) = m_sngWeights(l_lngX, l_lngY) + Value
+        Next l_lngX
+    Next l_lngY
+End Sub
+
+Public Sub MultiplyAll(ByVal Value As Single)
+On Error Resume Next
+Dim l_lngX As Long, l_lngY As Long
+    For l_lngY = LBound(m_sngWeights, 2) To UBound(m_sngWeights, 2)
+        For l_lngX = LBound(m_sngWeights, 1) To UBound(m_sngWeights, 1)
+            m_sngWeights(l_lngX, l_lngY) = m_sngWeights(l_lngX, l_lngY) * Value
+        Next l_lngX
+    Next l_lngY
+End Sub
+
 Public Property Get Weight(ByVal X As Long, ByVal Y As Long) As Single
 On Error Resume Next
     If X < 0 Or Y < 0 Or X >= Width Or Y >= Width Then
@@ -101,28 +121,40 @@ On Error Resume Next
     m_fpFilter.Divisor = NewValue
 End Property
 
-Public Function Filter(ByVal Destination As Fury2Image, ByVal Source As Fury2Image, Optional DestinationRectangle = Nothing, Optional SourceRectangle = Nothing, Optional ByVal RenderMode As SFXRenderModes = RenderMode_Normal, Optional Color As Long = -16777216) As Boolean
+Public Property Get Offset() As Single
 On Error Resume Next
-Dim l_rctDestination As Fury2Rect, l_rctSource As Fury2Rect
+    Offset = m_fpFilter.Offset
+End Property
+
+Public Property Let Offset(NewValue As Single)
+On Error Resume Next
+    If NewValue = 0 Then Exit Property
+    m_fpFilter.Offset = NewValue
+End Property
+
+Public Function Filter(ByVal Destination As Fury2Image, ByVal Source As Fury2Image, Optional ByVal DestinationRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal RenderMode As SFXRenderModes = RenderMode_Normal, Optional Color As Long = 0) As Boolean
+On Error Resume Next
 Dim l_rcDestination As Rectangle, l_rcSource As Rectangle
-    Set l_rctDestination = DestinationRectangle
-    Set l_rctSource = SourceRectangle
-    If l_rctDestination Is Nothing Then Set l_rctDestination = Destination.Rectangle
-    If l_rctSource Is Nothing Then Set l_rctSource = Source.Rectangle
-    l_rcDestination = l_rctDestination.GetRectangle
-    l_rcSource = l_rctSource.GetRectangle
-    Select Case RenderMode
-    Case RenderMode_Shadow
-        SoftFX.Filter_Convolution_Shadow Destination.Handle, Source.Handle, VarPtr(m_fpFilter), l_rcDestination, l_rcSource.Left, l_rcSource.Top, Color
-    Case RenderMode_Normal
-        SoftFX.Filter_Convolution Destination.Handle, Source.Handle, VarPtr(m_fpFilter), l_rcDestination, l_rcSource.Left, l_rcSource.Top
-    Case RenderMode_SourceAlpha
-        SoftFX.Filter_Convolution_SourceAlpha Destination.Handle, Source.Handle, VarPtr(m_fpFilter), l_rcDestination, l_rcSource.Left, l_rcSource.Top
-    Case RenderMode_Additive
-        SoftFX.Filter_Convolution_Additive Destination.Handle, Source.Handle, VarPtr(m_fpFilter), l_rcDestination, l_rcSource.Left, l_rcSource.Top
-    Case RenderMode_Subtractive
-        SoftFX.Filter_Convolution_Subtractive Destination.Handle, Source.Handle, VarPtr(m_fpFilter), l_rcDestination, l_rcSource.Left, l_rcSource.Top
-    Case Else
-    End Select
+Dim l_lngRenderer As Long
+    If DestinationRectangle Is Nothing Then Set DestinationRectangle = Destination.Rectangle
+    If SourceRectangle Is Nothing Then Set SourceRectangle = Source.Rectangle
+    l_rcDestination = DestinationRectangle.GetRectangle
+    l_rcSource = SourceRectangle.GetRectangle
+    l_lngRenderer = Source.GetRenderer(RenderMode)
+    SoftFX.Blit_Convolve Destination.Handle, Source.Handle, VarPtr(m_fpFilter), l_rcDestination, l_rcSource.Left, l_rcSource.Top, Color, l_lngRenderer
+End Function
+
+Public Function MaskFilter(ByVal Destination As Fury2Image, ByVal Source As Fury2Image, ByVal Mask As Fury2Image, Optional ByVal DestinationRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal MaskRectangle As Fury2Rect = Nothing, Optional ByVal RenderMode As SFXRenderModes = RenderMode_Normal, Optional Color As Long = 0) As Boolean
+On Error Resume Next
+Dim l_rcDestination As Rectangle, l_rcSource As Rectangle, l_rcMask As Rectangle
+Dim l_lngRenderer As Long
+    If DestinationRectangle Is Nothing Then Set DestinationRectangle = Destination.Rectangle
+    If SourceRectangle Is Nothing Then Set SourceRectangle = Source.Rectangle
+    If MaskRectangle Is Nothing Then Set MaskRectangle = Mask.Rectangle
+    l_rcDestination = DestinationRectangle.GetRectangle
+    l_rcSource = SourceRectangle.GetRectangle
+    l_rcMask = MaskRectangle.GetRectangle
+    l_lngRenderer = Source.GetRenderer(RenderMode)
+    SoftFX.Blit_Mask_Convolve Destination.Handle, Source.Handle, Mask.Handle, VarPtr(m_fpFilter), l_rcDestination, l_rcSource.Left, l_rcSource.Top, l_rcMask.Left, l_rcMask.Top, Color, l_lngRenderer
 End Function
 

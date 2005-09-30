@@ -27,8 +27,11 @@ End Property
 
 Public Sub Free()
 On Error Resume Next
-    m_seEngine.Sounds.Remove m_seEngine.Find(Me)
-    fmodex.FMOD_Sound_Release m_lngHandle
+    If m_seEngine Is Nothing Then
+    Else
+        m_seEngine.Sounds.Remove m_seEngine.Find(Me)
+    End If
+    If m_lngHandle <> 0 Then fmodex.FMOD_Sound_Release m_lngHandle
     m_lngHandle = 0
     Set m_seEngine = Nothing
     m_strFilename = ""
@@ -204,14 +207,14 @@ Dim l_lngValue As Long
     Length = CDbl(l_lngValue) / 1000#
 End Property
 
-Public Property Get Name() As String
+Public Property Get name() As String
 On Error Resume Next
 Dim l_bytName() As Byte
 Dim l_strName As String
     ReDim l_bytName(0 To 512)
     fmodex.FMOD_Sound_GetName m_lngHandle, ByVal VarPtr(l_bytName(0)), 511
     l_strName = StrConv(l_bytName, vbUnicode)
-    Name = Left(l_strName, InStr(l_strName, Chr(0)) - 1)
+    name = Left(l_strName, InStr(l_strName, Chr(0)) - 1)
     Err.Clear
 End Property
 
@@ -223,5 +226,6 @@ Dim l_lngChannel As Long
 End Function
 
 Private Sub Class_Terminate()
+On Error Resume Next
     Free
 End Sub

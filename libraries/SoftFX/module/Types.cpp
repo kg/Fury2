@@ -18,3 +18,38 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "../header/SoftFX Main.hpp"
+
+FLine FRect::edge(int index) {
+  FLine ln;
+  switch (index) {
+    case 0:
+      // top
+      ln.Start.X = this->X1;
+      ln.Start.Y = this->Y1;
+      ln.End.X = this->X2;
+      ln.End.Y = this->Y1;
+      break;
+    case 1:
+      // right
+      ln.Start.X = this->X2;
+      ln.Start.Y = this->Y1;
+      ln.End.X = this->X2;
+      ln.End.Y = this->Y2;
+      break;
+    case 2:
+      // bottom
+      ln.Start.X = this->X2;
+      ln.Start.Y = this->Y2;
+      ln.End.X = this->X1;
+      ln.End.Y = this->Y2;
+      break;
+    case 3:
+      // left
+      ln.Start.X = this->X1;
+      ln.Start.Y = this->Y2;
+      ln.End.X = this->X1;
+      ln.End.Y = this->Y1;
+      break;
+  }
+  return ln;
+}

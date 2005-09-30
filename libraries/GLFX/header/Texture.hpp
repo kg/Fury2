@@ -1,3 +1,7 @@
+namespace GL {
+  void freeTexture(GLuint handle);
+}
+
 struct Texture {
   GLuint Handle;
   Texture* IsolatedTexture;
@@ -5,6 +9,7 @@ struct Texture {
   int Left, Top, Width, Height;
   bool MatteOptimized;
   bool Owner;
+  bool FlippedVertically;
   int ScaleMode;
 
   Texture(GLuint handle = 0, int left = 0, int top = 0, int width = 0, int height = 0, float xs = 0, float ys = 0, bool owner = true) {
@@ -21,6 +26,7 @@ struct Texture {
     U2 = (left + width) * XScale;
     V2 = (top + height) * YScale;
     MatteOptimized = false;
+    FlippedVertically = false;
     Owner = owner;
     ScaleMode = -1;
   }
@@ -32,10 +38,23 @@ struct Texture {
     }
     if (Owner) {
       if (Handle != 0) {
+        GL::freeTexture(Handle);
         glDeleteTextures(1, &Handle);
         Handle = 0;
       }
     }
+  }
+
+  inline void flipVertical() {
+    FlippedVertically = !FlippedVertically;
+    if (FlippedVertically) {
+      V2 = Top * abs(YScale);
+      V1 = (Top + Height) * abs(YScale);
+    } else  {
+      V1 = Top * abs(YScale);
+      V2 = (Top + Height) * abs(YScale);
+    }
+    YScale = -YScale;
   }
 
   inline float U(float X) {

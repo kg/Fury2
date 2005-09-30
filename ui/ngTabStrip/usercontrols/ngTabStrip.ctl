@@ -107,14 +107,16 @@ On Error Resume Next
 Dim l_lngIndex As Long, l_lngOrientation As Long, l_strOrientation As String
 Dim l_booFailed As Boolean
     EnableTheme = False
-    For l_lngIndex = 0 To 2
-        Set m_imgShadow(l_lngIndex) = LoadThemeImage(Path, "shadow_" & (l_lngIndex + 1), l_booFailed)
-        Set m_imgMask(l_lngIndex) = LoadThemeImage(Path, "mask_" & (l_lngIndex + 1), l_booFailed)
-        Set m_imgOutline(l_lngIndex) = LoadThemeImage(Path, "outline_" & (l_lngIndex + 1), l_booFailed)
-    Next l_lngIndex
-    Set m_imgHighlight = LoadThemeImage(Path, "highlight", l_booFailed)
-    Set m_imgClose = LoadThemeImage(Path, "close", l_booFailed)
-    EnableTheme = Not l_booFailed
+    If g_booEnableThemes Then
+        For l_lngIndex = 0 To 2
+            Set m_imgShadow(l_lngIndex) = LoadThemeImage(Path, "shadow_" & (l_lngIndex + 1), l_booFailed)
+            Set m_imgMask(l_lngIndex) = LoadThemeImage(Path, "mask_" & (l_lngIndex + 1), l_booFailed)
+            Set m_imgOutline(l_lngIndex) = LoadThemeImage(Path, "outline_" & (l_lngIndex + 1), l_booFailed)
+        Next l_lngIndex
+        Set m_imgHighlight = LoadThemeImage(Path, "highlight", l_booFailed)
+        EnableTheme = Not l_booFailed
+    End If
+    Set m_imgClose = LoadThemeImage(g_strTabTheme, "close")
 End Sub
 
 Public Property Get Font() As StdFont

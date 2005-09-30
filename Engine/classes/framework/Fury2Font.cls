@@ -632,7 +632,7 @@ Dim l_lngThick As Long, l_lngX As Long, l_lngY As Long
     Err.Clear
 End Sub
 
-Public Sub AdjustGamma(ByVal Gamma As Long)
+Public Sub AdjustGamma(ByVal Gamma As Single)
 On Error Resume Next
 Dim l_imgCharacter As Fury2Image
 Dim l_lngCharacter As Long
@@ -648,8 +648,8 @@ On Error Resume Next
 Dim l_imgCharacter As Fury2Image
 Dim l_lngCharacter As Long
     For Each l_imgCharacter In m_colCharImages
-        l_imgCharacter.AdjustChannelGamma 3, GetAlpha(Color)
-        l_imgCharacter.AdjustRGBGamma GetRed(Color), GetGreen(Color), GetBlue(Color)
+        l_imgCharacter.AdjustChannelGamma 3, GetAlpha(Color) / 255
+        l_imgCharacter.AdjustRGBGamma GetRed(Color) / 255, GetGreen(Color) / 255, GetBlue(Color) / 255
         l_lngCharacter = l_lngCharacter + 1
     Next l_imgCharacter
     Err.Clear

@@ -114,19 +114,103 @@ struct FPoint {
   float X;
   float Y;
   inline float distance(FPoint *Other) {
-    double xd, yd;
-    xd = abs(Other->X - this->X);
-    yd = abs(Other->Y - this->Y);
-    return (float)(sqrt(pow(xd, 2) + pow(yd, 2)));
+    float xd, yd;
+    xd = Other->X - this->X;
+    yd = Other->Y - this->Y;
+    return (float)(sqrt((xd * xd) + (yd * yd)));
   }
-  inline void Translate(float x, float y) {
-	  this->X += x;
-	  this->Y += y;
+  inline float length() {
+    float v = (this->X * this->X) + (this->Y * this->Y);
+    return sqrt(v);
+  }
+  inline float dot(FPoint B) {
+    return (this->X * B.X + this->Y * B.Y);
+  }
+  inline FPoint perp() {
+    FPoint temp;
+    temp.X = -this->Y;
+    temp.Y = this->X;
+    return temp;
+  }
+  inline void normalize() {
+    float l = this->length();
+    if (l) {
+      this->X /= l;
+      this->Y /= l;
+    }
+  }
+  inline FPoint rotate90r() {
+    FPoint temp;
+    temp.X = -this->Y;
+    temp.Y = this->X;
+    return temp;
+  }
+  inline FPoint rotate90l() {
+    FPoint temp;
+    temp.X = this->Y;
+    temp.Y = -this->X;
+    return temp;
   }
   bool inside(Rectangle *Area);
   bool inside(Rectangle *Area, int Edge);
+  inline FPoint& operator-=(FPoint &rhs) {
+    this->X -= rhs.X;
+    this->Y -= rhs.Y;
+    return *this;
+  }
+  inline FPoint& operator-=(float rhs) {
+    this->X -= rhs;
+    this->Y -= rhs;
+    return *this;
+  }
+  inline FPoint& operator+=(FPoint &rhs) {
+    this->X += rhs.X;
+    this->Y += rhs.Y;
+    return *this;
+  }
+  inline FPoint& operator+=(float rhs) {
+    this->X += rhs;
+    this->Y += rhs;
+    return *this;
+  }
+  inline FPoint& operator*=(FPoint &rhs) {
+    this->X *= rhs.X;
+    this->Y *= rhs.Y;
+    return *this;
+  }
+  inline FPoint& operator*=(float rhs) {
+    this->X *= rhs;
+    this->Y *= rhs;
+    return *this;
+  }
+  inline FPoint& operator/=(FPoint &rhs) {
+    if (rhs.X) {
+      this->X /= rhs.X;
+    } else {
+      this->X = 0;
+    }
+    if (rhs.Y) {
+      this->Y /= rhs.Y;
+    } else {
+      this->Y = 0;
+    }
+    return *this;
+  }
+  inline FPoint& operator/=(float rhs) {
+    if (rhs) {
+      this->X /= rhs;
+      this->Y /= rhs;
+    } else {
+      this->X = 0;
+      this->Y = 0;
+    }
+    return *this;
+  }
   inline bool operator==(FPoint &rhs) {
     return ((rhs.X == this->X) && (rhs.Y == this->Y));
+  }
+  inline FPoint operator-() {
+    return FPoint(-(this->X), -(this->Y));
   }
 };
 
@@ -170,6 +254,7 @@ struct FRect {
       if (this->Y2 < that->Y1) return false;
       return true;
     }
+    FLine edge(int index);
     float X1;
     float Y1;
     float X2;
@@ -183,27 +268,82 @@ struct FSpan {
 
 struct FLine {
     inline FLine() {
-        this->Start.X = 0;
-        this->Start.Y = 0;
-        this->End.X = 0;
-        this->End.Y = 0;
+      this->Start.X = 0;
+      this->Start.Y = 0;
+      this->End.X = 0;
+      this->End.Y = 0;
+    }
+    inline FLine(FPoint a, FPoint b) {
+      this->Start = a;
+      this->End = b;
     }
     FLine(ILine *Line);
 	  inline bool intersect(FLine& that, FPoint& point) {
 		  // Based on the 2d line intersection method from "comp.graphics.algorithms Frequently Asked Questions"
+      if ((that.Start == this->Start) || (that.Start == this->End)) {
+        point = that.Start;
+        return true;
+      }
+      if ((that.End == this->Start) || (that.End == this->End)) {
+        point = that.End;
+        return true;
+      }
+      float thisx = this->End.X - this->Start.X;
+      float thisy = this->End.Y - this->Start.Y;
 		  float q = (this->Start.Y - that.Start.Y) * (that.End.X - that.Start.X) - (this->Start.X - that.Start.X) * (that.End.Y - that.Start.Y);
-		  float d = (this->End.X - this->Start.X) * (that.End.Y - that.Start.Y) - (this->End.Y - this->Start.Y) * (that.End.X - that.Start.X);
-		  if( d == 0.0f ) return false;
-		  float r = q / d;
-		  q = (this->Start.Y - that.Start.Y) * (this->End.X - this->Start.X) - (this->Start.X - that.Start.X) * (this->End.Y - this->Start.Y);
-		  float s = q / d;
-		  if( r < 0.0f || r > 1.0f || s < 0.0f || s > 1.0f ) return false;
-		  point.X = this->Start.X + (0.5f + r * (this->End.X - this->Start.X));
-		  point.Y = this->Start.Y + (0.5f + r * (this->End.Y - this->Start.Y));
+		  float d = (thisx) * (that.End.Y - that.Start.Y) - (thisy) * (that.End.X - that.Start.X);
+		  if (d == 0.0f) return false;
+      d = 1 / d;
+		  float r = q * d;
+      if (r < 0.0f || r > 1.0f) return false;
+		  q = (this->Start.Y - that.Start.Y) * (thisx) - (this->Start.X - that.Start.X) * (thisy);
+		  float s = q * d;
+		  if (s < 0.0f || s > 1.0f ) return false;
+		  point.X = this->Start.X + (r * thisx);
+		  point.Y = this->Start.Y + (r * thisy);
 		  return true;
 	  }
     inline float slope() {
       return (End.Y - Start.Y) / (End.X - Start.X);
+    }
+    inline FPoint vector() {
+      FPoint vec;
+      vec.X = this->End.X - this->Start.X;
+      vec.Y = this->End.Y - this->Start.Y;
+      return vec;
+    }
+    inline FPoint rvector() {
+      FPoint vec;
+      vec.X = this->Start.X - this->End.X;
+      vec.Y = this->Start.Y - this->End.Y;
+      return vec;
+    }
+    inline FPoint bearing() {
+      FPoint vec;
+      vec.X = this->End.X - this->Start.X;
+      vec.Y = this->End.Y - this->Start.Y;
+      vec.normalize();
+      return vec;
+    }
+    inline FPoint normal() {
+      FPoint vec = vector();
+      return vec.perp();
+    }
+    inline FRect bounds() {
+      FRect area;
+      area.X1 = Start.X > End.X ? End.X : Start.X;
+      area.Y1 = Start.Y > End.Y ? End.Y : Start.Y;
+      area.X2 = Start.X < End.X ? End.X : Start.X;
+      area.Y2 = Start.Y < End.Y ? End.Y : Start.Y;
+      return area;
+    }
+    inline void extend(float amount) {
+      FPoint vec = this->vector();
+      vec /= vec.length();
+      vec *= amount;
+      this->Start -= vec;
+      this->End += vec;
+      return;
     }
     FPoint Start, End;
 };

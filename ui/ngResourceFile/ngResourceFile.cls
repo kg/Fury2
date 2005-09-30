@@ -139,7 +139,7 @@ Public Property Get Item(ByVal IndexOrKey) As ngResource
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
     If (Timer - m_dblOpenedAt) > c_dblMaxAge Then
-        Reopen
+        Refresh
     End If
     If VarType(IndexOrKey) = vbString Then
         IndexOrKey = CStr(IndexOrKey)
@@ -152,7 +152,7 @@ End Property
 Public Property Get Count() As Long
 On Error Resume Next
     If (Timer - m_dblOpenedAt) > c_dblMaxAge Then
-        Reopen
+        Refresh
     End If
     Count = m_colCollection.Count
 End Property

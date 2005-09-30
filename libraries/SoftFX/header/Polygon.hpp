@@ -163,7 +163,7 @@ public:
   }
 
   inline void SetCount (int Count) {
-    this->InactiveVertexes = ClipValue(this->VertexCount - Count, 0, this->VertexCount);
+    this->InactiveVertexes = ClipValue(this->VertexCount - Count, this->VertexCount);
     return;
   }
 
@@ -273,7 +273,7 @@ public:
     if (Count < 1) return;
 //    this->Vertexes = AllocateArray(Vertex, Count);
     this->Vertexes = LookupAllocate<Vertex>(Count);
-	this->IsStatic = false;
+	  this->IsStatic = false;
     this->VertexCount = Count;
     this->InactiveVertexes = Count;
     this->Reserved = 1;
@@ -284,8 +284,8 @@ public:
     if (Count < 1) return;
 //    this->Vertexes = AllocateArray(Vertex, Count);
 //    this->Vertexes = LookupAllocate<Vertex>(Count);
-	this->Vertexes = StaticAllocate<Vertex>(Table, Count);
-	this->IsStatic = true;
+	  this->Vertexes = StaticAllocate<Vertex>(Table, Count);
+	  this->IsStatic = true;
     this->VertexCount = Count;
     this->InactiveVertexes = Count;
     this->Reserved = 1;

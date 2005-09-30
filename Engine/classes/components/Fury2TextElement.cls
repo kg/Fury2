@@ -115,7 +115,6 @@ Private Sub Class_Initialize()
 On Error Resume Next
     Alpha = 1
     Set Rectangle = New Fury2Rect
-    Set Me.Font = Engine.Font
 End Sub
 
 Private Property Get Fury2Plugin_DrawBehind() As Boolean

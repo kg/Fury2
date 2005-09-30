@@ -335,7 +335,10 @@ On Error Resume Next
 Dim l_lyrLayer As Fury2MapLayer
     For Each l_lyrLayer In m_lyrLayers
         With l_lyrLayer
-            If .Height > Height Then Height = .Height
+            If .Prerendered Then
+            Else
+                If .Height > Height Then Height = .Height
+            End If
         End With
     Next l_lyrLayer
 End Property
@@ -570,12 +573,28 @@ End Property
 
 Public Function MaxX() As Single
 Attribute MaxX.VB_Description = "The maximum X coordinate for any objects on the map."
-    MaxX = (Width * m_lyrLayers(1).Tileset.TileWidth) - 1
+On Error Resume Next
+Dim l_lyrLayer As Fury2MapLayer
+Dim l_lngMax As Long
+    For Each l_lyrLayer In Layers
+        l_lngMax = l_lyrLayer.MaxX
+        If l_lngMax > MaxX Then
+            MaxX = l_lngMax
+        End If
+    Next l_lyrLayer
 End Function
 
 Public Function MaxY() As Single
 Attribute MaxY.VB_Description = "The maximum Y coordinate for any objects on the map."
-    MaxY = (Height * m_lyrLayers(1).Tileset.TileHeight) - 1
+On Error Resume Next
+Dim l_lyrLayer As Fury2MapLayer
+Dim l_lngMax As Long
+    For Each l_lyrLayer In Layers
+        l_lngMax = l_lyrLayer.MaxY
+        If l_lngMax > MaxY Then
+            MaxY = l_lngMax
+        End If
+    Next l_lyrLayer
 End Function
 
 Public Property Let Name(vData As String)
@@ -631,7 +650,10 @@ Attribute ResizePreserve.VB_Description = "Resizes the map's layers, preserving 
 Dim m_lyrLayer As Fury2MapLayer
     If m_lyrLayers.Count > 0 Then
         For Each m_lyrLayer In m_lyrLayers
-            m_lyrLayer.ResizePreserve Width, Height
+            If m_lyrLayer.Prerendered Then
+            Else
+                m_lyrLayer.ResizePreserve Width, Height
+            End If
         Next m_lyrLayer
     End If
 End Sub
@@ -759,6 +781,7 @@ End Property
 
 Friend Sub Unload()
 On Error Resume Next
+Dim l_mobObject As Fury2MapObject
     Select Case LCase(Trim(GetSetting("bgm")))
     Case "[silence]"
     Case "[no change]", ""
@@ -768,7 +791,9 @@ On Error Resume Next
         Err.Clear
         m_objScript.Unload
     End If
-    Err.Clear
+    For Each l_mobObject In m_mobObjects
+        l_mobObject.Unload
+    Next l_mobObject
 End Sub
 
 Sub Update()
@@ -824,7 +849,10 @@ On Error Resume Next
 Dim l_lyrLayer As Fury2MapLayer
     For Each l_lyrLayer In m_lyrLayers
         With l_lyrLayer
-            If .Width > Width Then Width = .Width
+            If .Prerendered Then
+            Else
+                If .Width > Width Then Width = .Width
+            End If
         End With
     Next l_lyrLayer
 End Property

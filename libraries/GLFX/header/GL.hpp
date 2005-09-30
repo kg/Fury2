@@ -2,7 +2,10 @@ namespace GL {
   extern int blendMode;
   extern bool texturesEnabled[4];
   extern bool fogEnabled;
+  extern bool aaEnabled;
   extern GLuint activeTexture[4];
+  extern Texture* activeTextureObj[4];
+  extern Framebuffer* activeFramebuffer;
   extern int activeTextureStage;
   extern int scaleMode[4];
   extern GLenum drawMode;
@@ -10,6 +13,8 @@ namespace GL {
   extern Pixel fogColor;
   extern Pixel blendColor;
   extern Pixel textureColor;
+  extern int defaultDrawBuffer;
+  extern int defaultViewport[4];
 
   struct Vertex1T {
     float X, Y, U, V;
@@ -27,10 +32,13 @@ namespace GL {
 
   extern void flushImageHeap();
 
+  extern void initShaderVariables(GLSL::Program* program);
+
   extern Texture* createTexture(int width, int height);
   extern Texture* createTexture(int width, int height, bool enableCache);
   extern Texture* createTextureFromImage(int image, bool enableCache);
   extern Texture* createTextureFromFramebuffer(int image, bool enableCache);
+  extern Texture* createTextureEx(int width, int height, GLenum internalformat, GLenum format, GLenum type);
   extern void copyImageToImage(int from, int to);
   extern void copyImageToFramebuffer(int image);
   extern void copyFramebufferToImage(int image);
@@ -46,6 +54,9 @@ namespace GL {
 
   extern void enableTextures();
   extern void disableTextures();
+
+  extern void enableAA();
+  extern void disableAA();
 
   extern void enableFog();
   extern void disableFog();
@@ -66,6 +77,8 @@ namespace GL {
     }
   }
 
+  extern void setFramebuffer(Framebuffer* buffer);
+
   extern void drawArray(GLenum type, Vertex* pointer, int count);
   extern void drawArray(GLenum type, Vertex1T* pointer, int count);
   extern void drawLine(FPoint& start, FPoint& end);
@@ -80,6 +93,7 @@ namespace GL {
   extern void drawTexturedRectangleTiledF(float X, float Y, float W, float H, float SW, float SH, float U1, float V1, float U2, float V2);
   extern void draw2TexturedRectangle(FX::Rectangle& rect, float U1, float V1, float U2, float V2);
   extern void draw2TexturedRectangle(FX::Rectangle& rect, float U11, float V11, float U12, float V12, float U21, float V21, float U22, float V22);
+  extern void draw3TexturedRectangle(FX::Rectangle& rect, float U11, float V11, float U12, float V12, float U21, float V21, float U22, float V22, float U31, float V31, float U32, float V32);
   extern void drawBox(FX::Rectangle& box);
   inline void drawRectangle(FX::Rectangle* rect) {
     drawRectangle(*rect);
@@ -104,7 +118,15 @@ namespace GL {
     Texture* tex = 0;
     GLuint handle = 0;
     tex = getTexture(image);
-    if (tex) handle = tex->Handle;
+    if (tex) {
+      if ((tex->Width != SoftFX::GetImageWidth(image)) || (tex->Height != SoftFX::GetImageHeight(image))) {
+        delete tex;
+        setNamedTag(image, Texture, 0);
+        tex = 0;
+      } else {
+        handle = tex->Handle;
+      }
+    }
     if (handle == 0) {
       if (checkNamedTag(image, Context)) {
         // this is a context
@@ -123,7 +145,23 @@ namespace GL {
         if (SoftFX::GetImageDirty(image)) {
           // the texture is out of sync with the framebuffer
           endDraw();
+          Framebuffer *fb_old = activeFramebuffer;
+          setFramebuffer(0);
           copyFramebufferToTexture(tex, image);
+          setFramebuffer(fb_old);
+        }
+      } else if (checkNamedTag(image, Framebuffer)) {
+        // this is a framebuffer
+        Framebuffer *fb = (Framebuffer*)getNamedTag(image, Framebuffer);
+        if (SoftFX::GetImageLocked(image)) {
+          // locked framebuffers are always in sync
+        } else if (SoftFX::GetImageDirty(image)) {
+          // the texture is out of sync with the framebuffer
+          endDraw();
+          Framebuffer *fb_old = activeFramebuffer;
+          setFramebuffer(fb);
+          copyFramebufferToTexture(tex, image);
+          setFramebuffer(fb_old);
         }
       } else {
         // this is an image
@@ -134,7 +172,9 @@ namespace GL {
         }
       }
     }
+    switchTextureStage<Stage>();
     selectTextureN<Stage>(handle);
+    activeTextureObj[Stage] = tex;
   }
 
   template <int Stage> void selectImageAsIsolatedTextureN(int image) {
@@ -169,6 +209,17 @@ namespace GL {
           endDraw();
           copyFramebufferToTexture(tex, image);
         }
+      } else if (checkNamedTag(image, Framebuffer)) {
+        // this is a framebuffer
+        Framebuffer *fb = (Framebuffer*)getNamedTag(image, Framebuffer);
+        if (SoftFX::GetImageDirty(image)) {
+          // the texture is out of sync with the framebuffer
+          endDraw();
+          Framebuffer *fb_old = activeFramebuffer;
+          setFramebuffer(fb);
+          copyFramebufferToTexture(tex, image);
+          setFramebuffer(fb_old);
+        }
       } else {
         // this is an image
         if ((tex->IsolatedTexture == 0) && (tex->Owner == false)) {
@@ -188,6 +239,7 @@ namespace GL {
       }
     }
     selectTextureN<Stage>(handle);
+    activeTextureObj[Stage] = tex;
   }
 
   template <int Stage> void selectTextureN(GLuint handle) {
@@ -196,6 +248,7 @@ namespace GL {
       switchTextureStage<Stage>();
       glBindTexture(GL_TEXTURE_2D, handle);
       activeTexture[Stage] = handle;
+      activeTextureObj[Stage] = 0;
       scaleMode[Stage] = -1;
     }
   }

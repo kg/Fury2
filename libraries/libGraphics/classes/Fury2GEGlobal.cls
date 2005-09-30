@@ -25,6 +25,14 @@ Private RectCache As Collection
 Private CPUFreq As Currency
 Private Const Black As Long = &HFF000000, White As Long = &HFFFFFFFF
 
+Public Function F2TraceCounts() As String
+On Error Resume Next
+Dim l_strResult As String
+    l_strResult = l_strResult & "Images: " & g_lngImageCount & vbCrLf
+    l_strResult = l_strResult & "Rects: " & g_lngRectCount & vbCrLf
+    F2TraceCounts = l_strResult
+End Function
+
 Private Function GetReferenceCount(ByVal Obj As Object) As Long
 On Error Resume Next
 Dim m_objObj As IShellFolderEx_TLB.IUnknown
@@ -161,7 +169,8 @@ End Function
 
 ' P.S.: I'm a retard
 Public Function F2BoxFilter(Optional ByVal Size As Long = 3) As Fury2ConvolutionFilter
-    Set F2BoxFilter = F2AverageFilter
+On Error Resume Next
+    Set F2BoxFilter = F2AverageFilter(Size)
 End Function
 
 Public Function F2AverageFilter(Optional ByVal Size As Long = 3) As Fury2ConvolutionFilter
@@ -170,6 +179,30 @@ On Error Resume Next
     F2AverageFilter.Resize Size, Size
     F2AverageFilter.SetAll 1
     F2AverageFilter.Divisor = Size ^ 2
+End Function
+
+Public Function F2EmbossFilter(Optional ByVal Strength As Single = 1#) As Fury2ConvolutionFilter
+On Error Resume Next
+Dim l_lngCenterWeight As Long
+    Set F2EmbossFilter = New Fury2ConvolutionFilter
+    F2EmbossFilter.SetValues Array( _
+    0, -Strength, 0, _
+    -Strength, 0, Strength, _
+    0, Strength, 0)
+    F2EmbossFilter.Divisor = 1
+    F2EmbossFilter.Offset = 0.5
+End Function
+
+Public Function F2EdgeFilter(Optional ByVal Strength As Single = 1#) As Fury2ConvolutionFilter
+On Error Resume Next
+Dim l_lngCenterWeight As Long
+    Set F2EdgeFilter = New Fury2ConvolutionFilter
+    F2EdgeFilter.SetValues Array( _
+    0, -Strength, 0, _
+    -Strength, Strength * 4, -Strength, _
+    0, -Strength, 0)
+    F2EdgeFilter.Divisor = 1
+    F2EdgeFilter.Offset = 0.5
 End Function
 
 Public Function F2BlurFilter(Optional ByVal Strength As Long = 6) As Fury2ConvolutionFilter

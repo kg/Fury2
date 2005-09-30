@@ -66,7 +66,7 @@ Begin VB.Form frmFont
          ScaleHeight     =   95
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   143
-         TabIndex        =   8
+         TabIndex        =   6
          Top             =   1740
          Visible         =   0   'False
          Width           =   2205
@@ -108,7 +108,6 @@ Begin VB.Form frmFont
       Begin ngUI.ngTabStrip tsCharacter 
          Height          =   2145
          Left            =   225
-         TabIndex        =   7
          Top             =   2145
          Width           =   1965
          _ExtentX        =   3466
@@ -118,7 +117,6 @@ Begin VB.Form frmFont
    Begin ngUI.ngTabStrip tsViews 
       Height          =   375
       Left            =   2595
-      TabIndex        =   6
       Top             =   405
       Width           =   720
       _ExtentX        =   1270
@@ -209,7 +207,7 @@ End Property
 Private Sub picImage_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
     Editor.ActionUpdate
-    Select Case QuickShowMenu2(picImage, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+    Select Case QuickShowMenu2(picImage, X, Y, _
         Menus(MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
         frmIcons.ilContextMenus)
     Case 1
@@ -909,7 +907,7 @@ Dim l_rctCharacter As Fury2Rect
                 RedrawSelectedCharacter
                 If Button = 2 Then
                     Editor.ActionUpdate
-                    Select Case QuickShowMenu2(picCharacterList, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+                    Select Case QuickShowMenu2(picCharacterList, X, Y, _
                         Menus(MenuString("&Insert New"), "-", MenuString("Cu&t", , , "CUT", , , Editor.CanCut), MenuString("&Copy", , , "COPY", , , Editor.CanCopy), MenuString("&Paste", , , "PASTE", , , Editor.CanPaste), MenuString("&Delete", , , "DELETE", , , Editor.CanDelete)), _
                         frmIcons.ilContextMenus)
                     Case 1
@@ -932,7 +930,7 @@ Dim l_rctCharacter As Fury2Rect
     Next l_lngCharacter
     If Button = 2 Then
         Editor.ActionUpdate
-        Select Case QuickShowMenu2(picCharacterList, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+        Select Case QuickShowMenu2(picCharacterList, X, Y, _
             Menus(MenuString("&Insert New"), "-", MenuString("&Paste", , , "PASTE", , , Editor.CanPaste)), _
             frmIcons.ilContextMenus)
         Case 1

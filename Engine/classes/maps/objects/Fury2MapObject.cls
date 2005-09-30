@@ -33,11 +33,17 @@ Option Explicit
 Implements Fury2Object
 Implements IInspectable
 
-Public Sub Load(ByRef Engine As Fury2Engine, ByRef Map As Fury2Map)
+Public Property Get RenderLayer() As Long
+End Property
+
+Public Sub Load(ByVal Engine As Fury2Engine, ByVal Map As Fury2Map)
+End Sub
+
+Public Sub Unload()
 End Sub
 
 Public Sub Update()
 End Sub
 
-Public Sub Render(ByRef Surface As Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long)
+Public Sub Render(ByVal Camera As Fury2Camera)
 End Sub

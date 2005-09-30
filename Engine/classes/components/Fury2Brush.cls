@@ -179,6 +179,7 @@ Dim l_intValue As Integer
     Height = ClipValue(Height, 0, ClipValue(Map.Height - Y, 0, Me.Height - SourceY))
     If Width < 1 Or Height < 1 Then Exit Sub
     With Map.Layers(Layer)
+        If .Prerendered Then Exit Sub
         For l_lngY = SourceY To SourceY + Height - 1
             For l_lngX = SourceX To SourceX + Width - 1
                 l_intValue = m_intTiles(WrapValue(l_lngX + ScrollX, 0, Me.Width - 1), WrapValue(l_lngY + ScrollY, 0, Me.Height - 1))
@@ -211,6 +212,7 @@ Dim l_lngX As Long, l_lngY As Long
     Height = ClipValue(Height, 0, ClipValue(Map.Height - Y, 0, Me.Height - SourceY))
     If Width < 1 Or Height < 1 Then Exit Sub
     With Map.Layers(Layer)
+        If .Prerendered Then Exit Sub
         For l_lngY = SourceY To SourceY + Height - 1
             For l_lngX = SourceX To SourceX + Width - 1
                 m_intTiles(l_lngX, l_lngY) = .Tile(l_lngX + X, l_lngY + Y)
@@ -270,6 +272,8 @@ Dim l_lngTargets(0 To 0) As Long
         .RenderTargetCount = 1
         .ViewportX = 0
         .ViewportY = 0
+        .ParallaxX = 1
+        .ParallaxY = 1
     End With
     With l_tmpTilemap
         .Alpha = 255 * Alpha

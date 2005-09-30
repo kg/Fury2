@@ -10,6 +10,24 @@ int __cdecl DllMain(int hModule, int ul_reason_for_call, void* lpReserved)
 	return 1;
 }
 
+Export int GLGetStringLength(char* string) {
+  return strlen(string);
+}
+
+Export void* GLAllocateBytes(int Size) {
+  return malloc(Size);
+}
+
+Export int GLSetShaderLoadCallback(ShaderLoadCallback* callback) {
+  if (!Global) return Failure;
+  Global->_ShaderLoadCallback = callback;
+  return Success;
+}
+
+Export GLSL::Program* GLGetShader(char* name) {
+  return Global->GetShader(std::string(name));
+}
+
 Export int GLCopySurface(int from, int to) {
   if (!Global) return Failure;
   if (from) {
@@ -40,39 +58,35 @@ Export int GLFlip() {
   assert(Global->DC != 0);
   bool unlock = false;
   GL::endDraw();
-  glFlush();
   if (SoftFX::GetImageLocked(Global->Framebuffer) == 0) {
     unlock = true;
     SoftFX::LockImage(Global->Framebuffer);
   }
-  glFlush();
   GL::disableTextures();
   GL::selectTexture(0);
   GL::setBlendMode<BlendModes::Normal>();
   GL::setBlendColor(White);
   GL::setVertexColor(White);
+  Texture *tex;
   int width = SoftFX::GetImageWidth(Global->Framebuffer);
   int height = SoftFX::GetImageHeight(Global->Framebuffer);
   if ((width != Global->OutputWidth) || (height != Global->OutputHeight)) {
-    int texWidth = powerOfTwo(width);
-    int texHeight = powerOfTwo(height);
     FX::Rectangle Area = FX::Rectangle(0, 0, Global->OutputWidth, Global->OutputHeight);
     GL::enableTextures();
     GL::selectImageAsTexture(Global->Framebuffer);
+    tex = GL::getTexture(Global->Framebuffer);
     if (Global->ScaleMode == 1) {
       GL::setScaleMode<ScaleModes::Bilinear>();
     } else {
       GL::setScaleMode<ScaleModes::Linear>();
     }
-    GL::drawTexturedRectangle(Area, 0, 0, width / (float)texWidth, height / (float)texHeight);
+    GL::drawTexturedRectangle(Area, tex->U1, tex->V1, tex->U2, tex->V2);
     GL::endDraw();
-    glFlush();
     SwapBuffers(Global->DC);
     Area.Width = width;
     Area.Height = height;
-    GL::drawTexturedRectangle(Area, 0, 0, width / (float)texWidth, height / (float)texHeight);
+    GL::drawTexturedRectangle(Area, tex->U1, tex->V1, tex->U2, tex->V2);
     GL::endDraw();
-    glFlush();
   } else {
     SwapBuffers(Global->DC);
   }
@@ -99,4 +113,84 @@ Export int GLShutdown() {
 	delete Global;
   Global = Null;
   return Success;
+}
+
+void GLFXGlobal::CleanupShaders() {
+  if (this->GlobalShader != Null) {
+    delete this->GlobalShader;
+    this->GlobalShader = Null;
+  }
+  std::map<std::string, GLSL::Program*>::iterator iter = this->Shaders.begin();
+  std::map<std::string, GLSL::Program*>::iterator end = this->Shaders.end();
+  while (iter != end) {
+    delete iter->second;
+    ++iter;
+  }
+  this->Shaders.clear();
+}
+
+GLenum GLFXGlobal::checkError() {
+  GLenum e = glGetError();
+  if (e) {
+//    int x = abs(-1);
+  }
+  return e;
+}
+
+GLSL::Program* GLFXGlobal::GetShader(std::string& key) {
+  if (GLSL::isSupported()) {
+    GLSL::Program* program = 0;
+    std::map<std::string, GLSL::Program*>::iterator iter = Shaders.find(key);
+    if (iter != Shaders.end()) {
+      program = iter->second;
+      if (program) {
+        if (program->isLinked()) {
+        } else {
+          delete program;
+          program = 0;
+          iter->second = 0;
+        }
+      }
+    }
+    if (program == 0) {
+      GLSL::FragmentShader* shader = this->LoadShader(key.c_str());
+      if (shader) {
+        GLSL::FragmentShader* global = Global->GlobalShader;
+        if (global) {
+          if (global->isCompiled()) {
+          } else {
+            global = Null;
+          }
+        }
+        if (global == Null) {
+          global = this->LoadShader("global");
+          Global->GlobalShader = global;
+        }
+        program = new GLSL::Program();
+        if (global) {
+          program->attach(*global);
+        }
+        program->attach(*shader);
+        program->link();
+        Shaders[key] = program;
+      }
+    }
+    return program;
+  }
+  return 0;
+}
+
+GLSL::FragmentShader* GLFXGlobal::LoadShader(const char* filename) {
+  if (!_ShaderLoadCallback) return 0;
+  char* text = 0;
+  _ShaderLoadCallback(filename, &text);
+  if (text) {
+    GLSL::FragmentShader* shader = new GLSL::FragmentShader();
+    shader->addSource(text);
+    shader->compile();
+    free(text);
+    text = 0;
+    return shader;
+  }
+  return 0;
 }

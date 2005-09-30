@@ -2020,7 +2020,7 @@ Dim l_ptMouse As POINTAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstFrames.hwnd, l_ptMouse
-    Select Case QuickShowMenu2(lstFrames, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
+    Select Case QuickShowMenu2(lstFrames, l_ptMouse.X, l_ptMouse.Y, _
     ListContext(Not (Item Is Nothing)), _
     frmIcons.ilContextMenus)
     Case 1
@@ -2069,7 +2069,7 @@ Dim l_ptMouse As POINTAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstPoses.hwnd, l_ptMouse
-    Select Case QuickShowMenu2(lstPoses, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
+    Select Case QuickShowMenu2(lstPoses, l_ptMouse.X, l_ptMouse.Y, _
     ListContext(Not (Item Is Nothing)), _
     frmIcons.ilContextMenus)
     Case 1
@@ -2170,7 +2170,7 @@ Dim l_ptMouse As POINTAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstStates.hwnd, l_ptMouse
-    Select Case QuickShowMenu2(lstStates, l_ptMouse.X * Screen.TwipsPerPixelX, l_ptMouse.Y * Screen.TwipsPerPixelY, _
+    Select Case QuickShowMenu2(lstStates, l_ptMouse.X, l_ptMouse.Y, _
     ListContext(Not (Item Is Nothing)), _
     frmIcons.ilContextMenus)
     Case 1
@@ -2306,7 +2306,7 @@ Dim l_lngIndex As Long
     Next l_sprSprite
     Editor.ActionUpdate
     If Button = 2 Then
-        Select Case QuickShowMenu2(picSprites, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+        Select Case QuickShowMenu2(picSprites, X, Y, _
         ListContext(), _
         frmIcons.ilContextMenus)
         Case 1

@@ -5,6 +5,7 @@
 	Name="SoftFX"
 	ProjectGUID="{ED4A2B1F-A8EB-4F0D-BE84-D29D90FFBA34}"
 	RootNamespace="SoftFX"
+	SignManifests="true"
 	>
 	<Platforms>
 		<Platform
@@ -52,7 +53,7 @@
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="true"
 				RuntimeLibrary="1"
-				BufferSecurityCheck="false"
+				BufferSecurityCheck="true"
 				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="0"
 				FloatingPointModel="2"

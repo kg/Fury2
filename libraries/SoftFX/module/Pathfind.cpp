@@ -132,7 +132,7 @@ Export int PathFind_Vector(FPoint *start, FPoint *end, FLine *obstructions, int 
   root->pushLeft(tail);
   FLine currentLine;
   FPoint where, newpoint;
-  FVector vector, newvector;
+  FPoint vector, newvector;
   float vector_length, vector_angle;
   int leaf = 0, closest_obstruction;
   float closest_obstruction_distance;
@@ -172,7 +172,7 @@ Export int PathFind_Vector(FPoint *start, FPoint *end, FLine *obstructions, int 
             }
           }
           if (!skip) {
-            vector = FVector(current->up->point, where);
+            vector = FLine(current->up->point, where).vector();
             if (vector.length() < closest_obstruction_distance) {
               closest_obstruction = o;
               closest_obstruction_distance = vector.length();
@@ -182,22 +182,22 @@ Export int PathFind_Vector(FPoint *start, FPoint *end, FLine *obstructions, int 
       }
       if (closest_obstruction > -1) {
         if (stack.front().node->depth < max_tree_depth) {
-          vector = FVector(obstructions[closest_obstruction].Start, obstructions[closest_obstruction].End);
+          vector = FLine(obstructions[closest_obstruction].Start, obstructions[closest_obstruction].End).vector();
           vector_length = vector.length();
           vector_angle = AngleBetween(obstructions[closest_obstruction].Start, obstructions[closest_obstruction].End);
           vector.X = sin(vector_angle * Radian);
           vector.Y = -cos(vector_angle * Radian);
           newvector = vector;
-          newvector.Multiply(-1);
+          newvector *= (-1);
           newpoint = obstructions[closest_obstruction].Start;
-          newpoint.Translate(newvector.X, newvector.Y);
+          newpoint += FPoint(newvector.X, newvector.Y);
           newnode = new treeNode(newpoint);
           newnode->pushLeft(new treeNode(*end));
           current->up->pushLeft(newnode);
           newvector = vector;
-          newvector.Multiply(vector_length + 1);
+          newvector *= (vector_length + 1);
           newpoint = obstructions[closest_obstruction].Start;
-          newpoint.Translate(newvector.X, newvector.Y);
+          newpoint += FPoint(newvector.X, newvector.Y);
           newnode = new treeNode(newpoint);
           newnode->pushLeft(new treeNode(*end));
           current->up->pushRight(newnode);

@@ -4,6 +4,9 @@ Attribute VB_Name = "mdlUtility"
 '
 'Public Declare Function DX8Init Lib "DX8FX" Alias "_DX8Init@4" (ByVal Window As Long) As Long
 
+Global g_lngImageCount As Long
+Global g_lngRectCount As Long
+
 Public Function Atn2(ByVal X As Single, ByVal Y As Single) As Single
 On Error Resume Next
     If (X = 0) Then

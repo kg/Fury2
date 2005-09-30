@@ -38,6 +38,7 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 Implements Fury2Object
 Implements IVirtualFileCollection
+Implements IVirtualFileSaveable
 Implements IInspectableCollection
 
 Public Loaded As Boolean
@@ -470,6 +471,8 @@ Dim l_lngRenderTargets() As Long
             .RenderTargetCount = 1
             .ViewportX = XOffset
             .ViewportY = YOffset
+            .ParallaxX = 1
+            .ParallaxY = 1
             .Alpha = 255
             .Rectangle.left = 0
             .Rectangle.top = 0
@@ -480,31 +483,15 @@ Dim l_lngRenderTargets() As Long
     End If
 End Sub
 
-Public Sub Redraw(Camera As Fury2Camera, Optional OutputBuffer As Fury2Image = Nothing)
+Public Sub Redraw(ByRef Param As CameraParam, Optional OutputBuffer As Fury2Image = Nothing)
 On Error Resume Next
 Dim l_camCamera As CameraParam
-Dim l_lngRenderTargets() As Long
     If mvarDirty Then RefreshList
     Err.Clear
     If mCol.Count = 0 Then
     Else
         Err.Clear
-        With l_camCamera
-            l_lngRenderTargets = Camera.RenderTargetArray
-            If OutputBuffer Is Nothing Then
-            Else
-                l_lngRenderTargets(0) = OutputBuffer.Handle
-            End If
-            .pRenderTargets = VarPtr(l_lngRenderTargets(0))
-            .RenderTargetCount = UBound(l_lngRenderTargets) + 1
-            .ViewportX = Camera.ViewportX
-            .ViewportY = Camera.ViewportY
-            .Alpha = 255
-            .Rectangle.left = 0
-            .Rectangle.top = 0
-            .Rectangle.Width = Camera.Width
-            .Rectangle.Height = Camera.Height
-        End With
+        l_camCamera = Param
         RenderSprites mvarSortedFirst, l_camCamera
     End If
 End Sub
@@ -758,5 +745,11 @@ End Sub
 Private Sub IVirtualFileCollection_LoadHeader(File As libGraphics.VirtualFile)
 On Error Resume Next
     DoEvents
+End Sub
+
+Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
+End Sub
+
+Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
 End Sub
 

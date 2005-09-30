@@ -87,7 +87,8 @@ Dim l_imgTemp As Fury2Image
     l_filFilter.Filter m_imgGlow, l_imgTemp, , , RenderMode_Normal
     Set l_filFilter = F2GaussianBlurFilter(2)
     l_filFilter.Filter m_imgGlow, l_imgTemp, , , RenderMode_Additive
-    m_imgGlow.AdjustChannelGamma Alpha, 400
+    l_imgTemp.Deallocate
+    m_imgGlow.AdjustChannelGamma Alpha, 2.1
 End Sub
 
 Friend Property Get GlowImage() As Fury2Image
@@ -127,6 +128,15 @@ On Error Resume Next
     m_booHovering = False
     m_booPressed = False
 End Sub
+
+Private Function GetReferenceCount(ByVal Obj As Object) As Long
+On Error Resume Next
+Dim m_objObj As IShellFolderEx_TLB.IUnknown
+    Set m_objObj = Obj
+    If Err <> 0 Then Exit Function
+    m_objObj.AddRef
+    GetReferenceCount = m_objObj.Release
+End Function
 
 Friend Sub Free()
 On Error Resume Next
@@ -227,9 +237,9 @@ Dim l_lngTextWidth As Long
     End If
     Select Case m_tbsStyle
     Case bsyNormal, bsyCheck, bsyGroup
-        Width = l_lngTextWidth + l_lngImageWidth + (m_mnuParent.Metrics(mnmItemMargin) * 2)
+        Width = l_lngTextWidth + l_lngImageWidth + (m_mnuParent.Metrics(mnmItemMargin) * 2) + 4
     Case bsySeparator
-        Width = m_mnuParent.Metrics(mnmSeparatorSize) + (m_mnuParent.Metrics(mnmSeparatorMargin) * 2)
+        Width = m_mnuParent.Metrics(mnmSeparatorSize) + (m_mnuParent.Metrics(mnmSeparatorMargin) * 2) + 4
     End Select
     m_lngWidth = Width
 End Property

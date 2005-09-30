@@ -40,10 +40,26 @@ Implements IInspectable
 Implements IInspectableCollection
 Implements Fury2Object
 Implements IVirtualFileCollection
+Implements IVirtualFileSaveable
 
+Public Index As Long
+Private mvarCurrent As Fury2Waypoint
 Private mCol As Collection
 Private mvarLooping As Boolean
 Private mvarParent As Fury2Sprite
+
+Public Function Duplicate() As Fury2Path
+On Error Resume Next
+Dim l_pthNew As Fury2Path
+Dim l_wpNode As Fury2Waypoint
+    Set l_pthNew = New Fury2Path
+    For Each l_wpNode In mCol
+        l_pthNew.AddObject l_wpNode.Duplicate()
+    Next l_wpNode
+    l_pthNew.Index = Index
+    l_pthNew.Looping = mvarLooping
+    Set Duplicate = l_pthNew
+End Function
 
 Private Property Get IInspectableCollection_ItemCount() As Long
 On Error Resume Next
@@ -69,21 +85,38 @@ End Property
 
 Friend Sub SetParent(ByRef Parent As Fury2Sprite)
 On Error Resume Next
-    Set Parent = mvarParent
+    Set mvarParent = Parent
+End Sub
+
+Public Sub SkipTo(ByVal NewIndex As Long)
+On Error Resume Next
+    Skip (NewIndex - Index)
+End Sub
+
+Public Sub Skip(Optional ByVal Count As Long = 1)
+On Error Resume Next
+Dim l_lngCount As Long
+    If Count < 1 Then Exit Sub
+    For l_lngCount = 1 To Count
+        Completed
+    Next l_lngCount
 End Sub
 
 Public Sub Completed()
 On Error Resume Next
 Dim l_objWaypoint As Fury2Waypoint
     Set l_objWaypoint = mCol.Item(1)
+    mvarParent.WaypointReached l_objWaypoint
+    If l_objWaypoint.ReachedEvent <> "" Then
+        mvarParent.Map.Engine.ScriptEngine.AddCode l_objWaypoint.ReachedEvent
+    End If
     mCol.Remove 1
+    Set mvarCurrent = mCol.Item(1)
     If mvarLooping Then
         mCol.Add l_objWaypoint
         l_objWaypoint.WaitRemainder = l_objWaypoint.Wait
     End If
-    If l_objWaypoint.ReachedEvent <> "" Then
-        mvarParent.Map.Engine.ScriptEngine.AddCode l_objWaypoint.ReachedEvent
-    End If
+    Index = Index + 1
 End Sub
 
 Public Function Find(ByVal Obj) As Long
@@ -103,13 +136,15 @@ End Function
 Sub Clear()
 On Error Resume Next
     Set mCol = New Collection
+    Set mvarCurrent = Nothing
+    Index = 1
 End Sub
 
 Sub Reset()
 Attribute Reset.VB_Description = "Deprecated. Use Clear."
 Attribute Reset.VB_MemberFlags = "40"
 On Error Resume Next
-    Set mCol = New Collection
+    Clear
 End Sub
 
 Public Property Get Looping() As Boolean
@@ -123,7 +158,7 @@ On Error Resume Next
     mvarLooping = NewLooping
 End Property
 
-Public Function Add(ByVal X As Single, ByVal Y As Single, Optional ReachedEvent As String = "", Optional FailEvent As String = "", Optional Wait As Long = 0, Optional ByVal AtIndex) As Fury2Waypoint
+Public Function Add(ByVal X As Single, ByVal Y As Single, Optional ReachedEvent As String = "", Optional FailEvent As String = "", Optional ByVal Wait As Long = 0, Optional ByVal AtIndex As Long = -1) As Fury2Waypoint
 On Error Resume Next
     If mCol.Count >= c_lngMaxWaypoints Then Exit Function
     Dim objNewMember As Fury2Waypoint
@@ -133,32 +168,21 @@ On Error Resume Next
     objNewMember.Y = Y
     objNewMember.ReachedEvent = ReachedEvent
     objNewMember.FailEvent = FailEvent
-    If IsMissing(AtIndex) Then
-        mCol.Add objNewMember
-    Else
-        If mCol.Count = 0 Then
-            mCol.Add objNewMember
-        ElseIf AtIndex <= 1 Then
-            mCol.Add objNewMember, , 1
-        ElseIf mCol.Count > AtIndex Then
-            mCol.Add objNewMember, , AtIndex
-        Else
-            mCol.Add objNewMember, , , AtIndex - 1
-        End If
-    End If
+    
+    AddObject objNewMember, AtIndex
     
     Set Add = objNewMember
-    Set objNewMember = Nothing
 End Function
 
-Public Sub AddObject(ByVal Obj As Fury2Waypoint, Optional ByVal AtIndex)
+Public Sub AddObject(ByVal Obj As Fury2Waypoint, Optional ByVal AtIndex As Long = -1)
 On Error Resume Next
     If mCol.Count >= c_lngMaxWaypoints Then Exit Sub
-    If IsMissing(AtIndex) Then
+    If AtIndex < 1 Then
         mCol.Add Obj
     Else
         If mCol.Count = 0 Then
             mCol.Add Obj
+            Set mvarCurrent = Obj
         ElseIf AtIndex <= 1 Then
             mCol.Add Obj, , 1
         ElseIf mCol.Count > AtIndex Then
@@ -197,6 +221,7 @@ End Property
 Private Sub Class_Initialize()
 On Error Resume Next
     Set mCol = New Collection
+    Index = 1
 End Sub
 
 Private Sub Class_Terminate()
@@ -206,7 +231,7 @@ End Sub
 
 Private Sub IVirtualFileCollection_AddItem(Item As Object)
 On Error Resume Next
-    mCol.Add Item
+    AddObject Item
 End Sub
 
 Private Property Get IVirtualFileCollection_Count() As Long
@@ -237,5 +262,11 @@ End Sub
 Private Sub IVirtualFileCollection_LoadHeader(File As libGraphics.VirtualFile)
 On Error Resume Next
     File.Load mvarLooping
+    Index = 1
 End Sub
 
+Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
+End Sub
+
+Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
+End Sub

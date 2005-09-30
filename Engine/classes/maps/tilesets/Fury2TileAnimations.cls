@@ -37,6 +37,7 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 
 Implements Fury2Object
 Implements IVirtualFileCollection
+Implements IVirtualFileSaveable
 Private mCol As Collection
 Private mvarMapTable() As Integer
 
@@ -194,5 +195,11 @@ End Sub
 
 Private Sub IVirtualFileCollection_LoadHeader(File As libGraphics.VirtualFile)
 On Error Resume Next
+End Sub
+
+Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
+End Sub
+
+Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
 End Sub
 

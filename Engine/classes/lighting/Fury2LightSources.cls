@@ -37,6 +37,7 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 
 Implements Fury2Object
 Implements IVirtualFileCollection
+Implements IVirtualFileSaveable
 
 Private mHook As Object
 Private mCol As Collection
@@ -243,5 +244,11 @@ Dim l_objObject As Object
 '        ToIndex = ToIndex - 1
     End If
     Add l_objObject, , ToIndex
+End Sub
+
+Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
+End Sub
+
+Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
 End Sub
 

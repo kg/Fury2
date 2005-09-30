@@ -35,7 +35,7 @@ Implements Fury2Debugger
 Private Const EM_CANUNDO = &HC6
 Private Const EM_UNDO = &HC7
 
-Private Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hWnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+Private Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
 
 Public CanCut As Boolean, CanCopy As Boolean, CanPaste As Boolean, CanDelete As Boolean, CanSelectAll As Boolean, CanSelectNone As Boolean, CanUndo As Boolean, CanRedo As Boolean
 Private m_strGamePath As String
@@ -316,8 +316,8 @@ Dim l_clpDocument As iEditingCommands, l_ctlControl As Control
     If l_clpDocument Is Nothing Then
         Set l_ctlControl = m_docChild.Form.ActiveControl
         If TypeOf l_ctlControl Is TextBox Then
-            Action_Undo = CBool(SendMessage(l_ctlControl.hWnd, EM_CANUNDO, 0, 0))
-            SendMessage l_ctlControl.hWnd, EM_UNDO, 0, 0
+            Action_Undo = CBool(SendMessage(l_ctlControl.hwnd, EM_CANUNDO, 0, 0))
+            SendMessage l_ctlControl.hwnd, EM_UNDO, 0, 0
             ActionUpdate
         End If
     Else
@@ -364,7 +364,7 @@ Dim l_edcDocument As iEditingCommands, l_ctlControl As Control
                 CanDelete = CanCut
                 CanSelectAll = (Len(l_ctlControl.Text) > 0) And (l_ctlControl.SelLength < Len(l_ctlControl.Text))
                 CanSelectNone = l_ctlControl.SelLength > 0
-                CanUndo = SendMessage(l_ctlControl.hWnd, EM_CANUNDO, 0, 0) <> 0
+                CanUndo = SendMessage(l_ctlControl.hwnd, EM_CANUNDO, 0, 0) <> 0
                 CanRedo = False
             End If
         End If
@@ -416,6 +416,7 @@ End Property
 Private Sub Class_Initialize()
 On Error Resume Next
     Set m_optOptions = New EditorOptions
+    ngUI.ThemesEnabled = m_optOptions.EnableThemes
     Set m_clpClipboard = New cClipboardViewer
     Set m_amgAccelerators = New cAcceleratorManager
     ngCommon.SetHook Me
@@ -816,6 +817,8 @@ End Sub
 
 Public Sub Help_About()
 On Error Resume Next
+    MsgBox libGraphics.F2TraceCounts() & ngUI.DisplayMenuStats()
+    Exit Sub
     If g_engEngine Is Nothing Then
         Beep
         Exit Sub
@@ -826,12 +829,12 @@ End Sub
 
 Public Sub Help_OnlineDocs()
 On Error Resume Next
-    Call ShellExecute(frmMain.hWnd, "Open", "http://fury2.luminance.org/wiki/default.aspx/Documentation.Index", "", "", vbNormalFocus)
+    Call ShellExecute(frmMain.hwnd, "Open", "http://fury2.luminance.org/wiki/default.aspx/Documentation.Index", "", "", vbNormalFocus)
 End Sub
 
 Public Sub Help_OnlineTutorials()
 On Error Resume Next
-    Call ShellExecute(frmMain.hWnd, "Open", "http://fury2.luminance.org/wiki/default.aspx/Documentation.Tutorials", "", "", vbNormalFocus)
+    Call ShellExecute(frmMain.hwnd, "Open", "http://fury2.luminance.org/wiki/default.aspx/Documentation.Tutorials", "", "", vbNormalFocus)
 End Sub
 
 Public Sub HideDebugger()
@@ -843,7 +846,7 @@ End Sub
 
 Friend Sub InitClipboard()
 On Error Resume Next
-    m_clpClipboard.InitClipboardChangeNotification frmMain.hWnd
+    m_clpClipboard.InitClipboardChangeNotification frmMain.hwnd
 End Sub
 
 Public Sub LoadOptions()
@@ -859,6 +862,7 @@ Dim l_vfSetting As VirtualFile
         l_vfSetting.Data = l_bytSetting
         Set m_optOptions = New EditorOptions
         l_vfSetting.Load m_optOptions
+        ngUI.ThemesEnabled = m_optOptions.EnableThemes
     End If
 End Sub
 
@@ -1031,6 +1035,7 @@ End Property
 Friend Property Set Options(ByVal NewValue As EditorOptions)
 On Error Resume Next
     Set m_optOptions = NewValue
+    ngUI.ThemesEnabled = m_optOptions.EnableThemes
 End Property
 
 Public Sub Plugins_Activate(Index)
@@ -1062,6 +1067,7 @@ Dim l_vfSetting As VirtualFile
     Set l_vfSetting = F2File
     l_vfSetting.Save m_optOptions
     WriteRegData "Options", l_vfSetting.Data
+    ngUI.ThemesEnabled = m_optOptions.EnableThemes
 End Sub
 
 Public Sub SaveSettings(ByRef Name As String, ByRef Settings As IVirtualFileSaveable)
@@ -1092,9 +1098,9 @@ On Error Resume Next
     frmMain.SetStatus Value
 End Sub
 
-Public Sub SetFocus(ByVal hWnd As Long)
+Public Sub SetFocus(ByVal hwnd As Long)
 On Error Resume Next
-    frmMain.FixFocus hWnd
+    frmMain.FixFocus hwnd
 End Sub
 
 Public Sub Show_FileSidebar()

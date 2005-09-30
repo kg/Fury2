@@ -161,7 +161,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.RECT, ByVal wFormat As Long) As Long
+Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.Rect, ByVal wFormat As Long) As Long
 Private Const DT_WORDBREAK = &H10
 Private Const DT_NOPREFIX = &H800
 Private Const MinimumEditWidth As Long = 60
@@ -240,6 +240,7 @@ Public Event ItemSelected(ByVal Index As Long)
 Public Event ItemTitleDoubleClick(ByVal Index As Long)
 Public Event BeforeItemChange(ByRef Cancel As Boolean)
 Public Event AfterItemChange(ByVal OldValue As Variant, ByVal NewValue As Variant)
+Public Event AfterMultipleItemChange(ByVal NewValue As Variant)
 
 Public Property Get ShowInfobox() As Boolean
 On Error Resume Next
@@ -490,6 +491,7 @@ Dim l_objObject As Object, l_lngObject As Long
 Dim l_strValue As String, l_strIndex As String
 Dim l_colObject As IInspectableCollection
 Dim l_booInspectorType As Boolean
+Dim l_strSelectedItem As String
     Set l_colObject = m_objObject
     Err.Clear
     If m_objObject Is Nothing Then Exit Sub
@@ -1051,7 +1053,7 @@ End Sub
 
 Private Sub picInfo_Paint()
 On Error Resume Next
-Dim l_rcRect As Win32.RECT
+Dim l_rcRect As Win32.Rect
 Dim l_lngLength As Long
     picInfo.Line (0, 0)-(picInfo.ScaleWidth - 1, picInfo.ScaleHeight - 1), vbButtonShadow, B
     picInfo.Line (1, 1)-(picInfo.ScaleWidth - 2, picInfo.ScaleHeight - 2), vbButtonFace, BF
@@ -1124,7 +1126,7 @@ Dim l_lngIndex As Long
         RaiseEvent ItemSelected(l_lngIndex)
         If m_lngSelectedItem = l_lngIndex Then
             If Button = 2 Then
-'                Select Case QuickShowMenu(Me, X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, _
+'                Select Case QuickShowMenu(Me, X , Y , _
 '                    Menus(MenuString("Cu&t", , , "CUT"), MenuString("&Copy", , , "COPY"), MenuString("&Paste", , , "PASTE")), _
 '                    frmIcons.ilContextMenus)
 '                Case 1
@@ -1419,18 +1421,25 @@ Dim l_booError As Boolean
             Select Case l_vtType
             Case vbBoolean
                 CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_booValue
+                RaiseEvent AfterMultipleItemChange(l_booValue)
             Case vbSingle
                 CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_sngValue
+                RaiseEvent AfterMultipleItemChange(l_sngValue)
             Case vbDouble
                 CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_dblValue
+                RaiseEvent AfterMultipleItemChange(l_dblValue)
             Case vbLong
                 CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_lngValue
+                RaiseEvent AfterMultipleItemChange(l_lngValue)
             Case vbInteger
                 CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_intValue
+                RaiseEvent AfterMultipleItemChange(l_intValue)
             Case vbByte
                 CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_bytValue
+                RaiseEvent AfterMultipleItemChange(l_bytValue)
             Case vbString
                 CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_strValue
+                RaiseEvent AfterMultipleItemChange(l_strValue)
             Case Else
             End Select
         Next l_lngObject
@@ -1529,6 +1538,7 @@ Dim l_lngIndex As Long
     Case vbKeyReturn
         KeyCode = 0
         EditBoxChanged
+        Exit Sub
     Case vbKeyDown
         EditBoxChanged
         l_lngIndex = m_lngSelectedItem + 1

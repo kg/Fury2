@@ -41,6 +41,7 @@ End Enum
 Private m_lngClipboardFormats(0 To 0)
 Private m_objEditor As Object
 Private m_clpClipboard As cCustomClipboard
+Private m_imgIcon As Fury2Image
 
 Friend Property Get CustomClipboard() As cCustomClipboard
 On Error Resume Next
@@ -117,12 +118,14 @@ Private Sub iPlugin_Activate()
 End Sub
 
 Private Property Set iPlugin_Editor(RHS As Object)
+On Error Resume Next
     Set m_objEditor = RHS
+    Set m_imgIcon = m_objEditor.LoadResources("ng").ItemData("icons\image.png")
 End Property
 
 Private Property Get iPlugin_Icon() As Fury2Image
 On Error Resume Next
-    Set iPlugin_Icon = m_objEditor.LoadResources("ng").ItemData("icons\image.png")
+    Set iPlugin_Icon = m_imgIcon
 End Property
 
 Private Sub iPlugin_Initialize()

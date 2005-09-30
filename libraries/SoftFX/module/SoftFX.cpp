@@ -194,6 +194,8 @@ void InitDebugFlags() {
 
 Export void Initialize() {
 
+    if (Initialized) return;
+
     Processor::DetectProcessor();
     win32::QueryPerformanceFrequency(&CPUFreq);
     LookupInitialize();
@@ -212,6 +214,8 @@ Export void Initialize() {
 }
 
 Export void Uninitialize() {
+
+    if (!Initialized) return;
 
     StaticCleanup();
     CleanupHeap();

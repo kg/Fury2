@@ -25,8 +25,16 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
+Private Sub Form_Initialize()
+    g_lngFontForms = g_lngFontForms + 1
+End Sub
+
 Private Sub Form_Load()
 
+End Sub
+
+Private Sub Form_Terminate()
+    g_lngFontForms = g_lngFontForms - 1
 End Sub
 
 Private Sub tmrFlushForms_Timer()

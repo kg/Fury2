@@ -6,6 +6,7 @@
 	ProjectGUID="{3A410C42-E439-4191-B1E9-186A3971A4F4}"
 	RootNamespace="GLFX"
 	Keyword="Win32Proj"
+	SignManifests="true"
 	>
 	<Platforms>
 		<Platform
@@ -303,6 +304,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\module\GLSL.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\module\Overrides.cpp"
 				>
 			</File>
@@ -318,6 +323,10 @@
 			</File>
 			<File
 				RelativePath=".\header\Classes.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\header\Framebuffer.hpp"
 				>
 			</File>
 			<File
@@ -337,6 +346,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\header\GLSL.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\header\Import_SoftFX.hpp"
 				>
 			</File>
@@ -349,15 +362,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\header\PBuffer.hpp"
-				>
-			</File>
-			<File
 				RelativePath="..\SoftFX\header\Pixel.hpp"
 				>
 			</File>
 			<File
 				RelativePath=".\header\Rectangle.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\header\Renderbuffer.hpp"
 				>
 			</File>
 			<File

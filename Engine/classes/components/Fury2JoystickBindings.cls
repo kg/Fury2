@@ -34,7 +34,9 @@ Option Explicit
 '    License along with this library; if not, write to the Free Software
 '    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 '
+Implements Fury2Object
 Implements IVirtualFileCollection
+Implements IVirtualFileSaveable
 
 Public Parent As Fury2Joystick
 
@@ -157,3 +159,10 @@ Private Sub IVirtualFileCollection_SaveHeader(File As libGraphics.VirtualFile)
     With File
     End With
 End Sub
+
+Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
+End Sub
+
+Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
+End Sub
+

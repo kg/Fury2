@@ -34,6 +34,7 @@ Public Sub Resize(ByVal Width As Long, ByVal Height As Long)
 On Error Resume Next
     Width = ClipValue(Width, 1, 1024)
     Height = ClipValue(Height, 1, 1024)
+    If Width = m_mshParam.Width And Height = m_mshParam.Height Then Exit Sub
     ReDim m_mpPoints(0 To Width - 1, 0 To Height - 1)
     With m_mshParam
         .Width = Width
@@ -93,6 +94,13 @@ End Sub
 Public Sub TranslateAll(ByVal X As Single, ByVal Y As Single)
 On Error Resume Next
     TranslateMesh m_mshParam, X, Y
+End Sub
+
+Public Sub ApplyHeightmap(ByVal Heightmap As Fury2Image, Optional ByVal Rectangle As Fury2Rect = Nothing, Optional ByVal ScaleFactor As Single = 1#)
+On Error Resume Next
+    If Heightmap Is Nothing Then Exit Sub
+    If Rectangle Is Nothing Then Set Rectangle = Heightmap.Rectangle
+    MeshFromHeightmap m_mshParam, Heightmap.Handle, ScaleFactor, Rectangle.GetRectangle
 End Sub
 
 Public Sub SetAll(ByVal X As Single, ByVal Y As Single)

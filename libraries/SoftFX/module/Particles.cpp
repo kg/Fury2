@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "../header/SoftFX Main.hpp"
 #include "../header/MersenneTwister.h"
+#include "../header/Fury2.hpp"
 #include "../header/Particles.hpp"
 #include "../header/Filters.hpp"
 #include "../header/Blitters.hpp"
@@ -173,8 +174,10 @@ void ParticleEngine::render(ParticleCamera& camera) {
   for (int r = 0; r < camera.RenderTargetCount; r++) {
     Rectangle clip;
     clip = camera.Rectangle;
-    camera.pRenderTargets[r]->clipRectangle(&clip);
-    camera.pRenderTargets[r]->setClipRectangle(&clip);
+    if (camera.pRenderTargets[r]) {
+      camera.pRenderTargets[r]->clipRectangle(&clip);
+      camera.pRenderTargets[r]->setClipRectangle(&clip);
+    }
   }
 
   int t = 0;
@@ -186,22 +189,24 @@ void ParticleEngine::render(ParticleCamera& camera) {
     iter = listiter->begin();
     state.poly.Allocate(4);
     state.type = (*typeiter);
-    state.renderTarget = camera.pRenderTargets[ClipValue(state.type->RenderTarget, 0, camera.RenderTargetCount)];
-    state.renderer = getRenderer(state.type->RenderMode);
-    state.theta = 0;
-    state.distance = 0;
-    if (state.type->RenderType == prtGraphic) {
-      if (state.type->Graphic) {
-        Image* f = state.type->Graphic->pFrames[0];
-        float w = f->Width / 2, h = f->Height / 2;
-        state.theta = atan2(h, w);
-        state.distance = sqrt((w * w) + (h * h));
+    state.renderTarget = camera.pRenderTargets[ClipValue(state.type->RenderTarget, camera.RenderTargetCount)];
+    if (state.renderTarget) {
+      state.renderer = getRenderer(state.type->RenderMode);
+      state.theta = 0;
+      state.distance = 0;
+      if (state.type->RenderType == prtGraphic) {
+        if (state.type->Graphic) {
+          Image* f = state.type->Graphic->pFrames[0];
+          float w = f->Width / 2, h = f->Height / 2;
+          state.theta = atan2(h, w);
+          state.distance = sqrt((w * w) + (h * h));
+        }
       }
-    }
-    while (i--) {
-      state.particle = &(*iter);
-      iter->render(state);
-      ++iter;
+      while (i--) {
+        state.particle = &(*iter);
+        iter->render(state);
+        ++iter;
+      }
     }
     ++listiter;
     ++typeiter;
@@ -209,7 +214,9 @@ void ParticleEngine::render(ParticleCamera& camera) {
   }
 
   for (int r = 0; r < camera.RenderTargetCount; r++) {
-    camera.pRenderTargets[r]->setClipRectangle(camera.pRenderTargets[r]->getRectangle());
+    if (camera.pRenderTargets[r]) {
+      camera.pRenderTargets[r]->setClipRectangle(camera.pRenderTargets[r]->getRectangle());
+    }
   }
 }
 
@@ -221,6 +228,8 @@ void ParticleEngine::tick(float elapsed) {
   ParticleTypeList::iterator typeiter;
   ParticleModifierList::iterator modifier;
   ParticleGeneratorList::iterator generator;
+  ParticleDieEvent evt;
+  evt.engine = this;
   bool kill = false;
 
   generator = this->Generators.begin();
@@ -235,6 +244,8 @@ void ParticleEngine::tick(float elapsed) {
   countiter = this->ParticleCounts.begin();
   while (typeiter != this->Types.end()) {
     state.type = (*typeiter);
+    evt.type = state.type;
+    evt.UserData = evt.type->UserData;
     state.typeList = &(*listiter);
     int i = 0;
     int c = *countiter;
@@ -264,7 +275,8 @@ void ParticleEngine::tick(float elapsed) {
       kill = false;
       kill = iter->tick(state);
       if (kill) {
-        if (state.type->DieCallback) state.type->DieCallback(this, state.type, state.particle, state.type->UserData);
+        evt.particle = state.particle;
+        if (state.type->DieCallback) state.type->DieCallback(&evt);
         Particle temp = (*listiter)[c - 1];
         (*listiter)[c - 1] = *iter;
         *iter = temp;
@@ -288,6 +300,7 @@ void ParticleEngine::tick(float elapsed) {
   p.id = this->New##id + (this->Random##id * (engine.RNG.rand()));
 
 void ParticleGenerator::tick(ParticleEngineState& state) {
+  if (this->Life == 0) return;
   ParticleEngine& engine = *(state.engine);
   float d = this->GenerateDelay;
   if (d == 0) d = 1;
@@ -296,16 +309,21 @@ void ParticleGenerator::tick(ParticleEngineState& state) {
   this->CurrentDelay += state.elapsed;
   while (this->CurrentDelay > d) {
     this->CurrentDelay -= d;
+    if (this->Life > 0) {
+      this->Life -= 1;
+      if (this->Life < 0) 
+        this->Life = 0;
+    }
     Particle p;
     p.Type = this->Type;
     p.Frame = 0;
-    int t = ClipValue(this->Type, 0, engine.Types.size() - 1);
+    int t = ClipValue(this->Type, engine.Types.size() - 1);
     ParticleListList::iterator list = engine.Particles.begin();
     while (t--) {
       ++list;
     }
     int i = this->GenerateRate;
-    engine.prespawn(*list, i + engine.ParticleCounts[ClipValue(this->Type, 0, engine.Types.size() - 1)]);
+    engine.prespawn(*list, i + engine.ParticleCounts[ClipValue(this->Type, engine.Types.size() - 1)]);
     while (i--) {
       float ri = (this->GenerateRotation + (this->RandomGenerateRotation * engine.RNG.rand()));
       float r = (this->CurrentRotation * Radian);
@@ -328,6 +346,7 @@ void ParticleGenerator::tick(ParticleEngineState& state) {
       engine.spawn(p, *list);
       this->CurrentRotation += ri;
     }
+    this->CurrentRotation = NormalizeAngle(this->CurrentRotation);
   }
 }
 
@@ -340,6 +359,10 @@ void ParticleModifier::tick(ParticleEngineState& state) {
   if (particle.Y > this->Area.Y2) return;
   float xd = particle.X - this->X;
   float yd = particle.Y - this->Y;
+  if (this->Range > 0) {
+    if (xd > this->Range) return;
+    if (yd > this->Range) return;
+  }
   float distance2 = (xd * xd) + (yd * yd);
   float distance = sqrt(distance2);
   float weight = state.elapsed;
@@ -360,9 +383,37 @@ void ParticleModifier::tick(ParticleEngineState& state) {
   }
 }
 
+FPoint generateReflectionVector(FPoint N, FPoint I) {
+  // R= 2*(-I dot N)*N + I 
+  // I and N normalized
+  I /= I.length();
+  N /= N.length();
+  float dot = N.dot(-I);
+  FPoint R = N;
+  R *= 2.0f * dot;
+  R += I;
+  R /= R.length();
+  return R;
+}
+
+FPoint selectNormal(FPoint N, FPoint iP, FPoint pP) {
+    FPoint t = iP; t += N;
+    float d1 = (t.distance(&(pP)));
+    t = iP; t -= N;
+    float d2 = (t.distance(&(pP)));
+    if (d2 > d1)
+      N = -N;
+    return N;
+}
+
 bool Particle::tick(ParticleEngineState& state) {
   ParticleEngine& engine = *(state.engine);
   ParticleType& type = *(state.type);
+  ParticleCollideEvent evt;
+  evt.engine = &engine;
+  evt.type = &type;
+  evt.particle = this;
+  evt.UserData = type.UserData;
   decayUpdate(this, type, X);
   decayUpdate(this, type, Y);
   decayUpdate(this, type, A);
@@ -371,8 +422,143 @@ bool Particle::tick(ParticleEngineState& state) {
   //propUpdate(this, type, Y);
   //propUpdate(this, type, A);
   //propUpdate(this, type, L);
-  this->X += this->XV * state.elapsed;
-  this->Y += this->YV * state.elapsed;
+  FPoint newLocation;
+  newLocation.X = this->X + this->XV * state.elapsed;
+  newLocation.Y = this->Y + this->YV * state.elapsed;
+  if ((type.EnableCollision != 0)) {
+    float time = state.elapsed;
+    FLine path;
+    FPoint I;
+    FPoint ipt;
+    FPoint ivec;
+    path.Start.X = this->X;
+    path.Start.Y = this->Y;
+    path.End = newLocation;
+    I = path.vector();
+    FRect bounds = path.bounds();
+    if (engine.Surfaces != 0) {
+      CollisionMatrix* matrix;
+      matrix = engine.Surfaces;
+      int sx1 = (bounds.X1 / matrix->SectorWidth) - 1, sy1 = (bounds.Y1 / matrix->SectorHeight) - 1, sx2 = (bounds.X2 / matrix->SectorWidth) + 1, sy2 = (bounds.Y2 / matrix->SectorHeight) + 1;
+//      bool done = false;
+      for (int sy = sy1; sy <= sy2; sy++) {
+        for (int sx = sx1; sx <= sx2; sx++) {
+          CollisionSector* sector;
+          sector = engine.Surfaces->getSector(sx, sy);
+          if ((sector != 0)) {
+            std::vector<FLine>::iterator iter = sector->Lines.begin();
+            std::vector<FLine>::iterator enditer = sector->Lines.end();
+            while (iter != enditer) {
+              FLine test = *iter;
+              test.extend(ParticleLineExtension);
+              if (test.intersect(path, ipt)) {
+                if (type.CollisionResponse != 0.0f) {
+                  FPoint N = selectNormal(iter->normal(), ipt, path.Start);
+                  FPoint R = generateReflectionVector(N, I);
+                  R *= sqrt((this->XV * this->XV) + (this->YV * this->YV)) * type.CollisionResponse;
+                  ivec = ipt;
+                  ivec -= path.Start;
+                  ivec /= I;
+                  this->X = ipt.X - (this->XV * CollisionEpsilon);
+                  this->Y = ipt.Y - (this->YV * CollisionEpsilon);
+                  evt.vector = &R;
+                  evt.sprite = 0;
+                  if (state.type->CollideCallback) state.type->CollideCallback(&evt);
+                  this->XV = R.X;
+                  this->YV = R.Y;
+                  time -= ivec.length() * state.elapsed;
+                  newLocation.X = this->X + (this->XV * time);
+                  newLocation.Y = this->Y + (this->YV * time);
+                  path.Start.X = this->X;
+                  path.Start.Y = this->Y;
+                  if (time <= 0) {
+                    newLocation = path.Start;
+                    path.End = path.Start;
+                    iter = enditer;
+                  } else {
+                    path.End = newLocation;
+                    I = path.vector();
+                  }
+//                  assert(!(test.intersect(path, ipt)));
+                } else {
+                  this->X = ipt.X - (this->XV * CollisionEpsilon);
+                  this->Y = ipt.Y - (this->YV * CollisionEpsilon);
+                  newLocation.X = this->X;
+                  newLocation.Y = this->Y;
+                  this->XV = 0;
+                  this->YV = 0;
+                }
+              }
+              if (iter != enditer) 
+                ++iter;
+            }
+          }
+        }
+      }
+    }
+    if (engine.Sprites != 0) {
+      SpriteParam** list = engine.Sprites;
+      SpriteParam* guardian = reinterpret_cast<SpriteParam*>((void*)-1);
+      if (*list == guardian) list = 0;
+      while (list) {
+        SpriteParam* current = *list;
+        while (current) {
+          FRect spriteRect = current->getRect();
+          for (int e = 0; e < 4; e++) {
+            FLine test = spriteRect.edge(e);
+            test.extend(ParticleLineExtension);
+            if (test.intersect(path, ipt)) {
+              if (type.CollisionResponse != 0.0f) {
+                FPoint N = selectNormal(test.normal(), ipt, path.Start);
+                FPoint R = generateReflectionVector(N, I);
+                R *= sqrt((this->XV * this->XV) + (this->YV * this->YV)) * type.CollisionResponse;
+                ivec = ipt;
+                ivec -= path.Start;
+                ivec /= I;
+                this->X = ipt.X - (this->XV * CollisionEpsilon);
+                this->Y = ipt.Y - (this->YV * CollisionEpsilon);
+                evt.vector = &R;
+                evt.sprite = current;
+                if (state.type->CollideCallback) state.type->CollideCallback(&evt);
+                this->XV = R.X;
+                this->YV = R.Y;
+                time -= ivec.length() * state.elapsed;
+                newLocation.X = this->X + (this->XV * time);
+                newLocation.Y = this->Y + (this->YV * time);
+                path.Start.X = this->X;
+                path.Start.Y = this->Y;
+                if (time <= 0) {
+                  newLocation = path.Start;
+                  path.End = path.Start;
+                  current = 0;
+                } else {
+                  path.End = newLocation;
+                  I = path.vector();
+                }
+  //              assert(!(test.intersect(path, ipt)));
+              } else {
+                this->X = ipt.X - (this->XV * CollisionEpsilon);
+                this->Y = ipt.Y - (this->YV * CollisionEpsilon);
+                newLocation.X = this->X;
+                newLocation.Y = this->Y;
+                this->XV = 0;
+                this->YV = 0;
+              }
+            }
+          }
+          if (current) 
+            current = current->pNext;
+        }
+        list++;
+        if (*list == guardian) list = 0;
+      }
+    }
+    this->X = newLocation.X;
+    this->Y = newLocation.Y;
+  } else {
+    this->X = newLocation.X;
+    this->Y = newLocation.Y;
+  }
   this->A += this->AV * state.elapsed;
   this->L += this->LV * state.elapsed;
   if ((type.LBehavior == plbRemove) && (this->L <= ParticleMinimumL)) return true;
@@ -685,6 +871,14 @@ Export int SpawnParticle(ParticleEngine *Engine, Particle *NewParticle) {
   return Success;
 }
 
+Export int TickGenerator(ParticleEngine *Engine, ParticleGenerator *Generator, float elapsed) {
+  if (!Engine) return Failure;
+  if (!Generator) return Failure;
+  ParticleEngineState state = ParticleEngineState(*Engine, elapsed);
+  Generator->tick(state);
+  return Success;
+}
+
 Export int EmptyParticleEngine(ParticleEngine *Engine) {
   if (!Engine) return Failure;
   ParticleListList::iterator liter = Engine->Particles.begin();
@@ -702,6 +896,18 @@ Export int SetParticleEngineSize(ParticleEngine *Engine, FRect *Size) {
   if (!Engine) return Failure;
   if (!Size) return Failure;
   Engine->Size = *Size;
+  return Success;
+}
+
+Export int SetParticleEngineSprites(ParticleEngine *Engine, SpriteParam** FirstSprite) {
+  if (!Engine) return Failure;
+  Engine->Sprites = FirstSprite;
+  return Success;
+}
+
+Export int SetParticleEngineCollisionMatrix(ParticleEngine *Engine, CollisionMatrix *Matrix) {
+  if (!Engine) return Failure;
+  Engine->Surfaces = Matrix;
   return Success;
 }
 

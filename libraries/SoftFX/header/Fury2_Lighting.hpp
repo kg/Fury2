@@ -69,6 +69,7 @@ namespace Lighting {
     Byte Fuzziness;
     Byte Reserved[2];
     Rectangle Rect;
+    int FalloffDistance2;
   };
 
   class Obstruction {
@@ -162,7 +163,7 @@ namespace Lighting {
     }
   }
 
-  static const int DefaultSectorSize = 128;
+  static const int DefaultSectorSize = 64;
 
   class Sector {
 	public:

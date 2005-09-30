@@ -17,11 +17,19 @@ namespace Tags {
 		static const unsigned int Key = 0x4F474C;
 		static const unsigned int ValueIndex = 6;
 	};
+	namespace Framebuffer {
+		static const unsigned int KeyIndex = 7;
+		static const unsigned int Key = 0x4F474D;
+		static const unsigned int ValueIndex = 6;
+	};
   namespace Texture {
     static const unsigned int ValueIndex = 5;
   };
   namespace DC {
     static const unsigned int ValueIndex = 4;
+  };
+  namespace Pointer {
+    static const unsigned int ValueIndex = 3;
   };
 };
 

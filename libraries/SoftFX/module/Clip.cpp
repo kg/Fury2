@@ -99,10 +99,12 @@ Export int Clip2D_SimpleRect(Rectangle *Rect, Image *Dest, Image *Source, Rectan
         Rect->Top = Dest->ClipRectangle.Top;
     }
     if (SX < 0) {
+        Rect->Left -= SX;
         Rect->Width += SX;
         SX = 0;
     }
     if (SY < 0) {
+        Rect->Top -= SY;
         Rect->Height += SY;
         SY = 0;
     }

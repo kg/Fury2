@@ -220,6 +220,8 @@ struct CameraParam {
     int RenderTargetCount;
     Rectangle Rectangle;
     float Alpha;
+    float ParallaxX;
+    float ParallaxY;
     int ViewportX;
     int ViewportY;
 

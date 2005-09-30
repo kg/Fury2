@@ -597,12 +597,17 @@ Dim l_frmHost As Form
     m_evtShow.Invoke
     RaiseEvent Show
     ResetItems
+'    Set Host = frmMenu
     Set Host = New frmMenu
     Set Host.This.Menu = Me
     Host.This.Visible = False
     Load Host.This
     Host.This.Visible = False
     Reflow
+    If (x + IdealWidth) > (Screen.Width / Screen.TwipsPerPixelX) Then x = ((Screen.Width / Screen.TwipsPerPixelX) - IdealWidth)
+    If (y + IdealHeight) > (Screen.Height / Screen.TwipsPerPixelY) Then y = ((Screen.Height / Screen.TwipsPerPixelY) - IdealHeight)
+    If (x < 0) Then x = 0
+    If (y < 0) Then y = 0
     Host.This.Move x * Screen.TwipsPerPixelX, y * Screen.TwipsPerPixelY, (IdealWidth * Screen.TwipsPerPixelX) + Host.This.BorderWidth * 2, (IdealHeight * Screen.TwipsPerPixelY) + Host.This.BorderWidth * 2
     Host.This.SetParent Parent
     SetFocus Host.hwnd

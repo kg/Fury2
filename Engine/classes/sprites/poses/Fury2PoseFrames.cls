@@ -36,6 +36,7 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 Implements Fury2Object
 Implements IVirtualFileCollection
+Implements IVirtualFileSaveable
 Implements IInspectableCollection
 Private m_posParent As Fury2Pose
 Private mCol As Collection
@@ -365,4 +366,11 @@ Dim m_lngItems As Long, m_objItem As Fury2PoseFrame
         m_lngItems = m_lngItems + 1
     Next m_objItem
 End Function
+
+
+Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
+End Sub
+
+Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
+End Sub
 

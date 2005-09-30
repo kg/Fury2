@@ -116,7 +116,10 @@ Dim l_booEvent As Boolean
     If l_booEvent = True Then
         m_sngLastActivate = Engine.HiTimer
         Engine.ControlActivate Me
-        ActivateEvent.Invoke
+        If ActivateEvent Is Nothing Then
+        Else
+            ActivateEvent.Invoke
+        End If
     End If
 End Sub
 
@@ -129,7 +132,10 @@ Dim l_booEvent As Boolean
     If m_lngState < 0 Then m_lngState = 0
     If l_booEvent Then
         Engine.ControlDeactivate Me
-        DeactivateEvent.Invoke
+        If DeactivateEvent Is Nothing Then
+        Else
+            DeactivateEvent.Invoke
+        End If
     End If
 End Sub
 

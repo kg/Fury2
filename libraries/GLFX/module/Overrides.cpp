@@ -7,10 +7,39 @@ using namespace GL;
 using namespace BlendModes;
 using namespace ScaleModes;
 
+#define defFilter(name, shadername) \
+  defOverride(FilterSimple_##name) { \
+  readParam(int, Image, 0); \
+  contextCheck(Image); \
+  shaderCheck(); \
+  lockCheck(Image); \
+  readParamRect(Area, 1, Image); \
+  selectContext(Image); \
+  clipCheck(Image, Area); \
+  enableTextures(); \
+  selectImageAsTextureN<0>(Image); \
+  setBlendMode<Normal>(); \
+  setVertexColor(White); \
+  setBlendColor(White); \
+  GLSL::Program* shader = Global->GetShader(std::string(shadername)); \
+  GLSL::useProgram(*shader); \
+  FilterSimple_Shader_Core(Parameters, shader); \
+  GLSL::disableProgram(); \
+  SetImageDirty(Image, 1); \
+  return Success; \
+}
+
 #define contextCheck(param) \
-  if (!checkNamedTag(param, Context)) { return Failure; }
+  if (checkNamedTag(param, Framebuffer)) { GL::setFramebuffer(reinterpret_cast<Framebuffer*>(getNamedTag(param, Framebuffer))); } \
+  else if (!checkNamedTag(param, Context)) { return Failure; } \
+  else { GL::setFramebuffer(0); }
+#define contextSwitch(param) \
+  if (checkNamedTag(param, Framebuffer)) { GL::setFramebuffer(reinterpret_cast<Framebuffer*>(getNamedTag(param, Framebuffer))); } \
+  else { GL::setFramebuffer(0); }
 #define lockCheck(param) \
   if (!GetImageLocked(param)) { return Failure; }
+#define shaderCheck() \
+  if (!GLSL::isSupported()) { return Failure; }
 #define clipCheck(img, rect) \
   if (!ClipRectangle_ImageClipRect(&rect, img)) return Trivial_Success;
 
@@ -91,7 +120,7 @@ void setMaskRenderer(int Renderer, Pixel RenderArgument) {
   }
 }
 
-defOverride(Allocate) {
+defOverride(Allocate_Context) {
 	readParam(int, Image, 0);
 	readParam(int, Width, 1);
 	readParam(int, Height, 2);
@@ -140,12 +169,164 @@ defOverride(Allocate) {
   glLineWidth(1.0f);
   setNamedTagAndKey(Image, Context, Global->Context);
   setNamedTag(Image, DC, Global->DC);
+  setNamedTag(Image, Pointer, malloc(Width * Height * 4));
   SetImageWidth(Image, Width);
   SetImageHeight(Image, Height);
   SetImagePitch(Image, 0);
   SetImagePointer(Image, Null);
   SetImageLocked(Image, true);
+	return Success;
+}
+
+defOverride(Allocate_Framebuffer) {
+	readParam(int, Image, 0);
+	readParam(int, Width, 1);
+	readParam(int, Height, 2);
+  if (Width < 1) return 0;
+  if (Height < 1) return 0;
+  if (Image == Null) return 0;
+  if (GLEW_EXT_framebuffer_object) {
+    Framebuffer* buffer = new Framebuffer();
+    Texture* tex = GL::createTexture(Width, Height, false);
+    tex->flipVertical();
+    buffer->Image = Image;
+    buffer->AttachedTexture = tex;
+    buffer->Width = Width;
+    buffer->Height = Height;
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->Handle);
+    Global->checkError();
+    buffer->attachTexture(*tex);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+    Global->checkError();
+    setNamedTagAndKey(Image, Framebuffer, buffer);
+    setNamedTag(Image, Texture, tex);
+    setNamedTag(Image, Pointer, malloc(Width * Height * 4));
+    SetImageWidth(Image, Width);
+    SetImageHeight(Image, Height);
+    SetImagePitch(Image, 0);
+    SetImagePointer(Image, Null);
+    SetImageLocked(Image, true);
+  }
+	return Success;
+}
+
+defOverride(Allocate) {
+	readParam(int, Image, 0);
+	readParam(int, Width, 1);
+	readParam(int, Height, 2);
+  if (Width < 1) return 0;
+  if (Height < 1) return 0;
+  if (Image == Null) return 0;
+  if (checkNamedTag(Image, Framebuffer)) {
+    return _Allocate_Framebuffer(Parameters);
+  } else if (checkNamedTag(Image, Context)) {
+    return _Allocate_Context(Parameters);
+  } else {
+    return 0;
+  }
 	return 0;
+}
+
+void BlitSimple_Core(Override::OverrideParameters *Parameters) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParamRect(Area, 2, Null);
+  readParam(int, SourceX, 3);
+  readParam(int, SourceY, 4);
+  FX::Rectangle AreaCopy = Area;
+  if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
+    selectImageAsTexture(Source);
+    selectImageAsTexture(Source);
+    enableTextures();
+    setScaleMode<Linear>();
+    contextSwitch(Dest);
+    Texture* tex = getTexture(Source);
+    if ((Area.Width == tex->Width) && (Area.Height == tex->Height) && (SourceX == 0) && (SourceY == 0)) { 
+      drawTexturedRectangle(Area, tex->U1, tex->V1, tex->U2, tex->V2);
+    } else {
+      float U1 = tex->U(SourceX), V1 = tex->V(SourceY);
+      float U2 = tex->U(SourceX + Area.Width), V2 = tex->V(SourceY + Area.Height);
+      drawTexturedRectangle(Area, U1, V1, U2, V2);
+    }
+    SetImageDirty(Dest, 1);
+  }
+}
+
+void BlitSimple_Shader_Core(Override::OverrideParameters *Parameters, GLSL::Program* shader) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParamRect(Area, 2, Null);
+  readParam(int, SourceX, 3);
+  readParam(int, SourceY, 4);
+  FX::Rectangle AreaCopy = Area;
+  if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
+    enableTextures();
+    selectImageAsTexture(Source);
+    selectImageAsTexture(Source);
+    setScaleMode<Linear>();
+    contextSwitch(Dest);
+    Texture* tex = getTexture(Source);
+    initShaderVariables(shader);
+    if ((Area.Width == tex->Width) && (Area.Height == tex->Height) && (SourceX == 0) && (SourceY == 0)) { 
+      drawTexturedRectangle(Area, tex->U1, tex->V1, tex->U2, tex->V2);
+    } else {
+      float U1 = tex->U(SourceX), V1 = tex->V(SourceY);
+      float U2 = tex->U(SourceX + Area.Width), V2 = tex->V(SourceY + Area.Height);
+      drawTexturedRectangle(Area, U1, V1, U2, V2);
+    }
+    SetImageDirty(Dest, 1);
+  }
+}
+
+void FilterSimple_Shader_Core(Override::OverrideParameters *Parameters, GLSL::Program* shader) {
+  readParam(int, Dest, 0);
+  readParamRect(Area, 1, Null);
+  FX::Rectangle AreaCopy = Area;
+  if (ClipRectangle_ImageClipRect(&Area, Dest)) {
+    enableTextures();
+    selectImageAsTexture(Dest);
+    selectImageAsTexture(Dest);
+    contextSwitch(Dest);
+    setScaleMode<Linear>();
+    Texture* tex = getTexture(Dest);
+    initShaderVariables(shader);
+    if ((Area.Width == tex->Width) && (Area.Height == tex->Height) && (Area.Left == 0) && (Area.Top == 0)) { 
+      drawTexturedRectangle(Area, tex->U1, tex->V1, tex->U2, tex->V2);
+    } else {
+      float U1 = tex->U(Area.Left), V1 = tex->V(Area.Top);
+      float U2 = tex->U(Area.right()), V2 = tex->V(Area.bottom());
+      drawTexturedRectangle(Area, U1, V1, U2, V2);
+    }
+    SetImageDirty(Dest, 1);
+  }
+}
+
+void BlitSimple_FBTex_Core(Override::OverrideParameters *Parameters) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParamRect(Area, 2, Null);
+  readParam(int, SourceX, 3);
+  readParam(int, SourceY, 4);
+  FX::Rectangle AreaCopy = Area;
+  if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
+//    copyFramebufferToTexture(getTexture(Dest), Dest);
+    selectImageAsTextureN<0>(Source);
+    selectImageAsTextureN<1>(Dest);
+    selectImageAsTextureN<0>(Source);
+    selectImageAsTextureN<1>(Dest);
+    enableTexture<0>();
+    enableTexture<1>();
+    setScaleMode<Linear>();
+    contextSwitch(Dest);
+    Texture* tex = getTexture(Source);
+    Texture* fbtex = getTexture(Dest);
+    float U1 = tex->U(SourceX), V1 = tex->V(SourceY);
+    float U2 = tex->U(SourceX + Area.Width), V2 = tex->V(SourceY + Area.Height);
+    float U3 = fbtex->U(Area.Left), V3 = fbtex->V(Area.Top);
+    float U4 = fbtex->U(Area.right()), V4 = fbtex->V(Area.bottom());
+    draw2TexturedRectangle(Area, U1, V1, U2, V2, U3, V3, U4, V4);
+    SetImageDirty(Dest, 1);
+  }
 }
 
 defOverride(Clear) {
@@ -165,23 +346,47 @@ defOverride(Lock) {
   contextCheck(Image);
   if (GetImageLocked(Image)) return Failure;
   if (GetImageDirty(Image)) {
-    copyImageToFramebuffer(Image);
+    if (checkNamedTag(Image, Context)) {
+      copyImageToFramebuffer(Image);
+      SetImageLocked(Image, 1);
+      SetImagePointer(Image, 0);
+      SetImageDirty(Image, 0);
+      return Success;
+    } else if (checkNamedTag(Image, Framebuffer)) {
+      Framebuffer* buffer = (Framebuffer*)getNamedTag(Image, Framebuffer);
+      GL::setFramebuffer(buffer);
+      copyImageToFramebuffer(Image);
+      SetImageLocked(Image, 1);
+      SetImagePointer(Image, 0);
+      SetImageDirty(Image, 0);
+      return Success;
+    }
   }
-  SetImageLocked(Image, 1);
-  SetImageDirty(Image, 0);
-  return Success;
+  return Failure;
 }
 
 defOverride(Unlock) {
   readParam(int, Image, 0);
   contextCheck(Image);
   if (!GetImageLocked(Image)) return Failure;
-  SetImageLocked(Image, 0);
   if (GetImageDirty(Image)) {
-    copyFramebufferToImage(Image);
+    if (checkNamedTag(Image, Context)) {
+      SetImagePointer(Image, (void*)getNamedTag(Image, Pointer));
+      SetImageLocked(Image, 0);
+      SetImageDirty(Image, 0);
+      copyFramebufferToImage(Image);
+      return Success;
+    } else if (checkNamedTag(Image, Framebuffer)) {
+      SetImagePointer(Image, (void*)getNamedTag(Image, Pointer));
+      SetImageLocked(Image, 0);
+      SetImageDirty(Image, 0);
+      Framebuffer* buffer = (Framebuffer*)getNamedTag(Image, Framebuffer);
+      GL::setFramebuffer(buffer);
+      copyFramebufferToImage(Image);
+      return Success;
+    }
   }
-  SetImageDirty(Image, 0);
-  return Success;
+  return Failure;
 }
 
 defOverride(FilterSimple_Fill) {
@@ -197,6 +402,93 @@ defOverride(FilterSimple_Fill) {
   setVertexColor(Color);
   setBlendColor(White);
   drawRectangle(Area);
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Fill_Channel) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(int, Channel, 2);
+  readParam(int, Value, 3);
+  selectContext(Image);
+  clipCheck(Image, Area);
+  disableTextures();
+  setBlendMode<Subtractive>();
+  Pixel ChannelMask = Pixel(0, 0, 0, 0);
+  ChannelMask[Channel] = 255;
+  setVertexColor(ChannelMask);
+  setBlendColor(White);
+  drawRectangle(Area);
+  setBlendMode<Additive>();
+  ChannelMask[Channel] = Value;
+  setVertexColor(ChannelMask);
+  drawRectangle(Area);
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Invert_Channel) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  shaderCheck();
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(int, Channel, 2);
+  selectContext(Image);
+  clipCheck(Image, Area);
+  enableTextures();
+  selectImageAsTextureN<0>(Image);
+  setBlendMode<Normal>();
+  setVertexColor(White);
+  setBlendColor(White);
+  GLSL::Program* shader = Global->GetShader(std::string("invert_channel"));
+  GLSL::useProgram(*shader);
+  if (Channel == 0) {
+    Channel = 2;
+  } else if (Channel == 2) {
+    Channel = 0;
+  }
+  shader->getVariable("channel").set(Channel);
+  FilterSimple_Shader_Core(Parameters, shader);
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Swap_Channels) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  shaderCheck();
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(int, Channel1, 2);
+  readParam(int, Channel2, 3);
+  selectContext(Image);
+  clipCheck(Image, Area);
+  enableTextures();
+  selectImageAsTextureN<0>(Image);
+  setBlendMode<Normal>();
+  setVertexColor(White);
+  setBlendColor(White);
+  GLSL::Program* shader = Global->GetShader(std::string("swap_channels"));
+  GLSL::useProgram(*shader);
+  if (Channel1 == 0) {
+    Channel1 = 2;
+  } else if (Channel1 == 2) {
+    Channel1 = 0;
+  }
+  if (Channel2 == 0) {
+    Channel2 = 2;
+  } else if (Channel2 == 2) {
+    Channel2 = 0;
+  }
+  shader->getVariable("channel1").set(Channel1);
+  shader->getVariable("channel2").set(Channel2);
+  FilterSimple_Shader_Core(Parameters, shader);
+  GLSL::disableProgram();
   SetImageDirty(Image, 1);
   return Success;
 }
@@ -324,61 +616,6 @@ defOverride(FilterSimple_Fill_Subtractive_Opacity) {
   return Success;
 }
 
-void BlitSimple_Core(Override::OverrideParameters *Parameters) {
-  readParam(int, Dest, 0);
-  readParam(int, Source, 1);
-  readParamRect(Area, 2, Null);
-  readParam(int, SourceX, 3);
-  readParam(int, SourceY, 4);
-  FX::Rectangle AreaCopy = Area;
-  if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
-    enableTextures();
-    selectImageAsTexture(Source);
-    setScaleMode<Linear>();
-    Texture* tex = getTexture(Source);
-    if ((Area.Width == tex->Width) && (Area.Height == tex->Height) && (SourceX == 0) && (SourceY == 0)) { 
-      drawTexturedRectangle(Area, tex->U1, tex->V1, tex->U2, tex->V2);
-    } else {
-      float U1 = tex->U(SourceX), V1 = tex->V(SourceY);
-      float U2 = tex->U(SourceX + Area.Width), V2 = tex->V(SourceY + Area.Height);
-      drawTexturedRectangle(Area, U1, V1, U2, V2);
-    }
-    SetImageDirty(Dest, 1);
-  }
-}
-
-void BlitSimple_FBTex_Core(Override::OverrideParameters *Parameters) {
-  readParam(int, Dest, 0);
-  readParam(int, Source, 1);
-  readParamRect(Area, 2, Null);
-  readParam(int, SourceX, 3);
-  readParam(int, SourceY, 4);
-  FX::Rectangle AreaCopy = Area;
-  if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
-    selectImageAsTexture(Dest);
-    copyFramebufferToTexture(getTexture(Dest), Dest);
-    int texWidth = powerOfTwo(GetImageWidth(Source));
-    int texHeight = powerOfTwo(GetImageHeight(Source));
-    float xScale = 1.0f / texWidth;
-    float yScale = 1.0f / texHeight;
-    float U1 = (SourceX) * xScale, V1 = (SourceY) * yScale;
-    float U2 = U1 + ((Area.Width) * xScale), V2 = V1 + ((Area.Height) * yScale);
-    texWidth = powerOfTwo(GetImageWidth(Dest));
-    texHeight = powerOfTwo(GetImageHeight(Dest));
-    xScale = 1.0f / texWidth;
-    yScale = 1.0f / texHeight;
-    float U3 = (Area.Left) * xScale, V3 = (Area.Top) * yScale;
-    float U4 = U3 + (Area.Width * xScale), V4 = V3 + (Area.Height * yScale);
-    enableTexture<0>();
-    enableTexture<1>();
-    selectImageAsTextureN<0>(Source);
-    selectImageAsTextureN<1>(Dest);
-    setScaleMode<Linear>();
-    draw2TexturedRectangle(Area, U1, V1, U2, V2, U3, V3, U4, V4);
-    SetImageDirty(Dest, 1);
-  }
-}
-
 defOverride(BlitSimple_Normal) {
   readParam(int, Dest, 0);
   contextCheck(Dest);
@@ -389,6 +626,51 @@ defOverride(BlitSimple_Normal) {
   setVertexColor(White);
   setBlendColor(White);
   BlitSimple_Core(Parameters);
+  return Success;
+}
+
+defOverride(BlitSimple_Channel) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(int, DestChannel, 5);
+  readParam(int, SourceChannel, 6);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  Pixel ChannelMask = Pixel(0, 0, 0, 0);
+  ChannelMask[DestChannel] = 255;
+  selectImageAsTextureN<0>(Source);
+  disableTextures();
+  setBlendMode<Subtractive>();
+  setTextureColor(White);
+  setVertexColor(ChannelMask);
+  setBlendColor(White);
+  readParamRect(Area, 2, Null);
+  FX::Rectangle AreaCopy = Area;
+  if (ClipRectangle_ImageClipRect(&AreaCopy, Dest)) {
+    drawRectangle(AreaCopy);
+    setBlendMode<Additive>();
+    setTextureColor(White);
+    setVertexColor(White);
+    setBlendColor(White);
+    GLSL::Program* shader = Global->GetShader(std::string("copy_channel"));
+    GLSL::useProgram(*shader);
+    if (DestChannel == 0) {
+      DestChannel = 2;
+    } else if (DestChannel == 2) {
+      DestChannel = 0;
+    }
+    if (SourceChannel == 0) {
+      SourceChannel = 2;
+    } else if (SourceChannel == 2) {
+      SourceChannel = 0;
+    }
+    shader->getVariable("dest_channel").set(DestChannel);
+    shader->getVariable("source_channel").set(SourceChannel);
+    SoftFX::SetImageDirty(Source, 0);
+    BlitSimple_Shader_Core(Parameters, shader);
+    GLSL::disableProgram();
+  }
   return Success;
 }
 
@@ -807,9 +1089,10 @@ void BlitResample_Core(Override::OverrideParameters *Parameters) {
   FX::Rectangle DestCopy = DestRect;
   FX::Rectangle SourceCopy = SourceRect;
   if (Clip2D_PairedRect(&DestCopy, &SourceCopy, Dest, Source, &DestRect, &SourceRect, 0)) {
-    enableTextures();
     selectImageAsTexture(Source);
-	setScaler(Scaler);
+    enableTextures();
+	  setScaler(Scaler);
+    contextSwitch(Dest);
     Texture* tex = getTexture(Source);
     if ((SourceRect.Width == tex->Width) && (SourceRect.Height == tex->Height) && (SourceRect.Left == 0) && (SourceRect.Top == 0)) { 
       drawTexturedRectangle(DestRect, tex->U1, tex->V1, tex->U2, tex->V2);
@@ -931,28 +1214,19 @@ void BlitMask_Core(Override::OverrideParameters *Parameters) {
   readParam(int, MaskY, 7);
   FX::Rectangle AreaCopy = Area;
   if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
-    int maskWidth = GetImageWidth(Mask);
-    int maskHeight = GetImageHeight(Mask);
-    Area.Width = ClipValue(Area.Width, 0, maskWidth - MaskX);
-    Area.Height = ClipValue(Area.Height, 0, maskHeight - MaskY);
-    int texWidth = powerOfTwo(GetImageWidth(Source));
-    int texHeight = powerOfTwo(GetImageHeight(Source));
-    float xScale = 1.0f / texWidth;
-    float yScale = 1.0f / texHeight;
-    float U1 = (SourceX) * xScale, V1 = (SourceY) * yScale;
-    float U2 = U1 + ((Area.Width) * xScale), V2 = V1 + ((Area.Height) * yScale);
-    texWidth = powerOfTwo(GetImageWidth(Mask));
-    texHeight = powerOfTwo(GetImageHeight(Mask));
-    xScale = 1.0f / texWidth;
-    yScale = 1.0f / texHeight;
-    float U3 = (MaskX) * xScale, V3 = (MaskY) * yScale;
-    float U4 = U3 + (Area.Width * xScale), V4 = V3 + (Area.Height * yScale);
+    selectImageAsTextureN<0>(Source);
+    selectImageAsTextureN<1>(Mask);
+    selectImageAsTextureN<0>(Source);
+    selectImageAsTextureN<1>(Mask);
     enableTexture<0>();
     enableTexture<1>();
-    selectImageAsTextureN<0>(Source);
-    selectImageAsTextureN<1>(Mask);
-    selectImageAsTextureN<0>(Source);
-    selectImageAsTextureN<1>(Mask);
+    contextSwitch(Dest);
+    Texture* tex = getTexture(Source);
+    Texture* mtex = getTexture(Mask);
+    float U1 = tex->U(SourceX), V1 = tex->V(SourceY);
+    float U2 = tex->U(SourceX + Area.Width), V2 = tex->V(SourceY + Area.Height);
+    float U3 = mtex->U(MaskX), V3 = mtex->V(MaskY);
+    float U4 = mtex->U(MaskX + Area.Width), V4 = mtex->V(MaskY + Area.Height);
     setScaleMode<Linear>();
     draw2TexturedRectangle(Area, U1, V1, U2, V2, U3, V3, U4, V4);
     SetImageDirty(Dest, 1);
@@ -1174,6 +1448,7 @@ defOverride(SetPixel) {
   setBlendMode<Normal>();
   setBlendColor(White);
   setVertexColor(Color);
+  disableAA();
   drawPixel(X, Y);
   SetImageDirty(Image, 1);
   return Success;
@@ -1193,9 +1468,8 @@ defOverride(SetPixelAA) {
   setBlendMode<SourceAlpha>();
   setBlendColor(White);
   setVertexColor(Color);
-  glEnable(GL_POINT_SMOOTH);
+  enableAA();
   drawPixel((float)Xi + ((float)Xf / 255.0f) + 0.5f, (float)Yi + ((float)Yf / 255.0f) + 0.5f);
-  glDisable(GL_POINT_SMOOTH);
   SetImageDirty(Image, 1);
   return Success;
 }
@@ -1213,6 +1487,7 @@ defOverride(FilterSimple_Line) {
   setBlendMode<Normal>();
   setBlendColor(White);
   setVertexColor(Color);
+  disableAA();
   drawLine(start, end);
   SetImageDirty(Image, 1);
   return Success;
@@ -1250,9 +1525,8 @@ defOverride(FilterSimple_Line_AA) {
   setBlendMode<SourceAlpha>();
   setBlendColor(White);
   setVertexColor(Color);
-  glEnable(GL_LINE_SMOOTH);
+  enableAA();
   drawLine(FPoint(X1 + 0.5f, Y1 + 0.5f), FPoint(X2 + 0.5f, Y2 + 0.5f));
-  glDisable(GL_LINE_SMOOTH);
   SetImageDirty(Image, 1);
   return Success;
 }
@@ -1271,9 +1545,8 @@ defOverride(FilterSimple_Line_Gradient_AA) {
   disableTextures();
   setBlendMode<SourceAlpha>();
   setBlendColor(White);
-  glEnable(GL_LINE_SMOOTH);
+  enableAA();
   drawGradientLine(FPoint(X1 + 0.5f, Y1 + 0.5f), FPoint(X2 + 0.5f, Y2 + 0.5f), StartColor, EndColor);
-  glDisable(GL_LINE_SMOOTH);
   SetImageDirty(Image, 1);
   return Success;
 }
@@ -1291,6 +1564,7 @@ defOverride(FilterSimple_Line_Additive) {
   setBlendMode<Additive>();
   setBlendColor(White);
   setVertexColor(Color);
+  disableAA();
   drawLine(start, end);
   SetImageDirty(Image, 1);
   return Success;
@@ -1309,6 +1583,7 @@ defOverride(FilterSimple_Line_Subtractive) {
   setBlendMode<Subtractive>();
   setBlendColor(White);
   setVertexColor(Color);
+  disableAA();
   drawLine(start, end);
   SetImageDirty(Image, 1);
   return Success;
@@ -1327,6 +1602,7 @@ defOverride(FilterSimple_Line_Gradient) {
   disableTextures();
   setBlendMode<Normal>();
   setBlendColor(White);
+  disableAA();
   drawGradientLine(start, end, ColorS, ColorE);
   SetImageDirty(Image, 1);
   return Success;
@@ -1345,6 +1621,7 @@ defOverride(FilterSimple_Line_Gradient_SourceAlpha) {
   disableTextures();
   setBlendMode<SourceAlpha>();
   setBlendColor(White);
+  disableAA();
   drawGradientLine(start, end, ColorS, ColorE);
   SetImageDirty(Image, 1);
   return Success;
@@ -1362,6 +1639,7 @@ defOverride(FilterSimple_Box) {
   setBlendMode<Normal>();
   setVertexColor(Color);
   setBlendColor(White);
+  disableAA();
   drawBox(Area);
   SetImageDirty(Image, 1);
   return Success;
@@ -1379,6 +1657,7 @@ defOverride(FilterSimple_Box_SourceAlpha) {
   setBlendMode<SourceAlpha>();
   setVertexColor(Color);
   setBlendColor(White);
+  disableAA();
   drawBox(Area);
   SetImageDirty(Image, 1);
   return Success;
@@ -1405,6 +1684,193 @@ defOverride(FilterSimple_Adjust) {
   SetImageDirty(Image, 1);
   return Success;
 }
+
+defOverride(FilterSimple_Composite) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  shaderCheck();
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(Pixel, Color, 2);
+  selectContext(Image);
+  clipCheck(Image, Area);
+  enableTextures();
+  selectImageAsTextureN<0>(Image);
+  setBlendMode<Normal>();
+  setVertexColor(White);
+  setBlendColor(White);
+  GLSL::Program* shader = Global->GetShader(std::string("composite"));
+  GLSL::useProgram(*shader);
+  shader->getVariable("background_color").set(Color);
+  FilterSimple_Shader_Core(Parameters, shader);
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Gamma) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  shaderCheck();
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(float, Gamma, 2);
+  selectContext(Image);
+  clipCheck(Image, Area);
+  enableTextures();
+  selectImageAsTextureN<0>(Image);
+  setBlendMode<Normal>();
+  setVertexColor(White);
+  setBlendColor(White);
+  GLSL::Program* shader = Global->GetShader(std::string("gamma"));
+  GLSL::useProgram(*shader);
+  shader->getVariable("gamma").set(Vec4(1.0f / Gamma, 1.0f));
+  FilterSimple_Shader_Core(Parameters, shader);
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Gamma_RGB) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  shaderCheck();
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(float, RedGamma, 2);
+  readParam(float, GreenGamma, 3);
+  readParam(float, BlueGamma, 4);
+  selectContext(Image);
+  clipCheck(Image, Area);
+  enableTextures();
+  selectImageAsTextureN<0>(Image);
+  setBlendMode<Normal>();
+  setVertexColor(White);
+  setBlendColor(White);
+  GLSL::Program* shader = Global->GetShader(std::string("gamma"));
+  GLSL::useProgram(*shader);
+  shader->getVariable("gamma").set(Vec4(1.0f / RedGamma, 1.0f / GreenGamma, 1.0f / BlueGamma, 1.0f));
+  FilterSimple_Shader_Core(Parameters, shader);
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Gamma_Channel) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  shaderCheck();
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(int, Channel, 2);
+  readParam(float, Gamma, 3);
+  selectContext(Image);
+  clipCheck(Image, Area);
+  enableTextures();
+  selectImageAsTextureN<0>(Image);
+  setBlendMode<Normal>();
+  setVertexColor(White);
+  setBlendColor(White);
+  GLSL::Program* shader = Global->GetShader(std::string("gamma"));
+  GLSL::useProgram(*shader);
+  Vec4 vec = Vec4(1.0f);
+  if (Channel == 0) {
+    Channel = 2;
+  } else if (Channel == 2) {
+    Channel = 0;
+  }
+  vec.V[Channel] = 1.0f / Gamma;
+  shader->getVariable("gamma").set(vec);
+  FilterSimple_Shader_Core(Parameters, shader);
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Multiply) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  shaderCheck();
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(float, Factor, 2);
+  selectContext(Image);
+  clipCheck(Image, Area);
+  enableTextures();
+  selectImageAsTextureN<0>(Image);
+  setBlendMode<Normal>();
+  setVertexColor(White);
+  setBlendColor(White);
+  GLSL::Program* shader = Global->GetShader(std::string("multiply"));
+  GLSL::useProgram(*shader);
+  shader->getVariable("factor").set(Vec4(Factor, 1.0f));
+  FilterSimple_Shader_Core(Parameters, shader);
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Multiply_RGB) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  shaderCheck();
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(float, RedFactor, 2);
+  readParam(float, GreenFactor, 3);
+  readParam(float, BlueFactor, 4);
+  selectContext(Image);
+  clipCheck(Image, Area);
+  enableTextures();
+  selectImageAsTextureN<0>(Image);
+  setBlendMode<Normal>();
+  setVertexColor(White);
+  setBlendColor(White);
+  GLSL::Program* shader = Global->GetShader(std::string("multiply"));
+  GLSL::useProgram(*shader);
+  shader->getVariable("factor").set(Vec4(RedFactor, GreenFactor, BlueFactor, 1.0f));
+  FilterSimple_Shader_Core(Parameters, shader);
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Multiply_Channel) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  shaderCheck();
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(int, Channel, 2);
+  readParam(float, Factor, 3);
+  selectContext(Image);
+  clipCheck(Image, Area);
+  enableTextures();
+  selectImageAsTextureN<0>(Image);
+  setBlendMode<Normal>();
+  setVertexColor(White);
+  setBlendColor(White);
+  GLSL::Program* shader = Global->GetShader(std::string("multiply"));
+  GLSL::useProgram(*shader);
+  Vec4 vec = Vec4(1.0f);
+  if (Channel == 0) {
+    Channel = 2;
+  } else if (Channel == 2) {
+    Channel = 0;
+  }
+  vec.V[Channel] = Factor;
+  shader->getVariable("factor").set(vec);
+  FilterSimple_Shader_Core(Parameters, shader);
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defFilter(Grayscale, "grayscale")
+
+defFilter(Invert, "invert")
+
+defFilter(Invert_RGB, "invert_rgb")
 
 defOverride(FilterSimple_Adjust_RGB) {
   readParam(int, Image, 0);
@@ -2008,21 +2474,304 @@ defOverride(Deallocate) {
         Global->ImageHeap[i] = 0;
       }
     }
-	  if (checkNamedTag(Image, Context)) {
-      HGLRC context = (HGLRC)getNamedTag(Image, Context);
-      if (context != 0) {
-        flushImageHeap();
-        wglMakeCurrent(Global->DC, 0);
-        wglDeleteContext(context);
-        if (Global->Framebuffer == Image) {
-          Global->Framebuffer = 0;
-        }
-        SetImageLocked(Image, 0);
-      }
-      Global->Context = 0;
-	  }
   }
+  void* ptr = (void*)getNamedTag(Image, Pointer);
+  if (ptr) {
+    free(ptr);
+    setNamedTag(Image, Pointer, 0);
+  }
+	if (checkNamedTag(Image, Context)) {
+    HGLRC context = (HGLRC)getNamedTag(Image, Context);
+    if (context != 0) {
+      flushImageHeap();
+      wglMakeCurrent(Global->DC, 0);
+      wglDeleteContext(context);
+      if (Global->Framebuffer == Image) {
+        Global->Framebuffer = 0;
+      }
+      SetImageLocked(Image, 0);
+    }
+    Global->Context = 0;
+	}
+	if (checkNamedTag(Image, Framebuffer)) {
+    Framebuffer* fb = (Framebuffer*)getNamedTag(Image, Framebuffer);
+    if (fb != 0) {
+      delete fb;
+      fb = 0;
+    }
+	}
 	return Failure;
+}
+
+defOverride(BlitConvolve) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(Filter*, TheFilter, 2);
+  readParamRect(Area, 3, Null);
+  readParam(int, SourceX, 4);
+  readParam(int, SourceY, 5);
+  readParam(Pixel, RenderArgument, 6);
+  readParam(int, Renderer, 7);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  FX::Rectangle AreaCopy = Area;
+  if (!GLSL::isSupported()) return Failure;
+  GLSL::Program* program = 0;
+  if ((TheFilter->Width == 3) && (TheFilter->Height == 3)) {
+    program = Global->GetShader(std::string("convolve_3x3"));
+  } else if ((TheFilter->Width == 5) && (TheFilter->Height == 5)) {
+    program = Global->GetShader(std::string("convolve_5x5"));
+  }
+  if (program == 0) return Failure;
+  if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
+    enableTextures();
+    selectImageAsTexture(Source);
+    setRenderer(Renderer, RenderArgument);
+    setScaleMode<Linear>();
+    Texture* tex = getTexture(Source);
+    float U1 = tex->U(SourceX), V1 = tex->V(SourceY);
+    float U2 = tex->U(SourceX + Area.Width), V2 = tex->V(SourceY + Area.Height);
+    GLSL::useProgram(*program);
+    initShaderVariables(program);
+    program->getVariable("divisor").set(TheFilter->Divisor);
+    program->getVariable("offset").set(TheFilter->Offset);
+    program->getVariable("xOffset").set(TheFilter->XOffset);
+    program->getVariable("yOffset").set(TheFilter->YOffset);
+    if ((TheFilter->Width == 3) && (TheFilter->Height == 3)) {
+      program->getVariable("weights").set(reinterpret_cast<Mat3*>(TheFilter->Weights), 1);
+    } else if ((TheFilter->Width == 5) && (TheFilter->Height == 5)) {
+      program->getVariable("weights").set(reinterpret_cast<float*>(TheFilter->Weights), 25);
+    }
+    drawTexturedRectangle(Area, U1, V1, U2, V2);
+    GLSL::disableProgram();
+    SetImageDirty(Dest, 1);
+  }
+  setTextureColorN<0>(White);
+  setTextureColorN<1>(White);
+  disableTextures();
+  return Success;
+}
+
+defOverride(BlitConvolveMask) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(int, Mask, 2);
+  readParam(Filter*, TheFilter, 3);
+  readParamRect(Area, 4, Null);
+  readParam(int, SourceX, 5);
+  readParam(int, SourceY, 6);
+  readParam(int, MaskX, 7);
+  readParam(int, MaskY, 8);
+  readParam(Pixel, RenderArgument, 9);
+  readParam(int, Renderer, 10);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  FX::Rectangle AreaCopy = Area;
+  if (!GLSL::isSupported()) return Failure;
+  GLSL::Program* program = 0;
+  if ((TheFilter->Width == 3) && (TheFilter->Height == 3)) {
+    program = Global->GetShader(std::string("convolve_3x3_mask"));
+  } else if ((TheFilter->Width == 5) && (TheFilter->Height == 5)) {
+    program = Global->GetShader(std::string("convolve_5x5_mask"));
+  }
+  if (program == 0) return Failure;
+  if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
+    selectImageAsTextureN<1>(Mask);
+    selectImageAsTextureN<1>(Mask);
+    setScaleMode<Linear>();
+    selectImageAsTextureN<0>(Source);
+    selectImageAsTextureN<0>(Source);
+    setScaleMode<Linear>();
+    enableTexture<0>();
+    enableTexture<1>();
+    setRenderer(Renderer, RenderArgument);
+    Texture* tex = getTexture(Source);
+    Texture* mtex = getTexture(Mask);
+    float U1 = tex->U(SourceX), V1 = tex->V(SourceY);
+    float U2 = tex->U(SourceX + Area.Width), V2 = tex->V(SourceY + Area.Height);
+    float U3 = mtex->U(MaskX), V3 = mtex->V(MaskY);
+    float U4 = mtex->U(MaskX + Area.Width), V4 = mtex->V(MaskY + Area.Height);
+    switchTextureStage<0>();
+    GLSL::useProgram(*program);
+    initShaderVariables(program);
+    program->getVariable("tex").set(0);
+    program->getVariable("mask").set(1);
+    program->getVariable("divisor").set(TheFilter->Divisor);
+    program->getVariable("offset").set(TheFilter->Offset);
+    program->getVariable("xOffset").set(TheFilter->XOffset);
+    program->getVariable("yOffset").set(TheFilter->YOffset);
+    if ((TheFilter->Width == 3) && (TheFilter->Height == 3)) {
+      program->getVariable("weights").set(reinterpret_cast<Mat3*>(TheFilter->Weights), 1);
+    } else if ((TheFilter->Width == 5) && (TheFilter->Height == 5)) {
+      program->getVariable("weights").set(reinterpret_cast<float*>(TheFilter->Weights), 25);
+    }
+    draw2TexturedRectangle(Area, U1, V1, U2, V2, U3, V3, U4, V4);
+    GLSL::disableProgram();
+    SetImageDirty(Dest, 1);
+  }
+  setTextureColorN<0>(White);
+  setTextureColorN<1>(White);
+  disableTextures();
+  return Success;
+}
+
+int BlitDeform_GLSL(Override::OverrideParameters *Parameters) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(MeshParam*, Mesh, 2);
+  readParamRect(DestRect, 3, Null);
+  readParamRect(SourceRect, 4, Null);
+  readParam(Pixel, RenderArgument, 5);
+  readParam(int, Renderer, 6);
+  readParam(int, Scaler, 7);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  //clipCheck(Dest, DestRect);
+  if (Global->MeshTexture) {
+    if ((Global->MeshTexture->Width != Mesh->Width) || (Global->MeshTexture->Height != Mesh->Height) || (Global->MeshTexture->isInvalid())) {
+      delete Global->MeshTexture;
+      Global->MeshTexture = 0;
+    }
+  }
+  if (Global->MeshTexture) {
+  } else {
+    Global->MeshTexture = GL::createTextureEx(Mesh->Width, Mesh->Height, GL_LUMINANCE_ALPHA_FLOAT16_ATI, GL_LUMINANCE_ALPHA, GL_FLOAT);
+  }
+  enableTextures();
+  selectImageAsTextureN<0>(Source);
+  GL::switchTextureStage<0>();
+  setRenderer(Renderer, RenderArgument);
+  setScaler(Scaler);
+  GL::switchTextureStage<1>();
+  selectTextureN<1>(Global->MeshTexture->Handle);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, Global->MeshTexture->Left, Global->MeshTexture->Top, Mesh->Width, Mesh->Height, GL_LUMINANCE_ALPHA, GL_FLOAT, Mesh->pData);
+  ScaleModes::Linear_Clamp::Set();
+  GL::switchTextureStage<0>();
+
+  GLSL::Program* program = 0;
+  program = Global->GetShader(std::string("deform"));
+  if (program == 0) return Failure;
+
+  Texture* tex = getTexture(Source);
+  float U1 = tex->U(SourceRect.Left), V1 = tex->V(SourceRect.Top);
+  float U2 = tex->U(SourceRect.Left + SourceRect.Width), V2 = tex->V(SourceRect.Top + SourceRect.Height);
+  GLSL::useProgram(*program);
+  initShaderVariables(program);
+  program->getVariable("tex").set(0);
+  program->getVariable("mesh").set(1);
+  float u1, v1, u2, v2;
+  u1 = Global->MeshTexture->U(0.5);
+  v1 = Global->MeshTexture->V(0.5);
+  u2 = Global->MeshTexture->U(Global->MeshTexture->Width - 0.5);
+  v2 = Global->MeshTexture->V(Global->MeshTexture->Height - 0.5);
+  Vec2 size;
+  size.V[0] = Global->MeshTexture->U(1) - Global->MeshTexture->U(0);
+  size.V[1] = Global->MeshTexture->V(1) - Global->MeshTexture->V(0);
+  program->getVariable("meshPointSize").set(size);
+  size.V[0] = _Min(u1, u2);
+  size.V[1] = _Min(v1, v2);
+  program->getVariable("meshTopLeft").set(size);
+  size.V[0] = _Max(u1, u2);
+  size.V[1] = _Max(v1, v2);
+  program->getVariable("meshBottomRight").set(size);
+  draw2TexturedRectangle(DestRect, U1, V1, U2, V2, Global->MeshTexture->U(0), Global->MeshTexture->V(0), Global->MeshTexture->U(Mesh->Width), Global->MeshTexture->V(Mesh->Height));
+  GLSL::disableProgram();
+  SetImageDirty(Dest, 1);
+
+  endDraw();
+  setTextureColorN<0>(White);
+  setTextureColorN<1>(White);
+  disableTextures();
+  return Success;
+}
+
+int BlitDeformMask_GLSL(Override::OverrideParameters *Parameters) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(int, Mask, 2);
+  readParam(MeshParam*, Mesh, 3);
+  readParamRect(DestRect, 4, Null);
+  readParamRect(SourceRect, 5, Null);
+  readParamRect(MaskRect, 6, Null);
+  readParam(Pixel, RenderArgument, 7);
+  readParam(int, Opacity, 8);
+  readParam(int, Renderer, 9);
+  readParam(int, Scaler, 10);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  //clipCheck(Dest, DestRect);
+  if (Global->MeshTexture) {
+    if ((Global->MeshTexture->Width != Mesh->Width) || (Global->MeshTexture->Height != Mesh->Height) || (Global->MeshTexture->isInvalid())) {
+      delete Global->MeshTexture;
+      Global->MeshTexture = 0;
+    }
+  }
+  if (Global->MeshTexture) {
+  } else {
+    Global->MeshTexture = GL::createTextureEx(Mesh->Width, Mesh->Height, GL_LUMINANCE_ALPHA_FLOAT16_ATI, GL_LUMINANCE_ALPHA, GL_FLOAT);
+  }
+  enableTexture<0>();
+  enableTexture<1>();
+  enableTexture<2>();
+  selectImageAsTextureN<0>(Source);
+  selectImageAsTextureN<2>(Mask);
+  GL::switchTextureStage<0>();
+  setRenderer(Renderer, RenderArgument);
+  setScaler(Scaler);
+  GL::switchTextureStage<1>();
+  selectTextureN<1>(Global->MeshTexture->Handle);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, Global->MeshTexture->Left, Global->MeshTexture->Top, Mesh->Width, Mesh->Height, GL_LUMINANCE_ALPHA, GL_FLOAT, Mesh->pData);
+  ScaleModes::Linear_Clamp::Set();
+  GL::switchTextureStage<2>();
+  ScaleModes::Linear_Clamp::Set();
+  selectImageAsTextureN<0>(Source);
+  selectImageAsTextureN<2>(Mask);
+  GL::switchTextureStage<0>();
+
+  GLSL::Program* program = 0;
+  program = Global->GetShader(std::string("deform_mask"));
+  if (program == 0) return Failure;
+
+  Texture* tex = getTexture(Source);
+  Texture* mtex = getTexture(Mask);
+  float U1 = tex->U(SourceRect.Left), V1 = tex->V(SourceRect.Top);
+  float U2 = tex->U(SourceRect.Left + SourceRect.Width), V2 = tex->V(SourceRect.Top + SourceRect.Height);
+  float MU1 = mtex->U(MaskRect.Left), MV1 = mtex->V(MaskRect.Top);
+  float MU2 = mtex->U(MaskRect.Left + MaskRect.Width), MV2 = mtex->V(MaskRect.Top + MaskRect.Height);
+  GLSL::useProgram(*program);
+  initShaderVariables(program);
+  program->getVariable("tex").set(0);
+  program->getVariable("mesh").set(1);
+  program->getVariable("mask").set(2);
+  program->getVariable("opacity").set(Opacity / 255.0f);
+  float u1, v1, u2, v2;
+  u1 = Global->MeshTexture->U(0.5);
+  v1 = Global->MeshTexture->V(0.5);
+  u2 = Global->MeshTexture->U(Global->MeshTexture->Width - 0.5);
+  v2 = Global->MeshTexture->V(Global->MeshTexture->Height - 0.5);
+  Vec2 size;
+  size.V[0] = Global->MeshTexture->U(1) - Global->MeshTexture->U(0);
+  size.V[1] = Global->MeshTexture->V(1) - Global->MeshTexture->V(0);
+  program->getVariable("meshPointSize").set(size);
+  size.V[0] = _Min(u1, u2);
+  size.V[1] = _Min(v1, v2);
+  program->getVariable("meshTopLeft").set(size);
+  size.V[0] = _Max(u1, u2);
+  size.V[1] = _Max(v1, v2);
+  program->getVariable("meshBottomRight").set(size);
+  draw3TexturedRectangle(DestRect, U1, V1, U2, V2, Global->MeshTexture->U(0), Global->MeshTexture->V(0), Global->MeshTexture->U(Mesh->Width), Global->MeshTexture->V(Mesh->Height), MU1, MV1, MU2, MV2);
+  GLSL::disableProgram();
+  SetImageDirty(Dest, 1);
+
+  endDraw();
+  setTextureColorN<0>(White);
+  setTextureColorN<1>(White);
+  disableTextures();
+  return Success;
 }
 
 defOverride(BlitDeform) {
@@ -2037,6 +2786,9 @@ defOverride(BlitDeform) {
   contextCheck(Dest);
   lockCheck(Dest);
   selectContext(Dest);
+  if (GLSL::isSupported() && GLEW_ATI_texture_float) {
+    return BlitDeform_GLSL(Parameters);
+  }
   //clipCheck(Dest, DestRect);
   enableTextures();
   selectImageAsIsolatedTexture(Source);
@@ -2057,6 +2809,7 @@ defOverride(BlitDeform) {
   float bx = SourceRect.Left, by = SourceRect.Top;
   float bxi = (1 / (DestRect.Width / (float)(SourceRect.Width))), byi = (1 / (DestRect.Height / (float)(SourceRect.Height)));
   MeshPoint p[4];
+  disableAA();
   beginDraw(GL_LINES);
   while (iCY--) {
     iCX = (DoubleWord)DestRect.Width + 1;
@@ -2083,13 +2836,21 @@ defOverride(BlitDeform) {
         Mesh->get4Points(cx, cy, p);
         this is one of those times */
         
-        p[0] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
-        p[1] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
-        p[2] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
-        p[3] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+        int iy = ClipValue(cy, mh) * Mesh->Width;
+        int ix1 = ClipValue(cx, mw);
+        int ix2 = ClipValue(cx+1, mw);
+        p[0] = (Mesh->pData[ix1 + (iy)]);
+        p[1] = (Mesh->pData[ix2 + (iy)]);
+        iy = ClipValue(cy+1, mh) * Mesh->Width;
+        p[2] = (Mesh->pData[ix1 + (iy)]);
+        p[3] = (Mesh->pData[ix2 + (iy)]);
 
-        sx = bx + (((p[0].X * (1 - cxw) + p[1].X * cxw) * (1 - cyw) + (p[2].X * (1 - cxw) + p[3].X * cxw) * cyw));
-        sy = by + (((p[0].Y * (1 - cxw) + p[1].Y * cxw) * (1 - cyw) + (p[2].Y * (1 - cxw) + p[3].Y * cxw) * cyw)) - 0.5;
+        float xr1 = (p[0].X) + ((p[1].X - p[0].X) * cxw);
+        float xr2 = (p[2].X) + ((p[3].X - p[2].X) * cxw);
+        sx = bx + (xr1 + ((xr2 - xr1) * cyw));
+        xr1 = (p[0].Y) + ((p[1].Y - p[0].Y) * cxw);
+        xr2 = (p[2].Y) + ((p[3].Y - p[2].Y) * cxw);
+        sy = by + (xr1 + ((xr2 - xr1) * cyw)) - 0.5f;
         if (first_update) {
           first_update = false;
           bx += bxi;
@@ -2140,6 +2901,9 @@ defOverride(BlitDeformMask) {
   contextCheck(Dest);
   lockCheck(Dest);
   selectContext(Dest);
+  if (GLSL::isSupported() && GLEW_ATI_texture_float) {
+    return BlitDeformMask_GLSL(Parameters);
+  }
   //clipCheck(Dest, DestRect);
   enableTexture<0>();
   enableTexture<1>();
@@ -2166,6 +2930,7 @@ defOverride(BlitDeformMask) {
   float bx = SourceRect.Left, by = SourceRect.Top;
   float bxi = (1 / (DestRect.Width / (float)(SourceRect.Width))), byi = (1 / (DestRect.Height / (float)(SourceRect.Height)));
   MeshPoint p[4];
+  disableAA();
   beginDraw(GL_LINES);
   while (iCY--) {
     iCX = (DoubleWord)DestRect.Width + 1;
@@ -2192,13 +2957,21 @@ defOverride(BlitDeformMask) {
         Mesh->get4Points(cx, cy, p);
         this is one of those times */
         
-        p[0] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
-        p[1] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
-        p[2] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
-        p[3] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+        int iy = ClipValue(cy, mh) * Mesh->Width;
+        int ix1 = ClipValue(cx, mw);
+        int ix2 = ClipValue(cx+1, mw);
+        p[0] = (Mesh->pData[ix1 + (iy)]);
+        p[1] = (Mesh->pData[ix2 + (iy)]);
+        iy = ClipValue(cy+1, mh) * Mesh->Width;
+        p[2] = (Mesh->pData[ix1 + (iy)]);
+        p[3] = (Mesh->pData[ix2 + (iy)]);
 
-        sx = bx + (((p[0].X * (1 - cxw) + p[1].X * cxw) * (1 - cyw) + (p[2].X * (1 - cxw) + p[3].X * cxw) * cyw));
-        sy = by + (((p[0].Y * (1 - cxw) + p[1].Y * cxw) * (1 - cyw) + (p[2].Y * (1 - cxw) + p[3].Y * cxw) * cyw)) - 0.5;
+        float xr1 = (p[0].X) + ((p[1].X - p[0].X) * cxw);
+        float xr2 = (p[2].X) + ((p[3].X - p[2].X) * cxw);
+        sx = bx + (xr1 + ((xr2 - xr1) * cyw));
+        xr1 = (p[0].Y) + ((p[1].Y - p[0].Y) * cxw);
+        xr2 = (p[2].Y) + ((p[3].Y - p[2].Y) * cxw);
+        sy = by + (xr1 + ((xr2 - xr1) * cyw)) - 0.5f;
         if (first_update) {
           first_update = false;
           bx += bxi;
@@ -2238,6 +3011,7 @@ defOverride(BlitDeformMask) {
 
 Export void GLRenderFunction(int Dest, int X, int Y, void *Source, int Count) {
   if (Global->RenderTexture) {
+    disableAA();
     endDraw();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Count, 1, GL_BGRA_EXT, GL_UNSIGNED_BYTE, Source);
     GL::drawTexturedLine(X, Y + 1, X + Count, Y + 1, Global->RenderTexture->U(0), Global->RenderTexture->V(0), Global->RenderTexture->U(Count), Global->RenderTexture->V(0));
@@ -2252,6 +3026,7 @@ defOverride(GetScanlineRenderer) {
   contextCheck(Dest);
   lockCheck(Dest);
   selectContext(Dest);
+  disableTextures();
   if (Global->RenderTexture) {
     if ((Global->RenderTexture->Width < Count) || (Global->RenderTexture->isInvalid())) {
       delete Global->RenderTexture;
@@ -2263,14 +3038,16 @@ defOverride(GetScanlineRenderer) {
     Global->RenderTexture = GL::createTexture(Count + 1, 2, false);
   }
   Global->RenderFunction = Renderer;
-  setRenderer(Renderer, Argument);
   setVertexColor(White);
+  setRenderer(Renderer, Argument);
+  disableFog();
   enableTextures();
   selectTexture(Global->RenderTexture->Handle);
   return reinterpret_cast<int>(GLRenderFunction);
 }
 
 void InstallOverrides() {
+	addOverride(Allocate);
 	addOverride(Deallocate);
   addOverride(Clear);
   addOverride(Copy);
@@ -2278,6 +3055,7 @@ void InstallOverrides() {
   addOverride(Unlock);
   addOverride(SetPixel);
   addOverride(SetPixelAA);
+  addOverride(FilterSimple_Fill_Channel);
   addOverride(FilterSimple_Fill);
   addOverride(FilterSimple_Fill_Opacity);
   addOverride(FilterSimple_Fill_SourceAlpha);
@@ -2336,6 +3114,8 @@ void InstallOverrides() {
   addOverride(BlitMask_Merge_Opacity);
   addOverride(BlitDeform);
   addOverride(BlitDeformMask);
+  addOverride(BlitConvolve);
+  addOverride(BlitConvolveMask);
   addOverride(FilterSimple_Gradient_4Point);
   addOverride(FilterSimple_Gradient_4Point_SourceAlpha);
   addOverride(FilterSimple_Gradient_Vertical);
@@ -2360,14 +3140,30 @@ void InstallOverrides() {
   addOverride(FilterSimple_ConvexPolygon);
   addOverride(FilterSimple_ConvexPolygon_Textured);
   addOverride(FilterSimple_ConvexPolygon_Gradient);
+//  addOverride(FilterSimple_Grayscale);
 //  addOverride(FilterSimple_ConvexPolygon_AntiAlias);
 //  addOverride(FilterSimple_ConvexPolygon_Textured_AntiAlias);
   addOverride(RenderTilemapLayer);
   addOverride(RenderWindow);
   addOverride(GetScanlineRenderer);
+
+  addOverride(FilterSimple_Gamma);
+  addOverride(FilterSimple_Multiply);
+  addOverride(FilterSimple_Gamma_RGB);
+  addOverride(FilterSimple_Multiply_RGB);
+  addOverride(FilterSimple_Gamma_Channel);
+  addOverride(FilterSimple_Multiply_Channel);
+  addOverride(FilterSimple_Composite);
+  addOverride(FilterSimple_Grayscale);
+  addOverride(FilterSimple_Invert);
+  addOverride(FilterSimple_Invert_RGB);
+  addOverride(FilterSimple_Invert_Channel);
+  addOverride(FilterSimple_Swap_Channels);
+  addOverride(BlitSimple_Channel);
 }
 
 void UninstallOverrides() {
+	removeOverride(Allocate);
 	removeOverride(Deallocate);
   removeOverride(Clear);
   removeOverride(Copy);
@@ -2375,6 +3171,7 @@ void UninstallOverrides() {
   removeOverride(Unlock);
   removeOverride(SetPixel);
   removeOverride(SetPixelAA);
+  removeOverride(FilterSimple_Fill_Channel);
   removeOverride(FilterSimple_Fill);
   removeOverride(FilterSimple_Fill_Opacity);
   removeOverride(FilterSimple_Fill_SourceAlpha);
@@ -2433,6 +3230,8 @@ void UninstallOverrides() {
   removeOverride(BlitMask_Merge_Opacity);
   removeOverride(BlitDeform);
   removeOverride(BlitDeformMask);
+  removeOverride(BlitConvolve);
+  removeOverride(BlitConvolveMask);
   removeOverride(FilterSimple_Gradient_4Point);
   removeOverride(FilterSimple_Gradient_4Point_SourceAlpha);
   removeOverride(FilterSimple_Gradient_Vertical);
@@ -2454,6 +3253,7 @@ void UninstallOverrides() {
   removeOverride(FilterSimple_Adjust);
   removeOverride(FilterSimple_Adjust_RGB);
   removeOverride(FilterSimple_Adjust_Channel);
+//  removeOverride(FilterSimple_Grayscale);
   removeOverride(FilterSimple_ConvexPolygon);
   removeOverride(FilterSimple_ConvexPolygon_Textured);
   removeOverride(FilterSimple_ConvexPolygon_Gradient);
@@ -2462,14 +3262,71 @@ void UninstallOverrides() {
   removeOverride(RenderTilemapLayer);
   removeOverride(RenderWindow);
   removeOverride(GetScanlineRenderer);
+
+  removeOverride(FilterSimple_Gamma);
+  removeOverride(FilterSimple_Multiply);
+  removeOverride(FilterSimple_Gamma_RGB);
+  removeOverride(FilterSimple_Multiply_RGB);
+  removeOverride(FilterSimple_Gamma_Channel);
+  removeOverride(FilterSimple_Multiply_Channel);
+  removeOverride(FilterSimple_Composite);
+  removeOverride(FilterSimple_Grayscale);
+  removeOverride(FilterSimple_Invert);
+  removeOverride(FilterSimple_Invert_RGB);
+  removeOverride(FilterSimple_Invert_Channel);
+  removeOverride(FilterSimple_Swap_Channels);
+  removeOverride(BlitSimple_Channel);
 }
 
 Export void GLInstallAllocateHook() {
-  addOverride(Allocate);
+  addNamedOverride(Allocate, Allocate_Context);
   return;
 }
 
 Export void GLUninstallAllocateHook() {
-  removeOverride(Allocate);
+  removeNamedOverride(Allocate, Allocate_Context);
   return;
+}
+
+Export void GLInstallFBAllocateHook() {
+  addNamedOverride(Allocate, Allocate_Framebuffer);
+  return;
+}
+
+Export void GLUninstallFBAllocateHook() {
+  removeNamedOverride(Allocate, Allocate_Framebuffer);
+  return;
+}
+
+Export int GLShaderBlit(int Dest, int Source, FX::Rectangle* DestRect, FX::Rectangle* SourceRect, int Renderer, int Scaler, GLSL::Program* Shader) {
+  if (Dest == 0) return Failure;
+  if (Source == 0) return Failure;
+  if (DestRect == 0) return Failure;
+  if (SourceRect == 0) return Failure;
+  if (Shader == 0) return Failure;
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<SourceAlpha>();
+  FX::Rectangle DestCopy = DestRect;
+  FX::Rectangle SourceCopy = SourceRect;
+  if (Clip2D_PairedRect(&DestCopy, &SourceCopy, Dest, Source, DestRect, SourceRect, 0)) {
+    GLSL::useProgram(*Shader);
+    enableTextures();
+    selectImageAsTexture(Source);
+    setRenderer(Renderer, 0);
+	  setScaler(Scaler);
+    Texture* tex = getTexture(Source);
+    initShaderVariables(Shader);
+    if ((SourceRect->Width == tex->Width) && (SourceRect->Height == tex->Height) && (SourceRect->Left == 0) && (SourceRect->Top == 0)) { 
+      drawTexturedRectangle(DestRect, tex->U1, tex->V1, tex->U2, tex->V2);
+    } else {
+      float U1 = tex->U(SourceRect->Left), V1 = tex->V(SourceRect->Top);
+      float U2 = tex->U(SourceRect->right()), V2 = tex->V(SourceRect->bottom());
+      drawTexturedRectangle(DestRect, U1, V1, U2, V2);
+    }
+    SetImageDirty(Dest, 1);
+    GLSL::disableProgram();
+  }
+  return Success;
 }

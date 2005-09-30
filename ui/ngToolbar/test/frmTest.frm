@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#10.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.12#0"; "ngUI.ocx"
 Begin VB.Form frmTest 
    BackColor       =   &H000000FF&
    Caption         =   "ngToolbar Test"
@@ -22,6 +22,23 @@ Begin VB.Form frmTest
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   419
    StartUpPosition =   3  'Windows Default
+   Begin VB.CommandButton Command1 
+      Caption         =   "Command1"
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   495
+      Left            =   5280
+      TabIndex        =   2
+      Top             =   4155
+      Width           =   1215
+   End
    Begin VB.CommandButton cmdMenu 
       Caption         =   "Show Menu"
       BeginProperty Font 
@@ -35,14 +52,13 @@ Begin VB.Form frmTest
       EndProperty
       Height          =   630
       Left            =   4215
-      TabIndex        =   3
+      TabIndex        =   0
       Top             =   4755
       Width           =   1995
    End
    Begin ngUI.ngTabStrip tsTabs 
       Height          =   765
       Left            =   60
-      TabIndex        =   2
       Top             =   4680
       Width           =   3435
       _ExtentX        =   6059
@@ -73,7 +89,6 @@ Begin VB.Form frmTest
       Align           =   1  'Align Top
       Height          =   195
       Left            =   0
-      TabIndex        =   0
       Top             =   0
       Width           =   6285
       _ExtentX        =   11086
@@ -86,9 +101,20 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
+Private Declare Function MsgWaitForMultipleObjects Lib "user32" (ByVal nCount As Long, pHandles As Long, ByVal fWaitAll As Long, ByVal dwMilliseconds As Long, ByVal dwWakeMask As Long) As Long
+
 Dim m_mnuTest As ngMenu
 Dim m_mnuChild As ngMenu
 Dim m_mnuSubChild As ngMenu
+
+Public Sub MenuShow()
+On Error Resume Next
+    m_mnuTest.Items.RemoveByKeys "*"
+    m_mnuTest.Items.AddNew "&Item 1", "Alt+F4", "Item1", F2ImageFromPicture(Me.Icon)
+    m_mnuTest.Items.AddNew "I&tem 2", "None", "Item2", F2Image(4, 4), , , False
+    m_mnuTest.Items.AddNew "-"
+    m_mnuTest.Items.AddNew "Item &Number Three", "Ctrl+Alt+Del", "Item3"
+End Sub
 
 Public Sub ItemClicked(Item)
     Debug.Print "ItemClicked(" & Item.Key & ")"
@@ -98,9 +124,19 @@ Private Sub cmdMenu_MouseDown(Button As Integer, Shift As Integer, X As Single, 
 On Error Resume Next
 Dim l_ptPoint As PointAPI
     ClientToScreen cmdMenu.hWnd, l_ptPoint
+    Me.Caption = "Show"
     With m_mnuTest.Show(l_ptPoint.X, l_ptPoint.Y + (cmdMenu.Height))
         Me.Caption = "Selected " & .FullKey
     End With
+    Me.Caption = "Shown"
+End Sub
+
+Private Sub Command1_Click()
+Dim l_strMessage As String
+    MsgWaitForMultipleObjects 0, ByVal 0, False, 250, 0
+    l_strMessage = F2TraceCounts
+    l_strMessage = l_strMessage & ngUI.DisplayMenuStats()
+    MsgBox l_strMessage
 End Sub
 
 Private Sub Form_Load()
@@ -164,6 +200,7 @@ Dim l_lngIndex As Long
     Set m_mnuSubChild = CreateMenu()
     m_mnuSubChild.Items.AddNew "Item 1", , "Item1"
     m_mnuSubChild.Items.AddNew "Item 2", , "Item2"
+    Set m_mnuTest.ShowEvent = BindEvent(Me, "MenuShow")
     Set m_mnuChild.Items(2).ChildMenu = m_mnuSubChild
 End Sub
 

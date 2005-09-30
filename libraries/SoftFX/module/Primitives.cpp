@@ -703,10 +703,10 @@ FILTERSIMPLE_BEGINPRIMITIVE
         int iLength = _Max(abs(rCoordinates.Width), abs(rCoordinates.Height)) + 1;
         int iXOffset = (Line.Start.X > rCoordinates.Left) ? Line.Start.X - rCoordinates.Left : 0;
         int iYOffset = (Line.Start.Y > rCoordinates.Top) ? Line.Start.Y - rCoordinates.Top : 0;
-        int iOffset = ClipValue(abs(_Distance<int>(iXOffset, iYOffset)), 0, iLength);
+        int iOffset = ClipValue(abs(_Distance<int>(iXOffset, iYOffset)), iLength);
         iXOffset = (Line.Start.X < rCoordinates.Left) ? rCoordinates.Left - Line.Start.X : 0;
         iYOffset = (Line.Start.Y < rCoordinates.Top) ? rCoordinates.Top - Line.Start.Y : 0;
-        iLength -= ClipValue(abs(_Distance<int>(iXOffset, iYOffset)), 0, iLength - numpixels);
+        iLength -= ClipValue(abs(_Distance<int>(iXOffset, iYOffset)), iLength - numpixels);
         pColorTable = GenerateGradientTable(StartColor, EndColor, iLength, iOffset);
     DRAWLINE_BEGIN
         *pCurrent = pColorTable[i];
@@ -735,10 +735,10 @@ FILTERSIMPLE_BEGINPRIMITIVE
         if (iLength < 1) return Trivial_Success;
         int iXOffset = (Line.Start.X > rCoordinates.Left) ? Line.Start.X - rCoordinates.Left : 0;
         int iYOffset = (Line.Start.Y > rCoordinates.Top) ? Line.Start.Y - rCoordinates.Top : 0;
-        int iOffset = ClipValue(abs(_Distance<int>(iXOffset, iYOffset)), 0, iLength);
+        int iOffset = ClipValue(abs(_Distance<int>(iXOffset, iYOffset)), iLength);
         iXOffset = (Line.Start.X < rCoordinates.Left) ? rCoordinates.Left - Line.Start.X : 0;
         iYOffset = (Line.Start.Y < rCoordinates.Top) ? rCoordinates.Top - Line.Start.Y : 0;
-        iLength -= ClipValue(abs(_Distance<int>(iXOffset, iYOffset)), 0, iLength - numpixels);
+        iLength -= ClipValue(abs(_Distance<int>(iXOffset, iYOffset)), iLength - numpixels);
         pColorTable = GenerateGradientTable(StartColor, EndColor, iLength, iOffset);
         AlphaLevel *aDest;
     DRAWLINE_BEGIN
@@ -2699,6 +2699,11 @@ Export int FilterSimple_RenderStroke(Image *Dest, Stroke *TheStroke, RenderFunct
     }
   }
 
+  // cancel out sqrt() EXCEPT THIS BREAKS THE OPACITY CURVE
+  //for (int i = 0; i < TheStroke->PointCount; i++) {
+  //  TheStroke->Points[i].Thickness *= TheStroke->Points[i].Thickness;
+  //}
+
   cy = y1;
   int ys, xs, ysi, xsi;
   ys = 0;
@@ -2729,6 +2734,7 @@ Export int FilterSimple_RenderStroke(Image *Dest, Stroke *TheStroke, RenderFunct
             xd = abs(cx - ix);
             yd = abs(cy - iy);
             pt = p->Start->Thickness + ((p->End->Thickness - p->Start->Thickness) * u);
+//            d = 255 - ClipByte(((xd*xd + yd*yd) / pt) * 255.0f); 
             d = 255 - ClipByte((sqrt(xd*xd + yd*yd) / pt) * 255.0f);
             if (d) {
               if (d >= pi) {

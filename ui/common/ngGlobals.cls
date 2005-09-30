@@ -12,18 +12,19 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
-Private m_colResourceCache As Collection
 
 Public Function ConvertSystemColor(ByVal Index As SystemColors) As Long
 On Error Resume Next
     ConvertSystemColor = SetAlpha(SwapChannels(GetSystemColor(Index), Red, Blue), 255)
 End Function
 
-Public Sub DisplayMenuStats()
-    MsgBox "Menus: " & g_lngMenus & vbCrLf & _
+Public Function DisplayMenuStats() As String
+    DisplayMenuStats = "Menus: " & g_lngMenus & vbCrLf & _
             "Menu Hosts: " & g_lngMenuHosts & vbCrLf & _
-            "Menu Items: " & g_lngMenuItems
-End Sub
+            "Menu Items: " & g_lngMenuItems & vbCrLf & _
+            "Font Hosts: " & g_lngFontForms & vbCrLf & _
+            "Forms: " & Forms.Count
+End Function
 
 Public Sub CloseAllMenus()
 On Error Resume Next
@@ -67,6 +68,16 @@ On Error Resume Next
     g_strToolbarTheme = Theme
 End Sub
 
+Public Property Get ThemesEnabled() As Boolean
+On Error Resume Next
+    ThemesEnabled = g_booEnableThemes
+End Property
+
+Public Property Let ThemesEnabled(ByVal NewValue As Boolean)
+On Error Resume Next
+    g_booEnableThemes = NewValue
+End Property
+
 Public Function BindEvent(ByRef Obj As Object, ByRef Method As String, Optional ByRef Parameters = Nothing) As ngEvent
 On Error Resume Next
 Dim l_evtEvent As ngEvent
@@ -79,7 +90,7 @@ Public Function LoadResourceFile(ByRef Filename As String) As ngResourceFile
 On Error Resume Next
 Dim l_szaArchive As SAWZipNG.Archive
 Dim l_rfFile As ngResourceFile
-    Set l_rfFile = m_colResourceCache(Filename)
+    Set l_rfFile = g_colResourceCache(Filename)
     If l_rfFile Is Nothing Then
         Set l_szaArchive = New SAWZipNG.Archive
         Err.Clear
@@ -95,14 +106,18 @@ Dim l_rfFile As ngResourceFile
         Set l_rfFile.Archive = l_szaArchive
         l_rfFile.Filename = Filename
         l_rfFile.Refresh
-        m_colResourceCache.Add l_rfFile
+        g_colResourceCache.Add l_rfFile
     End If
     Set LoadResourceFile = l_rfFile
 End Function
 
 Private Sub Class_Initialize()
 On Error Resume Next
-    Set m_colResourceCache = New Collection
+    F2Init
+    g_booEnableThemes = True
+    If g_colResourceCache Is Nothing Then
+        Set g_colResourceCache = New Collection
+    End If
     Set g_fntMarlett = New StdFont
     g_fntMarlett.Name = "Marlett"
     g_fntMarlett.Size = 9
@@ -111,8 +126,8 @@ End Sub
 Private Sub Class_Terminate()
 On Error Resume Next
 Dim l_rfFile As ngResourceFile
-    For Each l_rfFile In m_colResourceCache
+    For Each l_rfFile In g_colResourceCache
         l_rfFile.Free
     Next l_rfFile
-    Set m_colResourceCache = Nothing
+    Set g_colResourceCache = Nothing
 End Sub

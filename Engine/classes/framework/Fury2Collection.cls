@@ -44,7 +44,12 @@ Implements IInspectableCollection
 
 Private mCol As Collection
 Private mHook As Object
+Public Event Add(ByVal Index As Long)
+Public Event Remove(ByVal Index As Long)
+Public Event Clear()
 #If ExternalModule = 0 Then
+Private m_strAddHook As String
+Private m_strRemoveHook As String
 Private m_engEngine As Fury2Engine
 
 Public Function Duplicate() As Fury2Collection
@@ -161,29 +166,39 @@ On Error Resume Next
     If Len(sKey) < 1 Then
         If AtIndex = -1 Then
             mCol.Add Obj
+            RaiseEvent Add(mCol.Count)
         Else
             If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj
+                RaiseEvent Add(mCol.Count)
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, , 1
+                RaiseEvent Add(1)
             ElseIf mCol.Count > AtIndex Then
                 mCol.Add Obj, , AtIndex
+                RaiseEvent Add(AtIndex)
             Else
                 mCol.Add Obj, , , AtIndex - 1
+                RaiseEvent Add(AtIndex)
             End If
         End If
     Else
         If AtIndex = -1 Then
             mCol.Add Obj, sKey
+            RaiseEvent Add(mCol.Count)
         Else
             If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj, sKey
+                RaiseEvent Add(mCol.Count)
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, sKey, 1
+                RaiseEvent Add(1)
             ElseIf mCol.Count > AtIndex Then
                 mCol.Add Obj, sKey, AtIndex
+                RaiseEvent Add(AtIndex)
             Else
                 mCol.Add Obj, sKey, , AtIndex - 1
+                RaiseEvent Add(AtIndex)
             End If
         End If
     End If
@@ -247,6 +262,7 @@ On Error Resume Next
     Else
         vntIndexKey = CLng(vntIndexKey)
     End If
+    RaiseEvent Remove(vntIndexKey)
     mCol.Remove vntIndexKey
     If mHook Is Nothing Then
     Else
@@ -272,6 +288,7 @@ End Sub
 Public Sub Clear()
 On Error Resume Next
     Set mCol = New Collection
+    RaiseEvent Clear
     If mHook Is Nothing Then
     Else
         mHook.Changed

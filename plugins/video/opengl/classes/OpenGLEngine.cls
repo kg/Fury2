@@ -57,8 +57,12 @@ End Property
 
 Public Function Fury2VideoDriver_CreateImage(ByVal Width As Long, ByVal Height As Long) As libGraphics.Fury2Image
 On Error Resume Next
+    GLInstallFBAllocateHook
     Set Fury2VideoDriver_CreateImage = F2Image(Width, Height)
-'    Set CreateImage = CreateContext(m_OutForm.hDC, Width, Height)
+    GLUninstallFBAllocateHook
+    If Fury2VideoDriver_CreateImage.NumericTags(7) <> 0 Then
+        SetImageLocked Fury2VideoDriver_CreateImage.Handle, 1
+    End If
 End Function
 
 Friend Sub InitBackbuffer()
@@ -183,6 +187,7 @@ On Error Resume Next
     m_OutForm.Show
     Err.Clear
     GLInit m_OutForm.HWND, m_OutForm.HDC
+    GLSetShaderLoadCallback AddressOf ShaderLoadCallback
     If Err <> 0 Then
         MsgBox "Unable to load OpenGL!", vbExclamation, "Error"
         m_booError = True
@@ -322,4 +327,14 @@ End Property
 Public Sub CopySurface(ByVal FromSurface As Fury2Image, ByVal ToSurface As Fury2Image)
 On Error Resume Next
     GLCopySurface FromSurface.Handle, ToSurface.Handle
+End Sub
+
+Public Function LoadShader(ByVal Shader As String) As Long
+On Error Resume Next
+    LoadShader = GLGetShader(Shader)
+End Function
+
+Public Sub ShaderBlit(ByVal Dest As Fury2Image, ByVal Source As Fury2Image, ByVal DestRect As Fury2Rect, ByVal SourceRect As Fury2Rect, ByVal Shader As Long)
+On Error Resume Next
+    GLShaderBlit Dest.Handle, Source.Handle, DestRect.GetRectangle, SourceRect.GetRectangle, 0, GetBilinearScaler(), Shader
 End Sub

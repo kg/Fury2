@@ -59,6 +59,7 @@ Attribute VB_Exposed = False
 Option Explicit
 Private m_lngOldBitmap As Long
 Private m_filFilter As Fury2ConvolutionFilter
+Dim m_imgFramebuffer As Fury2Image
 Dim m_imgMask As Fury2Image
 Dim m_imgPattern As Fury2Image
 Dim m_imgTexture() As Fury2Image
@@ -155,10 +156,38 @@ Dim l_mshMesh As Fury2DeformationMesh
 '    m_imgBuffer.Draw m_imgBuffer, m_imgBuffer.Width / 2, m_imgBuffer.Height / 2, 1, 0.5, , , , ResampleMode_Bilinear
     'm_imgBuffer.Blit F2Rect(50, 50, m_imgBuffer.Width, m_imgBuffer.Height, False), , m_imgBuffer, , BlitMode_Normal
     'm_imgBuffer.AdjustRGB 0, 64, -64
-'    m_imgTextureBlend.Blit , , m_imgTexture(l_lngFrame), 1
-'    m_imgTextureBlend.Blit , , m_imgTexture(WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))), l_sngS
-'    Set l_mshMesh = New Fury2DeformationMesh
-'    l_mshMesh.Resize 16, 16
+'    Set m_filFilter = F2EmbossFilter(1)
+    Set m_filFilter = F2BoxFilter(3)
+'    m_filFilter.Offset = 0.5
+'    m_filFilter.SetAll 0
+'    m_filFilter.Weight(1, 1) = 1
+'    m_filFilter.Divisor = 1
+    m_imgTextureBlend.Blit , , m_imgTexture(l_lngFrame), 1
+    m_imgTextureBlend.Blit , , m_imgTexture(WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))), l_sngS
+    m_imgMask.Clear F2RGB(127, 127, 127, 255)
+'    m_imgMask.GradientFill m_imgMask.Rectangle, Array(F2RGB(0, 255, 0, 255), F2RGB(0, 0, 255, 255), "V"), RenderMode_Normal
+'    m_imgMask.GradientFill m_imgMask.Rectangle, Array(F2Black, F2Black, F2White, F2White), RenderMode_Normal
+'    m_imgMask.GradientFill m_imgMask.Rectangle, Array(F2Black, F2RGB(127, 127, 127, 255), F2RGB(127, 127, 127, 255), F2White), RenderMode_Normal
+'    m_imgMask.AntiAliasEllipse Array(100, 100), F2RGB(0, 0, 0, 255), l_sngR * 45, l_sngR * 45, RenderMode_SourceAlpha, 0.25, 6, 1
+'    m_imgMask.[Line] Array(5, 5, 100, 5), F2White
+'    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(0, 0, 0, 255), l_sngR * 55, l_sngR * 55, RenderMode_SourceAlpha, 0.25
+    m_imgMask.AntiAliasEllipse Array(100, 40), F2RGB(255, 255, 255, 255), 65, 65, RenderMode_Merge, 0.25, 6, 1
+    m_imgMask.AntiAliasEllipse Array(40, 100), F2RGB(255, 255, 255, 255), 65, 65, RenderMode_Merge, 0.25, 6, 1
+    m_imgMask.CopyChannel m_imgMask, 3, 0
+'    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(255, 255, 255, 255), 65, 65, RenderMode_SourceAlpha, 0.25
+'    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(0, 0, 0, 255), 75, 75, RenderMode_SourceAlpha, 0.25
+'    m_imgMask.Box m_imgMask.Rectangle, F2White
+'    m_imgMask.RadialGradientFill F2Rect(100 - (l_sngR * 50), 100 - (l_sngR * 50), 100 + (l_sngR * 50), 100 + (l_sngR * 50), True), Array(F2RGB(255, 0, 0, 255), F2RGB(255, 0, 0, 0)), RenderMode_SourceAlpha
+'    m_imgMask.RadialGradientFill F2Rect(100 - (l_sngR * 33), 100 - (l_sngR * 33), 100 + (l_sngR * 33), 100 + (l_sngR * 33), True), Array(F2RGB(0, 0, 0, 255), F2RGB(0, 0, 0, 0)), RenderMode_SourceAlpha
+    Set l_mshMesh = New Fury2DeformationMesh
+    l_mshMesh.Resize ClipValue(CLng(Rnd * 32), 6, 32), ClipValue(CLng(Rnd * 32), 6, 32)
+'    l_mshMesh.SetAll 16, 0
+    l_mshMesh.ApplyHeightmap m_imgMask, , 32
+'    l_mshMesh.XValue(0, 0) = 100
+'    l_mshMesh.YValue(0, 0) = 100
+'    l_mshMesh.XValue(99, 9) = 100
+'    l_mshMesh.YValue(99, 9) = 100
+'    MeshFromHeightmap l_mshMesh.GetParam, m_imgMask.Handle, 3, m_imgMask.Rectangle.GetRectangle
 '    For l_lngY = 0 To l_mshMesh.Height - 1
 '        For l_lngX = 0 To l_mshMesh.Width - 1
 '            If EnableDeform Then
@@ -170,19 +199,42 @@ Dim l_mshMesh As Fury2DeformationMesh
 '    m_imgPattern.Box m_imgPattern.Rectangle, F2White
 '    m_imgBuffer.DeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgTextureBlend, l_mshMesh, RenderMode_Normal, ResampleMode_Bilinear_Wrap
 '    m_imgBuffer.MaskDeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgMask.Rectangle, m_imgTextureBlend, m_imgMask, l_mshMesh, 0.66, RenderMode_SourceAlpha, ResampleMode_Bilinear_Wrap
+'    m_imgFramebuffer.Clear F2RGB(64, 32, 32, 255)
+'    m_imgFramebuffer.Blit , , m_imgMask
     m_imgBuffer.Locked = UseHardware
-    m_imgTexture(0).Draw m_imgBuffer, 75, 75, , 2, l_sngR, BlitMode_SourceAlpha, , ResampleMode_Bilinear, True
+    If EnableDeform Then
+'        m_imgBuffer.DeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgPattern, l_mshMesh, RenderMode_Normal, ResampleMode_Bilinear
+'        m_imgBuffer.MaskDeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgMask.Rectangle, m_imgPattern, m_imgMask, l_mshMesh, 1#, RenderMode_SourceAlpha, ResampleMode_Bilinear
+        'm_imgBuffer.Stroke Array(Array(25, 25), Array(75, 75)), F2White, 3, 1, False, RenderMode_Normal
+        m_filFilter.MaskFilter m_imgBuffer, m_imgPattern, m_imgMask, F2Rect(0, 0, 200, 200, False), m_imgMask.Rectangle, , RenderMode_SourceAlpha
+    End If
+'    m_imgFramebuffer.Clear F2RGB(127, 0, 0, 255)
+'    m_imgFramebuffer.Blit , , m_imgMask, 0.5, BlitMode_Normal
+'    m_imgBuffer.Blit m_imgMask.Rectangle.Translate(0, 0), m_imgMask.Rectangle, m_imgFramebuffer, , BlitMode_Normal
+    m_imgBuffer.Blit m_imgMask.Rectangle.Translate(200, 0), m_imgMask.Rectangle, m_imgMask, , BlitMode_Normal
+    'm_imgBuffer.FillChannel m_imgBuffer.Rectangle, 0, 127
+'    m_imgBuffer.FillChannel m_imgBuffer.Rectangle, 0, 0
+'    m_imgBuffer.FillChannel m_imgBuffer.Rectangle, 1, 0
+'    m_imgBuffer.FillChannel m_imgBuffer.Rectangle, 2, 0
+'    m_imgBuffer.FillChannel m_imgBuffer.Rectangle, 3, 0
+'    m_imgBuffer.CopyChannel m_imgBuffer, 0, 2
+'    m_imgBuffer.CopyChannel m_imgBuffer, 1, 2
+'    m_imgBuffer.InvertChannel 0
+'    m_imgTexture(0).Draw m_imgBuffer, 75, 75, , 2, l_sngR, BlitMode_SourceAlpha, , ResampleMode_Bilinear, True
 '    m_imgBuffer.Stroke Array(Array(25, 25), Array(75, 75)), F2White, 3, , , RenderMode_SourceAlpha
 '    m_imgBuffer.AntiAliasFilledEllipse Array(150, 150), F2White, 50, 50, RenderMode_SourceAlpha
     'm_imgBuffer.GradientConvexPolygon Array(Array(75, 75, F2White), Array(75 + (Sin(l_sngR) * l_sngS), 75 + (-Cos(l_sngR) * l_sngS), F2Black), Array(75 + (Sin(l_sngR + (c_dblPi / 2)) * l_sngS), 75 + (-Cos(l_sngR + (c_dblPi / 2)) * l_sngS), F2Black)), RenderMode_Additive
+'    m_imgBuffer.AdjustChannelGamma 1, l_sngS
+'    m_imgBuffer.SwapChannels 0, 2
     m_imgBuffer.Locked = True
     GLFlip ' Me.HDC
-    l_sngS = l_sngS + 1
-    If (l_sngS >= 125) Then
-        l_sngS = 25
+    l_sngS = l_sngS + 0.025
+    If (l_sngS >= 2) Then
+        l_sngS = 0
         l_lngFrame = WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))
     End If
-    l_sngR = l_sngR + 0.25
+    l_sngR = l_sngR + 0.01
+    If l_sngR > 1 Then l_sngR = 0
 End Sub
 
 Private Sub cmdToggleDeform_Click()
@@ -201,11 +253,16 @@ On Error Resume Next
     Randomize Timer
     F2Init
     GLInit Me.HWND, Me.HDC
+    GLSetShaderLoadCallback AddressOf ShaderLoadCallback
     GLSetOutputSize Me.ScaleWidth, Me.ScaleHeight
     GLInstallAllocateHook
     Set m_imgBuffer = F2Image(400, 300)
     GLUninstallAllocateHook
     SetImageLocked m_imgBuffer.Handle, 1
+    GLInstallFBAllocateHook
+    Set m_imgFramebuffer = F2Image(256, 256)
+    GLUninstallFBAllocateHook
+    SetImageLocked m_imgFramebuffer.Handle, 1
 '    InitOpenGLOverride
 '    Set m_imgBuffer = CreateContext(Me.HDC, Me.ScaleWidth, Me.ScaleHeight)
 '    UseImageAsContext m_imgBuffer
@@ -226,9 +283,12 @@ On Error Resume Next
 '    Set m_imgTexture = F2LoadImage("J:\chia\set00.png")
     m_imgTexture() = F2LoadImage("J:\water.png").Split(32, 32)
     Set m_imgTextureBlend = F2Image(32, 32)
-    Set m_imgPattern = F2Image(256, 256)
-    Set m_imgMask = F2Image(256, 256)
-    m_imgMask.RadialGradientFill m_imgMask.Rectangle, Array(F2RGB(0, 0, 0, 0), F2RGB(0, 0, 0, 255)), RenderMode_Normal
+    Set m_imgPattern = F2Image(200, 200)
+    m_imgPattern.Blit , , F2LoadImage("J:\test.jpg")
+    Set m_imgMask = F2Image(200, 200)
+'    m_imgMask.RadialGradientFill m_imgMask.Rectangle, Array(F2RGB(255, 0, 0, 255), F2RGB(127, 0, 0, 255)), RenderMode_Normal
+'    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(255, 0, 0, 255), 50, 50, RenderMode_SourceAlpha
+'    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(0, 0, 0, 255), 25, 25, RenderMode_SourceAlpha
 '    m_imgBuffer.Clear F2Black
 '    m_lngTexture = CreateTextureFromImage(m_imgTexture.Handle)
 '    m_imgInFrontTexture.Box m_imgInFrontTexture.Rectangle, F2RGB(255, 255, 255, 0)

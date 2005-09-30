@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.12#0"; "ngUI.ocx"
 Begin VB.UserControl EntityList 
    AutoRedraw      =   -1  'True
    ClientHeight    =   3600
@@ -23,7 +23,6 @@ Begin VB.UserControl EntityList
    Begin ngUI.ngToolbar tbrOptions 
       Height          =   390
       Left            =   1185
-      TabIndex        =   1
       Top             =   1560
       Width           =   1965
       _ExtentX        =   3466
@@ -67,7 +66,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function ClientToScreen Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
+Private Declare Function ClientToScreen Lib "user32" (ByVal hwnd As Long, lpPoint As PointAPI) As Long
 Private m_objBoundObject As Object
 Private m_booEnableDragging As Boolean
 Private m_booEnableMultiSelect As Boolean
@@ -85,6 +84,7 @@ Public Event ItemVisibilityChanged(ByVal Item As Long)
 Public Event ContextMenu(ByVal X As Long, ByVal Y As Long)
 Public Event ItemContextMenu(ByVal Item As Long, ByVal X As Long, ByVal Y As Long)
 Public Event ToolbarClick(ByVal Button As ngUI.ngToolButton)
+Public NamePattern As String
 Public VisibleIcon As Fury2Image
 Public InvisibleIcon As Fury2Image
 Public ShowVisibilityToggles As Boolean
@@ -223,7 +223,7 @@ On Error Resume Next
 Dim l_lngMenuX As Long, l_lngMenuY As Long
 Dim l_lngY As Long, l_lngIndex As Long
 Dim l_objObject As Object
-Dim l_ptPoint As POINTAPI
+Dim l_ptPoint As PointAPI
     If BoundObject Is Nothing Then Exit Sub
     l_lngY = Y + vsScrollbar.Value
     l_lngIndex = (l_lngY \ m_lngItemHeight) + 1
@@ -302,7 +302,8 @@ Private Sub UserControl_Paint()
 On Error Resume Next
 Static m_booHere As Boolean
 Dim l_lngY As Long, l_lngHeight As Long, l_lngItems As Long, l_lngMaxHeight As Long
-Dim l_objObject As Object, l_rctItem As RECT
+Dim l_objObject As Object, l_rctItem As Rect
+Dim l_strName As String
     If m_booActive = False Then Exit Sub
     If m_booHere Then Exit Sub
     vsScrollbar.Move UserControl.ScaleWidth - vsScrollbar.Width, 0, vsScrollbar.Width, UserControl.ScaleHeight - IIf(tbrOptions.Visible, tbrOptions.Height, 0)
@@ -354,7 +355,13 @@ Dim l_objObject As Object, l_rctItem As RECT
                         .CurrentX = 4
                     End If
                     .CurrentY = l_lngY + ((m_lngItemHeight - m_lngItemTextHeight) \ 2)
-                    UserControl.Print l_objObject.Name
+                    l_strName = ""
+                    Err.Clear
+                    l_strName = l_objObject.Name
+                    If Err <> 0 Then
+                        l_strName = Replace(NamePattern, "%i", CStr(l_lngItems))
+                    End If
+                    UserControl.Print l_strName
                     If ShowVisibilityToggles Then
                         If m_imgIcon Is Nothing Then
                             Set m_imgIcon = VisibleIcon.Duplicate

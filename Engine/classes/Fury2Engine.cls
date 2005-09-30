@@ -855,6 +855,12 @@ On Error Resume Next
     F2Font.SetEngine Me
 End Function
 
+Public Function F2ParticleEngine() As Fury2ParticleEngine
+On Error Resume Next
+    Set F2ParticleEngine = New Fury2ParticleEngine
+    F2ParticleEngine.SetEngine Me
+End Function
+
 Public Function F2Graphic(Images, Optional ByVal XCenter As Long = -32767, Optional ByVal YCenter As Long = -32767, Optional ByVal BlitMode As SFXBlitModes = -1, Optional ByVal LoopMode As Fury2LoopModes = F2LM_Restart, Optional ByVal AnimationDelay As Long = 5) As Fury2Graphic
 On Error Resume Next
 Dim l_gfcGraphic As Fury2Graphic
@@ -1001,6 +1007,7 @@ End Function
 Function FadeBGM(Optional ByVal FromVolume As Single = -1, Optional ByVal ToVolume As Single = -1, Optional ByVal Length As Double = 1) As Fury2SoundFader
 On Error Resume Next
 Dim l_fadFader As Fury2SoundFader
+    If CurrentBGMChannel Is Nothing Then Exit Function
     Set l_fadFader = New Fury2SoundFader
     Set l_fadFader.Channel = CurrentBGMChannel
     Set l_fadFader.Slider = F2Slider
@@ -3018,7 +3025,6 @@ Public Sub ConsoleCommand(ByRef Command As String)
 On Error Resume Next
     If left(Trim(Command), 1) = "?" Then
         Err.Clear
-'        TextOut ScriptEngine.Language.GenerateSubCall("Engine" & ScriptEngine.Language.MethodOperator & "TextOut", ScriptEngine.Language.GenerateFunctionCall("Engine" & ScriptEngine.Language.MethodOperator & "ToString", Mid(Command, 2) & ", 1"))
         ScriptEngine.AddCode ScriptEngine.Language.GenerateSubCall("TextOut", Mid(Command, 2))
     Else
         Err.Clear
@@ -3892,7 +3898,11 @@ Dim l_evtBinding As Fury2Event, l_booActive As Boolean
         l_lngType = 1 ' Repeated key
     End If
     Set l_evtBinding = Keyboard.Binding(KeyCode)
-    l_booActive = (l_evtBinding.Blocked) And (l_evtBinding.Blocking)
+    If l_evtBinding Is Nothing Then
+        l_booActive = False
+    Else
+        l_booActive = (l_evtBinding.Blocked) And (l_evtBinding.Blocking)
+    End If
     If (l_booActive) Then
     Else
         QueueEvent 0, , , CLng(KeyCode), CLng(Shift), l_lngType
@@ -4804,7 +4814,10 @@ On Error Resume Next
     If EditMode Then
         DoEvents
     Else
-        Debugger.InterruptPoll Interrupt
+        If Debugger Is Nothing Then
+        Else
+            Debugger.InterruptPoll Interrupt
+        End If
         DoEvents
     End If
 End Sub
@@ -5505,16 +5518,25 @@ On Error Resume Next
 Dim l_sndBGM As Sound
     If VarType(BGM) = vbObject Then
         Set l_sndBGM = BGM
-        If l_sndBGM Is CurrentBGM Then Exit Sub
+        If l_sndBGM Is CurrentBGM Then
+            Err.Clear
+            Exit Sub
+        End If
         StopBGM Crossfade
         PlayBGM BGM, Crossfade
     Else
         BGM = CStr(BGM)
         Set l_sndBGM = SoundEngine.Load(BGM)
-        If l_sndBGM Is CurrentBGM Then Exit Sub
+        If l_sndBGM Is CurrentBGM Then
+            Err.Clear
+            Exit Sub
+        End If
         If (CurrentBGM Is Nothing) Then
         Else
-            If BGM = CurrentBGM.Filename Then Exit Sub
+            If BGM = CurrentBGM.Filename Then
+                Err.Clear
+                Exit Sub
+            End If
 '            If l_sndBGM.Name = CurrentBGM.Name Then Exit Sub
         End If
         StopBGM Crossfade

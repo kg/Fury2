@@ -98,10 +98,13 @@ Attribute DeallocateTileset.VB_MemberFlags = "40"
 On Error Resume Next
     If (Handle <> 0) Then
         SoftFX.DerefTileset Handle
-        If CLng(mvarBuffer.Tag(1)) <= 1 Then
-            mvarBuffer.Tag = Array(0, 0)
+        If mvarBuffer Is Nothing Then
         Else
-            mvarBuffer.Tag = Array(mvarBuffer.Tag(0), mvarBuffer.Tag(1) - 1)
+            If CLng(mvarBuffer.Tag(1)) <= 1 Then
+                mvarBuffer.Tag = Array(0, 0)
+            Else
+                mvarBuffer.Tag = Array(mvarBuffer.Tag(0), mvarBuffer.Tag(1) - 1)
+            End If
         End If
         Handle = 0
     End If
@@ -112,7 +115,10 @@ Attribute AllocateTileset.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_lngLayers As Long
     If Handle <> 0 Then DeallocateTileset
-    If Engine.EditMode Then ForceNew = True
+    If Engine Is Nothing Then
+    Else
+        If Engine.EditMode Then ForceNew = True
+    End If
     If ImageBased Then
         If mvarBuffer Is Nothing Then
             Load

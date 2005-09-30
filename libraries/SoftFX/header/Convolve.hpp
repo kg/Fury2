@@ -23,7 +23,7 @@ namespace Convolution {
     int Width, Height;
     int XOffset, YOffset;
     float Divisor;
-    unsigned char AlphaSmart;
+    float Offset;
   };
 };
 
@@ -37,16 +37,23 @@ struct MeshParam {
   MeshPoint *pData;
 
   inline MeshPoint* getPoint(int X, int Y) {
-    X = ClipValue(X, 0, Width - 1);
-    Y = ClipValue(Y, 0, Height - 1);
+    X = ClipValue(X, Width - 1);
+    Y = ClipValue(Y, Height - 1);
+    return &(pData[X + (Y * Width)]);
+  }
+
+  inline MeshPoint* getPointFast(int X, int Y) {
     return &(pData[X + (Y * Width)]);
   }
 
   inline void get4Points(int X, int Y, MeshPoint** Points) {
-    Points[0] = &(pData[ClipValue(X, 0, Width - 1) + (ClipValue(Y, 0, Height - 1) * Width)]);
-    Points[1] = &(pData[ClipValue(X+1, 0, Width - 1) + (ClipValue(Y, 0, Height - 1) * Width)]);
-    Points[2] = &(pData[ClipValue(X, 0, Width - 1) + (ClipValue(Y+1, 0, Height - 1) * Width)]);
-    Points[3] = &(pData[ClipValue(X+1, 0, Width - 1) + (ClipValue(Y+1, 0, Height - 1) * Width)]);
+    int y = ClipValue(Y, Height - 1) * Width;
+    int x1 = ClipValue(X, Width - 1), x2 = ClipValue(X+1, Width-1);
+    Points[0] = &(pData[x1 + (y)]);
+    Points[1] = &(pData[x2 + (y)]);
+    y = ClipValue(Y+1, Height - 1) * Width;
+    Points[2] = &(pData[x1 + (y)]);
+    Points[3] = &(pData[x2 + (y)]);
     return;
   }
 };

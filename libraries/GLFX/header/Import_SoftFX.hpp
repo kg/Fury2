@@ -71,6 +71,7 @@ namespace SoftFX {
 	defImport(int, GetFontSourceAlphaRenderer, () , 0) \
   defImport(int, Clip2D_SimpleRect, (FX::Rectangle *Rect, int Dest, int Source, FX::Rectangle *DestRect, int &CX, int &CY), 24) \
   defImport(int, Clip2D_PairedRect, (FX::Rectangle *Rect, FX::Rectangle *RectS, int Dest, int Source, FX::Rectangle *DestRect, FX::Rectangle *SourceRect, int *CropOutput), 28) \
+  defImport(int, ClipRectangle_Image, (FX::Rectangle *Rect, int Image), 8) \
   defImport(int, ClipRectangle_ImageClipRect, (FX::Rectangle *Rect, int Image), 8) \
   defImport(int, BlitSimple_Normal, (int Dest, int Source, FX::Rectangle *Area, int SX, int SY), 20) \
   defImport(int, GetPolygonVertexCount, (int Polygon), 4) \

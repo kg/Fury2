@@ -27,6 +27,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "../header/Convolve.hpp"
 #include "../header/Filters.hpp"
 
+inline Byte babs(int Value) {
+  return ClipByte(InlineIf(Value < 0, -Value, Value));
+}
+
 BLITTERSIMPLE_SIGNATURE(Automatic_SourceAlpha_Opacity) , int Opacity);
 
 BLITTERSIMPLE_SIGNATURE(Normal)
@@ -53,8 +57,8 @@ BLITTERSIMPLE_END
 BLITTERSIMPLE_SIGNATURE(Channel)
     , int DestChannel, int SourceChannel) {
 BLITTERSIMPLE_INIT
-	ColorChannels dch = (ColorChannels)ClipValue(DestChannel, 0, 3);
-	ColorChannels sch = (ColorChannels)ClipValue(SourceChannel, 0, 3);
+	ColorChannels dch = (ColorChannels)ClipValue(DestChannel, 3);
+	ColorChannels sch = (ColorChannels)ClipValue(SourceChannel, 3);
     _BOS(BlitSimple_Channel, 2) , DestChannel, SourceChannel _BOE
 BLITTERSIMPLE_BEGIN
 BLITTERSIMPLE_LOOPBEGIN
@@ -140,7 +144,7 @@ BLITTERSIMPLE_INIT
     _BOS(BlitSimple_Normal_Gamma, 1) , Gamma _BOE
 BLITTERSIMPLE_BEGIN
     AlphaLevel *aGamma;
-    aGamma = AlphaLevelLookup( ClipValue(Gamma, 0, 511) );
+    aGamma = AlphaLevelLookup( ClipValue(Gamma, 511) );
 BLITTERSIMPLE_LOOPBEGIN
     (*pDest)[::Blue] = AlphaFromLevel(aGamma, (*pSource)[::Blue]);
     (*pDest)[::Green] = AlphaFromLevel(aGamma, (*pSource)[::Green]);
@@ -701,21 +705,38 @@ BLITTERSIMPLE_INIT
     _BOS(BlitSimple_SourceAlpha, 0) _BOE
 BLITTERSIMPLE_BEGIN
     AlphaLevel *aSource, *aDest;
-BLITTERSIMPLE_LOOPBEGIN
-    if ((*pSource)[::Alpha]) {
-      if ((*pSource)[::Alpha] == 255) {
+    if (Source->OptimizeData.opaqueOnly) {
+      BLITTERSIMPLE_LOOPBEGIN
         (*pDest)[::Blue] = (*pSource)[::Blue];
         (*pDest)[::Green] = (*pSource)[::Green];
         (*pDest)[::Red] = (*pSource)[::Red];
-      } else {
-        aSource = AlphaLevelLookup( (*pSource)[::Alpha] );
-        aDest = AlphaLevelLookup( (*pSource)[::Alpha] ^ 0xFF );
+      BLITTERSIMPLE_LOOPEND
+    } else if (Source->OptimizeData.sameAlpha) {
+      Byte a = Source->getPixel(0, 0)[::Alpha];
+      aSource = AlphaLevelLookup( a );
+      aDest = AlphaLevelLookup( a ^ 0xFF );
+      BLITTERSIMPLE_LOOPBEGIN
         (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, (*pSource)[::Blue]);
         (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, (*pSource)[::Green]);
         (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, (*pSource)[::Red]);
-      }
+      BLITTERSIMPLE_LOOPEND
+    } else {
+    BLITTERSIMPLE_LOOPBEGIN
+        if ((*pSource)[::Alpha]) {
+          if ((*pSource)[::Alpha] == 255) {
+            (*pDest)[::Blue] = (*pSource)[::Blue];
+            (*pDest)[::Green] = (*pSource)[::Green];
+            (*pDest)[::Red] = (*pSource)[::Red];
+          } else {
+            aSource = AlphaLevelLookup( (*pSource)[::Alpha] );
+            aDest = AlphaLevelLookup( (*pSource)[::Alpha] ^ 0xFF );
+            (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, (*pSource)[::Blue]);
+            (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, (*pSource)[::Green]);
+            (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, (*pSource)[::Red]);
+          }
+        }
+    BLITTERSIMPLE_LOOPEND
     }
-BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
 
 BLITTERSIMPLE_SIGNATURE(SourceAlpha_Opacity)
@@ -1276,6 +1297,18 @@ BLITTERSIMPLE_LOOPBEGIN
     (*pDest)[::Blue] ^= (*pSource)[::Blue];
     (*pDest)[::Green] ^= (*pSource)[::Green];
     (*pDest)[::Red] ^= (*pSource)[::Red];
+BLITTERSIMPLE_LOOPEND
+BLITTERSIMPLE_END
+
+BLITTERSIMPLE_SIGNATURE(Difference)
+    ) {
+BLITTERSIMPLE_INIT
+    _BOS(BlitSimple_Difference, 0) _BOE
+BLITTERSIMPLE_BEGIN
+BLITTERSIMPLE_LOOPBEGIN
+    (*pDest)[::Blue] = babs((*pSource)[::Blue] - (*pDest)[::Blue]);
+    (*pDest)[::Green] = babs((*pSource)[::Green] - (*pDest)[::Green]);
+    (*pDest)[::Red] = babs((*pSource)[::Red] - (*pDest)[::Red]);
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
 
@@ -1938,8 +1971,8 @@ Export int BlitMask_Normal_Opacity(Image *Dest, Image *Source, Image *Mask,
           return Trivial_Success;
       }
 
-    rCoordinates.Width = ClipValue(rCoordinates.Width, 0, Mask->Width - MX);
-    rCoordinates.Height = ClipValue(rCoordinates.Height, 0, Mask->Height - MY);
+    rCoordinates.Width = ClipValue(rCoordinates.Width, Mask->Width - MX);
+    rCoordinates.Height = ClipValue(rCoordinates.Height, Mask->Height - MY);
 
     Pixel *pSource = Source->pointer(DSX, DSY),
         *pDest = Dest->pointer(
@@ -2038,8 +2071,8 @@ Export int BlitMask_SourceAlpha_Opacity(Image *Dest, Image *Source, Image *Mask,
           return Trivial_Success;
       }
 
-    rCoordinates.Width = ClipValue(rCoordinates.Width, 0, Mask->Width - MX);
-    rCoordinates.Height = ClipValue(rCoordinates.Height, 0, Mask->Height - MY);
+    rCoordinates.Width = ClipValue(rCoordinates.Width, Mask->Width - MX);
+    rCoordinates.Height = ClipValue(rCoordinates.Height, Mask->Height - MY);
 
     Pixel *pSource = Source->pointer(DSX, DSY),
         *pDest = Dest->pointer(
@@ -2141,8 +2174,8 @@ Export int BlitMask_Merge_Opacity(Image *Dest, Image *Source, Image *Mask,
           return Trivial_Success;
       }
 
-    rCoordinates.Width = ClipValue(rCoordinates.Width, 0, Mask->Width - MX);
-    rCoordinates.Height = ClipValue(rCoordinates.Height, 0, Mask->Height - MY);
+    rCoordinates.Width = ClipValue(rCoordinates.Width, Mask->Width - MX);
+    rCoordinates.Height = ClipValue(rCoordinates.Height, Mask->Height - MY);
 
     Pixel *pSource = Source->pointer(DSX, DSY),
         *pDest = Dest->pointer(
@@ -2198,8 +2231,8 @@ Export int BlitMask_Merge_Opacity(Image *Dest, Image *Source, Image *Mask,
     return Success;
 }
 
-Export int BlitConvolve_Normal(Image *Dest, Image *Source, Convolution::Filter *Filter,
-                          Rectangle *Rect, Coordinate SX, Coordinate SY)
+Export int BlitConvolve(Image *Dest, Image *Source, Convolution::Filter *Filter,
+                          Rectangle *Rect, Coordinate SX, Coordinate SY, Pixel RenderArgument, RenderFunction *Renderer)
 {
     if (!Dest || !Source || !Filter) {
       return Failure;
@@ -2214,23 +2247,41 @@ Export int BlitConvolve_Normal(Image *Dest, Image *Source, Convolution::Filter *
     if ((Filter->Width < 3) || (Filter->Height < 3)) return Failure; // Can't have a convolution filter smaller than 3x3
     if (((Filter->Width % 2) == 0) || ((Filter->Height % 2) == 0)) return Failure; // Can't have an even numbered size
 
-    int DSX = SX, DSY = SY;
+    {
+        int overrideresult = Override::EnumOverrides(Override::BlitConvolve, 8, Dest, Source, Filter, Rect, SX, SY, RenderArgument, Renderer);
+#ifdef OVERRIDES
+        if (overrideresult != 0) return overrideresult;
+#endif
+    }
 
-    ImageLockManager ilDest(lockingMode, Dest);
-    ImageLockManager ilSource(lockingMode, Source);
-    if (!ilDest.performUnlock())
-        return Failure;
-    if (!ilSource.performUnlock())
-        return Failure;
+    int DSX = SX, DSY = SY;
 
 	Rectangle rCoordinates;
     if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
          Rect, DSX, DSY)) return Trivial_Success;
 
-    Pixel *pDest = Dest->pointer(
-        rCoordinates.Left, rCoordinates.Top);
     Pixel pSource;
-    if ((!pDest)) return Failure;
+
+    LockedRenderFunction *lRenderer = Null;
+    bool needLock = true;
+    {
+        int overrideresult = Override::EnumOverrides(Override::GetScanlineRenderer, 4, Dest, Renderer, rCoordinates.Width, RenderArgument);
+  #ifdef OVERRIDES
+        if (overrideresult != 0) {
+          lRenderer = reinterpret_cast<LockedRenderFunction*>(overrideresult);
+          needLock = false;
+        }
+  #endif
+    }
+
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    if (needLock) {
+      if (!ilDest.performUnlock())
+          return Failure;
+    }
+    if (!ilSource.performUnlock())
+        return Failure;
     
 short **cellTables;
 DoubleWord cells = 0;
@@ -2244,22 +2295,22 @@ signed char *cxo, *cyo;
       }
     }
 
-    cxo = LookupAllocate<signed char>(cells);
-    cyo = LookupAllocate<signed char>(cells);
-    cellTables = LookupAllocate<short*>(cells);
+    cxo = StaticAllocate<signed char>(XBuffer, cells);
+    cyo = StaticAllocate<signed char>(YBuffer, cells);
+    cellTables = StaticAllocate<short*>(ListBuffer, cells);
 
     {
       float w;
       int i = 0;
       for (int y = 0; y < Filter->Height; y++) {
         for (int x = 0; x < Filter->Width; x++) {
-          w = Filter->Weights[(y * Filter->Width) + x] / Filter->Divisor;
+          w = Filter->Weights[(y * Filter->Width) + x];
           if (w) {
             cxo[i] = x + Filter->XOffset;
             cyo[i] = y + Filter->YOffset;
             cellTables[i] = LookupAllocate<short>(256);
             for (int v = 0; v < 256; v++) {
-              cellTables[i][v] = ceil((v * w));
+              cellTables[i][v] = floor((v * w));
             }
             i++;
           }
@@ -2267,35 +2318,59 @@ signed char *cxo, *cyo;
       }
     }
 
-    Dest->dirty();
-
     SX = DSX; SY = DSY;
     
     DoubleWord iCX = 0 , iCY = rCoordinates.Height;
+
+    Pixel *pDest = 0;
+    if (needLock) {
+      pDest = Dest->pointer(rCoordinates.Left, rCoordinates.Top);
+    }
+
+    Pixel* rowTable = StaticAllocate<Pixel>(TextureBuffer, rCoordinates.Width);
+    Pixel* pWrite = rowTable;
     
     DoubleWord iDestRowOffset =
         (Dest->Width - rCoordinates.Width) + Dest->Pitch;
     
+    int o = Filter->Offset * 255;
     int b = 0, g = 0, r = 0, a = 0;
 
     while (iCY--) {
       iCX = (DoubleWord)rCoordinates.Width;
       DSX = SX;
+      pWrite = rowTable;
       while (iCX--) {
         b = g = r = a = 0;
         for (DoubleWord i = 0; i < cells; i++) {
-            pSource = Source->getPixelClip(DSX + cxo[i], DSY + cyo[i]);
+            pSource = Source->getPixelClipNO(DSX + cxo[i], DSY + cyo[i]);
             b += cellTables[i][pSource[::Blue]];
             g += cellTables[i][pSource[::Green]];
             r += cellTables[i][pSource[::Red]];
             a += cellTables[i][pSource[::Alpha]];
         }
-        (*pDest)[::Blue] = ClipByte(b);
-        (*pDest)[::Green] = ClipByte(g);
-        (*pDest)[::Red] = ClipByte(r);
-        (*pDest)[::Alpha] = ClipByte(a);
-        pDest++;
+        (*pWrite)[::Blue] = ClipByte((b / Filter->Divisor) + o);
+        (*pWrite)[::Green] = ClipByte((g / Filter->Divisor) + o);
+        (*pWrite)[::Red] = ClipByte((r / Filter->Divisor) + o);
+        (*pWrite)[::Alpha] = ClipByte((a / Filter->Divisor) + o);
+        pWrite++;
         DSX++;
+      }
+      if (needLock) {
+        if (Renderer) {
+          Renderer(pDest, rowTable, rCoordinates.Width, 0, RenderArgument.V);
+          pDest += rCoordinates.Width;
+        } else {
+          iCX = (DoubleWord)rCoordinates.Width;
+          Pixel *pSource = rowTable;
+          while (iCX--) {
+            *pDest++ = *pSource++;
+          }
+        }
+      } else {
+        if (lRenderer) {
+          lRenderer(Dest, rCoordinates.Left, rCoordinates.Height - 1 - iCY, rowTable, rCoordinates.Width);
+        }
       }
       pDest += iDestRowOffset;
       DSY++;
@@ -2304,17 +2379,20 @@ signed char *cxo, *cyo;
     for (DoubleWord i = 0; i < cells; i++) {
       LookupDeallocate(cellTables[i]);
     }
-    LookupDeallocate(cellTables);
-    LookupDeallocate(cxo);
-    LookupDeallocate(cyo);
+    //LookupDeallocate(cellTables);
+    //LookupDeallocate(cxo);
+    //LookupDeallocate(cyo);
+
+    Dest->dirty();
 
     return Success;
 }
 
-Export int BlitConvolve_Additive(Image *Dest, Image *Source, Convolution::Filter *Filter,
-                          Rectangle *Rect, Coordinate SX, Coordinate SY)
+
+Export int BlitConvolveMask(Image *Dest, Image *Source, Image *Mask, Convolution::Filter *Filter,
+                          Rectangle *Rect, Coordinate SX, Coordinate SY, Coordinate MX, Coordinate MY, Pixel RenderArgument, RenderFunction *Renderer)
 {
-    if (!Dest || !Source || !Filter) {
+    if (!Dest || !Source || !Mask || !Filter) {
       return Failure;
     }
     if (!Dest->initialized()) {
@@ -2323,27 +2401,55 @@ Export int BlitConvolve_Additive(Image *Dest, Image *Source, Convolution::Filter
     if (!Source->initialized()) {
       return Failure;
     }
+    if (!Mask->initialized()) {
+      return Failure;
+    }
     if (Filter->Divisor < 1) return Failure; // Can't have a divisor lower than 1
     if ((Filter->Width < 3) || (Filter->Height < 3)) return Failure; // Can't have a convolution filter smaller than 3x3
     if (((Filter->Width % 2) == 0) || ((Filter->Height % 2) == 0)) return Failure; // Can't have an even numbered size
 
-    int DSX = SX, DSY = SY;
+    {
+        int overrideresult = Override::EnumOverrides(Override::BlitConvolveMask, 11, Dest, Source, Mask, Filter, Rect, SX, SY, MX, MY, RenderArgument, Renderer);
+#ifdef OVERRIDES
+        if (overrideresult != 0) return overrideresult;
+#endif
+    }
 
-    ImageLockManager ilDest(lockingMode, Dest);
-    ImageLockManager ilSource(lockingMode, Source);
-    if (!ilDest.performUnlock())
-        return Failure;
-    if (!ilSource.performUnlock())
-        return Failure;
+    int DSX = SX, DSY = SY;
+    int MSX = MX, MSY = MY;
 
 	Rectangle rCoordinates;
     if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
          Rect, DSX, DSY)) return Trivial_Success;
 
-    Pixel *pDest = Dest->pointer(
-        rCoordinates.Left, rCoordinates.Top);
     Pixel pSource;
-    if ((!pDest)) return Failure;
+
+    rCoordinates.Width = ClipValue(rCoordinates.Width, Mask->Width - MX);
+    rCoordinates.Height = ClipValue(rCoordinates.Height, Mask->Height - MY);
+
+    LockedRenderFunction *lRenderer = Null;
+    bool needLock = true;
+    {
+        int overrideresult = Override::EnumOverrides(Override::GetScanlineRenderer, 4, Dest, Renderer, rCoordinates.Width, RenderArgument);
+  #ifdef OVERRIDES
+        if (overrideresult != 0) {
+          lRenderer = reinterpret_cast<LockedRenderFunction*>(overrideresult);
+          needLock = false;
+        }
+  #endif
+    }
+
+    ImageLockManager ilDest(lockingMode, Dest);
+    ImageLockManager ilSource(lockingMode, Source);
+    ImageLockManager ilMask(lockingMode, Mask);
+    if (needLock) {
+      if (!ilDest.performUnlock())
+          return Failure;
+    }
+    if (!ilSource.performUnlock())
+        return Failure;
+    if (!ilMask.performUnlock())
+        return Failure;
     
 short **cellTables;
 DoubleWord cells = 0;
@@ -2357,22 +2463,22 @@ signed char *cxo, *cyo;
       }
     }
 
-    cxo = LookupAllocate<signed char>(cells);
-    cyo = LookupAllocate<signed char>(cells);
-    cellTables = LookupAllocate<short*>(cells);
+    cxo = StaticAllocate<signed char>(XBuffer, cells);
+    cyo = StaticAllocate<signed char>(YBuffer, cells);
+    cellTables = StaticAllocate<short*>(ListBuffer, cells);
 
     {
       float w;
       int i = 0;
       for (int y = 0; y < Filter->Height; y++) {
         for (int x = 0; x < Filter->Width; x++) {
-          w = Filter->Weights[(y * Filter->Width) + x] / Filter->Divisor;
+          w = Filter->Weights[(y * Filter->Width) + x];
           if (w) {
             cxo[i] = x + Filter->XOffset;
             cyo[i] = y + Filter->YOffset;
             cellTables[i] = LookupAllocate<short>(256);
             for (int v = 0; v < 256; v++) {
-              cellTables[i][v] = ceil((v * w));
+              cellTables[i][v] = floor((v * w));
             }
             i++;
           }
@@ -2380,399 +2486,86 @@ signed char *cxo, *cyo;
       }
     }
 
-    Dest->dirty();
-
     SX = DSX; SY = DSY;
     
     DoubleWord iCX = 0 , iCY = rCoordinates.Height;
+
+    Pixel *pDest = 0;
+    if (needLock) {
+      pDest = Dest->pointer(rCoordinates.Left, rCoordinates.Top);
+      if (pDest == 0) return Failure;
+    }
+
+    Pixel* rowTable = StaticAllocate<Pixel>(TextureBuffer, rCoordinates.Width);
+    Pixel* pWrite = rowTable;
+    Pixel *pMask = Mask->pointer(MSX, MSY);
     
     DoubleWord iDestRowOffset =
         (Dest->Width - rCoordinates.Width) + Dest->Pitch;
+    DoubleWord iMaskRowOffset =
+        (Mask->Width - rCoordinates.Width) + Mask->Pitch;
     
-    int b = 0, g = 0, r = 0;
-
-    while (iCY--) {
-      iCX = (DoubleWord)rCoordinates.Width;
-      DSX = SX;
-      while (iCX--) {
-        b = g = r = 0;
-        for (DoubleWord i = 0; i < cells; i++) {
-            pSource = Source->getPixelClip(DSX + cxo[i], DSY + cyo[i]);
-            b += cellTables[i][pSource[::Blue]];
-            g += cellTables[i][pSource[::Green]];
-            r += cellTables[i][pSource[::Red]];
-        }
-        (*pDest)[::Blue] = ClipByteHigh((*pDest)[::Blue] + ClipByte(b));
-        (*pDest)[::Green] = ClipByteHigh((*pDest)[::Green] + ClipByte(g));
-        (*pDest)[::Red] = ClipByteHigh((*pDest)[::Red] + ClipByte(r));
-        pDest++;
-        DSX++;
-      }
-      pDest += iDestRowOffset;
-      DSY++;
-    }
-
-    for (DoubleWord i = 0; i < cells; i++) {
-      LookupDeallocate(cellTables[i]);
-    }
-    LookupDeallocate(cellTables);
-    LookupDeallocate(cxo);
-    LookupDeallocate(cyo);
-
-    return Success;
-}
-
-Export int BlitConvolve_Subtractive(Image *Dest, Image *Source, Convolution::Filter *Filter,
-                          Rectangle *Rect, Coordinate SX, Coordinate SY)
-{
-    if (!Dest || !Source || !Filter) {
-      return Failure;
-    }
-    if (!Dest->initialized()) {
-      return Failure;
-    }
-    if (!Source->initialized()) {
-      return Failure;
-    }
-    if (Filter->Divisor < 1) return Failure; // Can't have a divisor lower than 1
-    if ((Filter->Width < 3) || (Filter->Height < 3)) return Failure; // Can't have a convolution filter smaller than 3x3
-    if (((Filter->Width % 2) == 0) || ((Filter->Height % 2) == 0)) return Failure; // Can't have an even numbered size
-
-    int DSX = SX, DSY = SY;
-
-    ImageLockManager ilDest(lockingMode, Dest);
-    ImageLockManager ilSource(lockingMode, Source);
-    if (!ilDest.performUnlock())
-        return Failure;
-    if (!ilSource.performUnlock())
-        return Failure;
-
-	Rectangle rCoordinates;
-    if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
-         Rect, DSX, DSY)) return Trivial_Success;
-
-    Pixel *pDest = Dest->pointer(
-        rCoordinates.Left, rCoordinates.Top);
-    Pixel pSource;
-    if ((!pDest)) return Failure;
-    
-short **cellTables;
-DoubleWord cells = 0;
-signed char *cxo, *cyo;
-
-    for (int y = 0; y < Filter->Height; y++) {
-      for (int x = 0; x < Filter->Width; x++) {
-        if (Filter->Weights[(y * Filter->Width) + x]) {
-          cells++;
-        }
-      }
-    }
-
-    cxo = LookupAllocate<signed char>(cells);
-    cyo = LookupAllocate<signed char>(cells);
-    cellTables = LookupAllocate<short*>(cells);
-
-    {
-      float w;
-      int i = 0;
-      for (int y = 0; y < Filter->Height; y++) {
-        for (int x = 0; x < Filter->Width; x++) {
-          w = Filter->Weights[(y * Filter->Width) + x] / Filter->Divisor;
-          if (w) {
-            cxo[i] = x + Filter->XOffset;
-            cyo[i] = y + Filter->YOffset;
-            cellTables[i] = LookupAllocate<short>(256);
-            for (int v = 0; v < 256; v++) {
-              cellTables[i][v] = ceil((v * w));
-            }
-            i++;
-          }
-        }
-      }
-    }
-
-    Dest->dirty();
-
-    SX = DSX; SY = DSY;
-    
-    DoubleWord iCX = 0 , iCY = rCoordinates.Height;
-    
-    DoubleWord iDestRowOffset =
-        (Dest->Width - rCoordinates.Width) + Dest->Pitch;
-    
-    int b = 0, g = 0, r = 0;
-
-    while (iCY--) {
-      iCX = (DoubleWord)rCoordinates.Width;
-      DSX = SX;
-      while (iCX--) {
-        b = g = r = 0;
-        for (DoubleWord i = 0; i < cells; i++) {
-          if (cellTables[i][255]) {
-            pSource = Source->getPixelClip(DSX + cxo[i], DSY + cyo[i]);
-            b += cellTables[i][pSource[::Blue]];
-            g += cellTables[i][pSource[::Green]];
-            r += cellTables[i][pSource[::Red]];
-          }
-        }
-        (*pDest)[::Blue] = ClipByteLow((*pDest)[::Blue] + ClipByte(b));
-        (*pDest)[::Green] = ClipByteLow((*pDest)[::Green] + ClipByte(g));
-        (*pDest)[::Red] = ClipByteLow((*pDest)[::Red] + ClipByte(r));
-        pDest++;
-        DSX++;
-      }
-      pDest += iDestRowOffset;
-      DSY++;
-    }
-
-    for (DoubleWord i = 0; i < cells; i++) {
-      LookupDeallocate(cellTables[i]);
-    }
-    LookupDeallocate(cellTables);
-    LookupDeallocate(cxo);
-    LookupDeallocate(cyo);
-
-    return Success;
-}
-
-
-Export int BlitConvolve_Shadow(Image *Dest, Image *Source, Convolution::Filter *Filter,
-                          Rectangle *Rect, Coordinate SX, Coordinate SY, Pixel ShadowColor)
-{
-    if (!Dest || !Source || !Filter) {
-      return Failure;
-    }
-    if (!Dest->initialized()) {
-      return Failure;
-    }
-    if (!Source->initialized()) {
-      return Failure;
-    }
-    if (Source->OptimizeData.transparentOnly) return Trivial_Success;
-    if (Filter->Divisor < 1) return Failure; // Can't have a divisor lower than 1
-    if ((Filter->Width < 3) || (Filter->Height < 3)) return Failure; // Can't have a convolution filter smaller than 3x3
-    if (((Filter->Width % 2) == 0) || ((Filter->Height % 2) == 0)) return Failure; // Can't have an even numbered size
-
-    int DSX = SX, DSY = SY;
-
-    ImageLockManager ilDest(lockingMode, Dest);
-    ImageLockManager ilSource(lockingMode, Source);
-    if (!ilDest.performUnlock())
-        return Failure;
-    if (!ilSource.performUnlock())
-        return Failure;
-
-	Rectangle rCoordinates;
-    if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
-         Rect, DSX, DSY)) return Trivial_Success;
-
-    Pixel *pDest = Dest->pointer(
-        rCoordinates.Left, rCoordinates.Top);
-    Pixel pSource;
-    if ((!pDest)) return Failure;
-    
-short **cellTables;
-DoubleWord cells = 0;
-signed char *cxo, *cyo;
-
-    for (int y = 0; y < Filter->Height; y++) {
-      for (int x = 0; x < Filter->Width; x++) {
-        if (Filter->Weights[(y * Filter->Width) + x]) {
-          cells++;
-        }
-      }
-    }
-
-    cxo = LookupAllocate<signed char>(cells);
-    cyo = LookupAllocate<signed char>(cells);
-    cellTables = LookupAllocate<short*>(cells);
-
-    {
-      float w;
-      int i = 0;
-      for (int y = 0; y < Filter->Height; y++) {
-        for (int x = 0; x < Filter->Width; x++) {
-          w = Filter->Weights[(y * Filter->Width) + x] / Filter->Divisor;
-          if (w) {
-            cxo[i] = x + Filter->XOffset;
-            cyo[i] = y + Filter->YOffset;
-            cellTables[i] = LookupAllocate<short>(256);
-            for (int v = 0; v < 256; v++) {
-              cellTables[i][v] = ceil((v * w));
-            }
-            i++;
-          }
-        }
-      }
-    }
-
-    Dest->dirty();
-
-    SX = DSX; SY = DSY;
-
-    Byte R = ShadowColor[::Red], G = ShadowColor[::Green], B = ShadowColor[::Blue];
-    
-    DoubleWord iCX = 0 , iCY = rCoordinates.Height;
-    
-    DoubleWord iDestRowOffset =
-        (Dest->Width - rCoordinates.Width) + Dest->Pitch;
-    
-    int a = 0;
-    AlphaLevel *aScale, *aSource, *aDest;
-    aScale = AlphaLevelLookup( ShadowColor[::Alpha] );
-
-    while (iCY--) {
-      iCX = (DoubleWord)rCoordinates.Width;
-      DSX = SX;
-      while (iCX--) {
-        a = 0;
-        for (DoubleWord i = 0; i < cells; i++) {
-          if (cellTables[i][255]) {
-            pSource = Source->getPixelClip(DSX + cxo[i], DSY + cyo[i]);
-            a += cellTables[i][pSource[::Alpha]];
-          }
-        }
-        a = AlphaFromLevel(aScale, ClipByte(a));
-        aDest = AlphaLevelLookup( a ^ 0xFF );
-        aSource = AlphaLevelLookup( a );
-        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, B);
-        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, G);
-        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, R);
-        pDest++;
-        DSX++;
-      }
-      pDest += iDestRowOffset;
-      DSY++;
-    }
-
-    for (DoubleWord i = 0; i < cells; i++) {
-      LookupDeallocate(cellTables[i]);
-    }
-    LookupDeallocate(cellTables);
-    LookupDeallocate(cxo);
-    LookupDeallocate(cyo);
-
-    return Success;
-}
-
-Export int BlitConvolve_SourceAlpha(Image *Dest, Image *Source, Convolution::Filter *Filter,
-                          Rectangle *Rect, Coordinate SX, Coordinate SY)
-{
-    if (!Dest || !Source || !Filter) {
-      return Failure;
-    }
-    if (!Dest->initialized()) {
-      return Failure;
-    }
-    if (!Source->initialized()) {
-      return Failure;
-    }
-    if (Filter->Divisor < 1) return Failure; // Can't have a divisor lower than 1
-    if ((Filter->Width < 3) || (Filter->Height < 3)) return Failure; // Can't have a convolution filter smaller than 3x3
-    if (((Filter->Width % 2) == 0) || ((Filter->Height % 2) == 0)) return Failure; // Can't have an even numbered size
-
-    int DSX = SX, DSY = SY;
-
-    ImageLockManager ilDest(lockingMode, Dest);
-    ImageLockManager ilSource(lockingMode, Source);
-    if (!ilDest.performUnlock())
-        return Failure;
-    if (!ilSource.performUnlock())
-        return Failure;
-
-	Rectangle rCoordinates;
-    if (!Clip2D_SimpleRect(&rCoordinates, Dest, Source,
-         Rect, DSX, DSY)) return Trivial_Success;
-
-    Pixel *pDest = Dest->pointer(
-        rCoordinates.Left, rCoordinates.Top);
-    Pixel pSource;
-    if ((!pDest)) return Failure;
-    
-short **cellTables;
-DoubleWord cells = 0;
-signed char *cxo, *cyo;
-
-    for (int y = 0; y < Filter->Height; y++) {
-      for (int x = 0; x < Filter->Width; x++) {
-        if (Filter->Weights[(y * Filter->Width) + x]) {
-          cells++;
-        }
-      }
-    }
-
-    cxo = LookupAllocate<signed char>(cells);
-    cyo = LookupAllocate<signed char>(cells);
-    cellTables = LookupAllocate<short*>(cells);
-
-    {
-      float w;
-      int i = 0;
-      for (int y = 0; y < Filter->Height; y++) {
-        for (int x = 0; x < Filter->Width; x++) {
-          w = Filter->Weights[(y * Filter->Width) + x] / Filter->Divisor;
-          if (w) {
-            cxo[i] = x + Filter->XOffset;
-            cyo[i] = y + Filter->YOffset;
-            cellTables[i] = LookupAllocate<short>(256);
-            for (int v = 0; v < 256; v++) {
-              cellTables[i][v] = ceil((v * w));
-            }
-            i++;
-          }
-        }
-      }
-    }
-
-    Dest->dirty();
-
-    SX = DSX; SY = DSY;
-    
-    DoubleWord iCX = 0 , iCY = rCoordinates.Height;
-    
-    DoubleWord iDestRowOffset =
-        (Dest->Width - rCoordinates.Width) + Dest->Pitch;
-    
+    int o = Filter->Offset * 255;
     int b = 0, g = 0, r = 0, a = 0;
-    AlphaLevel *aSource, *aDest;
+    int m = 0;
 
     while (iCY--) {
       iCX = (DoubleWord)rCoordinates.Width;
       DSX = SX;
+      pWrite = rowTable;
       while (iCX--) {
+        m = (*pMask)[::Alpha];
         b = g = r = a = 0;
-        for (DoubleWord i = 0; i < cells; i++) {
-            pSource = Source->getPixelClip(DSX + cxo[i], DSY + cyo[i]);
-            b += cellTables[i][pSource[::Blue]];
-            g += cellTables[i][pSource[::Green]];
-            r += cellTables[i][pSource[::Red]];
-            a += cellTables[i][pSource[::Alpha]];
+        if (m) {
+          for (DoubleWord i = 0; i < cells; i++) {
+              pSource = Source->getPixelClipNO(DSX + cxo[i], DSY + cyo[i]);
+              b += cellTables[i][pSource[::Blue]];
+              g += cellTables[i][pSource[::Green]];
+              r += cellTables[i][pSource[::Red]];
+              a += cellTables[i][pSource[::Alpha]];
+          }
+          (*pWrite)[::Blue] = ClipByte((b / Filter->Divisor) + o);
+          (*pWrite)[::Green] = ClipByte((g / Filter->Divisor) + o);
+          (*pWrite)[::Red] = ClipByte((r / Filter->Divisor) + o);
+          (*pWrite)[::Alpha] = ClipByte(((a / Filter->Divisor) + o) * m / 255);
+        } else {
+          pWrite->V = 0;
         }
-        a = ClipByte(a);
-        if (a == 255) {
-          (*pDest)[::Blue] = ClipByte(b);
-          (*pDest)[::Green] = ClipByte(g);
-          (*pDest)[::Red] = ClipByte(r);
-        } else if (a > 0) {
-          aSource = AlphaLevelLookup(a);
-          aDest = AlphaLevelLookup(a ^ 0xFF);
-          (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, ClipByte(b));
-          (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, ClipByte(g));
-          (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, ClipByte(r));
-        }
-        pDest++;
+        pWrite++;
+        pMask++;
         DSX++;
+        MSX++;
+      }
+      if (needLock) {
+        if (Renderer) {
+          Renderer(pDest, rowTable, rCoordinates.Width, 0, RenderArgument.V);
+          pDest += rCoordinates.Width;
+        } else {
+          iCX = (DoubleWord)rCoordinates.Width;
+          Pixel *pSource = rowTable;
+          while (iCX--) {
+            *pDest++ = *pSource++;
+          }
+        }
+      } else {
+        if (lRenderer) {
+          lRenderer(Dest, rCoordinates.Left, rCoordinates.Height - 1 - iCY, rowTable, rCoordinates.Width);
+        }
       }
       pDest += iDestRowOffset;
+      pMask += iMaskRowOffset;
       DSY++;
+      MSY++;
     }
 
     for (DoubleWord i = 0; i < cells; i++) {
       LookupDeallocate(cellTables[i]);
     }
-    LookupDeallocate(cellTables);
-    LookupDeallocate(cxo);
-    LookupDeallocate(cyo);
+    //LookupDeallocate(cellTables);
+    //LookupDeallocate(cxo);
+    //LookupDeallocate(cyo);
+
+    Dest->dirty();
 
     return Success;
 }
@@ -2829,7 +2622,7 @@ Export int BlitDeform(Image *Dest, Image *Source, MeshParam *Mesh, Rectangle *De
     float bx = rSourceCoordinates.Left, by = rSourceCoordinates.Top;
     float bxi = (1 / (rCoordinates.Width / (float)(rSourceCoordinates.Width))), byi = (1 / (rCoordinates.Height / (float)(rSourceCoordinates.Height)));
     float cxw = 0, cyw = 0, sx = 0, sy = 0, lsx = 0, lsy = 0;
-    float cxi = (mw / (float)rCoordinates.Width), cyi = (mh / (float)rCoordinates.Height);
+    float cxi = ((mw+1) / (float)rCoordinates.Width), cyi = ((mh+1) / (float)rCoordinates.Height);
     float xd, yd;
     Pixel *rowTable = StaticAllocate<Pixel>(BlitterBuffer, segmentWidth);
     bool update_points = true, first_update = true, perform_draw = false;
@@ -2859,13 +2652,21 @@ Export int BlitDeform(Image *Dest, Image *Source, MeshParam *Mesh, Rectangle *De
           Mesh->get4Points(cx, cy, p);
           this is one of those times */
           
-          p[0] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
-          p[1] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
-          p[2] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
-          p[3] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+          int iy = ClipValue(cy, mh) * Mesh->Width;
+          int ix1 = ClipValue(cx, mw);
+          int ix2 = ClipValue(cx+1, mw);
+          p[0] = (Mesh->pData[ix1 + (iy)]);
+          p[1] = (Mesh->pData[ix2 + (iy)]);
+          iy = ClipValue(cy+1, mh) * Mesh->Width;
+          p[2] = (Mesh->pData[ix1 + (iy)]);
+          p[3] = (Mesh->pData[ix2 + (iy)]);
 
-          sx = bx + ((p[0].X * (1 - cxw) + p[1].X * cxw) * (1 - cyw) + (p[2].X * (1 - cxw) + p[3].X * cxw) * cyw);
-          sy = by + ((p[0].Y * (1 - cxw) + p[1].Y * cxw) * (1 - cyw) + (p[2].Y * (1 - cxw) + p[3].Y * cxw) * cyw);
+          float xr1 = (p[0].X) + ((p[1].X - p[0].X) * cxw);
+          float xr2 = (p[2].X) + ((p[3].X - p[2].X) * cxw);
+          sx = bx + (xr1 + ((xr2 - xr1) * cyw));
+          xr1 = (p[0].Y) + ((p[1].Y - p[0].Y) * cxw);
+          xr2 = (p[2].Y) + ((p[3].Y - p[2].Y) * cxw);
+          sy = by + (xr1 + ((xr2 - xr1) * cyw));
           if (first_update) {
             first_update = false;
             bx += bxi;
@@ -2946,8 +2747,8 @@ Export int BlitDeformMask(Image *Dest, Image *Source, Image *Mask, MeshParam *Me
         if (!ClipRectangle_Image(&rCoordinates,
          Dest)) return Trivial_Success;
 
-    rCoordinates.Width = ClipValue(rCoordinates.Width, 0, Mask->Width - MaskRect->Left);
-    rCoordinates.Height = ClipValue(rCoordinates.Height, 0, Mask->Height - MaskRect->Top);
+    rCoordinates.Width = ClipValue(rCoordinates.Width, Mask->Width - MaskRect->Left);
+    rCoordinates.Height = ClipValue(rCoordinates.Height, Mask->Height - MaskRect->Top);
 
     Pixel *pDest = Dest->pointer(
         rCoordinates.Left, rCoordinates.Top),
@@ -3006,13 +2807,21 @@ Export int BlitDeformMask(Image *Dest, Image *Source, Image *Mask, MeshParam *Me
           Mesh->get4Points(cx, cy, p);
           this is one of those times */
           
-          p[0] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
-          p[1] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy, 0, mh) * Mesh->Width)]);
-          p[2] = (Mesh->pData[ClipValue(cx, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
-          p[3] = (Mesh->pData[ClipValue(cx+1, 0, mw) + (ClipValue(cy+1, 0, mh) * Mesh->Width)]);
+          int iy = ClipValue(cy, mh) * Mesh->Width;
+          int ix1 = ClipValue(cx, mw);
+          int ix2 = ClipValue(cx+1, mw);
+          p[0] = (Mesh->pData[ix1 + (iy)]);
+          p[1] = (Mesh->pData[ix2 + (iy)]);
+          iy = ClipValue(cy+1, mh) * Mesh->Width;
+          p[2] = (Mesh->pData[ix1 + (iy)]);
+          p[3] = (Mesh->pData[ix2 + (iy)]);
 
-          sx = bx + ((p[0].X * (1 - cxw) + p[1].X * cxw) * (1 - cyw) + (p[2].X * (1 - cxw) + p[3].X * cxw) * cyw);
-          sy = by + ((p[0].Y * (1 - cxw) + p[1].Y * cxw) * (1 - cyw) + (p[2].Y * (1 - cxw) + p[3].Y * cxw) * cyw);
+          float xr1 = (p[0].X) + ((p[1].X - p[0].X) * cxw);
+          float xr2 = (p[2].X) + ((p[3].X - p[2].X) * cxw);
+          sx = bx + (xr1 + ((xr2 - xr1) * cyw));
+          xr1 = (p[0].Y) + ((p[1].Y - p[0].Y) * cxw);
+          xr2 = (p[2].Y) + ((p[3].Y - p[2].Y) * cxw);
+          sy = by + (xr1 + ((xr2 - xr1) * cyw));
           if (first_update) {
             first_update = false;
             bx += bxi;

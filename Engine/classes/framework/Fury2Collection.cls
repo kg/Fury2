@@ -287,6 +287,9 @@ End Sub
 
 Public Sub Clear()
 On Error Resume Next
+    Do While mCol.Count > 0
+        mCol.Remove 1
+    Loop
     Set mCol = New Collection
     RaiseEvent Clear
     If mHook Is Nothing Then

@@ -93,7 +93,15 @@ Dim l_objItem As Object, l_lngItems As Long
     Next l_objItem
 End Function
 
-Sub Clear()
+Public Sub Clear()
+On Error Resume Next
+    Do While mCol.Count > 0
+        mCol.Remove 1
+    Loop
+    Set mCol = New Collection
+End Sub
+
+Public Sub ClearAll()
 On Error Resume Next
 Dim m_lyrLayer As Fury2MapLayer
     For Each m_lyrLayer In mCol

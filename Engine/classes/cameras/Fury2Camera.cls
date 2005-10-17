@@ -190,9 +190,11 @@ End Sub
 Sub Free()
 On Error Resume Next
 Dim l_imgTarget As Fury2Image
+    Set mvarViewingMap = Nothing
     For Each l_imgTarget In mvarRenderTargets
         l_imgTarget.Unsize
     Next l_imgTarget
+    Set m_engEngine = Nothing
 End Sub
 
 Public Property Get Gamma() As Single
@@ -285,15 +287,15 @@ Dim m_sngOldX As Single, m_sngOldY As Single
     mvarXBuffer = mvarXBuffer + XDistance
     mvarYBuffer = mvarYBuffer + YDistance
     If mvarConstrainToMap Then
-        If mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth <= mvarWidth Then
-            mvarViewportX = -(mvarWidth - (mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth)) \ 2
+        If mvarViewingMap.MaxX <= mvarWidth Then
+            mvarViewportX = -(mvarWidth - mvarViewingMap.MaxX) \ 2
         Else
-            mvarViewportX = Engine.ClipNumber(mvarViewportX, 0, Abs((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) - mvarWidth))
+            mvarViewportX = Engine.ClipNumber(mvarViewportX, 0, Abs(mvarViewingMap.MaxX - mvarWidth))
         End If
-        If mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight <= mvarHeight Then
-            mvarViewportY = -(mvarHeight - (mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight)) \ 2
+        If mvarViewingMap.MaxY * mvarViewingMap.Layers(1).Tileset.TileHeight <= mvarHeight Then
+            mvarViewportY = -(mvarHeight - mvarViewingMap.MaxY) \ 2
         Else
-            mvarViewportY = Engine.ClipNumber(mvarViewportY, 0, Abs((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) - mvarHeight))
+            mvarViewportY = Engine.ClipNumber(mvarViewportY, 0, Abs(mvarViewingMap.MaxY - mvarHeight))
         End If
     End If
 End Sub
@@ -411,24 +413,24 @@ Dim l_mopObject As Fury2MapObject
     End With
     If Area Is Nothing Then
         If mvarConstrainToMap Then
-            If mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth <= mvarWidth Then
-                mvarViewportX = -(mvarWidth - (mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth)) \ 2
+            If mvarViewingMap.MaxX <= mvarWidth Then
+                mvarViewportX = -(mvarWidth - (mvarViewingMap.MaxX)) \ 2
             Else
-                mvarViewportX = Engine.ClipNumber(mvarViewportX, 0, Abs((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) - mvarWidth))
+                mvarViewportX = Engine.ClipNumber(mvarViewportX, 0, Abs((mvarViewingMap.MaxX) - mvarWidth))
             End If
-            If mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight <= mvarHeight Then
-                mvarViewportY = -(mvarHeight - (mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight)) \ 2
+            If mvarViewingMap.MaxY <= mvarHeight Then
+                mvarViewportY = -(mvarHeight - (mvarViewingMap.MaxY)) \ 2
             Else
-                mvarViewportY = Engine.ClipNumber(mvarViewportY, 0, Abs((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) - mvarHeight))
+                mvarViewportY = Engine.ClipNumber(mvarViewportY, 0, Abs((mvarViewingMap.MaxY) - mvarHeight))
             End If
         End If
         FullRedraw = True
         Set Area = F2Rect(0, 0, l_imgBuffer.Width, l_imgBuffer.Height, False)
-        If (Engine.ClearMapBG) Or ((l_imgBuffer Is Engine.Backbuffer) And (((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) < l_imgBuffer.Width) Or ((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) < l_imgBuffer.Height))) Then
+        If (Engine.ClearMapBG) Or ((l_imgBuffer Is Engine.Backbuffer) And (((mvarViewingMap.MaxX) < l_imgBuffer.Width) Or ((mvarViewingMap.MaxY) < l_imgBuffer.Height))) Then
             If Output Is Nothing Then l_imgBuffer.Clear 0
         End If
     Else
-        If (Engine.ClearMapBG) Or ((l_imgBuffer Is Engine.Backbuffer) And (((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) < l_imgBuffer.Width) Or ((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) < l_imgBuffer.Height))) Then
+        If (Engine.ClearMapBG) Or ((l_imgBuffer Is Engine.Backbuffer) And (((mvarViewingMap.MaxX) < l_imgBuffer.Width) Or ((mvarViewingMap.MaxY) < l_imgBuffer.Height))) Then
             If Output Is Nothing Then l_imgBuffer.Fill Area, 0
         End If
     End If
@@ -836,10 +838,10 @@ End Property
 
 Public Property Let ViewportX(ByVal vData As Single)
     If mvarConstrainToMap Then
-        If mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth <= mvarWidth Then
-            mvarViewportX = -(mvarWidth - (mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth)) \ 2
+        If mvarViewingMap.MaxX <= mvarWidth Then
+            mvarViewportX = -(mvarWidth - (mvarViewingMap.MaxX)) \ 2
         Else
-            mvarViewportX = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.Width * mvarViewingMap.Layers(1).Tileset.TileWidth) - mvarWidth))
+            mvarViewportX = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.MaxX) - mvarWidth))
         End If
     Else
         mvarViewportX = vData
@@ -852,10 +854,10 @@ End Property
 
 Public Property Let ViewportY(ByVal vData As Single)
     If mvarConstrainToMap Then
-        If mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight <= mvarHeight Then
-            mvarViewportY = -(mvarHeight - (mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight)) \ 2
+        If mvarViewingMap.MaxY <= mvarHeight Then
+            mvarViewportY = -(mvarHeight - (mvarViewingMap.MaxY)) \ 2
         Else
-            mvarViewportY = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.Height * mvarViewingMap.Layers(1).Tileset.TileHeight) - mvarHeight))
+            mvarViewportY = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.MaxY) - mvarHeight))
         End If
     Else
         mvarViewportY = vData

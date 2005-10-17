@@ -159,7 +159,7 @@ Attribute VB_Exposed = False
 '    License along with this library; if not, write to the Free Software
 '    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 '
-
+ 
 Option Explicit
 Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.Rect, ByVal wFormat As Long) As Long
 Private Const DT_WORDBREAK = &H10
@@ -724,6 +724,7 @@ Dim l_strSelectedItem As String
         Set m_colNameStack = New Collection
     End If
     l_lngIndex = 1
+    l_lngOldIndex = -1
     For Each l_objFind In m_colObjectStack
         If l_objFind Is m_objObject Then
             l_lngOldIndex = l_lngIndex
@@ -731,6 +732,9 @@ Dim l_strSelectedItem As String
         End If
         l_lngIndex = l_lngIndex + 1
     Next l_objFind
+    If l_lngOldIndex = -1 Then
+        l_lngOldIndex = m_colObjectStack.Count
+    End If
     Set m_objObject = Obj
     If Not IgnoreStack Then
         For Each l_objFind In m_colObjectStack
@@ -945,8 +949,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -957,8 +961,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -1345,7 +1349,7 @@ Dim l_varValue As Variant
 Dim l_booValue As Boolean
 Dim l_itValue As IInspectorType
 Dim l_vtType As VbVarType
-Dim l_strText As String
+Dim l_strText As String, l_strNumber As String
 Dim l_lngValues As Long
 Dim l_booError As Boolean
     l_strText = txtEdit.Text
@@ -1379,15 +1383,17 @@ Dim l_booError As Boolean
     End If
     l_varOldValue = m_oiItems(m_lngSelectedItem).Value
     l_vtType = VarType(l_varOldValue)
-    If l_vtType = vbEmpty Or l_vtType = vbNull Or l_vtType = vbVariant Then
+    If l_vtType = vbEmpty Or l_vtType = vbNull Or l_vtType = vbVariant Or m_oiItems(m_lngSelectedItem).DataType = VT_VARIANT Then
         If Left(Trim(l_strText), 1) = """" Then
             l_vtType = vbString
         ElseIf Trim(l_strText) = CStr(True) Or Trim(l_strText) = CStr(False) Then
             l_vtType = vbBoolean
-        ElseIf InStr(l_strText, ".") Then
+        ElseIf IsNumeric(l_strText) And (InStr(l_strText, ".") Or InStr(l_strText, ",")) Then
             l_vtType = vbSingle
-        Else
+        ElseIf IsNumeric(l_strText) Then
             l_vtType = vbLong
+        Else
+            l_vtType = vbString
         End If
     End If
     Err.Clear

@@ -227,7 +227,7 @@ On Error Resume Next
 End Sub
 
 Private Sub cmbGraphicsPlugin_Change()
-    If cmbGraphicsPlugin.Text = "GDI" Then
+    If LCase(Trim(cmbGraphicsPlugin.Text)) = "GDI" Then
         cmbDisplayMode.Enabled = False
         lblDisplayMode.Enabled = False
     Else

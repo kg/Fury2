@@ -15,10 +15,57 @@ Attribute VB_Description = "Fury² Sound Handle"
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
 Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
+Private Const c_lngEndOffset As Long = 10
+
+Public StopEvent As Object
+Public BeforeEndEvent As Object
+Public EndEvent As Object
+Public StartEvent As Object
 Private m_sngFrequency As Single
 Private m_strFilename As String
 Private m_seEngine As SoundEngine
 Private m_lngHandle As Long
+
+Friend Property Get SyncPointCount() As Long
+On Error Resume Next
+Dim l_lngCount As Long
+    FMOD_Sound_GetNumSyncPoints m_lngHandle, l_lngCount
+    SyncPointCount = l_lngCount
+End Property
+
+Friend Sub AddDefaultSyncPoints()
+On Error Resume Next
+Dim l_lngLength As Long
+Dim l_lngHandle As Long
+    AddSyncPoint 0, "start"
+    FMOD_Sound_GetLength m_lngHandle, l_lngLength, FMOD_TIMEUNIT_MS
+    l_lngHandle = FreeFile
+    Open "C:\fmod.log" For Append As #l_lngHandle
+    Print #l_lngHandle, "Adding end-1 sync point to track " & m_strFilename & " @ " & (l_lngLength - 1000) & "ms, sound ID " & m_lngHandle
+    Close #l_lngHandle
+    AddSyncPoint l_lngLength - 1000, "end-1"
+    AddSyncPoint l_lngLength - c_lngEndOffset, "end"
+End Sub
+
+Friend Sub AddSyncPoint(ByVal Time As Long, Optional ByRef name As String = "")
+On Error Resume Next
+Dim l_lngPoint As Long
+    FMOD_Sound_AddSyncPoint m_lngHandle, Time, FMOD_TIMEUNIT_MS, name, l_lngPoint
+End Sub
+
+Friend Sub RemoveSyncPoint(ByVal Index As Long)
+On Error Resume Next
+Dim l_lngPoint As Long
+    FMOD_Sound_GetSyncPoint m_lngHandle, Index, l_lngPoint
+    FMOD_Sound_DeleteSyncPoint m_lngHandle, l_lngPoint
+End Sub
+
+Friend Sub RemoveSyncPoints()
+On Error Resume Next
+    Do While SyncPointCount > 0
+        RemoveSyncPoint 1
+    Loop
+End Sub
 
 Public Property Get Filename() As String
 On Error Resume Next
@@ -27,6 +74,7 @@ End Property
 
 Public Sub Free()
 On Error Resume Next
+    FMOD_Sound_SetUserData m_lngHandle, 0
     If m_seEngine Is Nothing Then
     Else
         m_seEngine.Sounds.Remove m_seEngine.Find(Me)
@@ -43,6 +91,9 @@ On Error Resume Next
     m_lngHandle = Handle
     m_strFilename = Filename
     m_sngFrequency = Frequency
+    FMOD_Sound_SetUserData m_lngHandle, ObjPtr(Me)
+    RemoveSyncPoints
+    AddDefaultSyncPoints
 End Sub
 
 Public Property Get Parent() As SoundEngine

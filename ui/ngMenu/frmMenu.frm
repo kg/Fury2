@@ -226,9 +226,16 @@ Dim l_rctText As Rect, l_rctAccelerator As Rect
                 End If
             End If
             If GetAlpha(Menu.Colors(mncGlow + l_lngOffset)) > 0 Then
-                m_imgSurface.Blit l_rctImage.Copy.Adjust(2, 2), , .GlowImage, IIf(.State = bstChecked, 1, 0.66), BlitMode_Font_SourceAlpha, Menu.Colors(mncGlow + l_lngOffset)
+                m_imgSurface.Blit l_rctImage.Copy.Adjust(2, 2), , .GlowImage, IIf(.State = mstChecked, 1, 0.66), BlitMode_Font_SourceAlpha, Menu.Colors(mncGlow + l_lngOffset)
             End If
             m_imgSurface.Blit l_rctImage, , .Image, , BlitMode_SourceAlpha_ColorMask, Menu.Colors(mncTint + l_lngOffset)
+            l_rctText.Right = l_rctText.Left
+            l_rctText.Left = 0
+            If .State = mstChecked Then
+                Set Font = g_fntMarlett
+                SelectObject m_lngDC, GetCurrentObject(Me.hDC, Object_Font)
+                DrawText m_lngDC, "a", 1, l_rctText, DrawText_Align_Center_Horizontal Or DrawText_Align_Center_Vertical
+            End If
         Case msySeparator
             Set l_rctItem = F2Rect(.Left, .Top, m_imgSurface.Width, .Height, False)
             If Not l_rctClip.Intersect(l_rctItem) Then Exit Sub
@@ -257,7 +264,7 @@ Dim l_rctText As Rect
             l_rctItem.Width = Me.ScaleWidth
             If Not l_rctClip.Intersect(l_rctItem) Then Exit Sub
             l_lngOffset = ColorOffset(.State)
-            If (.State = bstNormal) Then
+            If (.State = mstNormal) Then
             Else
                 m_imgSurface.Fill l_rctItem, Menu.Colors(mncBackground + l_lngOffset), RenderMode_SourceAlpha
                 m_imgSurface.Box l_rctItem, Menu.Colors(mncBorder + l_lngOffset), RenderMode_SourceAlpha

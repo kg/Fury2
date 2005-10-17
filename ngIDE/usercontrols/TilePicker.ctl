@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
 Begin VB.UserControl TilePicker 
    AutoRedraw      =   -1  'True
    BackColor       =   &H80000014&
@@ -20,7 +20,6 @@ Begin VB.UserControl TilePicker
    Begin ngUI.ngToolbar tbrTileset 
       Height          =   360
       Left            =   0
-      TabIndex        =   2
       Top             =   0
       Width           =   765
       _ExtentX        =   1349
@@ -278,6 +277,7 @@ End Sub
 
 Public Sub Redraw()
 On Error Resume Next
+Static l_booHere As Boolean
 Dim l_lngX As Long, l_lngY As Long
 Dim l_lngSX As Long, l_lngSY As Long
 Dim l_lngHeight As Long, l_lngMax As Long
@@ -290,6 +290,8 @@ Dim l_booSelected As Boolean
 Dim l_imgTile As Fury2Image
 Dim l_rctTile As Fury2Rect
 Dim l_lngBackgroundColor As Long, l_lngHighlightColor As Long
+    If l_booHere Then Exit Sub
+    l_booHere = True
     
     l_lngBackgroundColor = SwapChannels(GetSystemColor(SystemColor_Button_Face), Blue, Red)
     l_lngHighlightColor = SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Blue, Red), 127)
@@ -427,6 +429,7 @@ Dim l_lngBackgroundColor As Long, l_lngHighlightColor As Long
         m_lngHeight = l_lngHeight
         UserControl_Resize
     End If
+    l_booHere = False
 End Sub
 
 Public Property Get Tileset() As Fury2Tileset

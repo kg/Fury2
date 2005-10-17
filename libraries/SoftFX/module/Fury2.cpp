@@ -1243,6 +1243,7 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
   bool draw_caret = false, draw_selection = false, locate_char = false;
   // states
   bool _break = false, _render = false, _move_down = false;
+  int escape = 0;
   int line_count = 0;
   int current_X = 0, maximum_X = 0;
   int index = 1, buffer_index = 1;
@@ -1322,6 +1323,11 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
           // carriage return
           _break = true;
           break;
+        case '#':
+          if ((*(current+1)) == '[') {
+            break;
+          } else {
+          }
         case ' ': case '.':
         case ',': case ';':
         case '-': case '~':

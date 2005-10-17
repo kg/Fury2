@@ -23,13 +23,13 @@ Private Const c_lngMaxSoftwareChannels = 64
 Private m_colGroups As Collection
 Private m_colSounds As Collection
 Private m_lngFMod As Long
-Private m_cgMaster As Channelgroup
+Private m_cgMaster As ChannelGroup
 Public Enabled As Boolean
 Public m_Engine As Object
 
-Friend Function CreateChannelGroupH(ByVal Handle As Long) As Channelgroup
+Friend Function CreateChannelGroupH(ByVal Handle As Long) As ChannelGroup
 On Error Resume Next
-Dim l_cgNew As Channelgroup
+Dim l_cgNew As ChannelGroup
     If Handle = 0 Then Exit Function
     For Each l_cgNew In m_colGroups
         If l_cgNew.Handle = Handle Then
@@ -37,13 +37,13 @@ Dim l_cgNew As Channelgroup
             Exit Function
         End If
     Next l_cgNew
-    Set l_cgNew = New Channelgroup
+    Set l_cgNew = New ChannelGroup
     l_cgNew.Init Me, Handle
     m_colGroups.Add l_cgNew
     Set CreateChannelGroupH = l_cgNew
 End Function
 
-Public Function CreateChannelGroup(Optional ByRef name As String = "Channel Group") As Channelgroup
+Public Function CreateChannelGroup(Optional ByRef name As String = "Channel Group") As ChannelGroup
 On Error Resume Next
 Dim l_lngHandle As Long
     Call FMOD_System_CreateChannelGroup(m_lngFMod, name, l_lngHandle)
@@ -79,7 +79,7 @@ Dim m_sndObj As Sound, m_lngObj As Long
             m_lngObj = m_lngObj + 1
         Else
             m_objObj.AddRef
-            m_lngCount = m_objObj.Release
+            m_lngCount = m_objObj.release
             Set m_objObj = Nothing
             If m_lngCount < 2 Then
                 m_colSounds.Remove m_lngObj
@@ -134,7 +134,7 @@ Dim m_lngItems As Long
     Next m_lngItems
 End Function
 
-Public Function Load(ByVal Filename As String, Optional ByRef soundtype As String = "Stream") As Sound
+Public Function Load(ByVal Filename As String, Optional ByRef Soundtype As String = "Stream") As Sound
 On Error Resume Next
 Dim l_lngHandle As Long
 Dim l_sndSound As Sound
@@ -176,7 +176,7 @@ Dim l_strFilename As String
                     End If
                 Next l_sndSound
                 ' todo: FMOD_UNICODE? Not sure if this works on win9x/FAT32 so i'm not adding it yet
-                Select Case LCase(Trim(soundtype))
+                Select Case LCase(Trim(Soundtype))
                 Case "stream"
                     Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_2D Or FMOD_CREATESTREAM Or FMOD_ACCURATETIME, l_lngHandle)
                 Case "sample"
@@ -202,7 +202,7 @@ On Error Resume Next
     If m_lngFMod Then Initialized = False Else Initialized = True
 End Property
 
-Public Property Get Master() As Channelgroup
+Public Property Get Master() As ChannelGroup
 On Error Resume Next
     Set Master = m_cgMaster
 End Property

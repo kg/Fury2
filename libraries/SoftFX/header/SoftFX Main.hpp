@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define ASSEMBLY
 #define VISUALBASIC
 #define OVERRIDES
+#define DISABLE_SSE
 #ifdef _DEBUG
   #define TRACE
 #else

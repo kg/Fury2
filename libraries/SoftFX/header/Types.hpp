@@ -123,8 +123,11 @@ struct FPoint {
     float v = (this->X * this->X) + (this->Y * this->Y);
     return sqrt(v);
   }
-  inline float dot(FPoint B) {
-    return (this->X * B.X + this->Y * B.Y);
+  inline float cross(FPoint& Other) {
+    return (this->X * Other.Y) - (this->Y * Other.X);
+  }
+  inline float dot(FPoint& Other) {
+    return (this->X * Other.X + this->Y * Other.Y);
   }
   inline FPoint perp() {
     FPoint temp;

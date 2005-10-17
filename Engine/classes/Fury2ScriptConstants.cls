@@ -36,11 +36,29 @@ Implements Fury2Object
 
 Public Property Get Key(ByVal KeyCode As String) As Long
 On Error Resume Next
-    If Len(KeyCode) = 1 Then
-        Key = Asc(UCase(KeyCode))
-        Exit Property
-    End If
     Select Case LCase(Trim(KeyCode))
+    Case "~", "`"
+        Key = 192
+    Case "-", "_"
+        Key = 189
+    Case "=", "+"
+        Key = 187
+    Case "[", "{"
+        Key = 219
+    Case "]", "}"
+        Key = 221
+    Case "\", "|"
+        Key = 220
+    Case ";", ":"
+        Key = 186
+    Case "'", """"
+        Key = 222
+    Case ",", "<"
+        Key = 188
+    Case ".", ">"
+        Key = 190
+    Case "/", "?"
+        Key = 191
     Case "esc", "escape"
         Key = vbKeyEscape
     Case "bksp", "back", "backspace"
@@ -80,6 +98,10 @@ On Error Resume Next
     Case "down", "down arrow"
         Key = 40
     Case Else
+        If Len(KeyCode) = 1 Then
+            Key = Asc(UCase(KeyCode))
+            Exit Property
+        End If
         If LCase(left(KeyCode, 1)) = "f" Then
             Key = vbKeyF1 + CLng(Mid(KeyCode, 2)) - 1
         End If
@@ -265,6 +287,24 @@ Public Property Get RenderMode_Merge() As Long
 End Property
 Public Property Get RenderMode_Shadow() As Long
     RenderMode_Shadow = 5
+End Property
+Public Property Get RenderMode_Screen() As Long
+    RenderMode_Screen = 6
+End Property
+Public Property Get RenderMode_Additive_SourceAlpha() As Long
+    RenderMode_Additive_SourceAlpha = 7
+End Property
+Public Property Get RenderMode_Subtractive_SourceAlpha() As Long
+    RenderMode_Subtractive_SourceAlpha = 8
+End Property
+Public Property Get RenderMode_Font_SourceAlpha() As Long
+    RenderMode_Font_SourceAlpha = 9
+End Property
+Public Property Get RenderMode_Unerase() As Long
+    RenderMode_Unerase = 10
+End Property
+Public Property Get RenderMode_Erase() As Long
+    RenderMode_Erase = 11
 End Property
 
 Public Property Get CallType_Set() As Long

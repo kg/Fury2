@@ -63,7 +63,7 @@ Private m_imgLogo As Fury2Image
 Private m_imgText As Fury2Image
 Private m_imgTopFade As Fury2Image
 Private m_imgBottomFade As Fury2Image
-Private m_fntFont As Fury2Font
+Private m_fntFont As Fury2RasterFont
 Private m_lngYOffset As Long
 Private m_lngYOffset2 As Long
 Private m_lngHeight As Long
@@ -87,7 +87,7 @@ Dim l_vfFile As VirtualFile
     m_imgTopFade.GradientFill m_imgTopFade.Rectangle, Array(F2White, F2White, F2Black, F2Black)
     Set m_imgBottomFade = m_imgTopFade.Duplicate
     m_imgBottomFade.Flip
-    Set m_fntFont = g_engEngine.F2Font
+    Set m_fntFont = New Fury2RasterFont
     m_fntFont.ImportTTF Me.Font
     m_fntFont.Color = F2White
     m_fntFont.AddOutline F2Black, 1

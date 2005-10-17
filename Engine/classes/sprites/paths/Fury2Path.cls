@@ -43,10 +43,14 @@ Implements IVirtualFileCollection
 Implements IVirtualFileSaveable
 
 Public Index As Long
-Private mvarCurrent As Fury2Waypoint
 Private mCol As Collection
 Private mvarLooping As Boolean
 Private mvarParent As Fury2Sprite
+
+Public Property Get Current() As Fury2Waypoint
+On Error Resume Next
+    Set Current = mCol(Index)
+End Property
 
 Public Function Duplicate() As Fury2Path
 On Error Resume Next
@@ -105,18 +109,16 @@ End Sub
 Public Sub Completed()
 On Error Resume Next
 Dim l_objWaypoint As Fury2Waypoint
-    Set l_objWaypoint = mCol.Item(1)
+    Set l_objWaypoint = Current
     mvarParent.WaypointReached l_objWaypoint
     If l_objWaypoint.ReachedEvent <> "" Then
         mvarParent.Map.Engine.ScriptEngine.AddCode l_objWaypoint.ReachedEvent
     End If
-    mCol.Remove 1
-    Set mvarCurrent = mCol.Item(1)
     If mvarLooping Then
-        mCol.Add l_objWaypoint
-        l_objWaypoint.WaitRemainder = l_objWaypoint.Wait
+        Index = WrapValue(Index + 1, 1, mCol.Count)
+    Else
+        Index = Index + 1
     End If
-    Index = Index + 1
 End Sub
 
 Public Function Find(ByVal Obj) As Long
@@ -136,7 +138,6 @@ End Function
 Sub Clear()
 On Error Resume Next
     Set mCol = New Collection
-    Set mvarCurrent = Nothing
     Index = 1
 End Sub
 
@@ -182,7 +183,6 @@ On Error Resume Next
     Else
         If mCol.Count = 0 Then
             mCol.Add Obj
-            Set mvarCurrent = Obj
         ElseIf AtIndex <= 1 Then
             mCol.Add Obj, , 1
         ElseIf mCol.Count > AtIndex Then

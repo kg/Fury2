@@ -44,6 +44,7 @@ Private m_lngPathColor As Long
 Private m_lngPathNodeColor As Long
 Private m_lngZoom As Long
 Private m_booAutoScroll As Boolean
+Private m_booAutoListSwitch As Boolean
 Private m_booAlwaysShowLighting As Boolean
 Private m_booAlwaysShowSprites As Boolean
 Private m_booShowGrid As Boolean
@@ -98,6 +99,14 @@ End Property
 
 Public Property Let AutoScroll(NewValue As Boolean)
     m_booAutoScroll = NewValue
+End Property
+
+Public Property Get AutoListSwitch() As Boolean
+    AutoListSwitch = m_booAutoListSwitch
+End Property
+
+Public Property Let AutoListSwitch(NewValue As Boolean)
+    m_booAutoListSwitch = NewValue
 End Property
 
 Public Property Get ShowGrid() As Boolean
@@ -191,6 +200,7 @@ End Property
 Private Sub Class_Initialize()
 On Error Resume Next
     m_booAutoScroll = True
+    m_booAutoListSwitch = True
     m_lngZoom = 100
     m_lngBlockingColor = F2RGB(255, 0, 127, 220)
     m_lngLightingObstructionColor = F2RGB(63, 220, 63, 220)
@@ -222,6 +232,7 @@ On Error Resume Next
         .Load m_booAlwaysShowLighting
         .Load m_booAlwaysShowSprites
         If Not .EOS Then .Load m_lngGridColor
+        If Not .EOS Then .Load m_booAutoListSwitch
     End With
 End Sub
 
@@ -244,5 +255,6 @@ On Error Resume Next
         .Save m_booAlwaysShowLighting
         .Save m_booAlwaysShowSprites
         .Save m_lngGridColor
+        .Save m_booAutoListSwitch
     End With
 End Sub

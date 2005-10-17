@@ -801,8 +801,10 @@ FILTERSIMPLE_INIT
 FILTERSIMPLE_BEGIN
     Byte lookupTable[256];
     float g = 1.0f / Gamma;
+    float f = 0, fi = 1 / 255.0f;
     for (int i = 0; i < 256; i++) {
-        lookupTable[i] = ClipByte(pow(i / 255.0f, g) * 255.0f);
+        lookupTable[i] = ClipByte(pow(f, g) * 255.0f);
+        f += fi;
     }
 FILTERSIMPLE_LOOPBEGIN
     (*pCurrent)[::Blue] = lookupTable[(*pCurrent)[::Blue]];
@@ -820,10 +822,12 @@ FILTERSIMPLE_BEGIN
     float rg = 1.0f / RedGamma;
     float gg = 1.0f / GreenGamma;
     float bg = 1.0f / BlueGamma;
+    float f = 0, fi = 1 / 255.0f;
     for (int i = 0; i < 256; i++) {
-        redTable[i] = ClipByte(pow(i / 255.0f, rg) * 255.0f);
-        greenTable[i] = ClipByte(pow(i / 255.0f, gg) * 255.0f);
-        blueTable[i] = ClipByte(pow(i / 255.0f, bg) * 255.0f);
+        redTable[i] = ClipByte(pow(f, rg) * 255.0f);
+        greenTable[i] = ClipByte(pow(f, gg) * 255.0f);
+        blueTable[i] = ClipByte(pow(f, bg) * 255.0f);
+        f += fi;
     }
 FILTERSIMPLE_LOOPBEGIN
     (*pCurrent)[::Blue] = blueTable[(*pCurrent)[::Blue]];
@@ -839,8 +843,10 @@ FILTERSIMPLE_INIT
 FILTERSIMPLE_BEGIN
     Byte lookupTable[256];
     float g = 1.0f / Gamma;
+    float f = 0, fi = 1 / 255.0f;
     for (int i = 0; i < 256; i++) {
-        lookupTable[i] = ClipByte(pow(i / 255.0f, g) * 255.0f);
+        lookupTable[i] = ClipByte(pow(f, g) * 255.0f);
+        f += fi;
     }
   	ColorChannels ch = (ColorChannels)ClipValue(Channel, 3);
 FILTERSIMPLE_LOOPBEGIN

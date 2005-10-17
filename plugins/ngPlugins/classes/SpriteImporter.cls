@@ -140,7 +140,7 @@ Private Property Set iPlugin_Editor(RHS As Object)
 End Property
 
 Private Property Get iPlugin_Icon() As Fury2Image
-    Set iPlugin_Icon = LoadResPicture("SPRITES", vbResIcon)
+    Set iPlugin_Icon = m_objEditor.LoadResources("ng").ItemData("icons\sprite importer.png")
 End Property
 
 Private Sub iPlugin_Initialize()

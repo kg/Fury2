@@ -74,6 +74,7 @@ Private m_lngIdealWidth As Long, m_lngIdealHeight As Long
 Private m_lngRowHeight As Long
 Private m_booInitialized As Boolean
 Private m_booMouseOver As Boolean
+Public DrawBorder As Boolean
 Public ThemeBackground As Variant
 Public EnableTheme As Boolean
 Public ResourceFile As ngResourceFile
@@ -671,7 +672,15 @@ Dim l_rctArea As Rect
             Set UserControl.Font = l_fntOld
             RenderButton l_btnButton
         Next l_btnButton
+        If DrawBorder Then
+            If EnableTheme Then
+            Else
+                Set m_imgSurface.ClipRectangle = Area
+                m_imgSurface.Box m_imgSurface.Rectangle, F2RGB(0, 0, 0, 31), RenderMode_SourceAlpha
+            End If
+        End If
         Set UserControl.Font = l_fntOld
+        m_imgSurface.ResetClipRectangle
         RaiseEvent Redraw
         Refresh Area
     End If

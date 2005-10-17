@@ -131,7 +131,7 @@ Dim l_mshMesh As Fury2DeformationMesh
 '    glClear clrColorBufferBit
 ''    m_imgBuffer.ConvexPolygon Array(Array(10, 10), Array(50, 10), Array(50, 50), Array(25, 75), Array(10, 50)), F2White
 '    m_imgBuffer.Adjust -16
-    m_imgBuffer.Clear F2RGB(32, 48, 64, 0)
+'    m_imgBuffer.Clear F2RGB(32, 48, 64, 0)
 '    m_imgTexture.Draw m_imgBuffer, m_imgBuffer.Width / 2, m_imgBuffer.Height / 2, 1, 1, l_sngR, BlitMode_Additive, , ResampleMode_Bilinear
 '    m_imgBuffer.Blit f2rect(50, 50, 100, 100, False), , m_imgBuffer
 '    m_imgBuffer.Blit , , m_imgTexture, 1, BlitMode_SourceAlpha_Tint, F2RGB(0, 255, 0, 255)
@@ -171,9 +171,12 @@ Dim l_mshMesh As Fury2DeformationMesh
 '    m_imgMask.AntiAliasEllipse Array(100, 100), F2RGB(0, 0, 0, 255), l_sngR * 45, l_sngR * 45, RenderMode_SourceAlpha, 0.25, 6, 1
 '    m_imgMask.[Line] Array(5, 5, 100, 5), F2White
 '    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(0, 0, 0, 255), l_sngR * 55, l_sngR * 55, RenderMode_SourceAlpha, 0.25
-    m_imgMask.AntiAliasEllipse Array(100, 40), F2RGB(255, 255, 255, 255), 65, 65, RenderMode_Merge, 0.25, 6, 1
-    m_imgMask.AntiAliasEllipse Array(40, 100), F2RGB(255, 255, 255, 255), 65, 65, RenderMode_Merge, 0.25, 6, 1
-    m_imgMask.CopyChannel m_imgMask, 3, 0
+'    m_imgMask.AntiAliasEllipse Array(100, 40), F2RGB(255, 255, 255, 255), 65, 65, RenderMode_Merge, 0.25, 6, 1
+'    m_imgMask.AntiAliasEllipse Array(40, 100), F2RGB(255, 255, 255, 255), 65, 65, RenderMode_Merge, 0.25, 6, 1
+    m_imgMask.GradientFilledArc Array(100, 100), F2RGB(0, 0, 127, 255), F2RGB(63, 63, 255, 255), 40, 40 + (87 - 73), l_sngR, l_sngR + 93, , 7
+'    m_imgMask.Composite
+    'SoftFX.Primitive_Arc_Filled_Gradient m_imgMask.Handle, 100, 100, 40, 70, l_sngR, l_sngR - 90, F2White, F2Black, 0, 10
+'    m_imgMask.CopyChannel m_imgMask, 3, 0
 '    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(255, 255, 255, 255), 65, 65, RenderMode_SourceAlpha, 0.25
 '    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(0, 0, 0, 255), 75, 75, RenderMode_SourceAlpha, 0.25
 '    m_imgMask.Box m_imgMask.Rectangle, F2White
@@ -206,12 +209,12 @@ Dim l_mshMesh As Fury2DeformationMesh
 '        m_imgBuffer.DeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgPattern, l_mshMesh, RenderMode_Normal, ResampleMode_Bilinear
 '        m_imgBuffer.MaskDeformBlit m_imgPattern.Rectangle, m_imgPattern.Rectangle, m_imgMask.Rectangle, m_imgPattern, m_imgMask, l_mshMesh, 1#, RenderMode_SourceAlpha, ResampleMode_Bilinear
         'm_imgBuffer.Stroke Array(Array(25, 25), Array(75, 75)), F2White, 3, 1, False, RenderMode_Normal
-        m_filFilter.MaskFilter m_imgBuffer, m_imgPattern, m_imgMask, F2Rect(0, 0, 200, 200, False), m_imgMask.Rectangle, , RenderMode_SourceAlpha
+'        m_filFilter.MaskFilter m_imgBuffer, m_imgPattern, m_imgMask, F2Rect(0, 0, 200, 200, False), m_imgMask.Rectangle, , RenderMode_SourceAlpha
     End If
 '    m_imgFramebuffer.Clear F2RGB(127, 0, 0, 255)
 '    m_imgFramebuffer.Blit , , m_imgMask, 0.5, BlitMode_Normal
 '    m_imgBuffer.Blit m_imgMask.Rectangle.Translate(0, 0), m_imgMask.Rectangle, m_imgFramebuffer, , BlitMode_Normal
-    m_imgBuffer.Blit m_imgMask.Rectangle.Translate(200, 0), m_imgMask.Rectangle, m_imgMask, , BlitMode_Normal
+'    m_imgBuffer.Blit m_imgMask.Rectangle.Translate(200, 0), m_imgMask.Rectangle, m_imgMask, , BlitMode_SourceAlpha
     'm_imgBuffer.FillChannel m_imgBuffer.Rectangle, 0, 127
 '    m_imgBuffer.FillChannel m_imgBuffer.Rectangle, 0, 0
 '    m_imgBuffer.FillChannel m_imgBuffer.Rectangle, 1, 0
@@ -226,6 +229,8 @@ Dim l_mshMesh As Fury2DeformationMesh
     'm_imgBuffer.GradientConvexPolygon Array(Array(75, 75, F2White), Array(75 + (Sin(l_sngR) * l_sngS), 75 + (-Cos(l_sngR) * l_sngS), F2Black), Array(75 + (Sin(l_sngR + (c_dblPi / 2)) * l_sngS), 75 + (-Cos(l_sngR + (c_dblPi / 2)) * l_sngS), F2Black)), RenderMode_Additive
 '    m_imgBuffer.AdjustChannelGamma 1, l_sngS
 '    m_imgBuffer.SwapChannels 0, 2
+    m_imgBuffer.Adjust -32
+    m_imgMask.Draw m_imgBuffer, 200, 150, 1, 1, l_sngR, BlitMode_Additive, , ResampleMode_Linear
     m_imgBuffer.Locked = True
     GLFlip ' Me.HDC
     l_sngS = l_sngS + 0.025
@@ -233,8 +238,8 @@ Dim l_mshMesh As Fury2DeformationMesh
         l_sngS = 0
         l_lngFrame = WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))
     End If
-    l_sngR = l_sngR + 0.01
-    If l_sngR > 1 Then l_sngR = 0
+    l_sngR = l_sngR + 2
+    If l_sngR > 360 Then l_sngR = 0
 End Sub
 
 Private Sub cmdToggleDeform_Click()

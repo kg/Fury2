@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "Fury2_Lighting.hpp"
 
-static const int DefaultCollisionSectorSize = 128;
+static const int DefaultCollisionSectorSize = 256;
 
 class Tileset;
 class CollisionSector;

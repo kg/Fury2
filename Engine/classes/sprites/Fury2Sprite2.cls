@@ -95,10 +95,14 @@ Private m_booAreasUpdated As Boolean
 
 Private m_lngWalkState As Long, m_lngIdleState As Long
 
+Public SaveScriptData As Boolean
+
 Public LinkState As Boolean, LinkPose As Boolean, LinkFrame As Boolean, LinkProperties As Boolean, LinkBearing As Boolean
 
 Private WithEvents m_colPaths As Fury2Collection
+Attribute m_colPaths.VB_VarHelpID = -1
 Public PathIndex As Long
+Attribute PathIndex.VB_VarDescription = "*"
 Public SavedPaths As Fury2Collection
 Attribute SavedPaths.VB_VarDescription = "*"
 Public AttachedGraphic As Fury2Graphic
@@ -106,8 +110,47 @@ Attribute AttachedGraphic.VB_VarDescription = "*"
 Public Tag As String
 Attribute Tag.VB_VarDescription = "An additional piece of data."
 Public AnimationMultiplier As Single
+Attribute AnimationMultiplier.VB_VarDescription = "*"
 Public Ignore As Boolean
 Private mvarEngine As Fury2Engine
+
+Friend Sub FreeScript()
+On Error Resume Next
+Dim l_scrOld As Object
+    Set l_scrOld = m_objScript
+    Set m_objScript = Nothing
+    Set Engine.IObjThis = Nothing
+    l_scrOld.F2OInit Nothing, Nothing
+End Sub
+
+Public Sub ReloadScript()
+On Error Resume Next
+Dim l_vfTemp As VirtualFile
+Dim l_scrOld As Object
+    Set l_scrOld = m_objScript
+    Set m_objScript = Nothing
+    If SaveScriptData Then
+        Set l_vfTemp = New VirtualFile
+        l_vfTemp.Save l_scrOld
+    End If
+    m_booScriptLoadFailed = False
+    If Script Is Nothing Then
+        Set m_objScript = l_scrOld
+        Engine.DebugOut "Script reload failed for sprite " & Name
+    Else
+        l_scrOld.F2OInit Nothing, Nothing
+        Set l_scrOld = Nothing
+        Script.Init
+        Script.Initialize
+        If m_booLoaded Then
+            Script.Load
+        End If
+        If SaveScriptData Then
+            l_vfTemp.CursorPos = 0
+            l_vfTemp.Load Script
+        End If
+    End If
+End Sub
 
 Public Property Get RenderTarget() As Long
 On Error Resume Next
@@ -154,6 +197,7 @@ Public Property Let CanPush(ByVal NewValue As Boolean)
 End Property
 
 Public Property Get VelocityMultiplier() As Single
+Attribute VelocityMultiplier.VB_Description = "*"
     VelocityMultiplier = m_spParam.Velocity.VM
 End Property
 
@@ -205,6 +249,7 @@ On Error Resume Next
 End Sub
 
 Public Property Let AttachX(ByVal vData As Single)
+Attribute AttachX.VB_Description = "*"
     m_sngAttachX = vData
 End Property
 
@@ -213,6 +258,7 @@ Public Property Get AttachX() As Single
 End Property
 
 Public Property Let AttachY(ByVal vData As Single)
+Attribute AttachY.VB_Description = "*"
     m_sngAttachY = vData
 End Property
 
@@ -221,6 +267,7 @@ Public Property Get AttachY() As Single
 End Property
 
 Public Property Let AttachH(ByVal vData As Single)
+Attribute AttachH.VB_Description = "*"
     m_sngAttachH = vData
 End Property
 
@@ -229,6 +276,7 @@ Public Property Get AttachH() As Single
 End Property
 
 Public Property Let AttachV(ByVal vData As Single)
+Attribute AttachV.VB_Description = "*"
     m_sngAttachV = vData
 End Property
 
@@ -737,6 +785,7 @@ Dim l_posPose As Fury2Pose
     Else
         m_pthPath.Clear
     End If
+    Paths.Clear
     If m_staStates Is Nothing Then
     Else
         m_staStates.Clear
@@ -746,7 +795,7 @@ Dim l_posPose As Fury2Pose
     Set m_posPoses = Nothing
     Set m_staStates = Nothing
     Set m_pthPath = Nothing
-    Set m_objScript = Nothing
+    FreeScript
     Set m_sprAttached = Nothing
     Set m_sprSprites = Nothing
     Set m_mapMap = Nothing
@@ -888,6 +937,14 @@ Dim l_pthPath As Fury2Path
             .ReadSegment_Begin
                 .Load m_strScript
                 .Load m_booScriptOverride
+                l_booValue = False
+                .Load l_booValue
+                SaveScriptData = l_booValue
+                .ReadSegment_Begin
+                If SaveScriptData Then
+                    .Load Script
+                End If
+                .ReadSegment_End
             .ReadSegment_End
             
             ' ai settings
@@ -1029,6 +1086,12 @@ Dim l_pthPath As Fury2Path
             .WriteSegment_Begin
                 .Save m_strScript
                 .Save m_booScriptOverride
+                .Save SaveScriptData
+                .WriteSegment_Begin
+                If SaveScriptData Then
+                    .Save Script
+                End If
+                .WriteSegment_End
             .WriteSegment_End
             
             .WriteSegment_Begin
@@ -1747,11 +1810,11 @@ On Error Resume Next
 Dim l_sngPathDistance As Single
 Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
     If m_pthPath.Count > 0 Then
-        If m_pthPath(1).WaitRemainder > 0 Then
-            m_pthPath(1).WaitRemainder = m_pthPath(1).WaitRemainder - 1
-        Else
-            If State = IdleState Then State = WalkState
-            With m_pthPath(1)
+        With m_pthPath.Current
+            If .WaitRemainder > 0 Then
+                .WaitRemainder = .WaitRemainder - 1
+            Else
+                If State = IdleState Then State = WalkState
                 l_sngPathDistance = mvarEngine.DistanceBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
                 l_lngRCX = CLng(m_spParam.Position.X)
                 l_lngRCY = CLng(m_spParam.Position.Y)
@@ -1761,10 +1824,10 @@ Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
                     m_spParam.Position.X = .X
                     m_spParam.Position.Y = .Y
                     m_pthPath.Completed
-                    If m_pthPath.Count = 0 Then
+                    If m_pthPath.Current Is Nothing Then
                         If State = WalkState Then State = IdleState
                         Velocity = 0
-                    ElseIf m_pthPath(1).Wait > 0 Then
+                    ElseIf .Wait > 0 Then
                         If State = WalkState Then State = IdleState
                         Velocity = 0
                     End If
@@ -1779,17 +1842,17 @@ Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
                         m_spParam.Position.X = .X
                         m_spParam.Position.Y = .Y
                         m_pthPath.Completed
-                        If m_pthPath.Count = 0 Then
+                        If m_pthPath.Current Is Nothing Then
                             If State = WalkState Then State = IdleState
                             Velocity = 0
-                        ElseIf m_pthPath(1).Wait > 0 Then
+                        ElseIf .Wait > 0 Then
                             If State = WalkState Then State = IdleState
                             Velocity = 0
                         End If
                     End If
                 End If
-            End With
-        End If
+            End If
+        End With
     Else
     End If
 End Sub
@@ -2047,14 +2110,17 @@ Public Property Let X(ByVal NewValue As Single)
 End Property
 
 Public Property Get xLeft() As Single
+Attribute xLeft.VB_Description = "*"
     xLeft = m_spParam.Position.X - (m_spParam.Graphic.Rectangle.Width / 2)
 End Property
 
 Public Property Get xRight() As Single
+Attribute xRight.VB_Description = "*"
     xRight = m_spParam.Position.X + (m_spParam.Graphic.Rectangle.Width / 2)
 End Property
 
 Public Property Get XCenter() As Single
+Attribute XCenter.VB_Description = "*"
     XCenter = m_spParam.Position.X
 End Property
 
@@ -2075,6 +2141,7 @@ Public Property Let ConstantXForce(ByVal NewValue As Single)
 End Property
 
 Public Property Get XForce() As Single
+Attribute XForce.VB_Description = "*"
     XForce = m_spParam.Velocity.XF + m_spParam.Velocity.CXF
 End Property
 
@@ -2087,10 +2154,12 @@ Public Property Let Y(ByVal NewValue As Single)
 End Property
 
 Public Property Get YCenter() As Single
+Attribute YCenter.VB_Description = "*"
     YCenter = m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height \ 2)
 End Property
 
 Public Property Get yTop() As Single
+Attribute yTop.VB_Description = "*"
     yTop = m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height)
 End Property
 
@@ -2103,6 +2172,7 @@ Public Property Let ConstantYForce(ByVal NewValue As Single)
 End Property
 
 Public Property Get YForce() As Single
+Attribute YForce.VB_Description = "*"
     YForce = m_spParam.Velocity.YF + m_spParam.Velocity.CYF
 End Property
 
@@ -2131,6 +2201,7 @@ Public Property Let ZVelocity(ByVal NewValue As Single)
 End Property
 
 Public Property Get Pressure() As Single
+Attribute Pressure.VB_Description = "*"
     Pressure = m_spParam.Velocity.FW
 End Property
 

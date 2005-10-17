@@ -12,16 +12,48 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
+Public StopEvent As Object
+Public BeforeEndEvent As Object
+Public EndEvent As Object
+Public StartEvent As Object
 Private m_booDisposed As Boolean
 Private m_sndSound As Sound
 Private m_seEngine As SoundEngine
 Private m_lngHandle As Long
 
-Public Property Get ChannelGroup() As ChannelGroup
+Friend Sub FireStartCallback()
+On Error Resume Next
+    Debug.Print "Channel.FireStartCallback"
+    StartEvent.Invoke
+    m_sndSound.StartEvent.Invoke
+End Sub
+
+Friend Sub FireBeforeEndCallback()
+On Error Resume Next
+    Debug.Print "Channel.FireBeforeEndCallback"
+    BeforeEndEvent.Invoke
+    m_sndSound.BeforeEndEvent.Invoke
+End Sub
+
+Friend Sub FireEndCallback()
+On Error Resume Next
+    Debug.Print "Channel.FireEndCallback"
+    EndEvent.Invoke
+    m_sndSound.EndEvent.Invoke
+End Sub
+
+Friend Sub FireStopCallback()
+On Error Resume Next
+    Debug.Print "Channel.FireStopCallback"
+    StopEvent.Invoke
+    m_sndSound.StopEvent.Invoke
+End Sub
+
+Public Property Get Channelgroup() As Channelgroup
 On Error Resume Next
 Dim l_lngGroup As Long
     ResultCheck fmodex.FMOD_Channel_GetChannelGroup(m_lngHandle, l_lngGroup)
-    Set ChannelGroup = m_seEngine.CreateChannelGroupH(l_lngGroup)
+    Set Channelgroup = m_seEngine.CreateChannelGroupH(l_lngGroup)
 End Property
 
 Public Property Get Disposed() As Boolean
@@ -55,10 +87,15 @@ On Error Resume Next
     Set m_seEngine = Parent
     Set m_sndSound = Sound
     m_lngHandle = Handle
+    FMOD_Channel_SetUserData m_lngHandle, ObjPtr(Me)
+    FMOD_Channel_SetCallback m_lngHandle, FMOD_CHANNEL_CALLBACKTYPE_END, AddressOf FMod_Channel_Callback, 0
+    FMOD_Channel_SetCallback m_lngHandle, FMOD_CHANNEL_CALLBACKTYPE_SYNCPOINT, AddressOf FMod_Channel_Callback, 0
 End Sub
 
 Friend Sub Free()
 On Error Resume Next
+    FMOD_Channel_SetCallback m_lngHandle, FMOD_CHANNEL_CALLBACKTYPE_END, 0, 0
+    FMOD_Channel_SetUserData m_lngHandle, 0
     Set m_seEngine = Nothing
     Set m_sndSound = Nothing
     m_lngHandle = 0
@@ -67,7 +104,15 @@ End Sub
 
 Friend Sub ResultCheck(ByVal Result As FMOD_RESULT)
 On Error Resume Next
+Dim l_lngHandle As Long
     If Result = FMOD_ERR_CHANNEL_STOLEN Then Free
+    If (Result = FMOD_OK) Then
+    Else
+'        l_lngHandle = FreeFile
+'        Open "C:\fmod.log" For Append As #l_lngHandle
+'        Print #l_lngHandle, "FMod returned error code " & l_lngHandle
+'        Close #l_lngHandle
+    End If
 End Sub
 
 Public Property Get Playing() As Boolean
@@ -163,6 +208,13 @@ On Error Resume Next
     ResultCheck fmodex.FMOD_Channel_SetPriority(m_lngHandle, NewValue)
 End Property
 
+Public Property Let Position(ByVal NewPosition As Double)
+On Error Resume Next
+Dim l_lngValue As Long
+    l_lngValue = Floor(NewPosition * 1000)
+    ResultCheck fmodex.FMOD_Channel_SetPosition(m_lngHandle, l_lngValue, FMOD_TIMEUNIT_MS)
+End Property
+
 Public Property Get Position() As Double
 On Error Resume Next
 Dim l_lngValue As Long
@@ -172,5 +224,14 @@ End Property
 
 Public Sub Kill()
 On Error Resume Next
+'Dim l_lngHandle As Long
+'    l_lngHandle = FreeFile
+'    Open "C:\fmod.log" For Append As #l_lngHandle
+'    If m_sndSound Is Nothing Then
+'        Print #l_lngHandle, "Stopping sound {unknown} in channel " & m_lngHandle
+'    Else
+'        Print #l_lngHandle, "Stopping sound " & m_sndSound.Handle & " in channel " & m_lngHandle
+'    End If
+'    Close #l_lngHandle
     ResultCheck fmodex.FMOD_Channel_Stop(m_lngHandle)
 End Sub

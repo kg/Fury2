@@ -47,6 +47,7 @@ Private m_plnPlanes() As LightingPlane2
 Public Sub Free()
 On Error Resume Next
     m_colLights.Free
+    Set m_colLights = Nothing
     Erase m_litLights
     Erase m_obsObstructions
     Erase m_plnPlanes

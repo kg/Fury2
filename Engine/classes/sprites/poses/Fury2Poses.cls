@@ -103,6 +103,7 @@ End Sub
 Sub Free()
 On Error Resume Next
 Dim l_posPose As Fury2Pose
+    Set m_sprParent = Nothing
     For Each l_posPose In mCol
         l_posPose.Free
     Next l_posPose
@@ -271,6 +272,10 @@ On Error Resume Next
 End Property
 
 Public Sub Clear()
+On Error Resume Next
+    Do While mCol.Count > 0
+        mCol.Remove 1
+    Loop
     Set mCol = New Collection
 End Sub
 

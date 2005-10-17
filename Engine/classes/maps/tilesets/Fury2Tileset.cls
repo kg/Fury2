@@ -156,6 +156,7 @@ End Sub
 Sub Free()
 On Error Resume Next
     DeallocateTileset
+    SetParent Nothing
     Set mvarBuffer = New Fury2Image
 End Sub
 

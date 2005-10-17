@@ -156,7 +156,9 @@ End Function
 
 Private Sub Class_Initialize()
 On Error Resume Next
-    SetEngine DefaultEngine
+    If Me.Engine Is Nothing Then
+        SetEngine DefaultEngine
+    End If
     Set m_sprSprites = New Fury2Sprites
     Set m_araAreas = New Fury2Areas
     m_araAreas.SetParent Me
@@ -169,12 +171,13 @@ End Sub
 
 Private Sub Class_Terminate()
 On Error Resume Next
+    Engine.DebugOut "Fury2Map_Terminate"
 End Sub
 
 Public Sub Clear()
 Attribute Clear.VB_Description = "Erases all the map's layers."
 On Error Resume Next
-    Set m_lyrLayers = New Fury2MapLayers
+    m_lyrLayers.Clear
     m_strFilename = ""
     m_strName = ""
     m_lngWidth = 0
@@ -300,7 +303,7 @@ Dim m_lyrLayer As Fury2MapLayer
     Set m_lyrLayers = Nothing
     Set m_mobObjects = Nothing
     Set m_sprSprites = Nothing
-    Class_Initialize
+'    Class_Initialize
 End Sub
 
 Function GetSetting(Setting) As String

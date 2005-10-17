@@ -68,6 +68,7 @@ On Error Resume Next
     If g_edEditor.Event_DocumentClose(Me) Then Exit Sub
     SetBusyState True
     If Not (Form Is Nothing) Then
+        Form.Form_QueryUnload -1, -1
         Unload Form
     End If
     Detach

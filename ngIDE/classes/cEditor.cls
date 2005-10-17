@@ -817,12 +817,12 @@ End Sub
 
 Public Sub Help_About()
 On Error Resume Next
-    MsgBox libGraphics.F2TraceCounts() & ngUI.DisplayMenuStats()
-    Exit Sub
-    If g_engEngine Is Nothing Then
-        Beep
-        Exit Sub
-    End If
+'    MsgBox libGraphics.F2TraceCounts() & ngUI.DisplayMenuStats()
+'    Exit Sub
+'    If g_engEngine Is Nothing Then
+'        Beep
+'        Exit Sub
+'    End If
     Load frmAbout
     frmAbout.Show vbModal, frmMain
 End Sub

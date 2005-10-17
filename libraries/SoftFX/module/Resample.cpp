@@ -250,6 +250,8 @@ AlphaLevel *Level;
 
 void SampleRow_Linear_Rolloff(Image *Source, int X, int Y, int XW, int YW, int XI, int YI, int XWI, int YWI, int Count, Pixel *Dest) {
 int i;
+int pX, pY;
+bool c = false;
     ImageLockManager ilSource(lockingMode, Source);
     if (!ilSource.performUnlock()) return;
     X = X;
@@ -274,7 +276,29 @@ int i;
         YW = 65535 - (-YW % 65535);
       }
 
-      *Dest = Source->getPixelRolloffNO(X, Y);
+      pX = X;
+      pY = Y;
+      c = false;
+      if (pX < 0) {
+        pX = 0;
+        c = true;
+      } else if (pX >= Source->Width) {
+        pX = Source->Width - 1;
+        c = true;
+      }
+      if (pY < 0) {
+        pY = 0;
+        c = true;
+      } else if (pY >= Source->Height) {
+        pY = Source->Height - 1;
+        c = true;
+      }
+      if (c) { 
+        *Dest = Source->getPixelNO(pX, pY);
+        (*Dest)[::Alpha] = 0;
+      } else {
+        *Dest = Source->getPixelNO(pX, pY);
+      }
       Dest++;
 
       X += XI;

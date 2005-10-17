@@ -140,8 +140,8 @@ On Error Resume Next
     Colors(tbcDisabledText) = ConvertSystemColor(SystemColor_Button_Text_Disabled)
     Colors(tbcDisabledTint) = F2RGB(127, 127, 127, 63)
     Colors(tbcDisabledGlow) = F2RGB(127, 127, 127, 0)
-    Colors(tbcChecked) = SetAlpha(ConvertSystemColor(SystemColor_Highlight), 150)
-    Colors(tbcCheckedBorder) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 220)
+    Colors(tbcChecked) = SetAlpha(ConvertSystemColor(SystemColor_Highlight), 127)
+    Colors(tbcCheckedBorder) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 255)
     Colors(tbcCheckedText) = ConvertSystemColor(SystemColor_Highlight_Text)
     Colors(tbcCheckedTint) = F2White
     Colors(tbcCheckedGlow) = F2RGB(255, 255, 255, 255)
@@ -608,12 +608,13 @@ Dim l_frmHost As Form
     If (y + IdealHeight) > (Screen.Height / Screen.TwipsPerPixelY) Then y = ((Screen.Height / Screen.TwipsPerPixelY) - IdealHeight)
     If (x < 0) Then x = 0
     If (y < 0) Then y = 0
-    Host.This.Move x * Screen.TwipsPerPixelX, y * Screen.TwipsPerPixelY, (IdealWidth * Screen.TwipsPerPixelX) + Host.This.BorderWidth * 2, (IdealHeight * Screen.TwipsPerPixelY) + Host.This.BorderWidth * 2
     Host.This.SetParent Parent
     SetFocus Host.hwnd
 '    ShowWindow Host.hwnd, SW_SHOWNOACTIVATE
     Err.Clear
     g_colOpenMenus.Add Me
+    Host.This.Move x * Screen.TwipsPerPixelX, y * Screen.TwipsPerPixelY, (IdealWidth * Screen.TwipsPerPixelX) + Host.This.BorderWidth * 2, (IdealHeight * Screen.TwipsPerPixelY) + Host.This.BorderWidth * 2
+    SetWindowPos Host.hwnd, HWND_TOP, x, y, IdealWidth + (Host.This.BorderWidth * 2), IdealHeight + (Host.This.BorderWidth * 2), SWP_NOACTIVATE
     SetWindowPos Host.hwnd, HWND_TOP, x, y, IdealWidth + (Host.This.BorderWidth * 2), IdealHeight + (Host.This.BorderWidth * 2), SWP_NOACTIVATE Or SWP_SHOWWINDOW
     Host.This.HasFocus = True
     m_booMouseTouched = False

@@ -418,16 +418,14 @@ Attribute Free.VB_MemberFlags = "40"
 On Error Resume Next
     Erase mvarBlocking
     Erase mvarTiles
-    Set mvarAnimations = New Fury2TileAnimations
+    Set mvarAnimations = Nothing
     Set mvarDepthmapImage = Nothing
     mvarSprites.Free
-    Set mvarSprites = New Fury2Sprites
+    Set mvarSprites = Nothing
     mvarTileset.Free
-    Set mvarTileset = New Fury2Tileset
-    mvarTileset.SetParent Me
-    mvarTileset.SetEngine Me
+    Set mvarTileset = Nothing
     mvarLighting.Free
-    Set mvarLighting = New Fury2LayerLighting
+    Set mvarLighting = Nothing
     Set mvarParent = Nothing
 End Sub
 

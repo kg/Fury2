@@ -111,6 +111,46 @@ Pixel* GenerateGradientTable(Pixel* Table, Pixel StartColor, Pixel EndColor, int
     
 }
 
+Pixel* GenerateGradientTableUPM(Pixel* Table, Pixel StartColor, Pixel EndColor, int Size, int Offset) {
+
+    if (Size < 1) Size = 1;
+
+    Pixel *pTable = Table;
+
+    if (!pTable) return Null;
+
+    if (Size == 1) {
+        pTable[0] = StartColor;
+        return pTable;
+    }
+  
+    if (Offset < 0) Offset = 0;
+
+    float w = 0, winc = ((float)255 / (float)(Size - 1));
+    int weight = 0, ci = 0;
+    for (int i = 0; i < Size; i++) {
+        ci = i - Offset;
+
+        w += winc;
+        if (((ci) >= 0) && (ci < Size)) {
+            weight = ClipByte(w);
+
+            // set the color for this column (premultiplied for more speed)
+            pTable[ci][::Blue] = (((StartColor[::Blue] * (weight ^ 0xFF)) + (EndColor[::Blue] * weight)) / 255);
+            pTable[ci][::Green] = (((StartColor[::Green] * (weight ^ 0xFF)) + (EndColor[::Green] * weight)) / 255);
+            pTable[ci][::Red] = (((StartColor[::Red] * (weight ^ 0xFF)) + (EndColor[::Red] * weight)) / 255);
+            pTable[ci][::Alpha] = (((StartColor[::Alpha] * (weight ^ 0xFF)) + (EndColor[::Alpha] * weight)) / 255);
+        }
+
+    }
+
+    if (Offset == 0) pTable[0] = StartColor;
+    pTable[Size - 1] = EndColor;
+
+    return pTable;
+    
+}
+
 Pixel* GenerateGradientTable(Pixel* Table, Pixel StartColor, Pixel EndColor, int Size) {
     return GenerateGradientTable(Table, StartColor, EndColor, Size, 0);
 }

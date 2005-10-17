@@ -34,9 +34,34 @@ namespace Processor {
     };
 };
 
+FPoint inline AngleVector(float Angle) {
+  FPoint temp;
+  float r = Radians(Angle);
+  temp.X = sin(r);
+  temp.Y = -cos(r);
+  return temp;
+}
+
 float inline NormalizeAngle(float Angle) {
   float n = Angle / 360.0f;
   return Angle - (floor(n) * 360.0f);
+}
+
+Export inline int VectorInRange(FPoint A, FPoint B, FPoint X) {
+  bool sign = A.cross(B) >= 0.0f;
+  if (sign) {
+    bool a = A.cross(X) >= 0.0f;
+    bool b = X.cross(B) >= 0.0f;
+    return (a && b);
+  } else {
+    bool a = B.cross(X) > 0.0f;
+    bool b = X.cross(A) > 0.0f;
+    return (a && b);
+  }
+}
+
+Export inline int AngleInRange(float A, float B, float X) {
+  return VectorInRange(AngleVector(A), AngleVector(B), AngleVector(X));
 }
 
 template <class TA, class TB> float inline AngleBetween(TA a, TB b) {
@@ -167,7 +192,11 @@ void inline _SmallCopy(void* dest, void* source, DoubleWord bytes) {
 template <class T> void inline _Copy(void* dest, void* source, DoubleWord count) {
 #if (defined(ASSEMBLY))
     if ((Processor::SSE)) {
+#if (defined(DISABLE_SSE))
+        memcpy(dest, source, count * sizeof(T));
+#else
         memcpy_amd(dest, source, count * sizeof(T));
+#endif
     } else {
         // screw writing my own copy, pfft
         memcpy(dest, source, count * sizeof(T));
@@ -264,6 +293,9 @@ template <class T> void inline _Fill(void* dest, const T& value, DoubleWord coun
     DoubleWord bcount = count * sz;
     Align(16) DoubleWord v[4];
     _Pack<T>(&v[0], 16, value);
+#if (defined(DISABLE_SSE))
+    if (0) {
+#else
     if ((bcount >= 16) && ((bcount % 16) == 0) && (Processor::SSE)) {
         if ((DoubleWord)dest % 16 == 0) {
             _asm {
@@ -296,6 +328,7 @@ template <class T> void inline _Fill(void* dest, const T& value, DoubleWord coun
                 emms
             }
         }
+#endif
     } else if ((bcount >= 4) && ((bcount % 4) == 0)) {
         _asm {
             cld

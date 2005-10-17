@@ -117,6 +117,7 @@ Public MessageQueue As Fury2Collection
 Public BGMStack As Fury2Collection
 Public CurrentBGM As Sound
 Public CurrentBGMChannel As Channel
+Public CurrentBGMFader As Fury2SoundFader
 Public ScreenshotOverlay As Fury2Image
 
 ' Event hooks
@@ -216,6 +217,7 @@ Public DefaultTransition As Long
 Public DefaultTransitionLength As Single
 
 ' Private state/configuration variables
+Private m_dblLastFlushTime As Double
 Private m_sngConsoleOffset As Single
 Private m_booConsoleSliding As Boolean
 Private m_sngConsoleEndOffset As Single
@@ -351,13 +353,15 @@ On Error Resume Next
 Dim l_sngDelta As Single
     Angle1 = NormalizeAngle(Angle1)
     Angle2 = NormalizeAngle(Angle2)
-    If Angle2 < Angle1 Then
-        l_sngDelta = Angle1 - Angle2
-        Angle1 = NormalizeAngle(Angle1 + l_sngDelta)
-        Angle2 = NormalizeAngle(Angle2 + l_sngDelta)
-    End If
-    l_sngDelta = Angle2 - Angle1
-'          float ls = Env->Lights[l].Spread / 2;
+'    If Angle2 < Angle1 Then
+'        l_sngDelta = Angle1 - Angle2
+'        Angle1 = NormalizeAngle(Angle1 + l_sngDelta)
+'        Angle2 = NormalizeAngle(Angle2 + l_sngDelta)
+'    End If
+    l_sngDelta = NormalizeAngle(Angle2 - Angle1)
+    AngleDistance = l_sngDelta
+End Function
+
 '          float a_l = NormalizeAngle(AngleBetween(LightRay.Start, LightRay.End));
 '          float a_s = NormalizeAngle(Env->Lights[l].Angle - ls);
 '          float a_e = NormalizeAngle(Env->Lights[l].Angle + ls);
@@ -370,22 +374,46 @@ Dim l_sngDelta As Single
 '          } else {
 '            if ((a_l < a_s) || (a_l > a_e)) Obscured = true;
 '          }
-End Function
-
-Public Function AngleInRange(ByVal Angle As Single, ByVal Minimum As Single, ByVal Maximum As Single) As Boolean
+Public Function AngleInRange(ByVal Angle As Single, ByVal Minimum As Single, ByVal Maximum As Single, Optional ByVal Inclusive As Boolean = True) As Boolean
 On Error Resume Next
-Dim AngleDelta As Single
+    Angle = NormalizeAngle(Angle)
     Minimum = NormalizeAngle(Minimum)
     Maximum = NormalizeAngle(Maximum)
-    If Minimum > Maximum Then
-        AngleDelta = Minimum - Maximum
-        Minimum = NormalizeAngle(Minimum + AngleDelta)
-        Maximum = NormalizeAngle(Maximum + AngleDelta)
-        Angle = NormalizeAngle(Angle + AngleDelta)
-    Else
-        Angle = NormalizeAngle(Angle)
+    If Not Inclusive Then
+        If Angle = Minimum Then Exit Function
+        If Angle = Maximum Then Exit Function
     End If
-    AngleInRange = (Angle >= Minimum) And (Angle <= Maximum)
+    AngleInRange = SoftFX.AngleInRange(Minimum, Maximum, Angle) <> 0
+'Dim AngleDelta As Single
+'Dim A As Single, Mn As Single, Mx As Single
+'    Mn = NormalizeAngle(Minimum - Minimum)
+'    Mx = NormalizeAngle(Maximum - Minimum)
+'    A = NormalizeAngle(Angle - Minimum)
+'    If Inclusive Then
+'        AngleInRange = A <= Mx
+'    Else
+'        AngleInRange = A < Mx
+'    End If
+'    Mn = NormalizeAngle(Minimum - Maximum)
+'    Mx = NormalizeAngle(Maximum - Maximum)
+'    A = NormalizeAngle(Angle - Maximum)
+'    If Inclusive Then
+'        AngleInRange = AngleInRange And (A >= Mn)
+'    Else
+'        AngleInRange = AngleInRange And (A > Mn)
+'    End If
+'Dim D1 As Single, D2 As Single, L As Single, O As Single
+'    Angle = NormalizeAngle(Angle - Minimum)
+'    Maximum = NormalizeAngle(Maximum - Minimum)
+'    Minimum = 0
+'    L = Maximum ' AngleDistance(Minimum, Maximum)
+'    D1 = Angle - Minimum
+'    D2 = Maximum - Angle
+'    If Inclusive Then
+'        AngleInRange = (D1 <= L) And (D2 <= L)
+'    Else
+'        AngleInRange = (D1 < L) And (D2 < L)
+'    End If
 End Function
 
 Function ArrayCount(Arr As Variant, Value) As Long
@@ -1008,6 +1036,10 @@ Function FadeBGM(Optional ByVal FromVolume As Single = -1, Optional ByVal ToVolu
 On Error Resume Next
 Dim l_fadFader As Fury2SoundFader
     If CurrentBGMChannel Is Nothing Then Exit Function
+    If CurrentBGMFader.Channel Is CurrentBGMChannel Then
+        UnHookEvents CurrentBGMFader
+        Set CurrentBGMFader = Nothing
+    End If
     Set l_fadFader = New Fury2SoundFader
     Set l_fadFader.Channel = CurrentBGMChannel
     Set l_fadFader.Slider = F2Slider
@@ -1016,6 +1048,8 @@ Dim l_fadFader As Fury2SoundFader
     l_fadFader.Slider.Start Length
     HookEvents l_fadFader
     Set FadeBGM = l_fadFader
+    Set CurrentBGMFader = l_fadFader
+    Err.Clear
 End Function
 
 Public Function FormatNumber(ByVal Value As Double, ByVal Mask As String)
@@ -1640,8 +1674,8 @@ Public Function LoadImage(ByVal Filename As String, Optional ByVal IgnoreErrors 
 Attribute LoadImage.VB_Description = "Loads an image file into the cache and returns an image object."
 On Error Resume Next
 Dim m_imgPicture As Fury2Image
+Dim m_imgSecondRef As Fury2Image
     If Trim(CStr(Filename)) = "" Then Exit Function
-    If EditMode Then FlushImageCache
     Err.Clear
     Set m_imgPicture = Nothing
     Filename = LCase(Trim(Filesystem.AutoSelectExtension(Filename, "png;tga;jpg;bmp;gif;pcx")))
@@ -1660,6 +1694,18 @@ Dim m_imgPicture As Fury2Image
         If (EditMode = False) And (IgnoreErrors = False) Then CriticalError "LoadImage", "LoadImage", "Unable to load image: """ + Filename + """"
     End If
     Set LoadImage = m_imgPicture
+    Set m_imgSecondRef = LoadImage
+    If EditMode Then
+        If (SoftFX.GetTime() - m_dblLastFlushTime) > 60 Then
+            m_dblLastFlushTime = SoftFX.GetTime
+            FlushImageCache
+        End If
+    Else
+        If (SoftFX.GetTime() - m_dblLastFlushTime) > 600 Then
+            m_dblLastFlushTime = SoftFX.GetTime
+            FlushImageCache
+        End If
+    End If
 End Function
 
 Public Function LoadImages(ParamArray Filenames() As Variant) As Variant
@@ -1923,6 +1969,11 @@ Public Function NullEvent() As Fury2Event
 On Error Resume Next
 '    Set NullEvent = New Fury2Event
 '    NullEvent.SetEngine Me
+End Function
+
+Public Function PatternMatch(ByVal Text As String, ByVal Pattern As String) As Boolean
+On Error Resume Next
+    PatternMatch = Text Like Pattern
 End Function
 
 Public Function PadString(Text, ByVal Length As Long, Optional ByVal PaddingCharacter As String = " ") As String
@@ -3690,7 +3741,6 @@ Dim m_tsObj As Fury2Tileset
 Dim l_lngImagesFlushed As Long, l_lngTilesetsFlushed As Long
     If m_Images.Count > 0 Then
         m_lngObj = 1
-        DebugOut "Flushing image cache"
         Do While m_lngObj < m_Images.Count
             Set m_objObj = Nothing
             Set m_objObj = m_Images(m_lngObj)
@@ -3710,11 +3760,10 @@ Dim l_lngImagesFlushed As Long, l_lngTilesetsFlushed As Long
                 End If
             End If
         Loop
-        If l_lngImagesFlushed > 0 Then DebugOut "Flushed " & l_lngImagesFlushed & " image(s)"
+        If l_lngImagesFlushed > 0 Then DebugOut "Flushed " & l_lngImagesFlushed & " cached image(s)"
     End If
     If m_Tilesets.Count > 0 Then
         m_lngObj = 1
-        DebugOut "Flushing tileset cache"
         Do While m_lngObj < m_Tilesets.Count
             Set m_objObj = Nothing
             Set m_objObj = m_Tilesets(m_lngObj)
@@ -3734,7 +3783,7 @@ Dim l_lngImagesFlushed As Long, l_lngTilesetsFlushed As Long
                 End If
             End If
         Loop
-        If l_lngTilesetsFlushed > 0 Then DebugOut "Flushed " & l_lngTilesetsFlushed & " tileset(s)"
+        If l_lngTilesetsFlushed > 0 Then DebugOut "Flushed " & l_lngTilesetsFlushed & " cached tileset(s)"
     End If
 End Sub
 
@@ -5477,7 +5526,7 @@ Sub StopBGM(Optional ByVal Fade As Boolean = True)
 Attribute StopBGM.VB_Description = "Stops the currently playing BGM."
 On Error Resume Next
     If Fade Then
-        FadeBGM , 0
+        Set FadeBGM(, 0).EndEvent = BindEvent("Kill", CurrentBGMChannel)
     Else
         CurrentBGMChannel.Kill
     End If

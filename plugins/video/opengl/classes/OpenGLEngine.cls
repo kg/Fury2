@@ -137,7 +137,7 @@ On Error Resume Next
                     End If
                 End If
             End If
-            SetWindowPos m_OutForm.HWND, HWND_TOPMOST, 0, 0, m_lngWidth * m_sngScaleRatio, m_lngHeight * m_sngScaleRatio, 0
+            SetWindowPos m_OutForm.HWND, HWND_TOPMOST, -1, -1, m_lngWidth * m_sngScaleRatio + 2, m_lngHeight * m_sngScaleRatio + 2, 0
             Reallocate
         Else
             SetWindowPos m_OutForm.HWND, HWND_NOTOPMOST, 0, 0, m_lngWidth * m_sngScaleRatio, m_lngHeight * m_sngScaleRatio, 0

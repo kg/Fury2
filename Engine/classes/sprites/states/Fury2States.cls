@@ -65,6 +65,10 @@ On Error Resume Next
 End Property
 
 Public Sub Clear()
+On Error Resume Next
+    Do While mCol.Count > 0
+        mCol.Remove 1
+    Loop
     Set mCol = New Collection
 End Sub
 

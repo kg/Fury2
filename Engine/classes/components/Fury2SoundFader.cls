@@ -17,6 +17,7 @@ Public Channel As Channel
 Public VolumeStart As Single
 Public VolumeEnd As Single
 Public Slider As Fury2Slider
+Public EndEvent As Fury2Event
 Private m_engEngine As Fury2Engine
 
 Friend Sub SetEngine(Engine As Fury2Engine)
@@ -86,6 +87,7 @@ Dim l_sngVolume As Single
     l_sngVolume = VolumeStart + ((VolumeEnd - VolumeStart) * Slider.Progress)
     Channel.Volume = l_sngVolume
     If Slider.Finished Then
+        EndEvent.Invoke
         Set Channel = Nothing
         Engine.UnHookEvents Me
     End If

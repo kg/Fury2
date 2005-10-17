@@ -31,6 +31,8 @@ Public Enum SFXRenderModes
     RenderMode_Additive_SourceAlpha = 7
     RenderMode_Subtractive_SourceAlpha = 8
     RenderMode_Font_SourceAlpha = 9
+    RenderMode_Unerase = 10
+    RenderMode_Erase = 11
 End Enum
 
 Public Enum SFXResampleModes

@@ -69,22 +69,28 @@ void setRenderer(int Renderer, Pixel RenderArgument) {
     } else {
       disableFog();
     }
+    setBlendColor(White);
   } else if (Renderer == GetFontSourceAlphaRenderer()) {
     setBlendMode<Font_SourceAlpha>();
     setVertexColor(RenderArgument);
     disableFog();
+    setBlendColor(White);
   } else if (Renderer == GetAdditiveRenderer()) {
     setBlendMode<Additive>();
     disableFog();
+    setBlendColor(White);
   } else if (Renderer == GetSubtractiveRenderer()) { 
     setBlendMode<Subtractive>();
     disableFog();
+    setBlendColor(White);
   } else if (Renderer == GetAdditiveSourceAlphaRenderer()) {
     setBlendMode<Additive_SourceAlpha>();
     disableFog();
+    setBlendColor(White);
   } else if (Renderer == GetSubtractiveSourceAlphaRenderer()) { 
     setBlendMode<Subtractive_SourceAlpha>();
     disableFog();
+    setBlendColor(White);
   } else {
     setBlendMode<Normal>();
     if (RenderArgument[::Alpha] > 0) {
@@ -94,8 +100,8 @@ void setRenderer(int Renderer, Pixel RenderArgument) {
     } else {
       disableFog();
     }
+    setBlendColor(White);
   }
-  setBlendColor(White);
 }
 
 void setMaskRenderer(int Renderer, Pixel RenderArgument) {
@@ -2016,6 +2022,7 @@ defOverride(FilterSimple_ConvexPolygon_Textured) {
   selectImageAsTexture(TextureImage);
   setRenderer(Renderer, RenderArgument);
   setScaler(Scaler);
+  setVertexColor(Pixel(255, 255, 255, 255));
   Texture* tex = getTexture(TextureImage);
   TexturedVertex* ptr = GetTexturedPolygonVertexPointer(Polygon, 0);
   int vertex_count = GetTexturedPolygonVertexCount(Polygon);
@@ -2652,7 +2659,11 @@ int BlitDeform_GLSL(Override::OverrideParameters *Parameters) {
   GL::switchTextureStage<0>();
 
   GLSL::Program* program = 0;
-  program = Global->GetShader(std::string("deform"));
+  if ((Scaler == SoftFX::GetLinearWrapScaler()) || (Scaler == SoftFX::GetBilinearWrapScaler())) {
+      program = Global->GetShader(std::string("deform_wrap"));
+  } else {
+      program = Global->GetShader(std::string("deform"));
+  }
   if (program == 0) return Failure;
 
   Texture* tex = getTexture(Source);
@@ -2733,7 +2744,11 @@ int BlitDeformMask_GLSL(Override::OverrideParameters *Parameters) {
   GL::switchTextureStage<0>();
 
   GLSL::Program* program = 0;
-  program = Global->GetShader(std::string("deform_mask"));
+  if ((Scaler == SoftFX::GetLinearWrapScaler()) || (Scaler == SoftFX::GetBilinearWrapScaler())) {
+      program = Global->GetShader(std::string("deform_mask_wrap"));
+  } else {
+      program = Global->GetShader(std::string("deform_mask"));
+  }
   if (program == 0) return Failure;
 
   Texture* tex = getTexture(Source);

@@ -1465,6 +1465,46 @@ void RenderFunction_Subtractive(Pixel *Dest, Pixel *Source, int Count, Pixel Sol
     }
 }
 
+void RenderFunction_Unerase(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
+    int i = Count;
+    if (Source) {
+      while (i--) {
+        if ((*Source)[::Red]) {
+          (*Dest)[::Alpha] = ClipByteHigh((*Dest)[::Alpha] + (*Source)[::Red]);
+          Dest++;
+          Source++;
+        }
+      }
+    } else {
+      if (SolidColor[::Red] != 0) {
+        while (i--) {
+          (*Dest)[::Alpha] = ClipByteHigh((*Dest)[::Alpha] + SolidColor[::Red]);
+          Dest++;
+        }
+      }
+    }
+}
+
+void RenderFunction_Erase(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
+    int i = Count;
+    if (Source) {
+      while (i--) {
+        if ((*Source)[::Red]) {
+          (*Dest)[::Alpha] = ClipByteLow((*Dest)[::Alpha] - (*Source)[::Red]);
+          Dest++;
+          Source++;
+        }
+      }
+    } else {
+      if (SolidColor[::Red] != 0) {
+        while (i--) {
+          (*Dest)[::Alpha] = ClipByteLow((*Dest)[::Alpha] - SolidColor[::Red]);
+          Dest++;
+        }
+      }
+    }
+}
+
 void RenderFunction_Additive_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
     AlphaLevel *aSource;
     int i = Count;
@@ -1552,6 +1592,14 @@ Export int GetAdditiveRenderer() {
 
 Export int GetSubtractiveRenderer() {
   return (int)RenderFunction_Subtractive;
+}
+
+Export int GetUneraseRenderer() {
+  return (int)RenderFunction_Unerase;
+}
+
+Export int GetEraseRenderer() {
+  return (int)RenderFunction_Erase;
 }
 
 Export int GetAdditiveSourceAlphaRenderer() {
@@ -1908,7 +1956,7 @@ Export int FilterSimple_ConvexPolygon_Gradient(Image *Dest, GradientPolygon *InP
                     }
                     GenerateGradientTable(ScanlineTable, StartColor[i], EndColor[i], X + O + LO, O);
 */
-                    GenerateGradientTable(ScanlineTable, StartColor[i], EndColor[i], X, 0);
+                    GenerateGradientTableUPM(ScanlineTable, StartColor[i], EndColor[i], X, 0);
                     if (Renderer != Null) {
                         Renderer(Pointer, CurrentPixel, X, 0, RenderArgument);
                     } else {
@@ -2182,6 +2230,142 @@ Export int FilterSimple_ConvexPolygon_AntiAlias(Image *Image, SimplePolygon *InP
 
     Image->dirty();
     return Success;
+}
+
+Export int FilterSimple_FilledArc(Image *Image, float X, float Y, float R1, float R2, float Start, float End, Pixel Color, RenderFunction *Renderer, float Step) {
+  SimplePolygon Poly = SimplePolygon();
+  int result = 0;
+  Poly.Allocate(4);
+  float r = 0;
+  float s, i, e;
+  float sr, cr;
+  bool first = true;
+  FPoint pt[4];
+  s = Radians(Start);
+  e = Radians(End);
+  if (s > e) {
+    _Swap(s, e);
+  }
+  i = Radians(Step);
+  if ((s + i) > e)
+      i = e - s;
+  for (r = s; r <= e; r += i) {
+    sr = sin(r);
+    cr = -cos(r);
+    pt[0] = pt[1];
+    pt[3] = pt[2];
+    pt[1] = FPoint((sr * R2) + X, (cr * R2) + Y);
+    pt[2] = FPoint((sr * R1) + X, (cr * R1) + Y);
+    if (!first) {
+      Poly.Empty();
+      Poly.Append(pt[0]);
+      Poly.Append(pt[1]);
+      Poly.Append(pt[2]);
+      Poly.Append(pt[3]);
+      result |= FilterSimple_ConvexPolygon(Image, &Poly, Color, Renderer, 0);
+    }
+    if ((r + i) > e) {
+      i = (e - r);
+    }
+    if (abs(i) < 0.00001) break;
+    first = false;
+  }
+  return result;
+}
+
+Export int FilterSimple_FilledArc_AntiAlias(Image *Image, float X, float Y, float R1, float R2, float Start, float End, Pixel Color, RenderFunction *Renderer, float Step) {
+  SimplePolygon Poly = SimplePolygon();
+  int result = 0;
+  Poly.Allocate(4);
+  float r = 0;
+  float s, i, e;
+  float sr, cr;
+  bool first = true;
+  FPoint pt[4];
+  s = Radians(Start);
+  e = Radians(End);
+  if (s > e) {
+    _Swap(s, e);
+  }
+  i = Radians(Step);
+  if ((s + i) > e)
+      i = e - s;
+  for (r = s; r <= e; r += i) {
+    sr = sin(r);
+    cr = -cos(r);
+    pt[0] = pt[1];
+    pt[3] = pt[2];
+    pt[1] = FPoint((sr * R2) + X, (cr * R2) + Y);
+    pt[2] = FPoint((sr * R1) + X, (cr * R1) + Y);
+    if (!first) {
+      Poly.Empty();
+      Poly.Append(pt[0]);
+      Poly.Append(pt[1]);
+      Poly.Append(pt[2]);
+      Poly.Append(pt[3]);
+      result |= FilterSimple_ConvexPolygon_AntiAlias(Image, &Poly, Color, Renderer, 0);
+    }
+    if ((r + i) > e) {
+      i = (e - r);
+    }
+    if (abs(i) < 0.00001) break;
+    first = false;
+  }
+  return result;
+}
+
+Export int FilterSimple_FilledArc_Gradient(Image *Image, float X, float Y, float R1, float R2, float Start, float End, Pixel Color1, Pixel Color2, RenderFunction *Renderer, float Step) {
+  GradientPolygon Poly = GradientPolygon();
+  int result = 0;
+  Poly.Allocate(4);
+  float r = 0;
+  float s, i, e;
+  float sr, cr;
+  float a, ai;
+  Pixel c;
+  bool first = true;
+  GradientVertex pt[4];
+  s = Radians(Start);
+  e = Radians(End);
+  if (s > e) {
+    _Swap(s, e);
+    _Swap(Color1, Color2);
+  }
+  i = Radians(Step);
+  if ((s + i) > e)
+      i = e - s;
+  a = 0;
+  ai = 1 / (abs(e-s) / i);
+  for (r = s; r <= e; r += i) {
+    sr = sin(r);
+    cr = -cos(r);
+    pt[0] = pt[1];
+    pt[3] = pt[2];
+    if (first) {
+      c = Color1;
+    } else if (r >= e) {
+      c = Color2;
+    } else {
+      c = Pixel(Color1, Color2, a);
+    }
+    pt[1] = GradientVertex((sr * R2) + X, (cr * R2) + Y, c.V);
+    pt[2] = GradientVertex((sr * R1) + X, (cr * R1) + Y, c.V);
+    if (!first) {
+      Poly.Empty();
+      Poly.Append(pt[0]);
+      Poly.Append(pt[1]);
+      Poly.Append(pt[2]);
+      Poly.Append(pt[3]);
+      result |= FilterSimple_ConvexPolygon_Gradient(Image, &Poly, Renderer, 0);
+    }
+    if ((r + i) > e) {
+      i = (e - r);
+    }
+    if (abs(i) < 0.00001) break;
+    first = false;
+    a += ai;
+  }
+  return result;
 }
 
 Export int FilterSimple_FilledCircle_AntiAlias(Image *Image, float X, float Y, float XRadius, float YRadius, Pixel Color, RenderFunction *Renderer, float Accuracy) {

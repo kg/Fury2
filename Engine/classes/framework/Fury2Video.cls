@@ -29,6 +29,7 @@ Private m_lngFile As Long
 Private m_lngStream As Long
 Private m_lngGetFrameObj As Long
 Private m_strCodec As String
+Private m_lngImagePointer As Long
 Private m_engEngine As Fury2Engine
 
 Friend Sub SetEngine(Engine As Fury2Engine)
@@ -107,6 +108,7 @@ Dim l_bytFourCC(0 To 3) As Byte
     End If
     
     Set Image = F2Image(Abs(m_bihHeader.biWidth), Abs(m_bihHeader.biHeight))
+    m_lngImagePointer = Image.Pointer(0, 0)
     
     m_lngFrame = 1
     Refresh
@@ -226,6 +228,7 @@ Friend Sub ReadFrame(ByVal Index As Long)
 On Error Resume Next
 Dim l_lngDIB As Long
 Dim l_bihHeader As mAVIDecs.BitmapInfoHeader
+Dim l_lngY As Long, l_lngOffset As Long, l_lngRowWidth As Long
     If m_lngFile = 0 Then Exit Sub
     If m_lngStream = 0 Then Exit Sub
     If m_lngGetFrameObj = 0 Then Exit Sub
@@ -235,8 +238,18 @@ Dim l_bihHeader As mAVIDecs.BitmapInfoHeader
     If m_bihHeader.biBitCount < 32 Then Exit Sub
     If m_bihHeader.biSizeImage < 1 Then Exit Sub
     
-    CopyMemory ByVal Image.Pointer(0, 0), ByVal l_lngDIB + 40, m_bihHeader.biSizeImage
+'    CopyMemory ByVal Image.Pointer(0, 0), ByVal l_lngDIB + 40, m_bihHeader.biSizeImage
+'    Image.Flip
+'    l_lngOffset = 40
+'    l_lngRowWidth = m_bihHeader.biWidth * 4
+'    For l_lngY = 0 To Image.Height - 1
+'        CopyMemory ByVal Image.Pointer(0, (Image.Height - l_lngY - 1)), ByVal l_lngDIB + l_lngOffset, l_lngRowWidth
+'        l_lngOffset = l_lngOffset + l_lngRowWidth
+'    Next l_lngY
+
+    SoftFX.SetImagePointer Image.Handle, l_lngDIB + 40
     Image.Flip
+    
     SoftFX.SetImageDirty Image.Handle, 1
     Err.Clear
 End Sub
@@ -268,6 +281,9 @@ On Error Resume Next
         Call AVIFileRelease(m_lngFile)
         m_lngFile = 0
     End If
+    SetImagePointer Image.Handle, m_lngImagePointer
+    Set Image = Nothing
+    m_lngImagePointer = 0
     Err.Clear
 End Sub
 

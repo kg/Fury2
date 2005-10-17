@@ -115,6 +115,7 @@ End Sub
 Sub Free()
 Attribute Free.VB_MemberFlags = "40"
 On Error Resume Next
+    Set mvarParent = Nothing
     Set mvarImage = Nothing
 End Sub
 

@@ -2,7 +2,7 @@ VERSION 5.00
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{EF59A10B-9BC4-11D3-8E24-44910FC10000}#11.0#0"; "vbalEdit.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.12#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
 Begin VB.MDIForm frmMain 
    AutoShowChildren=   0   'False
    BackColor       =   &H8000000C&
@@ -1051,6 +1051,10 @@ End Sub
 Public Sub RefreshToolbars()
 On Error Resume Next
 Dim l_lngWidth As Long, l_lngHeight As Long, l_lngTotalHeight As Long
+    tbrMenus.DrawBorder = False
+    tbrMain.DrawBorder = True
+    tbrGame.DrawBorder = True
+    tbrPlugins.DrawBorder = True
     tbrMenus.Move 0, 0, picToolbarsTop.ScaleWidth, tbrMenus.IdealHeight
     l_lngWidth = IIf(tbrMain.Visible, tbrMain.IdealWidth, 0)
     l_lngHeight = IIf(tbrMain.Visible, tbrMain.Height, 0)
@@ -1095,7 +1099,7 @@ On Error Resume Next
 End Sub
 
 Private Sub picHiddenControls_KeyDown(KeyCode As Integer, Shift As Integer)
-    MsgBox "pichiddencontrols what"
+'    MsgBox "pichiddencontrols what"
 End Sub
 
 Private Sub picLog_Paint()
@@ -1146,7 +1150,7 @@ Dim l_rctStatus As RECT
     SetTextColor picStatus.hdc, GetSystemColor(SystemColor_Button_Text)
     l_rctStatus.Left = 1
     l_rctStatus.Top = 1
-    l_rctStatus.Right = picStatus.ScaleWidth - 102
+    l_rctStatus.Right = picStatus.ScaleWidth - 202
     l_rctStatus.Bottom = picStatus.ScaleHeight - 2
     DrawText picStatus.hdc, m_strStatusText, Len(m_strStatusText), l_rctStatus, DrawText_Align_Left Or DrawText_Align_Center_Vertical Or DrawText_NoPrefix Or DrawText_Wrap_None
     l_rctStatus.Left = l_rctStatus.Right + 1
@@ -1154,7 +1158,7 @@ Dim l_rctStatus As RECT
     If m_sngProgress < 1 Then
         DrawText picStatus.hdc, m_strProgressText, Len(m_strProgressText), l_rctStatus, DrawText_Align_Left Or DrawText_Align_Center_Vertical Or DrawText_NoPrefix Or DrawText_Wrap_None
     Else
-        picStatus.Line (l_rctStatus.Left, l_rctStatus.Top)-(l_rctStatus.Left + (100 * m_sngProgress), l_rctStatus.Bottom), GetSystemColor(SystemColor_Highlight), BF
+        picStatus.Line (l_rctStatus.Left, l_rctStatus.Top)-(l_rctStatus.Left + (200 * m_sngProgress), l_rctStatus.Bottom), GetSystemColor(SystemColor_Highlight), BF
     End If
 End Sub
 

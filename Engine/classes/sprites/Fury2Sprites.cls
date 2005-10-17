@@ -108,6 +108,9 @@ Dim l_sprSprite As Fury2Sprite
     For Each l_sprSprite In mCol
         l_sprSprite.Free
     Next l_sprSprite
+    Do While mCol.Count > 0
+        mCol.Remove 1
+    Loop
     mvarDirty = True
 End Sub
 

@@ -76,6 +76,7 @@ Sub Free()
 Attribute Free.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_fraFrame As Fury2PoseFrame
+    Set mvarParent = Nothing
     If mvarFrames Is Nothing Then Exit Sub
     If mvarFrames.Count > 0 Then
         For Each l_fraFrame In mvarFrames

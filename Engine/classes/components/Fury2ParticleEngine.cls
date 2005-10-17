@@ -128,12 +128,25 @@ On Error Resume Next
     m_lngHandle = SoftFX.CreateParticleEngine()
 End Sub
 
-Public Sub Deallocate()
+Public Sub AddCollisionLine(ByVal x1 As Single, ByVal y1 As Single, ByVal x2 As Single, ByVal y2 As Single)
+On Error Resume Next
+End Sub
+
+Public Sub AllocateMatrix(ByVal Width As Long, ByVal Height As Long)
+On Error Resume Next
+End Sub
+
+Public Sub DeallocateMatrix()
 On Error Resume Next
     If m_lngMatrix <> 0 Then
         SoftFX.DeleteCollisionMatrix m_lngMatrix
         m_lngMatrix = 0
     End If
+End Sub
+
+Public Sub Deallocate()
+On Error Resume Next
+    DeallocateMatrix
     If m_lngHandle <> 0 Then
         SoftFX.DestroyParticleEngine m_lngHandle
         m_lngHandle = 0

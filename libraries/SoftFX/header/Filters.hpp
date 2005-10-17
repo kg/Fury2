@@ -55,4 +55,6 @@ extern void RenderFunction_Shadow(Pixel *Dest, Pixel *Source, int Count, Pixel S
 extern void RenderFunction_Screen(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
 extern void RenderFunction_Additive_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
 extern void RenderFunction_Subtractive_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
+extern void RenderFunction_Erase(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
+extern void RenderFunction_Unerase(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument);
 #endif

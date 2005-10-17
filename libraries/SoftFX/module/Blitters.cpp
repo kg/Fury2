@@ -645,8 +645,10 @@ BLITTERSIMPLE_INIT
     _BOS(BlitSimple_Erase, 0) _BOE
 BLITTERSIMPLE_BEGIN
 BLITTERSIMPLE_LOOPBEGIN
-    if (pSource->V != 0) {
+    if ((*pSource)[Red] != 0) {
+      if ((*pDest)[Alpha] != 0) {
         (*pDest)[::Alpha] = ClipByteLow((*pDest)[::Alpha] - (*pSource)[::Red]);
+      }
     }
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
@@ -661,8 +663,10 @@ BLITTERSIMPLE_BEGIN
     AlphaLevel *aSource;
     aSource = AlphaLevelLookup( ClipByte(Opacity) );
 BLITTERSIMPLE_LOOPBEGIN
-    if (pSource->V != 0) {
+    if ((*pSource)[Red] != 0) {
+      if ((*pDest)[Alpha] != 0) {
         (*pDest)[::Alpha] = ClipByteLow((*pDest)[::Alpha] - AlphaFromLevel(aSource, (*pSource)[::Red]));
+      }
     }
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
@@ -673,8 +677,10 @@ BLITTERSIMPLE_INIT
     _BOS(BlitSimple_Unerase, 0) _BOE
 BLITTERSIMPLE_BEGIN
 BLITTERSIMPLE_LOOPBEGIN
-    if (pSource->V != 0) {
+    if ((*pSource)[Red] != 0) {
+      if ((*pDest)[Alpha] != 255) {
         (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + (*pSource)[::Red]);
+      }
     }
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
@@ -689,8 +695,10 @@ BLITTERSIMPLE_BEGIN
     AlphaLevel *aSource;
     aSource = AlphaLevelLookup( ClipByte(Opacity) );
 BLITTERSIMPLE_LOOPBEGIN
-    if (pSource->V != 0) {
+    if ((*pSource)[Red] != 0) {
+      if ((*pDest)[Alpha] != 255) {
         (*pDest)[::Alpha] = ClipByteHigh((*pDest)[::Alpha] + AlphaFromLevel(aSource, (*pSource)[::Red]));
+      }
     }
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END

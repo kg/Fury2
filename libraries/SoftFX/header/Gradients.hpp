@@ -22,6 +22,8 @@ Pixel* GenerateGradientTable(Pixel StartColor, Pixel EndColor, int Size, int Off
 Pixel* GenerateGradientTable(Pixel* Table, Pixel StartColor, Pixel EndColor, int Size);
 Pixel* GenerateGradientTable(Pixel* Table, Pixel StartColor, Pixel EndColor, int Size, int Offset);
 
+Pixel* GenerateGradientTableUPM(Pixel* Table, Pixel StartColor, Pixel EndColor, int Size, int Offset);
+
 Pixel* GenerateGradientTableFast(Pixel StartColor, Pixel EndColor, int Size);
 Pixel* GenerateGradientTableFast(Pixel StartColor, Pixel EndColor, int Size, int Offset);
 Pixel* GenerateGradientTableFast(Pixel* Table, Pixel StartColor, Pixel EndColor, int Size);

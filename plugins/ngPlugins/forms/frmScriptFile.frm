@@ -346,10 +346,6 @@ On Error Resume Next
     Set iExtendedForm_Extender = Me.extender
 End Property
 
-Private Sub picFocus_Click()
-
-End Sub
-
 Private Sub scScript_SelectionChange()
 On Error Resume Next
     Editor.SetLocation "Line " & scScript.Control.GetSel(True).StartLineNo & ", Col " & scScript.Control.GetSel(True).StartColNo

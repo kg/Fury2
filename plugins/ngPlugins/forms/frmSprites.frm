@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
 Begin VB.Form frmSprites 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -64,9 +64,10 @@ Begin VB.Form frmSprites
          _ExtentY        =   1323
       End
       Begin VB.PictureBox picPoses 
+         BackColor       =   &H80000016&
          BorderStyle     =   0  'None
          Height          =   5760
-         Left            =   495
+         Left            =   510
          ScaleHeight     =   384
          ScaleMode       =   3  'Pixel
          ScaleWidth      =   396
@@ -94,6 +95,7 @@ Begin VB.Form frmSprites
             Width           =   2205
          End
          Begin VB.PictureBox picFrames 
+            BackColor       =   &H80000016&
             BorderStyle     =   0  'None
             Height          =   5760
             Left            =   2445
@@ -214,6 +216,7 @@ Begin VB.Form frmSprites
          End
       End
       Begin VB.PictureBox picStates 
+         BackColor       =   &H80000016&
          BorderStyle     =   0  'None
          Height          =   3630
          Left            =   2190
@@ -369,6 +372,7 @@ Private Enum SpriteEditorViews
     View_States
     View_Poses
     View_Script
+    View_Data
 End Enum
 
 Private Const c_lngUndoStackLength As Long = 50
@@ -829,7 +833,7 @@ Public Sub RedrawSprites()
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.RECT
+Dim l_rctText As Win32.Rect
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long
@@ -912,13 +916,24 @@ Dim l_liItem As ngListItem
                 l_lngItems = 1
                 For Each l_fraFrame In SelectedPose.Frames
                     Set .AddNew(IIf(l_lngItems = 1, "Stopped Frame", "Animation Frame " & l_lngItems - 1)).Tag = l_fraFrame
+                    If l_lngItems = m_lngSelectedFrame Then
+                        lstFrames.ListItems(l_lngItems).Selected = True
+                    Else
+                        lstFrames.ListItems(l_lngItems).Selected = False
+                    End If
                     l_lngItems = l_lngItems + 1
                 Next l_fraFrame
+                lstFrames_SelectionChange
             Else
                 l_lngItems = 1
                 For Each l_liItem In lstFrames.ListItems
                     l_liItem.Text = IIf(l_lngItems = 1, "Stopped Frame", "Animation Frame " & l_lngItems - 1)
                     Set l_liItem.Tag = SelectedPose.Frames(l_lngItems)
+'                    If l_lngItems = m_lngSelectedFrame Then
+'                        l_liItem.Selected = True
+'                    Else
+'                        l_liItem.Selected = False
+'                    End If
                     l_lngItems = l_lngItems + 1
                 Next l_liItem
             End If
@@ -1012,7 +1027,7 @@ End Sub
 Public Sub Redraw()
 On Error Resume Next
     Select Case m_lngCurrentView
-    Case View_Overview
+    Case View_Overview, View_Data
         insOverview.RefreshValues
         insOverview.Redraw
     Case View_States
@@ -1239,6 +1254,7 @@ On Error Resume Next
     tsViews.Tabs.AddNew "States", "t" & CStr(View_States)
     tsViews.Tabs.AddNew "Poses", "t" & CStr(View_Poses)
     tsViews.Tabs.AddNew "Script", "t" & CStr(View_Script)
+    tsViews.Tabs.AddNew "Data", "t" & CStr(View_Data)
     tsStates.Tabs.AddNew "Options"
     tsStates.Tabs.AddNew "Poses"
     tsPoses.Tabs.AddNew "Options"
@@ -1299,6 +1315,7 @@ Dim l_objObject As Object
     Select Case m_lngCurrentView
     Case View_Overview
         insOverview.Visible = True
+        insOverview.InspectAny = False
         insOverview.ZOrder
         insOverview.Inspect SelectedSprite, "Sprite", True
     Case View_States
@@ -1313,6 +1330,14 @@ Dim l_objObject As Object
         scSprite.Text = SelectedSprite.ScriptSource
         scSprite.Visible = True
         scSprite.ZOrder
+    Case View_Data
+        SelectedSprite.ReloadScript
+        insOverview.Visible = True
+        insOverview.InspectAny = True
+        insOverview.ZOrder
+        insOverview.ClearStack
+        insOverview.AddToStack SelectedSprite, "Sprite"
+        insOverview.Inspect SelectedSprite.Script, "Data", False, False, True
     Case Else
     End Select
     Screen.MousePointer = 0
@@ -1379,6 +1404,29 @@ On Error Resume Next
     Screen.MousePointer = 0
 End Sub
 
+Public Function GetSelectedFrames() As Object()
+Dim l_lngItemCount As Long, l_lngIndex As Long, l_lngFrame As Long
+Dim l_liItems() As ngListItem
+Dim l_fraFrames() As Object, l_fraFrame As Fury2PoseFrame
+    If lstPoses.SelectedItemCount > 0 Then
+        l_liItems = lstPoses.SelectedItems
+        For l_lngIndex = LBound(l_liItems) To UBound(l_liItems)
+            l_lngItemCount = l_lngItemCount + SelectedSprite.Poses(l_liItems(l_lngIndex).Index).Frames.Count
+        Next l_lngIndex
+        ReDim l_fraFrames(0 To l_lngItemCount - 1)
+        l_lngFrame = 0
+        For l_lngIndex = LBound(l_liItems) To UBound(l_liItems)
+            With SelectedSprite.Poses(l_liItems(l_lngIndex).Index)
+                For Each l_fraFrame In .Frames
+                    Set l_fraFrames(l_lngFrame) = l_fraFrame
+                    l_lngFrame = l_lngFrame + 1
+                Next l_fraFrame
+            End With
+        Next l_lngIndex
+        GetSelectedFrames = l_fraFrames
+    End If
+End Function
+
 Public Sub FramesViewChanged()
 On Error Resume Next
 Dim l_lngItemCount As Long, l_lngIndex As Long, l_lngFrame As Long
@@ -1394,20 +1442,7 @@ Dim l_fraFrames() As Object, l_fraFrame As Fury2PoseFrame
     Case "options"
         insFrameOptions.ShowHierarchy = True
         If lstPoses.SelectedItemCount > 1 Then
-            l_liItems = lstPoses.SelectedItems
-            For l_lngIndex = LBound(l_liItems) To UBound(l_liItems)
-                l_lngItemCount = l_lngItemCount + SelectedSprite.Poses(l_liItems(l_lngIndex).Index).Frames.Count
-            Next l_lngIndex
-            ReDim l_fraFrames(0 To l_lngItemCount - 1)
-            l_lngFrame = 0
-            For l_lngIndex = LBound(l_liItems) To UBound(l_liItems)
-                With SelectedSprite.Poses(l_liItems(l_lngIndex).Index)
-                    For Each l_fraFrame In .Frames
-                        Set l_fraFrames(l_lngFrame) = l_fraFrame
-                        l_lngFrame = l_lngFrame + 1
-                    Next l_fraFrame
-                End With
-            Next l_lngIndex
+            l_fraFrames = GetSelectedFrames
             insFrameOptions.InspectMultiple l_fraFrames
         Else
             If lstFrames.SelectedItemCount > 1 Then
@@ -1435,13 +1470,17 @@ Dim l_fraFrames() As Object, l_fraFrame As Fury2PoseFrame
     Screen.MousePointer = 0
 End Sub
 
-Public Sub RedrawFrameView()
+Public Sub RedrawFrameView(Optional ByVal UpdateTextbox As Boolean = True)
 On Error Resume Next
 Dim l_lngIndex As Long
 Dim l_liItems() As ngListItem
+Dim l_objFrames() As Object
 Dim l_fraFrame As Fury2PoseFrame
 Dim l_itType As IInspectorType
+Dim l_strText As String, l_strCurrent As String
+Dim l_lngX As Long, l_lngY As Long, l_lngRowHeight As Long
     l_liItems = lstFrames.SelectedItems
+    l_objFrames = GetSelectedFrames()
     If (m_imgFrameDisplay.Width <> picFrameDisplay.ScaleWidth) Or (m_imgFrameDisplay.Height <> picFrameDisplay.ScaleHeight) Then
         m_imgFrameDisplay.Resize picFrameDisplay.ScaleWidth, picFrameDisplay.ScaleHeight
     End If
@@ -1453,34 +1492,77 @@ Dim l_itType As IInspectorType
             .Blit , , SelectedFrame.Image, 0.5, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
             Err.Clear
             l_lngIndex = -1
-            l_lngIndex = UBound(l_liItems)
+            l_lngIndex = UBound(l_objFrames)
             If l_lngIndex = -1 Or Err <> 0 Then
             Else
-                For l_lngIndex = LBound(l_liItems) To UBound(l_liItems)
-                    Set l_fraFrame = SelectedPose.Frames(l_liItems(l_lngIndex).Index)
+                For l_lngIndex = LBound(l_objFrames) To UBound(l_objFrames)
+                    Set l_fraFrame = l_objFrames(l_lngIndex)
                     .Fill l_fraFrame.Rectangle, SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
                     .Fill l_fraFrame.Rectangle, SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), RenderMode_SourceAlpha
                     .Blit l_fraFrame.Rectangle, l_fraFrame.Rectangle, l_fraFrame.Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
+                    Set l_itType = l_fraFrame.Rectangle
+                    l_strCurrent = l_itType.ToString
+                    If Len(l_strText) = 0 Then
+                        l_strText = l_strCurrent
+                    Else
+                        If l_strCurrent = l_strText Then
+                        Else
+                            l_strText = "[multiple values]"
+                        End If
+                    End If
                 Next l_lngIndex
             End If
-            Set l_itType = SelectedFrame.Rectangle
-            txtFrameProperty.Text = l_itType.ToString
+            If UpdateTextbox Then txtFrameProperty.Text = l_strText
         Case "Alignment"
-            .Blit F2Rect(0, 0, SelectedFrame.Rectangle.Width, SelectedFrame.Rectangle.Height, False), SelectedFrame.Rectangle, SelectedFrame.Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
-            .AntiAliasLine Array(SelectedFrame.XCenter, 0, SelectedFrame.XCenter, SelectedFrame.Rectangle.Height - 1), F2RGB(255, 0, 0, 255)
-            .AntiAliasLine Array(0, SelectedFrame.YCenter, SelectedFrame.Rectangle.Width - 1, SelectedFrame.YCenter), F2RGB(255, 0, 0, 255)
-            txtFrameProperty.Text = SelectedFrame.XCenter & ", " & SelectedFrame.YCenter
+            Err.Clear
+            l_lngIndex = -1
+            l_lngIndex = UBound(l_objFrames)
+            If l_lngIndex = -1 Or Err <> 0 Then
+                .Blit F2Rect(0, 0, SelectedFrame.Rectangle.Width, SelectedFrame.Rectangle.Height, False), SelectedFrame.Rectangle, SelectedFrame.Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
+                .AntiAliasLine Array(SelectedFrame.XCenter, 0, SelectedFrame.XCenter, SelectedFrame.Rectangle.Height - 1), F2RGB(255, 0, 0, 255)
+                .AntiAliasLine Array(0, SelectedFrame.YCenter, SelectedFrame.Rectangle.Width - 1, SelectedFrame.YCenter), F2RGB(255, 0, 0, 255)
+                l_strText = SelectedFrame.XCenter & ", " & SelectedFrame.YCenter
+            Else
+                For l_lngIndex = LBound(l_objFrames) To UBound(l_objFrames)
+                    Set l_fraFrame = l_objFrames(l_lngIndex)
+                    If (l_lngX + l_fraFrame.Rectangle.Width) > .Width Then
+                        l_lngX = 0
+                        l_lngY = l_lngY + l_lngRowHeight
+                        l_lngRowHeight = 0
+                    End If
+                    l_lngRowHeight = IIf(l_fraFrame.Rectangle.Height > l_lngRowHeight, l_fraFrame.Rectangle.Height, l_lngRowHeight)
+                    .Blit F2Rect(l_lngX, l_lngY, l_fraFrame.Rectangle.Width, l_fraFrame.Rectangle.Height, False), l_fraFrame.Rectangle, l_fraFrame.Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
+                    .AntiAliasLine Array(l_fraFrame.XCenter + l_lngX, l_lngY, l_fraFrame.XCenter + l_lngX, l_fraFrame.Rectangle.Height - 1 + l_lngY), F2RGB(255, 0, 0, 255)
+                    .AntiAliasLine Array(l_lngX, l_fraFrame.YCenter + l_lngY, l_fraFrame.Rectangle.Width - 1 + l_lngX, l_fraFrame.YCenter + l_lngY), F2RGB(255, 0, 0, 255)
+                    l_strCurrent = l_fraFrame.XCenter & ", " & l_fraFrame.YCenter
+                    If Len(l_strText) = 0 Then
+                        l_strText = l_strCurrent
+                    Else
+                        If l_strCurrent = l_strText Then
+                        Else
+                            l_strText = "[multiple values]"
+                        End If
+                    End If
+                    l_lngX = l_lngX + l_fraFrame.Rectangle.Width
+                Next l_lngIndex
+            End If
+            If UpdateTextbox Then txtFrameProperty.Text = l_strText
         Case Else
         End Select
     End With
     picFrameDisplay_Paint
 End Sub
 
-Public Sub RedrawPoseView()
+Public Sub RedrawPoseView(Optional ByVal UpdateTextbox As Boolean = True)
 On Error Resume Next
 Dim l_lngIndex As Long
 Dim l_posPose As Fury2Pose
+Dim l_fraFrame As Fury2PoseFrame
 Dim l_rctBlocking As Fury2Rect
+Dim l_liItems() As ngListItem
+Dim l_strText As String, l_strCurrent As String
+Dim l_lngX As Long, l_lngY As Long, l_lngRowHeight As Long
+    l_liItems = lstPoses.SelectedItems
     If (m_imgPoseDisplay.Width <> picPoseDisplay.ScaleWidth) Or (m_imgPoseDisplay.Height <> picPoseDisplay.ScaleHeight) Then
         m_imgPoseDisplay.Resize picPoseDisplay.ScaleWidth, picPoseDisplay.ScaleHeight
     End If
@@ -1488,10 +1570,35 @@ Dim l_rctBlocking As Fury2Rect
         .Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
         Select Case tsPoses.SelectedTab.Text
         Case "Blocking"
-            .Blit SelectedPose.Frames(1).Rectangle.Copy.Translate(-SelectedPose.Frames(1).Rectangle.Left, -SelectedPose.Frames(1).Rectangle.Top), SelectedPose.Frames(1).Rectangle, SelectedPose.Frames(1).Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
-            Set l_rctBlocking = F2Rect(Ceil(SelectedPose.Frames(1).XCenter - (SelectedPose.Blocking.Width / 2)), SelectedPose.Frames(1).YCenter - (SelectedPose.Frames(1).Rectangle.Height - SelectedPose.Blocking.Height), SelectedPose.Blocking.Width, SelectedPose.Blocking.Height, False)
-            .Box l_rctBlocking, F2RGB(255, 0, 0, 192), RenderMode_SourceAlpha
-            txtPoseProperty.Text = SelectedPose.Blocking.Width & "x" & SelectedPose.Blocking.Height
+            l_lngIndex = -1
+            l_lngIndex = UBound(l_liItems)
+            If l_lngIndex = -1 Or Err <> 0 Then
+            Else
+                For l_lngIndex = LBound(l_liItems) To UBound(l_liItems)
+                    Set l_posPose = SelectedSprite.Poses(l_liItems(l_lngIndex).Index)
+                    Set l_fraFrame = l_posPose.Frames(1)
+                    If (l_lngX + l_fraFrame.Rectangle.Width) > .Width Then
+                        l_lngX = 0
+                        l_lngY = l_lngY + l_lngRowHeight
+                        l_lngRowHeight = 0
+                    End If
+                    l_lngRowHeight = IIf(l_fraFrame.Rectangle.Height > l_lngRowHeight, l_fraFrame.Rectangle.Height, l_lngRowHeight)
+                    .Blit l_fraFrame.Rectangle.Copy.Translate(-l_fraFrame.Rectangle.Left + l_lngX, -l_fraFrame.Rectangle.Top + l_lngY), l_fraFrame.Rectangle, l_fraFrame.Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
+                    Set l_rctBlocking = F2Rect(Ceil(l_fraFrame.XCenter - (l_posPose.Blocking.Width / 2)) + l_lngX, l_fraFrame.YCenter - (l_posPose.Blocking.Height) + l_lngY, l_posPose.Blocking.Width, l_posPose.Blocking.Height, False)
+                    .Box l_rctBlocking, F2RGB(255, 0, 0, 192), RenderMode_SourceAlpha
+                    l_strCurrent = l_posPose.Blocking.Width & "x" & l_posPose.Blocking.Height
+                    If Len(l_strText) = 0 Then
+                        l_strText = l_strCurrent
+                    Else
+                        If l_strCurrent = l_strText Then
+                        Else
+                            l_strText = "[multiple values]"
+                        End If
+                    End If
+                    l_lngX = l_lngX + l_fraFrame.Rectangle.Width
+                Next l_lngIndex
+            End If
+            If UpdateTextbox Then txtPoseProperty.Text = l_strText
         Case Else
         End Select
     End With
@@ -1591,7 +1698,7 @@ End Sub
 Private Sub tsViews_Resize()
 On Error Resume Next
     Select Case m_lngCurrentView
-    Case View_Overview
+    Case View_Overview, View_Data
         insOverview.Move (2) + tsViews.Left, tsViews.Top + 24, tsViews.Width - 4, tsViews.Height - 26
     Case View_States
         picStates.Move (2) + tsViews.Left, tsViews.Top + 24, tsViews.Width - 4, tsViews.Height - 26
@@ -2015,7 +2122,7 @@ End Sub
 
 Private Sub lstFrames_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     If lstPoses.SelectedItemCount > 1 Then Exit Sub
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
@@ -2065,7 +2172,7 @@ End Sub
 
 Private Sub lstPoses_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstPoses.hwnd, l_ptMouse
@@ -2103,7 +2210,7 @@ End Sub
 
 Private Sub lstStatePoses_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
 Dim l_lngItems As Long
     If SelectedState Is Nothing Then Exit Sub
     If Button = 1 Then
@@ -2128,7 +2235,7 @@ End Sub
 Private Sub lstStatePoses_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_lngStatePosesEnd As Long
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
 Dim l_lngItems As Long
     If SelectedState Is Nothing Then Exit Sub
     If ((Button And 1) = 1) And m_booStatePosesDragging Then
@@ -2166,7 +2273,7 @@ End Sub
 
 Private Sub lstStates_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstStates.hwnd, l_ptMouse
@@ -2282,7 +2389,7 @@ Private Sub picSprites_MouseDown(Button As Integer, Shift As Integer, X As Singl
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.RECT
+Dim l_rctText As Win32.Rect
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long
@@ -2362,30 +2469,62 @@ End Sub
 Private Sub txtFrameProperty_Change()
 On Error Resume Next
 Dim l_itType As IInspectorType
-    Select Case tsFrames.SelectedTab.Text
-    Case "Rectangle"
-        Err.Clear
-        Set l_itType = SelectedFrame.Rectangle
-        l_itType.FromString txtFrameProperty.Text
-        If Err = 0 Then RedrawFrameView
-    Case "Alignment"
-        Err.Clear
-        SelectedFrame.XCenter = CSng(Split(txtFrameProperty.Text, ",")(0))
-        SelectedFrame.YCenter = CSng(Split(txtFrameProperty.Text, ",")(1))
-        If Err = 0 Then RedrawFrameView
-    Case Else
-    End Select
+Dim l_objFrames() As Object
+Dim l_lngIndex As Long
+Dim l_fraFrame As Fury2PoseFrame
+Dim l_booChanged As Boolean
+    If Left(txtFrameProperty.Text, 1) = "[" Then Exit Sub
+    l_objFrames = GetSelectedFrames()
+    Err.Clear
+    l_lngIndex = -1
+    l_lngIndex = UBound(l_objFrames)
+    If l_lngIndex = -1 Or Err <> 0 Then
+    Else
+        For l_lngIndex = LBound(l_objFrames) To UBound(l_objFrames)
+            Set l_fraFrame = l_objFrames(l_lngIndex)
+            Select Case tsFrames.SelectedTab.Text
+            Case "Rectangle"
+                Err.Clear
+                Set l_itType = l_fraFrame.Rectangle
+                l_itType.FromString txtFrameProperty.Text
+                If Err = 0 Then l_booChanged = True
+            Case "Alignment"
+                Err.Clear
+                l_fraFrame.XCenter = CSng(Split(txtFrameProperty.Text, ",")(0))
+                l_fraFrame.YCenter = CSng(Split(txtFrameProperty.Text, ",")(1))
+                If Err = 0 Then l_booChanged = True
+            Case Else
+            End Select
+        Next l_lngIndex
+    End If
+    If l_booChanged Then RedrawFrameView False
 End Sub
 
 Private Sub txtPoseProperty_Change()
 On Error Resume Next
-    Select Case tsPoses.SelectedTab.Text
-    Case "Blocking"
-        Err.Clear
-        SelectedPose.Blocking.SetValues CLng(Split(txtPoseProperty.Text, "x")(0)), CLng(Split(txtPoseProperty.Text, "x")(1))
-        If Err = 0 Then RedrawPoseView
-    Case Else
-    End Select
+Dim l_liItems() As ngListItem
+Dim l_lngIndex As Long
+Dim l_posPose As Fury2Pose
+Dim l_booChanged As Boolean
+    If Left(txtPoseProperty.Text, 1) = "[" Then Exit Sub
+    l_liItems = lstPoses.SelectedItems
+    Err.Clear
+    l_lngIndex = -1
+    l_lngIndex = UBound(l_liItems)
+    If l_lngIndex = -1 Or Err <> 0 Then
+    Else
+        For l_lngIndex = LBound(l_liItems) To UBound(l_liItems)
+            Set l_posPose = SelectedSprite.Poses(l_liItems(l_lngIndex).Index)
+            Select Case tsPoses.SelectedTab.Text
+            Case "Blocking"
+                Err.Clear
+                l_posPose.Blocking.SetValues CLng(Split(txtPoseProperty.Text, "x")(0)), CLng(Split(txtPoseProperty.Text, "x")(1))
+                If Err = 0 Then l_booChanged = True
+            Case Else
+            End Select
+        Next l_lngIndex
+    End If
+    If l_booChanged Then RedrawPoseView False
 End Sub
 
 Private Sub vsSprites_Change()

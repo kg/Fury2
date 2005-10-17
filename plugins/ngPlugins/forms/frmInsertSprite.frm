@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
 Begin VB.Form frmInsertSprite 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Insert Sprite"
@@ -26,11 +26,23 @@ Begin VB.Form frmInsertSprite
    ShowInTaskbar   =   0   'False
    StartUpPosition =   2  'CenterScreen
    Visible         =   0   'False
+   Begin VB.PictureBox picProgress 
+      AutoRedraw      =   -1  'True
+      FillColor       =   &H8000000D&
+      Height          =   270
+      Left            =   2880
+      ScaleHeight     =   1
+      ScaleMode       =   0  'User
+      ScaleWidth      =   1
+      TabIndex        =   4
+      Top             =   5235
+      Width           =   3060
+   End
    Begin VB.CheckBox chkTemplate 
       Caption         =   "Use as Template"
       Height          =   240
       Left            =   30
-      TabIndex        =   4
+      TabIndex        =   2
       Top             =   5250
       Width           =   5910
    End
@@ -92,7 +104,6 @@ Begin VB.Form frmInsertSprite
    Begin ngUI.ngTabStrip tsViews 
       Height          =   5190
       Left            =   30
-      TabIndex        =   2
       Top             =   30
       Width           =   5910
       _ExtentX        =   10425
@@ -128,25 +139,59 @@ Public Engine As Fury2Engine
 Public Cancelled As Boolean
 Public Sprite As Fury2Sprite
 
+Friend Sub SetProgress(ByVal Progress As Single)
+On Error Resume Next
+    picProgress.Cls
+    picProgress.Line (0, 0)-(Progress, 1), picProgress.FillColor, BF
+    picProgress.Refresh
+End Sub
+
+Friend Sub ClearList()
+On Error Resume Next
+Dim l_liItem As ngListItem
+Dim l_sprSprite As Fury2Sprite
+    Debug.Print "ClearList"
+    lstSprites.DisableUpdates = True
+    For Each l_liItem In lstSprites.ListItems
+        Set l_sprSprite = Nothing
+        Set l_sprSprite = l_liItem.Tag
+        If l_sprSprite Is Nothing Then
+        Else
+            l_sprSprite.Free
+        End If
+        Set l_liItem.Tag = Nothing
+        Set l_liItem.Image = Nothing
+    Next l_liItem
+    lstSprites.DisableUpdates = False
+    lstSprites.ListItems.Clear
+End Sub
+
 Public Sub RefreshSpriteList()
 On Error Resume Next
+Static l_booHere As Boolean
 Dim l_flsFiles As Fury2Files
 Dim l_scSprites As Fury2Sprites
 Dim l_sprSprite As Fury2Sprite
 Dim l_imgSprite As Fury2Image
 Dim l_rctSprite As Fury2Rect
-Dim l_lngFiles As Long
+Dim l_lngFiles As Long, l_lngSprites As Long
+    If l_booHere Then Exit Sub
+    l_booHere = True
+    Debug.Print "RefreshSpriteList"
     Set l_flsFiles = Engine.FileSystem.EnumFiles(, "*.f2sprites", True)
-    lstSprites.DisableUpdates = True
-    lstSprites.ListItems.Clear
+    ClearList
     If l_flsFiles Is Nothing Then
     Else
         If l_flsFiles.Count > 0 Then
+            SetProgress 0
             For l_lngFiles = 1 To l_flsFiles.Count
                 With l_flsFiles.File(l_lngFiles)
+                    SetProgress (l_lngFiles - 1) / l_flsFiles.Count
                     Set l_scSprites = Engine.LoadSprites(.Name)
                     lstSprites.ListItems.AddNew(.Title).Enabled = False
+                    l_lngSprites = 1
                     For Each l_sprSprite In l_scSprites
+                        SetProgress ((l_lngFiles - 1 + (l_lngSprites / (l_scSprites.Count))) / l_flsFiles.Count)
                         With l_sprSprite
                             .Initialize
                             .Load
@@ -156,19 +201,25 @@ Dim l_lngFiles As Long
                             l_sprSprite.Render l_imgSprite, 0, 0
                             Set lstSprites.ListItems.AddNew(.Name, , l_imgSprite).Tag = l_sprSprite
                         End With
+                        l_lngSprites = l_lngSprites + 1
+                        DoEvents
                     Next l_sprSprite
+                    l_scSprites.Clear
                 End With
             Next l_lngFiles
+            SetProgress 100
         End If
     End If
     cmdOK.Enabled = lstSprites.SelectedItemCount > 0
-    lstSprites.DisableUpdates = False
+    Debug.Print "RefreshSpriteList Done"
     lstSprites.Reflow
+    l_booHere = False
 End Sub
 
 Private Sub cmdCancel_Click()
 On Error Resume Next
     Cancelled = True
+    ClearList
     Me.Hide
 End Sub
 
@@ -179,11 +230,13 @@ On Error Resume Next
     Else
     End If
     If Sprite Is Nothing Then Cancelled = True Else Cancelled = False
+    ClearList
     Me.Hide
 End Sub
 
 Private Sub Form_Activate()
 On Error Resume Next
+    Debug.Print "frmInsertSprite_Activate"
     lstSprites.ListItems.Clear
     RefreshSpriteList
 End Sub
@@ -203,6 +256,7 @@ End Sub
 
 Private Sub tsViews_TabSelected(TheTab As ngTab)
 On Error Resume Next
+    Debug.Print "tsViews_TabSelected"
     Set Sprite = Nothing
     cmdOK.Enabled = False
     Select Case TheTab.Index
@@ -215,6 +269,8 @@ End Sub
 
 Private Sub Form_Load()
 On Error Resume Next
+    Debug.Print "frmInsertSprite_Load"
+    ClearList
     tsViews.Tabs.AddNew "Sprite Collections"
     lstSprites.Move tsViews.Left + 2, tsViews.Top + tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - tsViews.IdealHeight - 3
     lstSprites.Colors(lbcBackground) = ConvertSystemColor(SystemColor_Button_Highlight)

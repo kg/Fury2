@@ -5,12 +5,38 @@ Begin VB.Form frmTest
    ClientLeft      =   60
    ClientTop       =   450
    ClientWidth     =   6000
+   BeginProperty Font 
+      Name            =   "Times New Roman"
+      Size            =   12
+      Charset         =   0
+      Weight          =   400
+      Underline       =   0   'False
+      Italic          =   0   'False
+      Strikethrough   =   0   'False
+   EndProperty
    Icon            =   "frmTest.frx":0000
    LinkTopic       =   "Form1"
    ScaleHeight     =   300
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   400
    StartUpPosition =   2  'CenterScreen
+   Begin VB.TextBox Text1 
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   285
+      Left            =   120
+      TabIndex        =   2
+      Text            =   "ABCDEF abcdef Hello, World!"
+      Top             =   4140
+      Width           =   3150
+   End
    Begin VB.CommandButton cmdToggleDeform 
       Caption         =   "Toggle Deform"
       BeginProperty Font 
@@ -59,6 +85,8 @@ Attribute VB_Exposed = False
 Option Explicit
 Private m_lngOldBitmap As Long
 Private m_filFilter As Fury2ConvolutionFilter
+Dim m_fntFont As Fury2RasterFont
+Dim m_fntSubfont As Fury2RasterFont
 Dim m_imgFramebuffer As Fury2Image
 Dim m_imgMask As Fury2Image
 Dim m_imgPattern As Fury2Image
@@ -69,6 +97,7 @@ Dim m_imgCopy As Fury2Image
 Dim m_lngTexture As Long
 Dim m_lngX As Long, m_lngY As Long
 Dim m_varPoly() As Variant
+Dim m_strUnicode As String
 Public UseHardware As Boolean
 Public EnableDeform As Boolean
 Const c_dblPi As Double = 3.14159265358979
@@ -96,6 +125,8 @@ Dim l_lngX As Long, l_lngY As Long
 Dim l_sngX As Single, l_sngY As Single
 Static l_sngS As Single, l_sngR As Single
 Static l_lngFrame As Long
+Dim l_rctText As Win32.Rect
+Dim l_lngChar As Long, l_imgChar As Fury2Image
 Dim l_mshMesh As Fury2DeformationMesh
     'F2LockingMode = LockingMode_AutoUnlock_AutoLock
 ''    Set l_devDevice = GetImageDevice(m_imgBuffer)
@@ -229,10 +260,31 @@ Dim l_mshMesh As Fury2DeformationMesh
     'm_imgBuffer.GradientConvexPolygon Array(Array(75, 75, F2White), Array(75 + (Sin(l_sngR) * l_sngS), 75 + (-Cos(l_sngR) * l_sngS), F2Black), Array(75 + (Sin(l_sngR + (c_dblPi / 2)) * l_sngS), 75 + (-Cos(l_sngR + (c_dblPi / 2)) * l_sngS), F2Black)), RenderMode_Additive
 '    m_imgBuffer.AdjustChannelGamma 1, l_sngS
 '    m_imgBuffer.SwapChannels 0, 2
-    m_imgBuffer.Adjust -32
-    m_imgMask.Draw m_imgBuffer, 200, 150, 1, 1, l_sngR, BlitMode_Additive, , ResampleMode_Linear
+'    m_imgBuffer.Adjust -32
+'    m_imgMask.Draw m_imgBuffer, 200, 150, 1, 1, l_sngR, BlitMode_Additive, , ResampleMode_Linear
+    m_imgBuffer.Clear F2Black
+    m_imgBuffer.ResetClipRectangle
+    m_fntFont.Draw m_imgBuffer, Text1.Text, F2Rect(20, 10, 350, 200, False), F2White
+    m_fntFont.Draw m_imgBuffer, m_strUnicode, F2Rect(20, 25, 350, 200, False), F2White
+    Debug.Print m_fntFont.CharacterCount
+'    For l_lngChar = 255 To 512
+'        Set l_imgChar = m_fntFont.Character(l_lngChar)
+'        l_imgChar.Draw m_imgBuffer, l_lngX, l_lngY, 1, 1, 0, BlitMode_SourceAlpha
+'        l_lngX = l_lngX + l_imgChar.Width
+'        If l_lngX > 400 Then
+'            l_lngX = 0
+'            l_lngY = l_lngY + 24
+'        End If
+'        If (l_lngY > 300) Then Exit For
+'    Next l_lngChar
     m_imgBuffer.Locked = True
     GLFlip ' Me.HDC
+    l_rctText.Left = 0
+    l_rctText.Top = 0
+    l_rctText.Right = 400
+    l_rctText.Bottom = 300
+    Me.ForeColor = RGB(255, 255, 255)
+    'DrawText_Unicode Me.HDC, m_strUnicode, Len(m_strUnicode), l_rctText, DrawText_Align_Left Or DrawText_Align_Top
     l_sngS = l_sngS + 0.025
     If (l_sngS >= 2) Then
         l_sngS = 0
@@ -254,7 +306,7 @@ End Sub
 
 Private Sub Form_Load()
 On Error Resume Next
-    UseHardware = True
+    UseHardware = False
     Randomize Timer
     F2Init
     GLInit Me.HWND, Me.HDC
@@ -318,6 +370,21 @@ On Error Resume Next
 ''    m_imgCopy.SavePNG "C:\test.png"
 '    m_imgCopy.Locked = False
     m_imgBuffer.Clear F2White
+    Set m_fntFont = New Fury2RasterFont
+    m_fntFont.ImportTTF Me.Font, True
+'    m_fntFont.Refresh
+    m_strUnicode = ReadTextFile("C:\unicode.txt")
+'    Set m_fntSubfont = New Fury2RasterFont
+'    Me.Font.Italic = True
+'    m_fntSubfont.ImportTTF Me.Font
+'    m_fntFont.AddSubFont m_fntSubfont, "Italic"
+'    Set m_fntSubfont = New Fury2RasterFont
+'    Me.Font.Italic = False
+'    Me.Font.Bold = True
+'    Me.Font.Size = 12
+'    m_fntSubfont.ImportTTF Me.Font
+'    m_fntFont.AddSubFont m_fntSubfont, "Bold"
+    Me.Font.Bold = False
     Redraw
 End Sub
 

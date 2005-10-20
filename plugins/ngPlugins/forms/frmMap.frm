@@ -461,6 +461,9 @@ Private m_lngStartMouseTileX As Long, m_lngStartMouseTileY As Long
 Private m_lngOverlayWidth As Long, m_lngOverlayHeight As Long, m_lngOverlayX As Long, m_lngOverlayY As Long
 Private m_booOverlayLocked As Boolean
 
+Private m_undSpritePainter As cMultiUndoEntry
+Private m_sngSpritePainterDistance As Single
+
 Private m_lngWidth As Long, m_lngHeight As Long
 
 Private m_lngTileWidth As Long, m_lngTileHeight As Long
@@ -2814,6 +2817,56 @@ On Error Resume Next
     RefreshTool
 End Sub
 
+Private Sub insTool_EllipsisPressed(ByVal Index As Long)
+On Error Resume Next
+Dim l_strFilename As String
+    Select Case m_lngCurrentView
+    Case View_Tiles
+        Select Case Tool_Tiles
+        Case Else
+        End Select
+    Case View_Blocking
+        Select Case Tool_Blocking
+        Case Else
+        End Select
+    Case View_Areas
+        Select Case Tool_Areas
+        Case Else
+        End Select
+    Case View_Sprites
+        Select Case Tool_Sprites
+        Case SpriteTool_SpritePainter
+            Select Case LCase(Trim(insTool.ItemName(Index)))
+            Case "sprites"
+                l_strFilename = Editor.SelectFile("Sprite Collections|*.f2sprites")
+                If Len(Trim(LCase(l_strFilename))) > 0 Then
+                    If InStr(l_strFilename, Engine.FileSystem.Root) Then
+                        l_strFilename = Replace(Replace(l_strFilename, Engine.FileSystem.Root, "/"), "\", "/")
+                    End If
+                    Set ToolOptions.SpriteList = Nothing
+                    Set ToolOptions.SpriteList = Engine.LoadSprites(l_strFilename)
+                    If ToolOptions.SpriteList Is Nothing Then
+                        ToolOptions.SpritesFilename = ""
+                    Else
+                        ToolOptions.SpritesFilename = l_strFilename
+                    End If
+                End If
+                insTool.RefreshValues
+            End Select
+        Case Else
+        End Select
+    Case View_Lighting
+        Select Case Tool_Lighting
+        Case Else
+        End Select
+    Case View_Objects
+        Select Case Tool_Objects
+        Case Else
+        End Select
+    Case Else
+    End Select
+End Sub
+
 Private Sub iToolbar_HideToolbar(Toolbar As Object)
 On Error Resume Next
     Set m_tbrToolbar = Toolbar
@@ -5138,14 +5191,21 @@ Dim l_sprNew As Fury2Sprite
         m_booSelectingPathNodes = True
     Case SpriteTool_Add_Path
     Case SpriteTool_Insert
+    Case SpriteTool_SpritePainter
+        Set m_undSpritePainter = New cMultiUndoEntry
+        m_sngSpritePainterDistance = m_optSpritePainter.DrawRate
     Case Else
     End Select
 End Sub
 
 Public Sub Tool_Sprites_Move(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
+Dim l_undUndo As cObjectUndoEntry
 Dim l_wpNode As Fury2Waypoint, l_lngNode As Long
 Dim l_rctArea As Fury2Rect
+Dim l_sngDistance As Single, l_lngSprite As Long, l_sprSprite As Fury2Sprite
+Dim l_sngX As Single, l_sngY As Single, l_sngL As Single, l_lngC As Long, l_lngI As Long
+Dim l_varRand As Variant
     Select Case Tool_Sprites
     Case SpriteTool_Cursor
         If (m_booDraggingSprite) Then
@@ -5179,6 +5239,58 @@ Dim l_rctArea As Fury2Rect
             Redraw
         End If
     Case SpriteTool_Add_Path
+    Case SpriteTool_SpritePainter
+        If Button = 1 Then
+            l_sngDistance = Abs(m_lngMouseX - m_lngLastMouseX) + Abs(m_lngMouseY - m_lngLastMouseY)
+            Debug.Print l_sngDistance
+            m_sngSpritePainterDistance = m_sngSpritePainterDistance - l_sngDistance
+            If m_sngSpritePainterDistance <= 0 Then
+                Do While m_sngSpritePainterDistance <= 0
+                    m_sngSpritePainterDistance = m_sngSpritePainterDistance + m_optSpritePainter.DrawRate
+                    l_lngC = l_lngC + 1
+                Loop
+            End If
+            If l_lngC > 0 Then
+                For l_lngI = 1 To l_lngC
+                    If l_lngC = 1 Then
+                        l_sngL = 1
+                    Else
+                        l_sngL = (l_lngI / l_lngC)
+                    End If
+                    l_lngSprite = Engine.Random(1, m_optSpritePainter.SpriteList.Count, False)
+                    Set l_sprSprite = Nothing
+                    Set l_sprSprite = m_optSpritePainter.SpriteList(l_lngSprite).Duplicate
+                    If l_sprSprite Is Nothing Then
+                    Else
+                        l_sprSprite.Initialize
+                        l_sprSprite.Load
+                        If m_optSpritePainter.UseTemplate Then
+                            l_sprSprite.Template = m_optSpritePainter.SpritesFilename & ":" & l_sprSprite.Name
+                        End If
+                        l_varRand = Engine.PathTarget(0, 0, Engine.Random(0, 359.99), Engine.Random(0, m_optSpritePainter.DrawRadius))
+                        l_sngX = (m_lngLastMouseX * (1 - l_sngL)) + (m_lngMouseX * (l_sngL)) + l_varRand(0)
+                        l_sngY = (m_lngLastMouseY * (1 - l_sngL)) + (m_lngMouseY * (l_sngL)) + l_varRand(1)
+                        l_sprSprite.X = l_sngX
+                        l_sprSprite.Y = l_sngY
+                        SelectedLayer.Sprites.Add l_sprSprite
+                        Set l_undUndo = New cObjectUndoEntry
+                        With l_undUndo
+                            Set .Container = SelectedLayer.Sprites
+                            Set .Value = l_sprSprite
+                            .Index = SelectedLayer.Sprites.Count
+                            .Operation = OUO_Remove
+                        End With
+                        If m_undSpritePainter.Entries.Count = 0 Then
+                            m_undSpritePainter.Entries.Add l_undUndo
+                        Else
+                            m_undSpritePainter.Entries.Add l_undUndo, , 1
+                        End If
+                    End If
+                    Set l_sprSprite = Nothing
+                Next l_lngI
+                Redraw
+            End If
+        End If
     Case Else
     End Select
 End Sub
@@ -5256,6 +5368,17 @@ Dim l_sprSprite As Fury2Sprite
                 ToolChanged
             End If
         End If
+    Case SpriteTool_SpritePainter
+        If m_undSpritePainter.Entries.Count > 0 Then
+            m_colUndo.Add m_undSpritePainter
+            m_colRedo.Clear
+            If m_colUndo.Count > c_lngUndoStackLength Then
+                m_colUndo.Remove 1
+            End If
+        End If
+        Set m_undSpritePainter = Nothing
+        RefreshSprites
+        Redraw
     Case Else
     End Select
     m_booDraggingSprite = False
@@ -5506,7 +5629,7 @@ Dim l_strTool As String
     End Select
     If ToolOptions Is Nothing Then
     Else
-        tsTool.Tabs.AddNew "Options", "Options"
+        tsTool.Tabs.AddNew "Tool Options", "Tool Options"
     End If
     tsTool.Tabs.AddNew "View", "View"
     tsTool.DisableUpdates = False
@@ -5558,7 +5681,7 @@ On Error Resume Next
         With insTool
             .Inspect m_voViewOptions, "View"
         End With
-    Case "options"
+    Case "tool options"
         Set m_ctlCurrentTool = insTool
         With insTool
             .Inspect ToolOptions, "Tool Options"

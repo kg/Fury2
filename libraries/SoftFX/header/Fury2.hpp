@@ -268,12 +268,15 @@ struct TextParam {
 	  int CharsDrawn;
 	  int TabStopCount;
 	  int* TabStops;
+    Byte EnableColorCodes;
 };
 
 struct KerningPair {
     wchar_t Characters[2];
     int XOffset;
 };
+
+struct SubFontParam;
 
 struct FontParam {
     int EffectMode;
@@ -286,8 +289,15 @@ struct FontParam {
     int BaseMode;
     int MapCount;
     CharacterParam **MapPointer;
+    int SubFontCount;
+    SubFontParam* SubFonts;
 //    int KerningPairCount;
 //    KerningPair *KerningPairs;
+};
+
+struct SubFontParam {
+    const wchar_t* Name;
+    FontParam *Font;
 };
 
 enum CharacterTraits2 {
@@ -319,6 +329,8 @@ struct TextParam2 {
     int outLines;
     int outFoundCharacter;
     int outDrawnCharacters;
+    int SubFontCount;
+    SubFontParam* SubFonts;
 };
 
 struct KerningPair2 {

@@ -199,6 +199,8 @@ Private Type ObjectItem
 End Type
 
 Public InspectAny As Boolean
+ 
+Private m_booRefreshingEditBox As Boolean
 
 Private m_booGroupEdit As Boolean
 Private m_objGroupItems() As Object
@@ -348,6 +350,7 @@ Dim l_lngItems As Long, l_lngY As Long
         cmdElipsis.Visible = False
         Exit Sub
     End If
+    m_booRefreshingEditBox = True
     Err.Clear
     For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
         If Not (m_oiItems(l_lngItems).Filtered) Then
@@ -361,7 +364,10 @@ Dim l_lngItems As Long, l_lngY As Long
         End If
     Next l_lngItems
     With m_oiItems(m_lngSelectedItem)
-        If Err <> 0 Then Exit Sub
+        If Err <> 0 Then
+            m_booRefreshingEditBox = False
+            Exit Sub
+        End If
         l_lngNameWidth = m_lngNameWidth
         If (l_lngNameWidth > ((picItems.ScaleWidth - vsScroll.Width - MinimumEditWidth))) Then
             l_lngNameWidth = ((picItems.ScaleWidth - vsScroll.Width - MinimumEditWidth))
@@ -448,6 +454,7 @@ Dim l_lngItems As Long, l_lngY As Long
         End If
     End With
     l_lngOldIndex = m_lngSelectedItem
+    m_booRefreshingEditBox = False
 End Sub
 
 Public Property Get CurrentObject() As Object
@@ -949,8 +956,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -961,8 +968,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -1332,13 +1339,16 @@ End Sub
 
 Private Sub txtEdit_LostFocus()
 On Error Resume Next
-    If txtEdit.Locked Then Exit Sub
     m_booEditBoxActive = False
+    If txtEdit.Locked Then Exit Sub
+    If m_booRefreshingEditBox Then Exit Sub
     EditBoxChanged
+    DoEvents
 End Sub
 
 Private Sub EditBoxChanged()
 On Error Resume Next
+Static l_lngHere As Long
 Dim l_objObject As Object, l_lngObject As Long
 Dim l_booCancel As Boolean
 Dim l_varOldValue As Variant
@@ -1355,6 +1365,8 @@ Dim l_booError As Boolean
     l_strText = txtEdit.Text
     If l_strText = "{Multiple Values}" Then Exit Sub
     If l_strText = m_oiItems(m_lngSelectedItem).ValueText Then Exit Sub
+    If l_lngHere > 3 Then Exit Sub
+    l_lngHere = l_lngHere + 1
     Select Case m_oiItems(m_lngSelectedItem).SpecialType
     Case OIT_Color, OIT_Hex
         l_strText = "&H" & l_strText
@@ -1372,13 +1384,17 @@ Dim l_booError As Boolean
     Case Else
     End Select
     RaiseEvent BeforeItemChange(l_booCancel)
-    If l_booCancel Then Exit Sub
+    If l_booCancel Then
+        l_lngHere = l_lngHere - 1
+        Exit Sub
+    End If
     If TypeOf m_oiItems(m_lngSelectedItem).Value Is IInspectorType Then
         Set l_itValue = m_oiItems(m_lngSelectedItem).Value
         l_itValue.FromString l_strText
         RefreshValues
         RefreshEditBox
         RaiseEvent AfterItemChange(l_varOldValue, l_itValue)
+        l_lngHere = l_lngHere - 1
         Exit Sub
     End If
     l_varOldValue = m_oiItems(m_lngSelectedItem).Value
@@ -1484,6 +1500,7 @@ Dim l_booError As Boolean
     End If
     RefreshValues
     RefreshEditBox
+    l_lngHere = l_lngHere - 1
 End Sub
 
 Private Sub txtEdit_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)

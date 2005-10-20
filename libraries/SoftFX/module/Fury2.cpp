@@ -1234,10 +1234,13 @@ Rectangle old_clip;
 
 Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Font, TextParam *Options) {
   basic_string<wchar_t> buffer;
+  basic_string<wchar_t> color_buffer;
+  basic_string<wchar_t> name_buffer;
   wchar_t *current;
+  FontParam *currentFont, *nextFont;
   CharacterParam *_current = Null;
   Rectangle dest, clip, shadow, old_clip;
-  Pixel shadowColor;
+  Pixel shadowColor, textColor, nextColor;
   // configuration/data flags
   bool done = false, invisible = false, draw_shadow = false, broke = false;
   bool draw_caret = false, draw_selection = false, locate_char = false;
@@ -1247,6 +1250,7 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
   int line_count = 0;
   int current_X = 0, maximum_X = 0;
   int index = 1, buffer_index = 1;
+  int total_y = 0;
   int charsDrawn = 0;
   int currentChar = 0;
   if (!Text) return Failure;
@@ -1277,14 +1281,23 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
     locate_char = true;
   }
 
+  currentFont = Font;
+  nextFont = Font;
+
   enableClipping = true;
+  textColor = Font->FillColor;
+  nextColor = textColor;
   shadowColor = Font->ShadowColor;
-  shadowColor[::Alpha] = AlphaLookup(shadowColor[::Alpha], Font->FillColor[::Alpha]);
+  shadowColor[::Alpha] = AlphaLookup(shadowColor[::Alpha], textColor[::Alpha]);
   draw_shadow = (shadowColor[::Alpha] > 0);
   
   int X = 0, buffer_X = Rect->Left + Options->Scroll_X;
   int buffer_Y = Rect->Top + Options->Scroll_Y;
   int buffer_width = 0, last_width = 0, last_X = 0;
+  int row_height = Font->BaseHeight;
+  name_buffer.clear();
+  color_buffer.clear();
+  buffer.clear();
 
   current = Text;
 
@@ -1295,7 +1308,7 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
 
     if ((buffer_Y) >= Rect->bottom()) invisible = true;
 
-    _current = (*current <= Font->MapCount) ? Font->MapPointer[*current] : Font->MapPointer[32];
+    _current = (*current <= currentFont->MapCount) ? currentFont->MapPointer[*current] : currentFont->MapPointer[32];
 
     if (*((unsigned char *)current) == 0) {
       _render = true;
@@ -1324,17 +1337,87 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
           _break = true;
           break;
         case '#':
-          if ((*(current+1)) == '[') {
+          if (((*(current)) == '#') && ((*(current+1)) == '[') && (Options->EnableColorCodes)) {
+            // parsity parse parse parse
+            color_buffer.clear();
+            current++;
+            while (1) {
+              if ((*current) == 0) {
+                break;
+              } else if ((*current) == '[') {
+              } else if ((*current) == ']') {
+                break;
+              } else {
+                color_buffer += *current;
+              }
+              current++;
+            }
+            _render = true;
+            if ((*current) == 0) {
+              _render = true;
+              done = true;
+              broke = false;
+              break;
+            }
+            if (color_buffer.size() < 2) {
+              nextColor = currentFont->FillColor;
+            } else {
+              nextColor = Pixel(color_buffer);
+            }
             break;
           } else {
+            // pass this on
+          }
+        case '~':
+          if (((*(current)) == '~') && ((*(current+1)) == '[') && (Options->EnableColorCodes)) {
+            // parsity parse parse parse
+            name_buffer.clear();
+            current++;
+            while (1) {
+              if ((*current) == 0) {
+                break;
+              } else if ((*current) == '[') {
+              } else if ((*current) == ']') {
+                break;
+              } else {
+                name_buffer += *current;
+              }
+              current++;
+            }
+            _render = true;
+            if ((*current) == 0) {
+              _render = true;
+              done = true;
+              broke = false;
+              break;
+            }
+            if (name_buffer.size() < 1) {
+              nextFont = Font;
+            } else {
+              nextFont = Font;
+              if (Font->SubFontCount) {
+                for (int f = 0; f < Font->SubFontCount; f++) {
+                  if (_wcsicmp(name_buffer.c_str(), Font->SubFonts[f].Name) == 0) {
+                    nextFont = Font->SubFonts[f].Font;
+                    break;
+                  }
+                }
+              } 
+              if (nextFont == 0) nextFont = Font;
+              row_height = _Max(_Max(row_height, nextFont->BaseHeight), Font->BaseHeight);
+            }
+            break;
+          } else {
+            // pass this on
           }
         case ' ': case '.':
         case ',': case ';':
-        case '-': case '~':
+        case '-':
         case '+': case '*':
         case '/': case '=':
         case ':': case '(':
         case ')': case '<':
+        case '[': case ']':
         case '>': case '!':
         case  9 : case '?':
         case '@': case '^':
@@ -1362,7 +1445,7 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
 			      }
 		      }
           if (((buffer_width + current_X + Options->Scroll_X) > Rect->Width)) {
-            if (Font->WrapMode == 1) { 
+            if (currentFont->WrapMode == 1) { 
               done = true;
               _break = true;
               _render = true;
@@ -1396,43 +1479,45 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
 
     _render = _render || _break;
 
-    if ((_move_down) && (Font->WrapMode == 0)) {
+    if ((_move_down) && (currentFont->WrapMode == 0)) {
       if (current_X > maximum_X) maximum_X = current_X;
       current_X = 0;
       buffer_X = Rect->Left + Options->Scroll_X;
-      buffer_Y += Font->BaseHeight;
+      buffer_Y += row_height;
       if (buffer_width >= Rect->Width) _render = true;
       line_count++;
+      total_y += row_height;
       broke = true;
+      row_height = _Max(Font->BaseHeight, currentFont->BaseHeight);
     }
 
     if (_render) {
       X = buffer_X;
       for (DoubleWord i = 0; i < buffer.size(); i++) {
-        _current = ((buffer[i] <= Font->MapCount) && (buffer[i] >= 0)) ? Font->MapPointer[buffer[i]] : Font->MapPointer[32];
-		if ((currentChar > Options->MaxChars) && (Options->MaxChars > 0)) invisible = true;
+        _current = ((buffer[i] <= currentFont->MapCount) && (buffer[i] >= 0)) ? currentFont->MapPointer[buffer[i]] : currentFont->MapPointer[32];
+		    if ((currentChar > Options->MaxChars) && (Options->MaxChars > 0)) invisible = true;
 
         if ((_current) && (!invisible)) {
           if (draw_caret) {
             if (buffer_index == Options->Caret_Position) {
-              dest.setValues(X, buffer_Y, 1, Font->BaseHeight);
+              dest.setValues(X, buffer_Y, 1, row_height);
               FilterSimple_Fill_SourceAlpha(Dest, &dest, Options->Caret_Color);
             }
           }
 
           if (draw_selection) {
             if ((buffer_index >= Options->Selection_Start) && (buffer_index < Options->Selection_End)) {
-              dest.setValues(X, buffer_Y, _current->XIncrement, Font->BaseHeight);
+              dest.setValues(X, buffer_Y, _current->XIncrement, row_height);
               FilterSimple_Fill_SourceAlpha(Dest, &dest, Options->Selection_Color);
             }
           }
 
           if (_current->pImage) {
             dest.Left = X + _current->XOffset;
-            if (Font->BaseMode == 1) {
+            if (currentFont->BaseMode == 1) {
               dest.Top = buffer_Y + _current->YOffset;
             } else {
-              dest.Top = buffer_Y + _current->YOffset + (Font->BaseHeight - _current->pImage->Height);
+              dest.Top = buffer_Y + _current->YOffset + (currentFont->BaseHeight - _current->pImage->Height);
             }
             dest.Width = _current->pImage->Width;
             dest.Height = _current->pImage->Height;
@@ -1442,25 +1527,25 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
               shadow.Left += 1;
               shadow.Top += 1;
               
-              if (Font->EffectMode == 1) {
+              if (currentFont->EffectMode == 1) {
                 BlitSimple_Font_Merge_RGB_Opacity(Dest, _current->pImage, &shadow, 0, 0, shadowColor, Font->Alpha);
               } else {
                 BlitSimple_Font_SourceAlpha_RGB_Opacity(Dest, _current->pImage, &shadow, 0, 0, shadowColor, Font->Alpha);
               }
             }
 
-			charsDrawn++;
-            if (Font->EffectMode == 1) {
-              if (Font->FillColor.V == (DoubleWord)0xFFFFFFFF) {
+			      charsDrawn++;
+            if (currentFont->EffectMode == 1) {
+              if (textColor.V == (DoubleWord)0xFFFFFFFF) {
                 BlitSimple_Merge_Opacity(Dest, _current->pImage, &dest, 0, 0, Font->Alpha);
               } else {
-                BlitSimple_Font_Merge_RGB_Opacity(Dest, _current->pImage, &dest, 0, 0, Font->FillColor, Font->Alpha);
+                BlitSimple_Font_Merge_RGB_Opacity(Dest, _current->pImage, &dest, 0, 0, textColor, Font->Alpha);
               }
             } else {
-              if (Font->FillColor.V == (DoubleWord)0xFFFFFFFF) {
+              if (textColor.V == (DoubleWord)0xFFFFFFFF) {
                 BlitSimple_Automatic_SourceAlpha_Opacity(Dest, _current->pImage, &dest, 0, 0, Font->Alpha);
               } else {
-                BlitSimple_Font_SourceAlpha_RGB_Opacity(Dest, _current->pImage, &dest, 0, 0, Font->FillColor, Font->Alpha);
+                BlitSimple_Font_SourceAlpha_RGB_Opacity(Dest, _current->pImage, &dest, 0, 0, textColor, Font->Alpha);
               }
             }
           }
@@ -1471,7 +1556,7 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
           if (locate_char) {
             if ((Options->CharFromPoint_X < (X + _current->XIncrement))) {
 //            if ((Options->CharFromPoint_X >= X) && (Options->CharFromPoint_X < (X + _current->XIncrement))) {
-              if ((Options->CharFromPoint_Y >= buffer_Y) && (Options->CharFromPoint_Y < (buffer_Y + Font->BaseHeight))) {
+              if ((Options->CharFromPoint_Y >= buffer_Y) && (Options->CharFromPoint_Y < (buffer_Y + row_height))) {
                 Options->CharFromPoint = buffer_index;
                 if (Dest) {
                   Dest->ClipRectangle = old_clip;
@@ -1489,7 +1574,7 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
       if (current_X > maximum_X) maximum_X = current_X;
       if (done && draw_caret) {
         if (buffer_index == Options->Caret_Position) {
-          dest.setValues(X, buffer_Y, 1, Font->BaseHeight);
+          dest.setValues(X, buffer_Y, 1, row_height);
           FilterSimple_Fill_SourceAlpha(Dest, &dest, Options->Caret_Color);
         }
       }
@@ -1506,17 +1591,23 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
       buffer.clear();
       buffer_width = 0;
       buffer_index = index + 1;
-      if (done) line_count++;
+      if (done) {
+        line_count++;
+        row_height = _Max(Font->BaseHeight, currentFont->BaseHeight);
+        total_y += row_height;
+      }
     }
 
-    if ((_break) && (Font->WrapMode == 0)) {
+    if ((_break) && (currentFont->WrapMode == 0)) {
       broke = true;
       if (current_X > maximum_X) maximum_X = current_X;
       current_X = 0;
       buffer_X = Rect->Left + Options->Scroll_X;
-      buffer_Y += Font->BaseHeight;
+      buffer_Y += row_height;
       buffer_width = 0;
       line_count++;
+      total_y += row_height;
+      row_height = _Max(Font->BaseHeight, currentFont->BaseHeight);
     }
 
     current++;
@@ -1524,6 +1615,17 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
 
     last_width = buffer_width;
     last_X = buffer_X;
+
+    if (nextColor != textColor) {
+      textColor = nextColor;
+      shadowColor = currentFont->ShadowColor;
+      shadowColor[::Alpha] = AlphaLookup(shadowColor[::Alpha], textColor[::Alpha]);
+      draw_shadow = (shadowColor[::Alpha] > 0);
+    }
+
+    if (nextFont != currentFont) {
+      currentFont = nextFont;
+    }
 
   }
 
@@ -1534,7 +1636,7 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
   }
 
   Options->Width = maximum_X;
-  Options->Height = line_count * Font->BaseHeight;
+  Options->Height = total_y;
   Options->Lines = line_count;
   return Success;
 }

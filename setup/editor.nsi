@@ -112,6 +112,8 @@ Section "-Editor"
 
     SetOutPath "$INSTDIR\sys\resources"
 	File "J:\development\binary\sys\resources\*.zip"
+    SetOutPath "$INSTDIR\sys\character sets"
+	File "J:\development\binary\sys\character sets\*.txt"
     SetOutPath "$INSTDIR\sys\icons"
 	File "J:\development\binary\sys\icons\*.ico"
     SetOutPath "$INSTDIR\sys\"

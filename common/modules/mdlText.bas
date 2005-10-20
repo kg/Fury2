@@ -17,6 +17,21 @@ Public Enum TextFormats
     tfUCS2BigEndian
 End Enum
 
+Public Function EncodeTextFormat(ByRef Text As String, ByVal NewFormat As TextFormats) As Byte()
+On Error Resume Next
+    Select Case NewFormat
+    Case tfASCII
+        EncodeTextFormat = Text
+    Case tfUCS2LittleEndian
+        EncodeTextFormat = ChrW(&HFEFF) & Text
+    Case tfUCS2BigEndian
+        ' Unimplemented
+    Case tfUTF8
+        ' Unimplemented
+    Case Else
+    End Select
+End Function
+
 Public Function ReadTextFile(ByRef Filename As String) As String
 On Error Resume Next
 Dim l_lngHandle As Long, l_lngLength As Long

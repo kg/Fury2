@@ -1,6 +1,6 @@
 Type=Exe
 Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\WINDOWS\system32\stdole2.tlb#OLE Automation
-Reference=*\G{3B10323B-FEC1-4FAA-9A62-89666AC5A420}#43.23#0#..\..\..\..\binary\sys\graphics.dll#Fury² Game Creation System Graphics Engine
+Reference=*\G{3B10323B-FEC1-4FAA-9A62-89666AC5A420}#43.26#0#..\..\..\..\binary\sys\graphics.dll#Fury² Game Creation System Graphics Engine
 Form=frmSharedTest.frm
 Startup="frmSharedTest"
 ExeName32="SharedTest.exe"

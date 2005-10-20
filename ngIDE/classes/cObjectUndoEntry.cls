@@ -45,6 +45,11 @@ Public Value As Object
 Public Operation As ObjectUndoOperations
 Public Index As Long
 
+Private Sub Class_Terminate()
+On Error Resume Next
+    Value.Free
+End Sub
+
 Private Function iUndoEntry_Apply() As Boolean
 On Error Resume Next
 Dim l_colContainer As Collection
@@ -60,6 +65,7 @@ Dim l_colContainer As Collection
             Container.Add Value, , Index
         End If
     ElseIf Operation = OUO_Remove Then
+        Err.Clear
         If TypeOf Container Is Collection Then
             Set l_colContainer = Container
             l_colContainer.Remove Index

@@ -153,6 +153,8 @@ Private m_diDirectInput As DirectInput8
 Private ScriptCache As Collection
 Private m_colContextStack As New Collection
 Private m_imgMouseBuffer As Fury2Image
+Private WithEvents m_imeIMEEngine As IMEEngine
+Attribute m_imeIMEEngine.VB_VarHelpID = -1
 
 ' Non-game configuration variables
 Public ScreenshotPattern As String
@@ -255,6 +257,9 @@ Private m_booFresh As Boolean
 Private m_dblTimeOffset As Double
 Private m_objNotify As Object
 Private m_booNotifyNoLogging As Boolean
+Private m_booIMEOpen As Boolean
+Private m_lngIMECursorPos As Long
+Private m_strIMEText As String
 
 ' Public state variables
 Public ErrorOccurred As Boolean
@@ -280,6 +285,32 @@ Public ConsoleVisible As Boolean
 
 ' Private runtime constants
 Private m_curCPUFrequency As Currency
+
+Friend Sub InitIME()
+On Error Resume Next
+    Set m_imeIMEEngine = New IMEEngine
+    #If EnableIME = 1 Then
+        m_imeIMEEngine.Hook m_objOutputPlugin.Window.hwnd
+    #End If
+End Sub
+
+Public Sub EnableIME()
+On Error Resume Next
+    m_imeIMEEngine.Enabled = True
+End Sub
+
+Public Sub DisableIME()
+On Error Resume Next
+    m_imeIMEEngine.Enabled = False
+End Sub
+
+Friend Sub ShutdownIME()
+On Error Resume Next
+    #If EnableIME = 1 Then
+        m_imeIMEEngine.Unhook m_objOutputPlugin.Window.hwnd
+    #End If
+    Set m_imeIMEEngine = Nothing
+End Sub
 
 Function AddTextElement(Text, ByVal X As Long, ByVal Y As Long, Optional ByVal Realtime As Boolean = False) As Fury2TextElement
 Attribute AddTextElement.VB_Description = "Creates a new text element and adds it to the plugin stack."
@@ -571,12 +602,12 @@ On Error Resume Next
     End Select
 End Function
 
-Public Function CharIsPrintable(ByVal Index As Long) As Boolean
+Public Function CharIsPrintable(ByVal index As Long) As Boolean
 On Error Resume Next
     CharIsPrintable = False
-    Select Case Index
+    Select Case index
     Case Else
-        If Index >= 32 Then
+        If index >= 32 Then
             CharIsPrintable = True
         Else
             CharIsPrintable = False
@@ -631,7 +662,7 @@ Dim l_hosHost As VBENetHost
             Set CreateClientHost = l_hosHost
         End If
     Else
-        TextOut "Unable to create client; ENet not available!"
+        DebugOut "Unable to create client; ENet not available!"
     End If
 End Function
 
@@ -718,14 +749,14 @@ Dim l_hosHost As VBENetHost
             Set CreateServerHost = l_hosHost
         End If
     Else
-        TextOut "Unable to create server; ENet not available!"
+        DebugOut "Unable to create server; ENet not available!"
     End If
 End Function
 
 Public Function CreateTimer(ByRef Name As String, ByVal Delay As Long, ByRef FireCode As String, Optional ByVal GameOnly As Boolean = True, Optional ByVal Realtime As Boolean = False) As Fury2Timer
 Attribute CreateTimer.VB_Description = "Creates a timer object."
 On Error Resume Next
-    If Timers.Count >= c_lngMaxTimers Then Exit Function
+    If Timers.count >= c_lngMaxTimers Then Exit Function
     Set CreateTimer = New Fury2Timer
     With CreateTimer
         .SetEngine Me
@@ -1188,7 +1219,7 @@ Dim l_plgObj As Fury2Plugin
         UnHookEvents Obj
         Obj.Startup
         If l_plgObj Is Nothing Then Else l_plgObj.Init
-        If m_colPluginStack.Count > 0 Then
+        If m_colPluginStack.count > 0 Then
             If Priority Then
                 m_colPluginStack.Add Obj
                 m_colReversePluginStack.Add Obj, , 1
@@ -1248,8 +1279,8 @@ Static m_lngHere As Long
     Err.Clear
     Filename = Filesystem.AutoSelectExtension(Filename, "png;f2g;tga;jpg;bmp;gif")
     m_strName = Filename
-    If m_Images.Count > 0 Then
-        For m_lngImages = 1 To m_Images.Count
+    If m_Images.count > 0 Then
+        For m_lngImages = 1 To m_Images.count
             If m_Images(m_lngImages) Is Nothing Then
             Else
                 If m_Images(m_lngImages).Name = LCase(Trim(Filename)) Then
@@ -1281,10 +1312,15 @@ Static m_lngHere As Long
     SetImageTag m_imgImage.Handle, 1, 1234
 '    m_imgImage.Name = LCase(Trim(m_strName))
     m_Images.Add m_imgImage, LCase(Trim(m_strName))
-    iLoadImage = m_Images.Count
+    iLoadImage = m_Images.count
     m_lngHere = m_lngHere - 1
     Err.Clear
 End Function
+
+Public Property Get IME() As IMEEngine
+On Error Resume Next
+    Set IME = m_imeIMEEngine
+End Property
 
 Public Function InstantiateByName(ByRef Name As String) As Object
 On Error Resume Next
@@ -1490,7 +1526,7 @@ Dim l_objObject As Object, l_varTest As Variant
             frmConfigure.Show
             frmConfigure.SetFocus
             Do While frmConfigure.Visible
-                If GetActiveWindow <> frmConfigure.hWnd Then frmConfigure.SetFocus
+                If GetActiveWindow <> frmConfigure.hwnd Then frmConfigure.SetFocus
                 Call SleepEx(1, True)
                 DoEvents
             Loop
@@ -1746,7 +1782,7 @@ Dim l_objTemp As Object
     If l_objTemp Is Nothing Then Exit Function
     l_objTemp.HookEvents Me
     SetAppIcon l_objTemp.Window
-    m_lngLastWindow = l_objTemp.Window.hWnd
+    m_lngLastWindow = l_objTemp.Window.hwnd
     Set LoadOutputPlugin = l_objTemp
     Set l_objTemp = Nothing
 End Function
@@ -1795,13 +1831,13 @@ On Error Resume Next
     LoadSample.Volume = DefaultSampleVolume
 End Function
 
-Function LoadSprite(ByVal Filename As String, Optional ByVal Index = 1) As Fury2Sprite
+Function LoadSprite(ByVal Filename As String, Optional ByVal index = 1) As Fury2Sprite
 On Error Resume Next
 Dim m_sprSprites As Fury2Sprites
     Err.Clear
     Set m_sprSprites = LoadSprites(Filename)
     If m_sprSprites Is Nothing Then Exit Function
-    Set LoadSprite = m_sprSprites(Index)
+    Set LoadSprite = m_sprSprites(index)
     Set m_sprSprites = Nothing
     If Err <> 0 Then
         Set LoadSprite = Nothing
@@ -1897,9 +1933,9 @@ Dim NewMessage As Fury2MessageWindow
     With NewMessage
         Set .Engine = Me
         If Queue Then
-            If MessageQueue.Count > 0 Then
+            If MessageQueue.count > 0 Then
                 .First = False
-                MessageQueue(MessageQueue.Count).Last = False
+                MessageQueue(MessageQueue.count).Last = False
                 .Last = True
             Else
                 .First = True
@@ -1933,7 +1969,7 @@ Dim NewMessage As Fury2MessageWindow
     If Hook Then
         If Queue Then
             MessageQueue.Add NewMessage
-            If MessageQueue.Count = 1 Then HookEvents NewMessage
+            If MessageQueue.count = 1 Then HookEvents NewMessage
         Else
             MessageWindows.Add NewMessage
             HookEvents NewMessage
@@ -2287,8 +2323,8 @@ Dim l_lngFlags As Long
     If l_filFile Is Nothing Then Exit Function
     With l_filFile
         .WriteSegment_Begin
-            .Save CLng(m_FlagNames.Count)
-            For l_lngFlags = 1 To m_FlagNames.Count
+            .Save CLng(m_FlagNames.count)
+            For l_lngFlags = 1 To m_FlagNames.count
                 .Save CStr(m_FlagNames(l_lngFlags))
                 .Save CLng(VarType(m_Flags(CStr(m_FlagNames(l_lngFlags)))))
                 .Save CStr(m_Flags(CStr(m_FlagNames(l_lngFlags))))
@@ -2524,16 +2560,16 @@ On Error Resume Next
     Set EventHooks = m_colPluginStack
 End Property
 
-Public Property Get Flag(ByRef Index As String) As Variant
+Public Property Get Flag(ByRef index As String) As Variant
 Attribute Flag.VB_Description = "An array of global game settings."
 On Error Resume Next
-    Flag = m_Flags(LCase(Index))
+    Flag = m_Flags(LCase(index))
     Err.Clear
 End Property
 
-Public Property Get Flags(ByRef Index As String) As Variant
+Public Property Get Flags(ByRef index As String) As Variant
 Attribute Flags.VB_MemberFlags = "40"
-    Flags = Flag(Index)
+    Flags = Flag(index)
 End Property
 
 Public Property Get GFXEngine() As Object
@@ -2634,24 +2670,24 @@ On Error Resume Next
     Err.Clear
 End Property
 
-Public Property Let Flag(ByRef Index As String, ByVal NewValue As Variant)
+Public Property Let Flag(ByRef index As String, ByVal NewValue As Variant)
 On Error Resume Next
 Dim m_Value As Variant
     Err.Clear
-    Index = LCase(Index)
-    m_Value = m_Flags(Index)
+    index = LCase(index)
+    m_Value = m_Flags(index)
     If Err.Number <> 0 Then
-        m_Flags.Add NewValue, Index
-        m_FlagNames.Add Index
+        m_Flags.Add NewValue, index
+        m_FlagNames.Add index
     Else
-        m_Flags.Remove Index
-        m_Flags.Add NewValue, Index
+        m_Flags.Remove index
+        m_Flags.Add NewValue, index
     End If
     Err.Clear
 End Property
 
-Public Property Let Flags(ByRef Index As String, ByVal NewValue As Variant)
-    Flag(Index) = NewValue
+Public Property Let Flags(ByRef index As String, ByVal NewValue As Variant)
+    Flag(index) = NewValue
 End Property
 
 Public Property Let Icon(NewIcon As String)
@@ -2748,7 +2784,7 @@ On Error Resume Next
     End If
 End Sub
 
-Sub ArrayCopy(Target As Variant, Source As Variant, Optional ByVal Position As Long = 0, Optional ByVal SourcePosition As Long = 0, Optional ByVal Count As Long = -1)
+Sub ArrayCopy(Target As Variant, Source As Variant, Optional ByVal Position As Long = 0, Optional ByVal SourcePosition As Long = 0, Optional ByVal count As Long = -1)
 On Error Resume Next
 Dim m_lngLB As Long, m_lngUB As Long, m_lngSourceLB As Long, m_lngSourceUB As Long
 Dim m_lngCopy As Long
@@ -2759,39 +2795,39 @@ Dim m_lngCopy As Long
     m_lngUB = UBound(Target)
     m_lngSourceLB = LBound(Source)
     m_lngSourceUB = UBound(Source)
-    If Count = -1 Then Count = (m_lngSourceUB - m_lngSourceLB + 1)
+    If count = -1 Then count = (m_lngSourceUB - m_lngSourceLB + 1)
     If Position < m_lngLB Then
-        Count = Count - (m_lngLB - Position)
+        count = count - (m_lngLB - Position)
         Position = m_lngLB
     End If
     If Position > m_lngUB Then
-        Count = 1
+        count = 1
         Position = m_lngUB
     End If
     If SourcePosition < m_lngSourceLB Then
-        Count = Count - (m_lngSourceLB - SourcePosition)
+        count = count - (m_lngSourceLB - SourcePosition)
         SourcePosition = m_lngSourceLB
     End If
     If SourcePosition > m_lngSourceUB Then
-        Count = 1
+        count = 1
         SourcePosition = m_lngSourceUB
     End If
-    If Count > (m_lngUB - Position) + 1 Then
-        Count = (m_lngUB - Position) + 1
+    If count > (m_lngUB - Position) + 1 Then
+        count = (m_lngUB - Position) + 1
     End If
-    If Count > (m_lngSourceUB - SourcePosition) + 1 Then
-        Count = (m_lngSourceUB - SourcePosition) + 1
+    If count > (m_lngSourceUB - SourcePosition) + 1 Then
+        count = (m_lngSourceUB - SourcePosition) + 1
     End If
-    If Count < 1 Then
+    If count < 1 Then
         Exit Sub
     End If
-    For m_lngCopy = 0 To Count - 1
+    For m_lngCopy = 0 To count - 1
         ArrayAssign Target(m_lngCopy + Position), Source(m_lngCopy + SourcePosition)
     Next m_lngCopy
     Err.Clear
 End Sub
 
-Sub ArrayInsert(Arr As Variant, Value, ByVal Index As Long)
+Sub ArrayInsert(Arr As Variant, Value, ByVal index As Long)
 On Error Resume Next
 Dim m_lngLB As Long, m_lngUB As Long, m_lngCount As Long
 Dim m_lngItems As Long
@@ -2801,35 +2837,35 @@ Dim m_lngItems As Long
     m_lngUB = UBound(Arr)
     m_lngCount = (m_lngUB - m_lngLB) + 1
     If Err <> 0 Or m_lngUB < 0 Then
-        ReDim Arr(0 To Index)
-        m_lngUB = Index
+        ReDim Arr(0 To index)
+        m_lngUB = index
         ArrayAssign Arr(m_lngUB), Value
         Exit Sub
     End If
     Err.Clear
-    If Index < m_lngLB Then Exit Sub
-    If Index > (m_lngUB + 1) Then
-        ReDim Preserve Arr(m_lngLB To Index)
-        m_lngUB = Index
+    If index < m_lngLB Then Exit Sub
+    If index > (m_lngUB + 1) Then
+        ReDim Preserve Arr(m_lngLB To index)
+        m_lngUB = index
     Else
         ReDim Preserve Arr(m_lngLB To m_lngUB + 1)
         m_lngUB = m_lngUB + 1
     End If
-    If Index = m_lngLB Then
+    If index = m_lngLB Then
         For m_lngItems = m_lngUB - 1 To m_lngLB Step -1
             ArrayAssign Arr(m_lngItems + 1), Arr(m_lngItems)
         Next m_lngItems
-    ElseIf Index = m_lngUB Then
+    ElseIf index = m_lngUB Then
     Else
-        For m_lngItems = m_lngUB - 1 To Index Step -1
+        For m_lngItems = m_lngUB - 1 To index Step -1
             ArrayAssign Arr(m_lngItems + 1), Arr(m_lngItems)
         Next m_lngItems
     End If
-    ArrayAssign Arr(Index), Value
+    ArrayAssign Arr(index), Value
     Err.Clear
 End Sub
 
-Sub ArrayRemove(Arr As Variant, ByVal Index As Long)
+Sub ArrayRemove(Arr As Variant, ByVal index As Long)
 On Error Resume Next
 Dim m_lngLB As Long, m_lngUB As Long, m_lngCount As Long
 Dim m_lngItems As Long
@@ -2840,19 +2876,19 @@ Dim m_lngItems As Long
     m_lngCount = (m_lngUB - m_lngLB) + 1
     If Err <> 0 Or m_lngUB < 0 Then Exit Sub
     Err.Clear
-    If Index < m_lngLB Then Exit Sub
-    If Index > m_lngUB Then Exit Sub
+    If index < m_lngLB Then Exit Sub
+    If index > m_lngUB Then Exit Sub
     If m_lngLB >= m_lngUB Then
         Erase Arr
         Exit Sub
     End If
-    If Index = m_lngLB Then
+    If index = m_lngLB Then
         For m_lngItems = m_lngLB + 1 To m_lngUB
             Arr(m_lngItems - 1) = Arr(m_lngItems)
         Next m_lngItems
-    ElseIf Index = m_lngUB Then
+    ElseIf index = m_lngUB Then
     Else
-        For m_lngItems = Index + 1 To m_lngUB
+        For m_lngItems = index + 1 To m_lngUB
             Arr(m_lngItems - 1) = Arr(m_lngItems)
         Next m_lngItems
     End If
@@ -3285,7 +3321,7 @@ Dim l_strText As String
         Else
             ConsoleItems.Add l_strText
         End If
-        Do While ConsoleItems.Count > 100
+        Do While ConsoleItems.count > 100
             ConsoleItems.Remove 1
         Loop
     End If
@@ -3305,6 +3341,8 @@ Dim l_hosHost As VBENetHost
     If m_booENetInitialized Then
         For Each l_hosHost In Hosts
             l_hosHost.DisconnectAll
+            l_hosHost.Flush
+            l_hosHost.Free
         Next l_hosHost
         enet_deinitialize
         m_booENetInitialized = False
@@ -3315,7 +3353,7 @@ Public Sub DelayEvent(ByVal Delay As Long, ByRef Code As String, Optional ByVal 
 Attribute DelayEvent.VB_Description = "Causes an event to be fired after a certain amount of time. Similar to SetTimeout() in web browsers."
 On Error Resume Next
 Dim NewTimer As Fury2Timer
-    If Timers.Count >= c_lngMaxTimers Then Exit Sub
+    If Timers.count >= c_lngMaxTimers Then Exit Sub
     Set NewTimer = New Fury2Timer
     Timers.Add NewTimer
     With NewTimer
@@ -3333,9 +3371,9 @@ Public Sub DestroyAllMenus()
 Attribute DestroyAllMenus.VB_Description = "Removes all currently active menus."
 On Error Resume Next
 Dim m_lngItems As Long
-    If m_colPluginStack.Count = 0 Then Exit Sub
+    If m_colPluginStack.count = 0 Then Exit Sub
     m_lngItems = 1
-    Do While m_lngItems <= m_colPluginStack.Count
+    Do While m_lngItems <= m_colPluginStack.count
         If TypeOf m_colPluginStack.Item(m_lngItems) Is Fury2Menu Then
             UnHookEvents m_colPluginStack.Item(m_lngItems)
         Else
@@ -3349,9 +3387,9 @@ Public Sub DestroyAllMessageWindows()
 Attribute DestroyAllMessageWindows.VB_Description = "Removes all currently active message windows."
 On Error Resume Next
 Dim m_lngItems As Long
-    If m_colPluginStack.Count = 0 Then Exit Sub
+    If m_colPluginStack.count = 0 Then Exit Sub
     m_lngItems = 1
-    Do While m_lngItems <= m_colPluginStack.Count
+    Do While m_lngItems <= m_colPluginStack.count
         If TypeOf m_colPluginStack.Item(m_lngItems) Is Fury2MessageWindow Then
             UnHookEvents m_colPluginStack.Item(m_lngItems)
         Else
@@ -3365,9 +3403,9 @@ Public Sub DestroyAllTextElements()
 Attribute DestroyAllTextElements.VB_Description = "Removes all currently active text elements."
 On Error Resume Next
 Dim m_lngItems As Long
-    If m_colPluginStack.Count = 0 Then Exit Sub
+    If m_colPluginStack.count = 0 Then Exit Sub
     m_lngItems = 1
-    Do While m_lngItems <= m_colPluginStack.Count
+    Do While m_lngItems <= m_colPluginStack.count
         If TypeOf m_colPluginStack.Item(m_lngItems) Is Fury2TextElement Then
             UnHookEvents m_colPluginStack.Item(m_lngItems)
         Else
@@ -3406,10 +3444,10 @@ Dim m_lngIndex As Long
     Err.Clear
 End Sub
 
-Public Sub DisableHotspot(ByVal Index As Long)
+Public Sub DisableHotspot(ByVal index As Long)
 Attribute DisableHotspot.VB_Description = "Disables a hotspot."
 On Error Resume Next
-    With m_hsHotspots(Index)
+    With m_hsHotspots(index)
         .Enabled = False
     End With
     Err.Clear
@@ -3418,9 +3456,9 @@ End Sub
 Public Sub EmptyImageCache()
 On Error Resume Next
 Dim l_imgImage As Fury2Image
-    If m_Images.Count < 1 Then Exit Sub
+    If m_Images.count < 1 Then Exit Sub
     DebugOut "Emptying image cache"
-    Do While m_Images.Count > 0
+    Do While m_Images.count > 0
         Set l_imgImage = m_Images(1)
         l_imgImage.Deallocate
         Set l_imgImage = Nothing
@@ -3428,10 +3466,10 @@ Dim l_imgImage As Fury2Image
     Loop
 End Sub
 
-Public Sub EnableHotspot(ByVal Index As Long)
+Public Sub EnableHotspot(ByVal index As Long)
 Attribute EnableHotspot.VB_Description = "Enables a hotspot."
 On Error Resume Next
-    With m_hsHotspots(Index)
+    With m_hsHotspots(index)
         .Enabled = True
     End With
     Err.Clear
@@ -3739,9 +3777,9 @@ Dim m_objObj As IShellFolderEx_TLB.IUnknown, m_lngCount As Long
 Dim m_imgObj As Fury2Image, m_lngObj As Long
 Dim m_tsObj As Fury2Tileset
 Dim l_lngImagesFlushed As Long, l_lngTilesetsFlushed As Long
-    If m_Images.Count > 0 Then
+    If m_Images.count > 0 Then
         m_lngObj = 1
-        Do While m_lngObj < m_Images.Count
+        Do While m_lngObj < m_Images.count
             Set m_objObj = Nothing
             Set m_objObj = m_Images(m_lngObj)
             If m_objObj Is Nothing Then
@@ -3762,9 +3800,9 @@ Dim l_lngImagesFlushed As Long, l_lngTilesetsFlushed As Long
         Loop
         If l_lngImagesFlushed > 0 Then DebugOut "Flushed " & l_lngImagesFlushed & " cached image(s)"
     End If
-    If m_Tilesets.Count > 0 Then
+    If m_Tilesets.count > 0 Then
         m_lngObj = 1
-        Do While m_lngObj < m_Tilesets.Count
+        Do While m_lngObj < m_Tilesets.count
             Set m_objObj = Nothing
             Set m_objObj = m_Tilesets(m_lngObj)
             If m_objObj Is Nothing Then
@@ -3813,8 +3851,8 @@ End Sub
 Friend Sub FreedImage(ByVal Obj As Fury2Image)
 On Error Resume Next
 Dim m_lngImages As Long
-    If m_Images.Count <= 0 Then Exit Sub
-    For m_lngImages = 1 To m_Images.Count
+    If m_Images.count <= 0 Then Exit Sub
+    For m_lngImages = 1 To m_Images.count
         If m_Images(m_lngImages) Is Obj Then m_Images.Remove m_lngImages: Exit Sub
     Next m_lngImages
 End Sub
@@ -3834,6 +3872,7 @@ End Sub
 Public Sub Fury2VideoEventSink_Closed()
 Attribute Fury2VideoEventSink_Closed.VB_MemberFlags = "40"
 On Error Resume Next
+    ShutdownIME
     If Running = True Then
         Running = False
     End If
@@ -3958,12 +3997,12 @@ Dim l_evtBinding As Fury2Event, l_booActive As Boolean
     End If
 End Sub
 
-Private Sub Fury2VideoEventSink_KeyPress(ByVal KeyAscii As Integer)
+Private Sub Fury2VideoEventSink_KeyPress(ByVal KeyAscii As Long)
 On Error Resume Next
     Fury2VideoEventSink_KeyPress2 KeyAscii
 End Sub
 
-Public Sub Fury2VideoEventSink_KeyPress2(ByVal KeyAscii As Integer, Optional ByVal Force As Boolean = False)
+Public Sub Fury2VideoEventSink_KeyPress2(ByVal KeyAscii As Long, Optional ByVal Force As Boolean = False)
 On Error Resume Next
 Dim l_strInput As String
 Dim l_strBuffer As String
@@ -3976,7 +4015,7 @@ Dim l_strTemp As String
     End If
     If KeyAscii = 96 Or KeyAscii = 127 Then
     ElseIf KeyAscii >= 32 Then
-        l_strInput = Chr(KeyAscii)
+        l_strInput = ChrW(KeyAscii)
         If ConsoleVisible Then
             ConsoleInsert l_strInput
         ElseIf TrapKeys Then
@@ -4243,7 +4282,7 @@ Dim l_lngThreadID As Long
             m_lngFPSAccumulator = 0
             If ShowFPS Then
                 If Fullscreen Then
-                    SetWindowText m_objOutputPlugin.Window.hWnd, WindowCaption & " (" & FPS & " FPS)"
+                    SetWindowText m_objOutputPlugin.Window.hwnd, WindowCaption & " (" & FPS & " FPS)"
                 Else
                     m_objOutputPlugin.Window.Caption = WindowCaption & " (" & FPS & " FPS)"
                 End If
@@ -4476,7 +4515,7 @@ Dim l_joyJoystick As Fury2Joystick
         Exit Sub
     End If
     Set l_deEnum = DirectInput.GetDIDevices(DI8DEVTYPE_JOYSTICK, DIEDFL_ATTACHEDONLY)
-    TextOut "Detected " & l_deEnum.GetCount & " joysticks."
+    TextOut "Detected #[C0C0FF]" & l_deEnum.GetCount & "#[] joysticks."
     For l_lngDevices = 1 To l_deEnum.GetCount
         Set l_diDevice = l_deEnum.GetItem(l_lngDevices)
         Set l_devDevice = DirectInput.CreateDevice(l_diDevice.GetGuidInstance)
@@ -4484,7 +4523,7 @@ Dim l_joyJoystick As Fury2Joystick
         l_joyJoystick.Acquire l_devDevice
         Joysticks.Add l_joyJoystick
     Next l_lngDevices
-    If Joysticks.Count > 0 Then
+    If Joysticks.count > 0 Then
         Set l_joyJoystick = Joysticks(1)
         With l_joyJoystick
             .Bindings.Clear
@@ -4545,7 +4584,7 @@ On Error Resume Next
     Set m_ScriptEngine.Language = m_ScriptEngine.LoadLanguage(ScriptLanguage)
     Load frmScriptSink
     frmScriptSink.Visible = False
-    m_ScriptEngine.Init frmScriptSink.hWnd
+    m_ScriptEngine.Init frmScriptSink.hwnd
     m_ScriptEngine.AddObject "Engine", Me
     m_ScriptEngine.AddObject "Graphics", m_Graphics
     m_ScriptEngine.AddObject "Constants", m_objConstants
@@ -4711,7 +4750,7 @@ On Error Resume Next
     End If
 End Function
 
-Public Sub LoadMap(ByVal FilenameOrMap, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
+Public Sub LoadMap(ByVal FilenameOrMap, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal index As Long = 1)
 Attribute LoadMap.VB_Description = "Loads a map."
 On Error Resume Next
 Dim m_gblGlobal As Fury2Globals
@@ -4722,9 +4761,9 @@ Dim m_strOldFn As String
 Dim l_strFilename As String
     Set m_gblGlobal = New Fury2Globals
     DebugOut "Loading map """ & ToString(FilenameOrMap) & """"
-    ContextLevelAdd "LoadMap(""" + ToString(FilenameOrMap) + """, " + CStr(Index) + ")"
+    ContextLevelAdd "LoadMap(""" + ToString(FilenameOrMap) + """, " + CStr(index) + ")"
     Err.Clear
-    Set l_mapOld = Maps(Index)
+    Set l_mapOld = Maps(index)
     Err.Clear
     If VarType(FilenameOrMap) = vbString Then
         l_strFilename = CStr(FilenameOrMap)
@@ -4747,19 +4786,19 @@ Dim l_strFilename As String
     If m_mapNew Is Nothing Then
         CriticalError "LoadMap", "", "No valid map provided"
     Else
-        mvarMaps.Remove Index
-        mvarMaps.Add m_mapNew, , Index
+        mvarMaps.Remove index
+        mvarMaps.Add m_mapNew, , index
         If Camera.Map = 0 Then
-            Camera.Map = Index
+            Camera.Map = index
         End If
         m_mapNew.Init False
         Set Map = m_mapNew
         m_mapNew.SetEngine Me
         m_mapNew.Load
-        If m_mapNew.Sprites.Count > 0 Then
-            For m_lngLayers = 1 To m_mapNew.Layers.Count
+        If m_mapNew.Sprites.count > 0 Then
+            For m_lngLayers = 1 To m_mapNew.Layers.count
                 With m_mapNew.Layers(m_lngLayers)
-                    For m_lngSprites = 1 To .Sprites.Count
+                    For m_lngSprites = 1 To .Sprites.count
                             Set IObjThis = .Sprites(m_lngSprites)
                             ContextLevelAdd "Layers(" & m_lngLayers & ").Sprites(""" + IObjThis.Name + """).Script.Start"
                             .Sprites(m_lngSprites).Script.Start
@@ -4768,17 +4807,17 @@ Dim l_strFilename As String
                 End With
             Next m_lngLayers
         End If
-        Party.InitMap CLng(Index), CSng(LoadX), CSng(LoadY), CLng(Layer)
-        m_ScriptEngine.Exec "Engine_MapLoad", CLng(Index), CSng(LoadX), CSng(LoadY), CLng(Layer)
-        m_ScriptEngine.Exec "Engine_MapLoad", CLng(Index), CSng(LoadX), CSng(LoadY)
-        m_ScriptEngine.Exec "Engine_MapLoad", CLng(Index)
+        Party.InitMap CLng(index), CSng(LoadX), CSng(LoadY), CLng(Layer)
+        m_ScriptEngine.Exec "Engine_MapLoad", CLng(index), CSng(LoadX), CSng(LoadY), CLng(Layer)
+        m_ScriptEngine.Exec "Engine_MapLoad", CLng(index), CSng(LoadX), CSng(LoadY)
+        m_ScriptEngine.Exec "Engine_MapLoad", CLng(index)
         m_ScriptEngine.Exec "Engine_MapLoad"
         MapLoad m_strOldFn
         DebugOut "Map """ & ToString(FilenameOrMap) & """ loaded"
         If Debugger Is Nothing Then Else Debugger.MapSwitch ToString(FilenameOrMap)
     End If
     Cameras.Dirty
-    Set Map = Maps(Index)
+    Set Map = Maps(index)
     l_mapOld.Unload
     l_mapOld.Free
     FlushImageCache
@@ -4786,11 +4825,11 @@ Dim l_strFilename As String
     m_booTrace = False
 End Sub
 
-Public Sub LoadMapState(ByVal Index As Long, ByRef Name As String)
+Public Sub LoadMapState(ByVal index As Long, ByRef Name As String)
 Attribute LoadMapState.VB_Description = "Loads the current state of a map."
 On Error Resume Next
-    Maps.Remove Index
-    Maps.Add SavedMaps(Name), , Index
+    Maps.Remove index
+    Maps.Add SavedMaps(Name), , index
     SavedMaps.Remove Name
 End Sub
 
@@ -4824,6 +4863,38 @@ Dim l_lngHandle As Long
         m_objNotify.LogOutput Text
         If Err <> 0 Then m_booNotifyNoLogging = True
     End If
+End Sub
+
+Private Sub m_imeIMEEngine_CompositionBegin()
+On Error Resume Next
+    m_booIMEOpen = True
+    m_strIMEText = ""
+End Sub
+
+Private Sub m_imeIMEEngine_CompositionComplete()
+On Error Resume Next
+Dim l_lngChars As Long
+Dim l_lngChar As Long
+    m_strIMEText = m_imeIMEEngine.Text
+    If Len(m_strIMEText) > 0 Then
+        For l_lngChars = 1 To Len(m_strIMEText)
+            l_lngChar = AscW(Mid(m_strIMEText, l_lngChars, 1))
+            Me.Fury2VideoEventSink_KeyPress2 l_lngChar
+        Next l_lngChars
+    End If
+    m_booIMEOpen = False
+    m_strIMEText = ""
+End Sub
+
+Private Sub m_imeIMEEngine_CompositionUpdate()
+On Error Resume Next
+    m_booIMEOpen = True
+    m_strIMEText = m_imeIMEEngine.Text & vbCrLf & m_imeIMEEngine.GuideLine
+    m_lngIMECursorPos = m_imeIMEEngine.CursorPos
+End Sub
+
+Private Sub m_imeIMEEngine_LanguageChanged()
+On Error Resume Next
 End Sub
 
 Private Sub m_ScriptEngine_Error(ByVal LineNumber As Long, ByVal Character As Long, Description As String)
@@ -5003,8 +5074,8 @@ End Sub
 Sub PopBGM(Optional ByVal Crossfade As Boolean = True)
 On Error Resume Next
 Dim l_sndOld As Sound
-    Set l_sndOld = BGMStack.Item(BGMStack.Count)
-    BGMStack.Remove BGMStack.Count
+    Set l_sndOld = BGMStack.Item(BGMStack.count)
+    BGMStack.Remove BGMStack.count
     SwitchBGM l_sndOld, Crossfade
     Err.Clear
 End Sub
@@ -5013,25 +5084,25 @@ Public Sub PopContext()
 Attribute PopContext.VB_MemberFlags = "40"
 On Error Resume Next
     #If DebugFeatures = 1 Then
-        ScriptContext = CStr(m_colContextStack(m_colContextStack.Count))
-        m_colContextStack.Remove m_colContextStack.Count
+        ScriptContext = CStr(m_colContextStack(m_colContextStack.count))
+        m_colContextStack.Remove m_colContextStack.count
     #End If
 End Sub
 
 Public Sub PopEventHooks()
 On Error Resume Next
 Dim l_objObject As Object
-    If EventHookStack.Count > 0 Then
-        Set m_colPluginStack = EventHookStack.Item(EventHookStack.Count)
+    If EventHookStack.count > 0 Then
+        Set m_colPluginStack = EventHookStack.Item(EventHookStack.count)
         Set m_colReversePluginStack = New Collection
         For Each l_objObject In m_colPluginStack
-            If (m_colReversePluginStack.Count = 0) Then
+            If (m_colReversePluginStack.count = 0) Then
                 m_colReversePluginStack.Add l_objObject
             Else
                 m_colReversePluginStack.Add l_objObject, , 1
             End If
         Next l_objObject
-        EventHookStack.Remove EventHookStack.Count
+        EventHookStack.Remove EventHookStack.count
     End If
 End Sub
 
@@ -5128,7 +5199,7 @@ Dim PObj As Fury2Plugin, Obj As Object
     If ClearEveryFrame Then m_imgBackbuffer.Clear ClearBackgroundColor
     m_imgBackbuffer.ResetClipRectangle
     RedrawCameras
-    If m_colReversePluginStack.Count > 0 Then
+    If m_colReversePluginStack.count > 0 Then
         For Each Obj In m_colReversePluginStack
             Set PObj = Nothing
             Set PObj = Obj
@@ -5141,7 +5212,7 @@ Dim PObj As Fury2Plugin, Obj As Object
         Next Obj
     End If
     RedrawPictures
-    If m_colReversePluginStack.Count > 0 Then
+    If m_colReversePluginStack.count > 0 Then
         For Each Obj In m_colReversePluginStack
             If Not (Obj Is Nothing) Then
                 Set PObj = Nothing
@@ -5161,6 +5232,7 @@ Dim PObj As Fury2Plugin, Obj As Object
         RedrawHook.Invoke
     End If
     RedrawConsole
+    RedrawIME
     ContextLevelRemove
 End Sub
 
@@ -5174,6 +5246,45 @@ Dim m_camCamera As Fury2Camera
     ContextLevelRemove
 End Sub
 
+Public Sub RedrawIME()
+On Error Resume Next
+Dim l_rctText As Fury2Rect
+Dim l_rctCandidates As Fury2Rect
+Dim l_strCandidates() As String
+Dim l_lngCandidates As Long, l_lngY As Long, l_lngHeight As Long
+    If m_booIMEOpen Then
+        Set l_rctText = Font.GetTextRectangle(m_strIMEText, Backbuffer.Width, False)
+        l_rctText.Translate (Backbuffer.Width - l_rctText.Width) \ 2, Backbuffer.Height - (l_rctText.Height + 5)
+        l_rctText.Adjust 2, 2
+        Backbuffer.Fill l_rctText, F2RGB(0, 0, 0, 192), RenderMode_SourceAlpha
+        Backbuffer.Box l_rctText, F2White
+        l_rctText.Adjust -2, -2
+        l_rctText.Width = l_rctText.Width + 1
+        Font.Draw Backbuffer, m_strIMEText, l_rctText, F2White, 1, Font.Options(0, 0, 0, 0, 0, m_lngIMECursorPos + 1, F2White, , False)
+        l_strCandidates = m_imeIMEEngine.Candidates
+        l_lngCandidates = -1
+        Err.Clear
+        l_lngCandidates = UBound(l_strCandidates)
+        If Err <> 0 Or l_lngCandidates < 0 Then
+        Else
+            Set l_rctCandidates = Font.GetTextRectangle(Join(l_strCandidates, vbCrLf), Backbuffer.Width, False)
+            l_rctCandidates.Translate (Backbuffer.Width - l_rctCandidates.Width) \ 2, l_rctText.top - l_rctCandidates.Height - 5
+            l_rctCandidates.Adjust 2, 2
+            Backbuffer.Fill l_rctCandidates, F2RGB(0, 0, 0, 192), RenderMode_SourceAlpha
+            Backbuffer.Box l_rctCandidates, F2White
+            l_rctCandidates.Adjust -2, -2
+            l_lngY = l_rctCandidates.top
+            For l_lngCandidates = 0 To UBound(l_strCandidates)
+                If l_lngCandidates = m_imeIMEEngine.SelectedCandidate Then
+                    Backbuffer.Fill F2Rect(l_rctCandidates.left, l_lngY, l_rctCandidates.Width, Font.FullHeight, False), F2RGB(32, 63, 240, 220), RenderMode_SourceAlpha
+                End If
+                Font.Draw Backbuffer, l_strCandidates(l_lngCandidates), F2Rect(l_rctCandidates.left, l_lngY, l_rctCandidates.right, l_rctCandidates.bottom, True), F2White, 1, Font.Options(0, 0, 0, 0, 0, 0, 0, 0, False), l_lngHeight
+                l_lngY = l_lngY + (l_lngHeight - Font.FullHeight + Font.Height)
+            Next l_lngCandidates
+        End If
+    End If
+End Sub
+
 Public Sub RedrawConsole()
 On Error Resume Next
 Dim l_lngItems As Long, l_rctSize As Fury2Rect, l_strText As String, l_lngY As Long, l_lngHeight As Long
@@ -5185,13 +5296,13 @@ Dim l_rctConsole As Fury2Rect, l_rctTextbox As Fury2Rect
         Set l_rctConsole = F2Rect(0, -m_sngConsoleOffset, ScreenWidth, ConsoleHeight, False)
         .ResetClipRectangle
         .ClippedSetClipRectangle l_rctConsole
-        l_lngHeight = ClipValue(Font.TextHeight(ConsoleText, .Width - 2) + (Font.FullHeight - Font.Height), Font.FullHeight, ConsoleHeight) + 2
+        l_lngHeight = ClipValue(Font.TextHeight(ConsoleText, .Width - 2, False) + (Font.FullHeight - Font.Height), Font.FullHeight, ConsoleHeight) + 2
         l_lngTopColor = F2RGB(180, 180, 180, 192)
         l_lngBottomColor = F2RGB(110, 110, 110, 192)
         .GradientFill l_rctConsole, Array(l_lngTopColor, l_lngTopColor, l_lngBottomColor, l_lngBottomColor), RenderMode_SourceAlpha
-        If ConsoleItems.Count > 0 Then
+        If ConsoleItems.count > 0 Then
             l_lngY = l_rctConsole.bottom - l_lngHeight - 4
-            For l_lngItems = ConsoleItems.Count To 1 Step -1
+            For l_lngItems = ConsoleItems.count To 1 Step -1
                 l_strText = ConsoleItems(l_lngItems)
                 Set l_rctSize = Font.GetTextRectangle(l_strText, .Width - 4)
                 Font.Draw Backbuffer, l_strText, F2Rect(2, l_lngY - l_rctSize.Height, .Width - 4, l_rctSize.Height + (Font.FullHeight - Font.Height), False), F2White, 1
@@ -5203,7 +5314,7 @@ Dim l_rctConsole As Fury2Rect, l_rctTextbox As Fury2Rect
         .ResetClipRectangle
         .ClippedSetClipRectangle l_rctTextbox
         .GradientFill l_rctTextbox, Array(F2RGB(0, 0, 0, 32), F2RGB(0, 0, 0, 32), F2RGB(0, 0, 0, 96), F2RGB(0, 0, 0, 96)), RenderMode_SourceAlpha
-        Font.Draw Backbuffer, ConsoleText, F2Rect(2, l_rctConsole.bottom - l_lngHeight, .Width - 4, l_lngHeight + (Font.FullHeight - Font.Height) - 2, False), , , Font.Options(0, 0, 0, 0, 0, m_lngConsoleCaretPosition, F2White)
+        Font.Draw Backbuffer, ConsoleText, F2Rect(2, l_rctConsole.bottom - l_lngHeight, .Width - 4, l_lngHeight + (Font.FullHeight - Font.Height) - 2, False), , , Font.Options(0, 0, 0, 0, 0, m_lngConsoleCaretPosition, F2White, , False)
         .ResetClipRectangle
     End With
 End Sub
@@ -5332,10 +5443,10 @@ On Error Resume Next
     ContextLevelRemove
 End Sub
 
-Public Sub SaveMapState(ByVal Index As Long, ByRef Name As String)
+Public Sub SaveMapState(ByVal index As Long, ByRef Name As String)
 Attribute SaveMapState.VB_Description = "Saves the current state of a map."
 On Error Resume Next
-    SavedMaps.Add Maps(Index), Name
+    SavedMaps.Add Maps(index), Name
 End Sub
 
 Public Sub SaveUserData(ByRef Filename As String, ByVal Data As Object)
@@ -5361,10 +5472,10 @@ Dim l_objData As Object
     Err.Clear
 End Sub
 
-Public Sub SetHotspot(ByVal Index As Long, Optional ByVal left As Long = 0, Optional ByVal top As Long = 0, Optional ByVal Width As Long = 0, Optional ByVal Height As Long = 0, Optional ByRef ClickEvent = Nothing, Optional ByRef EnterEvent = Nothing, Optional ByRef LeaveEvent = Nothing)
+Public Sub SetHotspot(ByVal index As Long, Optional ByVal left As Long = 0, Optional ByVal top As Long = 0, Optional ByVal Width As Long = 0, Optional ByVal Height As Long = 0, Optional ByRef ClickEvent = Nothing, Optional ByRef EnterEvent = Nothing, Optional ByRef LeaveEvent = Nothing)
 Attribute SetHotspot.VB_Description = "Creates a hotspot."
 On Error Resume Next
-    With m_hsHotspots(CLng(Index))
+    With m_hsHotspots(CLng(index))
         .Enabled = True
         .x1 = left
         .y1 = top
@@ -5393,7 +5504,7 @@ On Error Resume Next
 Dim l_lngBorderWidth As Long, l_lngTitleHeight As Long, l_lngOldMode As Long
 Dim l_lngWidth As Long, l_lngHeight As Long
     With m_objOutputPlugin.Window
-        If GetForegroundWindow() = .hWnd Then
+        If GetForegroundWindow() = .hwnd Then
             l_lngOldMode = .ScaleMode
             .ScaleMode = 1
             l_lngBorderWidth = (.Width - .ScaleWidth) \ 2
@@ -5495,6 +5606,7 @@ Dim Obj As Object
     ScriptContext = "Shutdown"
     StopBGM
     SoundEngine.FlushCache
+    ShutdownIME
     If m_booIDE Then DebugOut "Ending game"
     UnloadAllMaps
     ScriptEngine.Exec "Engine_Shutdown"
@@ -5516,7 +5628,7 @@ Dim Obj As Object
     Next Obj
     ShowCursor True
     EmptyImageCache
-    For m_lngForms = Forms.Count To 0 Step -1
+    For m_lngForms = Forms.count To 0 Step -1
         Unload Forms(m_lngForms)
     Next m_lngForms
     m_objNotify.Quit
@@ -5594,14 +5706,14 @@ Dim l_sndBGM As Sound
     Err.Clear
 End Sub
 
-Public Sub SwitchMap(ByVal FilenameOrMap, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
+Public Sub SwitchMap(ByVal FilenameOrMap, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal index As Long = 1)
 Attribute SwitchMap.VB_Description = "Switches from the current map to a new one."
 On Error Resume Next
 Dim m_imgOld As Fury2Image
-    ContextLevelAdd "SwitchMap(""" + ToString(FilenameOrMap) + """, " + CStr(Index) + ")"
+    ContextLevelAdd "SwitchMap(""" + ToString(FilenameOrMap) + """, " + CStr(index) + ")"
     If DefaultTransition <> TR_None Then Set m_imgOld = m_imgBackbuffer.Duplicate
     Transition DefaultTransition, , 0
-    LoadMap FilenameOrMap, LoadX, LoadY, Layer, Index
+    LoadMap FilenameOrMap, LoadX, LoadY, Layer, index
     Sync
     Redraw
     Transition DefaultTransition, , 1
@@ -5615,6 +5727,7 @@ Sub SwitchOutputPlugin(ByRef NewPlugin As String)
 On Error Resume Next
     If m_objOutputPlugin Is Nothing Then
     Else
+        ShutdownIME
         Err.Clear
         Transitions.FadeOut 1
         m_objOutputPlugin.HookEvents Nothing
@@ -5647,6 +5760,7 @@ On Error Resume Next
         l_plgPlugin.OutputPluginChanged
         l_objPlugin.OutputPluginChanged
     Next l_objPlugin
+    InitIME
     Err.Clear
     If SubthreadCount >= 0 Then Transitions.FadeIn 1
 End Sub
@@ -5705,7 +5819,7 @@ Dim l_strText As String
         Else
             ConsoleItems.Add l_strText
         End If
-        Do While ConsoleItems.Count > 100
+        Do While ConsoleItems.count > 100
             ConsoleItems.Remove 1
         Loop
     End If
@@ -5843,7 +5957,7 @@ Public Sub UnHookAll()
 Attribute UnHookAll.VB_Description = "Unhooks all plugins from the event system."
 On Error Resume Next
 Dim CheckHooks As Long
-    Do While m_colPluginStack.Count > 0
+    Do While m_colPluginStack.count > 0
         UnHookEvents m_colPluginStack(1)
     Loop
     Set m_colPluginStack = New Collection
@@ -5855,8 +5969,8 @@ Public Sub UnHookEvents(ByVal Obj As Object)
 Attribute UnHookEvents.VB_Description = "Unhooks a plugin from the event system."
 On Error Resume Next
 Dim l_lngObject As Long
-    If m_colReversePluginStack.Count >= 1 Then
-        For l_lngObject = 1 To m_colReversePluginStack.Count
+    If m_colReversePluginStack.count >= 1 Then
+        For l_lngObject = 1 To m_colReversePluginStack.count
             Err.Clear
             If m_colReversePluginStack(l_lngObject) Is Obj Then
                 If Err.Number = 0 Then
@@ -5866,8 +5980,8 @@ Dim l_lngObject As Long
             End If
         Next l_lngObject
     End If
-    If m_colPluginStack.Count >= 1 Then
-        For l_lngObject = 1 To m_colPluginStack.Count
+    If m_colPluginStack.count >= 1 Then
+        For l_lngObject = 1 To m_colPluginStack.count
             Err.Clear
             If m_colPluginStack(l_lngObject) Is Obj Then
                 If Err.Number = 0 Then
@@ -5888,16 +6002,16 @@ On Error Resume Next
 Dim m_lngMaps As Long
 Dim m_lngCameras As Long
     DebugOut "Unloading all maps"
-    If Maps.Count > 0 Then
-        For m_lngMaps = 1 To Maps.Count
+    If Maps.count > 0 Then
+        For m_lngMaps = 1 To Maps.count
             Set Map = Maps(m_lngMaps)
             With Map
                 .Unload
                 .Free
             End With
             FlushImageCache
-            If Cameras.Count > 0 Then
-                For m_lngCameras = 1 To Cameras.Count
+            If Cameras.count > 0 Then
+                For m_lngCameras = 1 To Cameras.count
                     If Cameras(m_lngCameras).ViewingMap Is Maps(m_lngMaps) Then
                         Cameras(m_lngCameras).Map = 0
                     End If
@@ -5905,8 +6019,8 @@ Dim m_lngCameras As Long
             End If
             Maps.Remove m_lngMaps
             m_lngMaps = m_lngMaps - 1
-            If m_lngMaps > Maps.Count Then Exit For
-            If Maps.Count = 0 Then Exit For
+            If m_lngMaps > Maps.count Then Exit For
+            If Maps.count = 0 Then Exit For
         Next m_lngMaps
     End If
 End Sub
@@ -5951,11 +6065,11 @@ Static m_sngLastTimer As Single
             l_mapMap.TimerEvents.Update
             If Terminating Then Exit Sub
         Next l_mapMap
-        If Maps.Count > 0 Then
+        If Maps.count > 0 Then
             Set Map = Maps(1)
             m_lngMaps = 1
             For Each Map In Maps
-                If Map.Layers.Count > 0 Then
+                If Map.Layers.count > 0 Then
                     ContextLevelAdd "Maps(" + CStr(m_lngMaps) + ")"
                     Map.Update
                     ContextLevelRemove
@@ -5965,12 +6079,12 @@ Static m_sngLastTimer As Single
             Next Map
             Set Map = Maps(1)
         End If
-        If Cameras.Count > 0 Then
+        If Cameras.count > 0 Then
             For Each l_camCamera In Cameras
                 l_camCamera.Update
             Next l_camCamera
         End If
-        If m_colPluginStack.Count > 0 Then
+        If m_colPluginStack.count > 0 Then
             m_lngHooks = 1
             For Each Obj In m_colPluginStack
                 If Not (Obj Is Nothing) Then
@@ -6020,7 +6134,7 @@ Dim l_lngCount As Long
     ContextLevelAdd "ENet"
         For Each l_hosHost In Hosts
             l_hosHost.Poll
-            l_lngCount = (l_hosHost.Peers.Count + IIf(l_hosHost.TimeSynchronizer Is Nothing, 0, 1))
+            l_lngCount = (l_hosHost.Peers.count + IIf(l_hosHost.TimeSynchronizer Is Nothing, 0, 1))
             l_lngCount = GetReferenceCount(l_hosHost) - l_lngCount
             If l_lngCount <= 5 Then
                 DebugOut "Freeing ENet Host"
@@ -6182,7 +6296,7 @@ Dim Obj As Object, PObj As Fury2Plugin
 Dim l_gphGraphic As Fury2Graphic
 Dim l_vidVideo As Fury2Video
     If EnableTimers Then
-        If Timers.Count > 0 Then
+        If Timers.count > 0 Then
             ContextLevelAdd "Timers"
             m_lngTimers = 1
             For Each m_tmrTimer In Timers
@@ -6190,7 +6304,7 @@ Dim l_vidVideo As Fury2Video
                     .Update
                     If .OneShot = True And .Enabled = False Then
                         Timers.Remove m_lngTimers
-                        If m_lngTimers = Timers.Count + 1 Then Exit For
+                        If m_lngTimers = Timers.count + 1 Then Exit For
                         m_lngTimers = m_lngTimers - 1
                     End If
                 End With
@@ -6205,7 +6319,7 @@ Dim l_vidVideo As Fury2Video
     For Each l_vidVideo In Videos
         l_vidVideo.Update
     Next l_vidVideo
-    If m_colPluginStack.Count > 0 Then
+    If m_colPluginStack.count > 0 Then
         ContextLevelAdd "SyncUpdate"
         For Each Obj In m_colPluginStack
             Err.Clear
@@ -6226,7 +6340,7 @@ Friend Sub UpdateWindow()
 On Error Resume Next
 Dim l_lngWindow As Long, l_lngGameWindow
     l_lngWindow = GetForegroundWindow()
-    l_lngGameWindow = m_objOutputPlugin.Window.hWnd
+    l_lngGameWindow = m_objOutputPlugin.Window.hwnd
     If l_lngWindow <> m_lngLastWindow Then
         m_lngLastWindow = l_lngWindow
         If l_lngWindow <> l_lngGameWindow Then

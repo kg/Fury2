@@ -15,7 +15,7 @@ Option Explicit
 Sub KeyDown(ByVal KeyCode As Integer, ByVal Shift As Integer)
 End Sub
 
-Sub KeyPress(ByVal KeyAscii As Integer)
+Sub KeyPress(ByVal KeyCode As Long)
 End Sub
 
 Sub KeyUp(ByVal KeyCode As Integer, ByVal Shift As Integer)

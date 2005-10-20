@@ -1377,7 +1377,7 @@ On Error Resume Next
     If Onscreen Then
         Set Rectangle = F2Rect(Floor(m_spParam.Position.X - m_spParam.Graphic.XCenter), Floor(m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height) + (m_spParam.Graphic.Rectangle.Height - m_spParam.Graphic.YCenter)), m_spParam.Graphic.Rectangle.Width, m_spParam.Graphic.Rectangle.Height, False)
     Else
-        Set Rectangle = F2Rect(Floor(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2)), Floor(m_spParam.Position.Y - (m_spParam.Obstruction.Height)), m_spParam.Obstruction.Width, m_spParam.Obstruction.Height, False)
+        Set Rectangle = F2Rect(Ceil(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2)), Ceil(m_spParam.Position.Y - (m_spParam.Obstruction.Height)), m_spParam.Obstruction.Width, m_spParam.Obstruction.Height, False)
     End If
 End Property
 

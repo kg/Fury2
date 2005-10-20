@@ -1248,3 +1248,18 @@ Dim l_strInfo As String
     End With
     InspectObject = l_strResult
 End Function
+
+Public Property Get InIDE() As Boolean
+On Error Resume Next
+    InIDE = mdlEditor.InIDE
+End Property
+
+Public Property Get Path() As String
+On Error Resume Next
+    If InIDE Then
+        Path = App.Path & "\..\..\binary\sys\"
+    Else
+        Path = App.Path & "\"
+    End If
+    Err.Clear
+End Sub

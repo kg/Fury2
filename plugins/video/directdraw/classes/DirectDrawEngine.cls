@@ -127,8 +127,8 @@ End Sub
 
 Public Sub Fury2VideoDriver_Flip()
 On Error Resume Next
-Dim l_rctDest As DxVBLib.RECT
-Dim l_rctSource As DxVBLib.RECT
+Dim l_rctDest As DxVBLib.Rect
+Dim l_rctSource As DxVBLib.Rect
     If m_Closed Then Exit Sub
     LockBackbuffer
     If m_ddsBackbuffer.isLost Then
@@ -190,7 +190,7 @@ End Sub
 
 Friend Sub LockBackbuffer()
 On Error Resume Next
-Dim l_rcLock As DxVBLib.RECT
+Dim l_rcLock As DxVBLib.Rect
     SoftFX.SetImagePitch m_imgBackbuffer.Handle, 0
     SoftFX.SetImagePointer m_imgBackbuffer.Handle, 0
     SoftFX.SetImageLocked m_imgBackbuffer.Handle, 1
@@ -204,7 +204,7 @@ End Sub
 Friend Sub UnlockBackbuffer()
 On Error Resume Next
 Dim l_sdDesc As DDSURFACEDESC2
-Dim l_rcLock As DxVBLib.RECT
+Dim l_rcLock As DxVBLib.Rect
     m_ddsBackbuffer.GetSurfaceDesc l_sdDesc
     SoftFX.SetImagePointer m_imgBackbuffer.Handle, 0
     SoftFX.SetImageLocked m_imgBackbuffer.Handle, 1
@@ -243,7 +243,7 @@ End Sub
 
 Friend Sub Allocate()
 On Error Resume Next
-Dim l_rctSurface As DxVBLib.RECT
+Dim l_rctSurface As DxVBLib.Rect
     SoftFX.SetImageWidth m_imgBackbuffer.Handle, m_lngWidth
     SoftFX.SetImageHeight m_imgBackbuffer.Handle, m_lngHeight
     SoftFX.SetImagePitch m_imgBackbuffer.Handle, 0
@@ -284,8 +284,6 @@ End Sub
 Private Sub m_OutForm_KeyDown(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
     If KeyCode = vbKeyF4 And Shift = vbAltMask Then
-        m_OutForm.Hide
-        Fury2VideoDriver_Shutdown
         m_objHooked.Closed
         m_Closed = True
     ElseIf KeyCode = vbKeyReturn And Shift = vbAltMask Then
@@ -333,9 +331,10 @@ Private Sub m_OutForm_QueryUnload(Cancel As Integer, UnloadMode As Integer)
 On Error Resume Next
     If UnloadMode = 1 Or UnloadMode = 5 Then
     Else
-        Fury2VideoDriver_Shutdown
         m_objHooked.Closed
         m_Closed = True
+        Cancel = True
+        Fury2VideoDriver_Shutdown
     End If
 End Sub
 

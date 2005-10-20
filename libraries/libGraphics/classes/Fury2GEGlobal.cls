@@ -14,6 +14,21 @@ Attribute VB_Exposed = True
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
 Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
+Private Declare Function GetFontUnicodeRanges Lib "gdi32" (ByVal hdc As Long, ByVal Pointer As Long) As Long
+Private Declare Function GetGlyphOutlineW Lib "gdi32" (ByVal hdc As Long, ByVal Character As Long, ByVal Format As Long, ByRef Metrics As GlyphMetrics, ByVal BufferLength As Long, ByVal Buffer As Long, ByVal Transform As Long) As Long
+
+Private Type GlyphSetHeader
+    Size As Long
+    flags As Long
+    CodePointCount As Long
+    RangeCount As Long
+End Type
+
+Private Type GlyphSetEntry
+    Low As Integer
+    Count As Integer
+End Type
+
 Public Enum ResamplingMethods
     [Linear] = 0
     [BiLinear] = 1
@@ -218,6 +233,53 @@ Dim l_lngCenterWeight As Long
     F2BlurFilter.Divisor = 12 + l_lngCenterWeight
 End Function
 
+Public Function GetGlyphList(ByVal Font As StdFont, Optional ByVal EnableUnicode As Boolean = True) As Long()
+On Error Resume Next
+Dim l_lngLength As Long
+Dim l_gshHeader As GlyphSetHeader, l_gseRange As GlyphSetEntry
+Dim l_lngData As Long, l_lngPointer As Long
+Dim l_lngIndex As Long
+Dim l_lngChars As Long, l_lngRanges As Long
+Dim l_lngStart As Long, l_lngCount As Long
+Dim l_lngGlyphs() As Long
+
+    Set frmTextRender.Font = Font
+    If EnableUnicode Then
+        l_lngLength = GetFontUnicodeRanges(frmTextRender.hdc, 0)
+    End If
+    If l_lngLength >= Len(l_gshHeader) Then
+        l_lngData = SoftFX.AllocateMemory(l_lngLength)
+        SoftFX.FillMemoryByte l_lngData, 0, l_lngLength
+        GetFontUnicodeRanges frmTextRender.hdc, l_lngData
+        CopyMemory ByVal VarPtr(l_gshHeader), ByVal l_lngData, Len(l_gshHeader)
+        l_lngPointer = AddUInts(l_lngData, Len(l_gshHeader))
+        ReDim l_lngGlyphs(0 To l_gshHeader.CodePointCount + 1)
+        l_lngGlyphs(0) = 9
+        l_lngGlyphs(1) = 32
+        l_lngChars = 2
+        For l_lngRanges = 0 To l_gshHeader.RangeCount - 1
+            CopyMemory ByVal VarPtr(l_gseRange), ByVal l_lngPointer, Len(l_gseRange)
+            l_lngStart = ReadUShort(ByVal VarPtr(l_gseRange.Low))
+            l_lngCount = ReadUShort(ByVal VarPtr(l_gseRange.Count))
+            If l_lngCount > 0 Then
+                For l_lngIndex = l_lngChars To l_lngChars + l_lngCount
+                    l_lngGlyphs(l_lngIndex) = l_lngStart
+                    l_lngStart = l_lngStart + 1
+                Next l_lngIndex
+                l_lngChars = l_lngChars + l_lngCount
+            End If
+            l_lngPointer = AddUInts(l_lngPointer, Len(l_gseRange))
+        Next l_lngRanges
+        SoftFX.DeallocateMemory l_lngData
+    Else
+        ReDim l_lngGlyphs(0 To 254)
+        For l_lngIndex = 0 To 254
+            l_lngGlyphs(l_lngIndex) = l_lngIndex + 1
+        Next l_lngIndex
+    End If
+    GetGlyphList = l_lngGlyphs()
+End Function
+
 Public Function GetGlyphBitmap(ByVal Font As StdFont, ByVal Character As Long) As Fury2Image
 Attribute GetGlyphBitmap.VB_Description = "Returns an image generated of a character from a truetype font. Stores the following attributes in the image's Tag property: (GlyphOriginX, GlyphOriginY, BlackBoxX, BlackBoxY, CellIncX, CellIncY, MaximumCharWidth, MaximumCharHeight)"
 On Error Resume Next
@@ -231,6 +293,7 @@ Dim m_lngSize As Long, m_lngWidth As Long
 Dim m_lngDC As Long
 Dim m_tmMetric As TEXTMETRIC
 Dim m_frmText As frmTextRender
+Dim l_booUnicode As Boolean
     Set frmTextRender.Font = Font
     For m_lngColors = 0 To 66
         m_lngPalette(m_lngColors) = F2RGB(255, 255, 255, (m_lngColors * 255) \ 65)
@@ -238,14 +301,28 @@ Dim m_frmText As frmTextRender
     m_matTransform.H11 = 1
     m_matTransform.H22 = 1
     m_lngDC = frmTextRender.hdc
-    m_lngSize = GetGlyphOutline(m_lngDC, Character, GGO_Metrics, m_gmMetrics, Len(m_gmMetrics), 0, VarPtr(m_matTransform))
-    m_lngSize = GetGlyphOutline(m_lngDC, Character, GGO_Gray8_Bitmap, m_gmMetrics, 0, 0, VarPtr(m_matTransform))
+    Err.Clear
+    m_lngSize = GetGlyphOutlineW(m_lngDC, Character, GGO_Metrics, m_gmMetrics, Len(m_gmMetrics), 0, VarPtr(m_matTransform))
+    If (Err <> 0) Or (m_lngSize < 1) Or (GetLastError <> 0) Then
+        ' no unicode
+        Err.Clear
+        l_booUnicode = False
+        m_lngSize = GetGlyphOutline(m_lngDC, Character, GGO_Metrics, m_gmMetrics, Len(m_gmMetrics), 0, VarPtr(m_matTransform))
+        m_lngSize = GetGlyphOutline(m_lngDC, Character, GGO_Gray8_Bitmap, m_gmMetrics, 0, 0, VarPtr(m_matTransform))
+    Else
+        l_booUnicode = True
+        m_lngSize = GetGlyphOutlineW(m_lngDC, Character, GGO_Gray8_Bitmap, m_gmMetrics, 0, 0, VarPtr(m_matTransform))
+    End If
     Call GetTextMetrics(m_lngDC, m_tmMetric)
     If m_lngSize <= 1 Then
         Set m_imgChar = F2Image(0, 0)
     Else
         ReDim m_bytData(0 To (m_lngSize) - 1)
-        Call GetGlyphOutline(m_lngDC, Character, GGO_Gray8_Bitmap, m_gmMetrics, m_lngSize, VarPtr(m_bytData(0)), VarPtr(m_matTransform))
+        If l_booUnicode Then
+            Call GetGlyphOutlineW(m_lngDC, Character, GGO_Gray8_Bitmap, m_gmMetrics, m_lngSize, VarPtr(m_bytData(0)), VarPtr(m_matTransform))
+        Else
+            Call GetGlyphOutline(m_lngDC, Character, GGO_Gray8_Bitmap, m_gmMetrics, m_lngSize, VarPtr(m_bytData(0)), VarPtr(m_matTransform))
+        End If
         m_lngWidth = ((m_gmMetrics.BlackBoxX + 3) \ 4) * 4
         If m_lngWidth <= 0 Then Exit Function
         Set m_imgChar = F2Image(m_lngWidth, (m_lngSize \ m_lngWidth))
@@ -882,6 +959,17 @@ Dim newImage As Fury2Image
     Set newImage = New Fury2Image
     newImage.LoadString Data
     Set F2ImageFromString = newImage
+    Set newImage = Nothing
+End Function
+
+Public Function F2ImageFromPointer(ByVal Pointer As Long, ByVal Width As Long, ByVal Height As Long) As Fury2Image
+On Error Resume Next
+Dim newImage As Fury2Image
+    Set newImage = New Fury2Image
+    SoftFX.SetImagePointer newImage.Handle, Pointer
+    SoftFX.SetImageWidth newImage.Handle, Width
+    SoftFX.SetImageHeight newImage.Handle, Height
+    Set F2ImageFromPointer = newImage
     Set newImage = Nothing
 End Function
 

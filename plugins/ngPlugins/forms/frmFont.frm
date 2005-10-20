@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
 Begin VB.Form frmFont 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -186,6 +186,8 @@ Private m_fpgPlugin As iFileTypePlugin
 
 Private m_booVisible As Boolean
 
+Private m_strPreview As String
+
 Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
 Private m_lngCurrentView As FontEditorViews
@@ -232,6 +234,14 @@ End Sub
 Private Sub picImage_Resize()
 On Error Resume Next
     RedrawImage
+End Sub
+
+Private Sub picPreview_DblClick()
+On Error Resume Next
+Dim l_strFilename As String
+    l_strFilename = Editor.SelectFile("Text Files|*.txt")
+    m_strPreview = ReadTextFile(l_strFilename)
+    RedrawPreview
 End Sub
 
 Private Sub tsCharacter_Resize()
@@ -335,11 +345,10 @@ On Error Resume Next
 Dim l_imgCharacter As Fury2Image
 Dim l_lngCharacter As Long
 Dim l_lngX As Long
-Dim l_lngWidth As Long
 Dim l_rctCharacter As Fury2Rect
     m_imgCharacterList.Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
-    l_lngX = -hsCharacters.Value
-    For l_lngCharacter = 1 To m_fntFont.CharacterCount
+    l_lngX = 0
+    For l_lngCharacter = 1 + hsCharacters.Value To m_fntFont.CharacterCount
         Set l_imgCharacter = m_fntFont.Character(l_lngCharacter)
         If m_lngSelectedCharacter = l_lngCharacter Then
             m_imgCharacterList.Fill F2Rect(l_lngX, 0, ClipValue(l_imgCharacter.Width, 6, 999), picCharacterList.ScaleHeight, False), SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue)
@@ -347,10 +356,10 @@ Dim l_rctCharacter As Fury2Rect
 '        m_imgCharacterList.Blit F2Rect(l_lngX, m_fntFont.CharacterYOffset(l_lngCharacter) + (m_fntFont.Height - l_imgCharacter.Height), l_imgCharacter.Width, l_imgCharacter.Height, False), , l_imgCharacter, , BlitMode_Normal, SetAlpha(SwapChannels(IIf(m_lngSelectedCharacter = l_lngCharacter, GetSystemColor(SystemColor_Highlight_Text), GetSystemColor(SystemColor_Button_Text)), Red, Blue), 255)
         m_imgCharacterList.Blit F2Rect(l_lngX, m_fntFont.CharacterYOffset(l_lngCharacter) + (m_fntFont.Height - l_imgCharacter.Height), l_imgCharacter.Width, l_imgCharacter.Height, False), , l_imgCharacter, , BlitMode_Font_SourceAlpha, SetAlpha(SwapChannels(IIf(m_lngSelectedCharacter = l_lngCharacter, GetSystemColor(SystemColor_Highlight_Text), GetSystemColor(SystemColor_Button_Text)), Red, Blue), 255)
         l_lngX = l_lngX + ClipValue(l_imgCharacter.Width, 6, 999) + 1
-        l_lngWidth = l_lngWidth + ClipValue(l_imgCharacter.Width, 6, 999) + 1
+        If l_lngX > picCharacterList.ScaleWidth Then Exit For
     Next l_lngCharacter
+    hsCharacters.Max = m_fntFont.CharacterCount - 1
     picCharacterList.Refresh
-    hsCharacters.Max = l_lngWidth - picCharacterList.ScaleWidth
 End Sub
 
 Private Sub FixRectCoords(ByRef X1 As Long, ByRef Y1 As Long, ByRef X2 As Long, ByRef Y2 As Long)
@@ -492,6 +501,10 @@ End Sub
 
 Public Sub Cleanup()
 On Error Resume Next
+    Screen.MousePointer = 11
+    m_fntFont.Free
+    Set m_fntFont = Nothing
+    Screen.MousePointer = 0
     Set m_fpgPlugin = Nothing
 End Sub
 
@@ -537,10 +550,11 @@ On Error Resume Next
         m_imgPreview.Resize picPreview.ScaleWidth, picPreview.ScaleHeight
     End If
     With m_imgPreview
+        If Len(m_strPreview) = 0 Then
+            m_strPreview = Editor.LoadResources("ng").Item("font editor\test.txt").LoadText()
+        End If
         .Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
-        m_fntFont.Draw m_imgPreview, "The quick brown fox jumped over the lazy dogs." & vbCrLf & _
-            "My sphinx is made of quartz." & vbCrLf & _
-            "1234567890-= !@#$%^&*()_+", m_imgPreview.Rectangle
+        m_fntFont.Draw m_imgPreview, m_strPreview, m_imgPreview.Rectangle, SetAlpha(SwapChannels(GetSystemColor(SystemColor_Button_Text), Red, Blue), 255)
     End With
     picPreview_Paint
 End Sub
@@ -895,8 +909,8 @@ Dim l_lngCharacter As Long
 Dim l_lngX As Long
 Dim l_lngWidth As Long
 Dim l_rctCharacter As Fury2Rect
-    l_lngX = -hsCharacters.Value
-    For l_lngCharacter = 1 To m_fntFont.CharacterCount
+    l_lngX = 0
+    For l_lngCharacter = 1 + hsCharacters.Value To m_fntFont.CharacterCount
         Set l_imgCharacter = m_fntFont.Character(l_lngCharacter)
         If l_imgCharacter Is Nothing Then
         Else
@@ -926,6 +940,7 @@ Dim l_rctCharacter As Fury2Rect
                 Exit Sub
             End If
             l_lngX = l_lngX + ClipValue(l_imgCharacter.Width, 6, 999) + 1
+            If l_lngX > picCharacters.Width Then Exit For
         End If
     Next l_lngCharacter
     If Button = 2 Then

@@ -99,12 +99,17 @@ End Property
 
 Public Property Get ValueString() As String
 On Error Resume Next
-    ValueString = Chr(m_fntFont.CharacterValue(m_lngCharacter))
+    If m_fntFont.CharacterValue(m_lngCharacter) = 0 Then
+        ValueString = "{null}"
+    Else
+        ValueString = ChrW(m_fntFont.CharacterValue(m_lngCharacter))
+    End If
 End Property
 
 Public Property Let ValueString(ByVal NewValue As String)
 On Error Resume Next
-    m_fntFont.CharacterValue(m_lngCharacter) = Asc(Left(NewValue, 1))
+    If NewValue = "{null}" Then Exit Property
+    m_fntFont.CharacterValue(m_lngCharacter) = AscW(Left(NewValue, 1))
 End Property
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)

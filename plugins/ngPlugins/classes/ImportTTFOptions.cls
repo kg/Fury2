@@ -33,10 +33,20 @@ Attribute VB_Exposed = True
 Implements IVirtualFileSaveable
 Implements IInspectable
 
+Private mvarCharacterSet As String
+Private mvarEnableUnicode As Boolean
 Private mvarName As String
 Private mvarSize As Single
 Private mvarBold As Boolean
 Private mvarItalic As Boolean
+
+Public Property Get CharacterSet() As String
+    CharacterSet = mvarCharacterSet
+End Property
+
+Public Property Let CharacterSet(ByRef vData As String)
+    mvarCharacterSet = vData
+End Property
 
 Public Property Get Name() As String
     Name = mvarName
@@ -62,6 +72,14 @@ Public Property Let Bold(ByVal vData As Boolean)
     mvarBold = vData
 End Property
 
+Public Property Get EnableUnicode() As Boolean
+    EnableUnicode = mvarEnableUnicode
+End Property
+
+Public Property Let EnableUnicode(ByVal vData As Boolean)
+    mvarEnableUnicode = vData
+End Property
+
 Public Property Get Italic() As Boolean
     Italic = mvarItalic
 End Property
@@ -72,7 +90,9 @@ End Property
 
 Private Sub Class_Initialize()
     mvarName = "Tahoma"
+    mvarCharacterSet = "Standard"
     mvarSize = 8
+    mvarEnableUnicode = False
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
@@ -81,6 +101,8 @@ Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
         .Load mvarSize
         .Load mvarBold
         .Load mvarItalic
+        .Load mvarEnableUnicode
+        .Load mvarCharacterSet
     End With
 End Sub
 
@@ -90,6 +112,8 @@ Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
         .Save mvarSize
         .Save mvarBold
         .Save mvarItalic
+        .Save mvarEnableUnicode
+        .Save mvarCharacterSet
     End With
 End Sub
 

@@ -5,7 +5,6 @@
 	Name="SoftFX"
 	ProjectGUID="{ED4A2B1F-A8EB-4F0D-BE84-D29D90FFBA34}"
 	RootNamespace="SoftFX"
-	SignManifests="true"
 	>
 	<Platforms>
 		<Platform
@@ -670,6 +669,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\3rdparty\lzo\minilzo.c"
+				>
+			</File>
+			<File
 				RelativePath=".\module\Override.cpp"
 				>
 			</File>
@@ -900,11 +903,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\3rdparty\lzo\lzoconf.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\3rdparty\lzo\lzodefs.h"
+				>
+			</File>
+			<File
 				RelativePath=".\header\memcpy_amd.hpp"
 				>
 			</File>
 			<File
 				RelativePath=".\header\MersenneTwister.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\3rdparty\lzo\minilzo.h"
 				>
 			</File>
 			<File

@@ -69,4 +69,5 @@ Global Const c_lngMaxTimers As Long = 64&
 Global Const c_lngMaxCPUUsage As Long = 85&
 Global Const c_lngMaxEventQueue As Long = 127&
 Global Const c_lngMaxTimerUpdates As Long = 10&
-Global Const c_lngMaxCharMappings As Long = 1023&
+Global Const c_lngMaxCharMappings As Long = 1024&
+Global Const c_lngMaxGlyphs As Long = 10240&

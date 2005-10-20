@@ -18,6 +18,34 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "../header/SoftFX Main.hpp"
+#include "../../../3rdparty/lzo/minilzo.h"
+
+Export int CompressData(void* Source, int SourceLength, void* Dest, int DestLength) {
+    lzo1x_1_compress(Source, SourceLength, Dest, DestLength, temp);
+    return Success;
+}
+
+Export void* AllocateMemory(int Size) {
+    return malloc(Size);
+}
+
+Export int DeallocateMemory(void* Pointer) {
+    free(Pointer);
+    return Success;
+}
+
+Export int ReadUShort(unsigned short* Pointer) {
+    if (!Pointer) return Failure;
+    return *Pointer;
+}
+
+Export unsigned int AddUInts(unsigned int A, unsigned int B) {
+  return A + B;
+}
+
+Export unsigned int SubtractUInts(unsigned int A, unsigned int B) {
+  return A - B;
+}
 
 Export int FillMemoryI8(void* Pointer, Byte Value, int Count) {
     if (!Pointer) return Failure;

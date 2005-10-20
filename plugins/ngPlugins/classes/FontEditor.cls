@@ -100,6 +100,9 @@ Private Function iFileTypePlugin_CreateNew(Optional ByVal EnableWizard As Boolea
 On Error Resume Next
 Dim l_frmNew As New frmFont
 Dim l_fntFont As Fury2Font
+Dim l_strCharset As String
+Dim l_varCharsets As Variant
+Dim l_lngIndex As Long
     If EnableWizard Then
         Load frmImportTTF
         m_objEditor.LoadSettings "FontEditor\DefaultSettings", frmImportTTF.Options
@@ -111,7 +114,12 @@ Dim l_fntFont As Fury2Font
                 l_frmNew.SetFilename ""
                 l_frmNew.RefreshAll
                 Set l_fntFont = DefaultEngine.F2Font()
-                l_fntFont.ImportTTF DefaultEngine.TTFont(.Name, .Size, .Bold, .Italic)
+                l_varCharsets = Split(.CharacterSet, ",")
+                l_strCharset = ""
+                For l_lngIndex = LBound(l_varCharsets) To UBound(l_varCharsets)
+                    l_strCharset = l_strCharset & ReadTextFile(Editor.Path & "\character sets\" & l_varCharsets(l_lngIndex) & ".txt")
+                Next l_lngIndex
+                l_fntFont.ImportTTF DefaultEngine.TTFont(.Name, .Size, .Bold, .Italic), .EnableUnicode, l_strCharset
                 l_frmNew.SetFont l_fntFont
                 Set iFileTypePlugin_CreateNew = l_frmNew
                 Set iFileTypePlugin_CreateNew.Plugin = Me

@@ -79,6 +79,47 @@ public:
         (*this)[::Alpha] = AlphaFromLevel2(al1, P1[::Alpha], al2, P2[::Alpha]);
     }
 
+    inline Byte getHexByte(const wchar_t *ptr) {
+      wchar_t buf[3];
+      buf[0] = *ptr;
+      buf[1] = *(ptr+1);
+      buf[2] = 0;
+      return wcstoul(buf, 0, 16);
+    }
+
+    inline Pixel(std::basic_string<wchar_t> &string) {
+      Byte r, g, b, a;
+      switch(string.size()) {
+      case 2:
+        r = g = b = getHexByte(string.c_str());
+        a = 255;
+        break;
+      case 4:
+        r = g = b = getHexByte(string.c_str());
+        a = getHexByte(string.c_str() + 2);
+        break;
+      case 6:
+        r = getHexByte(string.c_str());
+        g = getHexByte(string.c_str() + 2);
+        b = getHexByte(string.c_str() + 4);
+        a = 255;
+        break;
+      case 8:
+        r = getHexByte(string.c_str());
+        g = getHexByte(string.c_str() + 2);
+        b = getHexByte(string.c_str() + 4);
+        a = getHexByte(string.c_str() + 6);
+        break;
+      default:
+        this->V = 0;
+        return;
+      }
+      (*this)[::Blue] = b;
+      (*this)[::Green] = g;
+      (*this)[::Red] = r;
+      (*this)[::Alpha] = a;
+    }
+
     inline void setGray(DoubleWord V) {
         (*this)[::Blue] = V;
         (*this)[::Green] = V;

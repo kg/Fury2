@@ -248,7 +248,7 @@ End Sub
 Private Sub m_OutForm_KeyDown(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
     If KeyCode = vbKeyF4 And Shift = vbAltMask Then
-        m_OutForm.Hide
+        m_objHooked.Closed
         m_booClosed = True
     ElseIf KeyCode = vbKeyReturn And Shift = vbAltMask Then
         SetFullscreen Not m_booFullscreen
@@ -291,10 +291,11 @@ Private Sub m_OutForm_QueryUnload(Cancel As Integer, UnloadMode As Integer)
 On Error Resume Next
     If UnloadMode = 1 Or UnloadMode = 5 Then
     Else
-        GLShutdown
-        Fury2VideoDriver_Shutdown
         m_objHooked.Closed
         m_booClosed = True
+        Cancel = True
+        GLShutdown
+        Fury2VideoDriver_Shutdown
     End If
 End Sub
 

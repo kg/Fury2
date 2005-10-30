@@ -833,7 +833,7 @@ Public Sub RedrawSprites()
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.Rect
+Dim l_rctText As Win32.RECT
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long
@@ -1264,6 +1264,7 @@ On Error Resume Next
     tsFrames.Tabs.AddNew "Rectangle"
     tsFrames.Tabs.AddNew "Alignment"
     tsFrames.Tabs.AddNew "Script"
+    tsFrames.Tabs.AddNew "Secondary Images"
 End Sub
 
 'Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
@@ -1449,6 +1450,24 @@ Dim l_fraFrames() As Object, l_fraFrame As Fury2PoseFrame
                 InspectListItems insFrameOptions, lstFrames.SelectedItems
             Else
                 insFrameOptions.Inspect SelectedFrame, "Frame #" & m_lngSelectedFrame, True
+            End If
+        End If
+        insFrameOptions.Visible = True
+        insFrameOptions.ZOrder
+    Case "secondary images"
+        insFrameOptions.ShowHierarchy = True
+        If lstPoses.SelectedItemCount > 1 Then
+'            l_fraFrames = GetSelectedFrames
+'            insFrameOptions.InspectMultiple l_fraFrames
+            insFrameOptions.Inspect Nothing
+        Else
+            If lstFrames.SelectedItemCount > 1 Then
+'                InspectListItems insFrameOptions, lstFrames.SelectedItems
+                insFrameOptions.Inspect Nothing
+            Else
+                insFrameOptions.ClearStack
+                insFrameOptions.AddToStack SelectedFrame, "Frame #" & m_lngSelectedFrame
+                insFrameOptions.Inspect SelectedFrame.SecondaryImages, "Secondary Images", False, False
             End If
         End If
         insFrameOptions.Visible = True
@@ -1644,7 +1663,7 @@ End Function
 Private Sub tsFrames_Resize()
 On Error Resume Next
     Select Case LCase(Trim(tsFrames.SelectedTab.Text))
-    Case "options"
+    Case "options", "secondary images"
         insFrameOptions.Move (2) + tsFrames.Left, tsFrames.Top + 24, tsFrames.Width - 4, tsFrames.Height - 26
     Case "script"
         scFrame.Move (2) + tsFrames.Left, tsFrames.Top + 24, tsFrames.Width - 4, tsFrames.Height - 26
@@ -2122,7 +2141,7 @@ End Sub
 
 Private Sub lstFrames_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As PointAPI
+Dim l_ptMouse As POINTAPI
     If lstPoses.SelectedItemCount > 1 Then Exit Sub
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
@@ -2172,7 +2191,7 @@ End Sub
 
 Private Sub lstPoses_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As PointAPI
+Dim l_ptMouse As POINTAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstPoses.hwnd, l_ptMouse
@@ -2210,7 +2229,7 @@ End Sub
 
 Private Sub lstStatePoses_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
-Dim l_ptMouse As PointAPI
+Dim l_ptMouse As POINTAPI
 Dim l_lngItems As Long
     If SelectedState Is Nothing Then Exit Sub
     If Button = 1 Then
@@ -2235,7 +2254,7 @@ End Sub
 Private Sub lstStatePoses_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_lngStatePosesEnd As Long
-Dim l_ptMouse As PointAPI
+Dim l_ptMouse As POINTAPI
 Dim l_lngItems As Long
     If SelectedState Is Nothing Then Exit Sub
     If ((Button And 1) = 1) And m_booStatePosesDragging Then
@@ -2273,7 +2292,7 @@ End Sub
 
 Private Sub lstStates_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As PointAPI
+Dim l_ptMouse As POINTAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstStates.hwnd, l_ptMouse
@@ -2389,7 +2408,7 @@ Private Sub picSprites_MouseDown(Button As Integer, Shift As Integer, X As Singl
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.Rect
+Dim l_rctText As Win32.RECT
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long

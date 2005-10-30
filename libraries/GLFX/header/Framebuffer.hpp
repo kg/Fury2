@@ -6,31 +6,46 @@ public:
   int Width, Height;
 
   static inline void doBind(GLuint handle) {
-    // this extension is retarded
-    GLuint temp;
-    glGetIntegerv( GL_FRAMEBUFFER_BINDING_EXT, (GLint*)&temp);
-    if (temp == handle) return;
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, handle);
+    if (GLEW_EXT_framebuffer_object) {
+      // this extension is retarded
+      GLuint temp;
+      glGetIntegerv( GL_FRAMEBUFFER_BINDING_EXT, (GLint*)&temp);
+      if (temp == handle) return;
+      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, handle);
+    }
   }
 
   inline void recreate() {
-    GL::endDraw();
-    unbind();
-    create();
-    delete AttachedTexture;
-    AttachedTexture = GL::createTexture(Width, Height, false);
-    AttachedTexture->flipVertical();
-    setNamedTag(Image, Texture, AttachedTexture);
-    doBind(Handle);
-    attachTexture(*AttachedTexture);
-    doBind(0);
+    if (GLEW_EXT_framebuffer_object) {
+      GL::endDraw();
+      unbind();
+      create();
+      delete AttachedTexture;
+      AttachedTexture = GL::createTexture(Width, Height, false);
+      AttachedTexture->flipVertical();
+      setNamedTag(Image, Texture, AttachedTexture);
+      doBind(Handle);
+      attachTexture(*AttachedTexture);
+      doBind(0);
+    }
+  }
+
+  inline void destroy() {
+    if (Handle != 0) {
+      glDeleteFramebuffersEXT(1, &Handle);
+      Global->checkError();
+      Handle = 0;
+    }
   }
 
   inline void create() {
-    GL::endDraw();
-    Handle = 0;
-    glGenFramebuffersEXT(1, &Handle);
-    Global->checkError();
+    destroy();
+    if (GLEW_EXT_framebuffer_object) {
+      GL::endDraw();
+      Handle = 0;
+      glGenFramebuffersEXT(1, &Handle);
+      Global->checkError();
+    }
   }
 
   Framebuffer() {
@@ -51,14 +66,14 @@ public:
       recreate();
     }
     doBind(Handle);
-//    Global->checkError();
+    Global->checkError();
   }
 
   inline static void unbind() {
     GL::endDraw();
     GL::disableTextures();
     doBind(0);
-//    Global->checkError();
+    Global->checkError();
   }
 
   inline void attachTexture(Texture& tex) {
@@ -80,9 +95,6 @@ public:
     bind();
     detachTexture();
     unbind();
-    if (Handle != 0) {
-      glDeleteFramebuffersEXT(1, &Handle);
-      Handle = 0;
-    }
+    destroy();
   }
 };

@@ -1308,6 +1308,8 @@ void RenderFunction_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixel Sol
         SolidColor[::Blue] = AlphaFromLevel(aColor, SolidColor[::Blue]) + AlphaFromLevel(aArg, arg[::Blue]);
         SolidColor[::Green] = AlphaFromLevel(aColor, SolidColor[::Green]) + AlphaFromLevel(aArg, arg[::Green]);
         SolidColor[::Red] = AlphaFromLevel(aColor, SolidColor[::Red]) + AlphaFromLevel(aArg, arg[::Red]);
+      } else {
+        SolidColor = Premultiply(arg);
       }
       a = SolidColor[::Alpha];
       if (a) {
@@ -1362,6 +1364,84 @@ void RenderFunction_Font_SourceAlpha(Pixel *Dest, Pixel *Source, int Count, Pixe
           _Fill<Pixel>(Dest, SolidColor, Count);
         } else {          
           aSource = AlphaLevelLookup( a );
+          aDest = AlphaLevelLookup( a ^ 0xFF );
+          while (i--) {
+            (*Dest)[::Blue] = AlphaFromLevel(aDest, (*Dest)[::Blue]) + SolidColor[::Blue];
+            (*Dest)[::Green] = AlphaFromLevel(aDest, (*Dest)[::Green]) + SolidColor[::Green];
+            (*Dest)[::Red] = AlphaFromLevel(aDest, (*Dest)[::Red]) + SolidColor[::Red];
+            Dest++;
+          }
+        }
+      }
+    }
+}
+
+void RenderFunction_SourceAlpha_Premultiplied(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
+    AlphaLevel *aSource, *aDest;
+	  Pixel arg = Pixel(Argument);
+    int i = Count;
+    Byte a = 0;
+    if (Source) {
+      if (arg[::Alpha]) {
+        //AlphaLevel *aTint;
+        //int tR, tG, tB;
+        //aSource = AlphaLevelLookup(arg[::Alpha]);
+        //aTint = AlphaLevelLookup(arg[::Alpha] ^ 0xFF);
+        //tB = AlphaFromLevel(aSource, arg[::Blue]);
+        //tG = AlphaFromLevel(aSource, arg[::Green]);
+        //tR = AlphaFromLevel(aSource, arg[::Red]);
+        //while (i--) {
+        //  a = (*Source)[::Alpha];
+        //  if (a) {
+        //    if (a == 255) {
+        //      (*Dest)[::Blue] = AlphaFromLevel(aTint, (*Source)[::Blue]) + tB;
+        //      (*Dest)[::Green] = AlphaFromLevel(aTint, (*Source)[::Green]) + tG;
+        //      (*Dest)[::Red] = AlphaFromLevel(aTint, (*Source)[::Red]) + tR;
+        //    } else {
+        //      aSource = AlphaLevelLookup( a );
+        //      aDest = AlphaLevelLookup( a ^ 0xFF );
+        //      (*Dest)[::Blue] = AlphaFromLevel2(aDest, (*Dest)[::Blue], aSource, AlphaFromLevel(aTint, (*Source)[::Blue]) + tB);
+        //      (*Dest)[::Green] = AlphaFromLevel2(aDest, (*Dest)[::Green], aSource, AlphaFromLevel(aTint, (*Source)[::Green]) + tG);
+        //      (*Dest)[::Red] = AlphaFromLevel2(aDest, (*Dest)[::Red], aSource, AlphaFromLevel(aTint, (*Source)[::Red]) + tR);
+        //    }
+        //  }
+        //  Dest++;
+        //  Source++;
+        //}
+      } else {
+        while (i--) {
+          a = (*Source)[::Alpha];
+          if (a) {
+            if (a == 255) {
+              (*Dest)[::Blue] = (*Source)[::Blue];
+              (*Dest)[::Green] = (*Source)[::Green];
+              (*Dest)[::Red] = (*Source)[::Red];
+            } else {
+              aDest = AlphaLevelLookup( a ^ 0xFF );
+              (*Dest)[::Blue] = AlphaFromLevel(aDest, (*Dest)[::Blue]) + (*Source)[::Blue];
+              (*Dest)[::Green] = AlphaFromLevel(aDest, (*Dest)[::Green]) + (*Source)[::Green];
+              (*Dest)[::Red] = AlphaFromLevel(aDest, (*Dest)[::Red]) + (*Source)[::Red];
+            }
+          }
+          Dest++;
+          Source++;
+        }
+      }
+    } else {
+      if (arg[::Alpha]) {
+        //AlphaLevel *aArg, *aColor;
+        //aArg = AlphaLevelLookup(arg[::Alpha]);
+        //aColor = AlphaLevelLookup(arg[::Alpha] ^ 0xFF);
+        //SolidColor[::Blue] = AlphaFromLevel(aColor, SolidColor[::Blue]) + AlphaFromLevel(aArg, arg[::Blue]);
+        //SolidColor[::Green] = AlphaFromLevel(aColor, SolidColor[::Green]) + AlphaFromLevel(aArg, arg[::Green]);
+        //SolidColor[::Red] = AlphaFromLevel(aColor, SolidColor[::Red]) + AlphaFromLevel(aArg, arg[::Red]);
+      }
+      a = SolidColor[::Alpha];
+      if (a) {
+        if (a == 255) {
+          _Fill<Pixel>(Dest, SolidColor, Count);
+        } else {          
+//          aSource = AlphaLevelLookup( a );
           aDest = AlphaLevelLookup( a ^ 0xFF );
           while (i--) {
             (*Dest)[::Blue] = AlphaFromLevel(aDest, (*Dest)[::Blue]) + SolidColor[::Blue];
@@ -1576,6 +1656,10 @@ Export int GetMergeRenderer() {
 
 Export int GetSourceAlphaRenderer() {
   return (int)RenderFunction_SourceAlpha;
+}
+
+Export int GetPremultipliedSourceAlphaRenderer() {
+  return (int)RenderFunction_SourceAlpha_Premultiplied;
 }
 
 Export int GetFontSourceAlphaRenderer() {

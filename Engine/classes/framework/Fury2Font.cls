@@ -13,6 +13,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
 Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
+
 '
 '    Engine (Fury² Game Creation System Runtime Engine)
 '    Copyright (C) 2003 Kevin Gadd

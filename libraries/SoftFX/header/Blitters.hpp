@@ -59,6 +59,10 @@ SIGNATURE(Font_Merge_RGB) , Pixel Color END_SIGNATURE
 SIGNATURE(Font_Merge_RGB_Opacity) , Pixel Color, int Opacity END_SIGNATURE
 SIGNATURE(Automatic_Matte_Opacity) , int Opacity END_SIGNATURE
 SIGNATURE(Automatic_SourceAlpha_Opacity) , int Opacity END_SIGNATURE
+SIGNATURE(NormalMap) , FPoint3* LightVector, Pixel LightColor END_SIGNATURE
+SIGNATURE(NormalMap_Additive) , FPoint3* LightVector, Pixel LightColor END_SIGNATURE
+SIGNATURE(NormalMap_SourceAlpha) , FPoint3* LightVector, Pixel LightColor END_SIGNATURE
+SIGNATURE(NormalMap_Additive_SourceAlpha) , FPoint3* LightVector, Pixel LightColor END_SIGNATURE
 
 #define TSIGNATURE(name) \
     Export int BlitTile_##name (Image *Dest, Image *Source,   \

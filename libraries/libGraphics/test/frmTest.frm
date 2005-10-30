@@ -20,23 +20,6 @@ Begin VB.Form frmTest
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   400
    StartUpPosition =   2  'CenterScreen
-   Begin VB.TextBox Text1 
-      BeginProperty Font 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      Height          =   285
-      Left            =   120
-      TabIndex        =   2
-      Text            =   "ABCDEF abcdef Hello, World!"
-      Top             =   4140
-      Width           =   3150
-   End
    Begin VB.CommandButton cmdToggleDeform 
       Caption         =   "Toggle Deform"
       BeginProperty Font 
@@ -98,6 +81,8 @@ Dim m_lngTexture As Long
 Dim m_lngX As Long, m_lngY As Long
 Dim m_varPoly() As Variant
 Dim m_strUnicode As String
+Dim m_fp3Light As FPoint3
+Dim m_lngLightColor As Long
 Public UseHardware As Boolean
 Public EnableDeform As Boolean
 Const c_dblPi As Double = 3.14159265358979
@@ -188,14 +173,14 @@ Dim l_mshMesh As Fury2DeformationMesh
     'm_imgBuffer.Blit F2Rect(50, 50, m_imgBuffer.Width, m_imgBuffer.Height, False), , m_imgBuffer, , BlitMode_Normal
     'm_imgBuffer.AdjustRGB 0, 64, -64
 '    Set m_filFilter = F2EmbossFilter(1)
-    Set m_filFilter = F2BoxFilter(3)
+'    Set m_filFilter = F2BoxFilter(3)
 '    m_filFilter.Offset = 0.5
 '    m_filFilter.SetAll 0
 '    m_filFilter.Weight(1, 1) = 1
 '    m_filFilter.Divisor = 1
-    m_imgTextureBlend.Blit , , m_imgTexture(l_lngFrame), 1
-    m_imgTextureBlend.Blit , , m_imgTexture(WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))), l_sngS
-    m_imgMask.Clear F2RGB(127, 127, 127, 255)
+'    m_imgTextureBlend.Blit , , m_imgTexture(l_lngFrame), 1
+'    m_imgTextureBlend.Blit , , m_imgTexture(WrapValue(l_lngFrame + 1, 0, UBound(m_imgTexture))), l_sngS
+'    m_imgMask.Clear F2RGB(127, 127, 127, 255)
 '    m_imgMask.GradientFill m_imgMask.Rectangle, Array(F2RGB(0, 255, 0, 255), F2RGB(0, 0, 255, 255), "V"), RenderMode_Normal
 '    m_imgMask.GradientFill m_imgMask.Rectangle, Array(F2Black, F2Black, F2White, F2White), RenderMode_Normal
 '    m_imgMask.GradientFill m_imgMask.Rectangle, Array(F2Black, F2RGB(127, 127, 127, 255), F2RGB(127, 127, 127, 255), F2White), RenderMode_Normal
@@ -204,7 +189,7 @@ Dim l_mshMesh As Fury2DeformationMesh
 '    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(0, 0, 0, 255), l_sngR * 55, l_sngR * 55, RenderMode_SourceAlpha, 0.25
 '    m_imgMask.AntiAliasEllipse Array(100, 40), F2RGB(255, 255, 255, 255), 65, 65, RenderMode_Merge, 0.25, 6, 1
 '    m_imgMask.AntiAliasEllipse Array(40, 100), F2RGB(255, 255, 255, 255), 65, 65, RenderMode_Merge, 0.25, 6, 1
-    m_imgMask.GradientFilledArc Array(100, 100), F2RGB(0, 0, 127, 255), F2RGB(63, 63, 255, 255), 40, 40 + (87 - 73), l_sngR, l_sngR + 93, , 7
+'    m_imgMask.GradientFilledArc Array(100, 100), F2RGB(0, 0, 127, 255), F2RGB(63, 63, 255, 255), 40, 40 + (87 - 73), l_sngR, l_sngR + 93, , 7
 '    m_imgMask.Composite
     'SoftFX.Primitive_Arc_Filled_Gradient m_imgMask.Handle, 100, 100, 40, 70, l_sngR, l_sngR - 90, F2White, F2Black, 0, 10
 '    m_imgMask.CopyChannel m_imgMask, 3, 0
@@ -216,7 +201,7 @@ Dim l_mshMesh As Fury2DeformationMesh
     Set l_mshMesh = New Fury2DeformationMesh
     l_mshMesh.Resize ClipValue(CLng(Rnd * 32), 6, 32), ClipValue(CLng(Rnd * 32), 6, 32)
 '    l_mshMesh.SetAll 16, 0
-    l_mshMesh.ApplyHeightmap m_imgMask, , 32
+'    l_mshMesh.ApplyHeightmap m_imgMask, , 32
 '    l_mshMesh.XValue(0, 0) = 100
 '    l_mshMesh.YValue(0, 0) = 100
 '    l_mshMesh.XValue(99, 9) = 100
@@ -262,11 +247,15 @@ Dim l_mshMesh As Fury2DeformationMesh
 '    m_imgBuffer.SwapChannels 0, 2
 '    m_imgBuffer.Adjust -32
 '    m_imgMask.Draw m_imgBuffer, 200, 150, 1, 1, l_sngR, BlitMode_Additive, , ResampleMode_Linear
+    m_imgMask.Clear F2Black
+    m_imgMask.NormalMapBlit , , m_imgPattern, Array(m_fp3Light.X, m_fp3Light.Y, m_fp3Light.Z), m_lngLightColor, BlitMode_Normal
+'    SoftFX.Blit_NormalMap m_imgMask.Handle, m_imgPattern.Handle, m_imgMask.Rectangle.GetRectangle, 0, 0, m_fp3Light, m_lngLightColor
     m_imgBuffer.Clear F2Black
+    m_imgBuffer.Blit , , m_imgMask
     m_imgBuffer.ResetClipRectangle
-    m_fntFont.Draw m_imgBuffer, Text1.Text, F2Rect(20, 10, 350, 200, False), F2White
-    m_fntFont.Draw m_imgBuffer, m_strUnicode, F2Rect(20, 25, 350, 200, False), F2White
-    Debug.Print m_fntFont.CharacterCount
+'    m_fntFont.Draw m_imgBuffer, Text1.Text, F2Rect(20, 10, 350, 200, False), F2White
+'    m_fntFont.Draw m_imgBuffer, m_strUnicode, F2Rect(20, 25, 350, 200, False), F2White
+'    Debug.Print m_fntFont.CharacterCount
 '    For l_lngChar = 255 To 512
 '        Set l_imgChar = m_fntFont.Character(l_lngChar)
 '        l_imgChar.Draw m_imgBuffer, l_lngX, l_lngY, 1, 1, 0, BlitMode_SourceAlpha
@@ -283,7 +272,7 @@ Dim l_mshMesh As Fury2DeformationMesh
     l_rctText.Top = 0
     l_rctText.Right = 400
     l_rctText.Bottom = 300
-    Me.ForeColor = RGB(255, 255, 255)
+'    Me.ForeColor = RGB(255, 255, 255)
     'DrawText_Unicode Me.HDC, m_strUnicode, Len(m_strUnicode), l_rctText, DrawText_Align_Left Or DrawText_Align_Top
     l_sngS = l_sngS + 0.025
     If (l_sngS >= 2) Then
@@ -306,7 +295,7 @@ End Sub
 
 Private Sub Form_Load()
 On Error Resume Next
-    UseHardware = False
+    UseHardware = True
     Randomize Timer
     F2Init
     GLInit Me.HWND, Me.HDC
@@ -340,9 +329,9 @@ On Error Resume Next
 '    Set m_imgTexture = F2LoadImage("J:\chia\set00.png")
     m_imgTexture() = F2LoadImage("J:\water.png").Split(32, 32)
     Set m_imgTextureBlend = F2Image(32, 32)
-    Set m_imgPattern = F2Image(200, 200)
-    m_imgPattern.Blit , , F2LoadImage("J:\test.jpg")
-    Set m_imgMask = F2Image(200, 200)
+    Set m_imgPattern = F2Image(256, 256)
+    m_imgPattern.Blit , , F2LoadImage("C:\Documents and Settings\Kevin\My Documents\Projects\fury2\docs\Examples\Drawing\normal.png")
+    Set m_imgMask = F2Image(256, 256)
 '    m_imgMask.RadialGradientFill m_imgMask.Rectangle, Array(F2RGB(255, 0, 0, 255), F2RGB(127, 0, 0, 255)), RenderMode_Normal
 '    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(255, 0, 0, 255), 50, 50, RenderMode_SourceAlpha
 '    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(0, 0, 0, 255), 25, 25, RenderMode_SourceAlpha
@@ -370,10 +359,10 @@ On Error Resume Next
 ''    m_imgCopy.SavePNG "C:\test.png"
 '    m_imgCopy.Locked = False
     m_imgBuffer.Clear F2White
-    Set m_fntFont = New Fury2RasterFont
-    m_fntFont.ImportTTF Me.Font, True
+'    Set m_fntFont = New Fury2RasterFont
+'    m_fntFont.ImportTTF Me.Font, True
 '    m_fntFont.Refresh
-    m_strUnicode = ReadTextFile("C:\unicode.txt")
+'    m_strUnicode = ReadTextFile("C:\unicode.txt")
 '    Set m_fntSubfont = New Fury2RasterFont
 '    Me.Font.Italic = True
 '    m_fntSubfont.ImportTTF Me.Font
@@ -385,6 +374,10 @@ On Error Resume Next
 '    m_fntSubfont.ImportTTF Me.Font
 '    m_fntFont.AddSubFont m_fntSubfont, "Bold"
     Me.Font.Bold = False
+    m_lngLightColor = F2White
+    m_fp3Light.X = 1
+'    m_fp3Light.Y = 1
+'    m_fp3Light.Z = 1
     Redraw
 End Sub
 
@@ -394,6 +387,8 @@ End Sub
 
 Private Sub Form_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
+    m_fp3Light.X = (X / 127) - 1
+    m_fp3Light.Y = (Y / 127) - 1
     m_lngX = X
     m_lngY = Y
 End Sub

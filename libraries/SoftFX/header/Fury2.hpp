@@ -79,11 +79,27 @@ struct SpriteObstruction {
     Byte Type;
 };
 
+enum SecondaryImageTypes {
+    siOverlay = 0,
+    siNormalMap = 1,
+    siShadow = 2,
+    siLightMap = 3,
+    siGlowMap = 4,
+    siShadowMap = 5
+};
+
+struct SpriteSecondaryImage {
+    Image* pImage;
+    SecondaryImageTypes ImageType;
+};
+
 struct SpriteGraphic {
     Image *pImage;
     Rectangle Rectangle;
     float XCenter, YCenter;
     Pixel MaskColor;
+    SpriteSecondaryImage *pSecondaryImages;
+    int SecondaryImageCount;
 };
 
 struct SpritePosition {

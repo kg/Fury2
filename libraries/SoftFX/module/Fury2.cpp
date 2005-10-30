@@ -150,6 +150,22 @@ Export Tileset* AllocateEmptyTileset(int TileCount, int TileWidth, int TileHeigh
     return new Tileset(TileCount, TileWidth, TileHeight);
 }
 
+Export void PremultiplyTileset(Tileset *pTileset) {
+    if (!pTileset) return;
+    for (int i = 0; i < pTileset->TileCount; i++) {
+      FilterSimple_Premultiply(pTileset->tile(i), Null);
+    }
+    return;
+}
+
+Export void SetTilesetPremultiplied(Tileset *pTileset, int Premultiplied) {
+    if (!pTileset) return;
+    for (int i = 0; i < pTileset->TileCount; i++) {
+      pTileset->tile(i)->OptimizeData.premultiplied = (Premultiplied != 0);
+    }
+    return;
+}
+
 Export void SetTile(Tileset *pTileset, int Index, Image* NewImage) {
     if (!pTileset) return;
     return pTileset->setTile(Index, NewImage);
@@ -904,6 +920,8 @@ Polygon<TexturedVertex> poly;
 RenderFunction *renderer = Null;
 bool scaled = false, rotated = false;
 int iCount = 0, iTemp = 0;
+int iSecondaryImage = -1;
+Image* currentImage = 0;
 Pixel white = Pixel(255,255,255,255);
     if (!Start) return Failure;
     if (!Camera) return Failure;
@@ -917,169 +935,184 @@ Pixel white = Pixel(255,255,255,255);
           pTarget = Camera->pRenderTargets[pCurrent->Params.RenderTarget];
         }
         if ((pCurrent->Params.Alpha != 0)) {
-          if (pCurrent->Graphic.pImage) {
-            w = pCurrent->Graphic.Rectangle.Width;
-            h = pCurrent->Graphic.Rectangle.Height;
-            x = (pCurrent->Position.X * Camera->ParallaxX) - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
-            y = (pCurrent->Position.Y * Camera->ParallaxY) - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
-            switch  (pCurrent->Params.SpecialFX) {
-            default:
-            case 0:
-              break;
-            case fxHardShadow:
-              break;
-            case fxSoftShadow:
-              if (ShadowImage) {
-                rctDest.Left = x - (pCurrent->Obstruction.W / 2.0);
-                rctDest.Top = y - (pCurrent->Obstruction.H);
-                rctDest.Width = pCurrent->Obstruction.W;
-                rctDest.Height = pCurrent->Obstruction.H;
-                rctSource = ShadowImage->getRectangle();
-                BlitResample_Subtractive_Opacity(pTarget, ShadowImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
-              }
-              break;
-            case fxCastShadow:
-              break;
+          switch  (pCurrent->Params.SpecialFX) {
+          default:
+          case 0:
+            break;
+          case fxHardShadow:
+            break;
+          case fxSoftShadow:
+            if (ShadowImage) {
+              rctDest.Left = x - (pCurrent->Obstruction.W / 2.0);
+              rctDest.Top = y - (pCurrent->Obstruction.H);
+              rctDest.Width = pCurrent->Obstruction.W;
+              rctDest.Height = pCurrent->Obstruction.H;
+              rctSource = ShadowImage->getRectangle();
+              BlitResample_Subtractive_Opacity(pTarget, ShadowImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
             }
-            s = pCurrent->Params.Scale;
-            r = pCurrent->Params.Angle;
-            scaled = (s != 1);
-            rotated = (((int)r) % 360) != 0;
-            if ((!scaled) && (!rotated)) {
-              w /= 2;
-              if ((y) < Camera->Rectangle.Top) goto nextsprite;
-              if ((y - h) > Camera->Rectangle.bottom()) goto nextsprite;
-              if ((x + w) < Camera->Rectangle.Left) goto nextsprite;
-              if ((x - w) > Camera->Rectangle.right()) goto nextsprite;
-              rctDest.Left = ceil(x - (w));
-              rctDest.Top = ceil(y - h);
-              rctDest.Width = pCurrent->Graphic.Rectangle.Width;
-              rctDest.Height = pCurrent->Graphic.Rectangle.Height;
-              rctSource = pCurrent->Graphic.Rectangle;
-              if (Clip2D_PairToRect(&rctDest, &rctSource, &(Camera->Rectangle))) {
-                  switch(pCurrent->Params.BlitMode) {
-                  default:
-                  case 0:
-                      iTemp = pCurrent->Graphic.pImage->MatteColor.V;
-                      pCurrent->Graphic.pImage->MatteColor = pCurrent->Graphic.MaskColor;
-                      if (pCurrent->Params.Color[::Alpha] > 0) {
-                        BlitSimple_Matte_Tint_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, pCurrent->Params.Color, abs(pCurrent->Params.Alpha) * Camera->Alpha);
-                      } else {
-                        BlitSimple_Matte_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
-                      }
-                      pCurrent->Graphic.pImage->MatteColor.V = iTemp;
-                      break;
-                  case 1:
-                      if (pCurrent->Params.Color[::Alpha] > 0) {
-                        BlitSimple_SourceAlpha_Tint_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, pCurrent->Params.Color, abs(pCurrent->Params.Alpha) * Camera->Alpha);
-                      } else {
-                        BlitSimple_Automatic_SourceAlpha_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
-                      }
-                      break;
-                  case 2:
-                      BlitSimple_Additive_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
-                      break;
-                  case 3:
-                      BlitSimple_Subtractive_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
-                      break;
-                  case 4:
-                      // Gamma
-                      break;
-                  case 5:
-                      BlitSimple_Screen_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
-                      break;
-                  case 6:
-                      BlitSimple_Multiply_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
-                      break;
-                  case 7:
-//                      BlitSimple_Lightmap_RGB_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
-                      // Lightmap
-                      break;
-                  case 8:
-                      BlitSimple_Merge_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
-                      break;
-                  }
+            break;
+          case fxCastShadow:
+            break;
+          }
+          iSecondaryImage = -1;
+          while (iSecondaryImage < pCurrent->Graphic.SecondaryImageCount) {
+            if (iSecondaryImage >= 0) {
+              switch (pCurrent->Graphic.pSecondaryImages[iSecondaryImage].ImageType) {
+                case siOverlay:
+                  currentImage = pCurrent->Graphic.pSecondaryImages[iSecondaryImage].pImage;
+                default:
+                  currentImage = 0;
+                  break;
               }
             } else {
-              if (rotated) {
-                switch(pCurrent->Params.BlitMode) {
-                default:
-                  renderer = Null;
-                  break;
-                case 1:
-                  renderer = RenderFunction_SourceAlpha;
-                  break;
-                case 2:
-                  renderer = RenderFunction_Additive;
-                  break;
-                case 3:
-                  renderer = RenderFunction_Subtractive;
-                  break;
-                case 5:
-                  renderer = RenderFunction_Screen;
-                  break;
-                case 8:
-                  renderer = RenderFunction_Merge;
-                  break;
-                }
-                x = (pCurrent->Position.X * Camera->ParallaxX) - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
-                y = (pCurrent->Position.Y * Camera->ParallaxY) - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
-                r *= Radian;
-                y -= (h * s / 2);
-                s /= 2;
-                w *= abs(s); h *= s;
-                poly.Empty();
-                Rotate4Points(w, h, r, px, py);
-                poly.Append(TexturedVertex(px[0] + x, py[0] + y, pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.Top));
-                poly.Append(TexturedVertex(px[1] + x, py[1] + y, pCurrent->Graphic.Rectangle.right_exclusive(), pCurrent->Graphic.Rectangle.Top));
-                poly.Append(TexturedVertex(px[2] + x, py[2] + y, pCurrent->Graphic.Rectangle.right_exclusive(), pCurrent->Graphic.Rectangle.bottom_exclusive()));
-                poly.Append(TexturedVertex(px[3] + x, py[3] + y, pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.bottom_exclusive()));
-                FilterSimple_ConvexPolygon_Textured(pTarget, pCurrent->Graphic.pImage, &poly, DefaultSampleFunction, renderer, pCurrent->Params.Color.V);
-              } else {
-                w *= abs(pCurrent->Params.Scale) / 2;
+              currentImage = pCurrent->Graphic.pImage;
+            }
+            iSecondaryImage++;
+            if (currentImage) {
+              w = pCurrent->Graphic.Rectangle.Width;
+              h = pCurrent->Graphic.Rectangle.Height;
+              x = (pCurrent->Position.X * Camera->ParallaxX) - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
+              y = (pCurrent->Position.Y * Camera->ParallaxY) - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
+              s = pCurrent->Params.Scale;
+              r = pCurrent->Params.Angle;
+              scaled = (s != 1);
+              rotated = (((int)r) % 360) != 0;
+              if ((!scaled) && (!rotated)) {
+                w /= 2;
+                if ((y) < Camera->Rectangle.Top) goto nextsprite;
+                if ((y - h) > Camera->Rectangle.bottom()) goto nextsprite;
+                if ((x + w) < Camera->Rectangle.Left) goto nextsprite;
+                if ((x - w) > Camera->Rectangle.right()) goto nextsprite;
                 rctDest.Left = ceil(x - (w));
-                rctDest.Top = ceil(y - (h * pCurrent->Params.Scale));
-                rctDest.Width = pCurrent->Graphic.Rectangle.Width * abs(pCurrent->Params.Scale);
-                rctDest.Height = pCurrent->Graphic.Rectangle.Height * pCurrent->Params.Scale;
-                rctDest.normalize();
-                if (pCurrent->Params.Scale < 0) { 
-                  rctSource = pCurrent->Graphic.Rectangle;
-                  rctSource.Top += rctSource.Height;
-                  rctSource.Height = -rctSource.Height;
-                } else {
-                  rctSource = pCurrent->Graphic.Rectangle;
+                rctDest.Top = ceil(y - h);
+                rctDest.Width = pCurrent->Graphic.Rectangle.Width;
+                rctDest.Height = pCurrent->Graphic.Rectangle.Height;
+                rctSource = pCurrent->Graphic.Rectangle;
+                if (Clip2D_PairToRect(&rctDest, &rctSource, &(Camera->Rectangle))) {
+                    switch(pCurrent->Params.BlitMode) {
+                    default:
+                    case 0:
+                        iTemp = currentImage->MatteColor.V;
+                        currentImage->MatteColor = pCurrent->Graphic.MaskColor;
+                        if (pCurrent->Params.Color[::Alpha] > 0) {
+                          BlitSimple_Matte_Tint_Opacity(pTarget, currentImage, &rctDest, rctSource.Left, rctSource.Top, pCurrent->Params.Color, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        } else {
+                          BlitSimple_Matte_Opacity(pTarget, currentImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        }
+                        currentImage->MatteColor.V = iTemp;
+                        break;
+                    case 1:
+                        if (pCurrent->Params.Color[::Alpha] > 0) {
+                          BlitSimple_SourceAlpha_Tint_Opacity(pTarget, currentImage, &rctDest, rctSource.Left, rctSource.Top, pCurrent->Params.Color, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        } else {
+                          BlitSimple_Automatic_SourceAlpha_Opacity(pTarget, currentImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        }
+                        break;
+                    case 2:
+                        BlitSimple_Additive_Opacity(pTarget, currentImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        break;
+                    case 3:
+                        BlitSimple_Subtractive_Opacity(pTarget, currentImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        break;
+                    case 4:
+                        // Gamma
+                        break;
+                    case 5:
+                        BlitSimple_Screen_Opacity(pTarget, currentImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        break;
+                    case 6:
+                        BlitSimple_Multiply_Opacity(pTarget, currentImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        break;
+                    case 7:
+  //                      BlitSimple_Lightmap_RGB_Opacity(pTarget, currentImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        // Lightmap
+                        break;
+                    case 8:
+                        BlitSimple_Merge_Opacity(pTarget, currentImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
+                        break;
+                    }
                 }
-                rctCopy = rctDest;
-                if (ClipRectangle_Rect(&rctCopy, &(Camera->Rectangle))) {
+              } else {
+                if (rotated) {
                   switch(pCurrent->Params.BlitMode) {
                   default:
-                  case 0:
-                    BlitResample_SourceAlpha_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                    renderer = Null;
                     break;
                   case 1:
-                    BlitResample_SourceAlpha_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                    renderer = RenderFunction_SourceAlpha;
                     break;
                   case 2:
-                    BlitResample_Additive_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                    renderer = RenderFunction_Additive;
                     break;
                   case 3:
-                    BlitResample_Subtractive_Opacity(pTarget, pCurrent->Graphic.pImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                    renderer = RenderFunction_Subtractive;
                     break;
+                  case 5:
+                    renderer = RenderFunction_Screen;
+                    break;
+                  case 8:
+                    renderer = RenderFunction_Merge;
+                    break;
+                  }
+                  x = (pCurrent->Position.X * Camera->ParallaxX) - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
+                  y = (pCurrent->Position.Y * Camera->ParallaxY) - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
+                  r *= Radian;
+                  y -= (h * s / 2);
+                  s /= 2;
+                  w *= abs(s); h *= s;
+                  poly.Empty();
+                  Rotate4Points(w, h, r, px, py);
+                  poly.Append(TexturedVertex(px[0] + x, py[0] + y, pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.Top));
+                  poly.Append(TexturedVertex(px[1] + x, py[1] + y, pCurrent->Graphic.Rectangle.right_exclusive(), pCurrent->Graphic.Rectangle.Top));
+                  poly.Append(TexturedVertex(px[2] + x, py[2] + y, pCurrent->Graphic.Rectangle.right_exclusive(), pCurrent->Graphic.Rectangle.bottom_exclusive()));
+                  poly.Append(TexturedVertex(px[3] + x, py[3] + y, pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.bottom_exclusive()));
+                  FilterSimple_ConvexPolygon_Textured(pTarget, currentImage, &poly, DefaultSampleFunction, renderer, pCurrent->Params.Color.V);
+                } else {
+                  w *= abs(pCurrent->Params.Scale) / 2;
+                  rctDest.Left = ceil(x - (w));
+                  rctDest.Top = ceil(y - (h * pCurrent->Params.Scale));
+                  rctDest.Width = pCurrent->Graphic.Rectangle.Width * abs(pCurrent->Params.Scale);
+                  rctDest.Height = pCurrent->Graphic.Rectangle.Height * pCurrent->Params.Scale;
+                  rctDest.normalize();
+                  if (pCurrent->Params.Scale < 0) { 
+                    rctSource = pCurrent->Graphic.Rectangle;
+                    rctSource.Top += rctSource.Height;
+                    rctSource.Height = -rctSource.Height;
+                  } else {
+                    rctSource = pCurrent->Graphic.Rectangle;
+                  }
+                  rctCopy = rctDest;
+                  if (ClipRectangle_Rect(&rctCopy, &(Camera->Rectangle))) {
+                    switch(pCurrent->Params.BlitMode) {
+                    default:
+                    case 0:
+                      BlitResample_SourceAlpha_Opacity(pTarget, currentImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                      break;
+                    case 1:
+                      BlitResample_SourceAlpha_Opacity(pTarget, currentImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                      break;
+                    case 2:
+                      BlitResample_Additive_Opacity(pTarget, currentImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                      break;
+                    case 3:
+                      BlitResample_Subtractive_Opacity(pTarget, currentImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+                      break;
+                    }
                   }
                 }
               }
             }
-            if (pCurrent->pAttachedGraphic) {
-              if (pCurrent->pAttachedGraphic->pFrames) {
-                pImage = pCurrent->pAttachedGraphic->pFrames[ClipValue(pCurrent->pAttachedGraphic->Frame,0,pCurrent->pAttachedGraphic->FrameCount - 1)];
-                if (pImage) {
-                  rctDest.Left = ceil(x - (pCurrent->pAttachedGraphic->XCenter - (pImage->Width/2)));
-                  rctDest.Top = ceil(y - (h + (float)pImage->Height) - pCurrent->pAttachedGraphic->YCenter);
-                  rctDest.Width = pImage->Width;
-                  rctDest.Height = pImage->Height;
-                  ModedBlit((SFX_BlitModes)(pCurrent->pAttachedGraphic->BlitMode), pTarget, pImage, &rctDest, 0, 0, pCurrent->pAttachedGraphic->Alpha);
-                }
-              }
+          }
+        }
+        if (pCurrent->pAttachedGraphic) {
+          if (pCurrent->pAttachedGraphic->pFrames) {
+            pImage = pCurrent->pAttachedGraphic->pFrames[ClipValue(pCurrent->pAttachedGraphic->Frame,0,pCurrent->pAttachedGraphic->FrameCount - 1)];
+            if (pImage) {
+              rctDest.Left = ceil(x - (pCurrent->pAttachedGraphic->XCenter - (pImage->Width/2)));
+              rctDest.Top = ceil(y - (h + (float)pImage->Height) - pCurrent->pAttachedGraphic->YCenter);
+              rctDest.Width = pImage->Width;
+              rctDest.Height = pImage->Height;
+              ModedBlit((SFX_BlitModes)(pCurrent->pAttachedGraphic->BlitMode), pTarget, pImage, &rctDest, 0, 0, pCurrent->pAttachedGraphic->Alpha);
             }
           }
         }
@@ -2217,7 +2250,7 @@ Polygon<FPoint> ShadowPoly;
 Polygon<GradientVertex> GradientShadowPoly;
 GradientVertex ShadowVertex;
 FPoint Point, LightPoint, LinePoint[4], LineCenter;
-FVector Vector;
+FPoint Vector;
 Rectangle FillRect, LightRect, CameraRect, CacheRect, ScratchRect;
 FRect LightFRect;
 float LightDistance, Falloff;
@@ -2229,6 +2262,7 @@ bool Ignore = false, Scaling = false;
 int SpriteCount = 0;
 Pixel SavedColor, LightColor;
 Image* RenderTarget;
+Image* NormalMap;
 int iOffsetX = 0, iOffsetY = 0;
 float OffsetX = 0, OffsetY = 0;
 int LightIterations = 0;
@@ -2353,12 +2387,12 @@ float FuzzyOffset = 0, FlickerAmount = 0;
 
           Vector.X = sin((Light->Angle - (Light->Spread / 2)) * Radian);
           Vector.Y = -cos((Light->Angle - (Light->Spread / 2)) * Radian);
-          Vector.Multiply(10000);
+          Vector *= 10000;
           ShadowPoly.Append(FPoint(LightPoint.X + Vector.X, LightPoint.Y + Vector.Y));
 
           Vector.X = sin((Light->Angle + (Light->Spread / 2)) * Radian);
           Vector.Y = -cos((Light->Angle + (Light->Spread / 2)) * Radian);
-          Vector.Multiply(10000);
+          Vector *= 10000;
           ShadowPoly.Append(FPoint(LightPoint.X + Vector.X, LightPoint.Y + Vector.Y));
 
           ShadowPoly.Finalize();
@@ -2384,7 +2418,7 @@ fuzzyrender:
 
           Vector.X = sin((Light->Angle - (Light->Spread / 2) + (FuzzyOffset * 2.5)) * Radian);
           Vector.Y = -cos((Light->Angle - (Light->Spread / 2) + (FuzzyOffset * 2.5)) * Radian);
-          Vector.Multiply(Light->FalloffDistance * Camera->OutputScaleRatio + FuzzyOffset);
+          Vector *= (Light->FalloffDistance * Camera->OutputScaleRatio + FuzzyOffset);
           ShadowVertex.X = LightPoint.X + Vector.X;
           ShadowVertex.Y = LightPoint.Y + Vector.Y;
           ShadowVertex.Color = Pixel(0, 0, 0, LightColor[::Alpha]).V;
@@ -2392,7 +2426,7 @@ fuzzyrender:
 
           Vector.X = sin((Light->Angle + (Light->Spread / 2) - (FuzzyOffset * 2.5)) * Radian);
           Vector.Y = -cos((Light->Angle + (Light->Spread / 2) - (FuzzyOffset * 2.5)) * Radian);
-          Vector.Multiply(Light->FalloffDistance * Camera->OutputScaleRatio + FuzzyOffset);
+          Vector *= (Light->FalloffDistance * Camera->OutputScaleRatio + FuzzyOffset);
           ShadowVertex.X = LightPoint.X + Vector.X;
           ShadowVertex.Y = LightPoint.Y + Vector.Y;
           ShadowVertex.Color = Pixel(0, 0, 0, LightColor[::Alpha]).V;
@@ -2465,21 +2499,21 @@ fuzzyrender:
 							LinePoint[1].Y *= Camera->OutputScaleRatio;
 						}
 
-						Vector = FVector(LightPoint, LinePoint[0]);
+						Vector = FPoint(LightPoint, LinePoint[0]);
 						vs = (sqrt((Vector.X * Vector.X) + (Vector.Y * Vector.Y)));
 						Vector.X = afloor(Vector.X / vs);
 						Vector.Y = afloor(Vector.Y / vs);
 						ShadowPoly.SetVertex(0, FPoint(LinePoint[0].X + Vector.X, LinePoint[0].Y + Vector.Y));
 
-						Vector = FVector(LightPoint, LinePoint[0]);
-						Vector.Multiply(10000);
+						Vector = FPoint(LightPoint, LinePoint[0]);
+						Vector *= 10000;
 						ShadowPoly.SetVertex(1, FPoint(LinePoint[0].X + Vector.X, LinePoint[0].Y + Vector.Y));
 
-						Vector = FVector(LightPoint, LinePoint[1]);
-						Vector.Multiply(10000);
+						Vector = FPoint(LightPoint, LinePoint[1]);
+						Vector *= 10000;
 						ShadowPoly.SetVertex(2, FPoint(LinePoint[1].X + Vector.X, LinePoint[1].Y + Vector.Y));
 
-						Vector = FVector(LightPoint, LinePoint[1]);
+						Vector = FPoint(LightPoint, LinePoint[1]);
 						vs = (sqrt((Vector.X * Vector.X) + (Vector.Y * Vector.Y)));
 						Vector.X = afloor(Vector.X / vs);
 						Vector.Y = afloor(Vector.Y / vs);
@@ -2561,12 +2595,12 @@ fuzzyrender:
               }
               ShadowPoly.SetVertex(0, LinePoint[0]);
 
-              Vector = FVector(LightPoint, LinePoint[0]);
-              Vector.Multiply(mul);
+              Vector = FPoint(LightPoint, LinePoint[0]);
+              Vector *= mul;
               ShadowPoly.SetVertex(1, FPoint(LinePoint[0].X + Vector.X, LinePoint[0].Y + Vector.Y));
 
-              Vector = FVector(LightPoint, LinePoint[1]);
-              Vector.Multiply(mul);
+              Vector = FPoint(LightPoint, LinePoint[1]);
+              Vector *= mul;
               ShadowPoly.SetVertex(2, FPoint(LinePoint[1].X + Vector.X, LinePoint[1].Y + Vector.Y));
 
               ShadowPoly.SetVertex(3, LinePoint[1]);
@@ -2682,6 +2716,13 @@ fuzzyrender:
     while (SortEntry) {
       if (SortEntry->type == Lighting::sprite) {
         Sprite = SortEntry->Sprite;
+        NormalMap = 0;
+        for (int si = 0; si < Sprite->Graphic.SecondaryImageCount; si++) {
+          if (Sprite->Graphic.pSecondaryImages[si].ImageType == siNormalMap) {
+            NormalMap = Sprite->Graphic.pSecondaryImages[si].pImage;
+            break;
+          }
+        }
         SavedColor = Sprite->Params.IlluminationLevel;
         SavedColor[::Alpha] = 255;
         w = Sprite->Graphic.Rectangle.Width / 2; h = Sprite->Graphic.Rectangle.Height;
@@ -2694,24 +2735,55 @@ fuzzyrender:
           rctDest.Width = Sprite->Graphic.Rectangle.Width; rctDest.Height = Sprite->Graphic.Rectangle.Height;
           rctSource = Sprite->Graphic.Rectangle;
           if (Clip2D_PairToRect(&rctDest, &rctSource, &(Camera->OutputRectangle))) {
-            switch(Sprite->Params.BlitMode) {
-            default: case 0:
-              iTemp = Sprite->Graphic.pImage->MatteColor.V;
-              Sprite->Graphic.pImage->MatteColor = Sprite->Graphic.MaskColor;
-              BlitSimple_Matte_Tint_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, SavedColor, abs(Sprite->Params.Alpha) * 255);
-              Sprite->Graphic.pImage->MatteColor.V = iTemp;
-              break;
-            case 1:
-              BlitSimple_SourceAlpha_Tint_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, SavedColor, abs(Sprite->Params.Alpha) * 255);
-              break;
-            case 7:
-              if (Camera->SaturationMode == 1) {
-                BlitSimple_Screen_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(Sprite->Params.Alpha) * 255);
-              } else {
-                BlitSimple_Additive_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(Sprite->Params.Alpha) * 255);
-              }
-            case 2: case 3: case 4: case 5: case 6: case 8:
+            if (NormalMap) {
+              SavedColor = Environment->AmbientLight;
+              SavedColor[::Alpha] = 255;
+              switch(Sprite->Params.BlitMode) {
+              case 0:
+                iTemp = Sprite->Graphic.pImage->MatteColor.V;
+                Sprite->Graphic.pImage->MatteColor = Sprite->Graphic.MaskColor;
+                BlitSimple_Matte_Tint_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, SavedColor, abs(Sprite->Params.Alpha) * 255);
+                Sprite->Graphic.pImage->MatteColor.V = iTemp;
                 break;
+              case 1:
+                BlitSimple_SourceAlpha_Tint_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, SavedColor, abs(Sprite->Params.Alpha) * 255);
+                break;
+              }
+              for (int l = 0; l < Environment->LightCount; l++) {
+                bool obscured = SightCheck(Environment, Environment->Lights[l].X, Environment->Lights[l].Y, Sprite->Position.X, Sprite->Position.Y, Sprite, Environment->Lights[l].Attached) != 1;
+                if (obscured) {
+                } else {
+                  FPoint3 LightVector = FPoint3(FPoint3(Environment->Lights[l].X, Environment->Lights[l].Y), FPoint3(Sprite->Position.X, Sprite->Position.Y, Sprite->Position.Z));
+                  Byte a = 255;
+                  if (Environment->Lights[l].FalloffDistance > 0) {
+                    int d = LightVector.length() * 255;
+                    a = 255 - ClipByte(d / Environment->Lights[l].FalloffDistance);
+                  }
+                  Pixel LightColor = Environment->Lights[l].Color;
+                  LightColor[::Alpha] = a;
+                  BlitSimple_NormalMap_Additive_SourceAlpha(Camera->OutputBuffer, NormalMap, &rctDest, rctSource.Left, rctSource.Top, &LightVector, LightColor);
+                }
+              }
+            } else {
+              switch(Sprite->Params.BlitMode) {
+              default: case 0:
+                iTemp = Sprite->Graphic.pImage->MatteColor.V;
+                Sprite->Graphic.pImage->MatteColor = Sprite->Graphic.MaskColor;
+                BlitSimple_Matte_Tint_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, SavedColor, abs(Sprite->Params.Alpha) * 255);
+                Sprite->Graphic.pImage->MatteColor.V = iTemp;
+                break;
+              case 1:
+                BlitSimple_SourceAlpha_Tint_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, SavedColor, abs(Sprite->Params.Alpha) * 255);
+                break;
+              case 7:
+                if (Camera->SaturationMode == 1) {
+                  BlitSimple_Screen_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(Sprite->Params.Alpha) * 255);
+                } else {
+                  BlitSimple_Additive_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(Sprite->Params.Alpha) * 255);
+                }
+              case 2: case 3: case 4: case 5: case 6: case 8:
+                  break;
+              }
             }
           }
         }

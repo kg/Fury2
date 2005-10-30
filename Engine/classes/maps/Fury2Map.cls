@@ -108,7 +108,7 @@ Dim m_sngX As Single, m_sngY As Single
     m_sngY = CSng(Y)
     If Sprite Is Nothing Then Exit Sub
     If m_lngLayer < 1 Then m_lngLayer = 1
-    If m_lngLayer > m_lyrLayers.Count Then m_lngLayer = m_lyrLayers.Count
+    If m_lngLayer > m_lyrLayers.count Then m_lngLayer = m_lyrLayers.count
     m_lyrLayers(m_lngLayer).Sprites.Add Sprite, True
     If m_sngX <> -32767 And m_sngY <> -32767 Then
         Sprite.Initialize
@@ -122,7 +122,7 @@ Attribute Areas.VB_Description = "All the areas defined for the map."
     Set Areas = m_araAreas
 End Property
 
-Function Blocked(ByVal Layer As Long, ByVal X As Long, ByVal Y As Long, Optional ByVal W As Long = -32767, Optional ByVal H As Long = -32767, Optional ByVal ExcludeSprite As Fury2Sprite) As Boolean
+Function Blocked(ByVal Layer As Long, ByVal X As Single, ByVal Y As Single, Optional ByVal W As Single = 1, Optional ByVal H As Single = 1, Optional ByVal ExcludeSprite As Fury2Sprite) As Boolean
 On Error Resume Next
 Dim l_lngResult As Long
 Dim l_rctArea As Fury2Rect
@@ -130,11 +130,9 @@ Dim l_frArea As FRect
 Dim l_booColliderBlocked As Boolean
 Dim l_lngLayer As Long
     l_lngLayer = CLng(Layer)
-    If l_lngLayer < 1 Or l_lngLayer > m_lyrLayers.Count Then
+    If l_lngLayer < 1 Or l_lngLayer > m_lyrLayers.count Then
         Exit Function
     End If
-    If W = -32767 Then W = 1
-    If H = -32767 Then H = 1
     Set l_rctArea = F2Rect(X, Y, W, H, False)
     With l_frArea
         .x1 = X
@@ -198,8 +196,8 @@ Dim l_lyrDest As Fury2MapLayer
 Dim l_sprSprite As Fury2Sprite, l_sprNew As Fury2Sprite
 Dim l_araArea As Fury2Area, l_araNew As Fury2Area
 Dim l_lnLines() As FLine, l_lngLines As Long
-    If Layers.Count = 0 Then Exit Sub
-    For l_lngLayer = 1 To Layers.Count
+    If Layers.count = 0 Then Exit Sub
+    For l_lngLayer = 1 To Layers.count
         Set l_lyrDest = Target.Layers(l_lngLayer + Layer - 1)
         With Layers(l_lngLayer)
             For l_lngY = 0 To .Height - 1
@@ -362,16 +360,16 @@ Dim l_sngProgMul As Single
     l_objScript.Initialize
     l_objScript.Init
     Set l_objScript = Nothing
-    l_sngProgMul = 60 / m_lyrLayers.Count
+    l_sngProgMul = 60 / m_lyrLayers.count
     Engine.LoadProgress "Map", 10
-    If m_lyrLayers.Count > 0 Then
-        For l_lngLayers = 1 To m_lyrLayers.Count
+    If m_lyrLayers.count > 0 Then
+        For l_lngLayers = 1 To m_lyrLayers.count
             With m_lyrLayers(l_lngLayers)
                 .CreateCollisionMatrix Me.MaxX, Me.MaxY
                 .UpdateDepthmap
                 Set .Sprites.Parent = Me
                 .Sprites.SetLayer l_lngLayers
-                If .Sprites.Count > 0 Then
+                If .Sprites.count > 0 Then
                     l_lngSprites = 1
                     For Each l_sprSprite In .Sprites
                         Set l_sprSprite = .Sprites(l_lngSprites)
@@ -380,7 +378,7 @@ Dim l_sngProgMul As Single
                         If l_sprSprite.Destroyed Then
                             ' Sprite removed itself from sprite list (Sprite.Die)
                             l_lngSprites = l_lngSprites - 1
-                            If l_lngSprites < 1 Or l_lngSprites > .Sprites.Count Then Exit For
+                            If l_lngSprites < 1 Or l_lngSprites > .Sprites.count Then Exit For
                         Else
                             m_sprSprites.Add l_sprSprite, False
                         End If
@@ -389,20 +387,20 @@ Dim l_sngProgMul As Single
                 .TileAnimations.RedimMapTable .Tileset.TileCount
                 .Lighting.Init Me.MaxX, Me.MaxY
             End With
-            Engine.LoadProgress "Map", 10 + ((30 / m_lyrLayers.Count) * l_lngLayers)
+            Engine.LoadProgress "Map", 10 + ((30 / m_lyrLayers.count) * l_lngLayers)
         Next l_lngLayers
     End If
-    If m_araAreas.Count > 0 Then
-        For l_lngAreas = 1 To m_araAreas.Count
+    If m_araAreas.count > 0 Then
+        For l_lngAreas = 1 To m_araAreas.count
             With m_araAreas(l_lngAreas)
                 .SetParent Me
-                .Index = l_lngAreas
+                .index = l_lngAreas
                 Set l_objScript = .Script
                     l_objScript.Init
                     l_objScript.Initialize
                 Set l_objScript = Nothing
             End With
-            Engine.LoadProgress "Map", 40 + ((10 / m_araAreas.Count) * l_lngAreas)
+            Engine.LoadProgress "Map", 40 + ((10 / m_araAreas.count) * l_lngAreas)
         Next l_lngAreas
     End If
     Engine.LoadProgress "Map", 50
@@ -502,7 +500,7 @@ Dim l_lngIndex As Long
     m_sprSprites.SetEngine Me.Engine
     For Each l_lyrLayer In m_lyrLayers
         l_lngIndex = l_lngIndex + 1
-        l_lyrLayer.Index = l_lngIndex
+        l_lyrLayer.index = l_lngIndex
         l_lyrLayer.Sprites.SetParent Me
         l_lyrLayer.Sprites.SetEngine Me.Engine
         For Each l_sprSprite In l_lyrLayer.Sprites
@@ -533,8 +531,8 @@ Dim l_lngIndex As Long
         For Each l_sprSprite In l_lyrLayer.Sprites
             l_lngIndex = l_lngIndex + 1
             l_sprSprite.SetParent Me
-            l_sprSprite.Layer = l_lyrLayer.Index
-            l_sprSprite.Index = l_lngIndex
+            l_sprSprite.Layer = l_lyrLayer.index
+            l_sprSprite.index = l_lngIndex
             l_sprSprite.Load
         Next l_sprSprite
     Next l_lyrLayer
@@ -641,7 +639,7 @@ End Sub
 Public Sub Resize(ByVal Width As Long, ByVal Height As Long)
 Attribute Resize.VB_Description = "Resizes the map's layers, throwing away any existing data."
 Dim m_lyrLayer As Fury2MapLayer
-    If m_lyrLayers.Count > 0 Then
+    If m_lyrLayers.count > 0 Then
         For Each m_lyrLayer In m_lyrLayers
             m_lyrLayer.Resize Width, Height
         Next m_lyrLayer
@@ -651,7 +649,7 @@ End Sub
 Public Sub ResizePreserve(ByVal Width As Long, ByVal Height As Long)
 Attribute ResizePreserve.VB_Description = "Resizes the map's layers, preserving any existing data if possible."
 Dim m_lyrLayer As Fury2MapLayer
-    If m_lyrLayers.Count > 0 Then
+    If m_lyrLayers.count > 0 Then
         For Each m_lyrLayer In m_lyrLayers
             If m_lyrLayer.Prerendered Then
             Else
@@ -820,7 +818,7 @@ Dim l_mobObject As Fury2MapObject
         If m_objScript Is Nothing Then Else m_objScript.Update
         Engine.ContextLevelRemove
     End If
-    If m_lyrLayers.Count > 0 Then
+    If m_lyrLayers.count > 0 Then
         l_lngLayers = 1
         For Each l_lyrLayer In m_lyrLayers
             Engine.ContextLevelAdd "Layers(" + CStr(l_lngLayers) + ")"

@@ -47,10 +47,10 @@ Dim l_lngHandle As Long
     AddSyncPoint l_lngLength - c_lngEndOffset, "end"
 End Sub
 
-Friend Sub AddSyncPoint(ByVal Time As Long, Optional ByRef name As String = "")
+Friend Sub AddSyncPoint(ByVal Time As Long, Optional ByRef Name As String = "")
 On Error Resume Next
 Dim l_lngPoint As Long
-    FMOD_Sound_AddSyncPoint m_lngHandle, Time, FMOD_TIMEUNIT_MS, name, l_lngPoint
+    FMOD_Sound_AddSyncPoint m_lngHandle, Time, FMOD_TIMEUNIT_MS, Name, l_lngPoint
 End Sub
 
 Friend Sub RemoveSyncPoint(ByVal Index As Long)
@@ -106,14 +106,14 @@ On Error Resume Next
     Handle = m_lngHandle
 End Property
 
-Public Property Get Loopcount() As Long
+Public Property Get LoopCount() As Long
 On Error Resume Next
 Dim l_lngValue As Long
     fmodex.FMOD_Sound_GetLoopCount m_lngHandle, l_lngValue
-    Loopcount = l_lngValue
+    LoopCount = l_lngValue
 End Property
 
-Public Property Let Loopcount(ByVal NewCount As Long)
+Public Property Let LoopCount(ByVal NewCount As Long)
 On Error Resume Next
     fmodex.FMOD_Sound_SetLoopCount m_lngHandle, NewCount
 End Property
@@ -258,14 +258,14 @@ Dim l_lngValue As Long
     Length = CDbl(l_lngValue) / 1000#
 End Property
 
-Public Property Get name() As String
+Public Property Get Name() As String
 On Error Resume Next
 Dim l_bytName() As Byte
 Dim l_strName As String
     ReDim l_bytName(0 To 512)
     fmodex.FMOD_Sound_GetName m_lngHandle, ByVal VarPtr(l_bytName(0)), 511
     l_strName = StrConv(l_bytName, vbUnicode)
-    name = Left(l_strName, InStr(l_strName, Chr(0)) - 1)
+    Name = Left(l_strName, InStr(l_strName, Chr(0)) - 1)
     Err.Clear
 End Property
 

@@ -45,7 +45,9 @@ Public CameraXOffset As Long, CameraYOffset As Long
 Public Enabled As Boolean
 Public Style As Long
 Public TurnSpeed As Double
+Public TileBased As Boolean
 
+Private BlockAccumulator As Long
 Private InputState(0 To 3) As Boolean
 
 Public LeftBinding As String, UpBinding As String, RightBinding As String, DownBinding As String, ActivateBinding As String
@@ -154,54 +156,120 @@ Private Sub Fury2Plugin_Update()
 On Error Resume Next
 Dim l_sprObj As Fury2Sprite
 Dim l_camObj As Fury2Camera
+Dim l_wpNode As Fury2Waypoint
+Dim l_sngX As Single, l_sngY As Single
+Dim l_booBlocked As Boolean
     If Obj Is Nothing Then Exit Sub
     If TypeOf Obj Is Fury2Sprite Then
         Set l_sprObj = Obj
         l_sprObj.AnimateWhileMoving = True
         If Enabled Then
             With l_sprObj
-                If .Path.Count <= 0 Then
+                If TileBased Then
                     If Engine.DisableMovement Then
-                        .Velocity = .Velocity - Engine.VelocityDecay
-                        If .Velocity <= 0.05 Then
-                            .Velocity = 0
-                        Else
-                        End If
+                        .Path.Clear
                     Else
+                        If .Path.count <= 0 Then
+                            Set l_wpNode = .Path.Add(.X, .Y)
+                        Else
+                            Set l_wpNode = .Path(1)
+                        End If
+                        l_booBlocked = .Blocked(l_wpNode.X, l_wpNode.Y)
+                        If l_booBlocked Then
+                            .Path.index = 2
+                        Else
+                            If .Path.index > 1 Then
+                                .Path.index = 1
+                            End If
+                        End If
+                        l_sngX = .TileX
+                        l_sngY = .TileY
                         If InputState(3) = False And InputState(0) = False And _
                         InputState(1) = True And InputState(2) = False Then
-                            .Angle = 90 ' Right
+                            l_sngX = l_sngX + 1 ' Right
                         ElseIf InputState(3) = False And InputState(0) = False And _
                         InputState(1) = True And InputState(2) = True Then
-                            .Angle = 135 ' Down-Right
+                            l_sngX = l_sngX + 1 ' Down-Right
+                            l_sngY = l_sngY + 1
                         ElseIf InputState(3) = False And InputState(0) = False And _
                         InputState(1) = False And InputState(2) = True Then
-                            .Angle = 180 ' Down
+                            l_sngY = l_sngY + 1 ' Down
                         ElseIf InputState(3) = True And InputState(0) = False And _
                         InputState(1) = False And InputState(2) = True Then
-                            .Angle = 225 ' Down-Left
+                            l_sngX = l_sngX - 1 ' Down-Left
+                            l_sngY = l_sngY + 1
                         ElseIf InputState(3) = True And InputState(0) = False And _
                         InputState(1) = False And InputState(2) = False Then
-                            .Angle = 270 ' Left
+                            l_sngX = l_sngX - 1 ' Left
                         ElseIf InputState(3) = True And InputState(0) = True And _
                         InputState(1) = False And InputState(2) = False Then
-                            .Angle = 315 ' Up-Left
+                            l_sngX = l_sngX - 1 ' Up-Left
+                            l_sngY = l_sngY - 1
                         ElseIf InputState(3) = False And InputState(0) = True And _
                         InputState(1) = False And InputState(2) = False Then
-                            .Angle = 0 ' Up
+                            l_sngY = l_sngY - 1 ' Up
                         ElseIf InputState(3) = False And InputState(0) = True And _
                         InputState(1) = True And InputState(2) = False Then
-                            .Angle = 45 ' Up-Right
-                        End If
-                        If InputState(3) Or InputState(1) Or InputState(0) Or InputState(2) Then
-                            If (.State = .IdleState) Then .State = .WalkState
-                            .Velocity = .Velocity + Engine.VelocityDecay
-                            If .Velocity > .WalkSpeed Then .Velocity = .WalkSpeed
+                            l_sngX = l_sngX + 1 ' Up-Right
+                            l_sngY = l_sngY - 1
                         Else
+                            Set l_wpNode = Nothing
+                        End If
+                        With .Map.Layers(.Layer)
+                            l_sngX = (Floor(l_sngX) * .Tileset.TileWidth) + (.Tileset.TileWidth / 2)
+                            l_sngY = (Floor(l_sngY) * .Tileset.TileHeight) + (.Tileset.TileHeight - 1)
+                            If l_sprObj.Blocked(l_sngX, l_sngY) Then
+                                l_sprObj.Face Array(l_sngX, l_sngY)
+                            Else
+                                l_wpNode.X = l_sngX
+                                l_wpNode.Y = l_sngY
+                            End If
+                        End With
+                    End If
+                Else
+                    If .Path.count <= 0 Then
+                        If Engine.DisableMovement Then
                             .Velocity = .Velocity - Engine.VelocityDecay
-                            If .Velocity < Engine.VelocityDecay Then
-                                If (.State = .WalkState) Then .State = .IdleState
+                            If .Velocity <= 0.05 Then
                                 .Velocity = 0
+                            Else
+                            End If
+                        Else
+                            If InputState(3) = False And InputState(0) = False And _
+                            InputState(1) = True And InputState(2) = False Then
+                                .Angle = 90 ' Right
+                            ElseIf InputState(3) = False And InputState(0) = False And _
+                            InputState(1) = True And InputState(2) = True Then
+                                .Angle = 135 ' Down-Right
+                            ElseIf InputState(3) = False And InputState(0) = False And _
+                            InputState(1) = False And InputState(2) = True Then
+                                .Angle = 180 ' Down
+                            ElseIf InputState(3) = True And InputState(0) = False And _
+                            InputState(1) = False And InputState(2) = True Then
+                                .Angle = 225 ' Down-Left
+                            ElseIf InputState(3) = True And InputState(0) = False And _
+                            InputState(1) = False And InputState(2) = False Then
+                                .Angle = 270 ' Left
+                            ElseIf InputState(3) = True And InputState(0) = True And _
+                            InputState(1) = False And InputState(2) = False Then
+                                .Angle = 315 ' Up-Left
+                            ElseIf InputState(3) = False And InputState(0) = True And _
+                            InputState(1) = False And InputState(2) = False Then
+                                .Angle = 0 ' Up
+                            ElseIf InputState(3) = False And InputState(0) = True And _
+                            InputState(1) = True And InputState(2) = False Then
+                                .Angle = 45 ' Up-Right
+                            End If
+                            If InputState(3) Or InputState(1) Or InputState(0) Or InputState(2) Then
+                                If (.State = .IdleState) Then .State = .WalkState
+                                .Velocity = .Velocity + Engine.VelocityDecay
+                                If .Velocity > .WalkSpeed Then .Velocity = .WalkSpeed
+                            Else
+                                .Velocity = .Velocity - Engine.VelocityDecay
+                                If .Velocity < Engine.VelocityDecay Then
+                                    If (.State = .WalkState) Then .State = .IdleState
+                                    .Velocity = 0
+                                End If
                             End If
                         End If
                     End If

@@ -103,6 +103,8 @@ struct ILine {
 };
 
 struct FPoint {
+  float X;
+  float Y;
   inline FPoint() {
     X = 0;
     Y = 0;
@@ -111,8 +113,10 @@ struct FPoint {
     this->X = X;
     this->Y = Y;
   }
-  float X;
-  float Y;
+  inline FPoint(FPoint A, FPoint B) {
+    this->X = B.X - A.X;
+    this->Y = B.Y - A.Y;
+  }
   inline float distance(FPoint *Other) {
     float xd, yd;
     xd = Other->X - this->X;
@@ -217,37 +221,160 @@ struct FPoint {
   }
 };
 
-struct FVector {
-  inline FVector() {
-    X = 0;
-    Y = 0;
-  }
-  FVector(FPoint &a, FPoint &b) {
-    X = b.X - a.X;
-    Y = b.Y - a.Y;
-  }
-  inline void Multiply(float Amount) {
-    X *= Amount;
-    Y *= Amount;
-    return;
-  }
-  inline float length() {
-    return sqrt((X * X) + (Y * Y));
-  }
-  inline void Rationalize() {
-    if (X > Y) {
-      Y /= X;
-      X = 1.0;
-    } else if (Y > X) {
-      X /= Y;
-      Y = 1.0;
-    } else {
-      X = Y = 1.0;
-    }
-  }
+struct FPoint3 {
   float X;
   float Y;
+  float Z;
+  inline FPoint3() {
+    X = 0;
+    Y = 0;
+    Z = 0;
+  }
+  inline FPoint3(float X, float Y) {
+    this->X = X;
+    this->Y = Y;
+    this->Z = 0;
+  }
+  inline FPoint3(float X, float Y, float Z) {
+    this->X = X;
+    this->Y = Y;
+    this->Z = Z;
+  }
+  inline FPoint3(FPoint3 A, FPoint3 B) {
+    this->X = B.X - A.X;
+    this->Y = B.Y - A.Y;
+    this->Z = B.Z - A.Z;
+  }
+  inline float distance(FPoint3 *Other) {
+    float xd, yd, zd;
+    xd = Other->X - this->X;
+    yd = Other->Y - this->Y;
+    zd = Other->Z - this->Z;
+    return (float)(sqrt((xd * xd) + (yd * yd) + (zd * zd)));
+  }
+  inline FPoint3 cross(FPoint3& Other) {
+    return FPoint3(Y * Other.Z - Z * Other.Y, Z * Other.X - X * Other.Z, X * Other.Y - Y * Other.X);
+  }
+  inline float dot(FPoint3& Other) {
+    return (this->X * Other.X + this->Y * Other.Y + this->Z * Other.Z);
+  }
+  inline float length() {
+    float v = (this->X * this->X) + (this->Y * this->Y) + (this->Z * this->Z);
+    return sqrt(v);
+  }
+  inline void normalize() {
+    float l = this->length();
+    if (l) {
+      this->X /= l;
+      this->Y /= l;
+      this->Z /= l;
+    }
+  }
+  inline FPoint3& operator-=(FPoint3 &rhs) {
+    this->X -= rhs.X;
+    this->Y -= rhs.Y;
+    this->Z -= rhs.Z;
+    return *this;
+  }
+  inline FPoint3& operator-=(float rhs) {
+    this->X -= rhs;
+    this->Y -= rhs;
+    this->Z -= rhs;
+    return *this;
+  }
+  inline FPoint3& operator+=(FPoint3 &rhs) {
+    this->X += rhs.X;
+    this->Y += rhs.Y;
+    this->Z += rhs.Z;
+    return *this;
+  }
+  inline FPoint3& operator+=(float rhs) {
+    this->X += rhs;
+    this->Y += rhs;
+    this->Z += rhs;
+    return *this;
+  }
+  inline FPoint3& operator*=(FPoint3 &rhs) {
+    this->X *= rhs.X;
+    this->Y *= rhs.Y;
+    this->Z *= rhs.Z;
+    return *this;
+  }
+  inline FPoint3& operator*=(float rhs) {
+    this->X *= rhs;
+    this->Y *= rhs;
+    this->Z *= rhs;
+    return *this;
+  }
+  inline FPoint3& operator/=(FPoint3 &rhs) {
+    if (rhs.X) {
+      this->X /= rhs.X;
+    } else {
+      this->X = 0;
+    }
+    if (rhs.Y) {
+      this->Y /= rhs.Y;
+    } else {
+      this->Y = 0;
+    }
+    if (rhs.Z) {
+      this->Z /= rhs.Z;
+    } else {
+      this->Z = 0;
+    }
+    return *this;
+  }
+  inline FPoint3& operator/=(float rhs) {
+    if (rhs) {
+      this->X /= rhs;
+      this->Y /= rhs;
+      this->Z /= rhs;
+    } else {
+      this->X = 0;
+      this->Y = 0;
+      this->Z = 0;
+    }
+    return *this;
+  }
+  inline bool operator==(FPoint3 &rhs) {
+    return ((rhs.X == this->X) && (rhs.Y == this->Y) && (rhs.Z == this->Z));
+  }
+  inline FPoint3 operator-() {
+    return FPoint3(-(this->X), -(this->Y), -(this->Z));
+  }
 };
+
+//struct FVector {
+//  inline FVector() {
+//    X = 0;
+//    Y = 0;
+//  }
+//  FVector(FPoint &a, FPoint &b) {
+//    X = b.X - a.X;
+//    Y = b.Y - a.Y;
+//  }
+//  inline void Multiply(float Amount) {
+//    X *= Amount;
+//    Y *= Amount;
+//    return;
+//  }
+//  inline float length() {
+//    return sqrt((X * X) + (Y * Y));
+//  }
+//  inline void Rationalize() {
+//    if (X > Y) {
+//      Y /= X;
+//      X = 1.0;
+//    } else if (Y > X) {
+//      X /= Y;
+//      Y = 1.0;
+//    } else {
+//      X = Y = 1.0;
+//    }
+//  }
+//  float X;
+//  float Y;
+//};
 
 struct FRect {
     inline bool intersect(FRect *that) {

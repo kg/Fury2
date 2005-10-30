@@ -51,11 +51,6 @@ Private m_lngImages() As Long
 Private m_sngLastFrame As Double
 Private m_engEngine As Fury2Engine
 
-Friend Function GetParam() As AnimatedGraphicParam
-On Error Resume Next
-    GetParam = m_parParam
-End Function
-
 Friend Sub SetEngine(Engine As Fury2Engine)
 On Error Resume Next
     Set m_engEngine = Engine
@@ -66,6 +61,11 @@ End Sub
 Public Property Get Engine() As Fury2Engine
     Set Engine = m_engEngine
 End Property
+
+Friend Function GetParam() As AnimatedGraphicParam
+On Error Resume Next
+    GetParam = m_parParam
+End Function
 
 Public Function Duplicate() As Fury2Graphic
 On Error Resume Next
@@ -95,14 +95,14 @@ End Property
 Public Sub Refresh()
 On Error Resume Next
 Dim l_lngImages As Long
-    ReDim m_lngImages(0 To Images.Count - 1)
-    If Images.Count > 0 Then
+    ReDim m_lngImages(0 To Images.count - 1)
+    If Images.count > 0 Then
         For l_lngImages = LBound(m_lngImages) To UBound(m_lngImages)
             m_lngImages(l_lngImages) = CLng(Images(l_lngImages + 1).Handle)
         Next l_lngImages
     End If
     With m_parParam
-        .FrameCount = Images.Count
+        .FrameCount = Images.count
         .Frame = AnimationFrame
         .BlitMode = BlitMode
         .MatteColor = Images(AnimationFrame).MatteColor
@@ -115,7 +115,7 @@ End Sub
 
 Public Property Get CurrentImage() As Fury2Image
 On Error Resume Next
-    AnimationFrame = WrapValue(AnimationFrame, 1, Images.Count)
+    AnimationFrame = WrapValue(AnimationFrame, 1, Images.count)
     Set CurrentImage = Images(AnimationFrame)
     Err.Clear
 End Property
@@ -140,9 +140,9 @@ End Function
 Sub Draw(ByVal Surface As Fury2Image, ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1)
 On Error Resume Next
 Dim l_imgFrame As Fury2Image
-    If Images.Count = 0 Then Exit Sub
+    If Images.count = 0 Then Exit Sub
     If Surface Is Nothing Then Exit Sub
-    AnimationFrame = WrapValue(AnimationFrame, 1, Images.Count)
+    AnimationFrame = WrapValue(AnimationFrame, 1, Images.count)
     Set l_imgFrame = Images(AnimationFrame)
     If l_imgFrame Is Nothing Then Exit Sub
     With l_imgFrame
@@ -153,24 +153,24 @@ End Sub
 Sub Update()
 On Error Resume Next
 Dim l_dblElapsed As Double
-    If Images.Count > 1 Then
+    If Images.count > 1 Then
         l_dblElapsed = (Engine.HiTimer - m_sngLastFrame) / ((1 / Engine.DesiredFramerate) * AnimationDelay)
         If (l_dblElapsed >= 1) Then
             m_sngLastFrame = Engine.HiTimer - ((l_dblElapsed - Floor(l_dblElapsed)) * (1 / Engine.DesiredFramerate) * AnimationDelay)
             Select Case LoopMode
             Case F2LM_Restart
-                AnimationFrame = WrapValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.Count)
+                AnimationFrame = WrapValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.count)
             Case F2LM_PingPong
                 AnimationFrame = AnimationFrame + (AnimationDirection * Floor(l_dblElapsed))
                 If (AnimationFrame < 1) Then
                     AnimationFrame = 2
                     AnimationDirection = 1
-                ElseIf (AnimationFrame > Images.Count) Then
-                    AnimationFrame = Images.Count - 1
+                ElseIf (AnimationFrame > Images.count) Then
+                    AnimationFrame = Images.count - 1
                     AnimationDirection = -1
                 End If
             Case F2LM_OneShot
-                AnimationFrame = ClipValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.Count)
+                AnimationFrame = ClipValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.count)
             End Select
         End If
     End If
@@ -194,8 +194,8 @@ Public Sub ReloadImages()
 On Error Resume Next
 Dim l_lngImage As Long, l_imgFile As Fury2Image
     Set Images = Engine.F2Collection()
-    If ImageFilenames.Count > 0 Then
-        For l_lngImage = 1 To ImageFilenames.Count
+    If ImageFilenames.count > 0 Then
+        For l_lngImage = 1 To ImageFilenames.count
             Set l_imgFile = Nothing
             Set l_imgFile = Engine.LoadImage(CStr(ImageFilenames(l_lngImage)))
             Images.Add l_imgFile
@@ -244,8 +244,8 @@ On Error Resume Next
 Dim l_lngFilenames As Long
     With File
         .WriteSegment_Begin
-            .Save CLng(ImageFilenames.Count)
-            For l_lngFilenames = 1 To ImageFilenames.Count
+            .Save CLng(ImageFilenames.count)
+            For l_lngFilenames = 1 To ImageFilenames.count
                 .Save CStr(ImageFilenames(l_lngFilenames))
             Next l_lngFilenames
         .WriteSegment_End

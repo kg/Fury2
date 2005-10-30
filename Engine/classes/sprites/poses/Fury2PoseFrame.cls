@@ -38,6 +38,9 @@ Implements IInspectable
 Implements Fury2Object
 Implements IVirtualFileSaveable
 
+Private WithEvents mvarSecondaryImages As Fury2Collection
+Attribute mvarSecondaryImages.VB_VarHelpID = -1
+Private m_siSecondaryImageParams() As SpriteSecondaryImage
 Private mvarRectangle As Fury2Rect
 Private mvarXCenter As Single
 Private mvarYCenter As Single
@@ -49,13 +52,29 @@ Private mvarScript As String
 Private mvarParent As Fury2Pose
 Private mvarIndex As Long
 
-Friend Sub SetIndex(ByVal Index As Long)
+Public Function AddSecondaryImage(Optional ByRef Filename As String = "", Optional ByVal ImageType As SecondaryImageTypes = siOverlay) As Fury2SecondaryImage
 On Error Resume Next
-    mvarIndex = Index
+Dim l_siImage As Fury2SecondaryImage
+    Set l_siImage = New Fury2SecondaryImage
+    l_siImage.SetParent Me
+    l_siImage.ImageType = ImageType
+    l_siImage.Filename = Filename
+    mvarSecondaryImages.Add l_siImage
+    Set AddSecondaryImage = l_siImage
+End Function
+
+Friend Property Get SecondaryImagePointer() As Long
+On Error Resume Next
+    SecondaryImagePointer = VarPtr(m_siSecondaryImageParams(0))
+End Property
+
+Friend Sub SetIndex(ByVal index As Long)
+On Error Resume Next
+    mvarIndex = index
 End Sub
 
-Public Property Get Index() As Long
-    Index = mvarIndex
+Public Property Get index() As Long
+    index = mvarIndex
 End Property
 
 Public Property Get Parent() As Fury2Pose
@@ -65,6 +84,7 @@ End Property
 Friend Sub SetParent(ByRef Parent As Fury2Pose)
 On Error Resume Next
     Set mvarParent = Parent
+    Set mvarSecondaryImages.Engine = mvarParent.Parent.Engine
 End Sub
 
 Public Sub RunScript()
@@ -92,8 +112,10 @@ Public Sub LoadGraphics()
 On Error Resume Next
 Dim l_varVariables As Variant
 Dim l_strFilename As String
+Dim l_siImage As Fury2SecondaryImage
+    Set mvarSecondaryImages.Engine = mvarParent.Parent.Engine
     l_varVariables = Array(Array("i", mvarIndex), Array("index", mvarIndex), _
-        Array("p", mvarParent.Index), Array("pose", mvarParent.Index), _
+        Array("p", mvarParent.index), Array("pose", mvarParent.index), _
         Array("pn", mvarParent.Name), Array("posename", mvarParent.Name), _
         Array("n", mvarParent.Parent.Name), Array("name", mvarParent.Parent.Name))
     l_strFilename = mvarParent.Parent.Engine.ParseString(mvarFilename, l_varVariables)
@@ -110,11 +132,21 @@ Dim l_strFilename As String
     Else
         mvarImage.MatteColor = mvarMatteColor
     End If
+    For Each l_siImage In mvarSecondaryImages
+        l_siImage.LoadGraphics
+    Next l_siImage
+    RefreshSecondaryImages
 End Sub
 
 Sub Free()
 Attribute Free.VB_MemberFlags = "40"
 On Error Resume Next
+Dim l_siImage As Fury2SecondaryImage
+    For Each l_siImage In mvarSecondaryImages
+        l_siImage.Free
+    Next l_siImage
+    mvarSecondaryImages.Clear
+    Set mvarSecondaryImages = Nothing
     Set mvarParent = Nothing
     Set mvarImage = Nothing
 End Sub
@@ -132,6 +164,7 @@ On Error Resume Next
         .YCenter = mvarYCenter
         .Delay = mvarDelay
         .Script = mvarScript
+        Set .SecondaryImages = mvarSecondaryImages.Duplicate
     End With
 End Function
 
@@ -223,36 +256,117 @@ Public Property Get Rectangle() As Fury2Rect
     Set Rectangle = mvarRectangle
 End Property
 
+Public Property Get SecondaryImages() As Fury2Collection
+On Error Resume Next
+    Set SecondaryImages = mvarSecondaryImages
+End Property
+
+Public Property Set SecondaryImages(ByVal NewValue As Fury2Collection)
+On Error Resume Next
+    Set mvarSecondaryImages = NewValue
+    RefreshSecondaryImages
+End Property
+
 Private Sub Class_Initialize()
+On Error Resume Next
     Set mvarRectangle = New Fury2Rect
+    Set mvarSecondaryImages = New Fury2Collection
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
+Dim l_lngCount As Long, l_lngIndex As Long
+Dim l_siImage As Fury2SecondaryImage
     With File
         .ReadSegment_Begin
-        .Load mvarMatteColor
-        .Load mvarFilename
-        .Load mvarRectangle
-        .Load mvarXCenter
-        .Load mvarYCenter
-        .Load mvarDelay
-        .Load mvarScript
+            .Load mvarMatteColor
+            .Load mvarFilename
+            .Load mvarRectangle
+            .Load mvarXCenter
+            .Load mvarYCenter
+            .Load mvarDelay
+            .Load mvarScript
+            .Load l_lngCount
+            mvarSecondaryImages.Clear
+            If l_lngCount > 0 Then
+                .ReadSegment_Begin
+                For l_lngIndex = 1 To l_lngCount
+                    Set l_siImage = New Fury2SecondaryImage
+                    l_siImage.SetParent Me
+                    .Load l_siImage
+                    mvarSecondaryImages.Add l_siImage
+                Next l_lngIndex
+                .ReadSegment_End
+            End If
         .ReadSegment_End
     End With
 End Sub
 
 Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
 On Error Resume Next
+Dim l_lngCount As Long, l_lngIndex As Long
+Dim l_siImage As Fury2SecondaryImage
     With File
         .WriteSegment_Begin
-        .Save mvarMatteColor
-        .Save mvarFilename
-        .Save mvarRectangle
-        .Save mvarXCenter
-        .Save mvarYCenter
-        .Save mvarDelay
-        .Save mvarScript
+            .Save mvarMatteColor
+            .Save mvarFilename
+            .Save mvarRectangle
+            .Save mvarXCenter
+            .Save mvarYCenter
+            .Save mvarDelay
+            .Save mvarScript
+            .Save mvarSecondaryImages.count
+            If mvarSecondaryImages.count > 0 Then
+                .WriteSegment_Begin
+                For l_lngIndex = 1 To mvarSecondaryImages.count
+                    Set l_siImage = mvarSecondaryImages(l_lngIndex)
+                    .Save l_siImage
+                Next l_lngIndex
+                .WriteSegment_End
+            End If
         .WriteSegment_End
     End With
+End Sub
+
+Friend Sub InitSecondaryImages()
+On Error Resume Next
+Dim l_siImage As Fury2SecondaryImage
+    For Each l_siImage In mvarSecondaryImages
+        l_siImage.SetParent Me
+        l_siImage.LoadGraphics
+    Next l_siImage
+End Sub
+
+Friend Sub RefreshSecondaryImages()
+On Error Resume Next
+Dim l_siImage As Fury2SecondaryImage
+Dim l_lngIndex As Long
+    ReDim m_siSecondaryImageParams(0 To mvarSecondaryImages.count - 1)
+    l_lngIndex = 0
+    For Each l_siImage In mvarSecondaryImages
+        l_siImage.SetIndex l_lngIndex + 1
+        m_siSecondaryImageParams(l_lngIndex).ImageType = l_siImage.ImageType
+        m_siSecondaryImageParams(l_lngIndex).pImage = l_siImage.Image.Handle
+        l_lngIndex = l_lngIndex + 1
+    Next l_siImage
+End Sub
+
+Private Sub mvarSecondaryImages_Add(ByVal index As Long)
+On Error Resume Next
+    RefreshSecondaryImages
+End Sub
+
+Private Sub mvarSecondaryImages_AddNew(Output As Object)
+On Error Resume Next
+    Set Output = Me.AddSecondaryImage()
+End Sub
+
+Private Sub mvarSecondaryImages_Clear()
+On Error Resume Next
+    RefreshSecondaryImages
+End Sub
+
+Private Sub mvarSecondaryImages_Remove(ByVal index As Long)
+On Error Resume Next
+    RefreshSecondaryImages
 End Sub

@@ -6,13 +6,11 @@ BEGIN
   DataSourceBehavior  = 0  'vbNone
   MTSTransactionMode  = 0  'NotAnMTSObject
 END
-Attribute VB_Name = "Fury2Slider"
+Attribute VB_Name = "Fury2Counter"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
-Attribute VB_Ext_KEY = "SavedWithClassBuilder6" ,"Yes"
-Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 '
 '    Engine (Fury² Game Creation System Runtime Engine)
@@ -35,14 +33,14 @@ Option Explicit
 Implements IVirtualFileSaveable
 Implements Fury2Object
 Public StartTime As Double
-Public EndTime As Double
+Public Interval As Double
+Public Engine As Fury2Engine
 Private m_booPaused As Boolean
 Private m_dblPausedSince As Double
-Public Engine As Fury2Engine
 
 Public Function Class_ToString() As String
 On Error Resume Next
-    Class_ToString = "Slider: " & Progress
+    Class_ToString = "Counter: " & Value
 End Function
 
 Public Property Get Paused() As Boolean
@@ -59,53 +57,36 @@ Dim l_dblPausedTime As Double
     Else
         l_dblPausedTime = Engine.HiTimer - m_dblPausedSince
         StartTime = StartTime + l_dblPausedTime
-        EndTime = EndTime + l_dblPausedTime
     End If
     m_booPaused = NewValue
 End Property
 
-Public Property Get TimeLeft() As Double
+Public Property Get Value() As Double
 On Error Resume Next
     If m_booPaused Then
-        TimeLeft = EndTime - m_dblPausedSince
+        Value = (m_dblPausedSince - StartTime) / (Interval)
     Else
-        TimeLeft = EndTime - Engine.HiTimer
-    End If
-    If TimeLeft < 0 Then TimeLeft = 0
-End Property
-
-Public Property Get Finished() As Boolean
-On Error Resume Next
-    If m_booPaused Then
-        Finished = False
-    Else
-        Finished = Engine.HiTimer >= EndTime
+        Value = (Engine.HiTimer - StartTime) / (Interval)
     End If
 End Property
 
-Public Property Get Progress() As Double
-On Error Resume Next
-    If m_booPaused Then
-        Progress = (m_dblPausedSince - StartTime) / (EndTime - StartTime)
-    Else
-        Progress = (Engine.HiTimer - StartTime) / (EndTime - StartTime)
-    End If
-    If Progress < 0 Then Progress = 0
-    If Progress > 1 Then Progress = 1
-End Property
-
-Public Sub Start(ByVal Length As Double)
+Public Sub Start(ByVal Interval As Double)
 On Error Resume Next
     m_booPaused = False
     StartTime = Engine.HiTimer
-    EndTime = StartTime + Length
+    Me.Interval = Interval
+End Sub
+
+Private Sub Class_Initialize()
+On Error Resume Next
+    Interval = 1
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
     File.ReadSegment_Begin
         File.Load StartTime
-        File.Load EndTime
+        File.Load Interval
     File.ReadSegment_End
 End Sub
 
@@ -113,6 +94,7 @@ Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
 On Error Resume Next
     File.WriteSegment_Begin
         File.Save StartTime
-        File.Save EndTime
+        File.Save Interval
     File.WriteSegment_End
 End Sub
+

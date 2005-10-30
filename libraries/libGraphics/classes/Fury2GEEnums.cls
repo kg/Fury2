@@ -33,6 +33,7 @@ Public Enum SFXRenderModes
     RenderMode_Font_SourceAlpha = 9
     RenderMode_Unerase = 10
     RenderMode_Erase = 11
+    RenderMode_SourceAlpha_Premultiplied = 12
 End Enum
 
 Public Enum SFXResampleModes
@@ -78,6 +79,7 @@ Public Enum SFXBlitModes
     BlitMode_Subtractive_SourceAlpha = 26
     BlitMode_SourceAlpha_ColorMask = 27
     BlitMode_Difference = 28
+    BlitMode_SourceAlpha_Premultiplied = 29
 End Enum
 
 Public Enum F2PixelFormats

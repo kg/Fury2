@@ -23,13 +23,13 @@ Private Const c_lngMaxSoftwareChannels = 64
 Private m_colGroups As Collection
 Private m_colSounds As Collection
 Private m_lngFMod As Long
-Private m_cgMaster As ChannelGroup
+Private m_cgMaster As Channelgroup
 Public Enabled As Boolean
 Public m_Engine As Object
 
-Friend Function CreateChannelGroupH(ByVal Handle As Long) As ChannelGroup
+Friend Function CreateChannelGroupH(ByVal Handle As Long) As Channelgroup
 On Error Resume Next
-Dim l_cgNew As ChannelGroup
+Dim l_cgNew As Channelgroup
     If Handle = 0 Then Exit Function
     For Each l_cgNew In m_colGroups
         If l_cgNew.Handle = Handle Then
@@ -37,16 +37,16 @@ Dim l_cgNew As ChannelGroup
             Exit Function
         End If
     Next l_cgNew
-    Set l_cgNew = New ChannelGroup
+    Set l_cgNew = New Channelgroup
     l_cgNew.Init Me, Handle
     m_colGroups.Add l_cgNew
     Set CreateChannelGroupH = l_cgNew
 End Function
 
-Public Function CreateChannelGroup(Optional ByRef name As String = "Channel Group") As ChannelGroup
+Public Function CreateChannelGroup(Optional ByRef Name As String = "Channel Group") As Channelgroup
 On Error Resume Next
 Dim l_lngHandle As Long
-    Call FMOD_System_CreateChannelGroup(m_lngFMod, name, l_lngHandle)
+    Call FMOD_System_CreateChannelGroup(m_lngFMod, Name, l_lngHandle)
     Set CreateChannelGroup = CreateChannelGroupH(l_lngHandle)
 End Function
 
@@ -170,7 +170,7 @@ Dim l_strFilename As String
             If m_Engine.FileSystem.FileExists(Filename) Then
                 l_strFilename = m_Engine.FileSystem.File(Filename).GetRealFilename
                 For Each l_sndSound In m_colSounds
-                    If l_sndSound.name = l_strFilename Then
+                    If l_sndSound.Name = l_strFilename Then
                         Set Load = l_sndSound
                         Exit Function
                     End If
@@ -202,7 +202,7 @@ On Error Resume Next
     If m_lngFMod Then Initialized = False Else Initialized = True
 End Property
 
-Public Property Get Master() As ChannelGroup
+Public Property Get Master() As Channelgroup
 On Error Resume Next
     Set Master = m_cgMaster
 End Property

@@ -104,6 +104,7 @@ On Error Resume Next
     If Context <> 0 Then
         Unhook Window
     End If
+    If InIDE Then Exit Sub
     Me.Window = Window
     Context = ImmCreateContext()
     AttachMessage Me, Window, WM_INPUTLANGCHANGE

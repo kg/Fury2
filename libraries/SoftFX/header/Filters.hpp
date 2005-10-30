@@ -33,6 +33,8 @@ FSIGNATURE(Gradient_4Edge) , ::Image *Edge1, ::Image *Edge2, ::Image *Edge3, ::I
 
 FSIGNATURE(Box) , Pixel Color END_FSIGNATURE
 
+FSIGNATURE(Premultiply) END_FSIGNATURE
+
 FSIGNATURE(Gradient_Radial) , Pixel Color1, Pixel Color2 END_FSIGNATURE
 
 Export extern int FilterSimple_Line(Image *Image, Rectangle* Area, Pixel Color);

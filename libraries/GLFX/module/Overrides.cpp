@@ -127,6 +127,7 @@ void setMaskRenderer(int Renderer, Pixel RenderArgument) {
 }
 
 defOverride(Allocate_Context) {
+  endDraw();
 	readParam(int, Image, 0);
 	readParam(int, Width, 1);
 	readParam(int, Height, 2);
@@ -185,6 +186,8 @@ defOverride(Allocate_Context) {
 }
 
 defOverride(Allocate_Framebuffer) {
+  endDraw();
+  disableAA(); // wtf ATI
 	readParam(int, Image, 0);
 	readParam(int, Width, 1);
 	readParam(int, Height, 2);
@@ -217,6 +220,7 @@ defOverride(Allocate_Framebuffer) {
 }
 
 defOverride(Allocate) {
+  endDraw();
 	readParam(int, Image, 0);
 	readParam(int, Width, 1);
 	readParam(int, Height, 2);
@@ -680,6 +684,122 @@ defOverride(BlitSimple_Channel) {
   return Success;
 }
 
+defOverride(BlitSimple_NormalMap) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(Vec3*, LightVector, 5);
+  readParam(Pixel, LightColor, 6);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  selectImageAsTextureN<0>(Source);
+  disableTextures();
+  setBlendMode<SourceAlpha>();
+  setTextureColor(White);
+  setVertexColor(White);
+  setBlendColor(White);
+  readParamRect(Area, 2, Null);
+  FX::Rectangle AreaCopy = Area;
+  if (ClipRectangle_ImageClipRect(&AreaCopy, Dest)) {
+    LightVector->normalize();
+    GLSL::Program* shader = Global->GetShader(std::string("normal_map"));
+    GLSL::useProgram(*shader);
+    shader->getVariable("light_vector").set(*LightVector);
+    shader->getVariable("light_color").set(LightColor);
+    SoftFX::SetImageDirty(Source, 0);
+    BlitSimple_Shader_Core(Parameters, shader);
+    GLSL::disableProgram();
+  }
+  return Success;
+}
+
+defOverride(BlitSimple_NormalMap_Additive) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(Vec3*, LightVector, 5);
+  readParam(Pixel, LightColor, 6);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  selectImageAsTextureN<0>(Source);
+  disableTextures();
+  setBlendMode<Additive_SourceAlpha>();
+  setTextureColor(White);
+  setVertexColor(White);
+  setBlendColor(White);
+  readParamRect(Area, 2, Null);
+  FX::Rectangle AreaCopy = Area;
+  if (ClipRectangle_ImageClipRect(&AreaCopy, Dest)) {
+    LightVector->normalize();
+    GLSL::Program* shader = Global->GetShader(std::string("normal_map"));
+    GLSL::useProgram(*shader);
+    shader->getVariable("light_vector").set(*LightVector);
+    shader->getVariable("light_color").set(LightColor);
+    SoftFX::SetImageDirty(Source, 0);
+    BlitSimple_Shader_Core(Parameters, shader);
+    GLSL::disableProgram();
+  }
+  return Success;
+}
+
+defOverride(BlitSimple_NormalMap_SourceAlpha) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(Vec3*, LightVector, 5);
+  readParam(Pixel, LightColor, 6);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  selectImageAsTextureN<0>(Source);
+  disableTextures();
+  setBlendMode<SourceAlpha>();
+  setTextureColor(White);
+  setVertexColor(White);
+  setBlendColor(White);
+  readParamRect(Area, 2, Null);
+  FX::Rectangle AreaCopy = Area;
+  if (ClipRectangle_ImageClipRect(&AreaCopy, Dest)) {
+    LightVector->normalize();
+    GLSL::Program* shader = Global->GetShader(std::string("normal_map_sourcealpha"));
+    GLSL::useProgram(*shader);
+    shader->getVariable("light_vector").set(*LightVector);
+    shader->getVariable("light_color").set(LightColor);
+    SoftFX::SetImageDirty(Source, 0);
+    BlitSimple_Shader_Core(Parameters, shader);
+    GLSL::disableProgram();
+  }
+  return Success;
+}
+
+defOverride(BlitSimple_NormalMap_Additive_SourceAlpha) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(Vec3*, LightVector, 5);
+  readParam(Pixel, LightColor, 6);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  selectImageAsTextureN<0>(Source);
+  disableTextures();
+  setBlendMode<Additive_SourceAlpha>();
+  setTextureColor(White);
+  setVertexColor(White);
+  setBlendColor(White);
+  readParamRect(Area, 2, Null);
+  FX::Rectangle AreaCopy = Area;
+  if (ClipRectangle_ImageClipRect(&AreaCopy, Dest)) {
+    LightVector->normalize();
+    GLSL::Program* shader = Global->GetShader(std::string("normal_map_sourcealpha"));
+    GLSL::useProgram(*shader);
+    shader->getVariable("light_vector").set(*LightVector);
+    shader->getVariable("light_color").set(LightColor);
+    SoftFX::SetImageDirty(Source, 0);
+    BlitSimple_Shader_Core(Parameters, shader);
+    GLSL::disableProgram();
+  }
+  return Success;
+}
+
 defOverride(BlitSimple_Normal_Opacity) {
   readParam(int, Dest, 0);
   readParam(int, Opacity, 5);
@@ -998,6 +1118,31 @@ defOverride(BlitSimple_SourceAlpha_Opacity) {
   lockCheck(Dest);
   selectContext(Dest);
   setBlendMode<SourceAlpha>();
+  setTextureColor(White);
+  setVertexColor(Pixel(255, 255, 255, Opacity));
+  BlitSimple_Core(Parameters);
+  return Success;
+}
+
+defOverride(BlitSimple_SourceAlpha_Premultiplied) {
+  readParam(int, Dest, 0);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<SourceAlpha_Premultiplied>();
+  setTextureColor(White);
+  setVertexColor(White);
+  BlitSimple_Core(Parameters);
+  return Success;
+}
+
+defOverride(BlitSimple_SourceAlpha_Premultiplied_Opacity) {
+  readParam(int, Dest, 0);
+  readParam(int, Opacity, 5);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<SourceAlpha_Premultiplied>();
   setTextureColor(White);
   setVertexColor(Pixel(255, 255, 255, Opacity));
   BlitSimple_Core(Parameters);
@@ -2467,6 +2612,11 @@ Texture* tex;
 
 defOverride(Deallocate) {
 	readParam(int, Image, 0);
+  void* ptr = (void*)getNamedTag(Image, Pointer);
+  if (ptr) {
+    free(ptr);
+    setNamedTag(Image, Pointer, 0);
+  }
   if (GetImagePointer(Image, 0, 0) != 0) {
     Texture* tex = getTexture(Image);
     if (tex) {
@@ -2482,11 +2632,6 @@ defOverride(Deallocate) {
       }
     }
   }
-  void* ptr = (void*)getNamedTag(Image, Pointer);
-  if (ptr) {
-    free(ptr);
-    setNamedTag(Image, Pointer, 0);
-  }
 	if (checkNamedTag(Image, Context)) {
     HGLRC context = (HGLRC)getNamedTag(Image, Context);
     if (context != 0) {
@@ -2499,13 +2644,17 @@ defOverride(Deallocate) {
       SetImageLocked(Image, 0);
     }
     Global->Context = 0;
+    setNamedTag(Image, Context, 0);
 	}
 	if (checkNamedTag(Image, Framebuffer)) {
     Framebuffer* fb = (Framebuffer*)getNamedTag(Image, Framebuffer);
     if (fb != 0) {
+      fb->detachTexture();
+      fb->unbind();
       delete fb;
       fb = 0;
     }
+    setNamedTag(Image, Framebuffer, 0);
 	}
 	return Failure;
 }
@@ -3089,6 +3238,8 @@ void InstallOverrides() {
   addOverride(BlitSimple_Matte_Tint_Opacity);
   addOverride(BlitSimple_SourceAlpha);
   addOverride(BlitSimple_SourceAlpha_Opacity);
+  addOverride(BlitSimple_SourceAlpha_Premultiplied);
+  addOverride(BlitSimple_SourceAlpha_Premultiplied_Opacity);
   addOverride(BlitSimple_SourceAlphaMatte);
   addOverride(BlitSimple_SourceAlphaMatte_Opacity);
   addOverride(BlitSimple_SourceAlpha_Tint);
@@ -3116,6 +3267,10 @@ void InstallOverrides() {
   addOverride(BlitSimple_Merge_Opacity);
   addOverride(BlitSimple_Font_Merge_RGB);
   addOverride(BlitSimple_Font_Merge_RGB_Opacity);
+  addOverride(BlitSimple_NormalMap);
+  addOverride(BlitSimple_NormalMap_Additive);
+  addOverride(BlitSimple_NormalMap_SourceAlpha);
+  addOverride(BlitSimple_NormalMap_Additive_SourceAlpha);
   addOverride(BlitResample_Normal);
   addOverride(BlitResample_Normal_Opacity);
   addOverride(BlitResample_SourceAlpha);
@@ -3205,6 +3360,8 @@ void UninstallOverrides() {
   removeOverride(BlitSimple_Matte_Tint_Opacity);
   removeOverride(BlitSimple_SourceAlpha);
   removeOverride(BlitSimple_SourceAlpha_Opacity);
+  removeOverride(BlitSimple_SourceAlpha_Premultiplied);
+  removeOverride(BlitSimple_SourceAlpha_Premultiplied_Opacity);
   removeOverride(BlitSimple_SourceAlphaMatte);
   removeOverride(BlitSimple_SourceAlphaMatte_Opacity);
   removeOverride(BlitSimple_SourceAlpha_Tint);
@@ -3232,6 +3389,10 @@ void UninstallOverrides() {
   removeOverride(BlitSimple_Merge_Opacity);
   removeOverride(BlitSimple_Font_Merge_RGB);
   removeOverride(BlitSimple_Font_Merge_RGB_Opacity);
+  removeOverride(BlitSimple_NormalMap);
+  removeOverride(BlitSimple_NormalMap_Additive);
+  removeOverride(BlitSimple_NormalMap_SourceAlpha);
+  removeOverride(BlitSimple_NormalMap_Additive_SourceAlpha);
   removeOverride(BlitResample_Normal);
   removeOverride(BlitResample_Normal_Opacity);
   removeOverride(BlitResample_SourceAlpha);

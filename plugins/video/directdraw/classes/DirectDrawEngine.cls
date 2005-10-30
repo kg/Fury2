@@ -34,6 +34,18 @@ Private m_ddsBackbuffer As DirectDrawSurface7
 Private m_bytBackbuffer() As Byte
 Public VSync As Boolean
 
+Public Property Get Feature(ByRef Name As String) As Boolean
+On Error Resume Next
+    Select Case LCase(Trim(Name))
+    Case "glsl"
+        Feature = False
+    Case "multitexturing"
+        Feature = False
+    Case Else
+        Feature = True
+    End Select
+End Property
+
 Private Property Get Fury2VideoDriver_Backbuffer() As libGraphics.Fury2Image
     Set Fury2VideoDriver_Backbuffer = m_imgBackbuffer
 End Property

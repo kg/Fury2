@@ -42,14 +42,14 @@ Implements Fury2Object
 Implements IVirtualFileCollection
 Implements IVirtualFileSaveable
 
-Public Index As Long
+Public index As Long
 Private mCol As Collection
 Private mvarLooping As Boolean
 Private mvarParent As Fury2Sprite
 
 Public Property Get Current() As Fury2Waypoint
 On Error Resume Next
-    Set Current = mCol(Index)
+    Set Current = mCol(index)
 End Property
 
 Public Function Duplicate() As Fury2Path
@@ -60,7 +60,7 @@ Dim l_wpNode As Fury2Waypoint
     For Each l_wpNode In mCol
         l_pthNew.AddObject l_wpNode.Duplicate()
     Next l_wpNode
-    l_pthNew.Index = Index
+    l_pthNew.index = index
     l_pthNew.Looping = mvarLooping
     Set Duplicate = l_pthNew
 End Function
@@ -70,20 +70,20 @@ On Error Resume Next
     IInspectableCollection_ItemCount = mCol.Count
 End Property
 
-Private Property Set IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+Private Property Set IInspectableCollection_ItemValue(ByVal index As Long, ByVal RHS As Variant)
 On Error Resume Next
 End Property
 
-Private Property Let IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+Private Property Let IInspectableCollection_ItemValue(ByVal index As Long, ByVal RHS As Variant)
 On Error Resume Next
 End Property
 
-Private Property Get IInspectableCollection_ItemValue(ByVal Index As Long) As Variant
+Private Property Get IInspectableCollection_ItemValue(ByVal index As Long) As Variant
 On Error Resume Next
     Err.Clear
-    Set IInspectableCollection_ItemValue = mCol(Index)
+    Set IInspectableCollection_ItemValue = mCol(index)
     If Err <> 0 Then
-        IInspectableCollection_ItemValue = mCol(Index)
+        IInspectableCollection_ItemValue = mCol(index)
     End If
 End Property
 
@@ -94,7 +94,7 @@ End Sub
 
 Public Sub SkipTo(ByVal NewIndex As Long)
 On Error Resume Next
-    Skip (NewIndex - Index)
+    Skip (NewIndex - index)
 End Sub
 
 Public Sub Skip(Optional ByVal Count As Long = 1)
@@ -115,9 +115,9 @@ Dim l_objWaypoint As Fury2Waypoint
         mvarParent.Map.Engine.ScriptEngine.AddCode l_objWaypoint.ReachedEvent
     End If
     If mvarLooping Then
-        Index = WrapValue(Index + 1, 1, mCol.Count)
+        index = WrapValue(index + 1, 1, mCol.Count)
     Else
-        Index = Index + 1
+        index = index + 1
     End If
 End Sub
 
@@ -137,8 +137,10 @@ End Function
 
 Sub Clear()
 On Error Resume Next
-    Set mCol = New Collection
-    Index = 1
+    Do While mCol.Count > 1
+        mCol.Remove 1
+    Loop
+    index = 1
 End Sub
 
 Sub Reset()
@@ -221,7 +223,7 @@ End Property
 Private Sub Class_Initialize()
 On Error Resume Next
     Set mCol = New Collection
-    Index = 1
+    index = 1
 End Sub
 
 Private Sub Class_Terminate()
@@ -244,9 +246,9 @@ On Error Resume Next
     Set IVirtualFileCollection_CreateNew = New Fury2Waypoint
 End Function
 
-Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object
+Private Function IVirtualFileCollection_GetItem(ByVal index As Long) As Object
 On Error Resume Next
-    Set IVirtualFileCollection_GetItem = mCol.Item(Index)
+    Set IVirtualFileCollection_GetItem = mCol.Item(index)
 End Function
 
 Private Sub IVirtualFileCollection_Reset()
@@ -262,7 +264,7 @@ End Sub
 Private Sub IVirtualFileCollection_LoadHeader(File As libGraphics.VirtualFile)
 On Error Resume Next
     File.Load mvarLooping
-    Index = 1
+    index = 1
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)

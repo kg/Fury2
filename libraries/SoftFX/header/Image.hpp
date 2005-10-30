@@ -48,9 +48,11 @@ struct OptimizationFlags {
     bool sameAlpha : 1;
     bool grayscaleOnly : 1;
     bool solidColor : 1;
+    bool premultiplied : 1;
 
     OptimizationFlags() {
       this->reset();
+      this->premultiplied = false;
     }
 
     inline void reset() {

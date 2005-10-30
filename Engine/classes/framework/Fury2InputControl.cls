@@ -41,7 +41,7 @@ Public Consumed As Boolean
 Public Handled As Boolean
 Public RepeatDelay As Single
 
-Private m_sngLastActivate As Single
+Private m_dblLastActivate As Single
 Private m_booReset As Boolean
 Private m_lngState As Long
 Private m_strName As String
@@ -86,21 +86,27 @@ End Sub
 
 Friend Sub ResetRepeat()
 On Error Resume Next
-    m_sngLastActivate = Engine.HiTimer
+    m_dblLastActivate = SoftFX.GetTime
 End Sub
 
 Friend Sub TriggerRepeat()
 On Error Resume Next
-Dim l_sngNow As Single
+Dim l_dblNow As Single, l_dblElapsed As Double, l_dblDelay As Double
+Dim l_lngElapsed As Long, l_lngTriggers As Long
     If (Repeat) Then
         If (m_lngState > 0) Then
-            l_sngNow = Engine.HiTimer
-            If ((l_sngNow - m_sngLastActivate)) > IIf(RepeatDelay = -1, Engine.RepeatDelay, RepeatDelay) Then
-                m_sngLastActivate = Engine.HiTimer
-                m_booReset = False
-                Handled = False
-                Engine.ControlActivate Me
-                ActivateEvent.Invoke
+            l_dblNow = SoftFX.GetTime()
+            l_dblDelay = IIf(RepeatDelay = -1, Engine.RepeatDelay, RepeatDelay)
+            l_dblElapsed = (l_dblNow - m_dblLastActivate) / l_dblDelay
+            l_lngElapsed = Floor(l_dblElapsed)
+            If l_lngElapsed > 0 Then
+                m_dblLastActivate = m_dblLastActivate + (l_dblDelay * l_lngElapsed)
+                For l_lngTriggers = 1 To l_lngElapsed
+                    m_booReset = False
+                    Handled = False
+                    Engine.ControlActivate Me
+                    ActivateEvent.Invoke
+                Next l_lngTriggers
             End If
         End If
     End If
@@ -114,7 +120,7 @@ Dim l_booEvent As Boolean
     m_lngState = m_lngState + 1
     m_booReset = False
     If l_booEvent = True Then
-        m_sngLastActivate = Engine.HiTimer
+        m_dblLastActivate = SoftFX.GetTime()
         Engine.ControlActivate Me
         If ActivateEvent Is Nothing Then
         Else

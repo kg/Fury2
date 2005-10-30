@@ -324,6 +324,21 @@ FILTERSIMPLE_LOOPBEGIN
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 
+FILTERSIMPLE_SIGNATURE(Premultiply)
+    ) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Premultiply, 0)  _FOE
+FILTERSIMPLE_BEGIN
+    AlphaLevel *aSource;
+FILTERSIMPLE_LOOPBEGIN
+    aSource = AlphaLevelLookup( (*pCurrent)[::Alpha] );
+    (*pCurrent)[::Blue] = AlphaFromLevel(aSource, (*pCurrent)[::Blue]);
+    (*pCurrent)[::Green] = AlphaFromLevel(aSource, (*pCurrent)[::Green]);
+    (*pCurrent)[::Red] = AlphaFromLevel(aSource, (*pCurrent)[::Red]);
+    Image->OptimizeData.premultiplied = true;
+FILTERSIMPLE_LOOPEND
+FILTERSIMPLE_END
+
 FILTERSIMPLE_SIGNATURE(Grid_SourceAlpha)
     , Pixel Value, int Width, int Height, int XOffset, int YOffset) {
 FILTERSIMPLE_INIT
@@ -771,11 +786,12 @@ FILTERSIMPLE_SIGNATURE(Adjust_HSV)
 FILTERSIMPLE_INIT
     _FOS(FilterSimple_Adjust_HSV, 3) , HueAmount, SaturationAmount, ValueAmount _FOE
 FILTERSIMPLE_BEGIN
-    HSVA HSVA;
+    //HSVA HSVA;
 FILTERSIMPLE_LOOPBEGIN
-    HSVA.setPixel(*pCurrent);
-    HSVA.setValues(HSVA.Hue + HueAmount, HSVA.Saturation + SaturationAmount, HSVA.Value + ValueAmount, HSVA.Alpha);
-    *pCurrent = HSVA.getPixel();
+    //HSVA.setPixel(*pCurrent);
+    //HSVA.setValuesFast(HSVA.Hue + HueAmount, HSVA.Saturation + SaturationAmount, HSVA.Value + ValueAmount, HSVA.Alpha);
+    //*pCurrent = HSVA.getPixel();
+    *pCurrent = adjustHSV(*pCurrent, HueAmount, SaturationAmount, ValueAmount);
 FILTERSIMPLE_LOOPEND
 FILTERSIMPLE_END
 

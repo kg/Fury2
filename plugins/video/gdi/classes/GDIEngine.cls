@@ -26,6 +26,18 @@ Private m_lngWidth As Long, m_lngHeight As Long
 Private m_sngScaleRatio As Single
 Private m_imgBackbuffer As Fury2Image
 
+Public Property Get Feature(ByRef Name As String) As Boolean
+On Error Resume Next
+    Select Case LCase(Trim(Name))
+    Case "glsl"
+        Feature = False
+    Case "multitexturing"
+        Feature = False
+    Case Else
+        Feature = True
+    End Select
+End Property
+
 Private Property Get Fury2VideoDriver_Backbuffer() As libGraphics.Fury2Image
     Set Fury2VideoDriver_Backbuffer = m_imgBackbuffer
 End Property

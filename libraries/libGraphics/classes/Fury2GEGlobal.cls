@@ -374,7 +374,12 @@ On Error Resume Next
     F2FileFromString.LoadFromString Data
 End Function
 
-Public Sub F2UnRGB(Color, ByRef RedVariable, ByRef GreenVariable, ByRef BlueVariable, Optional ByRef AlphaVariable)
+Public Function F2SplitRGB(ByVal Color As Long) As Variant
+On Error Resume Next
+    F2SplitRGB = Array(SoftFX.GetRed(Color), SoftFX.GetGreen(Color), SoftFX.GetBlue(Color), SoftFX.GetAlpha(Color))
+End Function
+
+Public Sub F2UnRGB(ByVal Color As Long, ByRef RedVariable, ByRef GreenVariable, ByRef BlueVariable, Optional ByRef AlphaVariable)
 On Error Resume Next
 Dim m_lngColor As Long
     RedVariable = SoftFX.GetRed(Color)
@@ -944,6 +949,24 @@ On Error Resume Next
     F2HSV = HSVA(Floor(Hue * 10), Floor(Saturation * 2550), Floor(Value * 2550), Alpha)
 End Function
 
+Public Function F2Normal(Optional ByVal LightVector As Variant = vbEmpty) As Long
+On Error Resume Next
+Dim l_fp3Light As FPoint3
+Dim l_vtType As VbVarType
+    l_vtType = VarType(LightVector)
+    If (l_vtType And vbArray) = vbArray Then
+        l_fp3Light.X = LightVector(0)
+        l_fp3Light.Y = LightVector(1)
+        l_fp3Light.Z = LightVector(2)
+    ElseIf (l_vtType = vbUserDefinedType) Or (l_vtType = vbObject) Then
+        l_fp3Light.X = LightVector.X
+        l_fp3Light.Y = LightVector.Y
+        l_fp3Light.Z = LightVector.Z
+    Else
+    End If
+    F2Normal = NormalColor(l_fp3Light)
+End Function
+
 Public Function F2ImageFromPicture(ByRef Picture As IPictureDisp) As Fury2Image
 On Error Resume Next
 Dim newImage As Fury2Image
@@ -1095,3 +1118,19 @@ On Error Resume Next
     RectCacheGC
     Set RectCache = Nothing
 End Sub
+
+Public Function Interpolate(ByVal A As Single, ByVal B As Single, ByVal X As Single) As Single
+On Error Resume Next
+    Interpolate = SoftFX.Interpolate(A, B, X)
+End Function
+
+Public Function CosineInterpolate(ByVal A As Single, ByVal B As Single, ByVal X As Single) As Single
+On Error Resume Next
+    CosineInterpolate = SoftFX.CosineInterpolate(A, B, X)
+End Function
+
+Public Function CubicInterpolate(ByVal A As Single, ByVal B As Single, ByVal C As Single, ByVal D As Single, ByVal X As Single) As Single
+On Error Resume Next
+    CubicInterpolate = SoftFX.CubicInterpolate(A, B, C, D, X)
+End Function
+

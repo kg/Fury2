@@ -174,6 +174,8 @@ On Error Resume Next
         GetRenderer = GetUneraseRenderer()
     Case SFXRenderModes.RenderMode_Erase
         GetRenderer = GetEraseRenderer()
+    Case SFXRenderModes.RenderMode_SourceAlpha_Premultiplied
+        GetRenderer = GetPremultipliedSourceAlphaRenderer()
     End Select
 End Function
 
@@ -787,6 +789,47 @@ Dim l_lngPoints As Long
     Primitive_Stroke_Bezier Handle, l_strStroke, GetRenderer(Mode), 0, Accuracy
 End Sub
 
+Public Sub NormalMapBlit(Optional ByVal DestRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal Source As Fury2Image = Nothing, Optional ByVal LightVector As Variant = vbEmpty, Optional ByVal LightColor As Long = -1, Optional ByVal Mode As SFXBlitModes = BlitMode_Default, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default)
+On Error Resume Next
+Dim l_fp3Light As FPoint3
+Dim l_lngScaler As Long
+Dim l_vtType As VbVarType
+    l_vtType = VarType(LightVector)
+    If (l_vtType And vbArray) = vbArray Then
+        l_fp3Light.X = LightVector(0)
+        l_fp3Light.Y = LightVector(1)
+        l_fp3Light.Z = LightVector(2)
+    ElseIf (l_vtType = vbUserDefinedType) Or (l_vtType = vbObject) Then
+        l_fp3Light.X = LightVector.X
+        l_fp3Light.Y = LightVector.Y
+        l_fp3Light.Z = LightVector.Z
+    Else
+        Exit Sub
+    End If
+    If Source Is Nothing Then Exit Sub
+    If DestRectangle Is Nothing Then Set DestRectangle = Me.Rectangle
+    If SourceRectangle Is Nothing Then Set SourceRectangle = Source.Rectangle
+    If Mode = BlitMode_Default Then Mode = m_bmdBlitMode
+    If ResampleMode = ResampleMode_Default Then ResampleMode = m_smdResampleMode
+    If ((SourceRectangle.Width <> DestRectangle.Width) Or (SourceRectangle.Height <> DestRectangle.Height)) Then
+        l_lngScaler = GetScaler(ResampleMode)
+    End If
+    If l_lngScaler Then
+    Else
+        Select Case Mode
+        Case SFXBlitModes.BlitMode_Normal
+            SoftFX.Blit_NormalMap m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_fp3Light, LightColor
+        Case SFXBlitModes.BlitMode_SourceAlpha
+'            SoftFX.Blit_NormalMap_SourceAlpha m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_fp3Light, LightColor
+        Case SFXBlitModes.BlitMode_Additive
+            SoftFX.Blit_NormalMap_Additive m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_fp3Light, LightColor
+        Case SFXBlitModes.BlitMode_Additive_SourceAlpha
+'            SoftFX.Blit_NormalMap_Additive_SourceAlpha m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_fp3Light, LightColor
+        Case Else
+        End Select
+    End If
+End Sub
+
 Public Sub Blit(Optional ByVal DestRectangle As Fury2Rect = Nothing, Optional ByVal SourceRectangle As Fury2Rect = Nothing, Optional ByVal Source As Fury2Image = Nothing, Optional ByVal Alpha As Single = 1, Optional ByVal Mode As SFXBlitModes = BlitMode_Default, Optional ByVal Color As Long = &HFFFFFFFF, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default)
 On Error Resume Next
 Dim l_lngAlpha As Long
@@ -830,6 +873,8 @@ Dim l_lngScaler As Long
             SoftFX.Blit_Automatic_Matte_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
         Case SFXBlitModes.BlitMode_SourceAlpha
             SoftFX.Blit_Automatic_SourceAlpha_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
+        Case SFXBlitModes.BlitMode_SourceAlpha_Premultiplied
+            SoftFX.Blit_SourceAlpha_Premultiplied_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
         Case SFXBlitModes.BlitMode_Additive
             SoftFX.Blit_Additive_Opacity m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_lngAlpha
         Case SFXBlitModes.BlitMode_Subtractive
@@ -948,6 +993,22 @@ Dim l_rcRect As Rectangle
         l_rcRect.Height = 0
         SoftFX.SetImageClipRectangle m_lngImage, l_rcRect
     End If
+End Sub
+
+Public Property Get Premultiplied() As Boolean
+On Error Resume Next
+    Premultiplied = SoftFX.GetImagePremultiplied(m_lngImage)
+End Property
+
+Public Property Let Premultiplied(ByVal NewValue As Boolean)
+On Error Resume Next
+    SoftFX.SetImagePremultiplied m_lngImage, NewValue
+End Property
+
+Public Sub Premultiply()
+On Error Resume Next
+    If Premultiplied Then Exit Sub
+    SoftFX.Filter_Premultiply m_lngImage, Rectangle.GetRectangle
 End Sub
 
 Public Sub Composite(ByVal Color As Long)

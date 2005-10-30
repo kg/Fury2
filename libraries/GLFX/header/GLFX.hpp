@@ -91,7 +91,18 @@ struct Vec3 {
     V[1] = b;
     V[2] = c;
   }
-
+  inline float length() {
+    float v = (V[0] * V[0]) + (V[1] * V[1]) + (V[2] * V[2]);
+    return sqrt(v);
+  }
+  inline void normalize() {
+    float l = this->length();
+    if (l) {
+      V[0] /= l;
+      V[1] /= l;
+      V[2] /= l;
+    }
+  }
   float V[3];
 };
 

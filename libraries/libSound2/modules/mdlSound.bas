@@ -41,10 +41,10 @@ Dim l_lngOffset As Long
             Case "end"
                 l_chnChannel.FireEndCallback
             End Select
-        Case FMOD_CHANNEL_CALLBACKTYPE_MODZXX
-        Case FMOD_CHANNEL_CALLBACKTYPE_MODROW
-        Case FMOD_CHANNEL_CALLBACKTYPE_MODORDER
-        Case FMOD_CHANNEL_CALLBACKTYPE_MODINST
+'        Case FMOD_CHANNEL_CALLBACKTYPE_MODZXX
+'        Case FMOD_CHANNEL_CALLBACKTYPE_MODROW
+'        Case FMOD_CHANNEL_CALLBACKTYPE_MODORDER
+'        Case FMOD_CHANNEL_CALLBACKTYPE_MODINST
         End Select
     End If
     

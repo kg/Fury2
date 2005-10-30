@@ -81,6 +81,15 @@ Export DoubleWord RGB(int R, int G, int B) {
     return Pixel(ClipByte(B), ClipByte(G), ClipByte(R)).V;
 }
 
+Export DoubleWord NormalColor(FPoint3* Vector) {
+  Pixel Color = Pixel(0, 0, 0, 0);
+  if (Vector) {
+    Vector->normalize();
+    Color = Pixel(Vector->X * 127 + 127, Vector->Y * 127 + 127, Vector->Z * 127 + 127, 255);
+  }
+  return Color.V;
+}
+
 Export DoubleWord Gray(int V) {
     return Pixel(ClipByte(V), ClipByte(V), ClipByte(V)).V;
 }

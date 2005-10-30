@@ -576,8 +576,7 @@ int iMask;
 
 Export inline int WrapValue(int value, int minimum, int maximum) {
   bool b = value < minimum;
-  int v = InlineIf(b, minimum - value, value - minimum);
-  v = v % ((maximum - minimum) + 1);
+  int v = InlineIf(b, minimum - value, value - minimum) % ((maximum - minimum) + 1);
   return InlineIf(b, maximum + 1 - v, minimum + v);
   /*
 	if (value < minimum) {

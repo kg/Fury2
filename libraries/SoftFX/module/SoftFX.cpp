@@ -304,6 +304,30 @@ Export int GetImageDirty(Image *Image) {
   return false;
 }
 
+Export void SetImagePremultiplied(Image *Image, int NewState) {
+
+  if (!Initialized) return;
+
+  if (Image) {
+    Image->OptimizeData.premultiplied = (NewState != 0);
+  }
+
+  return;
+}
+
+Export int GetImagePremultiplied(Image *Image) {
+
+  if (!Initialized) return false;
+
+  if (Image) {
+    if (Image->OptimizeData.premultiplied) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 Export int GetImageLocked(Image *Image) {
 
   if (!Initialized) return true;

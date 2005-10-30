@@ -20,8 +20,35 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "../header/SoftFX Main.hpp"
 #include "../../../3rdparty/lzo/minilzo.h"
 
+Export float Interpolate(float a, float b, float x) {
+  if (x <= 0) return a;
+  else if (x >= 1) return b;
+  else return a + ((b - a) * x);
+}
+
+Export float CosineInterpolate(float a, float b, float x) {
+  if (x <= 0) return a;
+  else if (x >= 1) return b;
+  else {
+    x *= Pi;
+    x = (1 - cos(x)) * 0.5;
+    return a + ((b - a) * x);
+  }
+}
+
+Export float CubicInterpolate(float a, float b, float c, float d, float x) {
+  if (x <= 0) return b;
+  else if (x >= 1) return c;
+  else {
+    float x2 = x * x;
+    float x3 = x2 * x;
+    float p = (d - c) - (a - b);
+	  return (p * x3) + ((a - b - p) * x2) + ((c - a) * x) + b;
+  }
+}
+
 Export int CompressData(void* Source, int SourceLength, void* Dest, int DestLength) {
-    lzo1x_1_compress(Source, SourceLength, Dest, DestLength, temp);
+    //lzo1x_1_compress(Source, SourceLength, Dest, DestLength, temp);
     return Success;
 }
 

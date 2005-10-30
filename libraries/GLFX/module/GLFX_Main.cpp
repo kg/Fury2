@@ -10,8 +10,40 @@ int __cdecl DllMain(int hModule, int ul_reason_for_call, void* lpReserved)
 	return 1;
 }
 
-Export int GLGetStringLength(char* string) {
-  return strlen(string);
+Export int GLGetFeatureSupport(const char* FeatureName) {
+  if (0 == strcmpi(FeatureName, "glsl")) {
+    return GLSL::isSupported();
+  } else if (0 == strcmpi(FeatureName, "framebuffer_objects")) {
+    return (GLEW_EXT_framebuffer_object != 0);
+  } else if (0 == strcmpi(FeatureName, "subtractive_blending")) {
+    return (GLEW_EXT_blend_subtract != 0);
+  } else if (0 == strcmpi(FeatureName, "advanced_blending")) {
+    return (GLEW_ARB_texture_env_combine != 0);
+  } else if (0 == strcmpi(FeatureName, "advanced_opacity")) {
+    return (GLEW_EXT_blend_color != 0);
+  } else if (0 == strcmpi(FeatureName, "multitexturing")) {
+    return (GLEW_ARB_multitexture != 0);
+  } else if (0 == strcmpi(FeatureName, "lightmap_blending")) {
+    return (GLEW_ARB_texture_env_combine != 0) && (GLEW_ARB_multitexture != 0);
+  } else if (0 == strcmpi(FeatureName, "deformation")) {
+    return (GLSL::isSupported()) && (GLEW_ATI_texture_float != 0);
+  } else if (0 == strcmpi(FeatureName, "convolution")) {
+    return (GLSL::isSupported());
+  } else if (0 == strcmpi(FeatureName, "masking")) {
+    return (GLEW_ARB_texture_env_combine != 0) && (GLEW_ARB_multitexture != 0);
+  } else if (0 == strcmpi(FeatureName, "grayscale")) {
+    return GLSL::isSupported();
+  } else if (0 == strcmpi(FeatureName, "invert")) {
+    return GLSL::isSupported();
+  } else if (0 == strcmpi(FeatureName, "normal_maps")) {
+    return GLSL::isSupported();
+  } else {
+    return -1;
+  }
+}
+
+Export int GLGetStringLength(const char* String) {
+  return strlen(String);
 }
 
 Export void* GLAllocateBytes(int Size) {
@@ -132,7 +164,7 @@ void GLFXGlobal::CleanupShaders() {
 GLenum GLFXGlobal::checkError() {
   GLenum e = glGetError();
   if (e) {
-//    int x = abs(-1);
+    int x = abs(-1);
   }
   return e;
 }

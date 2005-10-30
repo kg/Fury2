@@ -151,6 +151,14 @@ Public Enum Fury2WrapModes
     F2WM_Word = 0
     F2WM_None = 1
 End Enum
+
+Public Enum Fury2TweenModes
+    F2TM_Instant = 0
+    F2TM_Linear = 1
+    F2TM_Exponential = 2
+    F2TM_Sinusoidal = 3
+End Enum
+
 Private l_lngF2State As Long
 Public LoadError As String
 

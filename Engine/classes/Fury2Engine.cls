@@ -217,6 +217,7 @@ Public MaxFrameskip As Long
 Public TrapKeys As Boolean
 Public DefaultTransition As Long
 Public DefaultTransitionLength As Single
+Public AutoOptimizeImages As Boolean
 
 ' Private state/configuration variables
 Private m_dblLastFlushTime As Double
@@ -989,6 +990,17 @@ Public Function F2Slider() As Fury2Slider
     Set F2Slider.Engine = Me
 End Function
 
+Public Function F2Counter() As Fury2Counter
+    Set F2Counter = New Fury2Counter
+    Set F2Counter.Engine = Me
+End Function
+
+Public Function F2Sequence() As Fury2Sequence
+On Error Resume Next
+    Set F2Sequence = New Fury2Sequence
+    F2Sequence.SetEngine Me
+End Function
+
 Public Function F2SoundObject(ByVal Filename As String, Optional ByVal Repeat As Boolean = True) As Fury2SoundObject
 On Error Resume Next
 Dim l_sndSound As Fury2SoundObject
@@ -1295,6 +1307,7 @@ Static m_lngHere As Long
     If Filesystem.FileExists(Filename) Then
         Set m_filFile = Filesystem.File(Filename)
         Set m_imgImage = F2LoadImage(m_filFile.GetRealFilename)
+        If AutoOptimizeImages Then m_imgImage.Optimize
         m_imgImage.Name = Filename
         IsNew = True
     Else
@@ -4691,6 +4704,7 @@ On Error Resume Next
     Running = Not EditMode
     LogToFile = True
     LogToClipboard = False
+    AutoOptimizeImages = True
     
     PushPictures
     PushHotspots
@@ -5057,7 +5071,7 @@ On Error Resume Next
         Set CurrentBGM = SoundEngine.Load(CStr(Filename))
     End If
     CurrentBGM.LoopMode = LoopMode_Normal
-    CurrentBGM.Loopcount = -1
+    CurrentBGM.LoopCount = -1
     Set CurrentBGMChannel = CurrentBGM.Play(True)
     CurrentBGMChannel.Priority = 0
     If Fade Then

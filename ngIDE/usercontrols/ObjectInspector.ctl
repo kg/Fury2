@@ -956,8 +956,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -968,8 +968,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -1115,6 +1115,8 @@ On Error Resume Next
 Dim l_lngItems As Long
 Dim l_lngY As Long
 Dim l_lngIndex As Long
+Dim l_iecObject As IEditableCollection
+Dim l_objNew As Object
     EditBoxChanged
     l_lngIndex = -1
     l_lngY = picHierarchy.Height - vsScroll.Value
@@ -1129,14 +1131,29 @@ Dim l_lngIndex As Long
             End If
         End If
     Next l_lngItems
+    If Button = 2 Then
+        If TypeOf m_objObject Is IEditableCollection Then
+            Set l_iecObject = m_objObject
+            Select Case QuickShowMenu2(picItems, X, Y, Menus(MenuString("&Add New"), MenuString("&Remove")))
+            Case 1
+                Set l_objNew = l_iecObject.AddNew()
+                If l_objNew Is Nothing Then
+                Else
+                    Inspect l_objNew, "New Item", False, False, True
+                End If
+            Case 2
+                l_iecObject.Remove m_oiItems(l_lngItems).Value
+                Reinspect
+            Case Else
+            End Select
+        End If
+    End If
     If (l_lngIndex >= 0) And (l_lngIndex <= UBound(m_oiItems)) Then
         m_lngSelectedItem = l_lngIndex
         picItems_Paint
         picInfo_Paint
         RefreshEditBox
         RaiseEvent ItemSelected(l_lngIndex)
-        If m_lngSelectedItem = l_lngIndex Then
-            If Button = 2 Then
 '                Select Case QuickShowMenu(Me, X , Y , _
 '                    Menus(MenuString("Cu&t", , , "CUT"), MenuString("&Copy", , , "COPY"), MenuString("&Paste", , , "PASTE")), _
 '                    frmIcons.ilContextMenus)
@@ -1157,8 +1174,8 @@ Dim l_lngIndex As Long
 '                Case 3
 '                Case Else
 '                End Select
-            End If
-        End If
+'            End If
+'        End If
     End If
 End Sub
 

@@ -59,6 +59,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(FilterSimple_Box_SourceAlpha) \
   defItem(FilterSimple_ColorFilter) \
   defItem(FilterSimple_Composite) \
+  defItem(FilterSimple_Premultiply) \
   defItem(FilterSimple_ConvexPolygon) \
   defItem(FilterSimple_ConvexPolygon_Gradient) \
   defItem(FilterSimple_ConvexPolygon_Textured) \
@@ -170,6 +171,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(BlitSimple_SourceAlpha_ColorMask) \
   defItem(BlitSimple_SourceAlphaMatte) \
   defItem(BlitSimple_SourceAlphaMatte_Opacity) \
+  defItem(BlitSimple_SourceAlpha_Premultiplied) \
+  defItem(BlitSimple_SourceAlpha_Premultiplied_Opacity) \
   defItem(BlitSimple_Subtractive) \
   defItem(BlitSimple_Subtractive_Opacity) \
   defItem(BlitSimple_Subtractive_SourceAlpha) \
@@ -177,6 +180,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(BlitSimple_Unerase) \
   defItem(BlitSimple_Unerase_Opacity) \
   defItem(BlitSimple_XOR) \
+  defItem(BlitSimple_NormalMap) \
+  defItem(BlitSimple_NormalMap_Additive) \
+  defItem(BlitSimple_NormalMap_SourceAlpha) \
+  defItem(BlitSimple_NormalMap_Additive_SourceAlpha) \
   defItem(BlitSimple_) \
   defItem(BlitResample_Additive) \
   defItem(BlitResample_Additive_Opacity) \

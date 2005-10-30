@@ -36,6 +36,11 @@ Private m_lngWidth As Long, m_lngHeight As Long, m_lngBPP As Long
 Private m_sngScaleRatio As Single
 Private m_imgBackbuffer As Fury2Image
 
+Public Property Get Feature(ByRef Name As String) As Boolean
+On Error Resume Next
+    Feature = GLGetFeatureSupport(Name) = 1
+End Property
+
 Private Sub SetFormSize(ByRef Frm As Form, x As Long, y As Long, Optional ByVal Center As Boolean = False)
 On Error Resume Next
 Dim BW As Long, TH As Long, OldMode As Long

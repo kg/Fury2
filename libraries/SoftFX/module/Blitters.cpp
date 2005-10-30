@@ -703,13 +703,56 @@ BLITTERSIMPLE_LOOPBEGIN
 BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
 
+BLITTERSIMPLE_SIGNATURE(SourceAlpha_Premultiplied)
+    ) {
+BLITTERSIMPLE_INIT
+//    if (Source->OptimizeData.solidColor) {
+//      return FilterSimple_Fill_SourceAlpha(Dest, Rect, Source->getPixel(0, 0));
+//    }
+    if (Source->OptimizeData.transparentOnly) return Trivial_Success;
+    _BOS(BlitSimple_SourceAlpha_Premultiplied, 0) _BOE
+BLITTERSIMPLE_BEGIN
+    AlphaLevel *aDest;
+    if (Source->OptimizeData.opaqueOnly) {
+      BLITTERSIMPLE_LOOPBEGIN
+        (*pDest)[::Blue] = (*pSource)[::Blue];
+        (*pDest)[::Green] = (*pSource)[::Green];
+        (*pDest)[::Red] = (*pSource)[::Red];
+      BLITTERSIMPLE_LOOPEND
+    } else if (Source->OptimizeData.sameAlpha) {
+      Byte a = Source->getPixel(0, 0)[::Alpha];
+      aDest = AlphaLevelLookup( a ^ 0xFF );
+      BLITTERSIMPLE_LOOPBEGIN
+        (*pDest)[::Blue] = AlphaFromLevel(aDest, (*pDest)[::Blue]) + (*pSource)[::Blue];
+        (*pDest)[::Green] = AlphaFromLevel(aDest, (*pDest)[::Green]) + (*pSource)[::Green];
+        (*pDest)[::Red] = AlphaFromLevel(aDest, (*pDest)[::Red]) + (*pSource)[::Red];
+      BLITTERSIMPLE_LOOPEND
+    } else {
+      BLITTERSIMPLE_LOOPBEGIN
+        if ((*pSource)[::Alpha]) {
+          if ((*pSource)[::Alpha] == 255) {
+            (*pDest)[::Blue] = (*pSource)[::Blue];
+            (*pDest)[::Green] = (*pSource)[::Green];
+            (*pDest)[::Red] = (*pSource)[::Red];
+          } else {
+            aDest = AlphaLevelLookup( (*pSource)[::Alpha] ^ 0xFF );
+            (*pDest)[::Blue] = AlphaFromLevel(aDest, (*pDest)[::Blue]) + (*pSource)[::Blue];
+            (*pDest)[::Green] = AlphaFromLevel(aDest, (*pDest)[::Green]) + (*pSource)[::Green];
+            (*pDest)[::Red] = AlphaFromLevel(aDest, (*pDest)[::Red]) + (*pSource)[::Red];
+          }
+        }
+      BLITTERSIMPLE_LOOPEND
+    }
+BLITTERSIMPLE_END
+
 BLITTERSIMPLE_SIGNATURE(SourceAlpha)
     ) {
 BLITTERSIMPLE_INIT
+    if (Source->OptimizeData.transparentOnly) return Trivial_Success;
+    if (Source->OptimizeData.premultiplied) return BlitSimple_SourceAlpha_Premultiplied(Dest, Source, Rect, SX, SY);
     if (Source->OptimizeData.solidColor) {
       return FilterSimple_Fill_SourceAlpha(Dest, Rect, Source->getPixel(0, 0));
     }
-    if (Source->OptimizeData.transparentOnly) return Trivial_Success;
     _BOS(BlitSimple_SourceAlpha, 0) _BOE
 BLITTERSIMPLE_BEGIN
     AlphaLevel *aSource, *aDest;
@@ -729,7 +772,7 @@ BLITTERSIMPLE_BEGIN
         (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, (*pSource)[::Red]);
       BLITTERSIMPLE_LOOPEND
     } else {
-    BLITTERSIMPLE_LOOPBEGIN
+      BLITTERSIMPLE_LOOPBEGIN
         if ((*pSource)[::Alpha]) {
           if ((*pSource)[::Alpha] == 255) {
             (*pDest)[::Blue] = (*pSource)[::Blue];
@@ -743,8 +786,38 @@ BLITTERSIMPLE_BEGIN
             (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, (*pSource)[::Red]);
           }
         }
-    BLITTERSIMPLE_LOOPEND
+      BLITTERSIMPLE_LOOPEND
     }
+BLITTERSIMPLE_END
+
+BLITTERSIMPLE_SIGNATURE(SourceAlpha_Premultiplied_Opacity)
+    , int Opacity) {
+BLITTERSIMPLE_INIT
+    if (Opacity <= 0) return Trivial_Success;
+    if (Opacity >= 255) return BlitSimple_SourceAlpha_Premultiplied(Dest, Source, Rect, SX, SY);
+//    if (Source->OptimizeData.solidColor) {
+//      return FilterSimple_Fill_SourceAlpha_Opacity(Dest, Rect, Source->getPixel(0, 0), Opacity);
+//    }
+    if (Source->OptimizeData.transparentOnly) return Trivial_Success;
+    _BOS(BlitSimple_SourceAlpha_Premultiplied_Opacity, 1) , Opacity _BOE
+BLITTERSIMPLE_BEGIN
+    AlphaLevel *aDest, *aScale, *aScale2;
+    aScale = AlphaLevelLookup( ClipByte(Opacity) );
+    aScale2 = AlphaLevelLookup( ClipByte(Opacity) ^ 0xFF );
+BLITTERSIMPLE_LOOPBEGIN
+    if ((*pSource)[::Alpha]) {
+      if ((*pSource)[::Alpha] == 255) {
+        (*pDest)[::Blue] = AlphaFromLevel2(aScale2, (*pDest)[::Blue], aScale, (*pSource)[::Blue]);
+        (*pDest)[::Green] = AlphaFromLevel2(aScale2, (*pDest)[::Green], aScale, (*pSource)[::Green]);
+        (*pDest)[::Red] = AlphaFromLevel2(aScale2, (*pDest)[::Red], aScale, (*pSource)[::Red]);
+      } else {
+        aDest = AlphaLevelLookup( AlphaFromLevel(aScale, (*pSource)[::Alpha]) ^ 0xFF );
+        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aScale, (*pSource)[::Blue]);
+        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aScale, (*pSource)[::Green]);
+        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aScale, (*pSource)[::Red]);
+      }
+    }
+BLITTERSIMPLE_LOOPEND
 BLITTERSIMPLE_END
 
 BLITTERSIMPLE_SIGNATURE(SourceAlpha_Opacity)
@@ -752,10 +825,11 @@ BLITTERSIMPLE_SIGNATURE(SourceAlpha_Opacity)
 BLITTERSIMPLE_INIT
     if (Opacity <= 0) return Trivial_Success;
     if (Opacity >= 255) return BlitSimple_SourceAlpha(Dest, Source, Rect, SX, SY);
+    if (Source->OptimizeData.premultiplied) return BlitSimple_SourceAlpha_Premultiplied_Opacity(Dest, Source, Rect, SX, SY, Opacity);
+    if (Source->OptimizeData.transparentOnly) return Trivial_Success;
     if (Source->OptimizeData.solidColor) {
       return FilterSimple_Fill_SourceAlpha_Opacity(Dest, Rect, Source->getPixel(0, 0), Opacity);
     }
-    if (Source->OptimizeData.transparentOnly) return Trivial_Success;
     _BOS(BlitSimple_SourceAlpha_Opacity, 1) , Opacity _BOE
 BLITTERSIMPLE_BEGIN
     AlphaLevel *aSource, *aDest, *aScale, *aScale2;
@@ -2876,3 +2950,130 @@ Export int BlitDeformMask(Image *Dest, Image *Source, Image *Mask, MeshParam *Me
   
     return Success;
 }
+
+BLITTERSIMPLE_SIGNATURE(NormalMap)
+    , FPoint3 *LightVector, Pixel LightColor) {
+BLITTERSIMPLE_INIT
+    if (LightColor[::Alpha] == 0) return Trivial_Success;
+    _BOS(BlitSimple_NormalMap, 2) , LightVector, LightColor _BOE
+BLITTERSIMPLE_BEGIN
+    LightVector->normalize();
+    int lv[3];
+    lv[0] = ((LightVector->X) * 127);
+    lv[1] = ((LightVector->Y) * 127);
+    lv[2] = ((LightVector->Z) * 127);
+    int pv[3];
+    int d;
+    AlphaLevel *aSource, *aDest, *aScale;
+    aScale = AlphaLevelLookup( LightColor[::Alpha] );
+BLITTERSIMPLE_LOOPBEGIN
+    pv[0] = (*pSource)[::Red] - 127;
+    pv[1] = (*pSource)[::Green] - 127;
+    pv[2] = (*pSource)[::Blue] - 127;
+    d = ClipByte((lv[0] * pv[0] + lv[1] * pv[1] + lv[2] * pv[2]) / 63);
+    if (d) {
+      aSource = AlphaLevelLookup(AlphaFromLevel(aScale, d));
+      aDest = AlphaLevelLookup(AlphaFromLevel(aScale, d) ^ 0xFF);
+      (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, LightColor[::Blue]);
+      (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, LightColor[::Green]);
+      (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, LightColor[::Red]);
+    }
+BLITTERSIMPLE_LOOPEND
+BLITTERSIMPLE_END
+
+BLITTERSIMPLE_SIGNATURE(NormalMap_Additive)
+    , FPoint3 *LightVector, Pixel LightColor) {
+BLITTERSIMPLE_INIT
+    _BOS(BlitSimple_NormalMap_Additive, 2) , LightVector, LightColor _BOE
+BLITTERSIMPLE_BEGIN
+    LightVector->normalize();
+    int lv[3];
+    lv[0] = ((LightVector->X) * 127);
+    lv[1] = ((LightVector->Y) * 127);
+    lv[2] = ((LightVector->Z) * 127);
+    int pv[3];
+    int d;
+    AlphaLevel *aSource;
+BLITTERSIMPLE_LOOPBEGIN
+    pv[0] = (*pSource)[::Red] - 127;
+    pv[1] = (*pSource)[::Green] - 127;
+    pv[2] = (*pSource)[::Blue] - 127;
+    d = ClipByte((lv[0] * pv[0] + lv[1] * pv[1] + lv[2] * pv[2]) / 63);
+    if (d) {
+      if (d == 255) {
+        (*pDest)[::Blue] = ClipByteHigh((*pDest)[::Blue] + LightColor[::Blue]);
+        (*pDest)[::Green] = ClipByteHigh((*pDest)[::Green] + LightColor[::Green]);
+        (*pDest)[::Red] = ClipByteHigh((*pDest)[::Red] + LightColor[::Red]);
+      } else {
+        aSource = AlphaLevelLookup(d);
+        (*pDest)[::Blue] = ClipByteHigh((*pDest)[::Blue] + AlphaFromLevel(aSource, LightColor[::Blue]));
+        (*pDest)[::Green] = ClipByteHigh((*pDest)[::Green] + AlphaFromLevel(aSource, LightColor[::Green]));
+        (*pDest)[::Red] = ClipByteHigh((*pDest)[::Red] + AlphaFromLevel(aSource, LightColor[::Red]));
+      }
+    }
+BLITTERSIMPLE_LOOPEND
+BLITTERSIMPLE_END
+
+BLITTERSIMPLE_SIGNATURE(NormalMap_SourceAlpha)
+    , FPoint3 *LightVector, Pixel LightColor) {
+BLITTERSIMPLE_INIT
+    if (LightColor[::Alpha] == 0) return Trivial_Success;
+    _BOS(BlitSimple_NormalMap_SourceAlpha, 2) , LightVector, LightColor _BOE
+BLITTERSIMPLE_BEGIN
+    LightVector->normalize();
+    int lv[3];
+    lv[0] = ((LightVector->X) * 127);
+    lv[1] = ((LightVector->Y) * 127);
+    lv[2] = ((LightVector->Z) * 127);
+    int pv[3];
+    int d;
+    AlphaLevel *aSource, *aDest, *aScale, *aScale2;
+    aScale = AlphaLevelLookup( LightColor[::Alpha] );
+BLITTERSIMPLE_LOOPBEGIN
+    if ((*pSource)[::Alpha]) {
+      pv[0] = (*pSource)[::Red] - 127;
+      pv[1] = (*pSource)[::Green] - 127;
+      pv[2] = (*pSource)[::Blue] - 127;
+      d = ClipByte((lv[0] * pv[0] + lv[1] * pv[1] + lv[2] * pv[2]) / 63);
+      if (d) {
+        aScale2 = AlphaLevelLookup(AlphaFromLevel(aScale, (*pSource)[::Alpha]));
+        aSource = AlphaLevelLookup(AlphaFromLevel(aScale2, d));
+        aDest = AlphaLevelLookup(AlphaFromLevel(aScale2, d) ^ 0xFF);
+        (*pDest)[::Blue] = AlphaFromLevel2(aDest, (*pDest)[::Blue], aSource, LightColor[::Blue]);
+        (*pDest)[::Green] = AlphaFromLevel2(aDest, (*pDest)[::Green], aSource, LightColor[::Green]);
+        (*pDest)[::Red] = AlphaFromLevel2(aDest, (*pDest)[::Red], aSource, LightColor[::Red]);
+      }
+    }
+BLITTERSIMPLE_LOOPEND
+BLITTERSIMPLE_END
+
+BLITTERSIMPLE_SIGNATURE(NormalMap_Additive_SourceAlpha)
+    , FPoint3 *LightVector, Pixel LightColor) {
+BLITTERSIMPLE_INIT
+    _BOS(BlitSimple_NormalMap_Additive_SourceAlpha, 2) , LightVector, LightColor _BOE
+BLITTERSIMPLE_BEGIN
+    LightVector->normalize();
+    int lv[3];
+    lv[0] = ((LightVector->X) * 127);
+    lv[1] = ((LightVector->Y) * 127);
+    lv[2] = ((LightVector->Z) * 127);
+    int pv[3];
+    int d;
+    AlphaLevel *aSource, *aScale, *aScale2;
+    aScale = AlphaLevelLookup(LightColor[::Alpha]);
+BLITTERSIMPLE_LOOPBEGIN
+    if ((*pSource)[::Alpha]) {
+      pv[0] = (*pSource)[::Red] - 127;
+      pv[1] = (*pSource)[::Green] - 127;
+      pv[2] = (*pSource)[::Blue] - 127;
+      d = ClipByte((lv[0] * pv[0] + lv[1] * pv[1] + lv[2] * pv[2]) / 63);
+      if (d) {
+        aScale2 = AlphaLevelLookup(AlphaFromLevel(aScale, (*pSource)[::Alpha]));
+        aSource = AlphaLevelLookup(AlphaFromLevel(aScale2, d));
+        (*pDest)[::Blue] = ClipByteHigh((*pDest)[::Blue] + AlphaFromLevel(aSource, LightColor[::Blue]));
+        (*pDest)[::Green] = ClipByteHigh((*pDest)[::Green] + AlphaFromLevel(aSource, LightColor[::Green]));
+        (*pDest)[::Red] = ClipByteHigh((*pDest)[::Red] + AlphaFromLevel(aSource, LightColor[::Red]));
+      }
+    }
+BLITTERSIMPLE_LOOPEND
+BLITTERSIMPLE_END

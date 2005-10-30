@@ -266,6 +266,15 @@ End Property
 Public Property Get BlitMode_Subtractive_SourceAlpha() As Long
     BlitMode_Subtractive_SourceAlpha = 26
 End Property
+Public Property Get BlitMode_SourceAlpha_ColorMask() As Long
+    BlitMode_SourceAlpha_ColorMask = 27
+End Property
+Public Property Get BlitMode_Difference() As Long
+    BlitMode_Difference = 28
+End Property
+Public Property Get BlitMode_SourceAlpha_Premultiplied() As Long
+    BlitMode_SourceAlpha_Premultiplied = 29
+End Property
 
 Public Property Get RenderMode_Default() As Long
     RenderMode_Default = -1

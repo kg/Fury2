@@ -86,6 +86,7 @@ Public Property Get DirectionPoses() As Long
 End Property
 
 Private Sub Class_Initialize()
+    mvarDirectionPoses = 1
     mvarMaxVelocity = 1
     mvarName = "New State"
 End Sub
@@ -96,11 +97,7 @@ On Error Resume Next
         .ReadSegment_Begin
             .Load mvarName
             .Load mvarPoseOffset
-            If .EOS Then
-                mvarDirectionPoses = -1
-            Else
-                .Load mvarDirectionPoses
-            End If
+            .Load mvarDirectionPoses
             .Load mvarMaxVelocity
         .ReadSegment_End
     End With

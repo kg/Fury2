@@ -35,6 +35,7 @@ Option Explicit
 Implements Fury2Object
 Implements IInspectable
 Implements IVirtualFileSaveable
+Private mvarAttachTo As String
 Private mvarAngle As Single 'local copy
 Private mvarAttachedSprite As Fury2Sprite 'local copy
 Private mvarAttachX As Single, mvarAttachY As Single, mvarAttachH As Single, mvarAttachV As Single
@@ -52,7 +53,72 @@ Private mvarName As String
 Private mvarEnableCache As Boolean
 Private mvarCacheValid As Boolean
 Private mvarCache As Fury2Image
+Private mvarImageFilename As String
+Private mvarImage As Fury2Image
+Private mvarImageAlignX As Long, mvarImageAlignY As Long
 Private mvarFuzziness As Byte
+Private m_llParent As Fury2LayerLighting
+Private m_engEngine As Fury2Engine
+
+Public Sub UpdateAttachment()
+On Error Resume Next
+Dim l_sprSprite As Fury2Sprite
+    Set l_sprSprite = m_llParent.Layer.Sprites(mvarAttachTo)
+    If l_sprSprite Is Nothing Then
+        Set l_sprSprite = m_llParent.Layer.Sprites(CLng(mvarAttachTo))
+    End If
+    Attach l_sprSprite
+End Sub
+
+Public Property Get Rectangle() As Fury2Rect
+On Error Resume Next
+Dim l_sngX1 As Single, l_sngY1 As Single, l_sngX2 As Single, l_sngY2 As Single
+Dim l_sngW As Single, l_sngH As Single
+    If mvarImage Is Nothing Then
+        l_sngX1 = mvarX - mvarFalloffDistance
+        l_sngY1 = mvarY - mvarFalloffDistance
+        l_sngX2 = mvarX + mvarFalloffDistance
+        l_sngY2 = mvarY + mvarFalloffDistance
+    Else
+        l_sngW = mvarImage.Width / 2
+        l_sngH = mvarImage.Height / 2
+        l_sngX1 = mvarX - l_sngW - mvarImageAlignX
+        l_sngY1 = mvarY - l_sngH - mvarImageAlignY
+        l_sngX2 = mvarX + l_sngW - mvarImageAlignX
+        l_sngY2 = mvarY + l_sngH - mvarImageAlignY
+    End If
+    Set Rectangle = F2Rect(Floor(l_sngX1), Floor(l_sngY1), Ceil(l_sngX2 - l_sngX1), Ceil(l_sngY2 - l_sngY1), False)
+End Property
+
+Friend Sub SetParent(ByRef Parent As Fury2LayerLighting)
+On Error Resume Next
+    Set m_llParent = Parent
+End Sub
+
+Friend Sub SetEngine(ByRef Engine As Fury2Engine)
+On Error Resume Next
+    Set m_engEngine = Engine
+End Sub
+
+Public Sub Free()
+On Error Resume Next
+    Set m_llParent = Nothing
+    Set m_engEngine = Nothing
+    Set mvarCache = Nothing
+    Set mvarImage = Nothing
+    Set mvarAttachedSprite = Nothing
+End Sub
+
+Public Property Get AttachTo() As String
+On Error Resume Next
+    AttachTo = mvarAttachTo
+End Property
+
+Public Property Let AttachTo(ByRef NewValue As String)
+On Error Resume Next
+    mvarAttachTo = NewValue
+    UpdateAttachment
+End Property
 
 Public Property Get Alpha() As Single
 On Error Resume Next
@@ -64,6 +130,11 @@ On Error Resume Next
     mvarAlpha = NewAlpha
     mvarCacheValid = False
 End Property
+
+Public Sub UpdateImage()
+On Error Resume Next
+    Set mvarImage = m_engEngine.LoadImage(mvarImageFilename)
+End Sub
 
 Public Sub UpdateCache()
 On Error Resume Next
@@ -99,6 +170,24 @@ Friend Property Let CacheValid(NewValue As Boolean)
     mvarCacheValid = NewValue
 End Property
 
+Public Property Set Image(ByVal NewValue As Fury2Image)
+    Set mvarImage = NewValue
+End Property
+
+Public Property Get Image() As Fury2Image
+    Set Image = mvarImage
+End Property
+
+Public Property Get ImageFilename() As String
+    ImageFilename = mvarImageFilename
+End Property
+
+Public Property Let ImageFilename(ByRef NewValue As String)
+    mvarImageFilename = NewValue
+    UpdateImage
+    UpdateCache
+End Property
+
 Public Property Get Cache() As Fury2Image
     Set Cache = mvarCache
 End Property
@@ -119,7 +208,7 @@ Public Property Let Fuzziness(ByVal NewValue As Long)
     mvarFuzziness = ClipByte(NewValue)
 End Property
 
-Public Sub Attach(Sprite)
+Public Sub Attach(ByVal Sprite As Fury2Sprite)
 On Error Resume Next
     Set mvarAttachedSprite = Sprite
 End Sub
@@ -154,6 +243,10 @@ On Error Resume Next
             .Cache = 0
         End If
         .CacheValid = CByte(Abs(mvarCacheValid))
+        .Image = 0
+        .Image = mvarImage.Handle
+        .ImageAlignX = mvarImageAlignX
+        .ImageAlignY = mvarImageAlignY
     End With
 End Property
 
@@ -172,6 +265,8 @@ On Error Resume Next
         mvarX = .X
         mvarY = .Y
         mvarCacheValid = CBool(.CacheValid)
+        mvarImageAlignX = .ImageAlignX
+        mvarImageAlignY = .ImageAlignY
     End With
 End Property
 
@@ -200,6 +295,24 @@ End Property
 
 Public Property Get AttachY() As Single
     AttachY = mvarAttachY
+End Property
+
+Public Property Let ImageAlignX(ByVal vData As Long)
+    mvarImageAlignX = vData
+    UpdateCache
+End Property
+
+Public Property Get ImageAlignX() As Long
+    ImageAlignX = mvarImageAlignX
+End Property
+
+Public Property Let ImageAlignY(ByVal vData As Long)
+    mvarImageAlignY = vData
+    UpdateCache
+End Property
+
+Public Property Get ImageAlignY() As Long
+    ImageAlignY = mvarImageAlignY
 End Property
 
 Public Property Let AttachH(ByVal vData As Single)
@@ -290,7 +403,6 @@ Public Property Get Color() As Long
 End Property
 
 Public Property Get AttachedSprite() As Fury2Sprite
-Attribute AttachedSprite.VB_Description = "*"
     Set AttachedSprite = mvarAttachedSprite
 End Property
 
@@ -336,6 +448,12 @@ On Error Resume Next
             End If
             Set mvarCache = Nothing
             UpdateCache
+            .Load mvarImageFilename
+            .Load mvarImageAlignX
+            .Load mvarImageAlignY
+            UpdateImage
+            .Load mvarAttachTo
+            UpdateAttachment
         .ReadSegment_End
     End With
 End Sub
@@ -358,6 +476,10 @@ On Error Resume Next
             .Save mvarEnableCache
             .Save mvarFuzziness
             .Save mvarAlpha
+            .Save mvarImageFilename
+            .Save mvarImageAlignX
+            .Save mvarImageAlignY
+            .Save mvarAttachTo
         .WriteSegment_End
     End With
 End Sub

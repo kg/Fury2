@@ -41,7 +41,17 @@ Implements IVirtualFileSaveable
 
 Private mHook As Object
 Private mCol As Collection
-Private mvarParent As Fury2Map
+Private mvarParent As Fury2LayerLighting
+
+Public Sub Refresh()
+On Error Resume Next
+Dim l_litLight As Fury2LightSource
+    For Each l_litLight In mCol
+        l_litLight.UpdateCache
+        l_litLight.UpdateImage
+        l_litLight.UpdateAttachment
+    Next l_litLight
+End Sub
 
 Public Sub Free()
 On Error Resume Next
@@ -59,8 +69,8 @@ On Error Resume Next
 Dim l_colItems As Fury2Collection
 Dim l_litLight As Fury2LightSource
     If mvarParent Is Nothing Then Stop
-    If mvarParent.Engine Is Nothing Then Stop
-    Set l_colItems = mvarParent.Engine.F2Collection()
+    If mvarParent.Layer.Map.Engine Is Nothing Then Stop
+    Set l_colItems = mvarParent.Layer.Map.Engine.F2Collection()
     For Each l_litLight In mCol
         If l_litLight.Name Like Match Then
             l_colItems.Add l_litLight
@@ -74,7 +84,7 @@ On Error Resume Next
 Dim l_lngLightSources As Long
 Dim l_objObject As Object, l_strKey As String
 Dim l_litLightSource As Fury2LightSource
-    If mCol.Count < 1 Then Exit Function
+    If mCol.count < 1 Then Exit Function
     If VarType(vntIndexKey) = vbObject Then
         Set l_objObject = vntIndexKey
         l_lngLightSources = 1
@@ -100,19 +110,20 @@ Dim l_litLightSource As Fury2LightSource
     End If
 End Function
 
-Friend Sub SetParent(Parent As Fury2Map)
+Friend Sub SetParent(Parent As Fury2LayerLighting)
     Set mvarParent = Parent
 End Sub
 
 Public Function AddNew(X As Long, Y As Long) As Fury2LightSource
 On Error Resume Next
-    If mCol.Count >= c_lngMaxLightSources Then Exit Function
+    If mCol.count >= c_lngMaxLightSources Then Exit Function
     mCol.Add New Fury2LightSource
-    With mCol(mCol.Count)
+    With Item(mCol.count)
         .X = X - 32
         .Y = Y - 32
-        .Width = 64
-        .Height = 64
+        .FalloffDistance = 50
+        .Color = F2White
+        .SetEngine mvarParent.Layer.Map.Engine
         .SetParent mvarParent
     End With
 End Function
@@ -123,11 +134,11 @@ On Error Resume Next
         If IsMissing(AtIndex) Then
             mCol.Add Obj
         Else
-            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
+            If (mCol.count = 0) Or (AtIndex > mCol.count) Then
                 mCol.Add Obj
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, , 1
-            ElseIf mCol.Count > AtIndex Then
+            ElseIf mCol.count > AtIndex Then
                 mCol.Add Obj, , AtIndex
             Else
                 mCol.Add Obj, , , AtIndex - 1
@@ -138,11 +149,11 @@ On Error Resume Next
         If IsMissing(AtIndex) Then
             mCol.Add Obj, sKey
         Else
-            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
+            If (mCol.count = 0) Or (AtIndex > mCol.count) Then
                 mCol.Add Obj, sKey
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, sKey, 1
-            ElseIf mCol.Count > AtIndex Then
+            ElseIf mCol.count > AtIndex Then
                 mCol.Add Obj, sKey, AtIndex
             Else
                 mCol.Add Obj, sKey, , AtIndex - 1
@@ -150,6 +161,8 @@ On Error Resume Next
         End If
     End If
     Err.Clear
+    Obj.SetEngine mvarParent.Layer.Map.Engine
+    Obj.SetParent mvarParent
     If mHook Is Nothing Then
     Else
         mHook.Changed
@@ -163,14 +176,28 @@ On Error Resume Next
   Set Item = mCol(vntIndexKey)
 End Property
 
-Public Property Get Count() As Long
+Public Property Get count() As Long
 On Error Resume Next
-    Count = mCol.Count
+    count = mCol.count
 End Property
 
 Public Sub Remove(vntIndexKey As Variant)
 On Error Resume Next
+    Item(vntIndexKey).Free
     mCol.Remove vntIndexKey
+    If mHook Is Nothing Then
+    Else
+        mHook.Changed
+    End If
+End Sub
+
+Public Sub Clear()
+On Error Resume Next
+    Do While mCol.count > 0
+        Item(1).Free
+        mCol.Remove 1
+    Loop
+    Set mCol = New Collection
     If mHook Is Nothing Then
     Else
         mHook.Changed
@@ -201,7 +228,7 @@ End Sub
 
 Private Property Get IVirtualFileCollection_Count() As Long
 On Error Resume Next
-    IVirtualFileCollection_Count = mCol.Count
+    IVirtualFileCollection_Count = mCol.count
 End Property
 
 Private Function IVirtualFileCollection_CreateNew() As Object
@@ -209,18 +236,14 @@ On Error Resume Next
     Set IVirtualFileCollection_CreateNew = New Fury2LightSource
 End Function
 
-Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object
+Private Function IVirtualFileCollection_GetItem(ByVal index As Long) As Object
 On Error Resume Next
-    Set IVirtualFileCollection_GetItem = mCol.Item(Index)
+    Set IVirtualFileCollection_GetItem = mCol.Item(index)
 End Function
 
 Private Sub IVirtualFileCollection_Reset()
 On Error Resume Next
-    Set mCol = New Collection
-    If mHook Is Nothing Then
-    Else
-        mHook.Changed
-    End If
+    Clear
 End Sub
 
 Private Sub IVirtualFileCollection_SaveHeader(File As libGraphics.VirtualFile)
@@ -234,8 +257,8 @@ End Sub
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)
 On Error Resume Next
 Dim l_objObject As Object
-    If FromIndex < 1 Or FromIndex > mCol.Count Then Exit Sub
-    If ToIndex < 1 Or ToIndex > (mCol.Count + 1) Then Exit Sub
+    If FromIndex < 1 Or FromIndex > mCol.count Then Exit Sub
+    If ToIndex < 1 Or ToIndex > (mCol.count + 1) Then Exit Sub
     If FromIndex = ToIndex Then Exit Sub
     Set l_objObject = mCol.Item(FromIndex)
     Remove FromIndex

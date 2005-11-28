@@ -47,9 +47,9 @@ Private m_engEngine As Fury2Engine
 Public Sub Changed()
 On Error Resume Next
 Dim l_lngItem As Long
-    If mvarMembers.Count > 0 Then
-        For l_lngItem = 1 To mvarMembers.Count
-            mvarMembers(l_lngItem).Index = l_lngItem
+    If mvarMembers.count > 0 Then
+        For l_lngItem = 1 To mvarMembers.count
+            mvarMembers(l_lngItem).index = l_lngItem
         Next l_lngItem
     End If
 End Sub
@@ -64,16 +64,15 @@ Public Property Get Engine() As Fury2Engine
     Set Engine = m_engEngine
 End Property
 
-Public Sub InitMap(ByVal Index As Long, ByVal StartX As Single, ByVal StartY As Single, ByVal Layer As Long)
+Public Sub InitMap(ByVal index As Long, ByVal StartX As Single, ByVal StartY As Single, ByVal Layer As Long)
 On Error Resume Next
 Dim m_lngItems As Long
-    If mvarMembers.Count > 0 Then
-        For m_lngItems = 1 To mvarMembers.Count
-            mvarMembers(m_lngItems).InitMap Index, StartX, StartY, Layer
-            mvarMembers(m_lngItems).InitMap Index, StartX, StartY
+    If mvarMembers.count > 0 Then
+        For m_lngItems = 1 To mvarMembers.count
+            mvarMembers(m_lngItems).InitMap index, StartX, StartY, Layer
         Next m_lngItems
     End If
-    If mvarMembers.Count > 0 Then
+    If mvarMembers.count > 0 Then
         If Controller Is Nothing Then
         Else
             Engine.UnHookEvents Controller
@@ -127,8 +126,8 @@ Dim m_lngMembers As Long, m_strName As String
   Set Item = mvarMembers(vntIndexKey)
   If VarType(vntIndexKey) = vbString And Item Is Nothing Then
         m_strName = LCase(Trim(CStr(vntIndexKey)))
-        If mvarMembers.Count > 0 Then
-            For m_lngMembers = 1 To mvarMembers.Count
+        If mvarMembers.count > 0 Then
+            For m_lngMembers = 1 To mvarMembers.count
                 If LCase(Trim(mvarMembers(m_lngMembers).Name)) = m_strName Then
                     Set Item = mvarMembers(m_lngMembers)
                     Exit For
@@ -138,9 +137,9 @@ Dim m_lngMembers As Long, m_strName As String
   End If
 End Property
 
-Public Property Get Count() As Long
-Attribute Count.VB_MemberFlags = "40"
-    Count = mvarMembers.Count
+Public Property Get count() As Long
+Attribute count.VB_MemberFlags = "40"
+    count = mvarMembers.count
 End Property
 
 Public Sub Remove(vntIndexKey As Variant)

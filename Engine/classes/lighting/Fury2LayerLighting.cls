@@ -43,9 +43,29 @@ Private m_colLights As Fury2LightSources
 Private m_litLights() As LightSource
 Private m_obsObstructions() As LightingObstruction
 Private m_plnPlanes() As LightingPlane2
+Private m_lyrLayer As Fury2MapLayer
+
+Friend Sub SetParent(ByVal Parent As Fury2MapLayer)
+On Error Resume Next
+Dim l_litLight As Fury2LightSource
+    Set m_lyrLayer = Parent
+    m_colLights.SetParent m_lyrLayer.Map
+    For Each l_litLight In m_colLights
+        l_litLight.SetEngine m_lyrLayer.Map.Engine
+    Next l_litLight
+End Sub
+
+Public Property Get Layer() As Fury2MapLayer
+    Set Layer = m_lyrLayer
+End Property
 
 Public Sub Free()
 On Error Resume Next
+Dim l_litLight As Fury2LightSource
+    For Each l_litLight In m_colLights
+        l_litLight.Free
+    Next l_litLight
+    DeallocateLightingMatrix
     m_colLights.Free
     Set m_colLights = Nothing
     Erase m_litLights
@@ -85,9 +105,9 @@ On Error Resume Next
     End If
 End Sub
 
-Public Function PlanePointer(Index As Long) As Long
+Public Function PlanePointer(index As Long) As Long
 On Error Resume Next
-    PlanePointer = VarPtr(m_plnPlanes(Index))
+    PlanePointer = VarPtr(m_plnPlanes(index))
 End Function
 
 Public Function SightCheck(ByVal FromX As Single, ByVal FromY As Single, ByVal ToX As Single, ByVal ToY As Single, Optional ByRef IgnoreSprite1 = Nothing, Optional ByRef IgnoreSprite2 = Nothing) As Boolean
@@ -98,19 +118,19 @@ Public Function Raycast(ByVal X As Single, ByVal Y As Single, Optional ByRef Ign
     Raycast = SoftFX.RaycastPoint(m_envEnvironment, X, Y, IIf(IgnoreSprite Is Nothing, 0, IgnoreSprite.Pointer))
 End Function
 
-Public Sub RemovePlane(Index As Long)
+Public Sub RemovePlane(index As Long)
 On Error Resume Next
 Dim m_lngLines As Long
-    If Index < 0 Then Exit Sub
-    If Index > UBound(m_plnPlanes) Then Exit Sub
-    m_plnPlanes(Index).Start.X = -1
-    m_plnPlanes(Index).Start.Y = -1
-    m_plnPlanes(Index).end.X = -1
-    m_plnPlanes(Index).end.Y = -1
-    m_plnPlanes(Index).Height = 0
-    If Index = UBound(m_plnPlanes) Then
+    If index < 0 Then Exit Sub
+    If index > UBound(m_plnPlanes) Then Exit Sub
+    m_plnPlanes(index).Start.X = -1
+    m_plnPlanes(index).Start.Y = -1
+    m_plnPlanes(index).end.X = -1
+    m_plnPlanes(index).end.Y = -1
+    m_plnPlanes(index).Height = 0
+    If index = UBound(m_plnPlanes) Then
     Else
-        For m_lngLines = Index + 1 To UBound(m_plnPlanes)
+        For m_lngLines = index + 1 To UBound(m_plnPlanes)
             m_plnPlanes(m_lngLines - 1) = m_plnPlanes(m_lngLines)
         Next m_lngLines
     End If
@@ -148,16 +168,16 @@ On Error Resume Next
     m_envEnvironment.PlaneCount = UBound(m_plnPlanes)
 End Property
 
-Public Function GetPlane(Index) As Variant
+Public Function GetPlane(index) As Variant
 On Error Resume Next
-    With m_plnPlanes(Index)
+    With m_plnPlanes(index)
         GetPlane = Array(.Start.X, .Start.Y, .end.X, .end.Y, .Height)
     End With
 End Function
 
-Public Function SetPlane(Index, NewValue)
+Public Function SetPlane(index, NewValue)
 On Error Resume Next
-    With m_plnPlanes(Index)
+    With m_plnPlanes(index)
         .Start.X = CSng(NewValue(0))
         .Start.Y = CSng(NewValue(1))
         .end.X = CSng(NewValue(2))
@@ -166,23 +186,23 @@ On Error Resume Next
     End With
 End Function
 
-Public Function ObstructionPointer(Index As Long) As Long
+Public Function ObstructionPointer(index As Long) As Long
 On Error Resume Next
-    ObstructionPointer = VarPtr(m_obsObstructions(Index))
+    ObstructionPointer = VarPtr(m_obsObstructions(index))
 End Function
 
-Public Sub RemoveObstruction(Index As Long)
+Public Sub RemoveObstruction(index As Long)
 On Error Resume Next
 Dim m_lngLines As Long
-    If Index < 0 Then Exit Sub
-    If Index > UBound(m_obsObstructions) Then Exit Sub
-    m_obsObstructions(Index).Line.Start.X = -1
-    m_obsObstructions(Index).Line.Start.Y = -1
-    m_obsObstructions(Index).Line.end.X = -1
-    m_obsObstructions(Index).Line.end.Y = -1
-    If Index = UBound(m_obsObstructions) Then
+    If index < 0 Then Exit Sub
+    If index > UBound(m_obsObstructions) Then Exit Sub
+    m_obsObstructions(index).Line.Start.X = -1
+    m_obsObstructions(index).Line.Start.Y = -1
+    m_obsObstructions(index).Line.end.X = -1
+    m_obsObstructions(index).Line.end.Y = -1
+    If index = UBound(m_obsObstructions) Then
     Else
-        For m_lngLines = Index + 1 To UBound(m_obsObstructions)
+        For m_lngLines = index + 1 To UBound(m_obsObstructions)
             m_obsObstructions(m_lngLines - 1) = m_obsObstructions(m_lngLines)
         Next m_lngLines
     End If
@@ -220,16 +240,16 @@ On Error Resume Next
     m_envEnvironment.ObstructionCount = UBound(m_obsObstructions)
 End Property
 
-Public Function GetObstruction(Index) As Variant
+Public Function GetObstruction(index) As Variant
 On Error Resume Next
-    With m_obsObstructions(Index)
+    With m_obsObstructions(index)
         GetObstruction = Array(.Line.Start.X, .Line.Start.Y, .Line.end.X, .Line.end.Y)
     End With
 End Function
 
-Public Function SetObstruction(Index, NewValue)
+Public Function SetObstruction(index, NewValue)
 On Error Resume Next
-    With m_obsObstructions(Index).Line
+    With m_obsObstructions(index).Line
         .Start.X = NewValue(0)
         .Start.Y = NewValue(1)
         .end.X = NewValue(2)
@@ -249,8 +269,8 @@ End Property
 
 Public Sub RefreshLights()
 On Error Resume Next
-    ReDim Preserve m_litLights(0 To m_colLights.Count - 1)
-    m_envEnvironment.LightCount = m_colLights.Count
+    ReDim Preserve m_litLights(0 To m_colLights.count - 1)
+    m_envEnvironment.LightCount = m_colLights.count
 End Sub
 
 Public Sub Render(ByRef Camera As LightingCamera)
@@ -259,7 +279,7 @@ Dim l_litLight As Fury2LightSource
 Dim l_lngIndex As Long
 Dim l_booDestroyed As Boolean
     l_lngIndex = 0
-    If m_colLights.Count > 0 Then
+    If m_colLights.count > 0 Then
         For Each l_litLight In m_colLights
             l_booDestroyed = False
             If l_litLight.AttachedSprite Is Nothing Then
@@ -320,7 +340,7 @@ On Error Resume Next
         .X = X
         .Y = Y
         .Color = Color
-        .Name = "Light " & (m_colLights.Count + 1)
+        .Name = "Light " & (m_colLights.count + 1)
     End With
     m_colLights.Add AddLight
 End Function
@@ -331,10 +351,13 @@ On Error Resume Next
     ReDim m_obsObstructions(0 To 0)
     ReDim m_plnPlanes(0 To 0)
     Set m_colLights = New Fury2LightSources
+    m_colLights.SetParent Me
+    m_colLights.Hook Me
 End Sub
 
 Private Sub Class_Terminate()
-    DeallocateLightingMatrix
+On Error Resume Next
+    Free
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
@@ -349,8 +372,10 @@ Dim l_lsLight As LightSource
             .ReadSegment_Begin
                 If Not .EOS Then
                     Set m_colLights = New Fury2LightSources
+                    m_colLights.SetParent Me
                     .Load m_colLights
                     m_colLights.Hook Me
+                    m_colLights.Refresh
                 End If
             .ReadSegment_End
             .ReadSegment_Begin
@@ -417,9 +442,26 @@ On Error Resume Next
     End With
 End Sub
 
+Public Sub Resync()
+On Error Resume Next
+    If Lights.count < 1 Then Exit Sub
+Dim l_litLight As Fury2LightSource
+    For Each l_litLight In Lights
+        With l_litLight
+            If .AttachedSprite Is Nothing Then
+            Else
+                .Alpha = .AttachedSprite.Alpha
+                .Angle = .AttachedSprite.Angle
+                .X = .AttachedSprite.X + .AttachX
+                .Y = .AttachedSprite.Y + .AttachY
+            End If
+        End With
+    Next l_litLight
+End Sub
+
 Public Sub Update()
 On Error Resume Next
-    If Lights.Count < 1 Then Exit Sub
+    If Lights.count < 1 Then Exit Sub
 Dim l_litLight As Fury2LightSource
     For Each l_litLight In Lights
         With l_litLight

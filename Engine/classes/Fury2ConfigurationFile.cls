@@ -167,5 +167,5 @@ On Error Resume Next
     Array("Special FX", "Yes"), Array("Output Plugin", "GDI"), Array("Vertical Sync", "No"), Array("Show Framerate", "Yes"), Array("Show Titlebar", "Yes"), _
     Array("Default Transition", "Crossfade"), Array("Default Transition Length", "1.0"), "Default Map", Array("Default Font", "TTF;Tahoma"), "Default Window Skin", _
     Array("Default Start Position", "0 @ 0, 0"), Array("Enable Sound", "Yes"), Array("Music Volume", "0.65"), Array("Sound Volume", "1.00"), Array("Language", "VBScript"), Array("Icon", "/icon.ico"), _
-    Array("Default Cursor", ""), Array("Screen Scale Ratio", "1.0"), Array("Output Scaling Mode", "Fast"), Array("Fullscreen", "No"))
+    Array("Default Cursor", ""), Array("Screen Scale Ratio", "1.0"), Array("Output Scaling Mode", "Linear"), Array("Fullscreen", "No"), Array("Strict", "No"))
 End Sub

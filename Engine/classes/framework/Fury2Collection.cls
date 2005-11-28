@@ -46,8 +46,8 @@ Implements IEditableCollection
 Private mCol As Collection
 Private mHook As Object
 Public Event AddNew(ByRef Output As Object)
-Public Event Add(ByVal Index As Long)
-Public Event Remove(ByVal Index As Long)
+Public Event Add(ByVal index As Long)
+Public Event Remove(ByVal index As Long)
 Public Event Clear()
 #If ExternalModule = 0 Then
 Private m_strAddHook As String
@@ -367,20 +367,20 @@ On Error Resume Next
     IInspectableCollection_ItemCount = mCol.count
 End Property
 
-Private Property Set IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+Private Property Set IInspectableCollection_ItemValue(ByVal index As Long, ByVal RHS As Variant)
 On Error Resume Next
 End Property
 
-Private Property Let IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
+Private Property Let IInspectableCollection_ItemValue(ByVal index As Long, ByVal RHS As Variant)
 On Error Resume Next
 End Property
 
-Private Property Get IInspectableCollection_ItemValue(ByVal Index As Long) As Variant
+Private Property Get IInspectableCollection_ItemValue(ByVal index As Long) As Variant
 On Error Resume Next
     Err.Clear
-    Set IInspectableCollection_ItemValue = mCol(Index)
+    Set IInspectableCollection_ItemValue = mCol(index)
     If Err <> 0 Then
-        IInspectableCollection_ItemValue = mCol(Index)
+        IInspectableCollection_ItemValue = mCol(index)
     End If
 End Property
 

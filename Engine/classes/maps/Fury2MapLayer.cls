@@ -85,17 +85,18 @@ On Error Resume Next
     RenderTarget = mvarRenderTarget + 1
 End Property
 
-Public Property Let RenderTarget(ByVal Index As Long)
+Public Property Let RenderTarget(ByVal index As Long)
 On Error Resume Next
-    mvarRenderTarget = Index - 1
+    mvarRenderTarget = index - 1
 End Property
 
-Public Property Get Index() As Long
-    Index = mvarIndex
+Public Property Get index() As Long
+    index = mvarIndex
 End Property
 
-Friend Property Let Index(ByVal NewIndex As Long)
+Friend Property Let index(ByVal NewIndex As Long)
     mvarIndex = NewIndex
+    Sprites.SetLayer NewIndex
 End Property
 
 Public Sub AddCollisionLine(ByVal x1 As Single, ByVal y1 As Single, ByVal x2 As Single, ByVal y2 As Single)
@@ -223,10 +224,10 @@ On Error Resume Next
     CollisionLineCount = (UBound(mvarBlockingLines) - LBound(mvarBlockingLines)) + 1
 End Function
 
-Public Function CollisionLinePointer(ByVal Index As Long) As Long
+Public Function CollisionLinePointer(ByVal index As Long) As Long
 Attribute CollisionLinePointer.VB_Description = "*"
 On Error Resume Next
-    CollisionLinePointer = VarPtr(mvarBlockingLines(Index))
+    CollisionLinePointer = VarPtr(mvarBlockingLines(index))
 End Function
 
 Public Property Get CollisionLines() As FLine()
@@ -383,12 +384,12 @@ Dim NextX As Long, NextY As Long, deltaX As Long, deltaY As Long, CurrentX As Lo
     xPosition.Add X
     yPosition.Add Y
     isSeen(X, Y) = 1
-    Do Until xPosition.Count <= 0
-        CurrentX = CLng(xPosition.Item(xPosition.Count))
-        CurrentY = CLng(yPosition.Item(yPosition.Count))
+    Do Until xPosition.count <= 0
+        CurrentX = CLng(xPosition.Item(xPosition.count))
+        CurrentY = CLng(yPosition.Item(yPosition.count))
         ProgressUpdate (Height / CurrentY) * 100
-        xPosition.Remove xPosition.Count
-        yPosition.Remove yPosition.Count
+        xPosition.Remove xPosition.count
+        yPosition.Remove yPosition.count
         If isDrawn(CurrentX, CurrentY) = 1 Then Else mvarTiles(CurrentX, CurrentY) = nTile
         isDrawn(CurrentX, CurrentY) = 1
         For deltaX = -1 To 1
@@ -445,9 +446,9 @@ Dim m_lngTile As Long
     ProgressHide
 End Sub
 
-Public Function GetCollisionLine(ByVal Index As Long) As Fury2Rect
+Public Function GetCollisionLine(ByVal index As Long) As Fury2Rect
 On Error Resume Next
-    With mvarBlockingLines(Index)
+    With mvarBlockingLines(index)
         Set GetCollisionLine = F2Rect(.Start.X, .Start.Y, .end.X, .end.Y)
     End With
 End Function
@@ -522,6 +523,7 @@ Dim m_lngLineCount As Long
                 .Load mvarColor
                 .Load mvarRenderTarget
             .ReadSegment_End
+            mvarTileset.Free
             Set mvarTileset = New Fury2Tileset
             mvarTileset.SetParent Me
             mvarTileset.SetEngine Me.Parent.Engine
@@ -553,6 +555,7 @@ Dim m_lngLineCount As Long
             End If
             mdlFileUtils.Load2DByteArray mvarBlocking, File
             .Load mvarAnimations
+            mvarSprites.Free
             Set mvarSprites = New Fury2Sprites
             mvarSprites.SetEngine Me.Parent.Engine
             mvarSprites.SetParent Me.Parent
@@ -567,6 +570,9 @@ Dim m_lngLineCount As Long
                     ReDim mvarBlockingLines(0)
                 End If
             .ReadSegment_End
+            mvarLighting.Free
+            Set mvarLighting = New Fury2LayerLighting
+            mvarLighting.SetParent Me
             .Load mvarLighting
         .ReadSegment_End
     End With
@@ -705,12 +711,12 @@ Dim m_lngXMod As Long, m_lngYMod As Long
     xPosition.Add X
     yPosition.Add Y
     isSeen(X, Y) = 1
-    Do Until xPosition.Count <= 0
-        CurrentX = CLng(xPosition.Item(xPosition.Count))
-        CurrentY = CLng(yPosition.Item(yPosition.Count))
+    Do Until xPosition.count <= 0
+        CurrentX = CLng(xPosition.Item(xPosition.count))
+        CurrentY = CLng(yPosition.Item(yPosition.count))
         ProgressUpdate (Height / CurrentY) * 100
-        xPosition.Remove xPosition.Count
-        yPosition.Remove yPosition.Count
+        xPosition.Remove xPosition.count
+        yPosition.Remove yPosition.count
         If isDrawn(CurrentX, CurrentY) = 1 Then Else mvarTiles(CurrentX, CurrentY) = Pattern(Abs(CurrentX - X) Mod m_lngXMod, Abs(CurrentY - Y) Mod m_lngYMod)
         isDrawn(CurrentX, CurrentY) = 1
         For deltaX = -1 To 1
@@ -822,18 +828,18 @@ Dim m_intTile As Integer
     Err.Clear
 End Sub
 
-Public Sub RemoveCollisionLine(ByVal Index As Long)
+Public Sub RemoveCollisionLine(ByVal index As Long)
 On Error Resume Next
 Dim m_lngLines As Long
-    If Index < 0 Then Exit Sub
-    If Index > UBound(mvarBlockingLines) Then Exit Sub
-    mvarBlockingLines(Index).Start.X = -1
-    mvarBlockingLines(Index).Start.Y = -1
-    mvarBlockingLines(Index).end.X = -1
-    mvarBlockingLines(Index).end.Y = -1
-    If Index = UBound(mvarBlockingLines) Then
+    If index < 0 Then Exit Sub
+    If index > UBound(mvarBlockingLines) Then Exit Sub
+    mvarBlockingLines(index).Start.X = -1
+    mvarBlockingLines(index).Start.Y = -1
+    mvarBlockingLines(index).end.X = -1
+    mvarBlockingLines(index).end.Y = -1
+    If index = UBound(mvarBlockingLines) Then
     Else
-        For m_lngLines = Index + 1 To UBound(mvarBlockingLines)
+        For m_lngLines = index + 1 To UBound(mvarBlockingLines)
             mvarBlockingLines(m_lngLines - 1) = mvarBlockingLines(m_lngLines)
         Next m_lngLines
     End If
@@ -925,9 +931,9 @@ Dim mvarOldTiles() As Integer, mvarCopyRows As Long, m_lngRowCount As Long, mvar
     ProgressHide
 End Sub
 
-Public Function SetCollisionLine(ByVal Index As Long, NewLine)
+Public Function SetCollisionLine(ByVal index As Long, NewLine)
 On Error Resume Next
-    With mvarBlockingLines(Index)
+    With mvarBlockingLines(index)
         .Start.X = NewLine.left
         .Start.Y = NewLine.top
         .end.X = NewLine.right

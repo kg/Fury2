@@ -61,10 +61,10 @@ Private m_bytFontBuffer() As Byte
 
 Public Sub Free()
 On Error Resume Next
-    Do While m_colCharImages.count > 0
+    Do While m_colCharImages.Count > 0
         m_colCharImages.Remove 1
     Loop
-    Do While m_colSubfonts.count > 0
+    Do While m_colSubfonts.Count > 0
         m_colSubfonts.Remove 1
     Loop
     Erase m_cpmCharParams
@@ -83,12 +83,12 @@ On Error Resume Next
         Name = Font.Title
     End If
     m_colSubfonts.Add Font, Name
-    ReDim Preserve m_sfSubfonts(0 To m_colSubfonts.count)
-    ReDim Preserve m_strSubfontNames(0 To m_colSubfonts.count)
-    m_sfSubfonts(m_colSubfonts.count).Font = Font.Pointer
-    m_strSubfontNames(m_colSubfonts.count) = Name & Chr(0)
-    m_sfSubfonts(m_colSubfonts.count).Name = StrPtr(m_strSubfontNames(m_colSubfonts.count))
-    m_fpmFontParam.SubFontCount = m_colSubfonts.count + 1
+    ReDim Preserve m_sfSubfonts(0 To m_colSubfonts.Count)
+    ReDim Preserve m_strSubfontNames(0 To m_colSubfonts.Count)
+    m_sfSubfonts(m_colSubfonts.Count).Font = Font.Pointer
+    m_strSubfontNames(m_colSubfonts.Count) = Name & Chr(0)
+    m_sfSubfonts(m_colSubfonts.Count).Name = StrPtr(m_strSubfontNames(m_colSubfonts.Count))
+    m_fpmFontParam.SubFontCount = m_colSubfonts.Count + 1
     m_fpmFontParam.SubFonts = VarPtr(m_sfSubfonts(0))
 End Sub
 
@@ -156,8 +156,8 @@ Dim l_colNewImages As Collection, l_lngImages As Long, l_lngParams As Long, l_cp
         .SetEngine Engine
         Set l_colNewImages = New Collection
         l_cpmNewParams = m_cpmCharParams
-        If m_colCharImages.count > 0 Then
-            For l_lngImages = 1 To m_colCharImages.count
+        If m_colCharImages.Count > 0 Then
+            For l_lngImages = 1 To m_colCharImages.Count
                 l_colNewImages.Add m_colCharImages(l_lngImages).Duplicate
             Next l_lngImages
         End If
@@ -292,30 +292,30 @@ On Error Resume Next
     m_lngFullHeight = NewValue
 End Property
 
-Public Property Get CharacterValue(index) As Integer
+Public Property Get CharacterValue(Index) As Integer
 Attribute CharacterValue.VB_Description = "*"
 On Error Resume Next
-    CharacterValue = m_cpmCharParams(index - 1).MapValue
+    CharacterValue = m_cpmCharParams(Index - 1).MapValue
 End Property
 
-Public Property Let CharacterValue(index, Value As Integer)
+Public Property Let CharacterValue(Index, Value As Integer)
 On Error Resume Next
-    m_cpmCharParams(index - 1).MapValue = Value
+    m_cpmCharParams(Index - 1).MapValue = Value
 End Property
 
-Public Property Get Character(ByVal index As Long) As Fury2Image
+Public Property Get Character(ByVal Index As Long) As Fury2Image
 Attribute Character.VB_Description = "*"
 On Error Resume Next
-    Set Character = m_colCharImages(index)
+    Set Character = m_colCharImages(Index)
 End Property
 
-Public Property Set Character(ByVal index As Long, ByVal NewImage As Fury2Image)
+Public Property Set Character(ByVal Index As Long, ByVal NewImage As Fury2Image)
 On Error Resume Next
-    m_colCharImages.Remove index
-    If index < m_colCharImages.count Then
-        m_colCharImages.Add NewImage, , index
-    ElseIf index > 1 Then
-        m_colCharImages.Add NewImage, , , index - 1
+    m_colCharImages.Remove Index
+    If Index < m_colCharImages.Count Then
+        m_colCharImages.Add NewImage, , Index
+    ElseIf Index > 1 Then
+        m_colCharImages.Add NewImage, , , Index - 1
     Else
         m_colCharImages.Add NewImage
     End If
@@ -424,7 +424,11 @@ Dim l_optOptions As TextParam
     End If
     l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
     l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
-    Call SoftFX.RenderText(l_strText, l_imgSurface.Handle, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions)
+    If l_imgSurface Is Nothing Then
+        Call SoftFX.RenderText(l_strText, 0, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions)
+    Else
+        Call SoftFX.RenderText(l_strText, l_imgSurface.Handle, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions)
+    End If
     Draw = l_optOptions.Lines
     If l_optOptions.Height > 0 Then
         HeightOut = (l_optOptions.Height - m_fpmFontParam.BaseHeight) + m_lngFullHeight
@@ -547,12 +551,12 @@ On Error Resume Next
     Pointer = VarPtr(m_fpmFontParam)
 End Function
 
-Sub RemoveCharacter(index As Long)
+Sub RemoveCharacter(Index As Long)
 On Error Resume Next
 Dim m_lngMoveBack As Long
-    m_colCharImages.Remove index
-    If index < m_lngCharCount Then
-        For m_lngMoveBack = index - 1 To m_lngCharCount - 1
+    m_colCharImages.Remove Index
+    If Index < m_lngCharCount Then
+        For m_lngMoveBack = Index - 1 To m_lngCharCount - 1
             m_cpmCharParams(m_lngMoveBack) = m_cpmCharParams(m_lngMoveBack + 1)
         Next m_lngMoveBack
     End If
@@ -603,14 +607,14 @@ End Sub
 '    End With
 'End Sub
 
-Function CreateFixed(ByVal Width As Long, ByVal Height As Long, Optional ByVal count As Long = 256) As Boolean
+Function CreateFixed(ByVal Width As Long, ByVal Height As Long, Optional ByVal Count As Long = 256) As Boolean
 On Error Resume Next
 Dim l_lngChars As Long
 Dim l_imgCharacter As Fury2Image
     ReDim m_lngTabStops(0 To 0)
     m_strFilename = ""
     m_strTitle = "Font"
-    m_lngCharCount = CLng(count)
+    m_lngCharCount = CLng(Count)
     ReDim m_cpmCharParams(0 To m_lngCharCount - 1)
     Set m_colCharImages = New Collection
     If m_lngCharCount < 1 Then Exit Function
@@ -793,7 +797,7 @@ Dim l_lngPointer As Long
     If m_lngCharCount > c_lngMaxGlyphs Then
         m_lngCharCount = c_lngMaxGlyphs
     End If
-    Debug.Print "Glyph count: " & m_lngCharCount
+    Debug.Print "Glyph Count: " & m_lngCharCount
     l_lngMapCount = m_lngCharCount + 1
     If l_lngMapCount < 256 Then l_lngMapCount = 256
     For l_lngCharIndices = LBound(l_lngGlyphs) To UBound(l_lngGlyphs)
@@ -930,8 +934,8 @@ Dim l_lngX As Long, l_lngY As Long, l_imgChar As Fury2Image
                 Set l_imgChar = .Subimage(F2Rect(l_lngX, l_lngY, Width, Height, False))
                 l_imgChar.Optimize
                 m_colCharImages.Add l_imgChar
-                With m_cpmCharParams(m_colCharImages.count - 1)
-                    .MapValue = FirstCharacter + (m_colCharImages.count - 1)
+                With m_cpmCharParams(m_colCharImages.Count - 1)
+                    .MapValue = FirstCharacter + (m_colCharImages.Count - 1)
                     .pImage = l_imgChar.Handle
                     .XIncrement = Width
                     .XOffset = 0
@@ -970,7 +974,7 @@ Dim l_lngChars As Long
         .SaveCString ".rfn"
         .Skip -1
         .Save CInt(2)
-        .Save CInt(m_colCharImages.count + 1)
+        .Save CInt(m_colCharImages.Count + 1)
         .Skip 248
         .Save CInt(1)
         .Save CInt(1)
@@ -1284,8 +1288,8 @@ Dim l_lngTotalSize As Long, l_lngPointer As Long
             .Save m_lngFullHeight
         .WriteSegment_End
         .WriteSegment_Begin
-            If m_colCharImages.count > 0 Then
-                For l_lngChars = 1 To m_colCharImages.count
+            If m_colCharImages.Count > 0 Then
+                For l_lngChars = 1 To m_colCharImages.Count
                     .WriteSegment_Begin
                         .Save m_cpmCharParams(l_lngChars - 1).MapValue
                         .Save m_cpmCharParams(l_lngChars - 1).XIncrement
@@ -1295,7 +1299,7 @@ Dim l_lngTotalSize As Long, l_lngPointer As Long
                     .WriteSegment_End
                 Next l_lngChars
                 .WriteSegment_Begin
-                    For l_lngChars = 1 To m_colCharImages.count
+                    For l_lngChars = 1 To m_colCharImages.Count
                         If m_colCharImages(l_lngChars) Is Nothing Then
                         Else
                             With m_colCharImages(l_lngChars)
@@ -1309,7 +1313,7 @@ Dim l_lngTotalSize As Long, l_lngPointer As Long
 '                    l_lngPointer = VarPtr(m_bytFontBuffer(0))
                     .WriteSegment_Begin
                         ' Buffer
-                        For l_lngChars = 1 To m_colCharImages.count
+                        For l_lngChars = 1 To m_colCharImages.Count
                             If m_colCharImages(l_lngChars) Is Nothing Then
                             Else
                                 With m_colCharImages(l_lngChars)
@@ -1328,7 +1332,7 @@ Dim l_lngTotalSize As Long, l_lngPointer As Long
                     .WriteSegment_End
                     .WriteSegment_Begin
                         ' Character bitmap entries
-                        For l_lngChars = 1 To m_colCharImages.count
+                        For l_lngChars = 1 To m_colCharImages.Count
                             If m_colCharImages(l_lngChars) Is Nothing Then
                                 File.Save CLng(0)
                                 File.Save CLng(0)
@@ -1342,8 +1346,8 @@ Dim l_lngTotalSize As Long, l_lngPointer As Long
                     .WriteSegment_End
                 .WriteSegment_End
             End If
-'            If m_colCharImages.count > 0 Then
-'                For l_lngChars = 1 To m_colCharImages.count
+'            If m_colCharImages.Count > 0 Then
+'                For l_lngChars = 1 To m_colCharImages.Count
 '                    .WriteSegment_Begin
 '                        If m_colCharImages(l_lngChars) Is Nothing Then
 '                            .Save 0

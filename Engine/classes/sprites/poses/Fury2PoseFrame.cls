@@ -68,13 +68,13 @@ On Error Resume Next
     SecondaryImagePointer = VarPtr(m_siSecondaryImageParams(0))
 End Property
 
-Friend Sub SetIndex(ByVal index As Long)
+Friend Sub SetIndex(ByVal Index As Long)
 On Error Resume Next
-    mvarIndex = index
+    mvarIndex = Index
 End Sub
 
-Public Property Get index() As Long
-    index = mvarIndex
+Public Property Get Index() As Long
+    Index = mvarIndex
 End Property
 
 Public Property Get Parent() As Fury2Pose
@@ -84,7 +84,6 @@ End Property
 Friend Sub SetParent(ByRef Parent As Fury2Pose)
 On Error Resume Next
     Set mvarParent = Parent
-    Set mvarSecondaryImages.Engine = mvarParent.Parent.Engine
 End Sub
 
 Public Sub RunScript()
@@ -114,8 +113,8 @@ Dim l_varVariables As Variant
 Dim l_strFilename As String
 Dim l_siImage As Fury2SecondaryImage
     Set mvarSecondaryImages.Engine = mvarParent.Parent.Engine
-    l_varVariables = Array(Array("i", mvarIndex), Array("index", mvarIndex), _
-        Array("p", mvarParent.index), Array("pose", mvarParent.index), _
+    l_varVariables = Array(Array("i", mvarIndex), Array("Index", mvarIndex), _
+        Array("p", mvarParent.Index), Array("pose", mvarParent.Index), _
         Array("pn", mvarParent.Name), Array("posename", mvarParent.Name), _
         Array("n", mvarParent.Parent.Name), Array("name", mvarParent.Parent.Name))
     l_strFilename = mvarParent.Parent.Engine.ParseString(mvarFilename, l_varVariables)
@@ -154,6 +153,7 @@ End Sub
 Public Function Duplicate() As Fury2PoseFrame
 Attribute Duplicate.VB_Description = "Creates a copy of the frame."
 On Error Resume Next
+Dim l_siImage As Fury2SecondaryImage
     Set Duplicate = New Fury2PoseFrame
     With Duplicate
         .MatteColor = mvarMatteColor
@@ -164,7 +164,9 @@ On Error Resume Next
         .YCenter = mvarYCenter
         .Delay = mvarDelay
         .Script = mvarScript
-        Set .SecondaryImages = mvarSecondaryImages.Duplicate
+        For Each l_siImage In SecondaryImages
+            .SecondaryImages.Add l_siImage.Duplicate
+        Next l_siImage
     End With
 End Function
 
@@ -315,10 +317,10 @@ Dim l_siImage As Fury2SecondaryImage
             .Save mvarYCenter
             .Save mvarDelay
             .Save mvarScript
-            .Save mvarSecondaryImages.count
-            If mvarSecondaryImages.count > 0 Then
+            .Save mvarSecondaryImages.Count
+            If mvarSecondaryImages.Count > 0 Then
                 .WriteSegment_Begin
-                For l_lngIndex = 1 To mvarSecondaryImages.count
+                For l_lngIndex = 1 To mvarSecondaryImages.Count
                     Set l_siImage = mvarSecondaryImages(l_lngIndex)
                     .Save l_siImage
                 Next l_lngIndex
@@ -341,7 +343,7 @@ Friend Sub RefreshSecondaryImages()
 On Error Resume Next
 Dim l_siImage As Fury2SecondaryImage
 Dim l_lngIndex As Long
-    ReDim m_siSecondaryImageParams(0 To mvarSecondaryImages.count - 1)
+    ReDim m_siSecondaryImageParams(0 To mvarSecondaryImages.Count - 1)
     l_lngIndex = 0
     For Each l_siImage In mvarSecondaryImages
         l_siImage.SetIndex l_lngIndex + 1
@@ -351,7 +353,7 @@ Dim l_lngIndex As Long
     Next l_siImage
 End Sub
 
-Private Sub mvarSecondaryImages_Add(ByVal index As Long)
+Private Sub mvarSecondaryImages_Add(ByVal Index As Long)
 On Error Resume Next
     RefreshSecondaryImages
 End Sub
@@ -366,7 +368,7 @@ On Error Resume Next
     RefreshSecondaryImages
 End Sub
 
-Private Sub mvarSecondaryImages_Remove(ByVal index As Long)
+Private Sub mvarSecondaryImages_Remove(ByVal Index As Long)
 On Error Resume Next
     RefreshSecondaryImages
 End Sub

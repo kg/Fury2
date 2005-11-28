@@ -290,12 +290,12 @@ Dim m_sngOldX As Single, m_sngOldY As Single
         If mvarViewingMap.MaxX <= mvarWidth Then
             mvarViewportX = -(mvarWidth - mvarViewingMap.MaxX) \ 2
         Else
-            mvarViewportX = Engine.ClipNumber(mvarViewportX, 0, Abs(mvarViewingMap.MaxX - mvarWidth))
+            mvarViewportX = Engine.Math.ClipNumber(mvarViewportX, 0, Abs(mvarViewingMap.MaxX - mvarWidth))
         End If
         If mvarViewingMap.MaxY * mvarViewingMap.Layers(1).Tileset.TileHeight <= mvarHeight Then
             mvarViewportY = -(mvarHeight - mvarViewingMap.MaxY) \ 2
         Else
-            mvarViewportY = Engine.ClipNumber(mvarViewportY, 0, Abs(mvarViewingMap.MaxY - mvarHeight))
+            mvarViewportY = Engine.Math.ClipNumber(mvarViewportY, 0, Abs(mvarViewingMap.MaxY - mvarHeight))
         End If
     End If
 End Sub
@@ -416,12 +416,12 @@ Dim l_mopObject As Fury2MapObject
             If mvarViewingMap.MaxX <= mvarWidth Then
                 mvarViewportX = -(mvarWidth - (mvarViewingMap.MaxX)) \ 2
             Else
-                mvarViewportX = Engine.ClipNumber(mvarViewportX, 0, Abs((mvarViewingMap.MaxX) - mvarWidth))
+                mvarViewportX = Engine.Math.ClipNumber(mvarViewportX, 0, Abs((mvarViewingMap.MaxX) - mvarWidth))
             End If
             If mvarViewingMap.MaxY <= mvarHeight Then
                 mvarViewportY = -(mvarHeight - (mvarViewingMap.MaxY)) \ 2
             Else
-                mvarViewportY = Engine.ClipNumber(mvarViewportY, 0, Abs((mvarViewingMap.MaxY) - mvarHeight))
+                mvarViewportY = Engine.Math.ClipNumber(mvarViewportY, 0, Abs((mvarViewingMap.MaxY) - mvarHeight))
             End If
         End If
         FullRedraw = True
@@ -796,16 +796,16 @@ On Error Resume Next
 Dim l_sngXV As Single, l_sngYV As Single
     If mvarViewportXVelocity Then
         If mvarViewportX < mvarViewportXTarget Then
-            l_sngXV = Engine.ClipNumber(mvarViewportXVelocity, 0, mvarViewportXTarget - mvarViewportX)
+            l_sngXV = Engine.Math.ClipNumber(mvarViewportXVelocity, 0, mvarViewportXTarget - mvarViewportX)
         ElseIf mvarViewportX > mvarViewportXTarget Then
-            l_sngXV = Engine.ClipNumber(mvarViewportXVelocity, 0, mvarViewportX - mvarViewportXTarget)
+            l_sngXV = Engine.Math.ClipNumber(mvarViewportXVelocity, 0, mvarViewportX - mvarViewportXTarget)
         End If
     End If
     If mvarViewportYVelocity Then
         If mvarViewportY < mvarViewportYTarget Then
-            l_sngYV = Engine.ClipNumber(mvarViewportYVelocity, 0, mvarViewportYTarget - mvarViewportY)
+            l_sngYV = Engine.Math.ClipNumber(mvarViewportYVelocity, 0, mvarViewportYTarget - mvarViewportY)
         ElseIf mvarViewportY > mvarViewportYTarget Then
-            l_sngYV = Engine.ClipNumber(mvarViewportYVelocity, 0, mvarViewportY - mvarViewportYTarget)
+            l_sngYV = Engine.Math.ClipNumber(mvarViewportYVelocity, 0, mvarViewportY - mvarViewportYTarget)
         End If
     End If
     Move l_sngXV, l_sngYV
@@ -841,7 +841,7 @@ Public Property Let ViewportX(ByVal vData As Single)
         If mvarViewingMap.MaxX <= mvarWidth Then
             mvarViewportX = -(mvarWidth - (mvarViewingMap.MaxX)) \ 2
         Else
-            mvarViewportX = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.MaxX) - mvarWidth))
+            mvarViewportX = Engine.Math.ClipNumber(vData, 0, Abs((mvarViewingMap.MaxX) - mvarWidth))
         End If
     Else
         mvarViewportX = vData
@@ -857,7 +857,7 @@ Public Property Let ViewportY(ByVal vData As Single)
         If mvarViewingMap.MaxY <= mvarHeight Then
             mvarViewportY = -(mvarHeight - (mvarViewingMap.MaxY)) \ 2
         Else
-            mvarViewportY = Engine.ClipNumber(vData, 0, Abs((mvarViewingMap.MaxY) - mvarHeight))
+            mvarViewportY = Engine.Math.ClipNumber(vData, 0, Abs((mvarViewingMap.MaxY) - mvarHeight))
         End If
     Else
         mvarViewportY = vData

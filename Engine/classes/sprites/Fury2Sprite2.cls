@@ -157,9 +157,9 @@ On Error Resume Next
     RenderTarget = m_spParam.Params.RenderTarget + 1
 End Property
 
-Public Property Let RenderTarget(ByVal index As Long)
+Public Property Let RenderTarget(ByVal Index As Long)
 On Error Resume Next
-    m_spParam.Params.RenderTarget = index - 1
+    m_spParam.Params.RenderTarget = Index - 1
 End Property
 
 Friend Sub SetEngine(NewEngine As Fury2Engine)
@@ -526,8 +526,8 @@ End Sub
 
 Public Sub PopPath()
 On Error Resume Next
-    Set m_pthPath = SavedPaths.Item(SavedPaths.count)
-    SavedPaths.Remove SavedPaths.count
+    Set m_pthPath = SavedPaths.Item(SavedPaths.Count)
+    SavedPaths.Remove SavedPaths.Count
 End Sub
 
 Private Sub Class_Initialize()
@@ -720,9 +720,9 @@ End Property
 Public Sub Face(ByRef Point)
 On Error Resume Next
     If VarType(Point) = vbObject Then
-        Angle = mvarEngine.AngleBetween(X, Y, Point.X, Point.Y)
+        Angle = mvarEngine.Math.AngleBetween(X, Y, Point.X, Point.Y)
     ElseIf (VarType(Point) And vbArray) = vbArray Then
-        Angle = mvarEngine.AngleBetween(X, Y, Point(0), Point(1))
+        Angle = mvarEngine.Math.AngleBetween(X, Y, Point(0), Point(1))
     End If
 End Sub
 
@@ -811,13 +811,13 @@ Dim l_posPose As Fury2Pose
     m_booLoaded = False
 End Sub
 
-Friend Property Let index(ByVal NewValue As Long)
-    m_spParam.index = NewValue
+Friend Property Let Index(ByVal NewValue As Long)
+    m_spParam.Index = NewValue
 End Property
 
-Public Property Get index() As Long
-Attribute index.VB_Description = "*The numeric index of the sprite within its parent (if any)."
-    index = m_spParam.index
+Public Property Get Index() As Long
+Attribute Index.VB_Description = "*The numeric index of the sprite within its parent (if any)."
+    Index = m_spParam.Index
 End Property
 
 Public Sub Initialize()
@@ -1130,7 +1130,7 @@ Dim l_pthPath As Fury2Path
             
             ' paths
             .WriteSegment_Begin
-                .Save Paths.count - 1
+                .Save Paths.Count - 1
                 For Each l_pthPath In Paths
                     If l_pthPath Is Paths(1) Then
                     Else
@@ -1145,8 +1145,13 @@ Dim l_pthPath As Fury2Path
     End With
 End Sub
 
-Friend Property Let Layer(ByVal NewLayer As Long)
+Friend Sub SetLayer(ByVal NewLayer As Long)
     m_lngLayer = NewLayer
+End Sub
+
+Public Property Let Layer(ByVal NewValue As Long)
+On Error Resume Next
+    Parent.Layers(m_lngLayer).Sprites.MoveTo Index, NewValue
 End Property
 
 Public Property Get Layer() As Long
@@ -1313,11 +1318,11 @@ Attribute Poses.VB_Description = "~The sprite's defined poses."
     Set Poses = m_posPoses
 End Property
 
-Public Property Let Position(index, NewValue As Single)
+Public Property Let Position(Index, NewValue As Single)
 Attribute Position.VB_Description = "*"
 On Error Resume Next
-    If VarType(index) = vbString Then
-        Select Case LCase(Trim(index))
+    If VarType(Index) = vbString Then
+        Select Case LCase(Trim(Index))
         Case "x"
             m_spParam.Position.X = NewValue
         Case "y"
@@ -1327,7 +1332,7 @@ On Error Resume Next
         Case Else
         End Select
     Else
-        Select Case CLng(index)
+        Select Case CLng(Index)
         Case 0
             m_spParam.Position.X = NewValue
         Case 1
@@ -1339,10 +1344,10 @@ On Error Resume Next
     End If
 End Property
 
-Public Property Get Position(index) As Single
+Public Property Get Position(Index) As Single
 On Error Resume Next
-    If VarType(index) = vbString Then
-        Select Case LCase(Trim(index))
+    If VarType(Index) = vbString Then
+        Select Case LCase(Trim(Index))
         Case "x"
             Position = m_spParam.Position.X
         Case "y"
@@ -1352,7 +1357,7 @@ On Error Resume Next
         Case Else
         End Select
     Else
-        Select Case CLng(index)
+        Select Case CLng(Index)
         Case 0
             Position = m_spParam.Position.X
         Case 1
@@ -1544,9 +1549,9 @@ Public Property Let ScriptSource(ByRef NewValue As String)
     m_strScript = NewValue
 End Property
 
-Friend Sub SetAttributes(ByVal index As Long, ByVal Layer As Long, ByVal Sprites As Fury2Sprites, ByVal Map As Fury2Map)
+Friend Sub SetAttributes(ByVal Index As Long, ByVal Layer As Long, ByVal Sprites As Fury2Sprites, ByVal Map As Fury2Map)
 On Error Resume Next
-    m_spParam.index = index
+    m_spParam.Index = Index
     m_lngLayer = Layer
     Set m_sprSprites = Sprites
     Set m_mapMap = Map
@@ -1561,7 +1566,7 @@ End Sub
 Friend Sub SetParam(ByRef Param As SpriteParam)
 On Error Resume Next
     m_spParam = Param
-    m_spParam.index = 0
+    m_spParam.Index = 0
     m_spParam.Next = 0
     m_spParam.SortedNext = 0
 End Sub
@@ -1649,7 +1654,7 @@ Public Sub Teleport(ByVal X, ByVal Y, Optional ByVal Z = 0, Optional ByVal Layer
 On Error Resume Next
     If Layer <> -1 Then
         If Layer <> m_lngLayer Then
-            m_mapMap.Layers(m_lngLayer).Sprites.MoveTo m_spParam.index, CLng(Layer)
+            m_mapMap.Layers(m_lngLayer).Sprites.MoveTo m_spParam.Index, CLng(Layer)
         End If
     End If
     m_spParam.Position.X = CSng(X)
@@ -1785,8 +1790,10 @@ Dim l_sprCollided As Fury2Sprite
                 l_sngW = (l_sngSw / 2) * Abs(l_spAttached.Params.ScaleLevel)
                 l_sngH = (l_sngSh / 2) * l_spAttached.Params.ScaleLevel
                 l_varVx = Array(0, 0) ' mvarEngine.RotatePoint(0, 0, l_spAttached.Velocity.B) ' -1, -1
-                l_varH = mvarEngine.RotatePoint(l_sngW, 0, l_spAttached.Velocity.B)  ' 1, -1
-                l_varV = mvarEngine.RotatePoint(0, l_sngH, l_spAttached.Velocity.B)  ' -1, 1
+                With mvarEngine.Math
+                    l_varH = .RotatePoint(l_sngW, 0, l_spAttached.Velocity.B)  ' 1, -1
+                    l_varV = .RotatePoint(0, l_sngH, l_spAttached.Velocity.B)  ' -1, 1
+                End With
                 l_sngHp = (m_sngAttachH) / (l_sngW)
                 l_sngVp = (m_sngAttachV) / (l_sngH)
                 l_sngVxw = (1 - PClip(Abs(l_sngHp))) * (1 - PClip(Abs(l_sngVp)))
@@ -1818,7 +1825,7 @@ Private Sub UpdatePath()
 On Error Resume Next
 Dim l_sngPathDistance As Single
 Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
-    If m_pthPath.index <= m_pthPath.count Then
+    If m_pthPath.Index <= m_pthPath.Count Then
         With m_pthPath.Current
             If .WaitRemainder > 0 Then
                 .WaitRemainder = .WaitRemainder - 1
@@ -1842,7 +1849,7 @@ Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
                     End If
                 Else
                     If (Abs(l_sngPathDistance) >= (WalkSpeed)) Then
-                        Angle = mvarEngine.AngleBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
+                        Angle = mvarEngine.Math.AngleBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
                         Velocity = Velocity + mvarEngine.VelocityDecay
                         If Velocity < 0 Then Velocity = 0
                         If Velocity > WalkSpeed Then Velocity = WalkSpeed
@@ -1875,7 +1882,7 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
     Else
         If (m_spParam.Events.Moved And m_booAnimateWhileMoving) Or ((Not m_spParam.Events.Moved) And m_booAnimateWhileStopped) Then
             m_sngAnimationDelay = m_sngAnimationDelay + (1 * IIf(AnimationMultiplier = -32767, Engine.AnimationMultiplier, AnimationMultiplier))
-            If m_posPose.Frames.count < 2 Then
+            If m_posPose.Frames.Count < 2 Then
                 m_sngAnimationDelay = 0
             End If
             If m_sngAnimationDelay >= m_fraFrame.Delay Then
@@ -1887,27 +1894,27 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
                 If (l_lngPreFrame <> m_lngFrame) Or (l_lngPrePose <> m_lngPose) Or (l_lngPreState <> m_lngState) Then
                     Exit Sub
                 End If
-                If m_posPose.Frames.count = 1 Then
+                If m_posPose.Frames.Count = 1 Then
                     m_lngFrame = Frame = 1
                 Else
                     m_lngFrame = m_lngFrame + m_lngAnimationDirection
                     Select Case m_posPose.LoopMode
                     Case F2LM_OneShot
-                        If m_lngFrame > m_posPose.Frames.count Then
-                            m_lngFrame = m_posPose.Frames.count
+                        If m_lngFrame > m_posPose.Frames.Count Then
+                            m_lngFrame = m_posPose.Frames.Count
                         ElseIf m_lngFrame < 2 Then
                             m_lngFrame = 2
                         End If
                     Case F2LM_Restart
-                        If m_lngFrame > m_posPose.Frames.count Then
+                        If m_lngFrame > m_posPose.Frames.Count Then
                             m_lngFrame = 2
                         ElseIf m_lngFrame < 2 Then
-                            m_lngFrame = m_posPose.Frames.count
+                            m_lngFrame = m_posPose.Frames.Count
                         End If
                     Case F2LM_PingPong
-                        If m_lngFrame > m_posPose.Frames.count Then
+                        If m_lngFrame > m_posPose.Frames.Count Then
                             m_lngAnimationDirection = -m_lngAnimationDirection
-                            m_lngFrame = m_posPose.Frames.count - 1
+                            m_lngFrame = m_posPose.Frames.Count - 1
                         ElseIf m_lngFrame < 2 Then
                             m_lngAnimationDirection = -m_lngAnimationDirection
                             m_lngFrame = 3
@@ -1978,7 +1985,7 @@ On Error Resume Next
 Dim l_rctMe As Fury2Rect
 Dim l_araArea As Fury2Area
     If m_mapMap Is Nothing Then Exit Sub
-    If m_mapMap.Areas.count = 0 Then Exit Sub
+    If m_mapMap.Areas.Count = 0 Then Exit Sub
     Set l_rctMe = Me.Rectangle(False)
     For Each l_araArea In m_mapMap.Areas
         If (l_araArea.Rectangle.Intersect(l_rctMe)) Then
@@ -1998,7 +2005,7 @@ Dim l_fraFrame As Fury2PoseFrame
     If m_posPose Is Nothing Then
         Set l_fraFrame = Nothing
     Else
-        m_lngFrame = ClipValue(m_lngFrame, 1, m_posPose.Frames.count)
+        m_lngFrame = ClipValue(m_lngFrame, 1, m_posPose.Frames.Count)
         Set l_fraFrame = m_posPose.Frames(m_lngFrame)
     End If
     If (l_fraFrame Is m_fraFrame) And (Not Force) Then
@@ -2023,7 +2030,7 @@ On Error Resume Next
         Else
             .pImage = m_fraFrame.Image.Handle
         End If
-        .SecondaryImageCount = m_fraFrame.SecondaryImages.count
+        .SecondaryImageCount = m_fraFrame.SecondaryImages.Count
         If .SecondaryImageCount > 0 Then
             .pSecondaryImages = m_fraFrame.SecondaryImagePointer
         Else
@@ -2045,10 +2052,10 @@ Private Sub UpdatePose(Optional ByVal Force As Boolean = False)
 On Error Resume Next
 Dim l_posPose As Fury2Pose
     If m_staState Is Nothing Then
-        m_lngPose = ClipValue(m_lngPose, 1, m_posPoses.count)
+        m_lngPose = ClipValue(m_lngPose, 1, m_posPoses.Count)
         Set l_posPose = m_posPoses(m_lngPose)
     Else
-        m_lngPose = ClipValue(m_lngPose, 1, m_posPoses.count - m_staState.PoseOffset)
+        m_lngPose = ClipValue(m_lngPose, 1, m_posPoses.Count - m_staState.PoseOffset)
         Set l_posPose = m_posPoses(m_staState.PoseOffset + m_lngPose)
     End If
     If (l_posPose Is m_posPose) And (Not Force) Then
@@ -2062,7 +2069,7 @@ End Sub
 Private Sub UpdateState(Optional ByVal Force As Boolean = False)
 On Error Resume Next
 Dim l_staState As Fury2State
-    m_lngState = ClipValue(m_lngState, 1, m_staStates.count)
+    m_lngState = ClipValue(m_lngState, 1, m_staStates.Count)
     Set l_staState = m_staStates(m_lngState)
     If (l_staState Is m_staState) And (Not Force) Then
     Else
@@ -2232,9 +2239,9 @@ On Error Resume Next
     CreatePath.SetParent Me
 End Function
 
-Private Sub m_colPaths_Add(ByVal index As Long)
+Private Sub m_colPaths_Add(ByVal Index As Long)
 On Error Resume Next
-    m_colPaths(index).SetParent Me
+    m_colPaths(Index).SetParent Me
 End Sub
 
 Public Property Get TileX() As Single

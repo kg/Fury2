@@ -34,6 +34,26 @@ Option Explicit
 '
 Implements Fury2Object
 
+Public Property Get Alphabet() As String
+    Alphabet = "abcdefghijklmnopqrstuvwxyz"
+End Property
+
+Public Property Get Digits() As String
+    Digits = "0123456789"
+End Property
+
+Public Property Get BinaryDigits() As String
+    BinaryDigits = "01"
+End Property
+
+Public Property Get HexDigits() As String
+    HexDigits = "0123456789ABCDEF"
+End Property
+
+Public Property Get OctalDigits() As String
+    OctalDigits = "01234567"
+End Property
+
 Public Property Get Key(ByVal KeyCode As String) As Long
 On Error Resume Next
     Select Case LCase(Trim(KeyCode))
@@ -347,5 +367,8 @@ Public Property Get Radian() As Double
 End Property
 Public Property Get Pi() As Double
     Pi = c_dblPi
+End Property
+Public Property Get Sqrt2() As Double
+    Sqrt2 = c_dblSqrt2
 End Property
 

@@ -41,13 +41,13 @@ Private mvarParent As Fury2PoseFrame
 Private mvarType As SecondaryImageTypes
 Private mvarIndex As Long
 
-Friend Sub SetIndex(ByVal index As Long)
+Friend Sub SetIndex(ByVal Index As Long)
 On Error Resume Next
-    mvarIndex = index
+    mvarIndex = Index
 End Sub
 
-Public Property Get index() As Long
-    index = mvarIndex
+Public Property Get Index() As Long
+    Index = mvarIndex
 End Property
 
 Public Property Get Parent() As Fury2PoseFrame
@@ -63,9 +63,9 @@ Public Sub LoadGraphics()
 On Error Resume Next
 Dim l_varVariables As Variant
 Dim l_strFilename As String
-    l_varVariables = Array(Array("i", mvarIndex), Array("index", mvarIndex), _
-        Array("f", mvarParent.index), Array("frame", mvarParent.index), _
-        Array("p", mvarParent.Parent.index), Array("pose", mvarParent.Parent.index), _
+    l_varVariables = Array(Array("i", mvarIndex), Array("Index", mvarIndex), _
+        Array("f", mvarParent.Index), Array("frame", mvarParent.Index), _
+        Array("p", mvarParent.Parent.Index), Array("pose", mvarParent.Parent.Index), _
         Array("pn", mvarParent.Parent.Name), Array("posename", mvarParent.Parent.Name), _
         Array("n", mvarParent.Parent.Parent.Name), Array("name", mvarParent.Parent.Parent.Name))
     l_strFilename = mvarParent.Parent.Parent.Engine.ParseString(mvarFilename, l_varVariables)

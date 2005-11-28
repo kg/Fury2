@@ -531,7 +531,7 @@ Dim l_lngIndex As Long
         For Each l_sprSprite In l_lyrLayer.Sprites
             l_lngIndex = l_lngIndex + 1
             l_sprSprite.SetParent Me
-            l_sprSprite.Layer = l_lyrLayer.index
+            l_sprSprite.SetLayer l_lyrLayer.index
             l_sprSprite.index = l_lngIndex
             l_sprSprite.Load
         Next l_sprSprite

@@ -189,7 +189,7 @@ Export int KeyMatches(const char *key1, const char *key2) {
   SS_Start
   if (!key1) return false;
   if (!key2) return false;
-  int result = (strcmpi(key1, key2) == 0);
+  int result = (_strcmpi(key1, key2) == 0);
   return result;
   SS_End
   return 0;

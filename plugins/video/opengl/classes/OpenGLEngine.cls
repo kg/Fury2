@@ -35,6 +35,24 @@ Private m_objHooked As Fury2VideoEventSink
 Private m_lngWidth As Long, m_lngHeight As Long, m_lngBPP As Long
 Private m_sngScaleRatio As Single
 Private m_imgBackbuffer As Fury2Image
+Private m_lngScaleMode As Long
+
+Public Property Get ShaderPath() As String
+    ShaderPath = mdlGLFX.ShaderPath
+End Property
+
+Public Property Let ShaderPath(ByVal NewValue As String)
+    mdlGLFX.ShaderPath = NewValue
+End Property
+
+Private Property Let Fury2VideoDriver_ScaleMode(ByVal RHS As Long)
+    m_lngScaleMode = RHS
+    GLSetScaleMode RHS
+End Property
+
+Private Property Get Fury2VideoDriver_ScaleMode() As Long
+    Fury2VideoDriver_ScaleMode = m_lngScaleMode
+End Property
 
 Public Property Get Feature(ByRef Name As String) As Boolean
 On Error Resume Next
@@ -232,6 +250,7 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error Resume Next
+    ShaderPath = App.Path & "\shaders\"
     SetImageTag 0, 0, 0
     Set m_DX7 = New DirectX7
     Set m_DD7 = m_DX7.DirectDrawCreate("")

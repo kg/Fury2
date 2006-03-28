@@ -20,6 +20,25 @@ Begin VB.Form frmTest
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   400
    StartUpPosition =   2  'CenterScreen
+   Begin VB.ComboBox cmbScaleMode 
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   315
+      ItemData        =   "frmTest.frx":000C
+      Left            =   15
+      List            =   "frmTest.frx":0019
+      Style           =   2  'Dropdown List
+      TabIndex        =   2
+      Top             =   4170
+      Width           =   2865
+   End
    Begin VB.CommandButton cmdToggleDeform 
       Caption         =   "Toggle Deform"
       BeginProperty Font 
@@ -71,6 +90,7 @@ Private m_filFilter As Fury2ConvolutionFilter
 Dim m_fntFont As Fury2RasterFont
 Dim m_fntSubfont As Fury2RasterFont
 Dim m_imgFramebuffer As Fury2Image
+Dim m_imgTest As Fury2Image
 Dim m_imgMask As Fury2Image
 Dim m_imgPattern As Fury2Image
 Dim m_imgTexture() As Fury2Image
@@ -83,8 +103,10 @@ Dim m_varPoly() As Variant
 Dim m_strUnicode As String
 Dim m_fp3Light As FPoint3
 Dim m_lngLightColor As Long
+Dim m_lngShader As Long
 Public UseHardware As Boolean
 Public EnableDeform As Boolean
+Const ScreenScale As Single = 0.5
 Const c_dblPi As Double = 3.14159265358979
 Const c_dblRadian As Double = 1.74532925199433E-02
 
@@ -250,9 +272,12 @@ Dim l_mshMesh As Fury2DeformationMesh
     m_imgMask.Clear F2Black
     m_imgMask.NormalMapBlit , , m_imgPattern, Array(m_fp3Light.X, m_fp3Light.Y, m_fp3Light.Z), m_lngLightColor, BlitMode_Normal
 '    SoftFX.Blit_NormalMap m_imgMask.Handle, m_imgPattern.Handle, m_imgMask.Rectangle.GetRectangle, 0, 0, m_fp3Light, m_lngLightColor
-    m_imgBuffer.Clear F2Black
-    m_imgBuffer.Blit , , m_imgMask
+    m_imgBuffer.Clear F2RGB(32, 64, 96, 255)
+    m_imgBuffer.Blit , , m_imgMask, , BlitMode_Additive
     m_imgBuffer.ResetClipRectangle
+    m_lngShader = mdlGLFX.GLGetShader("scale2x")
+    m_imgBuffer.Blit , , m_imgTest
+'    mdlGLFX.GLShaderBlit m_imgBuffer.Handle, m_imgBuffer.Handle, m_imgBuffer.Rectangle.GetRectangle, F2Rect(0, 0, 200, 150, False).GetRectangle, 0, GetLinearScaler, m_lngShader
 '    m_fntFont.Draw m_imgBuffer, Text1.Text, F2Rect(20, 10, 350, 200, False), F2White
 '    m_fntFont.Draw m_imgBuffer, m_strUnicode, F2Rect(20, 25, 350, 200, False), F2White
 '    Debug.Print m_fntFont.CharacterCount
@@ -283,6 +308,10 @@ Dim l_mshMesh As Fury2DeformationMesh
     If l_sngR > 360 Then l_sngR = 0
 End Sub
 
+Private Sub cmbScaleMode_Click()
+    GLSetScaleMode cmbScaleMode.ListIndex
+End Sub
+
 Private Sub cmdToggleDeform_Click()
 On Error Resume Next
     EnableDeform = Not EnableDeform
@@ -301,8 +330,9 @@ On Error Resume Next
     GLInit Me.HWND, Me.HDC
     GLSetShaderLoadCallback AddressOf ShaderLoadCallback
     GLSetOutputSize Me.ScaleWidth, Me.ScaleHeight
+    GLSetScaleMode 0
     GLInstallAllocateHook
-    Set m_imgBuffer = F2Image(400, 300)
+    Set m_imgBuffer = F2Image(Me.ScaleWidth * ScreenScale, Me.ScaleHeight * ScreenScale)
     GLUninstallAllocateHook
     SetImageLocked m_imgBuffer.Handle, 1
     GLInstallFBAllocateHook
@@ -330,8 +360,9 @@ On Error Resume Next
     m_imgTexture() = F2LoadImage("J:\water.png").Split(32, 32)
     Set m_imgTextureBlend = F2Image(32, 32)
     Set m_imgPattern = F2Image(256, 256)
-    m_imgPattern.Blit , , F2LoadImage("C:\Documents and Settings\Kevin\My Documents\Projects\fury2\docs\Examples\Drawing\normal.png")
+    m_imgPattern.Blit , , F2LoadImage("C:\Documents and Settings\Kevin\My Documents\Projects\fury2\docs\Examples\Drawing\normal_map.png")
     Set m_imgMask = F2Image(256, 256)
+    Set m_imgTest = F2LoadImage("J:\test.png")
 '    m_imgMask.RadialGradientFill m_imgMask.Rectangle, Array(F2RGB(255, 0, 0, 255), F2RGB(127, 0, 0, 255)), RenderMode_Normal
 '    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(255, 0, 0, 255), 50, 50, RenderMode_SourceAlpha
 '    m_imgMask.AntiAliasFilledEllipse Array(100, 100), F2RGB(0, 0, 0, 255), 25, 25, RenderMode_SourceAlpha
@@ -358,7 +389,7 @@ On Error Resume Next
 '    Set m_imgCopy = m_imgBuffer.Duplicate
 ''    m_imgCopy.SavePNG "C:\test.png"
 '    m_imgCopy.Locked = False
-    m_imgBuffer.Clear F2White
+'    m_imgBuffer.Clear F2White
 '    Set m_fntFont = New Fury2RasterFont
 '    m_fntFont.ImportTTF Me.Font, True
 '    m_fntFont.Refresh
@@ -398,7 +429,7 @@ On Error Resume Next
     GLSetOutputSize Me.ScaleWidth, Me.ScaleHeight
     GLInstallAllocateHook
     m_imgBuffer.Unsize
-    m_imgBuffer.Resize 400, 300
+    m_imgBuffer.Resize Me.ScaleWidth * ScreenScale, Me.ScaleHeight * ScreenScale
     GLUninstallAllocateHook
     SetImageLocked m_imgBuffer.Handle, 1
 '    If m_imgBuffer.Width <> (Me.ScaleWidth \ 2) Or m_imgBuffer.Height <> (Me.ScaleHeight \ 2) Then

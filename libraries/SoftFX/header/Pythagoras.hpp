@@ -21,6 +21,8 @@ struct PythagorasLevel {
     Byte V[256];
 };
 
+const double PythagorasConstant = 0.707106781186547;
+
 extern PythagorasLevel *PythagorasTable;
 extern PythagorasLevel **PythagorasRootTable;
 

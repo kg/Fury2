@@ -54,6 +54,8 @@
 // It would be nice to CC: rjwagner@writeme.com and Cokus@math.washington.edu
 // when you write.
 
+#pragma warning(disable:4146)
+
 #ifndef MERSENNETWISTER_H
 #define MERSENNETWISTER_H
 

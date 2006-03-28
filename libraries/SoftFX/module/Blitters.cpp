@@ -2955,6 +2955,10 @@ BLITTERSIMPLE_SIGNATURE(NormalMap)
     , FPoint3 *LightVector, Pixel LightColor) {
 BLITTERSIMPLE_INIT
     if (LightColor[::Alpha] == 0) return Trivial_Success;
+    if (Source->OptimizeData.normalsPrepared) {
+    } else {
+      FilterSimple_PrepareNormals(Source, 0);
+    }
     _BOS(BlitSimple_NormalMap, 2) , LightVector, LightColor _BOE
 BLITTERSIMPLE_BEGIN
     LightVector->normalize();
@@ -2962,15 +2966,11 @@ BLITTERSIMPLE_BEGIN
     lv[0] = ((LightVector->X) * 127);
     lv[1] = ((LightVector->Y) * 127);
     lv[2] = ((LightVector->Z) * 127);
-    int pv[3];
     int d;
     AlphaLevel *aSource, *aDest, *aScale;
     aScale = AlphaLevelLookup( LightColor[::Alpha] );
 BLITTERSIMPLE_LOOPBEGIN
-    pv[0] = (*pSource)[::Red] - 127;
-    pv[1] = (*pSource)[::Green] - 127;
-    pv[2] = (*pSource)[::Blue] - 127;
-    d = ClipByte((lv[0] * pv[0] + lv[1] * pv[1] + lv[2] * pv[2]) / 63);
+    d = ClipByte((lv[0] * ((*pSource)[::Red] - 127) + lv[1] * ((*pSource)[::Green] - 127) + lv[2] * ((*pSource)[::Blue] - 127)) / 63);
     if (d) {
       aSource = AlphaLevelLookup(AlphaFromLevel(aScale, d));
       aDest = AlphaLevelLookup(AlphaFromLevel(aScale, d) ^ 0xFF);
@@ -2984,6 +2984,10 @@ BLITTERSIMPLE_END
 BLITTERSIMPLE_SIGNATURE(NormalMap_Additive)
     , FPoint3 *LightVector, Pixel LightColor) {
 BLITTERSIMPLE_INIT
+    if (Source->OptimizeData.normalsPrepared) {
+    } else {
+      FilterSimple_PrepareNormals(Source, 0);
+    }
     _BOS(BlitSimple_NormalMap_Additive, 2) , LightVector, LightColor _BOE
 BLITTERSIMPLE_BEGIN
     LightVector->normalize();
@@ -2991,14 +2995,10 @@ BLITTERSIMPLE_BEGIN
     lv[0] = ((LightVector->X) * 127);
     lv[1] = ((LightVector->Y) * 127);
     lv[2] = ((LightVector->Z) * 127);
-    int pv[3];
     int d;
     AlphaLevel *aSource;
 BLITTERSIMPLE_LOOPBEGIN
-    pv[0] = (*pSource)[::Red] - 127;
-    pv[1] = (*pSource)[::Green] - 127;
-    pv[2] = (*pSource)[::Blue] - 127;
-    d = ClipByte((lv[0] * pv[0] + lv[1] * pv[1] + lv[2] * pv[2]) / 63);
+    d = ClipByte((lv[0] * ((*pSource)[::Red] - 127) + lv[1] * ((*pSource)[::Green] - 127) + lv[2] * ((*pSource)[::Blue] - 127)) / 63);
     if (d) {
       if (d == 255) {
         (*pDest)[::Blue] = ClipByteHigh((*pDest)[::Blue] + LightColor[::Blue]);
@@ -3018,6 +3018,10 @@ BLITTERSIMPLE_SIGNATURE(NormalMap_SourceAlpha)
     , FPoint3 *LightVector, Pixel LightColor) {
 BLITTERSIMPLE_INIT
     if (LightColor[::Alpha] == 0) return Trivial_Success;
+    if (Source->OptimizeData.normalsPrepared) {
+    } else {
+      FilterSimple_PrepareNormals(Source, 0);
+    }
     _BOS(BlitSimple_NormalMap_SourceAlpha, 2) , LightVector, LightColor _BOE
 BLITTERSIMPLE_BEGIN
     LightVector->normalize();
@@ -3025,16 +3029,12 @@ BLITTERSIMPLE_BEGIN
     lv[0] = ((LightVector->X) * 127);
     lv[1] = ((LightVector->Y) * 127);
     lv[2] = ((LightVector->Z) * 127);
-    int pv[3];
     int d;
     AlphaLevel *aSource, *aDest, *aScale, *aScale2;
     aScale = AlphaLevelLookup( LightColor[::Alpha] );
 BLITTERSIMPLE_LOOPBEGIN
     if ((*pSource)[::Alpha]) {
-      pv[0] = (*pSource)[::Red] - 127;
-      pv[1] = (*pSource)[::Green] - 127;
-      pv[2] = (*pSource)[::Blue] - 127;
-      d = ClipByte((lv[0] * pv[0] + lv[1] * pv[1] + lv[2] * pv[2]) / 63);
+      d = ClipByte((lv[0] * ((*pSource)[::Red] - 127) + lv[1] * ((*pSource)[::Green] - 127) + lv[2] * ((*pSource)[::Blue] - 127)) / 63);
       if (d) {
         aScale2 = AlphaLevelLookup(AlphaFromLevel(aScale, (*pSource)[::Alpha]));
         aSource = AlphaLevelLookup(AlphaFromLevel(aScale2, d));
@@ -3050,6 +3050,10 @@ BLITTERSIMPLE_END
 BLITTERSIMPLE_SIGNATURE(NormalMap_Additive_SourceAlpha)
     , FPoint3 *LightVector, Pixel LightColor) {
 BLITTERSIMPLE_INIT
+    if (Source->OptimizeData.normalsPrepared) {
+    } else {
+      FilterSimple_PrepareNormals(Source, 0);
+    }
     _BOS(BlitSimple_NormalMap_Additive_SourceAlpha, 2) , LightVector, LightColor _BOE
 BLITTERSIMPLE_BEGIN
     LightVector->normalize();
@@ -3057,16 +3061,12 @@ BLITTERSIMPLE_BEGIN
     lv[0] = ((LightVector->X) * 127);
     lv[1] = ((LightVector->Y) * 127);
     lv[2] = ((LightVector->Z) * 127);
-    int pv[3];
     int d;
     AlphaLevel *aSource, *aScale, *aScale2;
     aScale = AlphaLevelLookup(LightColor[::Alpha]);
 BLITTERSIMPLE_LOOPBEGIN
     if ((*pSource)[::Alpha]) {
-      pv[0] = (*pSource)[::Red] - 127;
-      pv[1] = (*pSource)[::Green] - 127;
-      pv[2] = (*pSource)[::Blue] - 127;
-      d = ClipByte((lv[0] * pv[0] + lv[1] * pv[1] + lv[2] * pv[2]) / 63);
+      d = ClipByte((lv[0] * ((*pSource)[::Red] - 127) + lv[1] * ((*pSource)[::Green] - 127) + lv[2] * ((*pSource)[::Blue] - 127)) / 63);
       if (d) {
         aScale2 = AlphaLevelLookup(AlphaFromLevel(aScale, (*pSource)[::Alpha]));
         aSource = AlphaLevelLookup(AlphaFromLevel(aScale2, d));

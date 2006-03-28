@@ -27,6 +27,10 @@ FSIGNATURE(Fill_Opacity) , Pixel Color, int Opacity END_FSIGNATURE
 FSIGNATURE(Fill_SourceAlpha) , Pixel Color END_FSIGNATURE
 FSIGNATURE(Fill_SourceAlpha_Opacity) , Pixel Color, int Opacity END_FSIGNATURE
 
+FSIGNATURE(Blur_Horizontal) , int Radius END_FSIGNATURE
+FSIGNATURE(Blur_Vertical) , int Radius END_FSIGNATURE
+FSIGNATURE(Blur) , int XRadius, int YRadius END_FSIGNATURE
+
 FSIGNATURE(Gradient_4Point) , Pixel Color1, Pixel Color2, Pixel Color3, Pixel Color4 END_FSIGNATURE
 FSIGNATURE(Gradient_4Point_SourceAlpha) , Pixel Color1, Pixel Color2, Pixel Color3, Pixel Color4 END_FSIGNATURE
 FSIGNATURE(Gradient_4Edge) , ::Image *Edge1, ::Image *Edge2, ::Image *Edge3, ::Image *Edge4 END_FSIGNATURE
@@ -34,6 +38,8 @@ FSIGNATURE(Gradient_4Edge) , ::Image *Edge1, ::Image *Edge2, ::Image *Edge3, ::I
 FSIGNATURE(Box) , Pixel Color END_FSIGNATURE
 
 FSIGNATURE(Premultiply) END_FSIGNATURE
+
+FSIGNATURE(PrepareNormals) END_FSIGNATURE
 
 FSIGNATURE(Gradient_Radial) , Pixel Color1, Pixel Color2 END_FSIGNATURE
 

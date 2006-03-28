@@ -33,6 +33,15 @@ Private m_ddsHWBuffer As DirectDrawSurface7
 Private m_ddsBackbuffer As DirectDrawSurface7
 Private m_bytBackbuffer() As Byte
 Public VSync As Boolean
+Private m_lngScaleMode As Long
+
+Private Property Let Fury2VideoDriver_ScaleMode(ByVal RHS As Long)
+    m_lngScaleMode = RHS
+End Property
+
+Private Property Get Fury2VideoDriver_ScaleMode() As Long
+    Fury2VideoDriver_ScaleMode = m_lngScaleMode
+End Property
 
 Public Property Get Feature(ByRef Name As String) As Boolean
 On Error Resume Next

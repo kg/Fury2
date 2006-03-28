@@ -69,6 +69,12 @@ Dim l_imgSource As Fury2Image
     Compare = SoftFX.Blit_Compare(m_lngImage, l_imgSource.Handle, l_rctDest.GetRectangle, l_rctSource.Left, l_rctSource.Top)
 End Function
 
+Public Sub Blur(ByVal XRadius As Long, ByVal YRadius As Long, Optional ByVal Rectangle As Fury2Rect = Nothing)
+On Error Resume Next
+    If Rectangle Is Nothing Then Set Rectangle = Me.Rectangle
+    SoftFX.Filter_Blur m_lngImage, Rectangle.GetRectangle, XRadius, YRadius
+End Sub
+
 Public Function Draw(ByVal Surface As Fury2Image, ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1, Optional ByVal ScalePercentage As Single = 1, Optional ByVal RotationAngle As Single = 0, Optional ByVal Mode As SFXBlitModes = BlitMode_Default, Optional ByVal Color As Long = &HFFFFFFFF, Optional ByVal ResampleMode As SFXResampleModes = ResampleMode_Default, Optional ByVal AntiAlias As Boolean = False) As Fury2Rect
 On Error Resume Next
 Dim l_sngX As Single, l_sngY As Single
@@ -820,11 +826,11 @@ Dim l_vtType As VbVarType
         Case SFXBlitModes.BlitMode_Normal
             SoftFX.Blit_NormalMap m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_fp3Light, LightColor
         Case SFXBlitModes.BlitMode_SourceAlpha
-'            SoftFX.Blit_NormalMap_SourceAlpha m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_fp3Light, LightColor
+            SoftFX.Blit_NormalMap_SourceAlpha m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_fp3Light, LightColor
         Case SFXBlitModes.BlitMode_Additive
             SoftFX.Blit_NormalMap_Additive m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_fp3Light, LightColor
         Case SFXBlitModes.BlitMode_Additive_SourceAlpha
-'            SoftFX.Blit_NormalMap_Additive_SourceAlpha m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_fp3Light, LightColor
+            SoftFX.Blit_NormalMap_Additive_SourceAlpha m_lngImage, Source.Handle, DestRectangle.GetRectangle, SourceRectangle.Left, SourceRectangle.Top, l_fp3Light, LightColor
         Case Else
         End Select
     End If
@@ -1005,10 +1011,26 @@ On Error Resume Next
     SoftFX.SetImagePremultiplied m_lngImage, NewValue
 End Property
 
+Public Property Get NormalsPrepared() As Boolean
+On Error Resume Next
+    NormalsPrepared = SoftFX.GetImageNormalsPrepared(m_lngImage)
+End Property
+
+Public Property Let NormalsPrepared(ByVal NewValue As Boolean)
+On Error Resume Next
+    SoftFX.SetImageNormalsPrepared m_lngImage, NewValue
+End Property
+
 Public Sub Premultiply()
 On Error Resume Next
     If Premultiplied Then Exit Sub
     SoftFX.Filter_Premultiply m_lngImage, Rectangle.GetRectangle
+End Sub
+
+Public Sub PrepareNormals()
+On Error Resume Next
+'    If Premultiplied Then Exit Sub
+    SoftFX.Filter_PrepareNormals m_lngImage, Rectangle.GetRectangle
 End Sub
 
 Public Sub Composite(ByVal Color As Long)

@@ -129,7 +129,7 @@ void InitPythagorasTable() {
         PythagorasRootTable[a] = &(PythagorasTable[a]);
         for (b = 0; b < 256; b++) {
 #ifdef ACCURATE_PYTHAGORAS
-            PythagorasTable[a].V[b] = ClipByte( sqrt((float)(a * a) + (b * b)) * 0.707106781186547);
+            PythagorasTable[a].V[b] = ClipByte( sqrt((float)(a * a) + (b * b)) * PythagorasConstant);
 #else
             PythagorasTable[a].V[b] = ClipByte( sqrt((float)(a * a) + (b * b)) );
 #endif
@@ -321,6 +321,30 @@ Export int GetImagePremultiplied(Image *Image) {
 
   if (Image) {
     if (Image->OptimizeData.premultiplied) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+Export void SetImageNormalsPrepared(Image *Image, int NewState) {
+
+  if (!Initialized) return;
+
+  if (Image) {
+    Image->OptimizeData.normalsPrepared = (NewState != 0);
+  }
+
+  return;
+}
+
+Export int GetImageNormalsPrepared(Image *Image) {
+
+  if (!Initialized) return false;
+
+  if (Image) {
+    if (Image->OptimizeData.normalsPrepared) {
       return true;
     }
   }

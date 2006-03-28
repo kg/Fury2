@@ -65,7 +65,7 @@ End Sub
     
 Public Sub MoveCaret(Position As Long)
 On Error Resume Next
-    m_lngSelectionStart = mdlGlobal.Engine.ClipInteger(Position, 1, Len(Me.Text) + 1)
+    m_lngSelectionStart = SoftFX.ClipValue(Position, 1, Len(Me.Text) + 1)
     m_lngSelectionLength = 0
     m_lngSelectionDir = 1
 End Sub
@@ -75,7 +75,7 @@ On Error Resume Next
     Dim SelMax As Long
     If m_lngSelectionDir = -1 Then
         If ((m_lngSelectionStart > 1) Or (Amount > 0)) Then
-            m_lngSelectionStart = mdlGlobal.Engine.ClipInteger(m_lngSelectionStart + Amount, 1, Len(Me.Text) + 1)
+            m_lngSelectionStart = SoftFX.ClipValue(m_lngSelectionStart + Amount, 1, Len(Me.Text) + 1)
             m_lngSelectionLength = m_lngSelectionLength - Amount
             SelMax = Len(Me.Text) - m_lngSelectionStart + 1
             If m_lngSelectionLength <= 0 Then
@@ -89,7 +89,7 @@ On Error Resume Next
         m_lngSelectionLength = m_lngSelectionLength + Amount
         If m_lngSelectionLength < 0 Then
             m_lngSelectionDir = -1
-            m_lngSelectionStart = mdlGlobal.Engine.ClipInteger(m_lngSelectionStart + m_lngSelectionLength, 1, Len(Me.Text) + 1)
+            m_lngSelectionStart = SoftFX.ClipValue(m_lngSelectionStart + m_lngSelectionLength, 1, Len(Me.Text) + 1)
             m_lngSelectionLength = 1
         End If
         SelMax = Len(Me.Text) - m_lngSelectionStart + 1
@@ -101,8 +101,8 @@ End Sub
 
 Public Sub SetSelection(StartPos As Long, EndPos As Long)
 On Error Resume Next
-    m_lngSelectionStart = mdlGlobal.Engine.ClipInteger(StartPos, 1, Len(Me.Text) + 1)
-    m_lngSelectionLength = mdlGlobal.Engine.ClipInteger(EndPos, 1, Len(Me.Text) + 1) - m_lngSelectionStart
+    m_lngSelectionStart = SoftFX.ClipValue(StartPos, 1, Len(Me.Text) + 1)
+    m_lngSelectionLength = SoftFX.ClipValue(EndPos, 1, Len(Me.Text) + 1) - m_lngSelectionStart
     m_lngSelectionDir = 1
 End Sub
 
@@ -127,11 +127,11 @@ Public Property Let SelectionEnd(NewEnd As Long)
 Dim l_lngTemp As Long
     If NewEnd < m_lngSelectionStart Then
         l_lngTemp = m_lngSelectionStart
-        m_lngSelectionStart = mdlGlobal.Engine.ClipInteger(NewEnd, 1, Len(Me.Text) + 1)
+        m_lngSelectionStart = SoftFX.ClipValue(NewEnd, 1, Len(Me.Text) + 1)
         m_lngSelectionLength = l_lngTemp - m_lngSelectionStart
         m_lngSelectionDir = -1
     Else
-        m_lngSelectionLength = mdlGlobal.Engine.ClipInteger(NewEnd, 1, Len(Me.Text) + 1) - m_lngSelectionStart
+        m_lngSelectionLength = SoftFX.ClipValue(NewEnd, 1, Len(Me.Text) + 1) - m_lngSelectionStart
         m_lngSelectionDir = 1
     End If
 End Property
@@ -356,7 +356,7 @@ On Error Resume Next
     DispatchEvent "KeyPress", Character
     If Character = 0 Then Exit Sub
     If Locked Then Exit Sub
-    If mdlGlobal.Engine.CharIsPrintable(Character) Then
+    If Character >= 32 Then
         Me.SelectionText = Chr(Character)
     End If
 End Sub

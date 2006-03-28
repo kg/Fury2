@@ -29,6 +29,7 @@ namespace BlendModes {
       glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, GL_SRC_COLOR);
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB, GL_SRC_ALPHA);
+      checkGLErrors();
     }
   _BM_END
 
@@ -42,6 +43,7 @@ namespace BlendModes {
       glBlendFunc(GL_ONE, GL_ONE);
     }
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    checkGLErrors();
   _BM_END
 
   _BM_BEGIN(Subtractive)
@@ -53,6 +55,7 @@ namespace BlendModes {
         glBlendFunc(GL_ONE, GL_ONE);
       }
       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      checkGLErrors();
     }
   _BM_END
 
@@ -62,6 +65,7 @@ namespace BlendModes {
     }
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    checkGLErrors();
   _BM_END
 
   _BM_BEGIN(Subtractive_SourceAlpha)
@@ -69,6 +73,7 @@ namespace BlendModes {
       glBlendEquationEXT(GL_FUNC_REVERSE_SUBTRACT_EXT);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE);
       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      checkGLErrors();
     }
   _BM_END
 
@@ -78,6 +83,7 @@ namespace BlendModes {
     }
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    checkGLErrors();
   _BM_END
 
   _BM_BEGIN(Font_SourceAlpha)
@@ -86,6 +92,7 @@ namespace BlendModes {
     }
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    checkGLErrors();
   _BM_END
 
   _BM_BEGIN(Multiply)
@@ -105,6 +112,7 @@ namespace BlendModes {
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB, GL_ONE_MINUS_SRC_ALPHA);
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, GL_SRC_COLOR);
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_ARB, GL_SRC_ALPHA);
+      checkGLErrors();
     }
   _BM_END
 
@@ -122,6 +130,7 @@ namespace BlendModes {
       glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_CONSTANT_ARB);
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, GL_SRC_COLOR);
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB, GL_SRC_ALPHA);
+      checkGLErrors();
     }
     if (GLEW_ARB_multitexture) {
       glActiveTextureARB(GL_TEXTURE1_ARB); 
@@ -138,6 +147,7 @@ namespace BlendModes {
         glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, GL_SRC_COLOR);
         glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_ARB, GL_SRC_ALPHA);
         glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2.0);
+        checkGLErrors();
       }
     }
     if (GLEW_ARB_multitexture) glActiveTextureARB(GL_TEXTURE0_ARB); 
@@ -157,6 +167,7 @@ namespace BlendModes {
       glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_CONSTANT_ARB);
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, GL_SRC_COLOR);
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB, GL_SRC_ALPHA);
+      checkGLErrors();
     }
     if (GLEW_ARB_multitexture) {
       glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -172,6 +183,7 @@ namespace BlendModes {
         glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, GL_SRC_COLOR);
         glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_ARB, GL_SRC_ALPHA);
         glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1.0);
+        checkGLErrors();
       }
     }
     if (GLEW_ARB_multitexture) glActiveTextureARB(GL_TEXTURE0_ARB); 
@@ -193,6 +205,7 @@ namespace BlendModes {
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, GL_SRC_COLOR);
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB, GL_SRC_ALPHA);
       glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_ARB, GL_SRC_ALPHA);
+      checkGLErrors();
     }
     if (GLEW_ARB_multitexture) {
       glActiveTextureARB(GL_TEXTURE1_ARB); 
@@ -209,6 +222,7 @@ namespace BlendModes {
         glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, GL_SRC_COLOR);
         glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_ARB, GL_SRC_ALPHA);
         glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1.0);
+        checkGLErrors();
       }
     }
     if (GLEW_ARB_multitexture) glActiveTextureARB(GL_TEXTURE0_ARB); 
@@ -220,6 +234,7 @@ namespace BlendModes {
     }
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    checkGLErrors();
   _BM_END
 
 }

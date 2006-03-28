@@ -157,7 +157,7 @@ Dim l_sprSprite As Fury2Sprite
         Set l_sprSprite = l_liItem.Tag
         If l_sprSprite Is Nothing Then
         Else
-            l_sprSprite.Free
+'            l_sprSprite.Free
         End If
         Set l_liItem.Tag = Nothing
         Set l_liItem.Image = Nothing

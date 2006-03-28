@@ -106,7 +106,12 @@ Section "-Engine"
 	RegDLL "$INSTDIR\sys\uikit.dll"
 	RegDLL "$INSTDIR\sys\http.dll"
 
-	SetOutPath "$INSTDIR\"
+    SetOutPath "$INSTDIR\sys\shaders\"
+    File /nonfatal "J:\development\binary\sys\shaders\*.fs"
+    File /nonfatal "J:\development\binary\sys\shaders\*.vs"
+    File /nonfatal "J:\development\binary\sys\shaders\*.sh"
+
+    SetOutPath "$INSTDIR\"
 SectionEnd
 
 Section "Start Menu Shortcuts"

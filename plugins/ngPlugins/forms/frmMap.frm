@@ -307,7 +307,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As PointAPI) As Long
 Implements iExtendedForm
 Implements iEditingCommands
 Implements iCustomMenus
@@ -619,9 +619,15 @@ Dim l_lsLight As Fury2LightSource
 Dim l_colList As New Collection
 Dim l_sngXDistance As Single, l_sngYDistance As Single, l_sngDistance As Single
 Dim l_sngSmallestDistance As Single, l_lsSmallest As Fury2LightSource
+Dim l_sngD As Single
     For Each l_lsLight In SelectedLayer.Lighting.Lights
         l_sngDistance = Sqr((Abs(l_lsLight.X - X) ^ 2) + (Abs(l_lsLight.Y - Y) ^ 2))
-        If (l_sngDistance) <= ClipValue(l_lsLight.FalloffDistance, 10, 10000) Then
+        If l_lsLight.Image Is Nothing Then
+            l_sngD = l_lsLight.FalloffDistance
+        Else
+            l_sngD = IIf(l_lsLight.Image.Width < l_lsLight.Image.Height, l_lsLight.Image.Width, l_lsLight.Image.Height) / 2
+        End If
+        If (l_sngDistance) <= ClipValue(l_sngD, 10, 10000) Then
             l_colList.Add l_lsLight
         End If
     Next l_lsLight
@@ -800,7 +806,7 @@ End Function
 Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     With SelectedLayer.Sprites
         BeginProcess "Performing Paste..."
         If AtIndex < 1 Then
@@ -1160,7 +1166,7 @@ Public Sub AutoScroll(Optional ByVal X As Long = -32767, Optional ByVal Y As Lon
 On Error Resume Next
 Dim l_lngX1 As Long, l_lngY1 As Long, l_lngX2 As Long, l_lngY2 As Long
 Dim l_lngScrollX As Long, l_lngScrollY As Long
-Dim l_ptCursor As POINTAPI
+Dim l_ptCursor As PointAPI
 Dim l_lngCapture As Long
     If Not m_voViewOptions.AutoScroll Then Exit Sub
     hsMap.Tag = "lock"
@@ -3577,6 +3583,7 @@ End Sub
 Public Sub Redraw_Lighting()
 On Error Resume Next
 Dim l_litLight As Fury2LightSource
+Dim l_rctLight As Fury2Rect
 Dim l_sngX As Single, l_sngY As Single
 Dim l_sngAlpha As Single
 Dim l_varPlane As Variant, l_varLine As Variant
@@ -3589,17 +3596,29 @@ Dim l_rctSelection As Fury2Rect
             l_sngAlpha = IIf(l_lngIndex = m_lngSelectedLight, 1, 0.66)
             l_sngX = l_litLight.X - hsMap.Value
             l_sngY = l_litLight.Y - vsMap.Value
-            If Tool_Lighting = LightingTool_Cursor Then
-                If (l_lngIndex = m_lngSelectedLight) Then
-                    .FilledEllipse Array(l_sngX, l_sngY), SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), ClipValue(l_litLight.FalloffDistance, 2, 9999) + 1, ClipValue(l_litLight.FalloffDistance, 2, 9999) + 1, RenderMode_SourceAlpha
+            If l_litLight.Image Is Nothing Then
+                If Tool_Lighting = LightingTool_Cursor Then
+                    If (l_lngIndex = m_lngSelectedLight) Then
+                        .FilledEllipse Array(l_sngX, l_sngY), SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), ClipValue(l_litLight.FalloffDistance, 2, 9999) + 1, ClipValue(l_litLight.FalloffDistance, 2, 9999) + 1, RenderMode_SourceAlpha
+                    End If
+                    .Ellipse Array(l_sngX, l_sngY), SetAlpha(F2Black, l_sngAlpha * 255), ClipValue(l_litLight.FalloffDistance, 2, 9999) + 1, ClipValue(l_litLight.FalloffDistance, 2, 9999) + 1, RenderMode_SourceAlpha
+                    .Ellipse Array(l_sngX, l_sngY), SetAlpha(F2Black, l_sngAlpha * 255), ClipValue(l_litLight.FalloffDistance, 2, 9999) - 1, ClipValue(l_litLight.FalloffDistance, 2, 9999) - 1, RenderMode_SourceAlpha
+                    .Ellipse Array(l_sngX, l_sngY), SetAlpha(F2White, l_sngAlpha * 255), ClipValue(l_litLight.FalloffDistance, 2, 9999), ClipValue(l_litLight.FalloffDistance, 2, 9999), RenderMode_SourceAlpha
+                    If l_litLight.Spread > 90 Then
+                    Else
+                        .AntiAliasLine Array(l_sngX, l_sngY, l_sngX + (Sin((l_litLight.Angle - (l_litLight.Spread / 2)) * c_dblRadian) * l_litLight.FalloffDistance), l_sngY + (-Cos((l_litLight.Angle - (l_litLight.Spread / 2)) * c_dblRadian) * l_litLight.FalloffDistance)), SetAlpha(F2White, l_sngAlpha * 255)
+                        .AntiAliasLine Array(l_sngX, l_sngY, l_sngX + (Sin((l_litLight.Angle + (l_litLight.Spread / 2)) * c_dblRadian) * l_litLight.FalloffDistance), l_sngY + (-Cos((l_litLight.Angle + (l_litLight.Spread / 2)) * c_dblRadian) * l_litLight.FalloffDistance)), SetAlpha(F2White, l_sngAlpha * 255)
+                    End If
                 End If
-                .Ellipse Array(l_sngX, l_sngY), SetAlpha(F2Black, l_sngAlpha * 255), ClipValue(l_litLight.FalloffDistance, 2, 9999) + 1, ClipValue(l_litLight.FalloffDistance, 2, 9999) + 1, RenderMode_SourceAlpha
-                .Ellipse Array(l_sngX, l_sngY), SetAlpha(F2Black, l_sngAlpha * 255), ClipValue(l_litLight.FalloffDistance, 2, 9999) - 1, ClipValue(l_litLight.FalloffDistance, 2, 9999) - 1, RenderMode_SourceAlpha
-                .Ellipse Array(l_sngX, l_sngY), SetAlpha(F2White, l_sngAlpha * 255), ClipValue(l_litLight.FalloffDistance, 2, 9999), ClipValue(l_litLight.FalloffDistance, 2, 9999), RenderMode_SourceAlpha
-                If l_litLight.Spread > 90 Then
-                Else
-                    .AntiAliasLine Array(l_sngX, l_sngY, l_sngX + (Sin((l_litLight.Angle - (l_litLight.Spread / 2)) * c_dblRadian) * l_litLight.FalloffDistance), l_sngY + (-Cos((l_litLight.Angle - (l_litLight.Spread / 2)) * c_dblRadian) * l_litLight.FalloffDistance)), SetAlpha(F2White, l_sngAlpha * 255)
-                    .AntiAliasLine Array(l_sngX, l_sngY, l_sngX + (Sin((l_litLight.Angle + (l_litLight.Spread / 2)) * c_dblRadian) * l_litLight.FalloffDistance), l_sngY + (-Cos((l_litLight.Angle + (l_litLight.Spread / 2)) * c_dblRadian) * l_litLight.FalloffDistance)), SetAlpha(F2White, l_sngAlpha * 255)
+            Else
+                Set l_rctLight = l_litLight.Rectangle
+                If Tool_Lighting = LightingTool_Cursor Then
+                    If (l_lngIndex = m_lngSelectedLight) Then
+                        .Fill l_rctLight, SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), RenderMode_SourceAlpha
+                    End If
+                    .Box l_rctLight, SetAlpha(F2White, l_sngAlpha * 255), RenderMode_SourceAlpha
+                    .Box l_rctLight.Adjust(-1, -1), SetAlpha(F2Black, l_sngAlpha * 255), RenderMode_SourceAlpha
+                    .Box l_rctLight.Adjust(2, 2), SetAlpha(F2Black, l_sngAlpha * 255), RenderMode_SourceAlpha
                 End If
             End If
             .FilledEllipse Array(l_sngX, l_sngY), F2RGB(0, 0, 0, 255 * l_sngAlpha), 3, 3, RenderMode_SourceAlpha
@@ -5257,7 +5276,7 @@ Dim l_varRand As Variant
                     Else
                         l_sngL = (l_lngI / l_lngC)
                     End If
-                    l_lngSprite = Engine.Random(1, m_optSpritePainter.SpriteList.Count, False)
+                    l_lngSprite = Engine.Math.Random(1, m_optSpritePainter.SpriteList.Count, False)
                     Set l_sprSprite = Nothing
                     Set l_sprSprite = m_optSpritePainter.SpriteList(l_lngSprite).Duplicate
                     If l_sprSprite Is Nothing Then
@@ -5267,7 +5286,7 @@ Dim l_varRand As Variant
                         If m_optSpritePainter.UseTemplate Then
                             l_sprSprite.Template = m_optSpritePainter.SpritesFilename & ":" & l_sprSprite.Name
                         End If
-                        l_varRand = Engine.PathTarget(0, 0, Engine.Random(0, 359.99), Engine.Random(0, m_optSpritePainter.DrawRadius))
+                        l_varRand = Engine.Math.Ray(Engine.Math.Random(0, 359.99), Engine.Math.Random(0, m_optSpritePainter.DrawRadius))
                         l_sngX = (m_lngLastMouseX * (1 - l_sngL)) + (m_lngMouseX * (l_sngL)) + l_varRand(0)
                         l_sngY = (m_lngLastMouseY * (1 - l_sngL)) + (m_lngMouseY * (l_sngL)) + l_varRand(1)
                         l_sprSprite.X = l_sngX
@@ -5834,6 +5853,7 @@ End Sub
 
 Public Sub ViewChanged()
 On Error Resume Next
+Dim l_lyrLayer As Fury2MapLayer
 Dim l_objObject As Object
     Me.Caption = IIf(Trim(m_strFilename) = "", "Untitled.f2map", GetTitle(m_strFilename))
     Screen.MousePointer = 11
@@ -5867,6 +5887,10 @@ Dim l_objObject As Object
     tsLists.DisableUpdates = False
     tsLists.Reflow
     Select Case m_lngCurrentView
+    Case View_Lighting
+        For Each l_lyrLayer In m_mapMap.Layers
+            l_lyrLayer.Lighting.Resync
+        Next l_lyrLayer
     Case View_Properties
         insMap.Inspect m_mapMap, "Map"
     Case View_Script

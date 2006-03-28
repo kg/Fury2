@@ -75,7 +75,7 @@ struct statictable {
   void* Pointer;
 };
 
-extern statictable staticTables[StaticTableCount];
+extern Align(16) statictable staticTables[StaticTableCount];
 
 template<class Type>Type* StaticAllocate(StaticTables Table, DoubleWord Size) {
   Size *= sizeof(Type);

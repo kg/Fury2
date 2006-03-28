@@ -21,7 +21,7 @@ Option Explicit
 ' Fixes:
 ' 23 Jan 03
 ' SPM: Fixed multiple attach/detach bug which resulted in incorrectly setting
-' the message count.
+' the message Count.
 ' SPM: Refactored code
 ' SPM: Added automated detach on WM_DESTROY
 ' 27 Dec 99
@@ -94,15 +94,15 @@ Dim sName As String
    sName = "C" & hwnd
    MessageCount = GetProp(hwnd, sName)
 End Property
-Private Property Let MessageCount(ByVal hwnd As Long, ByVal count As Long)
+Private Property Let MessageCount(ByVal hwnd As Long, ByVal Count As Long)
 Dim sName As String
    m_f = 1
    sName = "C" & hwnd
-   m_f = SetProp(hwnd, sName, count)
-   If (count = 0) Then
+   m_f = SetProp(hwnd, sName, Count)
+   If (Count = 0) Then
       RemoveProp hwnd, sName
    End If
-   logMessage "Changed message count for " & Hex(hwnd) & " to " & count
+   logMessage "Changed message Count for " & Hex(hwnd) & " to " & Count
 End Property
 
 Private Property Get OldWindowProc(ByVal hwnd As Long) As Long
@@ -127,29 +127,29 @@ Dim sName As String
    MessageClassCount = GetProp(hwnd, sName)
 End Property
 
-Private Property Let MessageClassCount(ByVal hwnd As Long, ByVal iMsg As Long, ByVal count As Long)
+Private Property Let MessageClassCount(ByVal hwnd As Long, ByVal iMsg As Long, ByVal Count As Long)
 Dim sName As String
    sName = hwnd & "#" & iMsg & "C"
-   m_f = SetProp(hwnd, sName, count)
-   If (count = 0) Then
+   m_f = SetProp(hwnd, sName, Count)
+   If (Count = 0) Then
       RemoveProp hwnd, sName
    End If
-   logMessage "Changed message count for " & Hex(hwnd) & " Message " & iMsg & " to " & count
+   logMessage "Changed message Count for " & Hex(hwnd) & " Message " & iMsg & " to " & Count
 End Property
 
-Private Property Get MessageClass(ByVal hwnd As Long, ByVal iMsg As Long, ByVal index As Long) As Long
+Private Property Get MessageClass(ByVal hwnd As Long, ByVal iMsg As Long, ByVal Index As Long) As Long
 Dim sName As String
-   sName = hwnd & "#" & iMsg & "#" & index
+   sName = hwnd & "#" & iMsg & "#" & Index
    MessageClass = GetProp(hwnd, sName)
 End Property
-Private Property Let MessageClass(ByVal hwnd As Long, ByVal iMsg As Long, ByVal index As Long, ByVal classPtr As Long)
+Private Property Let MessageClass(ByVal hwnd As Long, ByVal iMsg As Long, ByVal Index As Long, ByVal classPtr As Long)
 Dim sName As String
-   sName = hwnd & "#" & iMsg & "#" & index
+   sName = hwnd & "#" & iMsg & "#" & Index
    m_f = SetProp(hwnd, sName, classPtr)
    If (classPtr = 0) Then
       RemoveProp hwnd, sName
    End If
-   logMessage "Changed message class for " & Hex(hwnd) & " Message " & iMsg & " Index " & index & " to " & Hex(classPtr)
+   logMessage "Changed message class for " & Hex(hwnd) & " Message " & iMsg & " Index " & Index & " to " & Hex(classPtr)
 End Property
 
 Sub AttachMessage( _
@@ -209,7 +209,7 @@ Dim msgClass As Long
    End If
 
    ' --------------------------------------------------------------------
-   ' 5) Get the message count
+   ' 5) Get the message Count
    ' --------------------------------------------------------------------
    msgCount = MessageCount(hwnd)
    If msgCount = 0 Then
@@ -219,7 +219,7 @@ Dim msgClass As Long
       If procOld = 0 Then
          ' remove class:
          MessageClass(hwnd, iMsg, MessageClassCount(hwnd, iMsg)) = 0
-         ' remove class count:
+         ' remove class Count:
          MessageClassCount(hwnd, iMsg) = MessageClassCount(hwnd, iMsg) - 1
          
          ErrRaise eeCantSubclass
@@ -236,7 +236,7 @@ Dim msgClass As Long
          SetWindowLong hwnd, GWL_WNDPROC, procOld
          ' remove class:
          MessageClass(hwnd, iMsg, MessageClassCount(hwnd, iMsg)) = 0
-         ' remove class count:
+         ' remove class Count:
          MessageClassCount(hwnd, iMsg) = MessageClassCount(hwnd, iMsg) - 1
          
          ' Raise an error:
@@ -254,7 +254,7 @@ Dim msgClass As Long
       
       ' remove class:
       MessageClass(hwnd, iMsg, MessageClassCount(hwnd, iMsg)) = 0
-      ' remove class count contribution:
+      ' remove class Count contribution:
       MessageClassCount(hwnd, iMsg) = MessageClassCount(hwnd, iMsg) - 1
       
       ' If we haven't any messages on this window then remove the subclass:
@@ -320,7 +320,7 @@ Dim procOld As Long
       Else
          ' remove this message class:
          
-         ' a) Anything above this index has to be shifted up:
+         ' a) Anything above this Index has to be shifted up:
          For msgClass = msgClassIndex To msgClassCount - 1
             MessageClass(hwnd, iMsg, msgClass) = MessageClass(hwnd, iMsg, msgClass + 1)
          Next msgClass
@@ -328,7 +328,7 @@ Dim procOld As Long
          ' b) The message class at the end can be removed:
          MessageClass(hwnd, iMsg, msgClassCount) = 0
          
-         ' c) Reduce the message class count:
+         ' c) Reduce the message class Count:
          MessageClassCount(hwnd, iMsg) = MessageClassCount(hwnd, iMsg) - 1
          
       End If
@@ -339,7 +339,7 @@ Dim procOld As Long
    End If
    
    ' ---------------------------------------------------------------------
-   ' 3) Reduce the message count:
+   ' 3) Reduce the message Count:
    ' ---------------------------------------------------------------------
    msgCount = MessageCount(hwnd)
    If (msgCount = 1) Then
@@ -411,7 +411,7 @@ Dim bDestroy As Boolean
             With iwp
                ' Preprocess (only checked first time around):
                If (iIndex = 1) Then
-                  If (.MsgResponse = emrPreProcess) Then
+                  If (.MsgResponse = emrPreprocess) Then
                      If Not (bCalled) Then
                         WindowProc = CallWindowProc(procOld, hwnd, iMsg, _
                                                   wParam, ByVal lParam)

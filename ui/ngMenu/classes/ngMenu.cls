@@ -120,32 +120,32 @@ End Sub
 
 Private Sub InitColors()
 On Error Resume Next
-    Colors(tbcBackground) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Button_Shadow), 0)
-    Colors(tbcBorder) = F2Transparent
-    Colors(tbcText) = ConvertSystemColor(SystemColor_Button_Text)
-    Colors(tbcTint) = F2RGB(255, 255, 255, 192)
-    Colors(tbcGlow) = F2RGB(0, 0, 0, 0)
-    Colors(tbcHighlight) = SetAlpha(ConvertSystemColor(SystemColor_Highlight), 140)
-    Colors(tbcHighlightBorder) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 190)
-    Colors(tbcHighlightText) = ConvertSystemColor(SystemColor_Highlight_Text)
-    Colors(tbcHighlightTint) = F2White
-    Colors(tbcHighlightGlow) = F2RGB(255, 255, 255, 140)
-    Colors(tbcPressed) = SetAlpha(ConvertSystemColor(SystemColor_Highlight), 192)
-    Colors(tbcPressedBorder) = ConvertSystemColor(SystemColor_Highlight)
-    Colors(tbcPressedText) = ConvertSystemColor(SystemColor_Highlight_Text)
-    Colors(tbcPressedTint) = F2White
-    Colors(tbcPressedGlow) = F2RGB(255, 255, 255, 190)
-    Colors(tbcDisabled) = F2Transparent
-    Colors(tbcDisabledBorder) = F2Transparent
-    Colors(tbcDisabledText) = ConvertSystemColor(SystemColor_Button_Text_Disabled)
-    Colors(tbcDisabledTint) = F2RGB(127, 127, 127, 63)
-    Colors(tbcDisabledGlow) = F2RGB(127, 127, 127, 0)
-    Colors(tbcChecked) = SetAlpha(ConvertSystemColor(SystemColor_Highlight), 127)
-    Colors(tbcCheckedBorder) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 255)
-    Colors(tbcCheckedText) = ConvertSystemColor(SystemColor_Highlight_Text)
-    Colors(tbcCheckedTint) = F2White
-    Colors(tbcCheckedGlow) = F2RGB(255, 255, 255, 255)
-    Colors(tbcSeparator) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Button_Shadow), 192)
+    Colors(mncBackground) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Button_Shadow), 0)
+    Colors(mncBorder) = F2Transparent
+    Colors(mncText) = ConvertSystemColor(SystemColor_Button_Text)
+    Colors(mncTint) = F2RGB(255, 255, 255, 192)
+    Colors(mncGlow) = F2RGB(0, 0, 0, 0)
+    Colors(mncHighlight) = SetAlpha(ConvertSystemColor(SystemColor_Highlight), 140)
+    Colors(mncHighlightBorder) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 190)
+    Colors(mncHighlightText) = ConvertSystemColor(SystemColor_Highlight_Text)
+    Colors(mncHighlightTint) = F2White
+    Colors(mncHighlightGlow) = F2RGB(255, 255, 255, 140)
+    Colors(mncPressed) = SetAlpha(ConvertSystemColor(SystemColor_Highlight), 192)
+    Colors(mncPressedBorder) = ConvertSystemColor(SystemColor_Highlight)
+    Colors(mncPressedText) = ConvertSystemColor(SystemColor_Highlight_Text)
+    Colors(mncPressedTint) = F2White
+    Colors(mncPressedGlow) = F2RGB(255, 255, 255, 190)
+    Colors(mncDisabled) = F2Transparent
+    Colors(mncDisabledBorder) = F2Transparent
+    Colors(mncDisabledText) = ConvertSystemColor(SystemColor_Button_Text_Disabled)
+    Colors(mncDisabledTint) = F2RGB(127, 127, 127, 63)
+    Colors(mncDisabledGlow) = F2RGB(127, 127, 127, 0)
+    Colors(mncChecked) = SetAlpha(ConvertSystemColor(SystemColor_Highlight), 127)
+    Colors(mncCheckedBorder) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Highlight), 255)
+    Colors(mncCheckedText) = ConvertSystemColor(SystemColor_Highlight_Text)
+    Colors(mncCheckedTint) = F2White
+    Colors(mncCheckedGlow) = F2RGB(255, 255, 255, 255)
+    Colors(mncSeparator) = BlendColors(ConvertSystemColor(SystemColor_Button_Face), ConvertSystemColor(SystemColor_Button_Shadow), 192)
     ' TODO: Initialize other colors
 End Sub
 

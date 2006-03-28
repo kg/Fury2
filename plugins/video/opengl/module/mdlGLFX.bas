@@ -17,7 +17,7 @@ Public Declare Function GLGetShader Lib "GLFX" Alias "_GLGetShader@4" (ByVal Sha
 Public Declare Function GLShaderBlit Lib "GLFX" Alias "_GLShaderBlit@28" (ByVal Dest As Long, ByVal Source As Long, ByRef DestRect As Rectangle, ByRef SourceRect As Rectangle, ByVal Renderer As Long, ByVal Scaler As Long, ByVal Shader As Long) As Long
 Public Declare Function GLGetFeatureSupport Lib "GLFX" Alias "_GLGetFeatureSupport@4" (ByVal Name As String) As Long
 
-Public Const ShaderPath As String = "J:\development\binary\sys\shaders\"
+Global ShaderPath As String
 
 Public Function ParseShader(ByRef Text As String) As String
 On Error Resume Next

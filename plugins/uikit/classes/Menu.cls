@@ -181,9 +181,9 @@ On Error Resume Next
     DispatchEvent "KeyDown", KeyCode, Shift
     Select Case KeyCode
     Case vbKeyUp
-        SelectedItem = mdlGlobal.Engine.ClipInteger(SelectedItem - 1, 1, Items.Count)
+        SelectedItem = SoftFX.ClipValue(SelectedItem - 1, 1, Items.Count)
     Case vbKeyDown
-        SelectedItem = mdlGlobal.Engine.ClipInteger(SelectedItem + 1, 1, Items.Count)
+        SelectedItem = SoftFX.ClipValue(SelectedItem + 1, 1, Items.Count)
     Case Else
     End Select
 End Sub
@@ -261,7 +261,7 @@ Dim l_lngHeight As Long, l_itmItem As Item, l_lngItem As Long, l_lngY As Long, l
         End If
         l_lngY = l_lngY + l_lngItemHeight
         l_rctItem.Top = l_lngY + l_rctNew.Top
-        l_rctItem.Bottom = mdlGlobal.Engine.ClipInteger(l_rctNew.Bottom, l_rctItem.Top, l_rctNew.Bottom)
+        l_rctItem.Bottom = SoftFX.ClipValue(l_rctNew.Bottom, l_rctItem.Top, l_rctNew.Bottom)
         l_lngHeight = l_lngHeight + l_lngItemHeight
         l_lngItem = l_lngItem + 1
     Next l_itmItem
@@ -299,7 +299,7 @@ Dim l_rctSize As Fury2Rect
         l_lngItem = 1
         For Each l_itmItem In m_colItems
             l_rctItem.Top = l_lngY + l_rctNew.Top
-            l_rctItem.Bottom = mdlGlobal.Engine.ClipInteger(l_rctNew.Bottom, l_rctItem.Top, l_rctNew.Bottom)
+            l_rctItem.Bottom = SoftFX.ClipValue(l_rctNew.Bottom, l_rctItem.Top, l_rctNew.Bottom)
             l_lngItemHeight = 0
             Err.Clear
             l_lngItemWidth = l_itmItem.Width
@@ -320,7 +320,7 @@ Dim l_rctSize As Fury2Rect
             If l_lngItemWidth > l_lngWidth Then l_lngWidth = l_lngItemWidth
             l_lngY = l_lngY + l_lngItemHeight
             l_rctItem.Top = l_lngY + l_rctNew.Top
-            l_rctItem.Bottom = mdlGlobal.Engine.ClipInteger(l_rctNew.Bottom, l_rctItem.Top, l_rctNew.Bottom)
+            l_rctItem.Bottom = SoftFX.ClipValue(l_rctNew.Bottom, l_rctItem.Top, l_rctNew.Bottom)
             l_lngHeight = l_lngHeight + l_lngItemHeight
             l_lngItem = l_lngItem + 1
         Next l_itmItem

@@ -49,7 +49,7 @@ namespace GL {
   extern void selectTexture(GLuint handle);
   extern void destroyTexture(GLuint handle);
 
-  extern void beginDraw(GLenum type);
+  extern GLenum beginDraw(GLenum type);
   extern void endDraw();
 
   extern void enableTextures();
@@ -131,6 +131,7 @@ namespace GL {
       if (checkNamedTag(image, Context)) {
         // this is a context
         endDraw();
+        glFinish();
         tex = createTextureFromFramebuffer(image, false);
         if (tex) handle = tex->Handle;
       } else {
@@ -246,7 +247,9 @@ namespace GL {
     if (handle != activeTexture[Stage]) {
       endDraw();
       switchTextureStage<Stage>();
+      checkGLErrors();
       glBindTexture(GL_TEXTURE_2D, handle);
+      checkGLErrors();
       activeTexture[Stage] = handle;
       activeTextureObj[Stage] = 0;
       scaleMode[Stage] = -1;
@@ -254,16 +257,16 @@ namespace GL {
   }
 
   template <int Stage> void enableTexture() {
-    switchTextureStage<Stage>();
     if (texturesEnabled[Stage]) return;
+    switchTextureStage<Stage>();
     endDraw();
     glEnable(GL_TEXTURE_2D);
     texturesEnabled[Stage] = true;
   }
 
   template <int Stage> void disableTexture() {
-    switchTextureStage<Stage>();
     if (!texturesEnabled[Stage]) return;
+    switchTextureStage<Stage>();
     endDraw();
     glDisable(GL_TEXTURE_2D);
     texturesEnabled[Stage] = false;
@@ -271,6 +274,7 @@ namespace GL {
 
   template <class Mode> inline void setBlendMode() {
     if (blendMode != Mode::id) {
+      switchTextureStage<0>();
       endDraw();
       Mode::Set();
       blendMode = Mode::id;
@@ -296,34 +300,44 @@ namespace GL {
   }
 
   template <int Stage> inline void switchTextureStage() {
+    if (activeTextureStage == 0) return;
     if (GLEW_ARB_multitexture) {
+      endDraw();
       glActiveTextureARB(GL_TEXTURE0_ARB);
     }
   }
 
   template <> inline void switchTextureStage<0>() {
+    if (activeTextureStage == 0) return;
     if (GLEW_ARB_multitexture) {
+      endDraw();
       glActiveTextureARB(GL_TEXTURE0_ARB);
       activeTextureStage = 0;
     }
   }
 
   template <> inline void switchTextureStage<1>() {
+    if (activeTextureStage == 1) return;
     if (GLEW_ARB_multitexture) {
+      endDraw();
       glActiveTextureARB(GL_TEXTURE1_ARB);
       activeTextureStage = 1;
     }
   }
 
   template <> inline void switchTextureStage<2>() {
+    if (activeTextureStage == 2) return;
     if (GLEW_ARB_multitexture) {
+      endDraw();
       glActiveTextureARB(GL_TEXTURE2_ARB);
       activeTextureStage = 2;
     }
   }
 
   template <> inline void switchTextureStage<3>() {
+    if (activeTextureStage == 3) return;
     if (GLEW_ARB_multitexture) {
+      endDraw();
       glActiveTextureARB(GL_TEXTURE3_ARB);
       activeTextureStage = 3;
     }

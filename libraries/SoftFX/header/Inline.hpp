@@ -34,6 +34,8 @@ namespace Processor {
     };
 };
 
+#define ref(x) *(&(x)) = x
+
 FPoint inline AngleVector(float Angle) {
   FPoint temp;
   float r = Radians(Angle);
@@ -97,29 +99,29 @@ template <class TA, class TB> float inline AngleBetween(TA a, TB b) {
 }
 
 template <class T> T inline _Distance(T x, T y) {
-    return sqrt((double)(x * x) + (y * y));
+  return sqrt((double)(x * x) + (y * y));
 }
 
 template <class T> T inline _Max(T one, T two) {
-    if (one > two) {
-        return one;
-    } else {
-        return two;
-    }
+  return (one > two) ? one : two;
 }
 
 template <class T> T inline _One(T value) {
-  if (value < 0) return 0;
-  if (value > 1) return 1;
-  return value;
+  return (value < 0) ? 0 : 
+    (value > 1) ? 1 : value;
+//int iClipped;
+//int iValue = *reinterpret_cast<int*>(&value);
+//float one = 1.0f;
+//int iOne = *reinterpret_cast<int*>(&one);
+//  iClipped = -(int)(value < 0);
+//  iValue = (iValue & ~iClipped);
+//  iClipped = -(int)(value > 0);
+//  iValue = ((iOne & iClipped) | (iValue & ~iClipped));
+//  return *reinterpret_cast<T*>(&iValue);
 }
 
 template <class T> T inline _Min(T one, T two) {
-    if (one < two) {
-        return one;
-    } else {
-        return two;
-    }
+  return (one < two) ? one : two;
 }
 
 template <class T> DoubleWord inline _ToDoubleWord(const T& value) {
@@ -479,25 +481,17 @@ Export inline Byte ClipByte(int value) {
 
 Export inline Byte ClipByteLow(int value) {
 #ifdef USEIFS
-  if (value < 0) {
-    return 0;
-  } else {
-    return value;
-  }
+  return (value < 0) ? 0 : value;
 #else
-    return ((value) & (-(int)!(value < 0))) & 0xFF;
+  return ((value) & (-(int)!(value < 0))) & 0xFF;
 #endif
 }
 
 Export inline Byte ClipByteHigh(int value) {
 #ifdef USEIFS
-  if (value > 255) {
-    return 255;
-  } else {
-    return value;
-  }
+  return (value > 255) ? 255 : value;
 #else
-    return ((255 & (-(int)(value > 255))) | (value)) & 0xFF;
+  return ((255 & (-(int)(value > 255))) | (value)) & 0xFF;
 #endif
 }
 
@@ -534,64 +528,24 @@ int iClipped;
 #endif
 }
 
-inline int InlineIf(bool condition, int ifTrue, int ifFalse) {
-#ifdef USEIFS
-    return condition ? ifTrue : ifFalse;
-#else
-int iMask;
-    iMask = -(int)(condition);
-    return (ifTrue & iMask) | (ifFalse & ~iMask);
-#endif
+template <class T> inline T InlineIf(bool condition, T ifTrue, T ifFalse) {
+int mask;
+    mask = -(int)(condition);
+    return (ifTrue & mask) | (ifFalse & ~mask);
 }
 
-inline int InlineIf(bool condition, int ifTrue) {
-#ifdef USEIFS
-    return condition ? ifTrue : 0;
-#else
-int iMask;
-    iMask = -(int)(condition);
-    return (ifTrue & iMask);
-#endif
-}
-
-inline unsigned int InlineIf(bool condition, unsigned int ifTrue, unsigned int ifFalse) {
-#ifdef USEIFS
-    return condition ? ifTrue : ifFalse;
-#else
-int iMask;
-    iMask = -(int)(condition);
-    return (ifTrue & iMask) | (ifFalse & ~iMask);
-#endif
-}
-
-inline unsigned int InlineIf(bool condition, unsigned int ifTrue) {
-#ifdef USEIFS
-    return condition ? ifTrue : 0;
-#else
-int iMask;
-    iMask = -(int)(condition);
-    return (ifTrue & iMask);
-#endif
+template <class T> inline T InlineIf(bool condition, T ifTrue) {
+    return (ifTrue & -(int)(condition));
 }
 
 Export inline int WrapValue(int value, int minimum, int maximum) {
   bool b = value < minimum;
   int v = InlineIf(b, minimum - value, value - minimum) % ((maximum - minimum) + 1);
   return InlineIf(b, maximum + 1 - v, minimum + v);
-  /*
-	if (value < minimum) {
-		int v = ((minimum - value) % ((maximum - minimum) + 1));
-		return maximum + 1 - v;
-	} else {
-		int v = ((value - minimum) % ((maximum - minimum) + 1));
-		return minimum + v;
-	}
-  */
 }
 
-inline float Round(float N)
-{
-     return floor(N + .5);
+inline float Round(float N) {
+  return (N < 0) ? ceil(N - 0.5f) : floor(N + 0.5f);
 }
 
 inline void RotatePoint(float &X, float &Y, float AngleInRadians) {
@@ -621,21 +575,20 @@ inline void Rotate4Points(float W, float H, float AngleInRadians, float *X, floa
     Generate4Points(W, H, X, Y);
     return;
   }
-  float theta = t, distance = d;
   if (W < 0) 
-    theta += Pi;
-  theta += AngleInRadians;
-  X[2] = cos(theta) * distance;
-  Y[2] = sin(theta) * distance;
-  theta += Radians(90);
-  X[3] = cos(theta) * distance;
-  Y[3] = sin(theta) * distance;
-  theta += Radians(90);
-  X[0] = cos(theta) * distance;
-  Y[0] = sin(theta) * distance;
-  theta += Radians(90);
-  X[1] = cos(theta) * distance;
-  Y[1] = sin(theta) * distance;
+    t += Pi;
+  t += AngleInRadians;
+  X[2] = cos(t) * d;
+  Y[2] = sin(t) * d;
+  t += Radians(90);
+  X[3] = cos(t) * d;
+  Y[3] = sin(t) * d;
+  t += Radians(90);
+  X[0] = cos(t) * d;
+  Y[0] = sin(t) * d;
+  t += Radians(90);
+  X[1] = cos(t) * d;
+  Y[1] = sin(t) * d;
 }
 
 inline void Rotate4Points(float W, float H, float AngleInRadians, float *X, float *Y, float t) {

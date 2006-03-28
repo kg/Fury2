@@ -117,23 +117,26 @@ struct FPoint {
     this->X = B.X - A.X;
     this->Y = B.Y - A.Y;
   }
-  inline float distance(FPoint *Other) {
+  inline float distance(const FPoint &Other) const {
     float xd, yd;
-    xd = Other->X - this->X;
-    yd = Other->Y - this->Y;
+    xd = Other.X - this->X;
+    yd = Other.Y - this->Y;
     return (float)(sqrt((xd * xd) + (yd * yd)));
   }
-  inline float length() {
+  inline float distance(FPoint *Other) const {
+	  return this->distance(*Other);
+  }
+  inline float length() const {
     float v = (this->X * this->X) + (this->Y * this->Y);
     return sqrt(v);
   }
-  inline float cross(FPoint& Other) {
+  inline float cross(const FPoint& Other) const {
     return (this->X * Other.Y) - (this->Y * Other.X);
   }
-  inline float dot(FPoint& Other) {
+  inline float dot(const FPoint& Other) const {
     return (this->X * Other.X + this->Y * Other.Y);
   }
-  inline FPoint perp() {
+  inline FPoint perp() const {
     FPoint temp;
     temp.X = -this->Y;
     temp.Y = this->X;
@@ -146,13 +149,13 @@ struct FPoint {
       this->Y /= l;
     }
   }
-  inline FPoint rotate90r() {
+  inline FPoint rotate90r() const {
     FPoint temp;
     temp.X = -this->Y;
     temp.Y = this->X;
     return temp;
   }
-  inline FPoint rotate90l() {
+  inline FPoint rotate90l() const {
     FPoint temp;
     temp.X = this->Y;
     temp.Y = -this->X;
@@ -191,16 +194,14 @@ struct FPoint {
     return *this;
   }
   inline FPoint& operator/=(FPoint &rhs) {
-    if (rhs.X) {
+    if (rhs.X)
       this->X /= rhs.X;
-    } else {
+    else
       this->X = 0;
-    }
-    if (rhs.Y) {
+    if (rhs.Y)
       this->Y /= rhs.Y;
-    } else {
+    else
       this->Y = 0;
-    }
     return *this;
   }
   inline FPoint& operator/=(float rhs) {
@@ -213,10 +214,10 @@ struct FPoint {
     }
     return *this;
   }
-  inline bool operator==(FPoint &rhs) {
+  inline bool operator==(FPoint &rhs) const {
     return ((rhs.X == this->X) && (rhs.Y == this->Y));
   }
-  inline FPoint operator-() {
+  inline FPoint operator-() const {
     return FPoint(-(this->X), -(this->Y));
   }
 };
@@ -377,7 +378,18 @@ struct FPoint3 {
 //};
 
 struct FRect {
-    inline bool intersect(FRect *that) {
+    FRect() {
+      this->X1 = this->Y1 = this->X2 = this->Y2 = 0;
+    }
+
+    FRect(float X1, float Y1, float X2, float Y2) {
+      this->X1 = X1;
+      this->Y1 = Y1;
+      this->X2 = X2;
+      this->Y2 = Y2;
+    }
+
+    inline bool intersect(FRect *that) const {
       if (this->X1 > that->X2) return false;
       if (this->Y1 > that->Y2) return false;
       if (this->X2 < that->X1) return false;

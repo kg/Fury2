@@ -70,6 +70,8 @@ namespace Lighting {
     Byte Reserved[2];
     Rectangle Rect;
     int FalloffDistance2;
+    Image *Image;
+    float ImageAlignX, ImageAlignY;
   };
 
   class Obstruction {

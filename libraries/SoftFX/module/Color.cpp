@@ -85,7 +85,7 @@ Export DoubleWord NormalColor(FPoint3* Vector) {
   Pixel Color = Pixel(0, 0, 0, 0);
   if (Vector) {
     Vector->normalize();
-    Color = Pixel(Vector->X * 127 + 127, Vector->Y * 127 + 127, Vector->Z * 127 + 127, 255);
+    Color = Pixel(Round(Vector->X * 127.0f) + 127, Round(Vector->Y * 127.0f) + 127, Round(Vector->Z * 127.0f) + 127, 255);
   }
   return Color.V;
 }

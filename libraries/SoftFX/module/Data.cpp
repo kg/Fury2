@@ -116,6 +116,14 @@ Export int Ceil(float Value) {
     return ceil(Value);
 }
 
+Export float FloorF(float Value) {
+    return floor(Value);
+}
+
+Export float CeilF(float Value) {
+    return ceil(Value);
+}
+
 Export int ShiftLeft(int Value, int Bits) {
   return Value << Bits;
 }

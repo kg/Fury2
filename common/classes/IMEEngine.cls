@@ -43,12 +43,12 @@ Dim l_bytCandidate() As Byte
             l_lngSize = ImmGetCandidateList(Context, 0, l_lngPointer, l_lngSize)
             CopyMemory l_hdrHeader, ByVal l_lngPointer, LenB(l_hdrHeader)
             SelectedCandidate = l_hdrHeader.Selection
-    '        Debug.Print l_hdrHeader.count & " candidates: ";
-            ReDim m_strCandidates(0 To l_hdrHeader.count - 1)
-            For l_lngCandidates = 0 To l_hdrHeader.count - 1
+    '        Debug.Print l_hdrHeader.Count & " candidates: ";
+            ReDim m_strCandidates(0 To l_hdrHeader.Count - 1)
+            For l_lngCandidates = 0 To l_hdrHeader.Count - 1
                 l_lngAddress = AddUInts(l_lngPointer, LenB(l_hdrHeader) + (4 * l_lngCandidates))
                 CopyMemory l_lngOffset, ByVal l_lngAddress, 4
-                If (l_lngCandidates = l_hdrHeader.count - 1) Then
+                If (l_lngCandidates = l_hdrHeader.Count - 1) Then
                     l_lngNextOffset = l_hdrHeader.Size
                 Else
                     l_lngAddress = AddUInts(l_lngPointer, LenB(l_hdrHeader) + (4 * (l_lngCandidates + 1)))

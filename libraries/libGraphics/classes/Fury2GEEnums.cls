@@ -46,6 +46,8 @@ Public Enum SFXResampleModes
     ResampleMode_Bilinear_Wrap = 5
     ResampleMode_Linear_Clamp = 6
     ResampleMode_Bilinear_Clamp = 7
+    ResampleMode_Scale2x = 8
+    ResampleMode_Scale3x = 9
 End Enum
 
 Public Enum SFXBlitModes

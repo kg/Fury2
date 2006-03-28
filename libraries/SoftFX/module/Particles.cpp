@@ -25,96 +25,40 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "../header/Blitters.hpp"
 #include "../header/Resample.hpp"
 
-inline float xpow(float v, float exp) {
-  if (exp == 1.0f) return v;
-  if (exp == 0.0f) return 1.0f;
-  if (exp == 2.0f) return v * v;
-  return pow(v, exp);
+void decayUpdate(ParticleDecayModes mode, float& value, const float decay, const float elapsed, MTRand& rng) {
+  switch (mode) {
+    case pdmSet: 
+      value = (decay * _One(elapsed)) + (value * (1 - _One(elapsed))); 
+      break; 
+
+    case pdmAdd: 
+      value += decay * elapsed; 
+      break; 
+
+    case pdmMultiply: 
+      value *= pow(decay, elapsed); 
+      break; 
+
+    case pdmExponent: 
+      value = pow(value, pow(decay, elapsed)); 
+      break; 
+
+    case pdmRandomAdd: 
+      value += decay * rng.rand() * elapsed; 
+      break; 
+
+    case pdmRandomMultiply: 
+      if (decay >= 0.0f)
+        value *= pow((float)pow(decay, (float)rng.rand()), elapsed); 
+      else
+        value *= pow((float)(1.0f + (abs(decay) * rng.rand())), elapsed); 
+      break; 
+  }
 }
 
-#define decayUpdate(p, t, id) \
-  if (t.id##VDecayMode != pdmNone) { \
-    switch(t.id##VDecayMode) { \
-      case pdmSet: \
-        p->id##V = (t.id##VDecay * _One(state.elapsed)) + (p->id##V * (1 - _One(state.elapsed))); \
-        break; \
-      case pdmAdd: \
-        p->id##V += t.id##VDecay * state.elapsed; \
-        break; \
-      case pdmMultiply: \
-        p->id##V *= xpow((float)t.id##VDecay, (float)state.elapsed); \
-        break; \
-      case pdmExponent: \
-        p->id##V = xpow(p->id##V, xpow((float)t.id##VDecay, (float)state.elapsed)); \
-        break; \
-      case pdmRandomAdd: \
-        p->id##V += t.id##VDecay * engine.RNG.rand() * state.elapsed; \
-        break; \
-      case pdmRandomMultiply: \
-        if (t.id##VDecay >= 0.0f) { \
-          p->id##V *= xpow((float)xpow((float)t.id##VDecay, (float)engine.RNG.rand()), state.elapsed); \
-        } else { \
-          p->id##V *= xpow((float)(1.0f + (abs(t.id##VDecay) * engine.RNG.rand())), state.elapsed); \
-        } \
-        break; \
-    } \
-  }
-
-#define decayUpdateEx(p, w, id) \
-  if (this->id##VDecayMode != pdmNone) { \
-    switch(this->id##VDecayMode) { \
-      case pdmSet: \
-        p.id##V = (this->id##VDecay * _One(w)) + (p.id##V * (1-_One(w))); \
-        break; \
-      case pdmAdd: \
-        p.id##V += this->id##VDecay * w; \
-        break; \
-      case pdmMultiply: \
-        p.id##V *= xpow(this->id##VDecay, w); \
-        break; \
-      case pdmExponent: \
-        p.id##V = xpow(p.id##V, xpow(this->id##VDecay, w)); \
-        break; \
-      case pdmRandomAdd: \
-        p.id##V += this->id##VDecay * w * engine.RNG.rand(); \
-        break; \
-      case pdmRandomMultiply: \
-        if (this->id##VDecay >= 0.0f) { \
-          p.id##V *= xpow((double)xpow(this->id##VDecay, w), (double)engine.RNG.rand()); \
-        } else { \
-          p.id##V *= 1.0f + (abs((double)xpow(this->id##VDecay, w)) * engine.RNG.rand()); \
-        } \
-        break; \
-    } \
-  }
-
-#define propUpdate(p, t, id) \
-  if (t.id##Mode != pdmNone) { \
-    switch(t.id##Mode) { \
-      case pdmSet: \
-        p->id = (p->id##V * _One(state.elapsed)) + (p->id * (1 - _One(state.elapsed))); \
-        break; \
-      case pdmAdd: \
-        p->id += p->id##V * state.elapsed; \
-        break; \
-      case pdmMultiply: \
-        p->id *= xpow((float)p->id##V, (float)state.elapsed); \
-        break; \
-      case pdmExponent: \
-        p->id = xpow(p->id##V, xpow((float)p->id##V, (float)state.elapsed)); \
-        break; \
-      case pdmRandomAdd: \
-        p->id += p->id##V * engine.RNG.rand() * state.elapsed; \
-        break; \
-      case pdmRandomMultiply: \
-        if (t.id##Mode >= 0.0f) { \
-          p->id *= xpow((float)xpow((float)p->id##V, (float)engine.RNG.rand()), state.elapsed); \
-        } else { \
-          p->id *= xpow((float)(1.0f + (abs(p->id##V) * engine.RNG.rand())), state.elapsed); \
-        } \
-        break; \
-    } \
-  }
+inline void decayUpdate(Byte mode, float& value, const float decay, const float elapsed, MTRand& rng) {
+  decayUpdate((ParticleDecayModes)mode, value, decay, elapsed, rng);
+}
 
 RenderFunction* getRenderer(int id) {
   switch (id) {
@@ -141,25 +85,22 @@ RenderFunction* getRenderer(int id) {
   }
 }
 
-void ParticleEngine::spawn(Particle& particle, ParticleList& list) {
-  if (!particle.inside(this->Size)) return;
-  int c = this->ParticleCounts[particle.Type];
-  if (c >= list.size()) {
+void ParticleEngine::spawn(const Particle& particle, ParticleList& list) {
+  if (!particle.inside(this->Bounds)) return;
+  unsigned int c = this->ParticleCounts[particle.Type];
+  if (c >= list.size())
     list.push_back(particle);
-  } else {
+  else
     list[c] = particle;
-  }
-  c++;
-  this->ParticleCounts[particle.Type] = c;
+  this->ParticleCounts[particle.Type] = ++c;
 }
 
 void ParticleEngine::prespawn(ParticleList& list, int newcount) {
-  if (list.capacity() < newcount) {
+  if (list.capacity() < newcount)
     list.reserve(newcount);
-  }
 }
 
-inline void ParticleEngine::spawn(Particle& particle) {
+inline void ParticleEngine::spawn(const Particle& particle) {
   if (particle.Type < 0) return;
   if (particle.Type >= this->Particles.size()) return;
   this->spawn(particle, this->Particles[particle.Type]);
@@ -171,6 +112,7 @@ void ParticleEngine::render(ParticleCamera& camera) {
   ParticleListList::iterator listiter;
   ParticleTypeList::iterator typeiter;
 
+  // set up the clipping rectangles of all the render targets
   for (int r = 0; r < camera.RenderTargetCount; r++) {
     Rectangle clip;
     clip = camera.Rectangle;
@@ -180,39 +122,51 @@ void ParticleEngine::render(ParticleCamera& camera) {
     }
   }
 
-  int t = 0;
+  unsigned int t = 0;
   typeiter = this->Types.begin();
   listiter = this->Particles.begin();
   while (typeiter != this->Types.end()) {
-    int i = this->ParticleCounts[t];
+    unsigned int i = this->ParticleCounts[t];
     if (i > listiter->size()) i = listiter->size();
     iter = listiter->begin();
-    state.poly.Allocate(4);
-    state.type = (*typeiter);
-    state.renderTarget = camera.pRenderTargets[ClipValue(state.type->RenderTarget, camera.RenderTargetCount)];
-    if (state.renderTarget) {
-      state.renderer = getRenderer(state.type->RenderMode);
-      state.theta = 0;
-      state.distance = 0;
-      if (state.type->RenderType == prtGraphic) {
-        if (state.type->Graphic) {
-          Image* f = state.type->Graphic->pFrames[0];
+
+    // preallocate a polygon structure for any polygon rendering operations
+    state.Poly.Allocate(4);
+
+    state.Type = (*typeiter);
+    state.RenderTarget = camera.pRenderTargets[ClipValue(state.Type->RenderTarget, camera.RenderTargetCount)];
+
+    if (state.RenderTarget) {
+      state.Theta = 0;
+      state.Distance = 0;
+
+      // predetermine the renderer for this particle type
+      state.Renderer = getRenderer(state.Type->RenderMode);
+
+      // precalculate theta and distance for this particle type
+      if (state.Type->RenderType == prtGraphic) {
+        if (state.Type->Graphic) {
+          Image* f = state.Type->Graphic->pFrames[0];
           float w = f->Width / 2, h = f->Height / 2;
-          state.theta = atan2(h, w);
-          state.distance = sqrt((w * w) + (h * h));
+          state.Theta = atan2(h, w);
+          state.Distance = sqrt((w * w) + (h * h));
         }
       }
+
       while (i--) {
-        state.particle = &(*iter);
+        state.Particle = &(*iter);
         iter->render(state);
         ++iter;
       }
+
     }
+
     ++listiter;
     ++typeiter;
     t++;
   }
 
+  // reset the clipping rectangles of all the render targets
   for (int r = 0; r < camera.RenderTargetCount; r++) {
     if (camera.pRenderTargets[r]) {
       camera.pRenderTargets[r]->setClipRectangle(camera.pRenderTargets[r]->getRectangle());
@@ -229,7 +183,7 @@ void ParticleEngine::tick(float elapsed) {
   ParticleModifierList::iterator modifier;
   ParticleGeneratorList::iterator generator;
   ParticleDieEvent evt;
-  evt.engine = this;
+  evt.Engine = this;
   bool kill = false;
 
   generator = this->Generators.begin();
@@ -238,55 +192,65 @@ void ParticleEngine::tick(float elapsed) {
     ++generator;
   }
 
-  int t = 0;
+  unsigned int t = 0;
   typeiter = this->Types.begin();
   listiter = this->Particles.begin();
   countiter = this->ParticleCounts.begin();
   while (typeiter != this->Types.end()) {
-    state.type = (*typeiter);
-    evt.type = state.type;
-    evt.UserData = evt.type->UserData;
-    state.typeList = &(*listiter);
-    int i = 0;
-    int c = *countiter;
+    state.Type = (*typeiter);
+    evt.Type = state.Type;
+    evt.UserData = evt.Type->UserData;
+    state.TypeList = &(*listiter);
+    unsigned int i, c;
+
     iter = listiter->begin();
     modifier = this->Modifiers.begin();
     while (modifier != this->Modifiers.end()) {
+	    // check type requirement
       bool r = ((t == (*modifier)->RequireType) || ((*modifier)->RequireType == -1));
+	    // check type exclusion
       bool e = ((t != (*modifier)->ExcludeType));
       if (e && r) {
         iter = listiter->begin();
-        i = 0;
-        c = *countiter;
-        while (i < c) {
-          state.particle = &(*iter);
+        i = *countiter;
+        while (i--) {
+          state.Particle = &(*iter);
           (*modifier)->tick(state);
           ++iter;
-          i++;
         }
       }
       ++modifier;
     }
+
     iter = listiter->begin();
     i = 0;
     c = *countiter;
     while (i < c) {
-      state.particle = &(*iter);
-      kill = false;
+      state.Particle = &(*iter);
+      // particle::tick returns true if the particle has expired and needs to be removed
       kill = iter->tick(state);
       if (kill) {
-        evt.particle = state.particle;
-        if (state.type->DieCallback) state.type->DieCallback(&evt);
+		    assert(c > 0);
+        if (state.Type->DieCallback) 
+        {
+          evt.Particle = state.Particle;
+          state.Type->DieCallback(&evt);
+        }
+        // swap the dead particle with the last live particle in the particle list
         Particle temp = (*listiter)[c - 1];
         (*listiter)[c - 1] = *iter;
         *iter = temp;
+        // decrease the size of the particle list (the dead particle is now outside the list)
         c--;
       } else {
         ++iter;
         i++;
       }
     }
+
+    // update the stored list count to reflect any dead particles from this update
     *countiter = c;
+
     ++countiter;
     ++listiter;
     ++typeiter;
@@ -295,37 +259,43 @@ void ParticleEngine::tick(float elapsed) {
 }
 
 #define generateProperty(id) \
-  p.id = this->New##id + (this->Random##id * (engine.RNG.rand(2.0f) - 1.0f));
+  p.id = this->New ## id + (this->Random ## id * (engine.RNG.rand(2.0f) - 1.0f))
 #define generatePropertyP(id) \
-  p.id = this->New##id + (this->Random##id * (engine.RNG.rand()));
+  p.id = this->New ## id + (this->Random ## id * (engine.RNG.rand()))
 
-void ParticleGenerator::tick(ParticleEngineState& state) {
+void ParticleGenerator::tick(const ParticleEngineState& state) {
   if (this->Life == 0) return;
-  ParticleEngine& engine = *(state.engine);
-  float d = this->GenerateDelay;
-  if (d == 0) d = 1;
-  d = 1 / d;
+  ParticleEngine& engine = *(state.Engine);
+  float delay = this->GenerateDelay;
+  if (delay == 0) 
+	  delay = 1;
+  else
+	  delay = 1 / delay;
   if (this->CurrentDelay < 0) this->CurrentDelay = 0;
-  this->CurrentDelay += state.elapsed;
-  while (this->CurrentDelay > d) {
-    this->CurrentDelay -= d;
+  this->CurrentDelay += state.Elapsed;
+  while (this->CurrentDelay > delay) {
+    this->CurrentDelay -= delay;
     if (this->Life > 0) {
       this->Life -= 1;
       if (this->Life < 0) 
         this->Life = 0;
     }
+
     Particle p;
     p.Type = this->Type;
     p.Frame = 0;
+
     int t = ClipValue(this->Type, engine.Types.size() - 1);
     ParticleListList::iterator list = engine.Particles.begin();
-    while (t--) {
+    while (t--)
       ++list;
-    }
+
     int i = this->GenerateRate;
+
+    // prepare room for any new particles that will be added to the list this iteration
     engine.prespawn(*list, i + engine.ParticleCounts[ClipValue(this->Type, engine.Types.size() - 1)]);
+
     while (i--) {
-      float ri = (this->GenerateRotation + (this->RandomGenerateRotation * engine.RNG.rand()));
       float r = (this->CurrentRotation * Radian);
       generateProperty(X);
       generateProperty(Y);
@@ -335,24 +305,27 @@ void ParticleGenerator::tick(ParticleEngineState& state) {
       generateProperty(YV);
       generatePropertyP(AV);
       generatePropertyP(LV);
-      float xd = sin(r);
-      float yd = -cos(r);
-      float w = this->NewR + (this->RandomR * engine.RNG.rand());
-      p.X += (xd * w);
-      p.Y += (yd * w);
-      w = this->NewRV + (this->RandomRV * engine.RNG.rand());
-      p.XV += (xd * w);
-      p.YV += (yd * w);
+      float xd = sin(r), yd = -cos(r);
+      float weight = this->NewR + (this->RandomR * engine.RNG.rand());
+      p.X += (xd * weight);
+      p.Y += (yd * weight);
+      weight = this->NewRV + (this->RandomRV * engine.RNG.rand());
+      p.XV += (xd * weight);
+      p.YV += (yd * weight);
       engine.spawn(p, *list);
-      this->CurrentRotation += ri;
+      this->CurrentRotation += (this->GenerateRotation + (this->RandomGenerateRotation * engine.RNG.rand()));
     }
+
     this->CurrentRotation = NormalizeAngle(this->CurrentRotation);
   }
 }
 
-void ParticleModifier::tick(ParticleEngineState& state) {
-  ParticleEngine& engine = *(state.engine);
-  Particle& particle = *(state.particle);
+#undef generateProperty
+#undef generatePropertyP
+
+void ParticleModifier::tick(const ParticleEngineState& state) {
+  ParticleEngine& engine = *(state.Engine);
+  Particle& particle = *(state.Particle);
   if (particle.X < this->Area.X1) return;
   if (particle.Y < this->Area.Y1) return;
   if (particle.X > this->Area.X2) return;
@@ -365,17 +338,25 @@ void ParticleModifier::tick(ParticleEngineState& state) {
   }
   float distance2 = (xd * xd) + (yd * yd);
   float distance = sqrt(distance2);
-  float weight = state.elapsed;
+  float weight = state.Elapsed;
+
+  // calculate effect weight
   if (this->Range > 0) {
     weight = (this->Range - distance) / this->Range * (this->RangeScale);
-    if (weight > 1) weight = 1;
-    if (weight < 0) weight = 0;
-    weight *= state.elapsed;
+    if (weight > 1) 
+      weight = 1;
+    else if (weight < 0) 
+      weight = 0;
+    weight *= state.Elapsed;
   }
-  decayUpdateEx(particle, weight, X);
-  decayUpdateEx(particle, weight, Y);
-  decayUpdateEx(particle, weight, A);
-  decayUpdateEx(particle, weight, L);
+
+  // apply decay
+  decayUpdate(state.Type->XVDecayMode, particle.X, state.Type->XVDecay, weight, engine.RNG);
+  decayUpdate(state.Type->YVDecayMode, particle.Y, state.Type->YVDecay, weight, engine.RNG);
+  decayUpdate(state.Type->AVDecayMode, particle.A, state.Type->AVDecay, weight, engine.RNG);
+  decayUpdate(state.Type->LVDecayMode, particle.L, state.Type->LVDecay, weight, engine.RNG);
+
+  // apply gravity
   if ((weight != 0) && (this->Attraction != 0) && (distance != 0) && (this->Mass != 0)) {
     weight = engine.gravity(this->Mass, 1.0f, distance2) * weight * this->Attraction;
     particle.XV -= weight * (particle.X - this->X);
@@ -385,9 +366,8 @@ void ParticleModifier::tick(ParticleEngineState& state) {
 
 FPoint generateReflectionVector(FPoint N, FPoint I) {
   // R= 2*(-I dot N)*N + I 
-  // I and N normalized
-  I /= I.length();
-  N /= N.length();
+  I.normalize();
+  N.normalize();
   float dot = N.dot(-I);
   FPoint R = N;
   R *= 2.0f * dot;
@@ -396,53 +376,65 @@ FPoint generateReflectionVector(FPoint N, FPoint I) {
   return R;
 }
 
-FPoint selectNormal(FPoint N, FPoint iP, FPoint pP) {
-    FPoint t = iP; t += N;
-    float d1 = (t.distance(&(pP)));
-    t = iP; t -= N;
-    float d2 = (t.distance(&(pP)));
-    if (d2 > d1)
-      N = -N;
+FPoint selectNormal(FPoint N, const FPoint& iP, const FPoint& pP) {
+  // any given line segment has two perpendicular normals
+  // this function selects the one facing in the direction we want
+  // by determining which of the two is closest to the incoming point
+  FPoint t = iP; t += N;
+  float distance1 = (t.distance(pP));
+  t = iP; t -= N;
+  float distance2 = (t.distance(pP));
+  if (distance2 > distance1)
+    return -N;
+  else
     return N;
 }
 
-bool Particle::tick(ParticleEngineState& state) {
-  ParticleEngine& engine = *(state.engine);
-  ParticleType& type = *(state.type);
+bool Particle::tick(const ParticleEngineState& state) {
+  ParticleEngine& engine = *(state.Engine);
+  const ParticleType& type = *(state.Type);
   ParticleCollideEvent evt;
-  evt.engine = &engine;
-  evt.type = &type;
-  evt.particle = this;
+  evt.Engine = &engine;
+  evt.Type = &type;
+  evt.Particle = this;
   evt.UserData = type.UserData;
-  decayUpdate(this, type, X);
-  decayUpdate(this, type, Y);
-  decayUpdate(this, type, A);
-  decayUpdate(this, type, L);
-  //propUpdate(this, type, X);
-  //propUpdate(this, type, Y);
-  //propUpdate(this, type, A);
-  //propUpdate(this, type, L);
+
+  // apply decay
+  decayUpdate(type.XVDecayMode, X, type.XVDecay, state.Elapsed, engine.RNG);
+  decayUpdate(type.YVDecayMode, Y, type.YVDecay, state.Elapsed, engine.RNG);
+  decayUpdate(type.AVDecayMode, A, type.AVDecay, state.Elapsed, engine.RNG);
+  decayUpdate(type.LVDecayMode, L, type.LVDecay, state.Elapsed, engine.RNG);
+
+  // process movement
   FPoint newLocation;
-  newLocation.X = this->X + this->XV * state.elapsed;
-  newLocation.Y = this->Y + this->YV * state.elapsed;
-  if ((type.EnableCollision != 0)) {
-    float time = state.elapsed;
+  newLocation.X = this->X + this->XV * state.Elapsed;
+  newLocation.Y = this->Y + this->YV * state.Elapsed;
+
+  // process collision
+  if (type.EnableCollision != 0) {
     FLine path;
     FPoint I;
-    FPoint ipt;
-    FPoint ivec;
+    FPoint intersectPoint;
+    FPoint intersectVector;
+    float time = state.Elapsed;
+
+    // generate the particle's projected path
     path.Start.X = this->X;
     path.Start.Y = this->Y;
     path.End = newLocation;
-    I = path.vector();
     FRect bounds = path.bounds();
+    I = path.vector();
+
     if (engine.Surfaces != 0) {
+      
       CollisionMatrix* matrix;
       matrix = engine.Surfaces;
-      int sx1 = (bounds.X1 / matrix->SectorWidth) - 1, sy1 = (bounds.Y1 / matrix->SectorHeight) - 1, sx2 = (bounds.X2 / matrix->SectorWidth) + 1, sy2 = (bounds.Y2 / matrix->SectorHeight) + 1;
-//      bool done = false;
+      int sx1 = floor(bounds.X1 / matrix->SectorWidth) - 1, sy1 = floor(bounds.Y1 / matrix->SectorHeight) - 1, sx2 = ceil(bounds.X2 / matrix->SectorWidth) + 1, sy2 = ceil(bounds.Y2 / matrix->SectorHeight) + 1;
+      
+      // iterate through all the cells in the collision matrix that the path passes through
       for (int sy = sy1; sy <= sy2; sy++) {
         for (int sx = sx1; sx <= sx2; sx++) {
+
           CollisionSector* sector;
           sector = engine.Surfaces->getSector(sx, sy);
           if ((sector != 0)) {
@@ -450,52 +442,80 @@ bool Particle::tick(ParticleEngineState& state) {
             std::vector<FLine>::iterator enditer = sector->Lines.end();
             while (iter != enditer) {
               FLine test = *iter;
+              // fudge line endpoints
               test.extend(ParticleLineExtension);
-              if (test.intersect(path, ipt)) {
+              if (test.intersect(path, intersectPoint)) {
                 if (type.CollisionResponse != 0.0f) {
-                  FPoint N = selectNormal(iter->normal(), ipt, path.Start);
+                  // process collision response
+                  // select the perpendicular normal for the collision surface
+                  FPoint N = selectNormal(iter->normal(), intersectPoint, path.Start);
+                  // generate the reflection vector from the normal and incoming vector
                   FPoint R = generateReflectionVector(N, I);
+                  // dampen the reflection vector by the response strength
                   R *= sqrt((this->XV * this->XV) + (this->YV * this->YV)) * type.CollisionResponse;
-                  ivec = ipt;
-                  ivec -= path.Start;
-                  ivec /= I;
-                  this->X = ipt.X - (this->XV * CollisionEpsilon);
-                  this->Y = ipt.Y - (this->YV * CollisionEpsilon);
-                  evt.vector = &R;
-                  evt.sprite = 0;
-                  if (state.type->CollideCallback) state.type->CollideCallback(&evt);
+                  intersectVector = intersectPoint;
+                  intersectVector -= path.Start;
+                  intersectVector /= I;
+                  // relocate the particle to something resembling the last point it occupied before collision
+                  this->X = intersectPoint.X - (this->XV * CollisionEpsilon);
+                  this->Y = intersectPoint.Y - (this->YV * CollisionEpsilon);
+                  if (state.Type->CollideCallback)
+                  {
+                    evt.Vector = &R;
+                    evt.Sprite = 0;
+                    state.Type->CollideCallback(&evt);
+                  }
+                  // replace the particle's velocity with the new reflection velocity
                   this->XV = R.X;
                   this->YV = R.Y;
-                  time -= ivec.length() * state.elapsed;
+                  // reduce the remaining time to process for the particle
+                  time -= intersectVector.length() * state.Elapsed;
+                  // generate the next path for the particle
                   newLocation.X = this->X + (this->XV * time);
                   newLocation.Y = this->Y + (this->YV * time);
                   path.Start.X = this->X;
                   path.Start.Y = this->Y;
                   if (time <= 0) {
+                    // no time remains for the particle to move so we can stop checking for collisions
                     newLocation = path.Start;
                     path.End = path.Start;
                     iter = enditer;
+                    break;
                   } else {
+                    // the particle has not moved for the elapsed time so continue checking for collisions
+                    // until a clear path is found or all time is elapsed
                     path.End = newLocation;
                     I = path.vector();
                   }
-//                  assert(!(test.intersect(path, ipt)));
                 } else {
-                  this->X = ipt.X - (this->XV * CollisionEpsilon);
-                  this->Y = ipt.Y - (this->YV * CollisionEpsilon);
+                  // relocate the particle to something resembling the last point it occupied before collision
+                  this->X = intersectPoint.X - (this->XV * CollisionEpsilon);
+                  this->Y = intersectPoint.Y - (this->YV * CollisionEpsilon);
+                  // collision response is disabled, so we're done
                   newLocation.X = this->X;
                   newLocation.Y = this->Y;
                   this->XV = 0;
                   this->YV = 0;
                 }
               }
-              if (iter != enditer) 
+
+              if (iter != enditer)
                 ++iter;
             }
           }
+          if (time <= 0)
+            // particle's time has elapsed so we can stop iterating cells
+            break;
+
         }
+
+        if (time <= 0)
+          // particle's time has elapsed so we can stop iterating cells
+          break;
       }
+
     }
+
     if (engine.Sprites != 0) {
       SpriteParam** list = engine.Sprites;
       SpriteParam* guardian = reinterpret_cast<SpriteParam*>((void*)-1);
@@ -507,22 +527,25 @@ bool Particle::tick(ParticleEngineState& state) {
           for (int e = 0; e < 4; e++) {
             FLine test = spriteRect.edge(e);
             test.extend(ParticleLineExtension);
-            if (test.intersect(path, ipt)) {
+            if (test.intersect(path, intersectPoint)) {
               if (type.CollisionResponse != 0.0f) {
-                FPoint N = selectNormal(test.normal(), ipt, path.Start);
+                FPoint N = selectNormal(test.normal(), intersectPoint, path.Start);
                 FPoint R = generateReflectionVector(N, I);
                 R *= sqrt((this->XV * this->XV) + (this->YV * this->YV)) * type.CollisionResponse;
-                ivec = ipt;
-                ivec -= path.Start;
-                ivec /= I;
-                this->X = ipt.X - (this->XV * CollisionEpsilon);
-                this->Y = ipt.Y - (this->YV * CollisionEpsilon);
-                evt.vector = &R;
-                evt.sprite = current;
-                if (state.type->CollideCallback) state.type->CollideCallback(&evt);
+                intersectVector = intersectPoint;
+                intersectVector -= path.Start;
+                intersectVector /= I;
+                this->X = intersectPoint.X - (this->XV * CollisionEpsilon);
+                this->Y = intersectPoint.Y - (this->YV * CollisionEpsilon);
+                if (state.Type->CollideCallback)
+                {
+                  evt.Vector = &R;
+                  evt.Sprite = current;
+                  state.Type->CollideCallback(&evt);
+                }
                 this->XV = R.X;
                 this->YV = R.Y;
-                time -= ivec.length() * state.elapsed;
+                time -= intersectVector.length() * state.Elapsed;
                 newLocation.X = this->X + (this->XV * time);
                 newLocation.Y = this->Y + (this->YV * time);
                 path.Start.X = this->X;
@@ -535,10 +558,9 @@ bool Particle::tick(ParticleEngineState& state) {
                   path.End = newLocation;
                   I = path.vector();
                 }
-  //              assert(!(test.intersect(path, ipt)));
               } else {
-                this->X = ipt.X - (this->XV * CollisionEpsilon);
-                this->Y = ipt.Y - (this->YV * CollisionEpsilon);
+                this->X = intersectPoint.X - (this->XV * CollisionEpsilon);
+                this->Y = intersectPoint.Y - (this->YV * CollisionEpsilon);
                 newLocation.X = this->X;
                 newLocation.Y = this->Y;
                 this->XV = 0;
@@ -553,43 +575,55 @@ bool Particle::tick(ParticleEngineState& state) {
         if (*list == guardian) list = 0;
       }
     }
-    this->X = newLocation.X;
-    this->Y = newLocation.Y;
-  } else {
-    this->X = newLocation.X;
-    this->Y = newLocation.Y;
+
   }
-  this->A += this->AV * state.elapsed;
-  this->L += this->LV * state.elapsed;
+
+  // apply movement
+  this->X = newLocation.X;
+  this->Y = newLocation.Y;
+  this->A += this->AV * state.Elapsed;
+  this->L += this->LV * state.Elapsed;
+
+  // process trivial culling (we return true to indicate the particle has 'died' and should be removed)
   if ((type.LBehavior == plbRemove) && (this->L <= ParticleMinimumL)) return true;
-  if (!this->inside(engine.Size)) return true;
+  if (!this->inside(engine.Bounds)) return true;
+
+  // process animation
   if (type.Graphic) {
-    this->Frame += type.Graphic->FrameIncrement * state.elapsed;
+    this->Frame += type.Graphic->FrameIncrement * state.Elapsed;
     switch (type.Graphic->LoopMode) {
       case 0:
+        // play once
         if (this->Frame < 0) this->Frame = 0;
         if (this->Frame > type.Graphic->FrameCount - 1) this->Frame = type.Graphic->FrameCount - 1;
         break;
       case 1:
+        // loop
         if (this->Frame < 0) this->Frame += type.Graphic->FrameCount - 1;
         if (this->Frame > type.Graphic->FrameCount - 1) this->Frame -= type.Graphic->FrameCount - 1;
-        break;
-      case 2:
-        // not implemented
         break;
     }
   } else {
     this->Frame = 0;
   }
+
   return false;
 }
 
 void Particle::render(ParticleEngineState& state) {
-  ParticleType& type = *(state.type);
-  ParticleCamera& camera = *(state.camera);
-  float x = this->X - camera.ViewportX + camera.Rectangle.Left;
-  float y = this->Y - camera.ViewportY + camera.Rectangle.Top;
+  const ParticleType& type = *(state.Type);
+  const ParticleCamera& camera = *(state.Camera);
+  float x = this->X - camera.ViewportX + camera.Rectangle.Left, y = this->Y - camera.ViewportY + camera.Rectangle.Top;
   Pixel c = type.Color1, c2 = type.Color2;
+  float s, r;
+  Image *renderTarget = state.RenderTarget;
+  Rectangle lineRect, destRect;
+  Stroke stroke;
+  StrokePoint strokePoints[2];
+  RenderFunction *renderer;
+  Image *texture;
+
+  // if the particle's color is based on its life value, calculate the color
   if (type.LColorMode != plcNone) {
     switch (type.LColorMode) {
       case plcFade:
@@ -603,20 +637,12 @@ void Particle::render(ParticleEngineState& state) {
         break;
     }
   }
-  Image *surface = state.renderTarget;
-  Rectangle rctLine;
-  Rectangle rctDest;
-  Stroke stroke;
-  StrokePoint strokePoints[2];
-  RenderFunction *renderer;
-  Image *pImage;
-  float s;
+
   switch (type.RenderType) {
-    default:
-      break;
     case prtPixel:
-      surface->setPixel(floor(x), floor(y), c);
+      renderTarget->setPixel(floor(x), floor(y), c);
       break;
+
     case prtAntiAliasPixel:
       switch (type.AMode) {
         case pamFadeAndScale:
@@ -624,8 +650,9 @@ void Particle::render(ParticleEngineState& state) {
           c = ScaleAlpha(c, ClipByte(this->A * camera.Alpha * 255.0f));
           break;
       }
-      surface->setPixelAA(x, y, c);
+      renderTarget->setPixelAA(x, y, c);
       break;
+
     case prtLine:
       switch (type.AMode) {
         case pamFadeAndScale:
@@ -633,9 +660,10 @@ void Particle::render(ParticleEngineState& state) {
           c = ScaleAlpha(c, ClipByte(this->A * camera.Alpha * 255.0f));
           break;
       }
-      rctLine.setValuesAbsolute(floor(x), floor(y), floor(x + this->XV), floor(y + this->YV));
-      FilterSimple_Line(surface, &rctLine, c);
+      lineRect.setValuesAbsolute(floor(x), floor(y), floor(x + this->XV), floor(y + this->YV));
+      FilterSimple_Line(renderTarget, &lineRect, c);
       break;
+
     case prtAntiAliasLine:
       switch (type.AMode) {
         case pamFadeAndScale:
@@ -643,8 +671,9 @@ void Particle::render(ParticleEngineState& state) {
           c = ScaleAlpha(c, ClipByte(this->A * camera.Alpha * 255.0f));
           break;
       }
-      FilterSimple_Line_AA(surface, x, y, x + this->XV, y + this->YV, c);
+      FilterSimple_Line_AA(renderTarget, x, y, x + this->XV, y + this->YV, c);
       break;
+
     case prtGradientLine:
       switch (type.AMode) {
         case pamFadeAndScale:
@@ -653,9 +682,10 @@ void Particle::render(ParticleEngineState& state) {
           c2 = ScaleAlpha(type.Color2, ClipByte(_One(this->A + this->AV) * camera.Alpha * 255.0f));
           break;
       }
-      rctLine.setValuesAbsolute(floor(x), floor(y), floor(x + this->XV), floor(y + this->YV));
-      FilterSimple_Line_Gradient(surface, &rctLine, c, c2);
+      lineRect.setValuesAbsolute(floor(x), floor(y), floor(x + this->XV), floor(y + this->YV));
+      FilterSimple_Line_Gradient(renderTarget, &lineRect, c, c2);
       break;
+
     case prtAntiAliasGradientLine:
       switch (type.AMode) {
         case pamFadeAndScale:
@@ -664,8 +694,9 @@ void Particle::render(ParticleEngineState& state) {
           c2 = ScaleAlpha(type.Color2, ClipByte(_One(this->A + this->AV) * camera.Alpha * 255.0f));
           break;
       }
-      FilterSimple_Line_Gradient_AA(surface, x, y, x + this->XV, y + this->YV, c, c2);
+      FilterSimple_Line_Gradient_AA(renderTarget, x, y, x + this->XV, y + this->YV, c, c2);
       break;
+
     case prtStroke:
       s = 1.0f;
       switch (type.AMode) {
@@ -678,7 +709,7 @@ void Particle::render(ParticleEngineState& state) {
           c = ScaleAlpha(c, ClipByte(this->A * camera.Alpha * 255.0f));
           break;
       }
-      renderer = state.renderer;
+      renderer = state.Renderer;
       stroke.PointCount = 2;
       stroke.Loop = 0;
       stroke.Softness = type.Softness;
@@ -691,12 +722,13 @@ void Particle::render(ParticleEngineState& state) {
       strokePoints[1].Y = y + this->YV;
       strokePoints[1].Color = c.V;
       strokePoints[1].Thickness = type.Thickness * _One(this->A + this->AV);
-      FilterSimple_RenderStroke(surface, &stroke, renderer, 0);
+      FilterSimple_RenderStroke(renderTarget, &stroke, renderer, 0);
+
     case prtGraphic:
       if (type.Graphic) {
         int a = type.Graphic->Alpha;
         s = 1.0f;
-        float r = 0;
+        r = 0.0f;
         switch (type.AMode) {
           case pamFadeAndScale:
             s *= _One(this->A);
@@ -711,65 +743,65 @@ void Particle::render(ParticleEngineState& state) {
             r = this->A * 360.0f;
             break;
         }
-        pImage = type.Graphic->pFrames[(int)floor(this->Frame)];
-        if (pImage) {
+        texture = type.Graphic->pFrames[(int)floor(this->Frame)];
+        if (texture) {
           if ((s == 1.0f) && (r == 0.0f)) {
-            rctDest.Left = ceil(x - type.Graphic->XCenter);
-            rctDest.Top = ceil(y - type.Graphic->YCenter);
-            rctDest.Width = pImage->Width;
-            rctDest.Height = pImage->Height;
+            // this particle is not scaled or rotated - do a trivial rectangular blit
+            destRect.Left = ceil(x - type.Graphic->XCenter);
+            destRect.Top = ceil(y - type.Graphic->YCenter);
+            destRect.Width = texture->Width;
+            destRect.Height = texture->Height;
             switch (type.RenderMode) {
               default:
-                BlitSimple_Normal_Tint_Opacity(surface, pImage, &rctDest, 0, 0, c, a);
+                BlitSimple_Normal_Tint_Opacity(renderTarget, texture, &destRect, 0, 0, c, a);
                 break;
               case 1:
-                BlitSimple_SourceAlpha_Tint_Opacity(surface, pImage, &rctDest, 0, 0, c, a);
+                BlitSimple_SourceAlpha_Tint_Opacity(renderTarget, texture, &destRect, 0, 0, c, a);
                 break;
               case 2:
-                BlitSimple_Additive_Opacity(surface, pImage, &rctDest, 0, 0, a);
+                BlitSimple_Additive_Opacity(renderTarget, texture, &destRect, 0, 0, a);
                 break;
               case 3:
-                BlitSimple_Subtractive_Opacity(surface, pImage, &rctDest, 0, 0, a);
+                BlitSimple_Subtractive_Opacity(renderTarget, texture, &destRect, 0, 0, a);
                 break;
               case 4:
-                BlitSimple_Merge_Opacity(surface, pImage, &rctDest, 0, 0, a);
+                BlitSimple_Merge_Opacity(renderTarget, texture, &destRect, 0, 0, a);
                 break;
               case 5:
                 break;
               case 6:
-                BlitSimple_Screen_Opacity(surface, pImage, &rctDest, 0, 0, a);
+                BlitSimple_Screen_Opacity(renderTarget, texture, &destRect, 0, 0, a);
                 break;
               case 7:
-                BlitSimple_Additive_SourceAlpha_Opacity(surface, pImage, &rctDest, 0, 0, a);
+                BlitSimple_Additive_SourceAlpha_Opacity(renderTarget, texture, &destRect, 0, 0, a);
                 break;
               case 8:
-                BlitSimple_Subtractive_SourceAlpha_Opacity(surface, pImage, &rctDest, 0, 0, a);
+                BlitSimple_Subtractive_SourceAlpha_Opacity(renderTarget, texture, &destRect, 0, 0, a);
                 break;
               case 9:
-                BlitSimple_Font_SourceAlpha_RGB_Opacity(surface, pImage, &rctDest, 0, 0, c, 255);
+                BlitSimple_Font_SourceAlpha_RGB_Opacity(renderTarget, texture, &destRect, 0, 0, c, 255);
                 break;
             }
           } else {
-            renderer = state.renderer;
+            // this particle is scaled and/or rotated, so draw it using a quad
+            renderer = state.Renderer;
             float px[4], py[4];
-            float w = pImage->Width;
-            float h = pImage->Height;
-            TexturedPolygon& poly = state.poly;
+            float w = texture->Width, h = texture->Height;
+            TexturedPolygon& poly = state.Poly;
             poly.Empty();
             r *= Radian;
             s /= 2;
             w *= s; h *= s;
-            if (!((state.camera->Rectangle.Left > x) || (state.camera->Rectangle.Top > y) || (state.camera->Rectangle.right() < x) || (state.camera->Rectangle.bottom() < y))) {
-              if (state.theta != 0) {
-                Rotate4Points(w, h, r, px, py, state.theta);
-              } else {
+            if (!((state.Camera->Rectangle.Left > x) || (state.Camera->Rectangle.Top > y) || (state.Camera->Rectangle.right() < x) || (state.Camera->Rectangle.bottom() < y))) {
+              if (state.Theta != 0)
+                Rotate4Points(w, h, r, px, py, state.Theta);
+              else
                 Rotate4Points(w, h, r, px, py);
-              }
               poly.Append(TexturedVertex(px[0] + x, py[0] + y, 0, 0));
-              poly.Append(TexturedVertex(px[1] + x, py[1] + y, pImage->Width - 1, 0));
-              poly.Append(TexturedVertex(px[2] + x, py[2] + y, pImage->Width - 1, pImage->Height - 1));
-              poly.Append(TexturedVertex(px[3] + x, py[3] + y, 0, pImage->Height - 1));
-              FilterSimple_ConvexPolygon_Textured(surface, pImage, &poly, DefaultSampleFunction, renderer, c.V);
+              poly.Append(TexturedVertex(px[1] + x, py[1] + y, texture->Width - 1, 0));
+              poly.Append(TexturedVertex(px[2] + x, py[2] + y, texture->Width - 1, texture->Height - 1));
+              poly.Append(TexturedVertex(px[3] + x, py[3] + y, 0, texture->Height - 1));
+              FilterSimple_ConvexPolygon_Textured(renderTarget, texture, &poly, DefaultSampleFunction, renderer, c.V);
             }
           }
         }
@@ -895,7 +927,7 @@ Export int EmptyParticleEngine(ParticleEngine *Engine) {
 Export int SetParticleEngineSize(ParticleEngine *Engine, FRect *Size) {
   if (!Engine) return Failure;
   if (!Size) return Failure;
-  Engine->Size = *Size;
+  Engine->Bounds = *Size;
   return Success;
 }
 
@@ -929,6 +961,7 @@ Export int GetParticleCount(ParticleEngine *Engine, int Type) {
   ParticleCountList::iterator citer = Engine->ParticleCounts.begin();
   int i = 0, c = 0;
   while (citer != Engine->ParticleCounts.end()) {
+    // if Type is omitted (<= 0) we count particles of any type
     if ((i == Type) || (Type < 0))
       c += *citer;
     ++citer;

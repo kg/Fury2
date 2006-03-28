@@ -24,6 +24,9 @@ Global Const c_lngKeyCount As Long = 255
 
 Global Const c_dblPi As Double = 3.14159265358979
 Global Const c_dblRadian As Double = 1.74532925199433E-02
+Global Const c_dblSqrt2 As Double = 1.4142135623731
+Global Const c_dblLn2 As Double = 0.693147180559945
+Global Const c_dblLn10 As Double = 2.30258509299405
 Global Const c_dblSineScale As Double = 1.18839510577812
 
 Global Const c_lngMaxNameLength As Long = 31

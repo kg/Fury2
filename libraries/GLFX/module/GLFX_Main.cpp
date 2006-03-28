@@ -26,7 +26,9 @@ Export int GLGetFeatureSupport(const char* FeatureName) {
   } else if (0 == strcmpi(FeatureName, "lightmap_blending")) {
     return (GLEW_ARB_texture_env_combine != 0) && (GLEW_ARB_multitexture != 0);
   } else if (0 == strcmpi(FeatureName, "deformation")) {
-    return (GLSL::isSupported()) && (GLEW_ATI_texture_float != 0);
+    return (GLSL::isSupported()) && (GLEW_ATI_texture_float != 0) && (GLEW_ARB_multitexture != 0);
+  } else if (0 == strcmpi(FeatureName, "merge_blending")) {
+    return (GLSL::isSupported()) && (GLEW_ARB_multitexture != 0);
   } else if (0 == strcmpi(FeatureName, "convolution")) {
     return (GLSL::isSupported());
   } else if (0 == strcmpi(FeatureName, "masking")) {
@@ -64,7 +66,11 @@ Export int GLCopySurface(int from, int to) {
   if (!Global) return Failure;
   if (from) {
     if (to) {
-      GL::copyImageToImage(from, to);
+      try {
+        GL::copyImageToImage(from, to);
+      } catch (...) {
+        return Failure;
+      }
       return Success;
     }
   }
@@ -85,57 +91,80 @@ Export int GLSetScaleMode(int mode) {
 }
 
 Export int GLFlip() {
-  if (!Global) return Failure;
-  assert(Global->Framebuffer != 0);
-  assert(Global->DC != 0);
-  bool unlock = false;
-  GL::endDraw();
-  if (SoftFX::GetImageLocked(Global->Framebuffer) == 0) {
-    unlock = true;
-    SoftFX::LockImage(Global->Framebuffer);
-  }
-  GL::disableTextures();
-  GL::selectTexture(0);
-  GL::setBlendMode<BlendModes::Normal>();
-  GL::setBlendColor(White);
-  GL::setVertexColor(White);
-  Texture *tex;
-  int width = SoftFX::GetImageWidth(Global->Framebuffer);
-  int height = SoftFX::GetImageHeight(Global->Framebuffer);
-  if ((width != Global->OutputWidth) || (height != Global->OutputHeight)) {
-    FX::Rectangle Area = FX::Rectangle(0, 0, Global->OutputWidth, Global->OutputHeight);
-    GL::enableTextures();
-    GL::selectImageAsTexture(Global->Framebuffer);
-    tex = GL::getTexture(Global->Framebuffer);
-    if (Global->ScaleMode == 1) {
-      GL::setScaleMode<ScaleModes::Bilinear>();
-    } else {
-      GL::setScaleMode<ScaleModes::Linear>();
+  try {
+    if (!Global) return Failure;
+    assert(Global->Framebuffer != 0);
+    assert(Global->DC != 0);
+    bool unlock = false;
+    GL::endDraw();
+    if (SoftFX::GetImageLocked(Global->Framebuffer) == 0) {
+      unlock = true;
+      SoftFX::LockImage(Global->Framebuffer);
     }
-    GL::drawTexturedRectangle(Area, tex->U1, tex->V1, tex->U2, tex->V2);
-    GL::endDraw();
-    SwapBuffers(Global->DC);
-    Area.Width = width;
-    Area.Height = height;
-    GL::drawTexturedRectangle(Area, tex->U1, tex->V1, tex->U2, tex->V2);
-    GL::endDraw();
-  } else {
-    SwapBuffers(Global->DC);
+    GL::disableTextures();
+    GL::selectTexture(0);
+    GL::setBlendMode<BlendModes::Normal>();
+    GL::setBlendColor(White);
+    GL::setVertexColor(White);
+    Texture *tex;
+    int width = SoftFX::GetImageWidth(Global->Framebuffer);
+    int height = SoftFX::GetImageHeight(Global->Framebuffer);
+    if ((width != Global->OutputWidth) || (height != Global->OutputHeight)) {
+      FX::Rectangle Area = FX::Rectangle(0, 0, Global->OutputWidth, Global->OutputHeight);
+      GL::enableTextures();
+      GL::selectImageAsTexture(Global->Framebuffer);
+      tex = GL::getTexture(Global->Framebuffer);
+      GLSL::Program* shader = 0;
+      switch (Global->ScaleMode) {
+        case 2:
+          shader = Global->GetShader(std::string("scale2x"));
+          GLSL::useProgram(*shader);
+          GL::initShaderVariables(shader);
+          GL::setScaleMode<ScaleModes::Linear>();
+          break;
+        case 1:
+          shader = Global->GetShader(std::string("clamp"));
+          GLSL::useProgram(*shader);
+          GL::initShaderVariables(shader);
+          GL::setScaleMode<ScaleModes::Bilinear>();
+          break;
+        default:
+          GL::setScaleMode<ScaleModes::Linear>();
+          break;
+      }
+      GL::drawTexturedRectangle(Area, tex->U1, tex->V1, tex->U2, tex->V2);
+      GL::endDraw();
+      SwapBuffers(Global->DC);
+      GLSL::disableProgram();
+      GL::setScaleMode<ScaleModes::Linear>();
+      Area.Width = width;
+      Area.Height = height;
+      GL::drawTexturedRectangle(Area, tex->U1, tex->V1, tex->U2, tex->V2);
+      GL::endDraw();
+    } else {
+      SwapBuffers(Global->DC);
+    }
+    if (unlock) {
+      SoftFX::UnlockImage(Global->Framebuffer);
+    }
+    return Success;
+  } catch (...) {
+    return Failure;
   }
-  if (unlock) {
-    SoftFX::UnlockImage(Global->Framebuffer);
-  }
-  return Success;
 }
 
 Export int GLInit(HWND Window, HDC DC) {
-  if (Global != Null) return Failure;
-  Global = new GLFXGlobal();
-  Global->Window = Window;
-  Global->DC = DC;
-	SoftFX::Load();
-	InstallOverrides();
-  return Success;
+  try {
+    if (Global != Null) return Failure;
+    Global = new GLFXGlobal();
+    Global->Window = Window;
+    Global->DC = DC;
+	  SoftFX::Load();
+	  InstallOverrides();
+    return Success;
+  } catch (...) {
+    return Failure;
+  }
 }
 
 Export int GLShutdown() {
@@ -162,7 +191,7 @@ void GLFXGlobal::CleanupShaders() {
 }
 
 GLenum GLFXGlobal::checkError() {
-  GLenum e = glGetError();
+  GLenum e = checkGLErrors();
   if (e) {
     int x = abs(-1);
   }

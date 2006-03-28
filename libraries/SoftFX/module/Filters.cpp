@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "../header/Blitters.hpp"
 #include "../header/Hue.hpp"
 #include <sys/timeb.h>
+#include <queue>
 
 FILTERSIMPLE_SIGNATURE(Invert)
     ) {
@@ -335,8 +336,137 @@ FILTERSIMPLE_LOOPBEGIN
     (*pCurrent)[::Blue] = AlphaFromLevel(aSource, (*pCurrent)[::Blue]);
     (*pCurrent)[::Green] = AlphaFromLevel(aSource, (*pCurrent)[::Green]);
     (*pCurrent)[::Red] = AlphaFromLevel(aSource, (*pCurrent)[::Red]);
-    Image->OptimizeData.premultiplied = true;
 FILTERSIMPLE_LOOPEND
+    Image->OptimizeData.premultiplied = true;
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Blur_Horizontal)
+    , int Radius) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Blur_Horizontal, 1) , Radius _FOE
+    if (Radius < 0) return Failure;
+    if (Radius == 0) return Trivial_Success;
+FILTERSIMPLE_BEGIN
+    int rSum = 0, gSum = 0, bSum = 0;
+    int factor = (Radius * 2) + 1;
+    std::queue<Pixel> queue;
+FILTERSIMPLE_ROW
+    int y = rCoordinates.bottom_exclusive() - iCY;
+    int x = rCoordinates.Left;
+    rSum = gSum = bSum = 0;
+    while (!queue.empty())
+      queue.pop();
+    Pixel l = Image->getPixelClipNO(rCoordinates.Left, y);
+    for (int f = 0; f < Radius; f++) {
+      rSum += l[::Red];
+      gSum += l[::Green];
+      bSum += l[::Blue];
+      queue.push(l);
+    }
+    for (int f = 0; f <= Radius; f++) {
+      Pixel c = Image->getPixelClipNO(rCoordinates.Left + f, y);
+      rSum += c[::Red];
+      gSum += c[::Green];
+      bSum += c[::Blue];
+      queue.push(c);
+    }
+FILTERSIMPLE_COL
+    (*pCurrent)[::Blue] = (bSum / factor);
+    (*pCurrent)[::Green] = (gSum / factor);
+    (*pCurrent)[::Red] = (rSum / factor);
+    Pixel add = Image->getPixelClipNO(x + Radius + 1, y);
+//    Pixel remove = Image->getPixelClipNO(x - Radius, y);
+    Pixel remove = queue.front();
+    bSum += add[::Blue];
+    gSum += add[::Green];
+    rSum += add[::Red];
+    bSum -= remove[::Blue];
+    gSum -= remove[::Green];
+    rSum -= remove[::Red];
+    x++;
+    queue.pop();
+    queue.push(add);
+FILTERSIMPLE_COLEND
+FILTERSIMPLE_ROWEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Blur_Vertical)
+    , int Radius) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Blur_Vertical, 1) , Radius _FOE
+    if (Radius < 0) return Failure;
+    if (Radius == 0) return Trivial_Success;
+FILTERSIMPLE_BEGIN
+    int rSum = 0, gSum = 0, bSum = 0;
+    int factor = (Radius * 2) + 1;
+    std::queue<Pixel> queue;
+FILTERSIMPLE_INVROW
+    int x = rCoordinates.right_exclusive() - iCX;
+    int y = rCoordinates.Top;
+    rSum = gSum = bSum = 0;
+    while (!queue.empty())
+      queue.pop();
+    Pixel l = Image->getPixelClipNO(x, rCoordinates.Top);
+    for (int f = 0; f < Radius; f++) {
+      rSum += l[::Red];
+      gSum += l[::Green];
+      bSum += l[::Blue];
+      queue.push(l);
+    }
+    for (int f = 0; f <= Radius; f++) {
+      Pixel c = Image->getPixelClipNO(x, rCoordinates.Top + f);
+      rSum += c[::Red];
+      gSum += c[::Green];
+      bSum += c[::Blue];
+      queue.push(c);
+    }
+FILTERSIMPLE_INVCOL
+    (*pCurrent)[::Blue] = (bSum / factor);
+    (*pCurrent)[::Green] = (gSum / factor);
+    (*pCurrent)[::Red] = (rSum / factor);
+    Pixel add = Image->getPixelClipNO(x, y + Radius + 1);
+//    Pixel remove = Image->getPixelClipNO(x, y - Radius);
+    Pixel remove = queue.front();
+    bSum += add[::Blue];
+    gSum += add[::Green];
+    rSum += add[::Red];
+    bSum -= remove[::Blue];
+    gSum -= remove[::Green];
+    rSum -= remove[::Red];
+    y++;
+    queue.pop();
+    queue.push(add);
+FILTERSIMPLE_INVCOLEND
+FILTERSIMPLE_INVROWEND
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Blur)
+    , int XRadius, int YRadius) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_Blur, 2) , XRadius, YRadius _FOE
+    if ((XRadius < 0) || (YRadius < 0)) return Failure;
+    if ((XRadius == 0) && (YRadius == 0)) return Trivial_Success;
+FILTERSIMPLE_BEGIN
+    FilterSimple_Blur_Horizontal(Image, Area, XRadius);
+    FilterSimple_Blur_Vertical(Image, Area, YRadius);
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(PrepareNormals)
+    ) {
+FILTERSIMPLE_INIT
+    _FOS(FilterSimple_PrepareNormals, 0)  _FOE
+FILTERSIMPLE_BEGIN
+    FPoint3 normal;
+FILTERSIMPLE_LOOPBEGIN
+    normal.X = ((*pCurrent)[::Red] - 127) / 127.0f;
+    normal.Y = ((*pCurrent)[::Green] - 127) / 127.0f;
+    normal.Z = ((*pCurrent)[::Blue] - 127) / 127.0f;
+    if (abs(1.0 - normal.length()) >= NormalAccuracyThreshold) {
+      normal.normalize();
+      *pCurrent = Pixel(Round(normal.X * 127.0f) + 127, Round(normal.Y * 127.0f) + 127, Round(normal.Z * 127.0f) + 127, (*pCurrent)[::Alpha]);
+    }
+FILTERSIMPLE_LOOPEND
+    Image->OptimizeData.normalsPrepared = true;
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Grid_SourceAlpha)

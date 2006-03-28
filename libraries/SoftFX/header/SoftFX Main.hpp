@@ -114,12 +114,13 @@ extern bool Initialized;
 
 const double Pi = 3.14159265358979;
 const double Radian = 1.74532925199433E-02;
+const double NormalAccuracyThreshold = (1.0f / 63.0f);
 #define Radians(a) (a * Radian)
 
 #define Export extern "C" __declspec(dllexport)
 
 #define AllocateArray(type, count) \
-    new type[count]
+    new Align(16) type[count]
 
 #define Delete(v) \
     if (v) { \

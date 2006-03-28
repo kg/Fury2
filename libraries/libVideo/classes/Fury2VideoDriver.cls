@@ -57,6 +57,12 @@ End Property
 Property Let ScaleRatio(ByVal NewValue As Single)
 End Property
 
+Property Get ScaleMode() As Long
+End Property
+
+Property Let ScaleMode(ByVal NewValue As Long)
+End Property
+
 Property Get Fullscreen() As Boolean
 End Property
 

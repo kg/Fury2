@@ -48,134 +48,137 @@ const double DefaultGravitationalConstant = 6.673e-11;
 //F = 1 m/s^2
 const double DefaultXgDistance = 1.0;
 
+// minimum life value accepted as >0
 const double ParticleMinimumL = 1.0f / 10000.0f;
 
+// fudge collision math by N pixels to account for the fact that our particles are points and not objects with real size
 const double CollisionEpsilon = 0.01;
 
-const double ParticleLineExtension = 0.5;
+// fudge collision between particles and line segments by N pixels to account for near misses
+const double ParticleLineExtension = 0.25;
 
+// predefine types
 struct ParticleEngineState;
 struct ParticleType;
-struct Particle;
-struct ParticleModifier;
-struct ParticleGenerator;
 struct ParticleCamera;
 struct ParticleDieEvent;
 struct ParticleCollideEvent;
+class Particle;
+class ParticleModifier;
+class ParticleGenerator;
 class ParticleEngine;
 
+// predefine function pointer types
 typedef void (ParticleDieCallback)(ParticleDieEvent* evt);
 typedef void (ParticleCollideCallback)(ParticleCollideEvent* evt);
 
+// container type aliases
+typedef std::vector<Particle> ParticleList;
+typedef std::vector<unsigned int> ParticleCountList;
+typedef std::vector<ParticleList> ParticleListList;
+typedef std::vector<ParticleType*> ParticleTypeList;
+typedef std::vector<ParticleModifier*> ParticleModifierList;
+typedef std::vector<ParticleGenerator*> ParticleGeneratorList;
+
 enum ParticleDecayModes {
-    pdmNone,
-    pdmSet,
-    pdmAdd,
-    pdmMultiply,
-    pdmExponent,
-    pdmRandomAdd,
-    pdmRandomMultiply
+  pdmNone,
+  pdmSet,
+  pdmAdd,
+  pdmMultiply,
+  pdmExponent,
+  pdmRandomAdd,
+  pdmRandomMultiply
 };
 
 enum ParticleLBehaviors {
-    plbNone,
-    plbRemove
+  plbNone,
+  plbRemove
 };
 
 enum ParticleLColorModes {
-    plcNone,
-    plcFade,
-    plcInterpolate
+  plcNone,
+  plcFade,
+  plcInterpolate
 };
 
 enum ParticleAModes {
-    pamFade,
-    pamScale,
-    pamFadeAndScale,
-    pamRotate
+  pamFade,
+  pamScale,
+  pamFadeAndScale,
+  pamRotate
 };
 
 enum ParticleRenderTypes {
-    prtPixel,
-    prtAntiAliasPixel,
-    prtLine,
-    prtAntiAliasLine,
-    prtGradientLine,
-    prtAntiAliasGradientLine,
-    prtStroke,
-    prtGraphic
+  prtPixel,
+  prtAntiAliasPixel,
+  prtLine,
+  prtAntiAliasLine,
+  prtGradientLine,
+  prtAntiAliasGradientLine,
+  prtStroke,
+  prtGraphic
 };
 
 struct ParticleGraphicParam {
-    int FrameCount;
-    Image **pFrames;
-    float XCenter, YCenter;
-    Pixel MatteColor;
-    int Alpha;
-    float FrameIncrement;
-    Byte LoopMode;
+  int FrameCount;
+  Image **pFrames;
+  float XCenter, YCenter;
+  Pixel MatteColor;
+  int Alpha;
+  float FrameIncrement;
+  Byte LoopMode;
 };
 
 struct ParticleType {
-    float XVDecay;
-    float YVDecay;
-    float AVDecay;
-    float LVDecay;
-    float Thickness;
-    float Softness;
-    float CollisionResponse;
-    ParticleGraphicParam *Graphic;
-    Pixel Color1;
-    Pixel Color2;
-    ParticleDieCallback* DieCallback;
-    ParticleCollideCallback* CollideCallback;
-    DoubleWord UserData;
-    Byte XVDecayMode;
-    Byte YVDecayMode;
-    Byte AVDecayMode;
-    Byte LVDecayMode;
-    Byte LColorMode;
-    Byte LBehavior;
-    Byte AMode;
-    Byte RenderType;
-    Byte RenderMode;
-    Byte RenderTarget;
-    Byte EnableCollision;
+  float XVDecay, YVDecay, AVDecay, LVDecay;
+  float Thickness;
+  float Softness;
+  float CollisionResponse;
+  ParticleGraphicParam *Graphic;
+  Pixel Color1, Color2;
+  ParticleDieCallback* DieCallback;
+  ParticleCollideCallback* CollideCallback;
+  DoubleWord UserData;
+  Byte XVDecayMode, YVDecayMode, AVDecayMode, LVDecayMode;
+  Byte LColorMode;
+  Byte LBehavior;
+  Byte AMode;
+  Byte RenderType;
+  Byte RenderMode;
+  Byte RenderTarget;
+  Byte EnableCollision;
 };
 
-struct Particle {
+class Particle {
+  public:
     float X, Y, A, L;
     float XV, YV, AV, LV;
     float Frame;
     int Type;
-public:
-    bool tick(ParticleEngineState& state);
+
+    bool tick(const ParticleEngineState& state);
     void render(ParticleEngineState& state);
-    inline bool inside(FRect& rect) {
+    inline bool inside (const FRect& rect) const {
       return !((this->X < rect.X1) | (this->X > rect.X2) | (this->Y < rect.Y1) | (this->Y > rect.Y2));
     }
 };
 
-struct ParticleModifier {
+class ParticleModifier {
+  public:
     float X, Y;
     float Range, RangeScale;
     float Mass;
     float Attraction;
-    float XVDecay;
-    float YVDecay;
-    float AVDecay;
-    float LVDecay;
-    Byte XVDecayMode;
-    Byte YVDecayMode;
-    Byte AVDecayMode;
-    Byte LVDecayMode;
+    float XVDecay, YVDecay, AVDecay, LVDecay;
+    Byte XVDecayMode, YVDecayMode, AVDecayMode, LVDecayMode;
     int ExcludeType, RequireType;
     FRect Area;
-public:
-    void tick(ParticleEngineState& state);
+
+    void tick(const ParticleEngineState& state);
 };
 
-struct ParticleGenerator {
+class ParticleGenerator {
+  public:
     int Type;
     int Life;
     float GenerateRate;
@@ -187,28 +190,20 @@ struct ParticleGenerator {
     float GenerateRotation;
     float RandomGenerateRotation;
     float CurrentDelay, CurrentRotation;
-public:
-    void tick(ParticleEngineState& state);
+
+    void tick(const ParticleEngineState& state);
 };
 
 struct ParticleCamera {
-    Image **pRenderTargets;
-    int RenderTargetCount;
-    Rectangle Rectangle;
-    float Alpha;
-    float ViewportX;
-    float ViewportY;
+  Image **pRenderTargets;
+  int RenderTargetCount;
+  Rectangle Rectangle;
+  float Alpha;
+  float ViewportX, ViewportY;
 };
 
-typedef std::vector<Particle> ParticleList;
-typedef std::vector<int> ParticleCountList;
-typedef std::vector<ParticleList> ParticleListList;
-typedef std::vector<ParticleType*> ParticleTypeList;
-typedef std::vector<ParticleModifier*> ParticleModifierList;
-typedef std::vector<ParticleGenerator*> ParticleGeneratorList;
-
 class ParticleEngine {
-public:
+  public:
     ParticleListList Particles;
     ParticleCountList ParticleCounts;
     ParticleTypeList Types;
@@ -216,9 +211,11 @@ public:
     ParticleGeneratorList Generators;
     SpriteParam **Sprites;
     CollisionMatrix *Surfaces;
-    FRect Size;
+    FRect Bounds;
     MTRand RNG;
+    // Gravitational constant
     double G;
+    // Gravitational unit (kg replacement)
     double Xg;
 
     inline ParticleEngine() {
@@ -231,79 +228,77 @@ public:
       RNG = MTRand();
       G = DefaultGravitationalConstant;
       setXg(DefaultXgDistance);
-      Size.X1 = -99999;
-      Size.Y1 = -99999;
-      Size.X2 = 99999;
-      Size.Y2 = 99999;
+	    // set default active zone to a ridiculously large rectangle
+      Bounds = FRect(-999999, -999999, 999999, 999999);
     }
 
     inline void setXg(double Distance) {
       Xg = 1.0 / G / 1.0 / Distance;
     }
 
-    inline float gravity(float m_a_xg, float m_b_kg, float d2) {
+    inline float gravity (float m_a_xg, float m_b_kg, float d2) const {
       return G * (m_a_xg * Xg) * (m_b_kg) / d2;
     }
 
-    void spawn(Particle& particle, ParticleList& list);
-    void spawn(Particle& particle);
+    void spawn(const Particle& particle, ParticleList& list);
+    void spawn(const Particle& particle);
     void prespawn(ParticleList& list, int count);
     void tick(float elapsed);
     void render(ParticleCamera& camera);
 };
 
 struct ParticleEngineState {
-    ParticleEngine* engine;
-    ParticleCamera* camera;
-    ParticleType* type;
-    ParticleList* typeList;
-    Particle* particle;
-    float elapsed, theta, distance;
-    Image* renderTarget;
-    RenderFunction* renderer;
-    TexturedPolygon poly;
+  ParticleEngine* Engine;
+  ParticleCamera* Camera;
+  ParticleType* Type;
+  ParticleList* TypeList;
+  Particle* Particle;
+  float Elapsed, Theta, Distance;
+  Image* RenderTarget;
+  RenderFunction* Renderer;
+  TexturedPolygon Poly;
 
-    inline void clear() {
-      engine = 0;
-      camera = 0;
-      type = 0;
-      particle = 0;
-      elapsed = 0;
-      renderTarget = 0;
-      renderer = 0;
-      theta = 0;
-      distance = 0;
-    }
+  inline void clear() {
+    Engine = 0;
+    Camera = 0;
+    Type = 0;
+    Particle = 0;
+    Elapsed = 0;
+    RenderTarget = 0;
+    Renderer = 0;
+    Theta = 0;
+    Distance = 0;
+  }
 
-    ParticleEngineState() {
-      clear();
-    }
+  ParticleEngineState() {
+    clear();
+  }
 
-    ParticleEngineState(ParticleEngine &Engine, ParticleCamera &Camera) {
-      clear();
-      engine = &Engine;
-      camera = &Camera;
-    }
+  ParticleEngineState(ParticleEngine &Engine, ParticleCamera &Camera) {
+    clear();
+    this->Engine = &Engine;
+    this->Camera = &Camera;
+  }
 
-    ParticleEngineState(ParticleEngine &Engine, float Elapsed) {
-      clear();
-      engine = &Engine;
-      elapsed = Elapsed;
-    }
+  ParticleEngineState(ParticleEngine &Engine, float Elapsed) {
+    clear();
+    this->Engine = &Engine;
+    this->Elapsed = Elapsed;
+  }
 };
 
 struct ParticleDieEvent {
-  ParticleEngine* engine;
-  ParticleType* type;
-  Particle* particle;
+  const ParticleEngine* Engine;
+  const ParticleType* Type;
+  const Particle* Particle;
   DoubleWord UserData;
 };
 
 struct ParticleCollideEvent {
-  ParticleEngine* engine;
-  ParticleType* type;
-  Particle* particle;
+  const ParticleEngine* Engine;
+  const ParticleType* Type;
+  const Particle* Particle;
   DoubleWord UserData;
-  SpriteParam* sprite;
-  FPoint* vector;
+  const SpriteParam* Sprite;
+  const FPoint* Vector;
 };

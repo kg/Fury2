@@ -63,6 +63,7 @@ namespace GL {
   }
 
   void flushImageHeap() {
+    endDraw();
     Texture* handle;
     int image;
     for (unsigned int i = 0; i < Global->ImageHeap.size(); ++i) {
@@ -87,6 +88,7 @@ namespace GL {
   Texture* createSmallTexture(int width, int height) {
     if (width > SmallTextureSize) return 0;
     if (height > SmallTextureSize) return 0;
+    endDraw();
     int x, y, w, h;
     w = powerOfTwo(width);
     h = powerOfTwo(height);
@@ -155,6 +157,7 @@ namespace GL {
 
   void copyImageToImage(int from, int to) {
     if (from == to) return;
+    endDraw();
     if (checkNamedTag(from, Context)) {
       // from context
       if (checkNamedTag(to, Context)) {
@@ -234,11 +237,10 @@ namespace GL {
     GL::setFramebuffer(buffer);
     int width = SoftFX::GetImageWidth(image);
     int height = SoftFX::GetImageHeight(image);
-    int yOffset = ((activeFramebuffer == 0) ? Global->OutputHeight - height : powerOfTwo(activeFramebuffer->Height) - height);
+    int yOffset = ((activeFramebuffer == 0) ? Global->OutputHeight - height : 0);
     FX::Rectangle rect = FX::Rectangle(0, 0, width, height);
-    enableTexture<0>();
     endDraw();
-    glEnd();
+    enableTexture<0>();
     selectTexture(tex->Handle);
     //setBlendMode<BlendModes::Normal>();
     //glDisable(GL_BLEND);
@@ -266,7 +268,6 @@ namespace GL {
     if (height < 1) return;
     if (ptr == Null) return;
     endDraw();
-    glEnd();
     enableTexture<0>();
     selectTexture(tex->Handle);
     if (tex->FlippedVertically) {
@@ -324,17 +325,27 @@ namespace GL {
     glDeleteTextures(1, &handle);
   }
 
-  void beginDraw(GLenum type) {
-    if (drawMode == type) return;
+  GLenum beginDraw(GLenum type) {
+    if (drawMode == type) return 0;
     if (drawMode != -1) {
       endDraw();
     }
+    checkGLErrors();
     glBegin(type);
-    drawMode = type;
+    GLenum e = checkGLErrors();
+    if (e == 0) {
+      drawMode = type;
+      return 0;
+    } else {
+      // error initiating draw!
+      drawMode = -1;
+      return e;
+    }
   }
 
   void endDraw() {
     if (drawMode != -1) {
+      checkGLErrors();
       glEnd();
       drawMode = -1;
     }
@@ -364,12 +375,14 @@ namespace GL {
   }
 
   void enableTextures() {
+    endDraw();
     disableTexture<2>();
     disableTexture<1>();
     enableTexture<0>();
   }
 
   void disableTextures() {
+    endDraw();
     disableTexture<2>();
     disableTexture<1>();
     disableTexture<0>();
@@ -477,10 +490,15 @@ namespace GL {
   }
 
   void setTextureColor(Pixel color) {
+    if (activeTexture[activeTextureStage] < 1) {
+      // no texture!
+      return;
+    }
     endDraw();
     textureColor = color;
     float fv[4] = {color[::Red] / 255.0f, color[::Green] / 255.0f, color[::Blue] / 255.0f, color[::Alpha] / 255.0f};
     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, fv);
+    Global->checkError();
   }
 
   void setFogColor(Pixel color) {
@@ -695,6 +713,7 @@ namespace GL {
   void initShaderVariables(GLSL::Program* program) {
     Texture* tex = activeTextureObj[0];
     if (tex) {
+      endDraw();
       GLSL::Variable var = program->getVariable("pixelSize");
       Vec2 size;
       float u1, v1, u2, v2;

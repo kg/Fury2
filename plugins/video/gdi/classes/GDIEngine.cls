@@ -25,6 +25,15 @@ Private m_lngDC As Long, m_lngBitmap As Long, m_lngOldBitmap As Long
 Private m_lngWidth As Long, m_lngHeight As Long
 Private m_sngScaleRatio As Single
 Private m_imgBackbuffer As Fury2Image
+Private m_lngScaleMode As Long
+
+Private Property Let Fury2VideoDriver_ScaleMode(ByVal RHS As Long)
+    m_lngScaleMode = RHS
+End Property
+
+Private Property Get Fury2VideoDriver_ScaleMode() As Long
+    Fury2VideoDriver_ScaleMode = m_lngScaleMode
+End Property
 
 Public Property Get Feature(ByRef Name As String) As Boolean
 On Error Resume Next

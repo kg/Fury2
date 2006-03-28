@@ -9,6 +9,23 @@
 #include <string>
 #include <map>
 
+inline GLenum checkGLErrors() {
+  GLenum e = glGetError();
+  GLenum l = e;
+  int i = 0;
+  while (e) {
+    // error!
+    l = e;
+    e = glGetError();
+    i++;
+    if (i > 9) {
+      // stupid ICD
+      return l;
+    }
+  }
+  return l;
+}
+
 using namespace std;
 
 typedef unsigned __int8 Byte;
@@ -30,6 +47,7 @@ static const int Trivial_Success = 2;
 static const int Success = 1;
 static const int Failure = 0;
 
+const double PythagorasConstant = 0.707106781186547;
 const double Pi = 3.14159265358979;
 const double Radian = 1.74532925199433E-02;
 #define Radians(a) (a * Radian)
@@ -70,6 +88,18 @@ inline void _DebugTrace(const wchar_t *text) {
 #include "Classes.hpp"
 
 struct Vec2 {
+  Vec2() {
+    V[0] = 0.0f;
+    V[1] = 0.0f;
+  }
+  Vec2(float value) {
+    V[0] = value;
+    V[1] = value;
+  }
+  Vec2(float a, float b) {
+    V[0] = a;
+    V[1] = b;
+  }
   float V[2];
 };
 

@@ -57,11 +57,9 @@ struct OverrideParameters {
 
 inline OverrideList* ResolveOverrides(const OverrideIndex key) {
 #if (defined(OVERRIDES) || !defined(SOFTFX))
-  SS_Start
-    if (Overrides[key].size()) {
-      return Overrides + key;
-    }
-  SS_End
+  if (Overrides[key].size()) {
+    return Overrides + key;
+  }
   return 0;
 #else
   return 0;

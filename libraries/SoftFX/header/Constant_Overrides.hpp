@@ -60,6 +60,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(FilterSimple_ColorFilter) \
   defItem(FilterSimple_Composite) \
   defItem(FilterSimple_Premultiply) \
+  defItem(FilterSimple_PrepareNormals) \
   defItem(FilterSimple_ConvexPolygon) \
   defItem(FilterSimple_ConvexPolygon_Gradient) \
   defItem(FilterSimple_ConvexPolygon_Textured) \
@@ -67,6 +68,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(FilterSimple_ConvexPolygon_Textured_AntiAlias) \
   defItem(FilterSimple_Decay) \
   defItem(FilterSimple_Depalettize) \
+  defItem(FilterSimple_Blur) \
+  defItem(FilterSimple_Blur_Horizontal) \
+  defItem(FilterSimple_Blur_Vertical) \
   defItem(FilterSimple_Fill) \
   defItem(FilterSimple_Fill_Opacity) \
   defItem(FilterSimple_Fill_Additive) \

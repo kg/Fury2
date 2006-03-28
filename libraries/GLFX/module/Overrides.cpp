@@ -197,14 +197,16 @@ defOverride(Allocate_Framebuffer) {
   if (GLEW_EXT_framebuffer_object) {
     Framebuffer* buffer = new Framebuffer();
     Texture* tex = GL::createTexture(Width, Height, false);
+//    Texture* attachedTex = GL::createTexture(Width, Height, false);
     tex->flipVertical();
+//    attachedTex->flipVertical();
     buffer->Image = Image;
-    buffer->AttachedTexture = tex;
+    buffer->AttachedTexture = tex; //attachedTex;
     buffer->Width = Width;
     buffer->Height = Height;
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->Handle);
     Global->checkError();
-    buffer->attachTexture(*tex);
+    buffer->attachTexture(*tex); //*attachedTex);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
     Global->checkError();
     setNamedTagAndKey(Image, Framebuffer, buffer);
@@ -330,6 +332,34 @@ void BlitSimple_FBTex_Core(Override::OverrideParameters *Parameters) {
     contextSwitch(Dest);
     Texture* tex = getTexture(Source);
     Texture* fbtex = getTexture(Dest);
+    float U1 = tex->U(SourceX), V1 = tex->V(SourceY);
+    float U2 = tex->U(SourceX + Area.Width), V2 = tex->V(SourceY + Area.Height);
+    float U3 = fbtex->U(Area.Left), V3 = fbtex->V(Area.Top);
+    float U4 = fbtex->U(Area.right()), V4 = fbtex->V(Area.bottom());
+    draw2TexturedRectangle(Area, U1, V1, U2, V2, U3, V3, U4, V4);
+    SetImageDirty(Dest, 1);
+  }
+}
+
+void BlitSimple_Shader_FBTex_Core(Override::OverrideParameters *Parameters, GLSL::Program* shader) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParamRect(Area, 2, Null);
+  readParam(int, SourceX, 3);
+  readParam(int, SourceY, 4);
+  FX::Rectangle AreaCopy = Area;
+  if (Clip2D_SimpleRect(&Area, Dest, Source, &AreaCopy, SourceX, SourceY)) {
+    selectImageAsTextureN<0>(Source);
+    selectImageAsTextureN<1>(Dest);
+    selectImageAsTextureN<0>(Source);
+    selectImageAsTextureN<1>(Dest);
+    enableTexture<0>();
+    enableTexture<1>();
+    setScaleMode<Linear>();
+    contextSwitch(Dest);
+    Texture* tex = getTexture(Source);
+    Texture* fbtex = getTexture(Dest);
+    initShaderVariables(shader);
     float U1 = tex->U(SourceX), V1 = tex->V(SourceY);
     float U2 = tex->U(SourceX + Area.Width), V2 = tex->V(SourceY + Area.Height);
     float U3 = fbtex->U(Area.Left), V3 = fbtex->V(Area.Top);
@@ -800,6 +830,67 @@ defOverride(BlitSimple_NormalMap_Additive_SourceAlpha) {
   return Success;
 }
 
+defOverride(BlitSimple_Merge) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  selectImageAsTextureN<0>(Source);
+  selectImageAsTextureN<1>(Dest);
+  selectImageAsTextureN<0>(Source);
+  selectImageAsTextureN<1>(Dest);
+  disableTextures();
+  setBlendMode<Normal>();
+  setTextureColor(White);
+  setVertexColor(White);
+  setBlendColor(White);
+  readParamRect(Area, 2, Null);
+  FX::Rectangle AreaCopy = Area;
+  if (ClipRectangle_ImageClipRect(&AreaCopy, Dest)) {
+    GLSL::Program* shader = Global->GetShader(std::string("merge"));
+    GLSL::useProgram(*shader);
+    shader->getVariable("tex").set(0);
+    shader->getVariable("framebuffer").set(1);
+    shader->getVariable("opacity").set(1.0f);
+    SoftFX::SetImageDirty(Source, 0);
+    BlitSimple_Shader_FBTex_Core(Parameters, shader);
+    GLSL::disableProgram();
+  }
+  return Success;
+}
+
+defOverride(BlitSimple_Merge_Opacity) {
+  readParam(int, Dest, 0);
+  readParam(int, Source, 1);
+  readParam(int, Opacity, 5);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  selectImageAsTextureN<0>(Source);
+  selectImageAsTextureN<1>(Dest);
+  selectImageAsTextureN<0>(Source);
+  selectImageAsTextureN<1>(Dest);
+  disableTextures();
+  setBlendMode<Normal>();
+  setTextureColor(White);
+  setVertexColor(White);
+  setBlendColor(White);
+  readParamRect(Area, 2, Null);
+  FX::Rectangle AreaCopy = Area;
+  if (ClipRectangle_ImageClipRect(&AreaCopy, Dest)) {
+    GLSL::Program* shader = Global->GetShader(std::string("merge"));
+    GLSL::useProgram(*shader);
+    shader->getVariable("tex").set(0);
+    shader->getVariable("framebuffer").set(1);
+    shader->getVariable("opacity").set(Opacity / 255.0f);
+    SoftFX::SetImageDirty(Source, 0);
+    BlitSimple_Shader_FBTex_Core(Parameters, shader);
+    GLSL::disableProgram();
+  }
+  return Success;
+}
+
 defOverride(BlitSimple_Normal_Opacity) {
   readParam(int, Dest, 0);
   readParam(int, Opacity, 5);
@@ -1153,9 +1244,9 @@ passOverride(BlitSimple_SourceAlphaMatte, BlitSimple_SourceAlpha)
 
 passOverride(BlitSimple_SourceAlphaMatte_Opacity, BlitSimple_SourceAlpha_Opacity)
 
-passOverride(BlitSimple_Merge, BlitSimple_SourceAlpha)
+//passOverride(BlitSimple_Merge, BlitSimple_SourceAlpha)
 
-passOverride(BlitSimple_Merge_Opacity, BlitSimple_SourceAlpha_Opacity)
+//passOverride(BlitSimple_Merge_Opacity, BlitSimple_SourceAlpha_Opacity)
 
 defOverride(BlitSimple_SourceAlpha_Tint) {
   readParam(int, Dest, 0);
@@ -1528,10 +1619,59 @@ defOverride(FilterSimple_Gradient_Vertical_SourceAlpha) {
   return Success;
 }
 
+int FilterSimple_Gradient_Radial_GLSL(Override::OverrideParameters *Parameters) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(Pixel, Color1, 2);
+  readParam(Pixel, Color2, 3);
+  selectContext(Image);
+  disableTextures();
+  setBlendMode<Normal>();
+  setBlendColor(White);
+  setVertexColor(White);
+  float w = Area.Width / 2.0f, h = Area.Height / 2.0f;
+  GLSL::Program* shader = Global->GetShader(std::string("radial_gradient"));
+  GLSL::useProgram(*shader);
+  shader->getVariable("startColor").set(Color1);
+  shader->getVariable("endColor").set(Color2);
+  drawGradientRectangle(Area, Pixel(0,0,0,255), Pixel(255,0,0,255), Pixel(0,255,0,255), Pixel(255,255,0,255));
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+int FilterSimple_Gradient_Radial_SourceAlpha_GLSL(Override::OverrideParameters *Parameters) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(Pixel, Color1, 2);
+  readParam(Pixel, Color2, 3);
+  selectContext(Image);
+  disableTextures();
+  setBlendMode<SourceAlpha>();
+  setBlendColor(White);
+  setVertexColor(White);
+  float w = Area.Width / 2.0f, h = Area.Height / 2.0f;
+  GLSL::Program* shader = Global->GetShader(std::string("radial_gradient"));
+  GLSL::useProgram(*shader);
+  shader->getVariable("startColor").set(Color1);
+  shader->getVariable("endColor").set(Color2);
+  drawGradientRectangle(Area, Pixel(0,0,0,255), Pixel(255,0,0,255), Pixel(0,255,0,255), Pixel(255,255,0,255));
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
 defOverride(FilterSimple_Gradient_Radial) {
   readParam(int, Image, 0);
   contextCheck(Image);
   lockCheck(Image);
+  if (GLSL::isSupported()) {
+    return FilterSimple_Gradient_Radial_GLSL(Parameters);
+  }
   readParamRect(Area, 1, Image);
   readParam(Pixel, Color1, 2);
   readParam(Pixel, Color2, 3);
@@ -1561,6 +1701,9 @@ defOverride(FilterSimple_Gradient_Radial_SourceAlpha) {
   readParam(int, Image, 0);
   contextCheck(Image);
   lockCheck(Image);
+  if (GLSL::isSupported()) {
+    return FilterSimple_Gradient_Radial_SourceAlpha_GLSL(Parameters);
+  }
   readParamRect(Area, 1, Image);
   readParam(Pixel, Color1, 2);
   readParam(Pixel, Color2, 3);
@@ -1859,6 +2002,31 @@ defOverride(FilterSimple_Composite) {
   return Success;
 }
 
+defOverride(FilterSimple_Replace) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  shaderCheck();
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(Pixel, FindColor, 2);
+  readParam(Pixel, ReplaceColor, 3);
+  selectContext(Image);
+  clipCheck(Image, Area);
+  enableTextures();
+  selectImageAsTextureN<0>(Image);
+  setBlendMode<Normal>();
+  setVertexColor(White);
+  setBlendColor(White);
+  GLSL::Program* shader = Global->GetShader(std::string("replace"));
+  GLSL::useProgram(*shader);
+  shader->getVariable("find").set(FindColor);
+  shader->getVariable("replace").set(ReplaceColor);
+  FilterSimple_Shader_Core(Parameters, shader);
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
 defOverride(FilterSimple_Gamma) {
   readParam(int, Image, 0);
   contextCheck(Image);
@@ -1876,6 +2044,36 @@ defOverride(FilterSimple_Gamma) {
   GLSL::Program* shader = Global->GetShader(std::string("gamma"));
   GLSL::useProgram(*shader);
   shader->getVariable("gamma").set(Vec4(1.0f / Gamma, 1.0f));
+  FilterSimple_Shader_Core(Parameters, shader);
+  GLSL::disableProgram();
+  SetImageDirty(Image, 1);
+  return Success;
+}
+
+defOverride(FilterSimple_Blur) {
+  readParam(int, Image, 0);
+  contextCheck(Image);
+  shaderCheck();
+  lockCheck(Image);
+  readParamRect(Area, 1, Image);
+  readParam(int, XRadius, 2);
+  readParam(int, YRadius, 3);
+  if (XRadius != YRadius) return Failure;
+  selectContext(Image);
+  clipCheck(Image, Area);
+  GLSL::Program* shader = Null;
+  if (XRadius == 1)
+    shader = Global->GetShader(std::string("blur_1x1"));
+  else if (XRadius == 2)
+    shader = Global->GetShader(std::string("blur_2x2"));
+  else
+    return Failure;
+  enableTextures();
+  selectImageAsTextureN<0>(Image);
+  setBlendMode<Normal>();
+  setVertexColor(White);
+  setBlendColor(White);
+  GLSL::useProgram(*shader);
   FilterSimple_Shader_Core(Parameters, shader);
   GLSL::disableProgram();
   SetImageDirty(Image, 1);
@@ -2649,9 +2847,11 @@ defOverride(Deallocate) {
 	if (checkNamedTag(Image, Framebuffer)) {
     Framebuffer* fb = (Framebuffer*)getNamedTag(Image, Framebuffer);
     if (fb != 0) {
+//      Texture* attachedTex = fb->AttachedTexture;
       fb->detachTexture();
       fb->unbind();
       delete fb;
+//      delete attachedTex;
       fb = 0;
     }
     setNamedTag(Image, Framebuffer, 0);
@@ -3318,12 +3518,14 @@ void InstallOverrides() {
   addOverride(GetScanlineRenderer);
 
   addOverride(FilterSimple_Gamma);
+  addOverride(FilterSimple_Blur);
   addOverride(FilterSimple_Multiply);
   addOverride(FilterSimple_Gamma_RGB);
   addOverride(FilterSimple_Multiply_RGB);
   addOverride(FilterSimple_Gamma_Channel);
   addOverride(FilterSimple_Multiply_Channel);
   addOverride(FilterSimple_Composite);
+  addOverride(FilterSimple_Replace);
   addOverride(FilterSimple_Grayscale);
   addOverride(FilterSimple_Invert);
   addOverride(FilterSimple_Invert_RGB);
@@ -3440,6 +3642,7 @@ void UninstallOverrides() {
   removeOverride(GetScanlineRenderer);
 
   removeOverride(FilterSimple_Gamma);
+  removeOverride(FilterSimple_Blur);
   removeOverride(FilterSimple_Multiply);
   removeOverride(FilterSimple_Gamma_RGB);
   removeOverride(FilterSimple_Multiply_RGB);

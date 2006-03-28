@@ -58,10 +58,23 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
                                                                 \
     if ((!pCurrent)) return Failure;                            \
                                                                 \
-    int iCX = 0 , iCY = rCoordinates.Height;                    \
+    int iCX = rCoordinates.Width, iCY = rCoordinates.Height;    \
                                                                 \
     int iRowOffset =                                            \
-        (Image->Width - rCoordinates.Width) + Image->Pitch;     
+        (Image->Width - rCoordinates.Width) + Image->Pitch;     \
+    int iColOffset =                                            \
+        (Image->Height - rCoordinates.Height) * (Image->Width + Image->Pitch);     \
+    int iRow =                                            \
+        Image->Width + Image->Pitch;     \
+    int iCol =                                            \
+        Image->Height * (iRow) - 1;     \
+                                                                \
+    ref(iCX);                                                   \
+    ref(iCY);                                                   \
+    ref(iRowOffset);                                            \
+    ref(iColOffset);                                            \
+    ref(iRow);                                                  \
+    ref(iCol);
                
 #define _FOS(name, xpc)                                         \
     {                                                           \
@@ -123,6 +136,28 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define FILTERSIMPLE_ROWEND                                     \
                                                                 \
         pCurrent += iRowOffset;                                 \
+                                                                \
+    }
+
+#define FILTERSIMPLE_INVROW                                     \
+                                                                \
+    while (iCX--) {                                             \
+                                                                \
+        iCY = rCoordinates.Height;                               
+
+#define FILTERSIMPLE_INVCOL                                     \
+                                                                \
+        while (iCY--) {
+            
+#define FILTERSIMPLE_INVCOLEND                                  \
+                                                                \
+            pCurrent += iRow;                             \
+                                                                \
+        }                                                                                                                      
+          
+#define FILTERSIMPLE_INVROWEND                                  \
+                                                                \
+        pCurrent -= iCol;                                 \
                                                                 \
     }
 

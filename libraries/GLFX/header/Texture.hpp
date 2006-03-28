@@ -1,5 +1,6 @@
 namespace GL {
   void freeTexture(GLuint handle);
+  void endDraw();
 }
 
 struct Texture {
@@ -66,10 +67,10 @@ struct Texture {
   }
 
   bool isInvalid() {
-    glEnd();
+    GL::endDraw();
     GLboolean temporary;
     glAreTexturesResident(1, &Handle, &temporary);
-    GLenum e = glGetError();
+    GLenum e = checkGLErrors();
     if (e == GL_INVALID_VALUE) {
       return true;
     }

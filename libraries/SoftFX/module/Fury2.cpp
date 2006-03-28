@@ -484,7 +484,7 @@ int CollisionCheckEx(SpriteParam *first, SpriteParam *check, bool mustbesolid, i
 float cw = 0;
 float sw = 0;
 SpriteParam * sCurrent = first;
-FRect rSource = {0, 0, 0, 0}, rDest = {0, 0, 0, 0};
+FRect rSource, rDest;
     if (!first) return 0;
     if (!check) return 0;
     if (!first->pNext) return 0;
@@ -1279,7 +1279,6 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
   bool draw_caret = false, draw_selection = false, locate_char = false;
   // states
   bool _break = false, _render = false, _move_down = false;
-  int escape = 0;
   int line_count = 0;
   int current_X = 0, maximum_X = 0;
   int index = 1, buffer_index = 1;
@@ -1679,7 +1678,7 @@ SpriteParam * sCurrent = first;
 float x, y, w, h;
     if (!first) return 0;
     if (!area) return 0;
-FRect rSource = *area, rDest = {0, 0, 0, 0};
+FRect rSource = *area, rDest;
     while (sCurrent) {
         if (sCurrent != exclude) {
             if ((sCurrent->Type != excludedtype) && (((requiredtype >= 0) && (sCurrent->Type == requiredtype)) || (requiredtype < 0))) {
@@ -1711,7 +1710,7 @@ SpriteParam * sCurrent = first;
 float cw;
     if (!first) return 0;
     if (!area) return 0;
-FRect rSource = *area, rDest = {0, 0, 0, 0};
+FRect rSource = *area, rDest;
     while (sCurrent) {
         if (sCurrent != exclude) {
             if ((sCurrent->Type != excludedtype) && (((requiredtype >= 0) && (sCurrent->Type == requiredtype)) || (requiredtype < 0))) {
@@ -2010,6 +2009,7 @@ Export int RenderPlaneOutlines_Masked(Image *Image, Lighting::Plane *Planes, Byt
 
 Export int SightCheck(Lighting::Environment *Env, float FromX, float FromY, float ToX, float ToY, SpriteParam *IgnoreSprite1, SpriteParam *IgnoreSprite2) {
   FLine LightRay;
+  FPoint pt = FPoint(FromX, FromY);
   FPoint IntersectionPoint;
   SpriteParam *Sprite;
   FLine SpriteLine;
@@ -2057,13 +2057,18 @@ Export int SightCheck(Lighting::Environment *Env, float FromX, float FromY, floa
       }
       float s = (Sprite->Obstruction.W + Sprite->Obstruction.H) / 4;
       float h = Sprite->Obstruction.H / 2;
-      float a = Radians(AngleBetween(Sprite->Position, FPoint(FromX, FromY)));          
-      float sdist = Sprite->ZHeight;
-      if (sdist <= 0) sdist = 10000;
-      SpriteLine.Start.X = (sin(a - Radians(90)) * s) + Sprite->Position.X;
-      SpriteLine.Start.Y = (-cos(a - Radians(90)) * s) + Sprite->Position.Y - h;
-      SpriteLine.End.X = (sin(a + Radians(90)) * s) + Sprite->Position.X;
-      SpriteLine.End.Y = (-cos(a + Radians(90)) * s) + Sprite->Position.Y - h;
+      FPoint p = FPoint(Sprite->Position.X, Sprite->Position.Y);
+      FPoint vl = FLine(p, pt).vector(), vr;
+      float d = vl.length();
+      vl /= d;
+      vl *= s;
+      vr = vl.rotate90r();
+      vl = vl.rotate90l();
+      p.Y -= h;
+      SpriteLine.Start = p;
+      SpriteLine.End = p;
+      SpriteLine.Start += vl;
+      SpriteLine.End += vr;
       if (LightRay.intersect(SpriteLine, IntersectionPoint)) {
         return 0;
       }
@@ -2105,13 +2110,13 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
   for (int l = 0; l < Env->LightCount; ++l) {
     Obscured = false;
 	  if (((!Env->Lights[l].Culled) || (!Env->Lights[l].PlaneCulled) || (!EnableCulling)) && (Env->Lights[l].Visible)) {
+      LightColor = Pixel(0, 0, 0, 0);
       ldist = Env->Lights[l].FalloffDistance;
       ldist11 = ldist * 1.1f;
       Falloff = Env->Lights[l].FalloffDistance > 0;
       if (Falloff) {
         DistanceMultiplier = (255.0F / ldist);
       }
-      LightColor = Env->Lights[l].Color;
       LightRay.Start.X = Env->Lights[l].X;
       LightRay.Start.Y = Env->Lights[l].Y;
       LightRay.End.X = X;
@@ -2120,7 +2125,21 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
   	  my1 = ClipValue(floor(_Min(LightRay.Start.Y, LightRay.End.Y) / fsh), Env->Matrix->Height - 1);
 	    mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / fsw), Env->Matrix->Width - 1);
 	    my2 = ClipValue(ceil(_Max(LightRay.Start.Y, LightRay.End.Y) / fsh), Env->Matrix->Height - 1);
-      if (Falloff) {
+      if (Env->Lights[l].Image) {
+        Distance = 0;
+        Falloff = false;
+        float w = Env->Lights[l].Image->Width / 2;
+        float h = Env->Lights[l].Image->Height / 2;
+        int x = floor(X - Env->Lights[l].X + w + Env->Lights[l].ImageAlignX);
+        int y = floor(Y - Env->Lights[l].Y + h + Env->Lights[l].ImageAlignY);
+        LightColor = Env->Lights[l].Image->getPixelClipNO(x, y);
+        LightColor = ScaleAlpha(LightColor, Env->Lights[l].Color[::Alpha]);
+        Obscured = (LightColor[::Alpha] == 0);
+        LightColor = Premultiply(LightColor);
+        ldist = _Max(w, h);
+        ldist11 = ldist * 1.1f;
+        if (Obscured) goto found;
+      } else if (Falloff) {
         YDistance = abs(LightRay.End.Y - LightRay.Start.Y) * DistanceMultiplier;
         XDistance = abs(LightRay.End.X - LightRay.Start.X) * DistanceMultiplier;
   #ifdef ACCURATE_PYTHAGORAS
@@ -2129,12 +2148,15 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
   //      Distance = ClipByte(sqrt((XDistance * XDistance) + (YDistance * YDistance)) / 0.707106781186547);
         Distance = ClipByte(sqrt((XDistance * XDistance) + (YDistance * YDistance)) / 0.95F);
   #endif
+        LightColor = Env->Lights[l].Color;
       } else {
+        LightColor = Env->Lights[l].Color;
         Distance = 0;
       }
       if (Distance < 255) {
         Obscured = false;
-        if ((Env->Lights[l].Spread < 180.0f) && (Distance > 0)) {
+        if (Env->Lights[l].Image) {
+        } else if ((Env->Lights[l].Spread < 180.0f) && (Distance > 0)) {
           // directional
           float ls = Env->Lights[l].Spread / 2;
           float a_l = NormalizeAngle(AngleBetween(LightRay.Start, LightRay.End));
@@ -2168,6 +2190,7 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
 		  }
 
         if (Env->Sprites != Null) {
+          FPoint lp = FPoint(Env->Lights[l].X, Env->Lights[l].Y);
           Sprite = Env->Sprites;
           while (Sprite) {
             if (Sprite == IgnoreSprite) {
@@ -2179,7 +2202,11 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
               continue;
             }
             FPoint p = FPoint(Sprite->Position.X, Sprite->Position.Y);
-            FPoint vl = FLine(p, FPoint(Env->Lights[l].X, Env->Lights[l].Y)).vector(), vr;
+            if (p.distance(&lp) > (ldist11)) {
+              Sprite = Sprite->pNext; 
+              continue;
+            }
+            FPoint vl = FLine(p, lp).vector(), vr;
             float d = vl.length();
             switch (Sprite->Params.SpecialFX) {
             default:
@@ -2306,8 +2333,8 @@ float FuzzyOffset = 0, FlickerAmount = 0;
     if ((Light->Cache != Null) && (Light->CacheValid == false)) {
       CameraRect = Light->Cache->getRectangle();
       RenderTarget = Light->Cache;
-      OffsetX = Light->X - Light->FalloffDistance;
-      OffsetY = Light->Y - Light->FalloffDistance;
+      iOffsetX = OffsetX = Light->X - Light->FalloffDistance;
+      iOffsetY = OffsetY = Light->Y - Light->FalloffDistance;
     } else {
       CameraRect = Camera->OutputRectangle;
       RenderTarget = Camera->ScratchBuffer;
@@ -2334,7 +2361,29 @@ float FuzzyOffset = 0, FlickerAmount = 0;
         Falloff = Light->FalloffDistance;
       }
 
-      if (abs(Light->Spread) > 90) {
+      if (Light->Image) {
+        // bitmapped
+        w = Light->Image->Width / 2.0f;
+        h = Light->Image->Height / 2.0f;
+        LightRect.setValuesAbsolute(LightPoint.X - floor(w) - Light->ImageAlignX, LightPoint.Y - floor(h) - Light->ImageAlignY, LightPoint.X + ceil(w) - Light->ImageAlignX, LightPoint.Y + ceil(h) - Light->ImageAlignY);
+        ScratchRect = LightRect;
+        LightFRect.X1 = LightPoint.X - w + OffsetX - Light->ImageAlignX;
+        LightFRect.Y1 = LightPoint.Y - h + OffsetY - Light->ImageAlignY;
+        LightFRect.X2 = LightPoint.X + w + OffsetX - Light->ImageAlignX;
+        LightFRect.Y2 = LightPoint.Y + h + OffsetY - Light->ImageAlignY;
+        Light_Clipped = !ClipRectangle_Rect(&LightRect, &CameraRect);
+
+        if (!Light_Clipped) {
+          // render the light's sphere of illumination
+          RenderTarget->setClipRectangle(LightRect);
+          FillRect.setValuesAbsolute(LightPoint.X - floor(w) - Light->ImageAlignX, LightPoint.Y - floor(h) - Light->ImageAlignY, LightPoint.X + ceil(w) - Light->ImageAlignX, LightPoint.Y + ceil(h) - Light->ImageAlignY);
+          if ((Light->CacheValid) && (Light->Cache != Null)) {
+          } else {
+            BlitSimple_Normal(RenderTarget, Light->Image, &FillRect, 0, 0);
+            //FilterSimple_Gradient_Radial(RenderTarget, &FillRect, Light->Color, Pixel(0, 0, 0, LightColor[::Alpha]));
+          }
+        }
+      } else if (abs(Light->Spread) > 90) {
         // unidirectional
         if (Light->FalloffDistance <= 0) {
           // no falloff (fill)
@@ -2450,8 +2499,8 @@ fuzzyrender:
               LightRect.setValuesAbsolute(GradientShadowPoly.MinimumX(), GradientShadowPoly.MinimumY(), GradientShadowPoly.MaximumX(), GradientShadowPoly.MaximumY());
               CacheRect = LightRect;
               CacheRect.Left = CacheRect.Top = 0;
-              //BlitSimple_Normal(RenderTarget, Light->Cache, &LightRect, 0, 0);
-              FilterSimple_Fill(RenderTarget, &LightRect, Pixel(0, 0, 0, 255));
+              BlitSimple_Normal(Camera->ScratchBuffer, Light->Cache, &LightRect, 0, 0);
+//              FilterSimple_Fill(RenderTarget, &LightRect, Pixel(0, 0, 0, 255));
             } else {
               FilterSimple_ConvexPolygon_Gradient(RenderTarget, &GradientShadowPoly, RenderFunction_Additive, 0);
               if (LightIterations > 0) {
@@ -2542,6 +2591,7 @@ fuzzyrender:
           } else {
             BlitSimple_Normal(Camera->ScratchBuffer, Light->Cache, &LightRect, 0, 0);
           }
+          ScratchRect = LightRect;
         }
         LightPoint.X += OffsetX;
         LightPoint.Y += OffsetY;
@@ -2749,19 +2799,47 @@ fuzzyrender:
                 BlitSimple_SourceAlpha_Tint_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, SavedColor, abs(Sprite->Params.Alpha) * 255);
                 break;
               }
-              for (int l = 0; l < Environment->LightCount; l++) {
-                bool obscured = SightCheck(Environment, Environment->Lights[l].X, Environment->Lights[l].Y, Sprite->Position.X, Sprite->Position.Y, Sprite, Environment->Lights[l].Attached) != 1;
-                if (obscured) {
-                } else {
-                  FPoint3 LightVector = FPoint3(FPoint3(Environment->Lights[l].X, Environment->Lights[l].Y), FPoint3(Sprite->Position.X, Sprite->Position.Y, Sprite->Position.Z));
-                  Byte a = 255;
-                  if (Environment->Lights[l].FalloffDistance > 0) {
-                    int d = LightVector.length() * 255;
-                    a = 255 - ClipByte(d / Environment->Lights[l].FalloffDistance);
+              for (int si = 0; si < Sprite->Graphic.SecondaryImageCount; si++) {
+                switch (Sprite->Graphic.pSecondaryImages[si].ImageType) {
+                case siNormalMap:
+                  for (int l = 0; l < Environment->LightCount; l++) {
+                    if (Environment->Lights[l].Culled) { 
+                    } else {
+                      bool obscured = SightCheck(Environment, Environment->Lights[l].X, Environment->Lights[l].Y, Sprite->Position.X, Sprite->Position.Y, Sprite, Environment->Lights[l].Attached) != 1;
+                      if (obscured) {
+                      } else {
+                        FPoint3 LightVector = FPoint3(FPoint3(Environment->Lights[l].X, Environment->Lights[l].Y), FPoint3(Sprite->Position.X, Sprite->Position.Y, Sprite->Position.Z));
+                        Pixel LightColor;
+                        if (Environment->Lights[l].Image) {
+                          float w = Environment->Lights[l].Image->Width / 2;
+                          float h = Environment->Lights[l].Image->Height / 2;
+                          int x = floor(Sprite->Position.X - Environment->Lights[l].X + w + Environment->Lights[l].ImageAlignX);
+                          int y = floor(Sprite->Position.Y - Environment->Lights[l].Y + h + Environment->Lights[l].ImageAlignY);
+                          LightColor = Environment->Lights[l].Image->getPixelClipNO(x, y);
+                          LightColor = ScaleAlpha(LightColor, Environment->Lights[l].Color[::Alpha]);
+                        } else if (Environment->Lights[l].FalloffDistance > 0) {
+                          Byte a = 255;
+                          int d = LightVector.length() * 255;
+                          a = 255 - ClipByte(d / Environment->Lights[l].FalloffDistance);
+                          LightColor = Environment->Lights[l].Color;
+                          LightColor[::Alpha] = a;
+                        }
+                        BlitSimple_NormalMap_Additive_SourceAlpha(Camera->OutputBuffer, Sprite->Graphic.pSecondaryImages[si].pImage, &rctDest, rctSource.Left, rctSource.Top, &LightVector, LightColor);
+                      }
+                    }
                   }
-                  Pixel LightColor = Environment->Lights[l].Color;
-                  LightColor[::Alpha] = a;
-                  BlitSimple_NormalMap_Additive_SourceAlpha(Camera->OutputBuffer, NormalMap, &rctDest, rctSource.Left, rctSource.Top, &LightVector, LightColor);
+                  break;
+                case siGlowMap:
+                  BlitSimple_Additive(Camera->OutputBuffer, Sprite->Graphic.pSecondaryImages[si].pImage, &rctDest, rctSource.Left, rctSource.Top);
+                  break;
+                case siShadowMap:
+                  BlitSimple_Subtractive(Camera->OutputBuffer, Sprite->Graphic.pSecondaryImages[si].pImage, &rctDest, rctSource.Left, rctSource.Top);
+                  break;
+                case siLightMap:
+                  BlitSimple_Lightmap_RGB(Camera->OutputBuffer, Sprite->Graphic.pSecondaryImages[si].pImage, &rctDest, rctSource.Left, rctSource.Top);
+                  break;
+                default:
+                  break;
                 }
               }
             } else {
@@ -2816,7 +2894,11 @@ fuzzyrender:
             Pixel *pDest = PlaneTexture->pointer(0, 0);
 		        int i = 0, imax = rctWall.Width;
             for (int l = 0; l < Environment->LightCount; l++) {
-              Environment->Lights[l].PlaneCulled = !(Environment->Lights[l].Rect.intersect(rctWall));
+              if (Environment->Lights[l].Image) {
+                Environment->Lights[l].PlaneCulled = false;
+              } else {
+                Environment->Lights[l].PlaneCulled = !(Environment->Lights[l].Rect.intersect(rctWall));
+              }
             }
             for (float x = sx; x <= ex; x += 1.0f) {
       			  if (i >= imax) break;
@@ -2826,7 +2908,10 @@ fuzzyrender:
               i++;
             }
             PlaneTexture->dirty();
+            int pw = PlaneTexture->Width;
+            PlaneTexture->Width = rctSource.Width;
             BlitResample_Normal(Camera->OutputBuffer, PlaneTexture, &rctWall, &rctSource, DefaultSampleFunction);
+            PlaneTexture->Width = pw;
           }
         }
         SortEntry = SortEntry->pSortedNext;

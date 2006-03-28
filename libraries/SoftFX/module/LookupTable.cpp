@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "../header/SoftFX Main.hpp"
 
-statictable staticTables[StaticTableCount];
+Align(16) statictable staticTables[StaticTableCount];
 
 inline void* vm_alloc(DoubleWord size) {
   DoubleWord *temp = 0, *result = 0;

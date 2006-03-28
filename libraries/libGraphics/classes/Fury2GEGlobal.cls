@@ -347,20 +347,20 @@ Dim m_lngLength As Long
         CheckExt = False
     End If
 End Function
-
-Public Function Floor(ByVal Value As Single) As Long
-On Error Resume Next
-    Floor = SoftFX.Floor(Value)
-End Function
-
-Public Function Ceil(ByVal Value As Single) As Long
-On Error Resume Next
-    Ceil = SoftFX.Ceil(Value)
-End Function
-
-Public Function ClipNumber(Value As Long, Min As Long, Max As Long) As Long
-    ClipNumber = ClipValue(Value, Min, Max)
-End Function
+'
+'Public Function Floor(ByVal Value As Single) As Long
+'On Error Resume Next
+'    Floor = SoftFX.Floor(Value)
+'End Function
+'
+'Public Function Ceil(ByVal Value As Single) As Long
+'On Error Resume Next
+'    Ceil = SoftFX.Ceil(Value)
+'End Function
+'
+'Public Function ClipNumber(Value As Long, Min As Long, Max As Long) As Long
+'    ClipNumber = ClipValue(Value, Min, Max)
+'End Function
 
 Public Function F2File(Optional Filename As String = "") As VirtualFile
 On Error Resume Next

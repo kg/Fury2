@@ -182,10 +182,10 @@ On Error Resume Next
     DispatchEvent "KeyDown", KeyCode, Shift
     Select Case KeyCode
     Case vbKeyUp
-        SelectedItem = mdlGlobal.Engine.ClipInteger(SelectedItem - 1, 1, Items.Count)
+        SelectedItem = SoftFX.ClipValue(SelectedItem - 1, 1, Items.Count)
         DispatchEvent "Select", SelectedItem
     Case vbKeyDown
-        SelectedItem = mdlGlobal.Engine.ClipInteger(SelectedItem + 1, 1, Items.Count)
+        SelectedItem = SoftFX.ClipValue(SelectedItem + 1, 1, Items.Count)
         DispatchEvent "Select", SelectedItem
     Case Else
     End Select
@@ -250,7 +250,7 @@ Dim l_lngMouseY As Long
             End If
             l_lngY = l_lngY + l_lngItemHeight
             l_rctItem.Top = l_lngY + l_rctNew.Top
-            l_rctItem.Bottom = mdlGlobal.Engine.ClipInteger(l_rctNew.Bottom, l_rctItem.Top, l_rctNew.Bottom)
+            l_rctItem.Bottom = SoftFX.ClipValue(l_rctNew.Bottom, l_rctItem.Top, l_rctNew.Bottom)
             l_lngHeight = l_lngHeight + l_lngItemHeight
             l_lngItem = l_lngItem + 1
         Next l_itmItem
@@ -350,7 +350,7 @@ Dim l_lngWidth As Long
         l_lngItem = 1
         For Each l_itmItem In m_colItems
             l_rctItem.Top = l_lngY + l_rctNew.Top
-            l_rctItem.Bottom = mdlGlobal.Engine.ClipInteger(l_rctNew.Bottom, l_rctItem.Top, l_rctNew.Bottom)
+            l_rctItem.Bottom = SoftFX.ClipValue(l_rctNew.Bottom, l_rctItem.Top, l_rctNew.Bottom)
             l_lngItemHeight = 0
             Err.Clear
             l_lngItemHeight = l_itmItem.Height(l_rctItem.Width)

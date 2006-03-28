@@ -899,10 +899,10 @@ FILTERSIMPLE_ROWEND
 FILTERSIMPLE_END
 
 FILTERSIMPLE_SIGNATURE(Gradient_4Edge)
-    , ::Image *Edge1, ::Image *Edge2, ::Image *Edge3, ::Image *Edge4) {
-FILTERSIMPLE_INIT
-FILTERSIMPLE_BEGIN
-FILTERSIMPLE_END
+	, ::Image *Edge1, ::Image *Edge2, ::Image *Edge3, ::Image *Edge4) 
+{
+		return Failure;
+}
 
 FILTERSIMPLE_SIGNATURE(Gradient_Horizontal_SourceAlpha)
     , Pixel Color1, Pixel Color2) {
@@ -1454,6 +1454,7 @@ void RenderFunction_SourceAlpha_Premultiplied(Pixel *Dest, Pixel *Source, int Co
     }
 }
 
+// note: outdated
 void RenderFunction_Merge(Pixel *Dest, Pixel *Source, int Count, Pixel SolidColor, DoubleWord Argument) {
     AlphaLevel *aSource, *aDest;
     int i = Count;

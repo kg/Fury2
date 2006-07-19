@@ -1,0 +1,23 @@
+[
+    uuid(3CB89DD9-2E5A-45D3-A6FF-E87B00CDCDCD),
+    helpstring("Compromise Virtual COM Registration Library"),
+    version(1.0),
+    lcid(0x0409)
+]
+library Compromise {
+    [dllname("Compromise.DLL"), helpstring("Compromise")]
+    module Compromise {
+        [entry("_Initialize@0")]
+        int Initialize(void);
+        [entry("_Uninitialize@0")]
+        int UnInitialize(void);
+
+        [entry("_Register@4")]
+        int Register([in,string]const wchar_t* Filename);
+        [entry("_Unregister@4")]
+        int Unregister([in,string]const wchar_t* Filename);
+
+        [entry("_IsSupported@0")]
+        int IsSupported(void);
+    }
+}

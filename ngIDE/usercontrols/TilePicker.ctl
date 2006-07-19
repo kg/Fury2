@@ -12,6 +12,31 @@ Begin VB.UserControl TilePicker
    ScaleHeight     =   275
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   119
+   Begin VB.Timer tmrDoRedraw 
+      Enabled         =   0   'False
+      Interval        =   1
+      Left            =   510
+      Top             =   2685
+   End
+   Begin VB.TextBox txtFilter 
+      BorderStyle     =   0  'None
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   225
+      Left            =   0
+      TabIndex        =   2
+      TabStop         =   0   'False
+      ToolTipText     =   "Attribute Filter"
+      Top             =   360
+      Width           =   1785
+   End
    Begin VB.Timer tmrRefreshToolbar 
       Interval        =   1000
       Left            =   285
@@ -82,6 +107,7 @@ Public Editor As Object
 Public ResourceFile As ngResourceFile
 Public Clipboard As cCustomClipboard
 Public BlitMode As SFXBlitModes
+Private m_booNeedSelect As Boolean
 Private m_lngClipboardFormat As Long
 Private m_imgBuffer As Fury2Image
 Private m_lngBuffer As Long
@@ -89,8 +115,108 @@ Private m_lngWidth As Long, m_lngHeight As Long
 Private m_lngStartX As Long, m_lngStartY As Long
 Private m_tstTileset As Fury2Tileset
 Private m_booPreserveRows As Boolean
+Private m_booTileIsHidden() As Boolean
 Private m_booTileIsSelected() As Boolean
 Private m_intSelectedTiles() As Integer
+
+Public Function ValueFromString(Text As String) As Variant
+On Error Resume Next
+Dim l_strValue As String
+Dim l_dblValue As Double
+Dim l_lngValue As Long
+Dim l_booValue As Boolean
+Dim l_arrValue As Variant
+Dim l_bytString() As Byte
+Dim l_strTemp As String
+Dim l_lngChar As Long
+Dim l_strChar As String
+Dim l_booString As Boolean, l_booEscape As Boolean
+Dim l_lngIndex As Long
+    If Text = "{Nothing}" Then
+        Set ValueFromString = Nothing
+        Exit Function
+    End If
+    If Text = "{Empty}" Then
+        ValueFromString = Empty
+        Exit Function
+    End If
+    If Left(Text, 1) = "(" And Right(Text, 1) = ")" Then
+        ' Array
+        ReDim l_arrValue(0 To 0)
+        l_lngIndex = 0
+        l_bytString = StrConv(Mid(Text, 2, Len(Text) - 2), vbFromUnicode)
+        For l_lngChar = LBound(l_bytString) To UBound(l_bytString)
+            l_strChar = Chr(l_bytString(l_lngChar))
+            If l_booEscape Then
+                Select Case LCase(l_strChar)
+                Case "n"
+                    l_strTemp = l_strTemp + vbCrLf
+                Case "r"
+                    l_strTemp = l_strTemp + vbCr
+                Case "l"
+                    l_strTemp = l_strTemp + vbLf
+                Case "0"
+                    l_strTemp = l_strTemp + Chr(0)
+                Case Else
+                    l_strTemp = l_strTemp + l_strChar
+                End Select
+                l_booEscape = False
+            Else
+                Select Case l_strChar
+                Case """"
+                    If (l_booString) Then
+                        l_booString = False
+                    Else
+                        l_booString = True
+                    End If
+                Case ","
+                    If (l_booString) Then
+                        l_strTemp = l_strTemp + l_strChar
+                    Else
+                        l_arrValue(l_lngIndex) = ValueFromString(l_strTemp)
+                        l_lngIndex = l_lngIndex + 1
+                        ReDim Preserve l_arrValue(0 To l_lngIndex)
+                        l_strTemp = ""
+                    End If
+                Case "\"
+                    l_booEscape = True
+                Case Else
+                    l_strTemp = l_strTemp + l_strChar
+                End Select
+            End If
+        Next l_lngChar
+        l_arrValue(l_lngIndex) = ValueFromString(l_strTemp)
+        ValueFromString = l_arrValue
+        Exit Function
+    Else
+        l_strValue = Text
+        If Left(Text, 1) = """" And Right(Text, 1) = """" Then
+            l_strValue = Mid(Text, 2, Len(Text) - 2)
+            ValueFromString = l_strValue
+            Exit Function
+        End If
+        Err.Clear
+        l_dblValue = CDbl(Text)
+        If Err = 0 Then
+            l_lngValue = CLng(Text)
+            If (Err = 0) And (Floor(l_dblValue) = l_lngValue) Then
+                ValueFromString = l_lngValue
+                Exit Function
+            End If
+            ValueFromString = l_dblValue
+            Exit Function
+        End If
+        Err.Clear
+        l_booValue = CBool(Text)
+        If Err = 0 Then
+            ValueFromString = l_booValue
+            Exit Function
+        End If
+        Err.Clear
+        ValueFromString = Trim(l_strValue)
+        Exit Function
+    End If
+End Function
 
 Friend Sub CutTile(ByVal Index As Long)
 On Error Resume Next
@@ -164,7 +290,7 @@ Dim l_lngRowWidth As Long
     HitTest = -1
     If Not (m_tstTileset Is Nothing) Then
         If (m_tstTileset.TileWidth > 0) And (m_tstTileset.TileHeight > 0) Then
-            l_lngY = -vsScrollbar.Value + tbrTileset.Height
+            l_lngY = -vsScrollbar.Value + tbrTileset.Height + txtFilter.Height
             l_lngX = -hsScrollbar.Value
             If PreserveRows Then
                 l_lngRowWidth = m_tstTileset.RowWidth
@@ -255,9 +381,11 @@ Dim l_lngY As Long, l_lngX As Long, l_lngI As Long
         m_intSelectedTiles = Tiles
     End If
     ReDim m_booTileIsSelected(0 To m_tstTileset.TileCount - 1)
+    ReDim m_booTileIsHidden(0 To m_tstTileset.TileCount - 1)
     For l_lngI = LBound(m_intSelectedTiles) To UBound(m_intSelectedTiles)
         m_booTileIsSelected(m_intSelectedTiles(l_lngI)) = True
     Next l_lngI
+    RefreshFilter
     Redraw
 End Sub
 
@@ -265,14 +393,17 @@ Private Sub AllocateBackbuffer()
 On Error Resume Next
     DeallocateBackbuffer
     Set m_imgBuffer = F2DIBSection(UserControl.ScaleWidth, UserControl.ScaleHeight, UserControl.hdc)
-    m_lngBuffer = SelectObject(UserControl.hdc, m_imgBuffer.DIBHandle)
+    m_booNeedSelect = True
 End Sub
 
 Private Sub DeallocateBackbuffer()
 On Error Resume Next
-    SelectObject UserControl.hdc, m_lngBuffer
-    m_lngBuffer = 0
-    Set m_imgBuffer = Nothing
+    If m_imgBuffer Is Nothing Then
+    Else
+        If Not m_booNeedSelect Then SelectObject UserControl.hdc, m_lngBuffer
+        m_lngBuffer = 0
+        Set m_imgBuffer = Nothing
+    End If
 End Sub
 
 Public Sub Redraw()
@@ -301,13 +432,15 @@ Dim l_lngBackgroundColor As Long, l_lngHighlightColor As Long
         l_lngMaxY = m_tstTileset.TileHeight
         If UBound(m_booTileIsSelected) <> (m_tstTileset.TileCount - 1) Then
             ReDim Preserve m_booTileIsSelected(0 To m_tstTileset.TileCount - 1)
+            ReDim m_booTileIsHidden(0 To m_tstTileset.TileCount - 1)
+            RefreshFilter
         End If
         If (m_tstTileset.TileWidth > 0) And (m_tstTileset.TileHeight > 0) Then
             Set l_imgTile = New Fury2Image
             Set l_rctTile = F2Rect(0, 0, m_tstTileset.TileWidth, m_tstTileset.TileHeight, False)
             l_imgTile.Deallocate
             l_lngOffset = (vsScrollbar.Value \ m_tstTileset.TileHeight)
-            l_lngY = -vsScrollbar.Value + (l_lngOffset * m_tstTileset.TileHeight) + tbrTileset.Height
+            l_lngY = -vsScrollbar.Value + (l_lngOffset * m_tstTileset.TileHeight) + tbrTileset.Height + txtFilter.Height
             l_lngX = -hsScrollbar.Value
             If PreserveRows Then
                 l_lngRowWidth = m_tstTileset.RowWidth
@@ -318,23 +451,25 @@ Dim l_lngBackgroundColor As Long, l_lngHighlightColor As Long
             l_lngWidth = l_lngRowWidth * m_tstTileset.TileWidth
             l_lngHeight = m_tstTileset.TileCount / (l_lngWidth \ m_tstTileset.TileWidth) * m_tstTileset.TileHeight
             For l_lngTile = l_lngOffset To m_tstTileset.TileCount - 1
-                l_imgTile.SetHandle GetTile(m_tstTileset.Handle, l_lngTile)
-                l_rctTile.RelLeft = l_lngX
-                l_rctTile.RelTop = l_lngY
-                If m_booTileIsSelected(l_lngTile) Then
-                    m_imgBuffer.Blit l_rctTile, Nothing, l_imgTile, , BlitMode
-                    m_imgBuffer.Fill l_rctTile, l_lngHighlightColor, RenderMode_SourceAlpha
-                    m_imgBuffer.Box l_rctTile.Adjust(-1, -1), F2White
-                    m_imgBuffer.Box l_rctTile.Adjust(1, 1), F2Black
-                Else
-                    m_imgBuffer.Blit l_rctTile, Nothing, l_imgTile, , BlitMode
+                If Not (m_booTileIsHidden(l_lngTile)) Then
+                    l_imgTile.SetHandle GetTile(m_tstTileset.Handle, l_lngTile)
+                    l_rctTile.RelLeft = l_lngX
+                    l_rctTile.RelTop = l_lngY
+                    If m_booTileIsSelected(l_lngTile) Then
+                        m_imgBuffer.Blit l_rctTile, Nothing, l_imgTile, , BlitMode
+                        m_imgBuffer.Fill l_rctTile, l_lngHighlightColor, RenderMode_SourceAlpha
+                        m_imgBuffer.Box l_rctTile.Adjust(-1, -1), F2White
+                        m_imgBuffer.Box l_rctTile.Adjust(1, 1), F2Black
+                    Else
+                        m_imgBuffer.Blit l_rctTile, Nothing, l_imgTile, , BlitMode
+                    End If
                 End If
                 l_lngX = l_lngX + m_tstTileset.TileWidth
                 If (l_lngX + m_tstTileset.TileWidth + hsScrollbar.Value) > (l_lngRowWidth * m_tstTileset.TileWidth) Then
                     l_lngX = -hsScrollbar.Value
                     l_lngY = l_lngY + m_tstTileset.TileHeight
                 End If
-                If (l_lngY) > (m_lngHeight + m_tstTileset.TileHeight + tbrTileset.Height) Then
+                If (l_lngY) > (m_lngHeight + m_tstTileset.TileHeight + tbrTileset.Height + txtFilter.Height) Then
                     Exit For
                 End If
             Next l_lngTile
@@ -419,11 +554,15 @@ Dim l_lngBackgroundColor As Long, l_lngHighlightColor As Long
     End If
     'UserControl.Line (l_lngMaxX, IIf(tbrTileset.Visible, tbrTileset.Height, 0))-(m_lngWidth, m_lngHeight + IIf(tbrTileset.Visible, tbrTileset.Height, 0)), UserControl.BackColor, BF
     'UserControl.Line (0, l_lngMaxY + IIf(tbrTileset.Visible, tbrTileset.Height, 0))-(l_lngMaxX, m_lngHeight + IIf(tbrTileset.Visible, tbrTileset.Height, 0)), UserControl.BackColor, BF
+    If m_booNeedSelect Then
+        m_booNeedSelect = False
+        m_lngBuffer = SelectObject(UserControl.hdc, m_imgBuffer.DIBHandle)
+    End If
     If UserControl.AutoRedraw Then UserControl.Refresh
     vsScrollbar.Visible = vsScrollbar.Enabled
     hsScrollbar.Visible = hsScrollbar.Enabled
     l_lngWidth = UserControl.ScaleWidth - IIf(vsScrollbar.Visible, vsScrollbar.Width, 0)
-    l_lngHeight = UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0) - IIf(tbrTileset.Visible, tbrTileset.Height, 0)
+    l_lngHeight = UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0) - IIf(tbrTileset.Visible, tbrTileset.Height, 0) - IIf(txtFilter.Visible, txtFilter.Height, 0)
     If (l_lngWidth <> m_lngWidth) Or (l_lngHeight <> m_lngHeight) Then
         m_lngWidth = l_lngWidth
         m_lngHeight = l_lngHeight
@@ -439,6 +578,8 @@ End Property
 Public Property Set Tileset(NewTileset As Fury2Tileset)
     Set m_tstTileset = NewTileset
     ReDim m_booTileIsSelected(0 To m_tstTileset.TileCount - 1)
+    ReDim m_booTileIsHidden(0 To m_tstTileset.TileCount - 1)
+    RefreshFilter
     RebuildCache
     Redraw
 End Property
@@ -506,9 +647,21 @@ On Error Resume Next
     End Select
 End Sub
 
+Private Sub tmrDoRedraw_Timer()
+On Error Resume Next
+    tmrDoRedraw.Enabled = False
+    Redraw
+End Sub
+
 Private Sub tmrRefreshToolbar_Timer()
 On Error Resume Next
     RefreshToolbar
+End Sub
+
+Private Sub txtFilter_Change()
+On Error Resume Next
+    RefreshFilter
+    Redraw
 End Sub
 
 Private Sub UserControl_Hide()
@@ -561,8 +714,7 @@ Dim l_intSelectedTiles() As Integer
             , frmIcons.ilContextMenus)
         Case 1
             m_booPreserveRows = Not m_booPreserveRows
-            Cls
-            Redraw
+            UserControl_Resize
         Case 3
             CutTile l_lngTile
         Case 4
@@ -629,13 +781,15 @@ On Error Resume Next
     DeallocateBackbuffer
     AllocateBackbuffer
     tbrTileset.Move 0, 0, UserControl.ScaleWidth, tbrTileset.IdealHeight
-    vsScrollbar.Move UserControl.ScaleWidth - (GetScrollbarSize(vsScrollbar) + 1), tbrTileset.Height, GetScrollbarSize(vsScrollbar) + 1, UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0) - IIf(tbrTileset.Visible, tbrTileset.Height, 0)
+    txtFilter.Move 0, tbrTileset.Height, UserControl.ScaleWidth, txtFilter.Height
+    vsScrollbar.Move UserControl.ScaleWidth - (GetScrollbarSize(vsScrollbar) + 1), txtFilter.Height + txtFilter.Top, GetScrollbarSize(vsScrollbar) + 1, UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0) - IIf(tbrTileset.Visible, tbrTileset.Height, 0) - IIf(txtFilter.Visible, txtFilter.Height, 0)
     hsScrollbar.Move 0, UserControl.ScaleHeight - (GetScrollbarSize(hsScrollbar) + 1), UserControl.ScaleWidth - IIf(vsScrollbar.Visible, vsScrollbar.Width, 0), GetScrollbarSize(hsScrollbar) + 1
     vsScrollbar.Visible = vsScrollbar.Enabled
     hsScrollbar.Visible = hsScrollbar.Enabled
     m_lngWidth = UserControl.ScaleWidth - IIf(vsScrollbar.Visible, vsScrollbar.Width, 0)
     m_lngHeight = UserControl.ScaleHeight - IIf(hsScrollbar.Visible, hsScrollbar.Height, 0) - IIf(tbrTileset.Visible, tbrTileset.Height, 0)
     Redraw
+    tmrDoRedraw.Enabled = True
 End Sub
 
 Public Sub InitToolbar()
@@ -659,6 +813,46 @@ On Error Resume Next
     UserControl_Resize
 End Sub
 
+Public Sub RefreshFilter()
+On Error Resume Next
+Dim l_varAttrib As Variant
+Dim l_varValue As Variant
+Dim l_strValue As String
+Dim l_lngAttrib As Long
+Dim l_lngIndex As Long
+Dim l_lngCount As Long
+    If m_tstTileset.TileCount < 1 Then Exit Sub
+    If Len(Trim(txtFilter.Text)) > 0 Then
+        l_varValue = ValueFromString(txtFilter.Text)
+        l_strValue = LCase(CStr(l_varValue))
+        For l_lngIndex = 0 To m_tstTileset.TileCount - 1
+            l_varAttrib = m_tstTileset.TileData(l_lngIndex)
+            m_booTileIsHidden(l_lngIndex) = True
+            Err.Clear
+            l_lngCount = -1
+            l_lngCount = UBound(l_varAttrib) - LBound(l_varAttrib) + 1
+            If l_lngCount > 0 Then
+                For l_lngAttrib = LBound(l_varAttrib) To UBound(l_varAttrib)
+                    Select Case VarType(l_varAttrib(l_lngAttrib))
+                    Case vbString
+                        If InStr(LCase(CStr(l_varAttrib(l_lngAttrib))), CStr(l_varValue)) Then
+                            m_booTileIsHidden(l_lngIndex) = False
+                        End If
+                    Case Else
+                        If (l_varAttrib(l_lngAttrib) = l_varValue) Then
+                            m_booTileIsHidden(l_lngIndex) = False
+                        End If
+                    End Select
+                Next l_lngAttrib
+            End If
+        Next l_lngIndex
+    Else
+        For l_lngIndex = 0 To m_tstTileset.TileCount - 1
+            m_booTileIsHidden(l_lngIndex) = False
+        Next l_lngIndex
+    End If
+End Sub
+
 Public Sub RefreshToolbar()
 On Error Resume Next
 Dim l_booEmbed As Boolean
@@ -675,6 +869,7 @@ Private Sub UserControl_Show()
 On Error Resume Next
     AllocateBackbuffer
     Redraw
+    tmrDoRedraw.Enabled = True
 End Sub
 
 Private Sub UserControl_Terminate()

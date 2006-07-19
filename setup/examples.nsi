@@ -7,7 +7,7 @@ XPStyle on
 Name "Fury² Examples"
 Var ALREADY_INSTALLED
 !define NAME "Fury² Examples"
-!define VERSION "0.8"
+!define VERSION "0.9"
 
 !include Library.nsh
 !include "MUI.nsh"
@@ -36,7 +36,7 @@ Var ALREADY_INSTALLED
 
   OutFile "..\..\binary\setup\fury2_examples_beta_${VERSION}.exe"
 
-  InstallDir "$PROGRAMFILES\Fury²"
+  InstallDir "$PROGRAMFILES\Fury2 0.9"
 
 ;--------------------------------
 ;Installer Sections
@@ -129,5 +129,4 @@ Section "Uninstall"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NAME}"
 
   RmDir /r "$INSTDIR\Examples"
-  RmDir /r "$INSTDIR"
 SectionEnd

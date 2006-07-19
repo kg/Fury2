@@ -307,7 +307,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As PointAPI) As Long
+Private Declare Function ScreenToClient Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
 Implements iExtendedForm
 Implements iEditingCommands
 Implements iCustomMenus
@@ -806,7 +806,7 @@ End Function
 Public Function PasteSprite(Optional ByVal AtIndex As Long = -1, Optional ByVal DoRedraw As Boolean = True) As Fury2Sprite
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
-Dim l_ptMouse As PointAPI
+Dim l_ptMouse As POINTAPI
     With SelectedLayer.Sprites
         BeginProcess "Performing Paste..."
         If AtIndex < 1 Then
@@ -1166,7 +1166,7 @@ Public Sub AutoScroll(Optional ByVal X As Long = -32767, Optional ByVal Y As Lon
 On Error Resume Next
 Dim l_lngX1 As Long, l_lngY1 As Long, l_lngX2 As Long, l_lngY2 As Long
 Dim l_lngScrollX As Long, l_lngScrollY As Long
-Dim l_ptCursor As PointAPI
+Dim l_ptCursor As POINTAPI
 Dim l_lngCapture As Long
     If Not m_voViewOptions.AutoScroll Then Exit Sub
     hsMap.Tag = "lock"
@@ -1281,7 +1281,7 @@ End Sub
 Public Sub ClearOverlay()
 On Error Resume Next
 Dim l_lngXO As Long, l_lngYO As Long
-    m_imgOverlay.Clear
+    m_imgOverlay.Clear F2FromGDIColor(picMapViewport.BackColor)
     If (m_lngOverlayX - hsMap.Value) < 0 Then
         l_lngXO = -(m_lngOverlayX - hsMap.Value)
     End If
@@ -5724,7 +5724,7 @@ End Sub
 
 Private Sub tpkTiles_TileHover(Tile As Integer)
 On Error Resume Next
-    Editor.SetLocation "Tile " & Tile
+    Editor.SetLocation "Tile " & Tile & " " & insMap.ValueToString(tpkTiles.Tileset.TileData(Tile))
 End Sub
 
 Private Sub tpkTiles_TilesetModified()
@@ -5868,20 +5868,27 @@ Dim l_objObject As Object
         Select Case m_lngCurrentView
         Case View_Tiles
             .AddNew "Layers", "Layers"
+            picMapView.MousePointer = vbArrow
         Case View_Blocking
             .AddNew "Layers", "Layers"
+            picMapView.MousePointer = vbCrosshair
         Case View_Lighting
             .AddNew "Layers", "Layers"
             .AddNew "Lights", "Lights"
+            picMapView.MousePointer = vbCrosshair
         Case View_Areas
             .AddNew "Areas", "Areas"
+            picMapView.MousePointer = vbCrosshair
         Case View_Sprites
             .AddNew "Layers", "Layers"
             .AddNew "Sprites", "Sprites"
             .AddNew "Paths", "Paths"
+            picMapView.MousePointer = vbArrow
         Case View_Objects
             .AddNew "Objects", "Objects"
+            picMapView.MousePointer = vbArrow
         Case Else
+            picMapView.MousePointer = vbArrow
         End Select
     End With
     tsLists.DisableUpdates = False

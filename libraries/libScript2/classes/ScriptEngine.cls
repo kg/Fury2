@@ -33,6 +33,25 @@ Public Event ExecutionEnd()
 
 Private Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (Destination As Any, Source As Any, ByVal Length As Long)
 
+Public Function ResolveMember(ByRef Obj As Object, ByVal Name As String) As Long
+On Error Resume Next
+    ResolveMember = m_Engine.ResolveMemberName(Obj, Name)
+    If ResolveMember = 0 Then
+        ResolveMember = -1
+    End If
+End Function
+
+Public Function InvokeMember(ByRef Obj As Object, ByVal Member As Long, ByVal InvokeType As VbCallType, ByRef Arguments() As Variant) As Variant
+On Error Resume Next
+    InvokeMember = m_Engine.InvokeMemberArray(Obj, Member, InvokeType, Arguments)
+End Function
+
+Public Function ResolveName(ByVal Name As String) As INamedItem
+On Error Resume Next
+    Set ResolveName = m_Engine.NamedItems(Name)
+    Err.Clear
+End Function
+
 Public Property Get ScriptRunning() As Boolean
     ScriptRunning = (ScriptsRunning > 0)
 End Property
@@ -153,6 +172,7 @@ Public Sub CreateModule(ByRef Name As String, ByRef Code As String)
 On Error Resume Next
     m_Engine.AddNamespace Name
     AddCode Code, Name
+'    AddObject Name, Namespace(Name), True, True, True
 End Sub
 
 Public Function ParseCodes(ByRef Str As String) As String

@@ -1,4 +1,4 @@
-frmNull = 176, 232, 1100, 838, C, -483, 233, 441, 839, C
-mdlMain = 132, 174, 1056, 781, C
+frmNull = 81, 33, 1005, 639, C, -483, 233, 441, 839, C
+mdlMain = 36, 8, 960, 615, C
 cBrowseForFolder = 44, 50, 825, 570, C
-mBrowseForFolder = 0, 0, 0, 0, C
+mBrowseForFolder = 44, 62, 943, 565, C

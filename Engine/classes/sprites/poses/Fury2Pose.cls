@@ -161,6 +161,7 @@ On Error Resume Next
     With Duplicate
         .Name = mvarName
         .Blocking.SetValues mvarBlocking.Width, mvarBlocking.Height
+        Set .Blocking.Polygon = mvarBlocking.Polygon.Duplicate()
         .LoopMode = mvarLoopMode
         .XVelocity = mvarXVelocity
         .YVelocity = mvarYVelocity
@@ -176,6 +177,11 @@ End Property
 
 Public Property Set Blocking(vData As Fury2Blocking)
     Set mvarBlocking = vData
+End Property
+
+Public Property Get BlockingPolygon() As Fury2Polygon
+On Error Resume Next
+    Set BlockingPolygon = mvarBlocking.Polygon
 End Property
 
 Public Property Let YVelocity(ByVal vData As Single)

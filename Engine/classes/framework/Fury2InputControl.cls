@@ -105,7 +105,7 @@ Dim l_lngElapsed As Long, l_lngTriggers As Long
                     m_booReset = False
                     Handled = False
                     Engine.ControlActivate Me
-                    ActivateEvent.Invoke
+                    If Not (ActivateEvent Is Nothing) Then ActivateEvent.Invoke
                 Next l_lngTriggers
             End If
         End If
@@ -122,10 +122,7 @@ Dim l_booEvent As Boolean
     If l_booEvent = True Then
         m_dblLastActivate = SoftFX.GetTime()
         Engine.ControlActivate Me
-        If ActivateEvent Is Nothing Then
-        Else
-            ActivateEvent.Invoke
-        End If
+        If Not (ActivateEvent Is Nothing) Then ActivateEvent.Invoke
     End If
 End Sub
 
@@ -138,10 +135,7 @@ Dim l_booEvent As Boolean
     If m_lngState < 0 Then m_lngState = 0
     If l_booEvent Then
         Engine.ControlDeactivate Me
-        If DeactivateEvent Is Nothing Then
-        Else
-            DeactivateEvent.Invoke
-        End If
+        If Not (DeactivateEvent Is Nothing) Then DeactivateEvent.Invoke
     End If
 End Sub
 

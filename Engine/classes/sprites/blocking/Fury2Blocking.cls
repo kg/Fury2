@@ -38,6 +38,7 @@ Implements IVirtualFileSaveable
 Implements IInspectable
 Implements IInspectorType
 
+Private mvarPolygon As Fury2Polygon
 Private mvarWidth As Long
 Private mvarHeight As Long
 
@@ -47,6 +48,14 @@ End Property
 
 Public Property Let Width(ByVal NewWidth As Long)
     mvarWidth = NewWidth
+End Property
+
+Public Property Get Polygon() As Fury2Polygon
+    Set Polygon = mvarPolygon
+End Property
+
+Public Property Set Polygon(ByVal NewPoly As Fury2Polygon)
+    Set mvarPolygon = NewPoly
 End Property
 
 Public Property Get Height() As Long
@@ -81,6 +90,12 @@ On Error Resume Next
         .ReadSegment_Begin
             .Load mvarWidth
             .Load mvarHeight
+            .ReadSegment_Begin
+                Set mvarPolygon = F2Polygon()
+                If Not EOS Then
+                    .Load mvarPolygon
+                End If
+            .ReadSegment_End
         .ReadSegment_End
     End With
 End Sub
@@ -91,6 +106,12 @@ On Error Resume Next
         .WriteSegment_Begin
             .Save mvarWidth
             .Save mvarHeight
+            If (mvarPolygon Is Nothing) Then
+            Else
+                .WriteSegment_Begin
+                    .Save mvarPolygon
+                .WriteSegment_End
+            End If
         .WriteSegment_End
     End With
 End Sub

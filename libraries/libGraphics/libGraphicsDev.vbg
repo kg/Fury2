@@ -1,5 +1,5 @@
 VBGROUP 5.0
 Project=libGraphics.vbp
-StartupProject=test\test.vbp
+Project=test\test.vbp
 Project=test\SharedTest.vbp
-Project=C:\Program Files\Microsoft Visual Studio\VB98\PolygonTest.vbp
+StartupProject=C:\Program Files\Microsoft Visual Studio\VB98\PolygonTest.vbp

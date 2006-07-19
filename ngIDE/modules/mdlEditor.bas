@@ -24,6 +24,78 @@ Global g_strVersion As String
 Global g_booMainWindowLoaded As Boolean
 Private m_lngBusyCount As Long
 
+Function LoadLibraries() As Boolean
+On Error Resume Next
+Dim l_colLibraries As Collection
+Dim l_lngLibrary As Long
+Dim l_strFilename As String
+Dim l_lngResult As Long
+Dim l_booFailed As Boolean
+    If InIDE Then
+        LoadLibraries = True
+        Exit Function
+    End If
+    If Compromise.IsSupported() = 0 Then
+        LoadLibraries = True
+        Exit Function
+    End If
+    ChDrive Left(App.Path, 2)
+    ChDir App.Path
+    Set l_colLibraries = New Collection
+    l_colLibraries.Add "debugger.dll"
+    l_colLibraries.Add "packages2.dll"
+    l_colLibraries.Add "graphics.dll"
+    l_colLibraries.Add "filesystem.dll"
+    l_colLibraries.Add "scriptengine.dll"
+    l_colLibraries.Add "script2.dll"
+    l_colLibraries.Add "sound2.dll"
+    l_colLibraries.Add "video.dll"
+    l_colLibraries.Add "engine.dll"
+    l_colLibraries.Add "SSubTmr6.dll"
+    l_colLibraries.Add "vbalHook6.dll"
+    l_colLibraries.Add "MDIActiveX.ocx"
+    l_colLibraries.Add "cFScroll.ocx"
+    l_colLibraries.Add "cmcs21.ocx"
+    l_colLibraries.Add "vbalDTab6.ocx"
+    l_colLibraries.Add "vbalIml6.ocx"
+    l_colLibraries.Add "vbalSBar6.ocx"
+    l_colLibraries.Add "vbalTreeView6.ocx"
+    l_colLibraries.Add "vbalEdit.ocx"
+    l_colLibraries.Add "cNewMenu6.dll"
+    l_colLibraries.Add "vbalHook6.dll"
+    l_colLibraries.Add "vbalMDITabs6.dll"
+    l_colLibraries.Add "vbalMDISplit6.dll"
+    l_colLibraries.Add "ngUI.ocx"
+    l_colLibraries.Add "ngCommon.dll"
+    l_colLibraries.Add "ngInterfaces.dll"
+    Load frmLoadingLibraries
+    frmLoadingLibraries.Show
+    frmLoadingLibraries.SetCaption "Loading libraries..."
+    frmLoadingLibraries.SetText ""
+    frmLoadingLibraries.SetProgress 0
+    Compromise.Initialize
+    For l_lngLibrary = 1 To l_colLibraries.Count
+        l_strFilename = l_colLibraries(l_lngLibrary)
+        frmLoadingLibraries.SetText l_strFilename
+        If Not InIDE Then
+            l_lngResult = Compromise.Register(App.Path + "\\" + l_strFilename)
+            If (l_lngResult = 1) Then
+            Else
+                l_lngResult = Compromise.Register(App.Path + "\editor\" + l_strFilename)
+                If (l_lngResult = 1) Then
+                Else
+                    MsgBox "Unable to load: " + l_colLibraries(l_lngLibrary), vbExclamation, "Error"
+                    l_booFailed = True
+                End If
+            End If
+        End If
+        frmLoadingLibraries.SetProgress l_lngLibrary / l_colLibraries.Count
+    Next l_lngLibrary
+    frmLoadingLibraries.Hide
+    Unload frmLoadingLibraries
+    LoadLibraries = Not l_booFailed
+End Function
+
 Public Sub Main()
 On Error Resume Next
 Dim l_varFiles As Variant
@@ -39,6 +111,10 @@ Dim l_varFiles As Variant
             frmDDE.lblDDE.LinkExecute Command$
             Unload frmDDE
         End If
+        End
+    End If
+    If LoadLibraries Then
+    Else
         End
     End If
     F2Init
@@ -83,7 +159,7 @@ Dim l_varFiles As Variant
     InitFilesystem App.Path
     InitAccelerators
     
-    g_edEditor.AcceleratorManager.Attach frmMain.hWnd
+    g_edEditor.AcceleratorManager.Attach frmMain.hwnd
     g_edEditor.Event_FocusChanged
     
     frmMain.RefreshActiveDocument

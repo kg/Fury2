@@ -52,6 +52,7 @@ struct FPoint;
 struct FVector;
 struct ILine;
 struct FLine;
+struct FInterval;
 
 struct IPoint {
     int X;
@@ -246,20 +247,20 @@ struct FPoint3 {
     this->Y = B.Y - A.Y;
     this->Z = B.Z - A.Z;
   }
-  inline float distance(FPoint3 *Other) {
+  inline float distance(FPoint3 *Other) const {
     float xd, yd, zd;
     xd = Other->X - this->X;
     yd = Other->Y - this->Y;
     zd = Other->Z - this->Z;
     return (float)(sqrt((xd * xd) + (yd * yd) + (zd * zd)));
   }
-  inline FPoint3 cross(FPoint3& Other) {
+  inline FPoint3 cross(FPoint3& Other) const {
     return FPoint3(Y * Other.Z - Z * Other.Y, Z * Other.X - X * Other.Z, X * Other.Y - Y * Other.X);
   }
-  inline float dot(FPoint3& Other) {
+  inline float dot(FPoint3& Other) const {
     return (this->X * Other.X + this->Y * Other.Y + this->Z * Other.Z);
   }
-  inline float length() {
+  inline float length() const {
     float v = (this->X * this->X) + (this->Y * this->Y) + (this->Z * this->Z);
     return sqrt(v);
   }
@@ -337,7 +338,7 @@ struct FPoint3 {
     }
     return *this;
   }
-  inline bool operator==(FPoint3 &rhs) {
+  inline bool operator==(FPoint3 &rhs) const {
     return ((rhs.X == this->X) && (rhs.Y == this->Y) && (rhs.Z == this->Z));
   }
   inline FPoint3 operator-() {
@@ -397,18 +398,28 @@ struct FRect {
       return true;
     }
     FLine edge(int index);
+
+    inline FPoint TopLeft() const {
+      return FPoint(X1, Y1);
+    }
+    inline FPoint TopRight() const {
+      return FPoint(X2, Y1);
+    }
+    inline FPoint BottomLeft() const {
+      return FPoint(X1, Y2);
+    }
+    inline FPoint BottomRight() const {
+      return FPoint(X2, Y2);
+    }
+
     float X1;
     float Y1;
     float X2;
     float Y2;
 };
 
-struct FSpan {
-    float S;
-    float E;
-};
-
 struct FLine {
+    FPoint Start, End;
     inline FLine() {
       this->Start.X = 0;
       this->Start.Y = 0;
@@ -445,33 +456,33 @@ struct FLine {
 		  point.Y = this->Start.Y + (r * thisy);
 		  return true;
 	  }
-    inline float slope() {
+    inline float slope() const {
       return (End.Y - Start.Y) / (End.X - Start.X);
     }
-    inline FPoint vector() {
+    inline FPoint vector() const {
       FPoint vec;
       vec.X = this->End.X - this->Start.X;
       vec.Y = this->End.Y - this->Start.Y;
       return vec;
     }
-    inline FPoint rvector() {
+    inline FPoint rvector() const {
       FPoint vec;
       vec.X = this->Start.X - this->End.X;
       vec.Y = this->Start.Y - this->End.Y;
       return vec;
     }
-    inline FPoint bearing() {
+    inline FPoint bearing() const {
       FPoint vec;
       vec.X = this->End.X - this->Start.X;
       vec.Y = this->End.Y - this->Start.Y;
       vec.normalize();
       return vec;
     }
-    inline FPoint normal() {
+    inline FPoint normal() const {
       FPoint vec = vector();
       return vec.perp();
     }
-    inline FRect bounds() {
+    inline FRect bounds() const {
       FRect area;
       area.X1 = Start.X > End.X ? End.X : Start.X;
       area.Y1 = Start.Y > End.Y ? End.Y : Start.Y;
@@ -487,7 +498,32 @@ struct FLine {
       this->End += vec;
       return;
     }
-    FPoint Start, End;
+};
+
+struct FInterval {
+public:
+  float Min, Max;
+
+  FInterval(float min, float max) {
+    Min = min;
+    Max = max;
+  }
+
+  inline void normalize() {
+    if (Min > Max) {
+      float t = Min;
+      Min = Max;
+      Max = t;
+    }
+  }
+
+  inline FInterval overlap(FInterval& other) const {
+    return FInterval((Min<other.Min)?Min:other.Min, (Max>other.Max)?Max:other.Max);
+  }
+
+  inline bool intersects(FInterval& other) const {
+    return ((Min >= other.Min) && (Min <= other.Max)) || ((Max >= other.Min) && (Max <= other.Max));
+  }
 };
 
 struct FixedPoint {

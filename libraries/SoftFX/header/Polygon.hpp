@@ -16,6 +16,7 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifndef _POLYGON_HPP_
 #define _POLYGON_HPP_
 
 inline Pixel GradientVertex::color() {
@@ -23,6 +24,80 @@ inline Pixel GradientVertex::color() {
 }
 inline void GradientVertex::setColor(Pixel V) {
   this->Color = V.V;
+}
+
+template <class T> inline FInterval CalculateInterval(FPoint axis, T& polygon) {
+  int vertices = polygon.Count();
+  if (vertices < 1) return FInterval(0, 0);
+  float d=axis.dot(polygon.GetVertexPoint(0));
+  FInterval value(d, d);
+  for (int v = 0; v < vertices; v++) {
+    d=polygon.GetVertexPoint(v).dot(axis);
+    if (d < value.Min)
+      value.Min = d;
+    else
+      if (d > value.Max)
+        value.Max = d;
+  }
+  return value;
+}
+
+template <class T> inline bool Intersects(T& a, FLine& line) {
+  if (a.Count() < 2) return false;
+  FLine edge;
+  FPoint temp = FPoint();
+  int edges = a.GetEdgeCount();
+  for (int e = 0; e < edges; e++) {
+    edge = a.GetEdgeLine(e);
+    if (line.intersect(edge, temp)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+template <class T> inline bool Intersects(T& a, T& b) {
+  if (a.Count() < 2) return false;
+  if (b.Count() < 2) return false;
+  if ((a.Count() == 2) || (b.Count() == 2)) {
+    if (a.Count() != b.Count()) {
+      FLine l = (a.Count() == 2) ? a.GetEdgeLine(0) : b.GetEdgeLine(0);
+      return Intersects((a.Count() == 2) ? b : a, l);
+    } else {
+      FLine lA = a.GetEdgeLine(0);
+      FLine lB = b.GetEdgeLine(0);
+      FPoint temp = FPoint();
+      return lA.intersect(lB, temp);
+    }
+  }
+  int aEdges = a.GetEdgeCount();
+  int bEdges = b.GetEdgeCount();
+  FPoint normal;
+  for (int e = 0; e < aEdges; e++) {
+    normal = a.GetEdgeLine(e).normal();
+    FInterval aInterval = CalculateInterval(normal, a), bInterval = CalculateInterval(normal, b);
+    if (!aInterval.intersects(bInterval))
+      return false;
+  }
+  for (int e = 0; e < bEdges; e++) {
+    normal = b.GetEdgeLine(e).normal();
+    FInterval aInterval = CalculateInterval(normal, a), bInterval = CalculateInterval(normal, b);
+    if (!aInterval.intersects(bInterval))
+      return false;
+  }
+  //for (int e = 0; e < aEdges; e++) {
+  //  normal = a.GetEdgeLine(e).vector();
+  //  FInterval aInterval = CalculateInterval(normal, a), bInterval = CalculateInterval(normal, b);
+  //  if (!aInterval.intersects(bInterval))
+  //    return false;
+  //}
+  //for (int e = 0; e < bEdges; e++) {
+  //  normal = b.GetEdgeLine(e).vector();
+  //  FInterval aInterval = CalculateInterval(normal, a), bInterval = CalculateInterval(normal, b);
+  //  if (!aInterval.intersects(bInterval))
+  //    return false;
+  //}
+  return true;
 }
 
 template <class T> inline T Intersection(T& a, T& b, Rectangle *Area, int Edge) {
@@ -125,6 +200,21 @@ inline TexturedVertex Intersection(TexturedVertex& a, TexturedVertex& b, Rectang
   return c;
 }
 
+template <class Vertex> class PolygonEdge {
+public:
+  Vertex Start;
+  Vertex End;
+
+  PolygonEdge(Vertex start, Vertex end) {
+    Start = start;
+    End = end;
+  }
+
+  inline FLine GetLine() {
+    return FLine(FPoint(Start.X, Start.Y), FPoint(End.X, End.Y));
+  }
+};
+
 template <class Vertex> class Polygon {
 public:
   Vertex *Vertexes;
@@ -142,6 +232,14 @@ public:
     Reserved = 0;
   }
 
+  Polygon(const Polygon& other) {
+    Vertexes = Null;
+    VertexCount = 0;
+    InactiveVertexes = 0;
+    Reserved = 0;
+    Copy(other);
+  }
+
   ~Polygon() {
     this->Deallocate();
   }
@@ -150,7 +248,7 @@ public:
     this->InactiveVertexes = this->VertexCount;
   }
 
-  inline void Copy (Polygon& Source) {
+  inline void Copy (const Polygon& Source) {
     if ((this->Reserved == 0) || (this->VertexCount < Source.VertexCount)) this->Allocate(Source.VertexCount - Source.InactiveVertexes);
     _Copy<Vertex>(this->Vertexes, Source.Vertexes, this->VertexCount);
     this->InactiveVertexes = this->VertexCount - Source.VertexCount;
@@ -212,7 +310,32 @@ public:
     return this->Vertexes[Index];
   }
 
-  inline float MinimumX() {
+  inline FPoint GetVertexPoint (int Index) {
+    return FPoint(this->Vertexes[Index].X, this->Vertexes[Index].Y);
+  }
+
+  inline PolygonEdge<Vertex> GetEdge (int Index) {
+    return PolygonEdge<Vertex>(this->Vertexes[Index], this->Vertexes[WrapValue(Index + 1, 0, VertexCount - InactiveVertexes - 1)]);
+  }
+
+  inline FLine GetEdgeLine (int Index) {
+    return FLine(GetVertexPoint(Index), GetVertexPoint(WrapValue(Index + 1, 0, VertexCount - InactiveVertexes - 1)));
+  }
+
+  inline int GetEdgeCount() {
+    return VertexCount - InactiveVertexes;
+  }
+
+  inline void Translate(float x, float y) {
+    Vertex *CurrentVertex = Vertexes;
+    for (int i = 0; i < VertexCount - InactiveVertexes; i++) {
+      CurrentVertex->X += x;
+      CurrentVertex->Y += y;
+      CurrentVertex++;
+    }
+  }
+
+  inline float MinimumX() const {
     Vertex *CurrentVertex = Vertexes;
     float Result = 99999999;
       for (int i = 0; i < VertexCount - InactiveVertexes; i++) {
@@ -221,7 +344,7 @@ public:
       }
       return Result;
   }
-  inline float MinimumY() {
+  inline float MinimumY() const {
     Vertex *CurrentVertex = Vertexes;
     float Result = 99999999;
       for (int i = 0; i < VertexCount - InactiveVertexes; i++) {
@@ -230,23 +353,37 @@ public:
       }
       return Result;
   }
-  inline float MaximumX() {
+  inline float MaximumX() const {
     Vertex *CurrentVertex = Vertexes;
-    float Result = 0;
+    float Result = -99999999;
       for (int i = 0; i < VertexCount - InactiveVertexes; i++) {
         if (CurrentVertex->X > Result) Result = CurrentVertex->X;
         CurrentVertex++;
       }
       return Result;
   }
-  inline float MaximumY() {
+  inline float MaximumY() const {
     Vertex *CurrentVertex = Vertexes;
-    float Result = 0;
+    float Result = -99999999;
       for (int i = 0; i < VertexCount - InactiveVertexes; i++) {
         if (CurrentVertex->Y > Result) Result = CurrentVertex->Y;
         CurrentVertex++;
       }
       return Result;
+  }
+  inline void GetBounds(FRect &Out) const {
+    Vertex *CurrentVertex = Vertexes;
+    Out.X1 = 99999999;
+    Out.Y1 = 99999999;
+    Out.X2 = -99999999;
+    Out.Y2 = -99999999;
+    for (int i = 0; i < VertexCount - InactiveVertexes; i++) {
+      if (CurrentVertex->X < Out.X1) Out.X1 = CurrentVertex->X;
+      if (CurrentVertex->Y < Out.Y1) Out.Y1 = CurrentVertex->Y;
+      if (CurrentVertex->X > Out.X2) Out.X2 = CurrentVertex->X;
+      if (CurrentVertex->Y > Out.Y2) Out.Y2 = CurrentVertex->Y;
+      CurrentVertex++;
+    }
   }
 
   inline int Count() {
@@ -371,3 +508,4 @@ template <class T> Polygon<T>* ClipPolygon(Polygon<T> *Poly, Rectangle *ClipRegi
 typedef Polygon<FPoint> SimplePolygon;
 typedef Polygon<TexturedVertex> TexturedPolygon;
 typedef Polygon<GradientVertex> GradientPolygon;
+#endif

@@ -7,7 +7,7 @@ XPStyle on
 Name "Fury² Editor"
 Var ALREADY_INSTALLED
 !define NAME "Fury² Editor"
-!define VERSION "0.8"
+!define VERSION "0.9"
 
 !include Library.nsh
 !include "MUI.nsh"
@@ -36,7 +36,7 @@ Var ALREADY_INSTALLED
 
   OutFile "..\..\binary\setup\fury2_editor_beta_${VERSION}.exe"
 
-  InstallDir "$PROGRAMFILES\Fury²"
+  InstallDir "$PROGRAMFILES\Fury2 0.9"
 
 ;--------------------------------
 ;Installer Sections
@@ -85,6 +85,8 @@ Section "-Editor"
 	File "J:\development\binary\sys\compressed\ng.dll"
 	File "J:\development\binary\sys\compressed\tk.dll"
 	File "J:\development\binary\sys\compressed\debugger.dll"
+    File "J:\development\binary\sys\*.plugins"
+    File "J:\development\binary\sys\plugin\*.plugins"
 
 	SetOutPath "$INSTDIR\sys\editor"
     !insertmacro InstallLib REGDLL $ALREADY_INSTALLED REBOOT_PROTECTED    "J:\development\binary\sys\win32\tlbinf32.dll" "$SYSDIR\tlbinf32.dll" "$SYSDIR"
@@ -100,7 +102,6 @@ Section "-Editor"
     RegDLL "$INSTDIR\sys\editor\cmcs21.ocx"
     RegDLL "$INSTDIR\sys\editor\vbalDTab6.ocx"
     RegDLL "$INSTDIR\sys\editor\vbalIml6.ocx"
-    RegDLL "$INSTDIR\sys\editor\vbalODCL6.ocx"
     RegDLL "$INSTDIR\sys\editor\vbalSBar6.ocx"
     RegDLL "$INSTDIR\sys\editor\vbalTreeView6.ocx"
     RegDLL "$INSTDIR\sys\editor\vbalEdit.ocx"
@@ -185,7 +186,4 @@ Section "Uninstall"
     UnRegDLL "$INSTDIR\sys\editor\tlbinf32.dll"
     RmDir /r "$INSTDIR\sys\resources"
     RmDir /r "$INSTDIR\sys\editor"
-
-    RmDir /r "$INSTDIR\sys"
-    RmDir /r "$INSTDIR"
 SectionEnd

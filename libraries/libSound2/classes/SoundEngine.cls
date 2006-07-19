@@ -43,10 +43,10 @@ Dim l_cgNew As Channelgroup
     Set CreateChannelGroupH = l_cgNew
 End Function
 
-Public Function CreateChannelGroup(Optional ByRef Name As String = "Channel Group") As Channelgroup
+Public Function CreateChannelGroup(Optional ByRef name As String = "Channel Group") As Channelgroup
 On Error Resume Next
 Dim l_lngHandle As Long
-    Call FMOD_System_CreateChannelGroup(m_lngFMod, Name, l_lngHandle)
+    Call FMOD_System_CreateChannelGroup(m_lngFMod, name, l_lngHandle)
     Set CreateChannelGroup = CreateChannelGroupH(l_lngHandle)
 End Function
 
@@ -122,9 +122,20 @@ On Error Resume Next
     End If
 End Sub
 
+Friend Sub Freed(ByVal Obj As Sound)
+On Error Resume Next
+Dim l_lngIndex As Long
+    If m_colSounds Is Nothing Then Exit Sub
+    l_lngIndex = Find(Obj)
+    If (l_lngIndex > 0) Then
+        m_colSounds.Remove l_lngIndex
+    End If
+End Sub
+
 Public Function Find(ByVal Obj As Sound) As Long
 On Error Resume Next
 Dim m_lngItems As Long
+    If m_colSounds Is Nothing Then Exit Function
     If m_colSounds.Count <= 0 Then Exit Function
     For m_lngItems = 1 To m_colSounds.Count
         If m_colSounds(m_lngItems) Is Obj Then
@@ -170,7 +181,7 @@ Dim l_strFilename As String
             If m_Engine.FileSystem.FileExists(Filename) Then
                 l_strFilename = m_Engine.FileSystem.File(Filename).GetRealFilename
                 For Each l_sndSound In m_colSounds
-                    If l_sndSound.Name = l_strFilename Then
+                    If l_sndSound.name = l_strFilename Then
                         Set Load = l_sndSound
                         Exit Function
                     End If

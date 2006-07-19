@@ -16,6 +16,8 @@ Private Declare Function SetFocus Lib "user32" (ByVal hwnd As Long) As Long
 Private Declare Function SetForegroundWindow Lib "user32" (ByVal hwnd As Long) As Long
 Private Declare Function ShowWindow Lib "user32" (ByVal hwnd As Long, ByVal nCmdShow As Long) As Long
 Private Declare Function GetWindowLong Lib "user32" Alias "GetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long) As Long
+Private Declare Function SetWindowLong Lib "user32" Alias "SetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long, ByVal dwNewLong As Long) As Long
+Private Const SWW_HPARENT As Long = (-8)
 Private Declare Function GetKeyState Lib "user32" (ByVal nVirtKey As Long) As Integer
 Private Const SW_SHOWNOACTIVATE As Long = 4
 Private Const KEY_PRESSED As Long = &H1000
@@ -602,6 +604,7 @@ Dim l_frmHost As Form
     Set Host.This.Menu = Me
     Host.This.Visible = False
     Load Host.This
+    SetWindowLong Host.hwnd, SWW_HPARENT, l_lngWindow
     Host.This.Visible = False
     Reflow
     If (x + IdealWidth) > (Screen.Width / Screen.TwipsPerPixelX) Then x = ((Screen.Width / Screen.TwipsPerPixelX) - IdealWidth)
@@ -615,7 +618,9 @@ Dim l_frmHost As Form
     g_colOpenMenus.Add Me
     Host.This.Move x * Screen.TwipsPerPixelX, y * Screen.TwipsPerPixelY, (IdealWidth * Screen.TwipsPerPixelX) + Host.This.BorderWidth * 2, (IdealHeight * Screen.TwipsPerPixelY) + Host.This.BorderWidth * 2
     SetWindowPos Host.hwnd, HWND_TOP, x, y, IdealWidth + (Host.This.BorderWidth * 2), IdealHeight + (Host.This.BorderWidth * 2), SWP_NOACTIVATE
+    SetWindowLong Host.hwnd, SWW_HPARENT, l_lngWindow
     SetWindowPos Host.hwnd, HWND_TOP, x, y, IdealWidth + (Host.This.BorderWidth * 2), IdealHeight + (Host.This.BorderWidth * 2), SWP_NOACTIVATE Or SWP_SHOWWINDOW
+    SetWindowLong Host.hwnd, SWW_HPARENT, l_lngWindow
     Host.This.HasFocus = True
     m_booMouseTouched = False
     If (GetKeyState(VK_LBUTTON) And KEY_PRESSED) Or (GetKeyState(VK_RBUTTON) And KEY_PRESSED) Then

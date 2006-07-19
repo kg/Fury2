@@ -42,6 +42,7 @@ Private mvarAttachX As Single, mvarAttachY As Single, mvarAttachH As Single, mva
 Private mvarAlpha As Single
 Private mvarColor As Long 'local copy
 Private mvarFalloffDistance As Long 'local copy
+Private mvarLightSize As Single
 Private mvarFlickerLevel As Single 'local copy
 Private mvarNoiseOpacity As Single 'local copy
 Private mvarSpinRate As Single 'local copy
@@ -225,6 +226,7 @@ On Error Resume Next
         End If
         .Color = BlendColors(0, mvarColor, mvarAlpha * 255)
         .FalloffDistance = mvarFalloffDistance
+        .LightSize = mvarLightSize
         .FlickerLevel = mvarFlickerLevel
         .NoiseOpacity = mvarNoiseOpacity
         .SpinRate = mvarSpinRate
@@ -257,6 +259,7 @@ On Error Resume Next
         Set mvarAttachedSprite = Nothing
         mvarColor = .Color
         mvarFalloffDistance = .FalloffDistance
+        mvarLightSize = .LightSize
         mvarFlickerLevel = .FlickerLevel
         mvarNoiseOpacity = .NoiseOpacity
         mvarSpinRate = .SpinRate
@@ -357,6 +360,15 @@ End Property
 
 Public Property Get Spread() As Single
     Spread = mvarSpread
+End Property
+
+Public Property Let LightSize(ByVal vData As Single)
+    mvarLightSize = vData
+    UpdateCache
+End Property
+
+Public Property Get LightSize() As Single
+    LightSize = mvarLightSize
 End Property
 
 Public Property Let SpinRate(ByVal vData As Single)

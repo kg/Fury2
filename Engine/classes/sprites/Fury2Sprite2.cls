@@ -37,6 +37,9 @@ Implements IInspectable
 Implements IVirtualFileSaveable
 Implements Fury2Object
 
+Private m_sngVelocityDecay As Single
+Private m_sngVelocityAccel As Single
+
 Private m_sprAttached As Fury2Sprite
 Private m_sngAttachX As Single, m_sngAttachY As Single, m_sngAttachH As Single, m_sngAttachV As Single
 
@@ -65,7 +68,7 @@ Private m_booDepthmapOverride As Boolean, m_booPoseOverride As Boolean, m_booScr
 
 Private m_sngRotationOffset As Single
 Private m_booTrueMovement As Boolean, m_booRelativeAnimation As Boolean
-Private m_booDisplayRotation As Boolean
+Private m_booDisplayRotation As Boolean, m_booRelativeRotation As Boolean
 
 Private m_booMoved As Boolean
 Private m_booLoaded As Boolean
@@ -87,13 +90,14 @@ Private m_booScript_Update As Boolean, m_booScript_Hit As Boolean
 Private m_booScript_HitMap As Boolean, m_booScript_Decay As Boolean
 Private m_booScript_AIUpdate As Boolean, m_booScript_Activate As Boolean
 Private m_booScript_Load As Boolean
-Private m_booScript_Died As Boolean, m_booScript_Step As Boolean
+Private m_booScript_Die As Boolean, m_booScript_Step As Boolean
 Private m_booScript_FadeOut As Boolean, m_booScript_Collided As Boolean
 Private m_booScript_WaypointReached As Boolean
     
 Private m_booAreasUpdated As Boolean
 
 Private m_lngWalkState As Long, m_lngIdleState As Long
+Private m_lngBlockingType As Long
 
 Public SaveScriptData As Boolean
 
@@ -113,6 +117,35 @@ Public AnimationMultiplier As Single
 Attribute AnimationMultiplier.VB_VarDescription = "*"
 Public Ignore As Boolean
 Private mvarEngine As Fury2Engine
+
+Private m_lngID_Activate As Long
+Private m_lngID_AIUpdate As Long
+Private m_lngID_Collided As Long
+Private m_lngID_Decay As Long
+Private m_lngID_Die As Long
+Private m_lngID_FadeOut As Long
+Private m_lngID_Hit As Long
+Private m_lngID_HitMap As Long
+Private m_lngID_Load As Long
+Private m_lngID_Step As Long
+Private m_lngID_Update As Long
+Private m_lngID_WaypointReached As Long
+
+Friend Sub BindScript()
+On Error Resume Next
+    m_lngID_Activate = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "Activate")
+    m_lngID_AIUpdate = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "AIUpdate")
+    m_lngID_Collided = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "Collided")
+    m_lngID_Decay = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "Decay")
+    m_lngID_Die = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "Die")
+    m_lngID_FadeOut = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "FadeOut")
+    m_lngID_Hit = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "Hit")
+    m_lngID_HitMap = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "HitMap")
+    m_lngID_Load = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "Load")
+    m_lngID_Step = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "Step")
+    m_lngID_Update = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "Update")
+    m_lngID_WaypointReached = mvarEngine.ScriptEngine.ResolveMember(m_objScript, "WaypointReached")
+End Sub
 
 Friend Sub FreeScript()
 On Error Resume Next
@@ -219,6 +252,39 @@ Public Property Let Color(ByVal NewColor As Long)
     m_spParam.Params.Color = NewColor
 End Property
 
+Public Property Get VelocityDecay() As Single
+Attribute VelocityDecay.VB_Description = "Controls the rate at which this object accelerates or decelerates when under the control of a path or controller. Set to -1 to use value of Engine.VelocityDecay."
+On Error Resume Next
+    If m_sngVelocityDecay <> -1 Then
+        VelocityDecay = m_sngVelocityDecay
+    Else
+        If (Engine Is Nothing) Then
+            VelocityDecay = m_sngVelocityDecay
+        Else
+            VelocityDecay = Engine.VelocityDecay
+        End If
+    End If
+End Property
+
+Public Property Let VelocityDecay(ByVal NewValue As Single)
+On Error Resume Next
+    m_sngVelocityDecay = NewValue
+End Property
+
+Public Property Get VelocityAccel() As Single
+On Error Resume Next
+    If m_sngVelocityAccel <> -1 Then
+        VelocityAccel = m_sngVelocityAccel
+    Else
+        VelocityAccel = VelocityDecay
+    End If
+End Property
+
+Public Property Let VelocityAccel(ByVal NewValue As Single)
+On Error Resume Next
+    m_sngVelocityAccel = NewValue
+End Property
+
 Public Function SightCheck(ByVal X As Single, ByVal Y As Single, Optional ByRef IgnoreSprite = Nothing) As Boolean
 On Error Resume Next
     SightCheck = m_mapMap.Layers(m_lngLayer).Lighting.SightCheck(m_spParam.Position.X, m_spParam.Position.Y, X, Y, Me, IgnoreSprite)
@@ -286,7 +352,7 @@ End Property
 
 Public Property Get Blocked(ByVal X As Single, ByVal Y As Single) As Boolean
 On Error Resume Next
-    Blocked = Map.Blocked(Layer, X - (m_spParam.Obstruction.Width / 2), Y - (m_spParam.Obstruction.Height), m_spParam.Obstruction.Width, m_spParam.Obstruction.Height, Me)
+    Blocked = Map.Blocked(Layer, X - (m_spParam.Obstruction.Width / 2), Y - (m_spParam.Obstruction.Height / IIf(m_lngBlockingType >= 1, 2, 1)), m_spParam.Obstruction.Width, m_spParam.Obstruction.Height, Me)
 End Property
 
 Public Sub AttachGraphic(Graphic)
@@ -364,6 +430,15 @@ Public Property Let DisplayRotation(ByVal Value As Boolean)
     m_booDisplayRotation = Value
 End Property
 
+Public Property Get RelativeRotation() As Boolean
+Attribute RelativeRotation.VB_Description = "If DisplayRotation is set, causes the display rotation to be based on the angle of the currently autoselected pose to approximate intermediate poses."
+    RelativeRotation = m_booRelativeRotation And m_booDisplayRotation
+End Property
+
+Public Property Let RelativeRotation(ByVal Value As Boolean)
+    m_booRelativeRotation = Value
+End Property
+
 Public Property Get Destroyed() As Boolean
 Attribute Destroyed.VB_Description = "*This value is true if the sprite has been destroyed by a Die command."
     Destroyed = m_booDestroyed
@@ -390,8 +465,8 @@ On Error Resume Next
             SupportsAction = m_booScript_AIUpdate
         Case "activate"
             SupportsAction = m_booScript_Activate
-        Case "died"
-            SupportsAction = m_booScript_Died
+        Case "die"
+            SupportsAction = m_booScript_Die
         Case "step"
             SupportsAction = m_booScript_Step
         Case "fadeout"
@@ -459,7 +534,14 @@ On Error Resume Next
     If NewValue = m_spParam.Velocity.B Then Exit Property
     m_spParam.Velocity.B = NewValue
     If m_booDisplayRotation Then
-        RotationAngle = Angle + RotationOffset
+        If m_booRelativeRotation Then
+            Dim l_lngHeading As Long, l_sngHeading As Single
+            l_lngHeading = CLng((((Angle * CSng(m_staState.DirectionPoses)) / 360!) + 0!)) Mod m_staState.DirectionPoses
+            l_sngHeading = l_lngHeading * (360 / m_staState.DirectionPoses)
+            RotationAngle = Angle + RotationOffset - l_sngHeading
+        Else
+            RotationAngle = Angle + RotationOffset
+        End If
     End If
     ReselectPose
 End Property
@@ -545,6 +627,8 @@ On Error Resume Next
     m_lngState = 1
     m_lngPose = 1
     m_lngFrame = 1
+    m_sngVelocityDecay = -1
+    m_sngVelocityAccel = -1
     PathIndex = 1
     Alpha = 1
     ScaleLevel = 1
@@ -617,6 +701,7 @@ Dim l_pthPath As Fury2Path
         .LinkState = Me.LinkState
         
         .DisplayRotation = Me.DisplayRotation
+        .RelativeRotation = Me.RelativeRotation
         .RotationAngle = Me.RotationAngle
         .RotationOffset = Me.RotationOffset
         .ScaleLevel = Me.ScaleLevel
@@ -632,6 +717,8 @@ Dim l_pthPath As Fury2Path
         .XVelocity = Me.XVelocity
         .YVelocity = Me.YVelocity
         .ZVelocity = Me.ZVelocity
+        .VelocityDecay = m_sngVelocityDecay
+        .VelocityAccel = m_sngVelocityAccel
         
         .Tag = Me.Tag
         
@@ -681,7 +768,13 @@ On Error Resume Next
 Dim l_lyrLayer As Fury2MapLayer
     m_booDestroyed = True
     mvarEngine.ContextLevelAdd Name + " : Die"
-    m_objScript.Die
+    If m_booScript_Die Then
+        If (m_lngID_Die <> -1) Then
+            mvarEngine.InvokeMember m_objScript, m_lngID_Die
+        Else
+            m_objScript.Die
+        End If
+    End If
     For Each l_lyrLayer In m_mapMap.Layers
         l_lyrLayer.Sprites.Remove Me
     Next l_lyrLayer
@@ -715,6 +808,15 @@ End Property
 
 Public Property Get Effect() As Fury2SpriteEffects
     Effect = m_spParam.Params.Effect
+End Property
+
+Public Property Let BlockingType(ByVal NewValue As Fury2SpriteBlockingTypes)
+    m_lngBlockingType = NewValue
+    UpdateObstruction
+End Property
+
+Public Property Get BlockingType() As Fury2SpriteBlockingTypes
+    BlockingType = m_lngBlockingType
 End Property
 
 Public Sub Face(ByRef Point)
@@ -873,6 +975,14 @@ Dim l_pthPath As Fury2Path
                 .RawLoad VarPtr(m_spParam.Velocity.XF), 4
                 .RawLoad VarPtr(m_spParam.Velocity.YF), 4
                 .RawLoad VarPtr(m_spParam.Velocity.FW), 4
+                .Load m_sngVelocityDecay
+                If (m_sngVelocityDecay <= 0) Then
+                    m_sngVelocityDecay = -1
+                End If
+                .Load m_sngVelocityAccel
+                If (m_sngVelocityAccel <= 0) Then
+                    m_sngVelocityAccel = -1
+                End If
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load m_lngPose
@@ -919,6 +1029,7 @@ Dim l_pthPath As Fury2Path
                 .Load l_booValue
                 .Load l_booValue
                 m_spParam.Stats.CanPush = CByte(Abs(l_booValue))
+                .Load m_lngBlockingType
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load l_lngValue
@@ -942,6 +1053,7 @@ Dim l_pthPath As Fury2Path
                 .Load l_lngValue
                 m_spParam.Params.RenderTarget = CByte(l_lngValue)
                 .Load m_sngRotationOffset
+                .Load m_booRelativeRotation
             .ReadSegment_End
             .ReadSegment_Begin
                 .Load m_strScript
@@ -1049,6 +1161,8 @@ Dim l_pthPath As Fury2Path
                 .RawSave VarPtr(m_spParam.Velocity.XF), 4
                 .RawSave VarPtr(m_spParam.Velocity.YF), 4
                 .RawSave VarPtr(m_spParam.Velocity.FW), 4
+                .Save m_sngVelocityDecay
+                .Save m_sngVelocityAccel
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save m_lngPose
@@ -1077,6 +1191,7 @@ Dim l_pthPath As Fury2Path
                 .Skip 2
                 .Skip 2
                 .Save CBool(m_spParam.Stats.CanPush)
+                .Save m_lngBlockingType
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save CLng(m_spParam.Params.Effect)
@@ -1091,6 +1206,7 @@ Dim l_pthPath As Fury2Path
                 .Save m_booDisplayRotation
                 .Save CLng(m_spParam.Params.RenderTarget)
                 .Save m_sngRotationOffset
+                .Save m_booRelativeRotation
             .WriteSegment_End
             .WriteSegment_Begin
                 .Save m_strScript
@@ -1377,10 +1493,17 @@ On Error Resume Next
         If X >= Floor(m_spParam.Position.X + (m_spParam.Graphic.Rectangle.Width / 2)) Then Exit Function
         If Y >= Floor(m_spParam.Position.Y) Then Exit Function
     Else
-        If X < Floor(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2)) Then Exit Function
-        If Y < Floor(m_spParam.Position.Y - (m_spParam.Obstruction.Height)) Then Exit Function
-        If X >= Floor(m_spParam.Position.X + (m_spParam.Obstruction.Width / 2)) Then Exit Function
-        If Y >= Floor(m_spParam.Position.Y) Then Exit Function
+        If m_lngBlockingType >= 1 Then
+            If X < Floor(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2)) Then Exit Function
+            If Y < Floor(m_spParam.Position.Y - (m_spParam.Obstruction.Height / 2)) Then Exit Function
+            If X >= Floor(m_spParam.Position.X + (m_spParam.Obstruction.Width / 2)) Then Exit Function
+            If Y >= Floor(m_spParam.Position.Y + (m_spParam.Obstruction.Height / 2)) Then Exit Function
+        Else
+            If X < Floor(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2)) Then Exit Function
+            If Y < Floor(m_spParam.Position.Y - (m_spParam.Obstruction.Height)) Then Exit Function
+            If X >= Floor(m_spParam.Position.X + (m_spParam.Obstruction.Width / 2)) Then Exit Function
+            If Y >= Floor(m_spParam.Position.Y) Then Exit Function
+        End If
     End If
     PointInside = True
 End Function
@@ -1391,7 +1514,11 @@ On Error Resume Next
     If Onscreen Then
         Set Rectangle = F2Rect(Floor(m_spParam.Position.X - m_spParam.Graphic.XCenter), Floor(m_spParam.Position.Y - (m_spParam.Graphic.Rectangle.Height) + (m_spParam.Graphic.Rectangle.Height - m_spParam.Graphic.YCenter)), m_spParam.Graphic.Rectangle.Width, m_spParam.Graphic.Rectangle.Height, False)
     Else
-        Set Rectangle = F2Rect(Ceil(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2)), Ceil(m_spParam.Position.Y - (m_spParam.Obstruction.Height)), m_spParam.Obstruction.Width, m_spParam.Obstruction.Height, False)
+        If (m_lngBlockingType = 1) Or (m_lngBlockingType = 2) Or (m_lngBlockingType = 4) Then
+            Set Rectangle = F2Rect(Ceil(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2)), Ceil(m_spParam.Position.Y - (m_spParam.Obstruction.Height / 2)), m_spParam.Obstruction.Width, m_spParam.Obstruction.Height, False)
+        Else
+            Set Rectangle = F2Rect(Ceil(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2)), Ceil(m_spParam.Position.Y - (m_spParam.Obstruction.Height)), m_spParam.Obstruction.Width, m_spParam.Obstruction.Height, False)
+        End If
     End If
 End Property
 
@@ -1480,7 +1607,7 @@ Dim l_strName As String
                 m_booScript_AIUpdate = m_objScript.ImplementsMethod("AIUpdate")
                 m_booScript_Activate = m_objScript.ImplementsMethod("Activate")
                 m_booScript_Load = m_objScript.ImplementsMethod("Load")
-                m_booScript_Died = m_objScript.ImplementsMethod("Died")
+                m_booScript_Die = m_objScript.ImplementsMethod("Die")
                 m_booScript_Step = m_objScript.ImplementsMethod("Step")
                 m_booScript_FadeOut = m_objScript.ImplementsMethod("FadeOut")
                 m_booScript_WaypointReached = m_objScript.ImplementsMethod("WaypointReached")
@@ -1510,7 +1637,7 @@ Dim l_strName As String
                     m_booScript_AIUpdate = .ImplementsMethod(l_strScript, "AIUpdate")
                     m_booScript_Activate = .ImplementsMethod(l_strScript, "Activate")
                     m_booScript_Load = .ImplementsMethod(l_strScript, "Load")
-                    m_booScript_Died = .ImplementsMethod(l_strScript, "Died")
+                    m_booScript_Die = .ImplementsMethod(l_strScript, "Die")
                     m_booScript_Step = .ImplementsMethod(l_strScript, "Step")
                     m_booScript_FadeOut = .ImplementsMethod(l_strScript, "FadeOut")
                     m_booScript_WaypointReached = .ImplementsMethod(l_strScript, "WaypointReached")
@@ -1527,6 +1654,7 @@ Dim l_strName As String
             End If
         End If
     End If
+    BindScript
     Set Script = m_objScript
     Err.Clear
 End Property
@@ -1677,7 +1805,11 @@ Friend Sub WaypointReached(ByVal Waypoint As Fury2Waypoint)
 On Error Resume Next
     If m_booScript_WaypointReached Then
         mvarEngine.ContextLevelAdd "Sprite_WaypointReached"
-        m_objScript.WaypointReached Waypoint
+        If (m_lngID_WaypointReached <> -1) Then
+            mvarEngine.InvokeMember m_objScript, m_lngID_WaypointReached, Array(Waypoint)
+        Else
+            m_objScript.WaypointReached Waypoint
+        End If
         mvarEngine.ContextLevelRemove
     End If
 End Sub
@@ -1691,7 +1823,11 @@ Dim l_sprCollided As Fury2Sprite
         m_lngAIDelay = 0
         If m_booScript_AIUpdate Then
             mvarEngine.ContextLevelAdd "Sprite_AIUpdate"
-            m_objScript.AIUpdate
+            If (m_lngID_AIUpdate <> -1) Then
+                mvarEngine.InvokeMember m_objScript, m_lngID_AIUpdate
+            Else
+                m_objScript.AIUpdate
+            End If
             mvarEngine.ContextLevelRemove
         End If
     End If
@@ -1703,7 +1839,14 @@ Dim l_sprCollided As Fury2Sprite
     
     'm_spParam.Params.SpecialFX = fxSoftShadow
     If m_booDisplayRotation Then
-        RotationAngle = Angle + RotationOffset
+        If m_booRelativeRotation Then
+            Dim l_lngHeading As Long, l_sngHeading As Single
+            l_lngHeading = CLng((((Angle * CSng(m_staState.DirectionPoses)) / 360!) + 0!)) Mod m_staState.DirectionPoses
+            l_sngHeading = l_lngHeading * (360 / m_staState.DirectionPoses)
+            RotationAngle = Angle + RotationOffset - l_sngHeading
+        Else
+            RotationAngle = Angle + RotationOffset
+        End If
     End If
         
     If m_spParam.Events.Moved Then
@@ -1722,9 +1865,11 @@ Dim l_sprCollided As Fury2Sprite
         If m_booScript_Step Then
             mvarEngine.ContextLevelAdd "Sprite_Step"
             Err.Clear
-        
-            m_objScript.Step
-        
+            If (m_lngID_Step <> -1) Then
+                mvarEngine.InvokeMember m_objScript, m_lngID_Step
+            Else
+                m_objScript.Step
+            End If
             Err.Clear
             mvarEngine.ContextLevelRemove
         End If
@@ -1733,9 +1878,11 @@ Dim l_sprCollided As Fury2Sprite
     If m_spParam.Events.FadedOut Then
         mvarEngine.ContextLevelAdd "Sprite_FadeOut"
         Err.Clear
-    
-        m_objScript.FadeOut
-    
+        If (m_lngID_FadeOut <> -1) Then
+            mvarEngine.InvokeMember m_objScript, m_lngID_FadeOut
+        Else
+            m_objScript.FadeOut
+        End If
         Err.Clear
         mvarEngine.ContextLevelRemove
     End If
@@ -1745,31 +1892,34 @@ Dim l_sprCollided As Fury2Sprite
         Set l_sprCollided = m_mapMap.Layers(m_lngLayer).Sprites(m_spParam.Events.CollidedWith)
     
         Err.Clear
-        m_objScript.Hit l_sprCollided
-    
+        If (m_lngID_Hit <> -1) Then
+            mvarEngine.InvokeMember m_objScript, m_lngID_Hit, Array(l_sprCollided)
+        Else
+            m_objScript.Hit l_sprCollided
+        End If
         If Err <> 0 Then
             Err.Clear
-        
-            m_objScript.Hit
-        
+            If (m_lngID_Hit <> -1) Then
+                mvarEngine.InvokeMember m_objScript, m_lngID_Hit
+            Else
+                m_objScript.Hit
+            End If
         End If
-        
         Err.Clear
         l_sprCollided.Script.Hit Me
-    
         If Err <> 0 Then
             Err.Clear
-        
             l_sprCollided.Script.Hit
-        
         End If
         mvarEngine.ContextLevelRemove
     ElseIf m_spParam.Events.CollidedWithMap Then
         mvarEngine.ContextLevelAdd "Sprite_HitMap"
         Err.Clear
-    
-        m_objScript.HitMap
-    
+        If (m_lngID_HitMap <> -1) Then
+            mvarEngine.InvokeMember m_objScript, m_lngID_HitMap
+        Else
+            m_objScript.HitMap
+        End If
         Err.Clear
         mvarEngine.ContextLevelRemove
     End If
@@ -1783,7 +1933,7 @@ Dim l_sprCollided As Fury2Sprite
             Dim l_sngHp As Single, l_sngVp As Single, l_sngVxw As Single, l_sngHw As Single, l_sngVw As Single
             Dim l_sngAX As Single, l_sngAY As Single
             Dim l_sngSw As Single, l_sngSh As Single
-            If True Then
+            If (m_sngAttachH <> 0) Or (m_sngAttachV <> 0) Then
                 l_spAttached = .GetParam
                 l_sngSw = (l_spAttached.Graphic.Rectangle.Width)
                 l_sngSh = (l_spAttached.Graphic.Rectangle.Height)
@@ -1819,6 +1969,13 @@ Dim l_sprCollided As Fury2Sprite
     End If
     
     m_spOldParam = m_spParam
+    If m_booScript_Update Then
+        If (m_lngID_Update <> -1) Then
+            mvarEngine.InvokeMember m_objScript, m_lngID_Update
+        Else
+            m_objScript.Update
+        End If
+    End If
 End Sub
 
 Private Sub UpdatePath()
@@ -1850,7 +2007,7 @@ Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
                 Else
                     If (Abs(l_sngPathDistance) >= (WalkSpeed)) Then
                         Angle = mvarEngine.Math.AngleBetween(m_spParam.Position.X, m_spParam.Position.Y, .X, .Y)
-                        Velocity = Velocity + mvarEngine.VelocityDecay
+                        Velocity = Velocity + VelocityAccel
                         If Velocity < 0 Then Velocity = 0
                         If Velocity > WalkSpeed Then Velocity = WalkSpeed
                         If Velocity > l_sngPathDistance Then Velocity = l_sngPathDistance
@@ -1943,13 +2100,21 @@ Dim l_araArea As Fury2Area, l_booWasIn As Boolean, l_booIsIn As Boolean
     m_booAreasUpdated = True
     With l_rctCurrent
         .left = CLng(m_spParam.Position.X - (m_spParam.Obstruction.Width / 2))
-        .top = CLng(m_spParam.Position.Y - (m_spParam.Obstruction.Height))
+        If (m_lngBlockingType >= 1) Then
+            .top = CLng(m_spParam.Position.Y - (m_spParam.Obstruction.Height / 2))
+        Else
+            .top = CLng(m_spParam.Position.Y - (m_spParam.Obstruction.Height))
+        End If
         .Width = m_spParam.Obstruction.Width
         .Height = m_spParam.Obstruction.Height
     End With
     With l_rctOld
         .left = CLng(m_spOldParam.Position.X - (m_spOldParam.Obstruction.Width / 2))
-        .top = CLng(m_spOldParam.Position.Y - (m_spOldParam.Obstruction.Height))
+        If (m_lngBlockingType >= 1) Then
+            .top = CLng(m_spOldParam.Position.Y - (m_spOldParam.Obstruction.Height / 2))
+        Else
+            .top = CLng(m_spOldParam.Position.Y - (m_spOldParam.Obstruction.Height))
+        End If
         .Width = m_spOldParam.Obstruction.Width
         .Height = m_spOldParam.Obstruction.Height
     End With
@@ -2041,10 +2206,19 @@ End Sub
 
 Private Sub UpdateObstruction()
 On Error Resume Next
+Dim l_rctBounds As FRect
     If m_posPose Is Nothing Then Exit Sub
     With m_spParam.Obstruction
-        .Width = m_posPose.Blocking.Width
-        .Height = m_posPose.Blocking.Height
+        If ((m_lngBlockingType = 3) Or (m_lngBlockingType = 4)) And (Not (m_posPose.BlockingPolygon Is Nothing)) Then
+            .pPolygon = m_posPose.BlockingPolygon.Handle
+            SoftFX.GetPolygonBounds .pPolygon, l_rctBounds
+            .Width = Abs(l_rctBounds.x2) + Abs(l_rctBounds.x1)
+            .Height = Abs(l_rctBounds.y2) + Abs(l_rctBounds.y1)
+        Else
+            .Width = m_posPose.Blocking.Width
+            .Height = m_posPose.Blocking.Height
+        End If
+        .Type = m_lngBlockingType
     End With
 End Sub
 

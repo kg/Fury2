@@ -7,7 +7,7 @@ XPStyle on
 Name "Fury² Engine"
 Var ALREADY_INSTALLED
 !define NAME "Fury² Engine"
-!define VERSION "0.8"
+!define VERSION "0.9"
 
 !include Library.nsh
 !include "MUI.nsh"
@@ -36,7 +36,7 @@ Var ALREADY_INSTALLED
 
   OutFile "..\..\binary\setup\fury2_beta_${VERSION}.exe"
 
-  InstallDir "$PROGRAMFILES\Fury²"
+  InstallDir "$PROGRAMFILES\Fury2 0.9"
 
 ;--------------------------------
 ;Installer Sections
@@ -70,6 +70,7 @@ Section "-Engine"
 
 	SetOutPath "$INSTDIR\sys"
 	File "J:\development\binary\sys\compressed\fury².exe"
+	File "J:\development\binary\sys\compressed\compromise.dll"
 	File "J:\development\binary\sys\compressed\engine.dll"
 	File "J:\development\binary\sys\compressed\graphics.dll"
 	File "J:\development\binary\sys\compressed\video.dll"
@@ -163,7 +164,4 @@ Section "Uninstall"
 	UnRegDLL "$INSTDIR\sys\video_directdraw.dll"
 	UnRegDLL "$INSTDIR\sys\video_opengl.dll"
 	UnRegDLL "$INSTDIR\sys\engine.dll"
-
-    RmDir /r "$INSTDIR\sys"
-    RmDir /r "$INSTDIR"
 SectionEnd

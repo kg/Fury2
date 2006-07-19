@@ -36,6 +36,15 @@ enum csRegions {
     csAll         = 15
 };
 
+Export int GetPolygonBounds(SimplePolygon* Poly, FRect* Out) {
+  if (Poly && Out) {
+    Poly->GetBounds(*Out);
+    return Success;
+  } else {
+    return Failure;
+  }
+}
+
 Export int GetPolygonVertexCount(SimplePolygon* Poly) {
   if (Poly) {
     return Poly->Count();
@@ -229,7 +238,15 @@ Export int ClipFloatLine(Image *Image, FLine *Line) {
   return ClipFloatLine(&(Image->ClipRectangle), Line);
 }
 
-Export int PointInsidePolygon(Polygon<FPoint> *Poly, FPoint *Point) {
+Export int PolygonIntersectsPolygon(SimplePolygon *PolyA, Polygon<FPoint> *PolyB) {
+  if (!PolyA) return 0;
+  if (!PolyB) return 0;
+  return Intersects(*PolyA, *PolyB);
+}
+
+Export int PointInsidePolygon(SimplePolygon *Poly, FPoint *Point) {
+  if (!Poly) return 0;
+  if (!Point) return 0;
 	FLine edge, trace;
 	FPoint who_cares;
 	trace.Start = trace.End = *Point;
@@ -1126,6 +1143,130 @@ FILTERSIMPLE_BEGIN
 FILTERSIMPLE_ROW
 FILTERSIMPLE_COL
     Weight = PythagorasLookup(xCTable[iCX], yCTable[iCY]);
+    currentColor = colorTable[Weight];
+    // retrieve render lookup pointers
+    aDest = AlphaLevelLookup( currentColor[::Alpha] );
+    // render pixel
+    (*pCurrent)[::Blue] = AlphaFromLevel(aDest, (*pCurrent)[::Blue]) + currentColor[::Blue];
+    (*pCurrent)[::Green] = AlphaFromLevel(aDest, (*pCurrent)[::Green]) + currentColor[::Green];
+    (*pCurrent)[::Red] = AlphaFromLevel(aDest, (*pCurrent)[::Red]) + currentColor[::Red];
+FILTERSIMPLE_COLEND
+FILTERSIMPLE_ROWEND
+//    DeleteArray(xCTable);
+//    DeleteArray(yCTable);
+//    LookupDeallocate(xCTable);
+//    LookupDeallocate(yCTable);
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Gradient_Radial_Ex)
+    , Pixel Color1, Pixel Color2, float StartOffset, float EndOffset) {
+FILTERSIMPLE_INIT
+    if ((StartOffset == EndOffset) && (EndOffset == 0.0f)) return FilterSimple_Gradient_Radial(Image, Area, Color1, Color2);
+    _FOS(FilterSimple_Gradient_Radial_Ex, 4) , Color1, Color2, va_float(StartOffset), va_float(EndOffset) _FOE
+FILTERSIMPLE_BEGIN
+    
+    Byte *xCTable, *yCTable;
+    Pixel colorTable[256];
+    Byte ramp[256];
+//    xCTable = AllocateArray(Byte, rCoordinates.Width);
+//    yCTable = AllocateArray(Byte, rCoordinates.Height);
+//    xCTable = LookupAllocate<Byte>(rCoordinates.Width);
+//    yCTable = LookupAllocate<Byte>(rCoordinates.Height);
+    xCTable = StaticAllocate<Byte>(XBuffer, rCoordinates.Width);
+    yCTable = StaticAllocate<Byte>(YBuffer, rCoordinates.Height);
+    {
+      float xMul = ((255.0 / ((Area->Width) / 2))), yMul = ((255.0 / ((Area->Height) / 2)));
+      int xOffset = (Area->Width / 2) - CropOffsets[2], yOffset = (Area->Height / 2) - CropOffsets[3];
+      AlphaLevel *aColor1, *aColor2;
+      for (int i = 0; i < rCoordinates.Width; i++) {
+        xCTable[i] = abs(i - xOffset) * xMul;
+      }
+      for (int i = 0; i < rCoordinates.Height; i++) {
+        yCTable[i] = abs(i - yOffset) * yMul;
+      }
+      for (int i = 0; i < 256; i++) {
+        aColor2 = AlphaLevelLookup( i );
+        aColor1 = AlphaLevelLookup( i ^ 0xFF );
+        colorTable[i][::Blue] = AlphaFromLevel2(aColor1, Color1[::Blue], aColor2, Color2[::Blue]);
+        colorTable[i][::Green] = AlphaFromLevel2(aColor1, Color1[::Green], aColor2, Color2[::Green]);
+        colorTable[i][::Red] = AlphaFromLevel2(aColor1, Color1[::Red], aColor2, Color2[::Red]);
+        colorTable[i][::Alpha] = AlphaFromLevel2(aColor1, Color1[::Alpha], aColor2, Color2[::Alpha]);
+      }
+      float l = 1.0f - clamp(EndOffset + StartOffset, -1.0f, 0.999999999f);
+      for (int i = 0; i < 256; i++) {
+        float pos = clamp((i / 255.0f) - StartOffset, 0.0f, 1.0f);
+        float value = pos / l;
+        ramp[i] = ClipByte(floor(value * 255.0f));
+      }
+      ramp[0] = 0;
+      ramp[255] = 255;
+    }
+
+    Byte Weight;
+
+FILTERSIMPLE_ROW
+FILTERSIMPLE_COL
+    Weight = ramp[PythagorasLookup(xCTable[iCX], yCTable[iCY])];
+    *pCurrent = colorTable[Weight];
+FILTERSIMPLE_COLEND
+FILTERSIMPLE_ROWEND
+//    DeleteArray(xCTable);
+//    DeleteArray(yCTable);
+//    LookupDeallocate(xCTable);
+//    LookupDeallocate(yCTable);
+FILTERSIMPLE_END
+
+FILTERSIMPLE_SIGNATURE(Gradient_Radial_SourceAlpha_Ex)
+    , Pixel Color1, Pixel Color2, float StartOffset, float EndOffset) {
+FILTERSIMPLE_INIT
+    if ((StartOffset == EndOffset) && (EndOffset == 0.0f)) return FilterSimple_Gradient_Radial_SourceAlpha(Image, Area, Color1, Color2);
+    _FOS(FilterSimple_Gradient_Radial_SourceAlpha_Ex, 4) , Color1, Color2, va_float(StartOffset), va_float(EndOffset) _FOE
+FILTERSIMPLE_BEGIN
+    
+    AlphaLevel *aDest;
+    Byte *xCTable, *yCTable;
+    Pixel colorTable[256], currentColor;
+    Byte ramp[256];
+//    xCTable = AllocateArray(Byte, rCoordinates.Width);
+//    yCTable = AllocateArray(Byte, rCoordinates.Height);
+    //xCTable = LookupAllocate<Byte>(rCoordinates.Width);
+    //yCTable = LookupAllocate<Byte>(rCoordinates.Height);
+    xCTable = StaticAllocate<Byte>(XBuffer, rCoordinates.Width);
+    yCTable = StaticAllocate<Byte>(YBuffer, rCoordinates.Height);
+    {
+      AlphaLevel *aColor1, *aColor2;
+      float xMul = ((255.0 / ((Area->Width) / 2))), yMul = ((255.0 / ((Area->Height) / 2)));
+      int xOffset = (Area->Width / 2) - CropOffsets[2], yOffset = (Area->Height / 2) - CropOffsets[3];
+      for (int i = 0; i < rCoordinates.Width; i++) {
+        xCTable[i] = abs(i - xOffset) * xMul;
+      }
+      for (int i = 0; i < rCoordinates.Height; i++) {
+        yCTable[i] = abs(i - yOffset) * yMul;
+      }
+      for (int i = 0; i < 256; i++) {
+        aColor2 = AlphaLevelLookup( i );
+        aColor1 = AlphaLevelLookup( i ^ 0xFF );
+        colorTable[i][::Alpha] = AlphaFromLevel2(aColor1, Color1[::Alpha], aColor2, Color2[::Alpha]);
+        colorTable[i][::Blue] = AlphaLookup(colorTable[i][::Alpha], AlphaFromLevel2(aColor1, Color1[::Blue], aColor2, Color2[::Blue]));
+        colorTable[i][::Green] = AlphaLookup(colorTable[i][::Alpha], AlphaFromLevel2(aColor1, Color1[::Green], aColor2, Color2[::Green]));
+        colorTable[i][::Red] = AlphaLookup(colorTable[i][::Alpha], AlphaFromLevel2(aColor1, Color1[::Red], aColor2, Color2[::Red]));
+        colorTable[i][::Alpha] = colorTable[i][::Alpha] ^ 0xFF;
+      }
+      float l = 1.0f - clamp(EndOffset + StartOffset, -1.0f, 0.999999999f);
+      for (int i = 0; i < 256; i++) {
+        float pos = clamp((i / 255.0f) - StartOffset, 0.0f, 1.0f);
+        float value = pos / l;
+        ramp[i] = ClipByte(floor(value * 255.0f));
+      }
+      ramp[0] = 0;
+      ramp[255] = 255;
+    }
+
+    Byte Weight;
+
+FILTERSIMPLE_ROW
+FILTERSIMPLE_COL
+    Weight = ramp[PythagorasLookup(xCTable[iCX], yCTable[iCY])];
     currentColor = colorTable[Weight];
     // retrieve render lookup pointers
     aDest = AlphaLevelLookup( currentColor[::Alpha] );

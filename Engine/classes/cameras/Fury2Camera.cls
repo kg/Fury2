@@ -639,10 +639,7 @@ Dim l_mopObject As Fury2MapObject
                 End If
             End If
             With l_lyrLayer
-                If .RenderEvent Is Nothing Then
-                Else
-                    .RenderEvent.Invoke
-                End If
+                .Rendered
             End With
         End If
     Next Layers
@@ -654,9 +651,7 @@ Dim l_mopObject As Fury2MapObject
     Next l_sprSprite
     End With
     Err.Clear
-    If mvarViewingMap.Script_Redraw = True Then
-        If mvarViewingMap.Script Is Nothing Then Else mvarViewingMap.Script.Redraw l_imgBuffer, Area
-    End If
+    mvarViewingMap.Redrawn
     Set OutputSurface = Nothing
     l_imgBuffer.UpdateClipRect
     mvarDirty = False

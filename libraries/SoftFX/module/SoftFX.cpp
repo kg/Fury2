@@ -235,7 +235,6 @@ Export double GetTime() {
 }
 
 Export int GetInitialized() {
-
     return Initialized;
 }
 

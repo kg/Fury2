@@ -72,6 +72,7 @@ namespace Lighting {
     int FalloffDistance2;
     Image *Image;
     float ImageAlignX, ImageAlignY;
+    float LightSize;
   };
 
   class Obstruction {

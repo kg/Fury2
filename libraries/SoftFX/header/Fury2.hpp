@@ -17,6 +17,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "Polygon.hpp"
 #include "Fury2_Lighting.hpp"
 
 static const int DefaultCollisionSectorSize = 256;
@@ -73,10 +74,25 @@ enum spSpecialFX {
     fxCastGraphicShadow = 8
 };
 
+enum SpriteObstructionTypes {
+    sotUpwardRect = 0,
+    sotCenteredRect = 1,
+    sotCenteredSphere = 2,
+    sotUpwardPolygon = 3,
+    sotCenteredPolygon = 4
+};
+
 struct SpriteObstruction {
     float W;
     float H;
     Byte Type;
+};
+
+struct SpriteObstruction2 {
+    float W;
+    float H;
+    Byte Type;
+    void* Polygon;
 };
 
 enum SecondaryImageTypes {
@@ -174,7 +190,7 @@ struct VelocityVector {
 struct SpriteParam {
     SpritePosition Position;
     SpriteVelocity Velocity;
-    SpriteObstruction Obstruction;
+    SpriteObstruction2 Obstruction;
     SpriteGraphic Graphic;
     VisualParameters Params;
     PhysicalParameters Stats;
@@ -192,6 +208,7 @@ struct SpriteParam {
     SpriteParam *pSortedNext;
 
     FRect getRect();
+    SimplePolygon* getPolygon();
 
     inline Rectangle getRectangle() {
     		Rectangle rect;
@@ -203,6 +220,7 @@ struct SpriteParam {
 
     bool touches(SpriteParam *other);
     bool touches(FRect *other);
+    bool touches(SimplePolygon *other);
     bool touches(SpriteParam *other, VelocityVector *other_speed);
     inline int touches(FLine *lines, int line_count);
     inline int touches(CollisionMatrix *Matrix);
@@ -487,6 +505,7 @@ public:
   }
 
   bool collisionCheck(FRect *Rectangle, int XOffset = 0, int YOffset = 0);
+  bool collisionCheck(FRect *Rectangle, SimplePolygon *Polygon, int XOffset = 0, int YOffset = 0);
 };
 
 class CollisionMatrix {
@@ -522,6 +541,7 @@ public:
   bool addLines(FLine *Lines, int Count);
 
   bool collisionCheck(FRect *Rectangle);
+  bool collisionCheck(FRect *Rectangle, SimplePolygon *Polygon);
 
   inline CollisionSector* getSector(int X, int Y) {
     if (X < 0) return Null;

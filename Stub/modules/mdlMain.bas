@@ -22,6 +22,32 @@ Option Explicit
 
 Public Declare Sub PostQuitMessage Lib "user32" (ByVal nExitCode As Long)
 
+Sub CompReg(Filename As String)
+On Error Resume Next
+Dim l_lngResult As Long
+    If InIDE Then Exit Sub
+    If Not Compromise.IsSupported() Then Exit Sub
+    l_lngResult = Compromise.Register(Filename)
+    If (l_lngResult = 0) Then
+        MsgBox "Load failed: " + Filename, vbExclamation, "Compromise Error"
+    End If
+End Sub
+
+Sub LoadLibraries()
+On Error Resume Next
+    If InIDE Then Exit Sub
+    Compromise.Initialize
+    CompReg "packages2.dll"
+    CompReg "graphics.dll"
+    CompReg "filesystem.dll"
+    CompReg "scriptengine.dll"
+    CompReg "script2.dll"
+    CompReg "sound2.dll"
+    CompReg "video.dll"
+    CompReg "http.dll"
+    CompReg "engine.dll"
+End Sub
+
 Function InIDE() As Boolean
 On Error Resume Next
     Err.Clear
@@ -40,6 +66,7 @@ Dim l_strFolder As String
 Dim l_bfBrowse As cBrowseForFolder
     ChDrive Left(App.Path, 2)
     ChDir App.Path
+    LoadLibraries
     DoEvents
     Load frmNull
     Err.Clear
@@ -55,12 +82,14 @@ Dim l_bfBrowse As cBrowseForFolder
         If Len(Trim(l_strFolder)) <= 0 Then
             End
         End If
+        Err.Clear
         Fury2Load l_strFolder, EM_Normal, frmNull
     Else
+        Err.Clear
         Fury2Load Command$, EM_Normal, frmNull
     End If
     If (Err <> 0) Or (frmNull.Loaded = False) Then
-        MsgBox "Unable to load Fury²." & vbCrLf & Engine.LoadError, vbCritical, "Error"
+        MsgBox "Unable to load Fury²." & vbCrLf & engine.LoadError, vbCritical, "Error"
         Unload frmNull
         End
     End If

@@ -539,9 +539,18 @@ template <class T> inline T InlineIf(bool condition, T ifTrue) {
 }
 
 Export inline int WrapValue(int value, int minimum, int maximum) {
-  bool b = value < minimum;
-  int v = InlineIf(b, minimum - value, value - minimum) % ((maximum - minimum) + 1);
-  return InlineIf(b, maximum + 1 - v, minimum + v);
+  int d = maximum - minimum + 1;
+  if (value < minimum) {
+    int n = abs(minimum - value);
+    int i = n % d;
+    return minimum + ((d - i) % d);
+  } else if (value > maximum) {
+    int n = abs(value - maximum - 1);
+    int i = n % d;
+    return minimum + i;
+  } else {
+    return value;
+  }
 }
 
 inline float Round(float N) {
@@ -606,3 +615,50 @@ inline void Rotate4Points(float W, float H, float AngleInRadians, float *X, floa
   }
   Rotate4Points(W, H, AngleInRadians, X, Y, atan2(H, W), sqrt((W * W) + (H * H)));
 }
+
+template <class T> inline T clamp(T value, T min, T max) 
+{
+  if (value < min) return min;
+  else if (value > max) return max;
+  else return value;
+}
+
+template <class T> struct fastqueue {
+  T* Data;
+  int InsertionPoint;
+  int ReadPoint;
+  int Max;
+
+  fastqueue(int capacity) {
+    Data = new T[capacity];
+    InsertionPoint = 0;
+    ReadPoint = 0;
+    Max = capacity - 1;
+  }
+
+  ~fastqueue() {
+    if (Data != Null) {
+      delete[] Data;
+      Data = Null;
+      InsertionPoint = 0;
+      ReadPoint = 0;
+      Max = 0;
+    }
+  }
+
+  inline void push(T value) {
+    Data[InsertionPoint] = value;
+    InsertionPoint = WrapValue(InsertionPoint + 1, 0, Max);
+  }
+
+  inline void pop(T& out) {
+    out = Data[ReadPoint];
+    ReadPoint = WrapValue(ReadPoint + 1, 0, Max);
+  }
+
+  inline void clear() {
+    InsertionPoint = 0;
+    ReadPoint = 0;
+    Max = 0;
+  }
+};

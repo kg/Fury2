@@ -42,6 +42,7 @@ FSIGNATURE(Premultiply) END_FSIGNATURE
 FSIGNATURE(PrepareNormals) END_FSIGNATURE
 
 FSIGNATURE(Gradient_Radial) , Pixel Color1, Pixel Color2 END_FSIGNATURE
+FSIGNATURE(Gradient_Radial_Ex) , Pixel Color1, Pixel Color2, float StartOffset, float EndOffset END_FSIGNATURE
 
 Export extern int FilterSimple_Line(Image *Image, Rectangle* Area, Pixel Color);
 Export extern int FilterSimple_Line_AA(Image *Image, float X1, float Y1, float X2, float Y2, Pixel Color);

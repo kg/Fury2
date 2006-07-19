@@ -87,7 +87,7 @@ Dim l_sngVolume As Single
     l_sngVolume = VolumeStart + ((VolumeEnd - VolumeStart) * Slider.Progress)
     Channel.Volume = l_sngVolume
     If Slider.Finished Then
-        EndEvent.Invoke
+        If Not (EndEvent Is Nothing) Then EndEvent.Invoke
         Set Channel = Nothing
         Engine.UnHookEvents Me
     End If

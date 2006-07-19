@@ -254,5 +254,5 @@ End Sub
 Private Sub Form_Load()
     Cancelled = False
     SetAppIcon Me
-    LoadSettings
+'    LoadSettings
 End Sub

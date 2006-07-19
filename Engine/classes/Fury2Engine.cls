@@ -194,6 +194,7 @@ Public GameTimePaused As Boolean
 Public ActivationDistance As Single
 Public ScaleBlocking As Boolean
 Public VelocityDecay As Single
+Attribute VelocityDecay.VB_VarDescription = "Controls the rate at which objects accelerate and decelerate when under the control of a path or controller object."
 Public OutputPlugin As String
 Public VSync As Boolean
 Public DisableSound As Boolean
@@ -582,6 +583,11 @@ On Error Resume Next
     End If
 End Function
 
+Function ResolveName(ByRef Name) As Object
+On Error Resume Next
+    Set ResolveName = m_ScriptEngine.ResolveName(Name)
+End Function
+
 #If EnableBehaviors = 1 Then
 Public Function F2Behavior(BType) As Fury2Behavior
 On Error Resume Next
@@ -822,10 +828,14 @@ Function FadeBGM(Optional ByVal FromVolume As Single = -1, Optional ByVal ToVolu
 On Error Resume Next
 Dim l_fadFader As Fury2SoundFader
     If CurrentBGMChannel Is Nothing Then Exit Function
-    If CurrentBGMFader.Channel Is CurrentBGMChannel Then
-        UnHookEvents CurrentBGMFader
-        Set CurrentBGMFader = Nothing
+    Set l_fadFader = CurrentBGMFader
+    If Not (l_fadFader Is Nothing) Then
+        If l_fadFader.Channel Is CurrentBGMChannel Then
+            UnHookEvents l_fadFader
+            Set CurrentBGMFader = Nothing
+        End If
     End If
+    Set l_fadFader = Nothing
     Set l_fadFader = New Fury2SoundFader
     Set l_fadFader.Channel = CurrentBGMChannel
     Set l_fadFader.Slider = F2Slider
@@ -1022,10 +1032,15 @@ Dim m_lngImages As Long
 Dim m_imgImage As Fury2Image
 Dim m_strName As String
 Dim m_filFile As Fury2File
+Dim l_strSuffix As String
 Static m_lngHere As Long
     DebugOut "Loading image """ & Filename & """"
     m_lngHere = m_lngHere + 1
     Err.Clear
+    If InStr(Filename, "%") Then
+        l_strSuffix = Mid(Filename, InStrRev(Filename, "%"))
+        Filename = left(Filename, InStrRev(Filename, "%") - 1)
+    End If
     Filename = Filesystem.AutoSelectExtension(Filename, "png;f2g;tga;jpg;bmp;gif")
     m_strName = Filename
     If m_Images.Count > 0 Then
@@ -1043,7 +1058,7 @@ Static m_lngHere As Long
     End If
     If Filesystem.FileExists(Filename) Then
         Set m_filFile = Filesystem.File(Filename)
-        Set m_imgImage = F2LoadImage(m_filFile.GetRealFilename)
+        Set m_imgImage = F2LoadImage(m_filFile.GetRealFilename + l_strSuffix)
         If AutoOptimizeImages Then m_imgImage.Optimize
         m_imgImage.Name = Filename
         IsNew = True
@@ -1271,7 +1286,9 @@ Dim l_objObject As Object, l_varTest As Variant
             frmConfigure.Show
             frmConfigure.SetFocus
             Do While frmConfigure.Visible
-                If GetActiveWindow <> frmConfigure.hwnd Then frmConfigure.SetFocus
+                If Not InIDE Then
+                    If GetActiveWindow <> frmConfigure.hwnd Then frmConfigure.SetFocus
+                End If
                 Call SleepEx(1, True)
                 DoEvents
             Loop
@@ -1523,12 +1540,9 @@ Dim l_objTemp As Object
     If Not (Debugger Is Nothing) Then Set l_objTemp = Debugger.DebugCreateOutputPlugin()
     If l_objTemp Is Nothing Then
         Err.Clear
+        If (InIDE() = False) And (Compromise.IsSupported() = 1) Then Compromise.Register RootPath + "video_" + NewPlugin + ".dll"
         Set l_objTemp = CreateObject("video_" + CStr(Trim(NewPlugin)) + "." + CStr(Trim(NewPlugin)) + "Engine")
         If Err.Number <> 0 Then
-            Err.Clear
-            Call RegisterServer(RootPath + "video_" + NewPlugin + ".dll", False)
-            Call RegisterServer(RootPath + "video_" + NewPlugin + ".dll", True)
-            Set l_objTemp = CreateObject("video_" + CStr(Trim(NewPlugin)) + "." + CStr(Trim(NewPlugin)) + "Engine")
             If Err.Number <> 0 Then CriticalError "LoadOutputPlugin """ + CStr(NewPlugin) + """", "CreateObject()", Err.Description + "(Error #" + CStr(Err.Number) + ")"
         End If
     End If
@@ -1547,25 +1561,16 @@ Dim l_filFile As Fury2File
     DebugOut "Loading plugin """ & DLLFile & """"
     If Filesystem.FileExists(DLLFile) Then
         Set l_filFile = Filesystem.File(DLLFile)
+        If (InIDE() = False) And (Compromise.IsSupported() = 1) Then Compromise.Register l_filFile.GetRealFilename
     ElseIf FileLen(App.Path & "\" & Replace(DLLFile, "/", "\")) > 0 Then
         ' In engine dir
+        If (InIDE() = False) And (Compromise.IsSupported() = 1) Then Compromise.Register App.Path & "\" & Replace(DLLFile, "/", "\")
     Else
         CriticalError "LoadPlugin", "File check", "Unable to load plugin """ & PluginName & """, """ & DLLFile & """ not found"
     End If
     Err.Clear
     Set LoadPlugin = CreateObject(PluginName)
     If LoadPlugin Is Nothing Or Err.Number <> 0 Then
-        If l_filFile Is Nothing Then Exit Function
-        Err.Clear
-        RegisterDLL l_filFile.GetRealFilename
-        DoEvents
-        Set LoadPlugin = CreateObject(PluginName)
-        If LoadPlugin Is Nothing Or Err.Number <> 0 Then
-        Else
-            Set LoadPlugin.Engine = Me
-            LoadPlugin.Plugin_Load
-            DebugOut "Plugin " & ToString(LoadPlugin) & " loaded"
-        End If
     Else
         Set LoadPlugin.Engine = Me
         LoadPlugin.Plugin_Load
@@ -2030,11 +2035,11 @@ Dim l_vtType As VariantTypeConstants
     ElseIf l_vtType = vbNull Then
         ToString = "{Null}"
     ElseIf (l_vtType And vbArray) = vbArray Then
-        If UBound(Value) > 64 Then
+        If UBound(Value) > 256 Then
             ToString = "{Array}"
         Else
             If QuoteStrings Then
-                ToString = "{" + JoinX(Value, ", ", QuoteStrings) + "}"
+                ToString = "(" + JoinX(Value, ", ", QuoteStrings) + ")"
             Else
                 ToString = JoinX(Value, , QuoteStrings)
             End If
@@ -2343,10 +2348,14 @@ End Property
 Public Property Let Icon(NewIcon As String)
 On Error Resume Next
     m_strIcon = NewIcon
+    If m_objOutputPlugin Is Nothing Then Exit Property
     If Trim(m_strIcon) = "" Or (Filesystem.FileExists(m_strIcon) = False) Then
         SetAppIcon m_objOutputPlugin.Window
     Else
-        SetWindowIcon m_objOutputPlugin.Window, Filesystem.File(m_strIcon).GetRealFilename
+        Dim l_filFile As Fury2File
+        Set l_filFile = Filesystem.File(m_strIcon)
+        If l_filFile Is Nothing Then Exit Property
+        SetWindowIcon m_objOutputPlugin.Window, l_filFile.GetRealFilename
     End If
 End Property
 
@@ -2895,7 +2904,9 @@ End Sub
 
 Friend Sub EngineLoop()
 On Error Resume Next
-    m_objOutputPlugin.Window.SetFocus
+    If Not InIDE Then
+        m_objOutputPlugin.Window.SetFocus
+    End If
     If (ErrorOccurred) And (Debugger Is Nothing) Then ShowConsole
     Cameras.Dirty
     m_objNotify.Begin
@@ -3033,16 +3044,16 @@ Dim l_lngHotspots As Long, l_booInside As Boolean
                 l_booInside = m_lngX >= .x1 And m_lngX < .x2 And m_lngY >= .y1 And m_lngY < .y2
                 If .Hovering Then
                     If l_booInside Then
-                        .ClickEvent.Invoke
+                        If Not (.ClickEvent Is Nothing) Then .ClickEvent.Invoke
                     Else
                         .Hovering = False
-                        .LeaveEvent.Invoke
+                        If Not (.LeaveEvent Is Nothing) Then .LeaveEvent.Invoke
                     End If
                 Else
                     If l_booInside Then
-                        .EnterEvent.Invoke
+                        If Not (.EnterEvent Is Nothing) Then .EnterEvent.Invoke
                         .Hovering = True
-                        .ClickEvent.Invoke
+                        If Not (.ClickEvent Is Nothing) Then .ClickEvent.Invoke
                     End If
                 End If
             End If
@@ -3086,11 +3097,11 @@ Dim l_lngHotspots As Long, l_booInside As Boolean
                     If l_booInside Then
                     Else
                         .Hovering = False
-                        .LeaveEvent.Invoke
+                        If Not (.LeaveEvent Is Nothing) Then .LeaveEvent.Invoke
                     End If
                 Else
                     If l_booInside Then
-                        .EnterEvent.Invoke
+                        If Not (.EnterEvent Is Nothing) Then .EnterEvent.Invoke
                         .Hovering = True
                     End If
                 End If
@@ -3241,7 +3252,9 @@ Sub FocusWindow()
 Attribute FocusWindow.VB_MemberFlags = "40"
 On Error Resume Next
     SetTopmost m_objOutputPlugin.Window, m_objOutputPlugin.Fullscreen
-    m_objOutputPlugin.Window.SetFocus
+    If Not InIDE Then
+        m_objOutputPlugin.Window.SetFocus
+    End If
     Err.Clear
 End Sub
 
@@ -3809,8 +3822,7 @@ On Error Resume Next
     End Select
 End Sub
 
-Public Sub Include(ByVal Filename As String, Optional ByVal Require As Boolean = True)
-Attribute Include.VB_Description = "Loads a script file."
+Public Sub IncludeModule(ByVal Filename As String, Optional ByVal ModuleName As String = "", Optional ByVal Require As Boolean = True)
 On Error Resume Next
 Dim l_strText As String
 Dim l_strModule As String
@@ -3832,7 +3844,7 @@ Dim l_strModule As String
         If Not Filesystem.FileExists(Filename) Then
             If m_booErrorsOff Then
             Else
-                CriticalError "Include", "Include", "Script not found: " + ToString(Filename)
+                CriticalError "IncludeModule", "IncludeModule", "Script not found: " + ToString(Filename)
             End If
             Exit Sub
         End If
@@ -3843,12 +3855,29 @@ Dim l_strModule As String
     End If
     ContextLevelAdd Filename
     l_strModule = VariableName(Filesystem.GetTitle(Filename))
-    m_ScriptEngine.AddCode Filesystem.File(Filename).Text
+    If Len(ModuleName) > 0 Then
+        If Not m_ScriptEngine.ModuleExists(ModuleName) Then
+            m_ScriptEngine.CreateModule ModuleName, Filesystem.File(Filename).Text
+            If Err <> 0 Then
+                Err.Clear
+        '        m_ScriptEngine.Error.Clear
+            End If
+            ContextLevelRemove
+            Exit Sub
+        End If
+    End If
+    m_ScriptEngine.AddCode Filesystem.File(Filename).Text, ModuleName
     If Err <> 0 Then
         Err.Clear
 '        m_ScriptEngine.Error.Clear
     End If
     ContextLevelRemove
+End Sub
+
+Public Sub Include(ByVal Filename As String, Optional ByVal Require As Boolean = True)
+Attribute Include.VB_Description = "Loads a script file."
+On Error Resume Next
+    IncludeModule Filename, , Require
 End Sub
 
 Friend Sub Init(Parameters As String)
@@ -4135,6 +4164,10 @@ On Error Resume Next
     Filesystem.Root = "."
     Configuration.InitDefaultSettings
 End Sub
+
+Public Property Get InIDE() As Boolean
+    InIDE = mdlFury2.InIDE
+End Property
 
 Public Sub iTerminate()
 On Error Resume Next
@@ -4485,7 +4518,7 @@ On Error Resume Next
         Set CurrentBGM = SoundEngine.Load(CStr(Filename))
     End If
     CurrentBGM.LoopMode = LoopMode_Normal
-    CurrentBGM.LoopCount = -1
+    CurrentBGM.Loopcount = -1
     Set CurrentBGMChannel = CurrentBGM.Play(True)
     CurrentBGMChannel.Priority = 0
     If Fade Then
@@ -4861,16 +4894,26 @@ Dim m_lngWidth As Long, m_lngHeight As Long
     End With
 End Sub
 
-Public Sub RunCode(ByRef Code)
+Public Sub RunCode(ByRef Code, Optional ByRef Module As String = "")
 On Error Resume Next
     ContextLevelAdd "RunCode"
-    m_ScriptEngine.AddCode ToString(Code)
+    If (Len(Module) < 1) Or (m_ScriptEngine.ModuleExists(Module)) Then
+        m_ScriptEngine.AddCode ToString(Code), Module
+    Else
+        m_ScriptEngine.CreateModule Module, ToString(Code)
+    End If
     If Err <> 0 Then
         Err.Clear
 '        m_ScriptEngine.Error.Clear
     End If
     ContextLevelRemove
 End Sub
+
+Public Property Get Module(ByRef ModuleName As String) As Object
+On Error Resume Next
+    Set Module = m_ScriptEngine.Namespace(ModuleName)
+    Err.Clear
+End Property
 
 Public Sub SaveMapState(ByVal Index As Long, ByRef Name As String)
 Attribute SaveMapState.VB_Description = "Saves the current state of a map."
@@ -4914,7 +4957,7 @@ On Error Resume Next
         Set .EnterEvent = BindEvent(EnterEvent)
         Set .LeaveEvent = BindEvent(LeaveEvent)
         If (Mouse.X >= .x1) And (Mouse.Y >= .y1) And (Mouse.X < .x2) And (Mouse.Y < .y2) Then
-            .EnterEvent.Invoke
+            If Not (.EnterEvent Is Nothing) Then .EnterEvent.Invoke
             .Hovering = True
         Else
             .Hovering = False
@@ -5065,6 +5108,7 @@ End Sub
 
 Friend Sub ShutdownIME()
 On Error Resume Next
+    If m_imeIMEEngine Is Nothing Then Exit Sub
     #If EnableIME = 1 Then
         m_imeIMEEngine.Unhook m_objOutputPlugin.Window.hwnd
     #End If
@@ -5839,3 +5883,11 @@ Dim l_objObject As Object
     End If
     m_ScriptEngine.AddObject Alias, l_objObject, True, True, True
 End Sub
+
+Friend Function InvokeMember(ByVal Obj As Object, ByVal Member As Long, Optional ByRef Args As Variant) As Variant
+On Error Resume Next
+Dim l_varArgs() As Variant
+    l_varArgs = Args
+    Err.Clear
+    InvokeMember = m_ScriptEngine.InvokeMember(Obj, Member, VbMethod, l_varArgs)
+End Function

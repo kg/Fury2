@@ -91,114 +91,125 @@ Export DoubleWord NormalColor(FPoint3* Vector) {
 }
 
 Export DoubleWord Gray(int V) {
-    return Pixel(ClipByte(V), ClipByte(V), ClipByte(V)).V;
+  return Pixel(ClipByte(V), ClipByte(V), ClipByte(V)).V;
 }
 
 Export DoubleWord GrayA(int V, int A) {
-    return Pixel(ClipByte(V), ClipByte(V), ClipByte(V), ClipByte(A)).V;
+  return Pixel(ClipByte(V), ClipByte(V), ClipByte(V), ClipByte(A)).V;
 }
 
 Export DoubleWord SwapChannels(Pixel Color, int Channel1, int Channel2) {
-    _Swap<Byte>(Color[(ColorChannels)ClipValue(Channel1, 3)], Color[(ColorChannels)ClipValue(Channel2, 3)]);
-    return Color.V;
+  _Swap<Byte>(Color[(ColorChannels)ClipValue(Channel1, 3)], Color[(ColorChannels)ClipValue(Channel2, 3)]);
+  return Color.V;
 }
 
 Export DoubleWord SetChannel(Pixel Color, int Channel, int Value) {
-    Color[(ColorChannels)ClipValue(Channel, 3)] = ClipByte(Value);
-    return Color.V;
+  Color[(ColorChannels)ClipValue(Channel, 3)] = ClipByte(Value);
+  return Color.V;
 }
 
 Export DoubleWord GetChannel(Pixel Color, int Channel) {
-    return Color[(ColorChannels)ClipValue(Channel, 3)];
+  return Color[(ColorChannels)ClipValue(Channel, 3)];
 }
 
 Export DoubleWord BlendColors(Pixel Dest, Pixel Source, int Opacity) {
-    Opacity = ClipByte(Opacity);
-    Dest[::Blue] = AlphaLookup(Dest[::Blue], Opacity ^ 0xFF) + AlphaLookup(Source[::Blue], Opacity);
-    Dest[::Green] = AlphaLookup(Dest[::Green], Opacity ^ 0xFF) + AlphaLookup(Source[::Green], Opacity);
-    Dest[::Red] = AlphaLookup(Dest[::Red], Opacity ^ 0xFF) + AlphaLookup(Source[::Red], Opacity);
-    Dest[::Alpha] = AlphaLookup(Dest[::Alpha], Opacity ^ 0xFF) + AlphaLookup(Source[::Alpha], Opacity);
-    return Dest.V;
+  if (!Initialized) return Failure;
+  Opacity = ClipByte(Opacity);
+  Dest[::Blue] = AlphaLookup(Dest[::Blue], Opacity ^ 0xFF) + AlphaLookup(Source[::Blue], Opacity);
+  Dest[::Green] = AlphaLookup(Dest[::Green], Opacity ^ 0xFF) + AlphaLookup(Source[::Green], Opacity);
+  Dest[::Red] = AlphaLookup(Dest[::Red], Opacity ^ 0xFF) + AlphaLookup(Source[::Red], Opacity);
+  Dest[::Alpha] = AlphaLookup(Dest[::Alpha], Opacity ^ 0xFF) + AlphaLookup(Source[::Alpha], Opacity);
+  return Dest.V;
 }
 
 Export DoubleWord MultiplyColor(Pixel Color, Pixel Mul, int Opacity) {
-    Opacity = ClipByte(Opacity);
-    int White = Opacity ^ 0xFF;
-    Color[::Blue] = AlphaLookup(Color[::Blue], AlphaLookup(Mul[::Blue], Opacity) + White);
-    Color[::Green] = AlphaLookup(Color[::Green], AlphaLookup(Mul[::Green], Opacity) + White);
-    Color[::Red] = AlphaLookup(Color[::Red], AlphaLookup(Mul[::Red], Opacity) + White);
-    Color[::Alpha] = AlphaLookup(Color[::Alpha], AlphaLookup(Mul[::Alpha], Opacity) + White);
-    return Color.V;
+  if (!Initialized) return Failure;
+  Opacity = ClipByte(Opacity);
+  int White = Opacity ^ 0xFF;
+  Color[::Blue] = AlphaLookup(Color[::Blue], AlphaLookup(Mul[::Blue], Opacity) + White);
+  Color[::Green] = AlphaLookup(Color[::Green], AlphaLookup(Mul[::Green], Opacity) + White);
+  Color[::Red] = AlphaLookup(Color[::Red], AlphaLookup(Mul[::Red], Opacity) + White);
+  Color[::Alpha] = AlphaLookup(Color[::Alpha], AlphaLookup(Mul[::Alpha], Opacity) + White);
+  return Color.V;
 }
 
 Export DoubleWord ColorToGrayscale(Pixel Color) {
-    Color.setGray(((Color[::Blue] * 11) + (Color[::Green] * 59) + (Color[::Red] * 30)) / 100);
-    return Color.V;
+  Color.setGray(((Color[::Blue] * 11) + (Color[::Green] * 59) + (Color[::Red] * 30)) / 100);
+  return Color.V;
 }
 
 Export DoubleWord InvertColor(Pixel Color) {
-    Color[::Blue] ^= 0xFF;
-    Color[::Green] ^= 0xFF;
-    Color[::Red] ^= 0xFF;
-    Color[::Alpha] ^= 0xFF;
-    return Color.V;
+  Color[::Blue] ^= 0xFF;
+  Color[::Green] ^= 0xFF;
+  Color[::Red] ^= 0xFF;
+  Color[::Alpha] ^= 0xFF;
+  return Color.V;
 }
 
 Export DoubleWord InvertColorRGB(Pixel Color) {
-    Color[::Blue] ^= 0xFF;
-    Color[::Green] ^= 0xFF;
-    Color[::Red] ^= 0xFF;
-    return Color.V;
+  Color[::Blue] ^= 0xFF;
+  Color[::Green] ^= 0xFF;
+  Color[::Red] ^= 0xFF;
+  return Color.V;
 }
 
 Export DoubleWord InvertChannel(Pixel Color, int Channel) {
-    Color[(ColorChannels)ClipValue(Channel, 3)] ^= 0xFF;
-    return Color.V;
+  Color[(ColorChannels)ClipValue(Channel, 3)] ^= 0xFF;
+  return Color.V;
 }
 
 Export void ColorToHSVA(Pixel Color, HSVA* Out) {
+  if (!Initialized) return;
   *Out = HSVA(Color);
   return;
 }
 
 Export DoubleWord HSVAToColor(HSVA* In) {
+  if (!Initialized) return Failure;
   return In->getPixel().V;
 }
 
 Export int GetHue(Pixel Color) {
+  if (!Initialized) return Failure;
   HSVA TheColor = HSVA(Color);
   return TheColor.Hue;
 }
 
 Export int GetSaturation(Pixel Color) {
+  if (!Initialized) return Failure;
   HSVA TheColor = HSVA(Color);
   return TheColor.Saturation;
 }
 
 Export int GetHSVAValue(Pixel Color) {
+  if (!Initialized) return Failure;
   HSVA TheColor = HSVA(Color);
   return TheColor.Value;
 }
 
 Export DoubleWord SetHue(Pixel Color, int NewValue) {
+  if (!Initialized) return Failure;
   HSVA TheColor = HSVA(Color);
   TheColor.setHue(NewValue);
   return TheColor.getPixel().V;
 }
 
 Export DoubleWord SetSaturation(Pixel Color, int NewValue) {
+  if (!Initialized) return Failure;
   HSVA TheColor = HSVA(Color);
   TheColor.setSaturation(NewValue);
   return TheColor.getPixel().V;
 }
 
 Export DoubleWord SetHSVAValue(Pixel Color, int NewValue) {
+  if (!Initialized) return Failure;
   HSVA TheColor = HSVA(Color);
   TheColor.setValue(NewValue);
   return TheColor.getPixel().V;
 }
 
 Export DoubleWord HSVAColor(int H, int S, int V, int A) {
+  if (!Initialized) return Failure;
   HSVA TheColor = HSVA(H, S, V, A);
   return TheColor.getPixel().V;
 }

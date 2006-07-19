@@ -88,7 +88,7 @@ End Sub
 
 Private Sub SelectionChanged()
 On Error Resume Next
-    MoveEvent.Invoke
+    If Not (MoveEvent Is Nothing) Then MoveEvent.Invoke
     Err.Clear
 End Sub
 
@@ -96,17 +96,21 @@ Private Sub ItemSelect(Index)
 On Error Resume Next
     If mCol.Item(Index).Enabled = False Then Exit Sub
     If mCol.Item(Index).SelectEvent Is Nothing Then
+        Err.Clear
         mCol.Item(Index).SelectEvent.Invoke mCol.Item(Index).Index
-        mCol.Item(Index).SelectEvent.Invoke
+        If Err <> 0 Then mCol.Item(Index).SelectEvent.Invoke
     End If
-    SelectEvent.Invoke mCol.Item(Index).Index
-    SelectEvent.Invoke
+    If Not (SelectEvent Is Nothing) Then
+        Err.Clear
+        SelectEvent.Invoke mCol.Item(Index).Index
+        If Err <> 0 Then SelectEvent.Invoke
+    End If
     Err.Clear
 End Sub
 
 Private Sub CloseMenu()
 On Error Resume Next
-    CloseEvent.Invoke
+    If Not (CloseEvent Is Nothing) Then CloseEvent.Invoke
 End Sub
 
 Public Sub MouseUp(ByVal Button As Long, ByVal Shift As Long, ByRef X As Long, ByRef Y As Long)

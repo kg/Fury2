@@ -22,6 +22,26 @@ Option Explicit
 Global g_colPlugins As Engine.Fury2Collection
 Global g_colFileTypePlugins As Engine.Fury2Collection
 
+Public Function UninstallPlugin(ByRef ClassName As String) As Long
+On Error Resume Next
+Dim l_lngCount As Long, l_lngPlugins As Long
+Dim l_strName As String, l_lngEnabled As Long, l_strFilename As String
+Dim l_lngRemoved As Long
+    l_lngCount = ReadRegSetting("Plugins\Count", 0)
+    If l_lngCount > 0 Then
+        For l_lngPlugins = 1 To l_lngCount
+            l_strName = ReadRegSetting("Plugins\" & l_lngPlugins & "::Name")
+            Err.Clear
+            If Trim(LCase(l_strName)) Like Trim(LCase(ClassName)) Then
+                Call WriteRegSetting("Plugins\" & l_lngPlugins & "::Name", "")
+                Call WriteRegSetting("Plugins\" & l_lngPlugins & "::Filename", "")
+                l_lngRemoved = l_lngRemoved + 1
+            End If
+        Next l_lngPlugins
+    End If
+    UninstallPlugin = l_lngRemoved
+End Function
+
 Public Function IsPluginInstalled(ByRef ClassName As String) As Boolean
 On Error Resume Next
 On Error Resume Next
@@ -40,15 +60,73 @@ Dim l_strName As String, l_lngEnabled As Long, l_strFilename As String
     End If
 End Function
 
+Public Sub InstallPluginSet(ByVal Filename As String)
+On Error Resume Next
+Dim l_strText As String
+Dim l_strLines() As String
+Dim l_strName As String
+Dim l_strLibrary As String
+Dim l_strPath As String
+Dim l_strDLL As String
+Dim l_lngPlugins As Long
+Dim l_strLine As String
+Dim l_strParts() As String
+    l_strText = ReadTextFile(Filename)
+    l_strPath = GetPath(Filename)
+    l_strLines = Split(l_strText, vbCrLf)
+    l_strName = l_strLines(0)
+    l_strLibrary = l_strLines(1)
+    l_strDLL = l_strLines(2)
+    For l_lngPlugins = 3 To UBound(l_strLines)
+        l_strLine = l_strLines(l_lngPlugins)
+        l_strParts = Split(l_strLine, ":")
+        InstallPlugin l_strLibrary & "." & l_strParts(1), l_strPath & "\" & l_strDLL
+    Next l_lngPlugins
+End Sub
+
 Public Sub InstallPlugin(ByRef ClassName As String, ByRef Filename As String)
 On Error Resume Next
 Dim l_lngCount As Long
+Dim l_lngResult As Long
+Dim l_lngIndex As Long
+Dim l_lngPlugins As Long
+Dim l_strName As String
     If IsPluginInstalled(ClassName) Then Exit Sub
     l_lngCount = ReadRegSetting("Plugins\Count", 0)
-    l_lngCount = l_lngCount + 1
-    WriteRegSetting "Plugins\Count", l_lngCount
-    WriteRegSetting "Plugins\" & l_lngCount & "::Name", ClassName
-    WriteRegSetting "Plugins\" & l_lngCount & "::Filename", Filename
+    l_lngIndex = -1
+    If l_lngCount > 0 Then
+        For l_lngPlugins = 1 To l_lngCount
+            l_strName = ReadRegSetting("Plugins\" & l_lngPlugins & "::Name")
+            If Trim(LCase(l_strName)) = "" Then
+                l_lngIndex = l_lngPlugins
+                Exit For
+            End If
+        Next l_lngPlugins
+    End If
+    If (l_lngIndex = -1) Then
+        l_lngCount = l_lngCount + 1
+        l_lngIndex = l_lngCount
+        WriteRegSetting "Plugins\Count", l_lngCount
+    End If
+    WriteRegSetting "Plugins\" & l_lngIndex & "::Name", ClassName
+    If Not InIDE Then
+        l_lngResult = Compromise.Register(Filename)
+        If (l_lngResult = 1) Then
+            WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", Filename
+        Else
+            l_lngResult = Compromise.Register(App.Path & "\" & Filename)
+            If (l_lngResult = 1) Then
+                WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", App.Path & "\" & Filename
+            Else
+                l_lngResult = Compromise.Register(App.Path & "\plugin\" & Filename)
+                If (l_lngResult = 1) Then
+                    WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", App.Path & "\plugin\" & Filename
+                Else
+                    WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", ""
+                End If
+            End If
+        End If
+    End If
 End Sub
 
 Public Function XCreateObject(ByRef Name As String, Optional ByRef Filename As String = "") As Object
@@ -69,15 +147,10 @@ Dim l_strLibrary As String, l_strClass As String
         End Select
     Else
         Err.Clear
-        Set XCreateObject = CreateObject(Name)
-        If Err <> 0 Or XCreateObject Is Nothing Then
-            If FileExists(Filename) Then
-                RegisterServer Filename, False
-                RegisterServer Filename, True
-            End If
-            Err.Clear
-            Set XCreateObject = CreateObject(Name)
+        If (Not InIDE) And (Compromise.IsSupported() = 1) Then
+            Compromise.Register Filename
         End If
+        Set XCreateObject = CreateObject(Name)
     End If
 End Function
 
@@ -134,23 +207,23 @@ Dim l_plgPlugin As iPlugin
     l_lngCount = ReadRegSetting("Plugins\Count", 0)
     If l_lngCount = 0 Then
         SetStatus "Installing Standard Plugins"
-        InstallPlugin "internal.cUnknownFileType", App.Path
-        InstallPlugin "ngPlugins.RM2kXSpriteImporter", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.TextFile", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.ImageFile", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.ImageGridRemover", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.SpriteImporter", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.ImageMapImporter", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.AudioFile", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.MapEditor", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.ScriptFile", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.SpriteEditor", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.FontEditor", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.TilesetEditor", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.CommandBrowser", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "ngPlugins.UserDataEditor", GetPath(App.Path) & "\ng.dll"
-        InstallPlugin "tk.TKTilesetImporter", GetPath(App.Path) & "\tk.dll"
-        InstallPlugin "tk.TKBoardImporter", GetPath(App.Path) & "\tk.dll"
+        InstallPlugin "internal.cUnknownFileType", ""
+        InstallPlugin "ngPlugins.RM2kXSpriteImporter", "\ng.dll"
+        InstallPlugin "ngPlugins.TextFile", "\ng.dll"
+        InstallPlugin "ngPlugins.ImageFile", "\ng.dll"
+        InstallPlugin "ngPlugins.ImageGridRemover", "\ng.dll"
+        InstallPlugin "ngPlugins.SpriteImporter", "\ng.dll"
+        InstallPlugin "ngPlugins.ImageMapImporter", "\ng.dll"
+        InstallPlugin "ngPlugins.AudioFile", "\ng.dll"
+        InstallPlugin "ngPlugins.MapEditor", "\ng.dll"
+        InstallPlugin "ngPlugins.ScriptFile", "\ng.dll"
+        InstallPlugin "ngPlugins.SpriteEditor", "\ng.dll"
+        InstallPlugin "ngPlugins.FontEditor", "\ng.dll"
+        InstallPlugin "ngPlugins.TilesetEditor", "\ng.dll"
+        InstallPlugin "ngPlugins.CommandBrowser", "\ng.dll"
+        InstallPlugin "ngPlugins.UserDataEditor", "\ng.dll"
+        InstallPlugin "tk.TKTilesetImporter", "\tk.dll"
+        InstallPlugin "tk.TKBoardImporter", "\tk.dll"
         l_lngCount = ReadRegSetting("Plugins\Count", 0)
     End If
     If l_lngCount > 0 Then

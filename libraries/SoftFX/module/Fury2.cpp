@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "../header/Blend.hpp"
 #include "../header/Clip.hpp"
 #include "../header/Resample.hpp"
-#include "../header/Polygon.hpp"
 #include "../header/Blitters.hpp"
 #include "../header/Filters.hpp"
 #include <math.h>
@@ -35,6 +34,7 @@ int ClipLine(Rectangle *Rect, ILine *Line);
 Export int ClipLine(Image *Image, ILine *Line);
 Export int ClipFloatLine(Image *Image, FLine *Line);
 Export int CheckLineCollide(FRect * rct, FLine * lines, int linecount);
+Export int CheckLineCollide2(FRect * rct, SimplePolygon * poly, FLine * lines, int linecount);
 
 Image* ShadowImage = Null;
 
@@ -481,27 +481,17 @@ if (!Layer) return Failure;
 }
 
 int CollisionCheckEx(SpriteParam *first, SpriteParam *check, bool mustbesolid, int requiredtype, int excludedtype, SpriteParam **out) {
-float cw = 0;
-float sw = 0;
 SpriteParam * sCurrent = first;
 FRect rSource, rDest;
     if (!first) return 0;
     if (!check) return 0;
     if (!first->pNext) return 0;
-    sw = (check->Obstruction.W) / 2;
-    rSource.X1 = (check->Position.X) - (sw);
-    rSource.X2 = (check->Position.X) + (sw);
-    rSource.Y1 = (check->Position.Y) - (check->Obstruction.H);
-    rSource.Y2 = (check->Position.Y);
+    rSource = check->getRect();
     while (sCurrent) {
         if (sCurrent != check) {
             if ((sCurrent->Type != excludedtype) && (((requiredtype >= 0) && (sCurrent->Type == requiredtype)) || (requiredtype < 0))) {
                 if ((sCurrent->Stats.Solid) || (!mustbesolid)) {
-                    cw = (sCurrent->Obstruction.W) / 2;
-                    rDest.X1 = (sCurrent->Position.X) - (cw);
-                    rDest.X2 = (sCurrent->Position.X) + (cw);
-                    rDest.Y1 = (sCurrent->Position.Y) - (sCurrent->Obstruction.H);
-                    rDest.Y2 = (sCurrent->Position.Y);
+                    rDest = sCurrent->getRect();
                     if (rSource.X1 > rDest.X2) goto nevar;
                     if (rSource.Y1 > rDest.Y2) goto nevar;
                     if (rSource.X2 < rDest.X1) goto nevar;
@@ -1707,7 +1697,6 @@ nevar:
 
 Export int FindSprite(SpriteParam *first, FRect *area, SpriteParam *exclude, bool mustbesolid, int requiredtype, int excludedtype) {
 SpriteParam * sCurrent = first;
-float cw;
     if (!first) return 0;
     if (!area) return 0;
 FRect rSource = *area, rDest;
@@ -1715,11 +1704,7 @@ FRect rSource = *area, rDest;
         if (sCurrent != exclude) {
             if ((sCurrent->Type != excludedtype) && (((requiredtype >= 0) && (sCurrent->Type == requiredtype)) || (requiredtype < 0))) {
                 if ((sCurrent->Stats.Solid) || (!mustbesolid)) {
-                    cw = (sCurrent->Obstruction.W) / 2;
-                    rDest.X1 = (sCurrent->Position.X) - (cw);
-                    rDest.X2 = (sCurrent->Position.X) + (cw);
-                    rDest.Y1 = (sCurrent->Position.Y) - (sCurrent->Obstruction.H);
-                    rDest.Y2 = (sCurrent->Position.Y);
+                    rDest = sCurrent->getRect();
                     if (rSource.X1 > rDest.X2) goto nevar;
                     if (rSource.Y1 > rDest.Y2) goto nevar;
                     if (rSource.X2 < rDest.X1) goto nevar;
@@ -1863,6 +1848,63 @@ FLine ln;
     return false;
 }
 
+Export int CheckLineCollide2(FRect *rct, SimplePolygon *poly, FLine *lines, int linecount) {
+int sCode = 0, eCode = 0, nCode = 0;
+FLine *line = lines;
+int iCount;
+FPoint pt;
+FLine ln;
+    if (!rct) return false;
+    if (!lines) return false;
+    for (iCount = 1; iCount <= linecount; iCount++) {
+        ln = *line;
+        while(true) {
+            sCode = PointRegionCode(&ln.Start, rct);
+            eCode = PointRegionCode(&ln.End, rct);
+            if ((sCode | eCode) == 0) {
+                // trivial accept
+                if (Intersects(*poly, ln))
+                  return iCount;
+                else
+                  break;
+            } else if ((sCode & eCode) != 0) {
+                // trivial reject
+                break;
+            } else {
+                if(sCode == 0)
+                {
+                    pt = ln.Start;
+                    ln.Start = ln.End;
+                    ln.End = pt;
+                    nCode = sCode; 
+                    sCode = eCode;
+                    eCode = nCode;
+                } 
+                // nontrivial
+                if (sCode & csTop) {
+                    // top
+                    ln.Start.X +=(ln.End.X - ln.Start.X) * (rct->Y1 - ln.Start.Y) / (ln.End.Y - ln.Start.Y);
+                    ln.Start.Y = rct->Y1;
+                } else if (sCode & csBottom) {
+                    // bottom
+                    ln.Start.X +=(ln.End.X - ln.Start.X) * (rct->Y2 - ln.Start.Y) / (ln.End.Y - ln.Start.Y);
+                    ln.Start.Y = rct->Y2;
+                } else if (sCode & csRight) {
+                    // right
+                    ln.Start.Y +=(ln.End.Y - ln.Start.Y) * (rct->X2 - ln.Start.X) / (ln.End.X - ln.Start.X);
+                    ln.Start.X = rct->X2;
+                } else {
+                    // left
+                    ln.Start.Y +=(ln.End.Y - ln.Start.Y) * (rct->X1 - ln.Start.X) / (ln.End.X - ln.Start.X);
+                    ln.Start.X = rct->X1;
+                }
+            }
+        }
+        line++;
+    }
+    return false;
+}
+
 int CheckLineCollide(FRect *rct, std::vector<FLine> Lines) {
 int sCode = 0, eCode = 0, nCode = 0;
 DoubleWord iCount;
@@ -1914,20 +1956,147 @@ FLine ln;
     return false;
 }
 
+int CheckLineCollide2(FRect *rct, SimplePolygon *poly, std::vector<FLine> Lines) {
+int sCode = 0, eCode = 0, nCode = 0;
+DoubleWord iCount;
+FPoint pt;
+FLine ln;
+    if (!rct) return false;
+    for (iCount = 0; iCount < Lines.size(); iCount++) {
+        ln = Lines[iCount];
+        while(true) {
+            sCode = PointRegionCode(&ln.Start, rct);
+            eCode = PointRegionCode(&ln.End, rct);
+            if ((sCode | eCode) == 0) {
+                // trivial accept
+                if (Intersects(*poly, ln))
+                  return iCount + 1;
+                else
+                  break;
+            } else if ((sCode & eCode) != 0) {
+                // trivial reject
+                break;
+            } else {
+                if(sCode == 0)
+                {
+                    pt = ln.Start;
+                    ln.Start = ln.End;
+                    ln.End = pt;
+                    nCode = sCode; 
+                    sCode = eCode;
+                    eCode = nCode;
+                } 
+                // nontrivial
+                if (sCode & csTop) {
+                    // top
+                    ln.Start.X +=(ln.End.X - ln.Start.X) * (rct->Y1 - ln.Start.Y) / (ln.End.Y - ln.Start.Y);
+                    ln.Start.Y = rct->Y1;
+                } else if (sCode & csBottom) {
+                    // bottom
+                    ln.Start.X +=(ln.End.X - ln.Start.X) * (rct->Y2 - ln.Start.Y) / (ln.End.Y - ln.Start.Y);
+                    ln.Start.Y = rct->Y2;
+                } else if (sCode & csRight) {
+                    // right
+                    ln.Start.Y +=(ln.End.Y - ln.Start.Y) * (rct->X2 - ln.Start.X) / (ln.End.X - ln.Start.X);
+                    ln.Start.X = rct->X2;
+                } else {
+                    // left
+                    ln.Start.Y +=(ln.End.Y - ln.Start.Y) * (rct->X1 - ln.Start.X) / (ln.End.X - ln.Start.X);
+                    ln.Start.X = rct->X1;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 FRect SpriteParam::getRect() {
 float w = this->Obstruction.W / 2;
+float h = this->Obstruction.H / 2;
 FRect v;
-    v.X1 = (this->Position.X) - (w);
-    v.X2 = (this->Position.X) + (w);
-    v.Y1 = (this->Position.Y) - (this->Obstruction.H);
-    v.Y2 = (this->Position.Y);
+    switch (this->Obstruction.Type) {
+      case sotUpwardRect:
+      case sotUpwardPolygon:
+        v.X1 = (this->Position.X) - (w);
+        v.X2 = (this->Position.X) + (w);
+        v.Y1 = (this->Position.Y) - (this->Obstruction.H);
+        v.Y2 = (this->Position.Y);
+        break;
+      case sotCenteredRect:
+      case sotCenteredPolygon:
+        v.X1 = (this->Position.X) - (w);
+        v.X2 = (this->Position.X) + (w);
+        v.Y1 = (this->Position.Y) - (h);
+        v.Y2 = (this->Position.Y) + (h);
+        break;
+      case sotCenteredSphere:
+        float s = w;
+        v.X1 = (this->Position.X) - (s);
+        v.X2 = (this->Position.X) + (s);
+        v.Y1 = (this->Position.Y) - (s);
+        v.Y2 = (this->Position.Y) + (s);
+        break;
+    }
+    return v;
+}
+
+Polygon<FPoint>* SpriteParam::getPolygon() {
+float w = this->Obstruction.W / 2;
+float h = this->Obstruction.H / 2;
+FRect r;
+Polygon<FPoint> *v = new Polygon<FPoint>();
+Polygon<FPoint> *base;
+    switch (this->Obstruction.Type) {
+      case sotUpwardRect:
+        r.X1 = (this->Position.X) - (w);
+        r.X2 = (this->Position.X) + (w);
+        r.Y1 = (this->Position.Y) - (this->Obstruction.H);
+        r.Y2 = (this->Position.Y);
+        v->Allocate(4);
+        v->Append(r.TopLeft());
+        v->Append(r.TopRight());
+        v->Append(r.BottomRight());
+        v->Append(r.BottomLeft());
+        break;
+      case sotCenteredSphere:
+      case sotCenteredRect:
+        r.X1 = (this->Position.X) - (w);
+        r.X2 = (this->Position.X) + (w);
+        r.Y1 = (this->Position.Y) - (h);
+        r.Y2 = (this->Position.Y) + (h);
+        v->Allocate(4);
+        v->Append(r.TopLeft());
+        v->Append(r.TopRight());
+        v->Append(r.BottomRight());
+        v->Append(r.BottomLeft());
+        break;
+      case sotUpwardPolygon:
+        base = (Polygon<FPoint>*)this->Obstruction.Polygon;
+        v->Copy(*base);
+        v->Translate(this->Position.X, this->Position.Y - (this->Obstruction.H));
+        break;
+      case sotCenteredPolygon:
+        base = (Polygon<FPoint>*)this->Obstruction.Polygon;
+        v->Copy(*base);
+        v->Translate(this->Position.X, this->Position.Y);
+        break;
+    }
     return v;
 }
 
 bool SpriteParam::touches(SpriteParam *other) {
-FRect rOther;
-  rOther = other->getRect();
-  return this->touches(&rOther);
+  if ((this->Obstruction.Type == sotUpwardPolygon) || (this->Obstruction.Type == sotCenteredPolygon) ||
+    (other->Obstruction.Type == sotUpwardPolygon) || (other->Obstruction.Type == sotCenteredPolygon)) {
+    Polygon<FPoint> *pOther = other->getPolygon();
+    bool result = this->touches(pOther);
+    delete pOther;
+    return result;
+  } else {
+    FRect rOther;
+    rOther = other->getRect();
+    return this->touches(&rOther);
+  }
+  return false;
 }
 
 bool SpriteParam::touches(FRect *other) {
@@ -1936,23 +2105,41 @@ FRect rMe;
   return rMe.intersect(other);
 }
 
+bool SpriteParam::touches(SimplePolygon *other) {
+Polygon<FPoint> *pMe = this->getPolygon();
+  bool result = Intersects(*pMe, *other);
+  delete pMe;
+  return result;
+}
+
 bool SpriteParam::touches(SpriteParam *other, VelocityVector *other_speed) {
+  // NYI
+  return this->touches(other);
   return false;
 }
 
 inline int SpriteParam::touches(FLine *lines, int line_count) {
-FRect rct;
-  rct = this->getRect();
-  return CheckLineCollide(&rct, lines, line_count);
+FRect rct = this->getRect();
+  if ((this->Obstruction.Type == sotUpwardPolygon) || (this->Obstruction.Type == sotCenteredPolygon)) {
+    Polygon<FPoint> *poly = this->getPolygon();
+    int result = CheckLineCollide2(&rct, poly, lines, line_count);
+    delete poly;
+    return result;
+  } else {
+    return CheckLineCollide(&rct, lines, line_count);
+  }
 }
 
 inline int SpriteParam::touches(CollisionMatrix *Matrix) {
 FRect rct;
   rct = this->getRect();
-  if (Matrix->collisionCheck(&rct)) {
-    return 1;
+  if ((this->Obstruction.Type == sotUpwardPolygon) || (this->Obstruction.Type == sotCenteredPolygon)) {
+    Polygon<FPoint> *poly = this->getPolygon();
+    bool result = Matrix->collisionCheck(&rct, poly);
+    delete poly;
+    return result;
   } else {
-    return 0;
+    return Matrix->collisionCheck(&rct);
   }
 }
 
@@ -2140,13 +2327,19 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
         ldist11 = ldist * 1.1f;
         if (Obscured) goto found;
       } else if (Falloff) {
-        YDistance = abs(LightRay.End.Y - LightRay.Start.Y) * DistanceMultiplier;
-        XDistance = abs(LightRay.End.X - LightRay.Start.X) * DistanceMultiplier;
+        float doff = 0.0f, dramp = 1.0f / 0.95f;
+        if (Env->Lights[l].LightSize > 0)
+        {
+          doff = (Env->Lights[l].LightSize / Env->Lights[l].FalloffDistance) * 255.0f;
+          dramp = (1.0f + (doff / 255.0f)) / 0.95f;
+        }
+        YDistance = (abs(LightRay.End.Y - LightRay.Start.Y) * DistanceMultiplier);
+        XDistance = (abs(LightRay.End.X - LightRay.Start.X) * DistanceMultiplier);
   #ifdef ACCURATE_PYTHAGORAS
         Distance = PythagorasLookup(ClipByte(XDistance), ClipByte(YDistance));
   #else
   //      Distance = ClipByte(sqrt((XDistance * XDistance) + (YDistance * YDistance)) / 0.707106781186547);
-        Distance = ClipByte(sqrt((XDistance * XDistance) + (YDistance * YDistance)) / 0.95F);
+        Distance = ClipByte(clamp((sqrt((XDistance * XDistance) + (YDistance * YDistance))) - doff, 0.0f, 255.0f) * dramp);
   #endif
         LightColor = Env->Lights[l].Color;
       } else {
@@ -2408,11 +2601,14 @@ float FuzzyOffset = 0, FlickerAmount = 0;
 
           if (!Light_Clipped) {
             // render the light's sphere of illumination
+            float so = 0.0f;
+            if (Light->LightSize > 0) 
+              so = Light->LightSize / Light->FalloffDistance;
             RenderTarget->setClipRectangle(LightRect);
             FillRect.setValuesAbsolute(LightPoint.X - Falloff, LightPoint.Y - Falloff, LightPoint.X + Falloff, LightPoint.Y + Falloff);
             if ((Light->CacheValid) && (Light->Cache != Null)) {
             } else {
-              FilterSimple_Gradient_Radial(RenderTarget, &FillRect, Light->Color, Pixel(0, 0, 0, LightColor[::Alpha]));
+              FilterSimple_Gradient_Radial_Ex(RenderTarget, &FillRect, Light->Color, Pixel(0, 0, 0, LightColor[::Alpha]), so, 0.0f);
             }
           }
         }
@@ -3361,6 +3557,23 @@ bool CollisionMatrix::collisionCheck(FRect *Rectangle) {
   return false;
 }
 
+bool CollisionMatrix::collisionCheck(FRect *Rectangle, SimplePolygon *Polygon) {
+  int xMin = Rectangle->X1 / this->SectorWidth, yMin = Rectangle->Y1 / this->SectorHeight, 
+      xMax = Rectangle->X2 / this->SectorWidth, yMax = Rectangle->Y2 / this->SectorHeight;
+  xMin = ClipValue(xMin, this->Width - 1);
+  yMin = ClipValue(yMin, this->Height - 1);
+  xMax = ClipValue(xMax, this->Width - 1);
+  yMax = ClipValue(yMax, this->Height - 1);
+  for (int y = yMin; y <= yMax; y++) {
+    for (int x = xMin; x <= xMax; x++) {
+      if (this->getSector(x, y)->collisionCheck(Rectangle, Polygon, x * this->SectorWidth, y * this->SectorHeight)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void CollisionMatrix::erase() {
   for (int y = 0; y < this->Height; y++) {
     for (int x = 0; x < this->Width; x++) {
@@ -3371,6 +3584,13 @@ void CollisionMatrix::erase() {
 
 bool CollisionSector::collisionCheck(FRect *Rectangle, int XOffset, int YOffset) {
   if (CheckLineCollide(Rectangle, this->Lines)) {
+    return true;
+  }
+  return false;
+}
+
+bool CollisionSector::collisionCheck(FRect *Rectangle, SimplePolygon *Polygon, int XOffset, int YOffset) {
+  if (CheckLineCollide2(Rectangle, Polygon, this->Lines)) {
     return true;
   }
   return false;

@@ -27,6 +27,11 @@ Begin VB.Form frmSprites
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   613
    ShowInTaskbar   =   0   'False
+   Begin VB.Timer tmrAnimatePreview 
+      Interval        =   50
+      Left            =   3975
+      Top             =   3420
+   End
    Begin VB.PictureBox picHarmless 
       BorderStyle     =   0  'None
       Height          =   15
@@ -54,6 +59,16 @@ Begin VB.Form frmSprites
       TabIndex        =   0
       Top             =   15
       Width           =   9330
+      Begin VB.PictureBox picPreview 
+         Height          =   435
+         Left            =   3180
+         ScaleHeight     =   25
+         ScaleMode       =   3  'Pixel
+         ScaleWidth      =   37
+         TabIndex        =   22
+         Top             =   720
+         Width           =   615
+      End
       Begin ngPlugins.Script scSprite 
          Height          =   750
          Left            =   105
@@ -86,6 +101,7 @@ Begin VB.Form frmSprites
          Begin VB.PictureBox picPoseDisplay 
             Height          =   1485
             Left            =   420
+            MousePointer    =   2  'Cross
             ScaleHeight     =   95
             ScaleMode       =   3  'Pixel
             ScaleWidth      =   143
@@ -130,6 +146,7 @@ Begin VB.Form frmSprites
             Begin VB.PictureBox picFrameDisplay 
                Height          =   1485
                Left            =   975
+               MousePointer    =   2  'Cross
                ScaleHeight     =   95
                ScaleMode       =   3  'Pixel
                ScaleWidth      =   143
@@ -373,11 +390,15 @@ Private Enum SpriteEditorViews
     View_Poses
     View_Script
     View_Data
+    View_Preview
 End Enum
 
 Private Const c_lngUndoStackLength As Long = 50
 Private Const c_lngRedoStackLength As Long = 25
 
+Private m_sngPreviewAngle As Single
+
+Private m_imgPreviewDisplay As Fury2Image
 Private m_imgFrameDisplay As Fury2Image
 Private m_imgPoseDisplay As Fury2Image
 Private m_imgSpriteBuffer As Fury2Image
@@ -386,6 +407,11 @@ Private m_lngSelectedSprite As Long
 Private m_lngSelectedState As Long
 Private m_lngSelectedPose As Long
 Private m_lngSelectedFrame As Long
+
+Private m_rctFrameStartRect As Fury2Rect
+Private m_lngFrameStartX As Long
+Private m_lngFrameStartY As Long
+Private m_lngFrameMode As Long
 
 Private m_booStatePosesDragging As Boolean
 Private m_lngStatePosesStart As Long
@@ -820,6 +846,7 @@ On Error Resume Next
     Set m_imgSpriteBuffer = F2Image(1, 1)
     Set m_imgFrameDisplay = F2Image(1, 1)
     Set m_imgPoseDisplay = F2Image(1, 1)
+    Set m_imgPreviewDisplay = F2Image(1, 1)
 End Sub
 
 Public Sub DeallocateBuffers()
@@ -827,13 +854,14 @@ On Error Resume Next
     Set m_imgSpriteBuffer = Nothing
     Set m_imgFrameDisplay = Nothing
     Set m_imgPoseDisplay = Nothing
+    Set m_imgPreviewDisplay = Nothing
 End Sub
 
 Public Sub RedrawSprites()
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.RECT
+Dim l_rctText As Win32.Rect
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long
@@ -1027,6 +1055,8 @@ End Sub
 Public Sub Redraw()
 On Error Resume Next
     Select Case m_lngCurrentView
+    Case View_Preview
+        RedrawPreview
     Case View_Overview, View_Data
         insOverview.RefreshValues
         insOverview.Redraw
@@ -1255,6 +1285,7 @@ On Error Resume Next
     tsViews.Tabs.AddNew "Poses", "t" & CStr(View_Poses)
     tsViews.Tabs.AddNew "Script", "t" & CStr(View_Script)
     tsViews.Tabs.AddNew "Data", "t" & CStr(View_Data)
+    tsViews.Tabs.AddNew "Preview", "t" & CStr(View_Preview)
     tsStates.Tabs.AddNew "Options"
     tsStates.Tabs.AddNew "Poses"
     tsPoses.Tabs.AddNew "Options"
@@ -1310,6 +1341,7 @@ Dim l_objObject As Object
     insOverview.Visible = False
     picStates.Visible = False
     picPoses.Visible = False
+    picPreview.Visible = False
     scSprite.Visible = False
     m_splSidebar.Resize
     tsViews_Resize
@@ -1339,6 +1371,11 @@ Dim l_objObject As Object
         insOverview.ClearStack
         insOverview.AddToStack SelectedSprite, "Sprite"
         insOverview.Inspect SelectedSprite.Script, "Data", False, False, True
+    Case View_Preview
+        m_sngPreviewAngle = 0
+        picPreview.Visible = True
+        picPreview.ZOrder
+        RedrawPreview
     Case Else
     End Select
     Screen.MousePointer = 0
@@ -1581,6 +1618,7 @@ Dim l_rctBlocking As Fury2Rect
 Dim l_liItems() As ngListItem
 Dim l_strText As String, l_strCurrent As String
 Dim l_lngX As Long, l_lngY As Long, l_lngRowHeight As Long
+Dim l_rctBounds As FRect
     l_liItems = lstPoses.SelectedItems
     If (m_imgPoseDisplay.Width <> picPoseDisplay.ScaleWidth) Or (m_imgPoseDisplay.Height <> picPoseDisplay.ScaleHeight) Then
         m_imgPoseDisplay.Resize picPoseDisplay.ScaleWidth, picPoseDisplay.ScaleHeight
@@ -1603,15 +1641,56 @@ Dim l_lngX As Long, l_lngY As Long, l_lngRowHeight As Long
                     End If
                     l_lngRowHeight = IIf(l_fraFrame.Rectangle.Height > l_lngRowHeight, l_fraFrame.Rectangle.Height, l_lngRowHeight)
                     .Blit l_fraFrame.Rectangle.Copy.Translate(-l_fraFrame.Rectangle.Left + l_lngX, -l_fraFrame.Rectangle.Top + l_lngY), l_fraFrame.Rectangle, l_fraFrame.Image, 1, IIf(SelectedSprite.Effect = F2SB_Matte, BlitMode_Matte, BlitMode_SourceAlpha)
-                    Set l_rctBlocking = F2Rect(Ceil(l_fraFrame.XCenter - (l_posPose.Blocking.Width / 2)) + l_lngX, l_fraFrame.YCenter - (l_posPose.Blocking.Height) + l_lngY, l_posPose.Blocking.Width, l_posPose.Blocking.Height, False)
-                    .Box l_rctBlocking, F2RGB(255, 0, 0, 192), RenderMode_SourceAlpha
-                    l_strCurrent = l_posPose.Blocking.Width & "x" & l_posPose.Blocking.Height
-                    If Len(l_strText) = 0 Then
-                        l_strText = l_strCurrent
-                    Else
-                        If l_strCurrent = l_strText Then
+                    Select Case SelectedSprite.BlockingType
+                    Case F2BT_CenteredRect
+                    Case F2BT_CenteredSphere
+                        Set l_rctBlocking = F2Rect(Ceil(l_fraFrame.XCenter - (l_posPose.Blocking.Width / 2)) + l_lngX, l_fraFrame.YCenter - (l_posPose.Blocking.Height / 2) + l_lngY, l_posPose.Blocking.Width, l_posPose.Blocking.Height, False)
+                        .Box l_rctBlocking, F2RGB(255, 0, 0, 192), RenderMode_SourceAlpha
+                    Case F2BT_UpwardRect
+                        Set l_rctBlocking = F2Rect(Ceil(l_fraFrame.XCenter - (l_posPose.Blocking.Width / 2)) + l_lngX, l_fraFrame.YCenter - (l_posPose.Blocking.Height) + l_lngY, l_posPose.Blocking.Width, l_posPose.Blocking.Height, False)
+                        .Box l_rctBlocking, F2RGB(255, 0, 0, 192), RenderMode_SourceAlpha
+                    Case F2BT_CenteredPolygon
+                        If (l_posPose.BlockingPolygon Is Nothing) Then
+                            Set l_rctBlocking = F2Rect(Ceil(l_fraFrame.XCenter - (l_posPose.Blocking.Width / 2)) + l_lngX, l_fraFrame.YCenter - (l_posPose.Blocking.Height) + l_lngY, l_posPose.Blocking.Width, l_posPose.Blocking.Height, False)
+                            .Box l_rctBlocking, F2RGB(255, 0, 0, 192), RenderMode_SourceAlpha
                         Else
-                            l_strText = "[multiple values]"
+                            SoftFX.GetPolygonBounds l_posPose.BlockingPolygon.Handle, l_rctBounds
+                            Set l_rctBlocking = F2Rect(Ceil(l_fraFrame.XCenter - (Abs(l_rctBounds.X2) + Abs(l_rctBounds.X1)) / 2) + l_lngX, l_fraFrame.YCenter - ((Abs(l_rctBounds.Y2) + Abs(l_rctBounds.Y1)) / 2) + l_lngY, l_rctBounds.X2 - l_rctBounds.X1, l_rctBounds.Y2 - l_rctBounds.Y1, False)
+                            .Box l_rctBlocking, F2RGB(255, 0, 0, 63), RenderMode_SourceAlpha
+                            l_posPose.BlockingPolygon.DrawOutline m_imgPoseDisplay, l_fraFrame.XCenter, l_fraFrame.YCenter, F2RGB(255, 0, 0, 255), True
+                        End If
+                    Case F2BT_UpwardPolygon
+                        If (l_posPose.BlockingPolygon Is Nothing) Then
+                            Set l_rctBlocking = F2Rect(Ceil(l_fraFrame.XCenter - (l_posPose.Blocking.Width / 2)) + l_lngX, l_fraFrame.YCenter - (l_posPose.Blocking.Height) + l_lngY, l_posPose.Blocking.Width, l_posPose.Blocking.Height, False)
+                            .Box l_rctBlocking, F2RGB(255, 0, 0, 192), RenderMode_SourceAlpha
+                        Else
+                            SoftFX.GetPolygonBounds l_posPose.BlockingPolygon.Handle, l_rctBounds
+                            Set l_rctBlocking = F2Rect(Ceil(l_fraFrame.XCenter - (Abs(l_rctBounds.X2) + Abs(l_rctBounds.X1)) / 2) + l_lngX, l_fraFrame.YCenter - (Abs(l_rctBounds.Y2) + Abs(l_rctBounds.Y1)) + l_lngY, l_rctBounds.X2 - l_rctBounds.X1, l_rctBounds.Y2 - l_rctBounds.Y1, False)
+                            .Box l_rctBlocking, F2RGB(255, 0, 0, 63), RenderMode_SourceAlpha
+                            l_posPose.BlockingPolygon.DrawOutline m_imgPoseDisplay, l_fraFrame.XCenter, l_fraFrame.YCenter - (Abs(l_rctBounds.Y2) + Abs(l_rctBounds.Y1)), F2RGB(255, 0, 0, 255), True
+                        End If
+                    End Select
+                    If (l_posPose.BlockingPolygon Is Nothing) Then
+                        l_strCurrent = l_posPose.Blocking.Width & "x" & l_posPose.Blocking.Height
+                        If Len(l_strText) = 0 Then
+                            l_strText = l_strCurrent
+                        Else
+                            If l_strCurrent = l_strText Then
+                            Else
+                                l_strText = "[multiple values]"
+                            End If
+                        End If
+                    Else
+                        Dim l_insPoly As IInspectorType
+                        Set l_insPoly = l_posPose.BlockingPolygon
+                        l_strCurrent = l_insPoly.ToString
+                        If Len(l_strText) = 0 Then
+                            l_strText = l_strCurrent
+                        Else
+                            If l_strCurrent = l_strText Then
+                            Else
+                                l_strText = "[multiple values]"
+                            End If
                         End If
                     End If
                     l_lngX = l_lngX + l_fraFrame.Rectangle.Width
@@ -1622,6 +1701,33 @@ Dim l_lngX As Long, l_lngY As Long, l_lngRowHeight As Long
         End Select
     End With
     picPoseDisplay_Paint
+End Sub
+
+Public Sub RedrawPreview()
+On Error Resume Next
+Dim l_sprSprite As Fury2Sprite
+Dim l_rctSprite As Fury2Rect
+Dim l_sngOldAngle As Single
+Dim l_sngX As Single, l_sngY As Single
+Dim l_varPt As Variant
+    Engine.SmoothScaling = True
+    Set l_sprSprite = SelectedSprite
+    l_sngOldAngle = l_sprSprite.Angle
+    l_sprSprite.Angle = m_sngPreviewAngle
+    Set l_rctSprite = l_sprSprite.Rectangle(True)
+    If (m_imgPreviewDisplay.Width <> picPreview.ScaleWidth) Or (m_imgPreviewDisplay.Height <> picPreview.ScaleHeight) Then
+        m_imgPreviewDisplay.Resize picPreview.ScaleWidth, picPreview.ScaleHeight
+    End If
+    With m_imgPreviewDisplay
+        .Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
+        l_sprSprite.Render m_imgPreviewDisplay, (m_imgPreviewDisplay.Width - l_rctSprite.Width) / 2, (m_imgPreviewDisplay.Height - l_rctSprite.Height) / 2
+        l_sngX = m_imgPreviewDisplay.Width / 2
+        l_sngY = m_imgPreviewDisplay.Height / 2
+        l_varPt = Engine.Math.PathTarget(l_sngX, l_sngY, m_sngPreviewAngle, Engine.Math.Maximum(l_rctSprite.Width, l_rctSprite.Height))
+        .AntiAliasLine Array(l_sngX, l_sngY, l_varPt(0), l_varPt(1)), F2RGB(255, 0, 0, 255)
+    End With
+    l_sprSprite.Angle = l_sngOldAngle
+    picPreview_Paint
 End Sub
 
 Private Function ClipboardContainsFormat(Format As SpriteEditorClipboardFormats) As Boolean
@@ -1659,6 +1765,124 @@ Dim l_objPlugin As SpriteEditor
     Set l_objPlugin = m_fpgPlugin
     Set Editor = l_objPlugin.Editor
 End Function
+
+Private Function Engine() As Fury2Engine
+On Error Resume Next
+    Set Engine = Editor.Engine
+End Function
+
+Private Sub picFrameDisplay_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    If SelectedFrame Is Nothing Then Exit Sub
+    Select Case tsFrames.SelectedTab.Text
+    Case "Rectangle"
+        m_lngFrameStartX = X
+        m_lngFrameStartY = Y
+        Set m_rctFrameStartRect = SelectedFrame.Rectangle.Copy()
+        Select Case Button
+        Case 1
+            SelectedFrame.Rectangle.Left = X
+            SelectedFrame.Rectangle.Top = Y
+            SelectedFrame.Rectangle.Rationalize
+            SelectedFrame.Image.Clip SelectedFrame.Rectangle
+            RedrawFrameView
+        Case 2
+            RedrawFrameView
+        Case Else
+        End Select
+    Case "Alignment"
+        Select Case Button
+        Case 1
+            SelectedFrame.XCenter = Engine.Math.ClipNumber(X, 0, SelectedFrame.Rectangle.Width - 1)
+            SelectedFrame.YCenter = Engine.Math.ClipNumber(Y, 0, SelectedFrame.Rectangle.Height - 1)
+            RedrawFrameView
+        Case Else
+        End Select
+    Case Else
+    End Select
+End Sub
+
+Private Sub picFrameDisplay_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    If SelectedFrame Is Nothing Then Exit Sub
+    Select Case tsFrames.SelectedTab.Text
+    Case "Rectangle"
+        Select Case Button
+        Case 1
+            SelectedFrame.Rectangle.Left = m_lngFrameStartX
+            SelectedFrame.Rectangle.Top = m_lngFrameStartY
+            SelectedFrame.Rectangle.Right = X
+            SelectedFrame.Rectangle.Bottom = Y
+            SelectedFrame.Rectangle.Rationalize
+            SelectedFrame.Image.Clip SelectedFrame.Rectangle
+            RedrawFrameView
+        Case 2
+            Set SelectedFrame.Rectangle = m_rctFrameStartRect.Copy
+            SelectedFrame.Rectangle.Translate X - m_lngFrameStartX, Y - m_lngFrameStartY
+            SelectedFrame.Image.Clip SelectedFrame.Rectangle
+            RedrawFrameView
+        Case Else
+        End Select
+    Case "Alignment"
+        picFrameDisplay_MouseDown Button, Shift, X, Y
+    Case Else
+    End Select
+End Sub
+
+Private Sub picFrameDisplay_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    If SelectedFrame Is Nothing Then Exit Sub
+    Select Case tsFrames.SelectedTab.Text
+    Case "Rectangle"
+    Case "Alignment"
+    Case Else
+    End Select
+End Sub
+
+Private Sub picPoseDisplay_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    Select Case tsPoses.SelectedTab.Text
+    Case "Blocking"
+        m_lngFrameStartX = X
+        m_lngFrameStartY = Y
+        Select Case Button
+        Case 1
+            RedrawPoseView
+        Case 2
+            RedrawPoseView
+        Case Else
+        End Select
+    Case Else
+    End Select
+End Sub
+
+Private Sub picPoseDisplay_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    Select Case tsPoses.SelectedTab.Text
+    Case "Blocking"
+        Select Case Button
+        Case 1
+            SelectedPose.Blocking.SetValues Abs(X - m_lngFrameStartX), Abs(Y - m_lngFrameStartY)
+            RedrawPoseView
+        Case 2
+            RedrawPoseView
+        Case Else
+        End Select
+    Case Else
+    End Select
+End Sub
+
+Private Sub picPreview_Paint()
+On Error Resume Next
+    CopyImageToDC picPreview.hdc, m_imgPreviewDisplay.Rectangle, m_imgPreviewDisplay
+End Sub
+
+Private Sub picPreview_Resize()
+On Error Resume Next
+    If picPreview.Visible Then RedrawPreview
+End Sub
+
+Private Sub tmrAnimatePreview_Timer()
+On Error Resume Next
+    If m_lngCurrentView <> View_Preview Then Exit Sub
+    m_sngPreviewAngle = Engine.Math.NormalizeAngle(m_sngPreviewAngle + 2)
+    RedrawPreview
+End Sub
 
 Private Sub tsFrames_Resize()
 On Error Resume Next
@@ -1717,6 +1941,8 @@ End Sub
 Private Sub tsViews_Resize()
 On Error Resume Next
     Select Case m_lngCurrentView
+    Case View_Preview
+        picPreview.Move (2) + tsViews.Left, tsViews.Top + 24, tsViews.Width - 4, tsViews.Height - 26
     Case View_Overview, View_Data
         insOverview.Move (2) + tsViews.Left, tsViews.Top + 24, tsViews.Width - 4, tsViews.Height - 26
     Case View_States
@@ -2141,7 +2367,7 @@ End Sub
 
 Private Sub lstFrames_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     If lstPoses.SelectedItemCount > 1 Then Exit Sub
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
@@ -2191,7 +2417,7 @@ End Sub
 
 Private Sub lstPoses_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstPoses.hwnd, l_ptMouse
@@ -2229,7 +2455,7 @@ End Sub
 
 Private Sub lstStatePoses_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
 Dim l_lngItems As Long
     If SelectedState Is Nothing Then Exit Sub
     If Button = 1 Then
@@ -2254,7 +2480,7 @@ End Sub
 Private Sub lstStatePoses_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_lngStatePosesEnd As Long
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
 Dim l_lngItems As Long
     If SelectedState Is Nothing Then Exit Sub
     If ((Button And 1) = 1) And m_booStatePosesDragging Then
@@ -2292,7 +2518,7 @@ End Sub
 
 Private Sub lstStates_ItemContextMenu(Item As ngUI.ngListItem)
 On Error Resume Next
-Dim l_ptMouse As POINTAPI
+Dim l_ptMouse As PointAPI
     Editor.ActionUpdate
     GetCursorPos l_ptMouse
     ScreenToClient lstStates.hwnd, l_ptMouse
@@ -2408,7 +2634,7 @@ Private Sub picSprites_MouseDown(Button As Integer, Shift As Integer, X As Singl
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_rctSprite As Fury2Rect
-Dim l_rctText As Win32.RECT
+Dim l_rctText As Win32.Rect
 Dim l_lngY As Long
 Dim l_lngHeight As Long
 Dim l_lngTotalHeight As Long

@@ -95,6 +95,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   defItem(FilterSimple_Gradient_Vertical_SourceAlpha) \
   defItem(FilterSimple_Gradient_Radial) \
   defItem(FilterSimple_Gradient_Radial_SourceAlpha) \
+  defItem(FilterSimple_Gradient_Radial_Ex) \
+  defItem(FilterSimple_Gradient_Radial_SourceAlpha_Ex) \
   defItem(FilterSimple_Grayscale) \
   defItem(FilterSimple_Grid_SourceAlpha) \
   defItem(FilterSimple_Invert) \

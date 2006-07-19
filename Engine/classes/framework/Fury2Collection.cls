@@ -46,8 +46,8 @@ Implements IEditableCollection
 Private mCol As Collection
 Private mHook As Object
 Public Event AddNew(ByRef Output As Object)
-Public Event Add(ByVal index As Long)
-Public Event Remove(ByVal index As Long)
+Public Event Add(ByVal Index As Long)
+Public Event Remove(ByVal Index As Long)
 Public Event Clear()
 #If ExternalModule = 0 Then
 Private m_strAddHook As String
@@ -55,6 +55,7 @@ Private m_strRemoveHook As String
 Private m_engEngine As Fury2Engine
 
 Public Function Duplicate() As Fury2Collection
+Attribute Duplicate.VB_Description = "Creates and returns a shallow copy of the collection."
 On Error Resume Next
 Dim l_colNew As Fury2Collection
 Dim l_lngIndex As Long
@@ -63,12 +64,32 @@ Dim l_lngIndex As Long
     Else
         Set l_colNew = m_engEngine.F2Collection()
     End If
-    If mCol.count > 0 Then
-        For l_lngIndex = 1 To mCol.count
+    If mCol.Count > 0 Then
+        For l_lngIndex = 1 To mCol.Count
             l_colNew.Add mCol(l_lngIndex)
         Next l_lngIndex
     End If
     Set Duplicate = l_colNew
+End Function
+
+Public Function ToArray() As Variant
+Attribute ToArray.VB_Description = "Returns an array containing all the items in the collection."
+On Error Resume Next
+Dim l_arrItems As Variant
+Dim l_lngIndex As Long
+    If (Count = 0) Then
+        ToArray = Array()
+    Else
+        ReDim l_arrItems(0 To Count - 1)
+        For l_lngIndex = 1 To Count
+            If ((VarType(Me(l_lngIndex)) And vbObject) = vbObject) Then
+                Set l_arrItems(l_lngIndex - 1) = Me(l_lngIndex)
+            Else
+                l_arrItems(l_lngIndex - 1) = Me(l_lngIndex)
+            End If
+        Next l_lngIndex
+        ToArray = l_arrItems
+    End If
 End Function
 
 Friend Sub SetEngine(Engine As Fury2Engine)
@@ -76,6 +97,7 @@ Friend Sub SetEngine(Engine As Fury2Engine)
 End Sub
 
 Public Property Get Engine() As Fury2Engine
+Attribute Engine.VB_Description = "*"
     Set Engine = m_engEngine
 End Property
 #End If
@@ -90,7 +112,7 @@ On Error Resume Next
 Dim l_objObject As Object
 Dim l_objResult As Object
 Dim l_varResult As Variant
-    If mCol.count < 1 Then Exit Function
+    If mCol.Count < 1 Then Exit Function
     For Each l_objObject In mCol
         Err.Clear
         Set l_objResult = Nothing
@@ -114,7 +136,7 @@ Public Function FindByMethod(ByVal MethodName As String, ParamArray Parameters()
 On Error Resume Next
 Dim l_objObject As Object
 Dim l_booResult As Boolean
-    If mCol.count < 1 Then Exit Function
+    If mCol.Count < 1 Then Exit Function
     For Each l_objObject In mCol
         Err.Clear
         l_booResult = False
@@ -149,7 +171,7 @@ End Function
 Public Sub CallMethodWithParameters(ByVal MethodName As String, ParamArray Parameters() As Variant)
 On Error Resume Next
 Dim l_objObject As Object
-    If mCol.count < 1 Then Exit Sub
+    If mCol.Count < 1 Then Exit Sub
     For Each l_objObject In mCol
         Err.Clear
         Select Case UBound(Parameters)
@@ -179,7 +201,7 @@ End Sub
 Public Sub CallMethod(MethodName As String, Optional IgnoreErrors As Boolean = False)
 On Error Resume Next
 Dim l_objObject As Object
-    If mCol.count < 1 Then Exit Sub
+    If mCol.Count < 1 Then Exit Sub
     For Each l_objObject In mCol
         Err.Clear
         CallByName l_objObject, MethodName, VbMethod
@@ -192,20 +214,21 @@ Dim l_objObject As Object
 End Sub
 
 Public Sub Add(Obj, Optional ByVal sKey As String = "", Optional ByVal AtIndex As Long = -1)
+Attribute Add.VB_Description = "Adds a new item to the collection. sKey specifies an optional string-based key for retrieving the item. AtIndex specifies a specific index to place the item at. (If an item already exists at this index, it is moved up by one to become AtIndex+1.)"
 On Error Resume Next
     sKey = LCase(Trim(sKey))
     If Len(sKey) < 1 Then
         If AtIndex = -1 Then
             mCol.Add Obj
-            RaiseEvent Add(mCol.count)
+            RaiseEvent Add(mCol.Count)
         Else
-            If (mCol.count = 0) Or (AtIndex > mCol.count) Then
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj
-                RaiseEvent Add(mCol.count)
+                RaiseEvent Add(mCol.Count)
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, , 1
                 RaiseEvent Add(1)
-            ElseIf mCol.count > AtIndex Then
+            ElseIf mCol.Count > AtIndex Then
                 mCol.Add Obj, , AtIndex
                 RaiseEvent Add(AtIndex)
             Else
@@ -216,15 +239,15 @@ On Error Resume Next
     Else
         If AtIndex = -1 Then
             mCol.Add Obj, sKey
-            RaiseEvent Add(mCol.count)
+            RaiseEvent Add(mCol.Count)
         Else
-            If (mCol.count = 0) Or (AtIndex > mCol.count) Then
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj, sKey
-                RaiseEvent Add(mCol.count)
+                RaiseEvent Add(mCol.Count)
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, sKey, 1
                 RaiseEvent Add(1)
-            ElseIf mCol.count > AtIndex Then
+            ElseIf mCol.Count > AtIndex Then
                 mCol.Add Obj, sKey, AtIndex
                 RaiseEvent Add(AtIndex)
             Else
@@ -259,7 +282,7 @@ End Property
 Public Function Find(ByVal Var) As Long
 On Error Resume Next
 Dim m_lngItems As Long, m_objItem As Object
-    If mCol.count <= 0 Then Exit Function
+    If mCol.Count <= 0 Then Exit Function
     If IsObject(Var) Then
         m_lngItems = 1
         For Each m_objItem In mCol
@@ -270,7 +293,7 @@ Dim m_lngItems As Long, m_objItem As Object
             m_lngItems = m_lngItems + 1
         Next m_objItem
     Else
-        For m_lngItems = 1 To mCol.count
+        For m_lngItems = 1 To mCol.Count
             If mCol(m_lngItems) = Var Then
                 Find = m_lngItems
                 Exit Function
@@ -279,12 +302,39 @@ Dim m_lngItems As Long, m_objItem As Object
     End If
 End Function
 
-Public Property Get count() As Long
+Public Property Let Count(ByVal NewCount As Long)
 On Error Resume Next
-    count = mCol.count
+Dim l_lngCount As Long
+    l_lngCount = mCol.Count
+    If (NewCount <> l_lngCount) Then
+        If l_lngCount < NewCount Then
+            Do While mCol.Count < NewCount
+                mCol.Add Nothing
+            Loop
+        Else
+            If NewCount < 0 Then NewCount = 0
+            Do While mCol.Count > NewCount
+                mCol.Remove mCol.Count
+            Loop
+        End If
+    End If
 End Property
 
+Public Property Get Count() As Long
+Attribute Count.VB_Description = "The number of items contained in the collection. Set higher to add empty items, and set lower to remove existing items from the beginning of the collection."
+On Error Resume Next
+    Count = mCol.Count
+End Property
+
+Public Sub Replace(ByVal Index As Long, ByVal Value As Variant)
+Attribute Replace.VB_Description = "Inserts a new item at the location Index and removes the existing item that was already there."
+On Error Resume Next
+    Add Value, , Index
+    Remove Index + 1
+End Sub
+
 Public Sub Remove(ByVal vntIndexKey)
+Attribute Remove.VB_Description = "Removes an item from the collection based on either its numerical index or string-based key."
 On Error Resume Next
     If VarType(vntIndexKey) = vbString Then
         vntIndexKey = LCase(Trim(CStr(vntIndexKey)))
@@ -304,8 +354,8 @@ End Sub
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)
 On Error Resume Next
 Dim l_objObject As Object
-    If FromIndex < 1 Or FromIndex > mCol.count Then Exit Sub
-    If ToIndex < 1 Or ToIndex > (mCol.count + 1) Then Exit Sub
+    If FromIndex < 1 Or FromIndex > mCol.Count Then Exit Sub
+    If ToIndex < 1 Or ToIndex > (mCol.Count + 1) Then Exit Sub
     If FromIndex = ToIndex Then Exit Sub
     Set l_objObject = mCol.Item(FromIndex)
     Remove FromIndex
@@ -317,8 +367,9 @@ Dim l_objObject As Object
 End Sub
 
 Public Sub Clear()
+Attribute Clear.VB_Description = "Removes all items from the collection."
 On Error Resume Next
-    Do While mCol.count > 0
+    Do While mCol.Count > 0
         mCol.Remove 1
     Loop
     Set mCol = New Collection
@@ -364,23 +415,25 @@ End Sub
 
 Private Property Get IInspectableCollection_ItemCount() As Long
 On Error Resume Next
-    IInspectableCollection_ItemCount = mCol.count
+    IInspectableCollection_ItemCount = mCol.Count
 End Property
 
-Private Property Set IInspectableCollection_ItemValue(ByVal index As Long, ByVal RHS As Variant)
+Private Property Set IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
 On Error Resume Next
+    Replace Index, RHS
 End Property
 
-Private Property Let IInspectableCollection_ItemValue(ByVal index As Long, ByVal RHS As Variant)
+Private Property Let IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
 On Error Resume Next
+    Replace Index, RHS
 End Property
 
-Private Property Get IInspectableCollection_ItemValue(ByVal index As Long) As Variant
+Private Property Get IInspectableCollection_ItemValue(ByVal Index As Long) As Variant
 On Error Resume Next
     Err.Clear
-    Set IInspectableCollection_ItemValue = mCol(index)
+    Set IInspectableCollection_ItemValue = mCol(Index)
     If Err <> 0 Then
-        IInspectableCollection_ItemValue = mCol(index)
+        IInspectableCollection_ItemValue = mCol(Index)
     End If
 End Property
 
@@ -428,9 +481,9 @@ Dim l_strType As String
 Dim l_lngIndex As Long
     With File
         .WriteSegment_Begin
-            .Save CLng(mCol.count)
-            If mCol.count > 0 Then
-                For l_lngIndex = 1 To mCol.count
+            .Save CLng(mCol.Count)
+            If mCol.Count > 0 Then
+                For l_lngIndex = 1 To mCol.Count
                     .WriteSegment_Begin
                         Set l_objItem = Nothing
                         l_strItem = vbNullString

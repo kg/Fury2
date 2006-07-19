@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.7#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
 Begin VB.Form frmUserData 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -62,7 +62,6 @@ Begin VB.Form frmUserData
    Begin ngUI.ngTabStrip tsViews 
       Height          =   4665
       Left            =   1860
-      TabIndex        =   2
       Top             =   1530
       Width           =   5550
       _ExtentX        =   9790
@@ -177,7 +176,9 @@ End Sub
 
 Public Sub DeallocateBuffers()
 On Error Resume Next
-    SelectObject picUI.hdc, m_lngOldBitmap
+    If m_lngOldBitmap <> 0 Then
+        SelectObject picUI.hdc, m_lngOldBitmap
+    End If
     Set m_imgCustomDisplay = Nothing
     m_lngOldBitmap = 0
     picUI.AutoRedraw = False

@@ -405,7 +405,7 @@ Public Property Let Root(NewRoot As String)
 On Error Resume Next
     m_strRoot = NewRoot
     If Right(m_strRoot, 1) <> "\" Then m_strRoot = m_strRoot + "\"
-    m_modRoot.SetPath m_strRoot
+    If Not (m_modRoot) Is Nothing Then m_modRoot.SetPath m_strRoot
     CurrentFolder = "/"
 End Property
 
@@ -785,11 +785,13 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error Resume Next
-    Root = App.Path
+    m_strRoot = App.Path
+    m_strCurrentFolder = "/"
+    If Right(m_strRoot, 1) <> "\" Then m_strRoot = m_strRoot + "\"
     Set m_colDeletionQueue = New Collection
     Set m_colFolderDeletionQueue = New Collection
     Set m_colModules = New Fury2Collection
-    Set m_modRoot = MountDiskFolder(Root)
+    Set m_modRoot = MountDiskFolder(App.Path)
     OverwriteReadOnlyFiles = True
 End Sub
 

@@ -136,7 +136,7 @@ defOverride(Allocate_Context) {
   if (Image == Null) return 0;
   flushImageHeap();
   Global->Framebuffer = Image;
-  PIXELFORMATDESCRIPTOR pfdFormat = { 
+    PIXELFORMATDESCRIPTOR pfdFormat = { 
       sizeof(PIXELFORMATDESCRIPTOR),   // size of this pfd 
       1,                     // version number 
       PFD_DRAW_TO_WINDOW |   // support window 

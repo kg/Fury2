@@ -803,11 +803,20 @@ Dim l_imgLayer As Fury2Image
             Case "maskcolor", "mattecolor", "mask", "matte"
                 F2LoadImage.MatteColor = CLng(m_varTokens(1))
             Case "replacecolor", "replace"
-                F2LoadImage.ReplaceColor CLng(m_varTokens(1)), CLng(m_varTokens(2)), F2LoadImage.Rectangle
+                m_varTokens = Split(m_varTokens(1), ",")
+                F2LoadImage.ReplaceColor CLng(m_varTokens(0)), CLng(m_varTokens(1)), F2LoadImage.Rectangle
             Case "composite"
                 F2LoadImage.Composite CLng(m_varTokens(1))
             Case "gamma"
-                F2LoadImage.AdjustGamma CLng(m_varTokens(1))
+                F2LoadImage.AdjustGamma CSng(m_varTokens(1))
+            Case "rgbgamma"
+                m_varTokens = Split(m_varTokens(1), ",")
+                F2LoadImage.AdjustRGBGamma CSng(m_varTokens(0)), CSng(m_varTokens(1)), CSng(m_varTokens(2))
+            Case "hsb"
+                m_varTokens = Split(m_varTokens(1), ",")
+                F2LoadImage.AdjustHSV CSng(m_varTokens(0)), CSng(m_varTokens(1)), CSng(m_varTokens(2))
+            Case "multiply"
+                F2LoadImage.Multiply CSng(m_varTokens(1))
             Case "flip"
                 F2LoadImage.Flip
             Case "mirror"
@@ -919,6 +928,25 @@ Dim newImage As Fury2Image
     newImage.Resize X, Y
     Set F2Image = newImage
     Set newImage = Nothing
+End Function
+
+Public Function F2Polygon(Optional ByVal Points As Variant = vbEmpty) As Fury2Polygon
+On Error Resume Next
+Dim newPolygon As Fury2Polygon
+Dim l_vtType As VbVarType
+Dim l_lngPoint As Long
+    Set newPolygon = New Fury2Polygon
+    Set F2Polygon = newPolygon
+    l_vtType = VarType(Points)
+    If (l_vtType And vbArray) = vbArray Then
+        newPolygon.Count = UBound(Points) - LBound(Points) + 1
+        For l_lngPoint = LBound(Points) To UBound(Points)
+            newPolygon.Point(l_lngPoint - LBound(Points)) = Points(l_lngPoint)
+        Next l_lngPoint
+    Else
+        newPolygon.Count = 0
+    End If
+    Set newPolygon = Nothing
 End Function
 
 Public Function F2SharedImage(ByVal X As Long, ByVal Y As Long, ByVal ID As String) As Fury2Image

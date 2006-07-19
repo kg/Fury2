@@ -18,6 +18,12 @@ Begin VB.UserControl ObjectInspector
    ScaleHeight     =   240
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   320
+   Begin VB.Timer tmrReinspect 
+      Enabled         =   0   'False
+      Interval        =   1
+      Left            =   2220
+      Top             =   1560
+   End
    Begin VB.Timer tmrDoRedraw 
       Enabled         =   0   'False
       Interval        =   1
@@ -161,7 +167,7 @@ Attribute VB_Exposed = False
 '
  
 Option Explicit
-Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.Rect, ByVal wFormat As Long) As Long
+Private Declare Function DrawText Lib "user32" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, lpRect As Win32.RECT, ByVal wFormat As Long) As Long
 Private Const DT_WORDBREAK = &H10
 Private Const DT_NOPREFIX = &H800
 Private Const MinimumEditWidth As Long = 60
@@ -180,6 +186,7 @@ Private Enum ObjectItemTypes
     OIT_Color
     OIT_Enum
     OIT_CollectionItem
+    OIT_NewCollectionItem
 End Enum
 
 Private Type ObjectItem
@@ -243,6 +250,7 @@ Public Event ItemTitleDoubleClick(ByVal Index As Long)
 Public Event BeforeItemChange(ByRef Cancel As Boolean)
 Public Event AfterItemChange(ByVal OldValue As Variant, ByVal NewValue As Variant)
 Public Event AfterMultipleItemChange(ByVal NewValue As Variant)
+Public Event AfterItemAdd(ByVal NewValue As Variant)
 
 Public Property Get ShowInfobox() As Boolean
 On Error Resume Next
@@ -425,10 +433,7 @@ Dim l_lngItems As Long, l_lngY As Long
                 If Not m_oiItems(m_lngSelectedItem).Filtered Then txtEdit.Visible = True
             End If
         Case Else
-            If (l_vtType And vbArray) = vbArray Then
-            Else
-                If Not m_oiItems(m_lngSelectedItem).Filtered Then txtEdit.Visible = True
-            End If
+            If Not m_oiItems(m_lngSelectedItem).Filtered Then txtEdit.Visible = True
         End Select
         If m_booHaveFocus Then
             If m_booFilterActive Then
@@ -496,9 +501,9 @@ Dim l_varValue As Variant
 Dim l_varFirstValue As Variant
 Dim l_objObject As Object, l_lngObject As Long
 Dim l_strValue As String, l_strIndex As String
-Dim l_colObject As IInspectableCollection
 Dim l_booInspectorType As Boolean
 Dim l_strSelectedItem As String
+Dim l_colObject As IInspectableCollection
     Set l_colObject = m_objObject
     Err.Clear
     If m_objObject Is Nothing Then Exit Sub
@@ -515,6 +520,9 @@ Dim l_strSelectedItem As String
                         .Value = l_colObject.ItemValue(l_lngIndex)
                     End If
                     Err.Clear
+                ElseIf .SpecialType = OIT_NewCollectionItem Then
+                    .Value = ""
+                    .ValueText = ""
                 ElseIf m_booMultiple Then
                     l_varFirstValue = Empty
                     l_varValue = Empty
@@ -597,7 +605,7 @@ Dim l_strSelectedItem As String
                         If VarType(.Value) = vbString Then
                             .ValueText = .Value
                         Else
-                            .ValueText = Fury2Globals.ToString(.Value, True)
+                            .ValueText = ValueToString(.Value)
                         End If
                     End Select
                 End If
@@ -878,14 +886,27 @@ Dim l_colObject As IInspectableCollection
     If TypeOf m_objObject Is IInspectableCollection Then
         Set l_colObject = m_objObject
         l_lngOffset = UBound(m_oiItems)
-        ReDim Preserve m_oiItems(0 To UBound(m_oiItems) + l_colObject.ItemCount)
-        For l_lngIndex = 1 To l_colObject.ItemCount
-            m_oiItems(l_lngIndex + l_lngOffset).Name = "Item " & l_lngIndex
-            m_oiItems(l_lngIndex + l_lngOffset).SpecialType = OIT_CollectionItem
-            m_oiItems(l_lngIndex + l_lngOffset).CanInspect = True
-            m_oiItems(l_lngIndex + l_lngOffset).ShowElipsis = True
-            m_oiItems(l_lngIndex + l_lngOffset).CallTypes = VbGet
-        Next l_lngIndex
+        ReDim Preserve m_oiItems(0 To UBound(m_oiItems) + l_colObject.ItemCount + 1)
+        If l_colObject.ItemCount > 0 Then
+            For l_lngIndex = 1 To l_colObject.ItemCount
+                With m_oiItems(l_lngIndex + l_lngOffset)
+                    .Name = "Item " & l_lngIndex
+                    .Description = "Item #" + l_lngIndex + " in the collection."
+                    .SpecialType = OIT_CollectionItem
+                    .CanInspect = True
+                    .ShowElipsis = True
+                    .CallTypes = VbGet Or VbLet
+                End With
+            Next l_lngIndex
+        End If
+        With m_oiItems(UBound(m_oiItems))
+            .Name = "{New Item}"
+            .Description = "Enter a value here to add a new item to the collection."
+            .SpecialType = OIT_NewCollectionItem
+            .CanInspect = False
+            .ShowElipsis = True
+            .CallTypes = VbGet Or VbLet
+        End With
     End If
     For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
         With m_oiItems(l_lngItems)
@@ -956,8 +977,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -968,8 +989,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -1064,7 +1085,7 @@ End Sub
 
 Private Sub picInfo_Paint()
 On Error Resume Next
-Dim l_rcRect As Win32.Rect
+Dim l_rcRect As Win32.RECT
 Dim l_lngLength As Long
     picInfo.Line (0, 0)-(picInfo.ScaleWidth - 1, picInfo.ScaleHeight - 1), vbButtonShadow, B
     picInfo.Line (1, 1)-(picInfo.ScaleWidth - 2, picInfo.ScaleHeight - 2), vbButtonFace, BF
@@ -1337,6 +1358,12 @@ On Error Resume Next
     picItems_Paint
 End Sub
 
+Private Sub tmrReinspect_Timer()
+On Error Resume Next
+    tmrReinspect.Enabled = False
+    Reinspect
+End Sub
+
 Private Sub txtEdit_Change()
 On Error Resume Next
 End Sub
@@ -1363,6 +1390,190 @@ On Error Resume Next
     DoEvents
 End Sub
 
+Function ValueToString(Value) As String
+On Error Resume Next
+Dim l_vtType As VariantTypeConstants
+Dim l_strValue As String, l_strEscaped As String
+    l_vtType = VarType(Value)
+    If l_vtType = vbEmpty Then
+        ValueToString = "{Empty}"
+    ElseIf l_vtType = vbNull Then
+        ValueToString = "{Null}"
+    ElseIf (l_vtType And vbArray) = vbArray Then
+        ValueToString = "(" + OIJoin(Value) + ")"
+    ElseIf (l_vtType = vbSingle) Or (l_vtType = vbDouble) Then
+        ValueToString = Format(Value, "##############0.0##############")
+    ElseIf l_vtType = vbString Then
+        l_strValue = Trim(CStr(Value))
+        l_strEscaped = EscapeString(CStr(Value))
+        If (l_strValue <> l_strEscaped) Or InStr(l_strValue, ",") Then
+            ValueToString = """" + l_strEscaped + """"
+        Else
+            ValueToString = l_strValue
+        End If
+    ElseIf l_vtType = vbObject Then
+        If Value Is Nothing Then
+            ValueToString = "{Nothing}"
+        Else
+            Err.Clear
+            ValueToString = "{Object}"
+            ValueToString = CStr(Value.ToString())
+            If Err = 0 Then Exit Function
+            Err.Clear
+            ValueToString = CStr(Value.Class_ToString())
+            If Err = 0 Then Exit Function
+            Err.Clear
+            ValueToString = CStr(ToNumber(Value))
+            If Err = 0 Then Exit Function
+            Err.Clear
+            ValueToString = "{Object: " + TypeName(Value) + "}"
+        End If
+    ElseIf l_vtType = vbUserDefinedType Then
+        ValueToString = "{UDT}"
+    Else
+        ValueToString = "{Unknown}"
+        Err.Clear
+        ValueToString = CStr(Value)
+        If Err <> 0 Then ValueToString = "{Unknown}"
+    End If
+End Function
+
+Function OIJoin(Arr As Variant) As String
+On Error Resume Next
+Dim m_lngLB As Long, m_lngUB As Long, m_lngCount As Long
+Dim m_lngItems As Long
+Dim l_strValue As String, l_strEscaped As String
+    OIJoin = ""
+    Err.Clear
+    If (VarType(Arr) And vbArray) <> vbArray Then Exit Function
+    m_lngLB = LBound(Arr)
+    m_lngUB = UBound(Arr)
+    m_lngCount = (m_lngUB - m_lngLB) + 1
+    If Err <> 0 Or m_lngUB < 0 Then Exit Function
+    For m_lngItems = m_lngLB To m_lngUB
+        l_strValue = ValueToString(Arr(m_lngItems))
+        l_strEscaped = Trim(EscapeString(l_strValue))
+        If (l_strValue <> l_strEscaped) Or InStr(l_strValue, ",") Then
+            l_strValue = """" + l_strEscaped + """"
+        End If
+        OIJoin = OIJoin + l_strValue
+        If m_lngItems < m_lngUB Then
+            OIJoin = OIJoin + ", "
+        End If
+    Next m_lngItems
+    Err.Clear
+End Function
+
+Function EscapeString(Text As String) As String
+On Error Resume Next
+    EscapeString = Replace(Replace(Replace(Replace(Replace(Replace(Text, _
+        "\", "\\"), _
+        vbCrLf, "\n"), _
+        vbCr, "\r"), _
+        vbLf, "\l"), _
+        Chr(0), "\0"), _
+        """", "\""")
+End Function
+
+Public Function ValueFromString(Text As String) As Variant
+On Error Resume Next
+Dim l_strValue As String
+Dim l_dblValue As Double
+Dim l_lngValue As Long
+Dim l_booValue As Boolean
+Dim l_arrValue As Variant
+Dim l_bytString() As Byte
+Dim l_strTemp As String
+Dim l_lngChar As Long
+Dim l_strChar As String
+Dim l_booString As Boolean, l_booEscape As Boolean
+Dim l_lngIndex As Long
+    If Text = "{Nothing}" Then
+        Set ValueFromString = Nothing
+        Exit Function
+    End If
+    If Text = "{Empty}" Then
+        ValueFromString = Empty
+        Exit Function
+    End If
+    If Left(Text, 1) = "(" And Right(Text, 1) = ")" Then
+        ' Array
+        ReDim l_arrValue(0 To 0)
+        l_lngIndex = 0
+        l_bytString = StrConv(Mid(Text, 2, Len(Text) - 2), vbFromUnicode)
+        For l_lngChar = LBound(l_bytString) To UBound(l_bytString)
+            l_strChar = Chr(l_bytString(l_lngChar))
+            If l_booEscape Then
+                Select Case LCase(l_strChar)
+                Case "n"
+                    l_strTemp = l_strTemp + vbCrLf
+                Case "r"
+                    l_strTemp = l_strTemp + vbCr
+                Case "l"
+                    l_strTemp = l_strTemp + vbLf
+                Case "0"
+                    l_strTemp = l_strTemp + Chr(0)
+                Case Else
+                    l_strTemp = l_strTemp + l_strChar
+                End Select
+                l_booEscape = False
+            Else
+                Select Case l_strChar
+                Case """"
+                    If (l_booString) Then
+                        l_booString = False
+                    Else
+                        l_booString = True
+                    End If
+                Case ","
+                    If (l_booString) Then
+                        l_strTemp = l_strTemp + l_strChar
+                    Else
+                        l_arrValue(l_lngIndex) = ValueFromString(l_strTemp)
+                        l_lngIndex = l_lngIndex + 1
+                        ReDim Preserve l_arrValue(0 To l_lngIndex)
+                        l_strTemp = ""
+                    End If
+                Case "\"
+                    l_booEscape = True
+                Case Else
+                    l_strTemp = l_strTemp + l_strChar
+                End Select
+            End If
+        Next l_lngChar
+        l_arrValue(l_lngIndex) = ValueFromString(l_strTemp)
+        ValueFromString = l_arrValue
+        Exit Function
+    Else
+        l_strValue = Text
+        If Left(Text, 1) = """" And Right(Text, 1) = """" Then
+            l_strValue = Mid(Text, 2, Len(Text) - 2)
+            ValueFromString = l_strValue
+            Exit Function
+        End If
+        Err.Clear
+        l_dblValue = CDbl(Text)
+        If Err = 0 Then
+            l_lngValue = CLng(Text)
+            If (Err = 0) And (Floor(l_dblValue) = l_lngValue) Then
+                ValueFromString = l_lngValue
+                Exit Function
+            End If
+            ValueFromString = l_dblValue
+            Exit Function
+        End If
+        Err.Clear
+        l_booValue = CBool(Text)
+        If Err = 0 Then
+            ValueFromString = l_booValue
+            Exit Function
+        End If
+        Err.Clear
+        ValueFromString = Trim(l_strValue)
+        Exit Function
+    End If
+End Function
+
 Private Sub EditBoxChanged()
 On Error Resume Next
 Static l_lngHere As Long
@@ -1374,17 +1585,50 @@ Dim l_intValue As Integer, l_lngValue As Long
 Dim l_bytValue As Byte, l_strValue As String
 Dim l_varValue As Variant
 Dim l_booValue As Boolean
+Dim l_strIndex As String, l_lngIndex As Long
 Dim l_itValue As IInspectorType
 Dim l_vtType As VbVarType
 Dim l_strText As String, l_strNumber As String
 Dim l_lngValues As Long
 Dim l_booError As Boolean
+Dim l_colObject As IInspectableCollection
+    Set l_colObject = m_objObject
+    Err.Clear
     l_strText = txtEdit.Text
     If l_strText = "{Multiple Values}" Then Exit Sub
     If l_strText = m_oiItems(m_lngSelectedItem).ValueText Then Exit Sub
     If l_lngHere > 3 Then Exit Sub
     l_lngHere = l_lngHere + 1
     Select Case m_oiItems(m_lngSelectedItem).SpecialType
+    Case OIT_NewCollectionItem
+        If (txtEdit.Visible = False) Then l_lngHere = l_lngHere - 1: Exit Sub
+        If (Trim(l_strText)) = "" Then l_lngHere = l_lngHere - 1: Exit Sub
+        l_varValue = ValueFromString(l_strText)
+        If (VarType(l_varValue) = vbEmpty) Then l_lngHere = l_lngHere - 1: Exit Sub
+        CallByName m_objObject, "Add", VbMethod, l_varValue
+        RaiseEvent AfterItemAdd(l_varValue)
+        txtEdit.Text = ""
+        tmrReinspect.Enabled = True
+        l_lngHere = l_lngHere - 1
+        Exit Sub
+    Case OIT_CollectionItem
+        If (txtEdit.Visible = False) Then l_lngHere = l_lngHere - 1: Exit Sub
+        l_strIndex = Replace(m_oiItems(m_lngSelectedItem).Name, "Item ", "")
+        l_lngIndex = CLng(l_strIndex)
+        If (Trim(l_strText)) = "" Then l_lngHere = l_lngHere - 1: Exit Sub
+        l_varValue = ValueFromString(l_strText)
+        If (VarType(l_varValue) = vbEmpty) Then l_lngHere = l_lngHere - 1: Exit Sub
+        'CallByName m_objObject, "Replace", VbMethod, l_lngIndex, l_varValue
+        If (VarType(l_varValue) And vbObject) = vbObject Then
+            Set l_colObject.ItemValue(l_lngIndex) = l_varValue
+        Else
+            l_colObject.ItemValue(l_lngIndex) = l_varValue
+        End If
+        RaiseEvent AfterItemChange(m_oiItems(m_lngSelectedItem).Value, l_varValue)
+        txtEdit.Text = ""
+        tmrReinspect.Enabled = True
+        l_lngHere = l_lngHere - 1
+        Exit Sub
     Case OIT_Color, OIT_Hex
         l_strText = "&H" & l_strText
     Case OIT_Enum
@@ -1430,7 +1674,7 @@ Dim l_booError As Boolean
         End If
     End If
     Err.Clear
-    If m_booMultiple Then
+    If (m_booMultiple) Then
         Select Case l_vtType
         Case vbBoolean
             l_booValue = CBool(l_strText)
@@ -1454,6 +1698,7 @@ Dim l_booError As Boolean
             l_strValue = CStr(l_strText)
             l_varValue = l_strValue
         Case Else
+            l_varValue = ValueFromString(l_strText)
         End Select
         For l_lngObject = LBound(m_objObjects) To UBound(m_objObjects)
             Set l_objObject = m_objObjects(l_lngObject)
@@ -1480,6 +1725,8 @@ Dim l_booError As Boolean
                 CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_strValue
                 RaiseEvent AfterMultipleItemChange(l_strValue)
             Case Else
+                CallByName l_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_varValue
+                RaiseEvent AfterMultipleItemChange(l_varValue)
             End Select
         Next l_lngObject
     Else
@@ -1500,6 +1747,9 @@ Dim l_booError As Boolean
             l_lngValue = CLng(l_strText)
             CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_lngValue
             RaiseEvent AfterItemChange(l_varOldValue, l_lngValue)
+            If LCase(m_oiItems(m_lngSelectedItem).Name) = "count" Then
+                tmrReinspect.Enabled = True
+            End If
         Case vbInteger
             l_intValue = CInt(l_strText)
             CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_intValue
@@ -1513,6 +1763,9 @@ Dim l_booError As Boolean
             CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_strValue
             RaiseEvent AfterItemChange(l_varOldValue, l_strValue)
         Case Else
+            l_varValue = ValueFromString(l_strText)
+            CallByName m_objObject, m_oiItems(m_lngSelectedItem).Name, VbLet, l_varValue
+            RaiseEvent AfterItemChange(l_varOldValue, l_varValue)
         End Select
     End If
     RefreshValues

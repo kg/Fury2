@@ -69,7 +69,7 @@ Private mvarOldDisable As Boolean
 
 Public Sub CloseWindow()
 On Error Resume Next
-    CloseEvent.Invoke
+    If Not (CloseEvent Is Nothing) Then CloseEvent.Invoke
     Err.Clear
     If DisableClose Then Exit Sub
     If ((Queued = False) Or (Queued And Last)) And Engine.EnableObjectEvents Then Engine.ScriptEngine.Exec "MessageWindow_Destroy", Me
@@ -188,7 +188,7 @@ On Error Resume Next
                 ScrollEnd = ScrollY - (Rectangle.Height - 4)
                 ScrollSpeed = -1
             Else
-                ClickEvent.Invoke
+                If Not (ClickEvent Is Nothing) Then ClickEvent.Invoke
                 Err.Clear
                 If Not DisableClose Then
                     CloseWindow
@@ -287,7 +287,7 @@ On Error Resume Next
             ScrollEnd = ScrollY - (Rectangle.Height)
             ScrollSpeed = -1
         Else
-            ClickEvent.Invoke
+            If Not (ClickEvent Is Nothing) Then ClickEvent.Invoke
             Err.Clear
             If Not DisableClose Then
                 CloseWindow

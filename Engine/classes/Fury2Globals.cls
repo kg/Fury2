@@ -105,6 +105,14 @@ Public Enum Fury2SpriteEffects
     F2SB_Merge
 End Enum
 
+Public Enum Fury2SpriteBlockingTypes
+    F2BT_UpwardRect
+    F2BT_CenteredRect
+    F2BT_CenteredSphere
+    F2BT_UpwardPolygon
+    F2BT_CenteredPolygon
+End Enum
+
 Public Enum Fury2SpriteClasses
     F2SC_Any = -1
     F2SC_None = -1
@@ -171,12 +179,14 @@ Attribute Fury2Initialize.VB_Description = "Initializes the engine library."
 On Error Resume Next
     If l_lngF2State = 0 Then F2Init
     l_lngF2State = l_lngF2State + 1
+    Compromise.Initialize
     SetProfilerCallbacks AddressOf ProfileClear, AddressOf ProfilePrint, AddressOf ProfileQuery
 End Sub
 
 Sub Fury2Terminate()
 Attribute Fury2Terminate.VB_Description = "Unloads the library from memory."
 On Error Resume Next
+    Compromise.UnInitialize
     If InIDE Then
     Else
         TerminateProcess GetCurrentProcess, 0
@@ -411,11 +421,11 @@ Dim l_vtType As VariantTypeConstants
     ElseIf l_vtType = vbNull Then
         ToString = "{Null}"
     ElseIf (l_vtType And vbArray) = vbArray Then
-        If UBound(Value) > 64 Then
+        If UBound(Value) > 256 Then
             ToString = "{Array}"
         Else
             If QuoteStrings Then
-                ToString = "{" + JoinX(Value, ", ", QuoteStrings) + "}"
+                ToString = "(" + JoinX(Value, ", ", QuoteStrings) + ")"
             Else
                 ToString = JoinX(Value, , QuoteStrings)
             End If

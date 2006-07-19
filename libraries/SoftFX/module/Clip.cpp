@@ -249,7 +249,7 @@ Export int ClipRectangle_Rect(Rectangle *Rect, Rectangle *Clip) {
     Rect->normalize();
     if (Rect->Left < Clip->Left) {
           Rect->Width -= Clip->Left - Rect->Left;
-          Rect->Left = 0;
+          Rect->Left = Clip->Left;
     }
     if (Rect->Top < Clip->Top) {
           Rect->Height -= Clip->Top - Rect->Top;

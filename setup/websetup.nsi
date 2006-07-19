@@ -7,7 +7,8 @@ XPStyle on
 Name "Fury² Web Installer"
 Var ALREADY_INSTALLED
 !define NAME "Fury²"
-!define VERSION "0.8"
+!define VERSION "0.9"
+!define WEBSITE "http://luminance.org/fury2/downloads"
 
 !include Library.nsh
 !include "MUI.nsh"
@@ -35,7 +36,7 @@ Section "Engine"
     IfFileExists $2 enginesetupfound
     DetailPrint "Attempting to download engine..."
     Call ConnectInternet
-    NSISdl::download http://fury2.luminance.org/downloads/fury2_beta_${VERSION}.exe $2
+    NSISdl::download ${WEBSITE}/fury2_beta_${VERSION}.exe $2
     Pop $0
     StrCmp $0 success essuccess
         DetailPrint "Engine download failed: $0"
@@ -52,7 +53,7 @@ Section "Editor"
     IfFileExists $2 editorsetupfound
     DetailPrint "Attempting to download editor..."
     Call ConnectInternet
-    NSISdl::download http://fury2.luminance.org/downloads/fury2_editor_beta_${VERSION}.exe $2
+    NSISdl::download ${WEBSITE}/fury2_editor_beta_${VERSION}.exe $2
     Pop $0
     StrCmp $0 success edssuccess
         DetailPrint "Editor download failed: $0"
@@ -69,7 +70,7 @@ Section "Examples"
     IfFileExists $2 examplessetupfound
     DetailPrint "Attempting to download examples..."
     Call ConnectInternet
-    NSISdl::download http://fury2.luminance.org/downloads/fury2_examples_beta_${VERSION}.exe $2
+    NSISdl::download ${WEBSITE}/fury2_examples_beta_${VERSION}.exe $2
     Pop $0
     StrCmp $0 success exssuccess
         DetailPrint "Examples download failed: $0"

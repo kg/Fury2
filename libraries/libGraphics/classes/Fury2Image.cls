@@ -1624,7 +1624,7 @@ On Error Resume Next
     ConvexPolygon Points, Color, Mode
 End Sub
 
-Public Sub RadialGradientFill(ByVal Rectangle As Fury2Rect, ByVal Colors, Optional ByVal Mode As SFXRenderModes = RenderMode_Default)
+Public Sub RadialGradientFill(ByVal Rectangle As Fury2Rect, ByVal Colors, Optional ByVal Mode As SFXRenderModes = RenderMode_Default, Optional Offsets = Nothing)
 On Error Resume Next
 Dim l_rctRect As Fury2Rect
     Set l_rctRect = Rectangle
@@ -1633,11 +1633,17 @@ Dim l_rctRect As Fury2Rect
         Exit Sub
     End If
     If Mode = RenderMode_Default Then Mode = m_rmdRenderMode
+    Dim l_sngOffsets(0 To 1) As Single
+    If (VarType(Offsets) = vbObject) Then
+    Else
+        l_sngOffsets(0) = CSng(Offsets(0))
+        l_sngOffsets(1) = CSng(Offsets(1))
+    End If
     Select Case Mode
     Case SFXRenderModes.RenderMode_Normal
-        SoftFX.Filter_Gradient_Radial m_lngImage, l_rctRect.GetRectangle, CLng(Colors(0)), CLng(Colors(1))
+        SoftFX.Filter_Gradient_Radial_Ex m_lngImage, l_rctRect.GetRectangle, CLng(Colors(0)), CLng(Colors(1)), l_sngOffsets(0), l_sngOffsets(1)
     Case SFXRenderModes.RenderMode_SourceAlpha
-        SoftFX.Filter_Gradient_Radial_SourceAlpha m_lngImage, l_rctRect.GetRectangle, CLng(Colors(0)), CLng(Colors(1))
+        SoftFX.Filter_Gradient_Radial_SourceAlpha_Ex m_lngImage, l_rctRect.GetRectangle, CLng(Colors(0)), CLng(Colors(1)), l_sngOffsets(0), l_sngOffsets(1)
     Case Else
     End Select
 End Sub

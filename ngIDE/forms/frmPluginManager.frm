@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#8.10#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
 Begin VB.Form frmPluginManager 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Plugin Manager"
@@ -64,7 +64,6 @@ Begin VB.Form frmPluginManager
    End
    Begin VB.CommandButton cmdInstallNewPlugin 
       Caption         =   "&Install New..."
-      Enabled         =   0   'False
       BeginProperty Font 
          Name            =   "Tahoma"
          Size            =   9
@@ -162,7 +161,7 @@ Begin VB.Form frmPluginManager
          Enabled         =   0   'False
          Height          =   255
          Left            =   975
-         TabIndex        =   21
+         TabIndex        =   7
          Top             =   765
          Width           =   4770
       End
@@ -295,7 +294,6 @@ Begin VB.Form frmPluginManager
    Begin ngUI.ngTabStrip tsSelected 
       Height          =   2220
       Left            =   30
-      TabIndex        =   7
       Top             =   2595
       Width           =   5805
       _ExtentX        =   10239
@@ -332,7 +330,7 @@ Public Sub RefreshPluginProperties()
 On Error Resume Next
 Dim l_plgPlugin As iPlugin
 Dim l_fpgPlugin As iFileTypePlugin
-    'cmdRemoveSelected.Enabled = (lstPlugins.ListCount > 0) And (lstPlugins.ListIndex >= 0)
+    cmdRemoveSelected.Enabled = Not (lstPlugins.FirstSelectedItem Is Nothing)
     Set l_plgPlugin = lstPlugins.FirstSelectedItem.Tag
     If l_plgPlugin Is Nothing Then
     Else
@@ -454,6 +452,17 @@ On Error Resume Next
     Unload Me
 End Sub
 
+Private Sub cmdInstallNewPlugin_Click()
+On Error Resume Next
+Dim l_strFilename As String
+    l_strFilename = SelectLocalFile("Plugin Sets (*.plugins)|*.plugins", "Install Plugin Set...")
+    InstallPluginSet l_strFilename
+    ShutdownPlugins
+    InitPlugins
+    LoadPlugins
+    RefreshPluginList
+End Sub
+
 Private Sub cmdOK_Click()
 On Error Resume Next
     Me.Hide
@@ -462,6 +471,21 @@ On Error Resume Next
     ShutdownPlugins
     InitPlugins
     LoadPlugins
+End Sub
+
+Private Sub cmdRemoveSelected_Click()
+On Error Resume Next
+Dim l_lngIndex As Long
+    l_lngIndex = lstPlugins.FirstSelectedItem.Index
+    UninstallPlugin "*." & TypeName(lstPlugins.FirstSelectedItem.Tag)
+    lstPlugins.ListItems.Remove lstPlugins.FirstSelectedItem
+    ShutdownPlugins
+    InitPlugins
+    LoadPlugins
+    RefreshPluginList
+    If (l_lngIndex > lstPlugins.ListItems.Count) Then
+        lstPlugins.SelectItems l_lngIndex
+    End If
 End Sub
 
 Private Sub tsSelected_Resize()

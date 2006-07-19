@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.11#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
 Begin VB.Form frmTileset 
    BorderStyle     =   0  'None
    Caption         =   "Untitled.f2tileset"
@@ -50,6 +50,16 @@ Begin VB.Form frmTileset
       Top             =   1020
       Visible         =   0   'False
       Width           =   5895
+      Begin ngPlugins.ObjectInspector oiAttributes 
+         Height          =   330
+         Left            =   4980
+         TabIndex        =   5
+         Top             =   2850
+         Visible         =   0   'False
+         Width           =   420
+         _ExtentX        =   741
+         _ExtentY        =   582
+      End
       Begin VB.PictureBox picImage 
          Height          =   1485
          Left            =   1905
@@ -158,6 +168,7 @@ Private m_lngSelectedTile As Long
 
 Private m_colUndo As New Engine.Fury2Collection
 Private m_colRedo As New Engine.Fury2Collection
+Private m_colTileAttributes As New Engine.Fury2Collection
 
 Private m_tsTileset As Fury2Tileset
 Private m_strFilename As String
@@ -178,6 +189,16 @@ Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
 On Error Resume Next
     Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\tileset.png")
 End Property
+
+Private Sub oiAttributes_AfterItemAdd(ByVal NewValue As Variant)
+On Error Resume Next
+    Tileset.TileData(m_lngSelectedTile - 1) = m_colTileAttributes.ToArray
+End Sub
+
+Private Sub oiAttributes_AfterItemChange(ByVal OldValue As Variant, ByVal NewValue As Variant)
+On Error Resume Next
+    Tileset.TileData(m_lngSelectedTile - 1) = m_colTileAttributes.ToArray
+End Sub
 
 Private Sub picImage_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
@@ -212,6 +233,7 @@ End Sub
 Private Sub tsTile_Resize()
 On Error Resume Next
     picImage.Move (2) + tsTile.Left, tsTile.Top + tsTile.IdealHeight + 1, tsTile.Width - 4, tsTile.Height - (tsTile.IdealHeight + 3)
+    oiAttributes.Move (2) + tsTile.Left, tsTile.Top + tsTile.IdealHeight + 1, tsTile.Width - 4, tsTile.Height - (tsTile.IdealHeight + 3)
 End Sub
 
 Private Sub hsTiles_Change()
@@ -271,9 +293,24 @@ End Sub
 
 Public Sub RedrawSelectedTile()
 On Error Resume Next
+Dim l_varAttributes As Variant
+Dim l_lngIndex As Long
     Select Case LCase(Trim(tsTile.SelectedTab.Text))
     Case "image"
         RedrawImage
+    Case "attributes"
+        oiAttributes.InspectAny = True
+        Set m_colTileAttributes = New Engine.Fury2Collection
+        l_varAttributes = Tileset.TileData(m_lngSelectedTile - 1)
+        Err.Clear
+        If UBound(l_varAttributes) >= 0 Then
+            If Err = 0 Then
+                For l_lngIndex = LBound(l_varAttributes) To UBound(l_varAttributes)
+                    m_colTileAttributes.Add oiAttributes.ValueToString(l_varAttributes(l_lngIndex))
+                Next l_lngIndex
+            End If
+        End If
+        oiAttributes.Inspect m_colTileAttributes
     Case Else
     End Select
 End Sub
@@ -450,6 +487,8 @@ On Error Resume Next
     tsViews.Tabs.AddNew "Overview", "t" & CStr(View_Overview)
     tsViews.Tabs.AddNew "Tiles", "t" & CStr(View_Tiles)
     tsTile.Tabs.AddNew "Image"
+    tsTile.Tabs.AddNew "Collision"
+    tsTile.Tabs.AddNew "Attributes"
 End Sub
 
 Public Sub RefreshAll()
@@ -529,10 +568,13 @@ End Function
 Private Sub tsTile_TabSelected(TheTab As ngUI.ngTab)
 On Error Resume Next
     picImage.Visible = False
+    oiAttributes.Visible = False
     tsTile_Resize
     Select Case LCase(Trim(TheTab.Text))
     Case "image"
         picImage.Visible = True
+    Case "attributes"
+        oiAttributes.Visible = True
     Case Else
     End Select
     RedrawSelectedTile
@@ -589,11 +631,6 @@ End Sub
 Private Sub iCustomMenus_DestroyMenus(Handler As ngInterfaces.iCustomMenuHandler)
 On Error Resume Next
     With Handler.GetMenu
-        ' .DestroyMenu "Tools"
-        ' .DestroyMenu "AddDropShadow"
-        ' .DestroyMenu "AddOutline"
-        ' .DestroyMenu "Recolor"
-        ' .DestroyMenu "ToolsEndSeparator"
     End With
 End Sub
 

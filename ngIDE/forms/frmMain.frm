@@ -350,8 +350,8 @@ Implements iCustomMenuHandler
 
 Private Const WM_MDIGETACTIVE = &H229
 Private Declare Function W32SetFocus Lib "user32" (ByVal hwnd As Long) As Long
-Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
-Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
+Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
 
 Private m_lngFocus As Long
 Private m_strStatusText As String
@@ -458,7 +458,7 @@ End Sub
 
 Private Function GetToolbarX(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
+Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0)))
@@ -466,7 +466,7 @@ End Function
 
 Private Function GetToolbarY(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
+Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0)))
@@ -1143,7 +1143,7 @@ End Sub
 
 Private Sub picStatus_Paint()
 On Error Resume Next
-Dim l_rctStatus As RECT
+Dim l_rctStatus As Rect
     picStatus.Line (0, 0)-(picStatus.ScaleWidth - 1, picStatus.ScaleHeight - 1), picStatus.BackColor, BF
     SetBackgroundMode picStatus.hdc, BackgroundMode_Opaque
     SetBackgroundColor picStatus.hdc, GetSystemColor(SystemColor_Button_Face)
@@ -1929,9 +1929,9 @@ Dim l_lngLeftSpace As Long, l_lngRightSpace As Long
 Dim l_lngTopSpace As Long, l_lngBottomSpace As Long
 Dim l_lngTextHeight As Long, l_lngTitleHeight As Long
 Dim l_lngWidth As Long, l_lngHeight As Long
-Dim l_rctWindow As Win32.RECT
+Dim l_rctWindow As Win32.Rect
 Dim l_lngWindowWidth As Long, l_lngWindowHeight As Long
-Dim l_rctTextSize As Win32.RECT, l_rctText As Win32.RECT
+Dim l_rctTextSize As Win32.Rect, l_rctText As Win32.Rect
 Dim l_sngCloseTime As Single
 Dim l_strWaitingNotices As String
     GetClientRect Me.hwnd, l_rctWindow

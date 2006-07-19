@@ -411,6 +411,11 @@ Dim m_colData As IVirtualFileCollection
         Err.Clear
         ReDim Preserve Data(LBound(Data) To UBound(Data))
         If Err <> 0 Then
+            m_lngValue = 0
+            EnsureLength m_lngCursorPos + 4
+            memcpyvb m_bytData(m_lngCursorPos - 1), m_lngValue, 4
+            m_lngCursorPos = m_lngCursorPos + 4
+            IncSegLength 4
         Else
             m_lngValue = (UBound(Data) - LBound(Data)) + 1
             EnsureLength m_lngCursorPos + 4
@@ -423,7 +428,7 @@ Dim m_colData As IVirtualFileCollection
         m_lngLength = UBound(Data)
         If (m_lngLength >= 0) And (Err = 0) Then
             For m_lngItems = LBound(Data) To UBound(Data)
-                Save Data(m_lngItems)
+                SaveVariant Data(m_lngItems)
             Next m_lngItems
         End If
     Case vbBoolean
@@ -593,6 +598,7 @@ Dim m_lngCount As Long
 Dim m_objData As IVirtualFileSaveable
 Dim m_objLoad As Object
 Dim m_colData As IVirtualFileCollection
+Dim l_varData As Variant
     If VarPtr(Data) = 0 Then Exit Sub
     If VarType(Data) = vbObject Then
         If Data Is Nothing Then
@@ -626,6 +632,8 @@ Dim m_colData As IVirtualFileCollection
             Data = CCur(0)
         Case vbString
             Data = CStr("")
+        Case Is >= vbArray
+            Data = Array()
         Case Else
         End Select
         If (m_lngSegmentCount > 0) And (EOS = True) Then
@@ -679,7 +687,12 @@ Dim m_colData As IVirtualFileCollection
         m_lngLength = UBound(Data)
         If (m_lngLength >= 0) And (Err = 0) Then
             For m_lngItems = LBound(Data) To UBound(Data)
-                Load Data(m_lngItems)
+                l_varData = LoadVariant
+'                If (VarType(l_varData) And vbObject) = vbObject Then
+'                    Set Data(m_lngItems) = l_varData
+'                Else
+                    Data(m_lngItems) = l_varData
+'                End If
             Next m_lngItems
         End If
     Case vbBoolean
@@ -782,6 +795,8 @@ Dim l_varData As Variant
         l_varData = CDec(0)
     Case vbCurrency
         l_varData = CCur(0)
+    Case Is >= vbArray
+        l_varData = Array()
     End Select
     Load l_varData
     LoadVariant = l_varData

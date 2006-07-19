@@ -349,13 +349,12 @@ FILTERSIMPLE_INIT
 FILTERSIMPLE_BEGIN
     int rSum = 0, gSum = 0, bSum = 0;
     int factor = (Radius * 2) + 1;
-    std::queue<Pixel> queue;
+    fastqueue<Pixel> queue(factor * 2);
 FILTERSIMPLE_ROW
     int y = rCoordinates.bottom_exclusive() - iCY;
     int x = rCoordinates.Left;
     rSum = gSum = bSum = 0;
-    while (!queue.empty())
-      queue.pop();
+    queue.clear();
     Pixel l = Image->getPixelClipNO(rCoordinates.Left, y);
     for (int f = 0; f < Radius; f++) {
       rSum += l[::Red];
@@ -376,7 +375,8 @@ FILTERSIMPLE_COL
     (*pCurrent)[::Red] = (rSum / factor);
     Pixel add = Image->getPixelClipNO(x + Radius + 1, y);
 //    Pixel remove = Image->getPixelClipNO(x - Radius, y);
-    Pixel remove = queue.front();
+    Pixel remove;
+    queue.pop(remove);
     bSum += add[::Blue];
     gSum += add[::Green];
     rSum += add[::Red];
@@ -384,7 +384,6 @@ FILTERSIMPLE_COL
     gSum -= remove[::Green];
     rSum -= remove[::Red];
     x++;
-    queue.pop();
     queue.push(add);
 FILTERSIMPLE_COLEND
 FILTERSIMPLE_ROWEND
@@ -399,13 +398,12 @@ FILTERSIMPLE_INIT
 FILTERSIMPLE_BEGIN
     int rSum = 0, gSum = 0, bSum = 0;
     int factor = (Radius * 2) + 1;
-    std::queue<Pixel> queue;
+    fastqueue<Pixel> queue(factor + 1);
 FILTERSIMPLE_INVROW
     int x = rCoordinates.right_exclusive() - iCX;
     int y = rCoordinates.Top;
     rSum = gSum = bSum = 0;
-    while (!queue.empty())
-      queue.pop();
+    queue.clear();
     Pixel l = Image->getPixelClipNO(x, rCoordinates.Top);
     for (int f = 0; f < Radius; f++) {
       rSum += l[::Red];
@@ -426,7 +424,8 @@ FILTERSIMPLE_INVCOL
     (*pCurrent)[::Red] = (rSum / factor);
     Pixel add = Image->getPixelClipNO(x, y + Radius + 1);
 //    Pixel remove = Image->getPixelClipNO(x, y - Radius);
-    Pixel remove = queue.front();
+    Pixel remove;
+    queue.pop(remove);
     bSum += add[::Blue];
     gSum += add[::Green];
     rSum += add[::Red];
@@ -434,7 +433,6 @@ FILTERSIMPLE_INVCOL
     gSum -= remove[::Green];
     rSum -= remove[::Red];
     y++;
-    queue.pop();
     queue.push(add);
 FILTERSIMPLE_INVCOLEND
 FILTERSIMPLE_INVROWEND

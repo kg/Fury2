@@ -96,13 +96,14 @@ Private m_booScript_Load As Boolean
 Private m_booScript_Die As Boolean, m_booScript_Step As Boolean
 Private m_booScript_FadeOut As Boolean, m_booScript_Collided As Boolean
 Private m_booScript_WaypointReached As Boolean
-    
+
 Private m_booAreasUpdated As Boolean
 
 Private m_lngWalkState As Long, m_lngIdleState As Long
 Private m_lngBlockingType As Long
 
 Public SaveScriptData As Boolean
+Attribute SaveScriptData.VB_VarDescription = "If True, the data in the sprite's Script will be saved along with the sprite."
 
 Public LinkState As Boolean, LinkPose As Boolean, LinkFrame As Boolean, LinkProperties As Boolean, LinkBearing As Boolean
 Attribute LinkState.VB_VarDescription = "If True, while Attached to another sprite, this sprite will share that sprite's state."
@@ -166,6 +167,7 @@ Dim l_scrOld As Object
 End Sub
 
 Public Sub ReloadScript()
+Attribute ReloadScript.VB_Description = "Reloads the sprite's script."
 On Error Resume Next
 Dim l_vfTemp As VirtualFile
 Dim l_scrOld As Object
@@ -201,6 +203,7 @@ On Error Resume Next
 End Property
 
 Public Property Let RenderTarget(ByVal Index As Long)
+Attribute RenderTarget.VB_Description = ""
 On Error Resume Next
     m_spParam.Params.RenderTarget = Index - 1
 End Property
@@ -230,6 +233,7 @@ Attribute Pushable.VB_Description = "If True, other sprites can apply force to t
 End Property
 
 Public Property Let Pushable(ByVal NewValue As Boolean)
+Attribute Pushable.VB_Description = ""
     m_spParam.Stats.Pushable = CByte(Abs(CLng(NewValue)))
 End Property
 
@@ -239,6 +243,7 @@ Attribute CanPush.VB_Description = "If True, this sprite can apply force to othe
 End Property
 
 Public Property Let CanPush(ByVal NewValue As Boolean)
+Attribute CanPush.VB_Description = ""
     m_spParam.Stats.CanPush = CByte(Abs(CLng(NewValue)))
 End Property
 
@@ -248,6 +253,7 @@ Attribute VelocityMultiplier.VB_Description = "*"
 End Property
 
 Public Property Let VelocityMultiplier(ByVal NewValue As Single)
+Attribute VelocityMultiplier.VB_Description = ""
     m_spParam.Velocity.VM = NewValue
 End Property
 
@@ -262,6 +268,7 @@ Attribute Color.VB_Description = "The sprite's tint color.{Color}"
 End Property
 
 Public Property Let Color(ByVal NewColor As Long)
+Attribute Color.VB_Description = ""
     m_spParam.Params.Color = NewColor
 End Property
 
@@ -280,6 +287,7 @@ On Error Resume Next
 End Property
 
 Public Property Let VelocityDecay(ByVal NewValue As Single)
+Attribute VelocityDecay.VB_Description = ""
 On Error Resume Next
     m_sngVelocityDecay = NewValue
 End Property
@@ -295,11 +303,13 @@ On Error Resume Next
 End Property
 
 Public Property Let VelocityAccel(ByVal NewValue As Single)
+Attribute VelocityAccel.VB_Description = ""
 On Error Resume Next
     m_sngVelocityAccel = NewValue
 End Property
 
 Public Function SightCheck(ByVal X As Single, ByVal Y As Single, Optional ByRef IgnoreSprite = Nothing) As Boolean
+Attribute SightCheck.VB_Description = "Performs a sight check from this sprite to a given location, using the current lighting data. If IgnoreSprite specifies a sprite, that sprite will be ignored."
 On Error Resume Next
     SightCheck = m_mapMap.Layers(m_lngLayer).Lighting.SightCheck(m_spParam.Position.X, m_spParam.Position.Y, X, Y, Me, IgnoreSprite)
 End Function
@@ -310,6 +320,7 @@ Attribute AIUpdateRate.VB_Description = "The number of frames between each time 
 End Property
 
 Public Property Let AIUpdateRate(ByVal NewValue As Long)
+Attribute AIUpdateRate.VB_Description = ""
 On Error Resume Next
     m_lngAIUpdateRate = Abs(NewValue)
 End Property
@@ -320,6 +331,7 @@ Attribute Attached.VB_Description = "*"
 End Property
 
 Public Sub Attach(ByRef Sprite, Optional ByVal XOffset As Single = 0, Optional ByVal YOffset As Single = 0, Optional ByVal HOffset As Single = 0, Optional ByVal VOffset As Single = 0)
+Attribute Attach.VB_Description = "Attaches the sprite to another sprite."
 On Error Resume Next
     Set m_sprAttached = Sprite
     m_sngAttachX = XOffset
@@ -334,6 +346,7 @@ Attribute AttachX.VB_Description = "*"
 End Property
 
 Public Property Get AttachX() As Single
+Attribute AttachX.VB_Description = ""
     AttachX = m_sngAttachX
 End Property
 
@@ -343,6 +356,7 @@ Attribute AttachY.VB_Description = "*"
 End Property
 
 Public Property Get AttachY() As Single
+Attribute AttachY.VB_Description = ""
     AttachY = m_sngAttachY
 End Property
 
@@ -352,6 +366,7 @@ Attribute AttachH.VB_Description = "*"
 End Property
 
 Public Property Get AttachH() As Single
+Attribute AttachH.VB_Description = ""
     AttachH = m_sngAttachH
 End Property
 
@@ -361,15 +376,18 @@ Attribute AttachV.VB_Description = "*"
 End Property
 
 Public Property Get AttachV() As Single
+Attribute AttachV.VB_Description = ""
     AttachV = m_sngAttachV
 End Property
 
 Public Property Get Blocked(ByVal X As Single, ByVal Y As Single) As Boolean
+Attribute Blocked.VB_Description = "Checks to see if a given location would be blocked if this sprite were to be there."
 On Error Resume Next
     Blocked = Map.Blocked(Layer, X - (m_spParam.Obstruction.Width / 2), Y - (m_spParam.Obstruction.Height / IIf(m_lngBlockingType >= 1, 2, 1)), m_spParam.Obstruction.Width, m_spParam.Obstruction.Height, Me)
 End Property
 
 Public Sub AttachGraphic(Graphic)
+Attribute AttachGraphic.VB_Description = "Attaches a graphic to this sprite."
 On Error Resume Next
 Dim l_gphGraphic As Fury2Graphic
     Set l_gphGraphic = Graphic
@@ -379,6 +397,7 @@ Dim l_gphGraphic As Fury2Graphic
 End Sub
 
 Sub RefreshAttachedGraphic()
+Attribute RefreshAttachedGraphic.VB_Description = "Refreshes the graphic attached to this sprite, if it has changed."
 On Error Resume Next
     With m_spParam
         If AttachedGraphic Is Nothing Then
@@ -391,6 +410,7 @@ On Error Resume Next
 End Sub
 
 Public Sub Refresh()
+Attribute Refresh.VB_Description = "Refreshes the state of the sprite."
 On Error Resume Next
     UpdateGraphic
 End Sub
@@ -401,6 +421,7 @@ Attribute WalkState.VB_Description = "The state used while the sprite is in moti
 End Property
 
 Public Property Let WalkState(ByVal NewState As Long)
+Attribute WalkState.VB_Description = ""
 On Error Resume Next
     If State = m_lngWalkState Then
         State = NewState
@@ -414,6 +435,7 @@ Attribute IdleState.VB_Description = "The state used when the sprite is not in m
 End Property
 
 Public Property Let IdleState(ByVal NewState As Long)
+Attribute IdleState.VB_Description = ""
 On Error Resume Next
     If State = m_lngIdleState Then
         State = NewState
@@ -432,6 +454,7 @@ Attribute CastShadow.VB_Description = "If True, the sprite will cast a shadow wh
 End Property
 
 Public Property Let CastShadow(ByVal NewValue As Boolean)
+Attribute CastShadow.VB_Description = ""
     m_spParam.Params.SpecialFX = (m_spParam.Params.SpecialFX And (Not 4)) Or (IIf(NewValue, 4, 0))
 End Property
 
@@ -441,6 +464,7 @@ Attribute DisplayRotation.VB_Description = "If True, the sprite will be rotated 
 End Property
 
 Public Property Let DisplayRotation(ByVal Value As Boolean)
+Attribute DisplayRotation.VB_Description = ""
     m_booDisplayRotation = Value
 End Property
 
@@ -450,6 +474,7 @@ Attribute RelativeRotation.VB_Description = "If DisplayRotation is set, causes t
 End Property
 
 Public Property Let RelativeRotation(ByVal Value As Boolean)
+Attribute RelativeRotation.VB_Description = ""
     m_booRelativeRotation = Value
 End Property
 
@@ -459,11 +484,13 @@ Attribute Destroyed.VB_Description = "*This value is true if the sprite has been
 End Property
 
 Public Function Class_ToString() As String
+Attribute Class_ToString.VB_Description = ""
 On Error Resume Next
     Class_ToString = "Sprite: " & m_strName
 End Function
 
 Function SupportsAction(ByVal Name As String) As Boolean
+Attribute SupportsAction.VB_Description = "Returns True if the specified action is supported by the sprite's script."
 On Error Resume Next
     With mvarEngine.ScriptEngine.Language
         Select Case LCase(Trim(Name))
@@ -495,6 +522,7 @@ On Error Resume Next
 End Function
 
 Function Action(Optional ByVal Activator As Object, Optional ByVal ActionName As String = "Activate") As Boolean
+Attribute Action.VB_Description = "Performs an action on the sprite's script."
 On Error Resume Next
     Action = True
     mvarEngine.ContextLevelAdd "Sprite_" + ActionName
@@ -509,6 +537,7 @@ On Error Resume Next
 End Function
 
 Function ActionAhead(Optional ByVal Distance As Single = -1, Optional ByVal ActionName As String = "Activate", Optional ByVal Class As Long = -1) As Boolean
+Attribute ActionAhead.VB_Description = "Attempts to perform an action on a sprite ahead of the current sprite."
 On Error Resume Next
 Dim l_objTarget As Object
 Dim l_sprTarget As Fury2Sprite, l_araTarget As Fury2Area
@@ -534,6 +563,7 @@ Attribute Alpha.VB_Description = "The opacity of the sprite."
 End Property
 
 Public Property Let Alpha(ByVal NewValue As Single)
+Attribute Alpha.VB_Description = ""
 On Error Resume Next
     m_spParam.Params.Alpha = NewValue
 End Property
@@ -544,6 +574,7 @@ Attribute Angle.VB_Description = "The direction the sprite is facing. (Also affe
 End Property
 
 Public Property Let Angle(ByVal NewValue As Single)
+Attribute Angle.VB_Description = ""
 On Error Resume Next
     If NewValue = m_spParam.Velocity.B Then Exit Property
     m_spParam.Velocity.B = NewValue
@@ -577,6 +608,7 @@ Attribute AnimateWhileMoving.VB_Description = "If True, the sprite will animate 
 End Property
 
 Public Property Let AnimateWhileMoving(ByVal NewValue As Boolean)
+Attribute AnimateWhileMoving.VB_Description = ""
     m_booAnimateWhileMoving = NewValue
 End Property
 
@@ -586,6 +618,7 @@ Attribute AnimateWhileStopped.VB_Description = "If True, the sprite will animate
 End Property
 
 Public Property Let AnimateWhileStopped(ByVal NewValue As Boolean)
+Attribute AnimateWhileStopped.VB_Description = ""
     m_booAnimateWhileStopped = NewValue
 End Property
 
@@ -595,6 +628,7 @@ Attribute AnimationDelay.VB_Description = "*The delay accumulator for animations
 End Property
 
 Public Property Let AnimationDelay(ByVal NewValue As Single)
+Attribute AnimationDelay.VB_Description = ""
     m_sngAnimationDelay = NewValue
 End Property
 
@@ -604,6 +638,7 @@ Attribute AnimationDirection.VB_Description = "*The direction animations are cur
 End Property
 
 Public Property Let AnimationDirection(ByVal NewValue As Long)
+Attribute AnimationDirection.VB_Description = ""
     If (NewValue = 0) Then Exit Property
     m_lngAnimationDirection = NewValue
 End Property
@@ -614,10 +649,12 @@ Attribute Class.VB_Description = "The sprite's class. Used for behaviors."
 End Property
 
 Public Property Get Class() As Fury2SpriteClasses
+Attribute Class.VB_Description = ""
     Class = m_spParam.Type
 End Property
 
 Public Sub PushPath()
+Attribute PushPath.VB_Description = "Pushes the current path onto the path stack."
 On Error Resume Next
     SavedPaths.Add m_pthPath
     Set m_pthPath = New Fury2Path
@@ -625,6 +662,7 @@ On Error Resume Next
 End Sub
 
 Public Sub PopPath()
+Attribute PopPath.VB_Description = "Pops a path from the path stack."
 On Error Resume Next
     Set m_pthPath = SavedPaths.Item(SavedPaths.Count)
     SavedPaths.Remove SavedPaths.Count
@@ -668,6 +706,7 @@ On Error Resume Next
 End Sub
 
 Public Sub CopyTo(ByVal OtherSprite, Optional ByVal AsTemplate As Boolean = False, Optional ByVal Fast As Boolean = False)
+Attribute CopyTo.VB_Description = "Copies the contents of this sprite to another sprite, optionally performing a template-style copy or a fast copy."
 On Error Resume Next
 Dim l_sprOther As Fury2Sprite
 Dim l_spOld As SpriteParam
@@ -682,7 +721,7 @@ Dim l_pthPath As Fury2Path
             Set .States = Me.States.Duplicate
             Set .Poses = Me.Poses.Duplicate
         End If
-    
+
         l_spOld = .GetParam
         .SetParam m_spParam
         If AsTemplate Then
@@ -696,7 +735,7 @@ Dim l_pthPath As Fury2Path
             .DepthmapOverride = Me.DepthmapOverride
             .PoseOverride = Me.PoseOverride
         End If
-            
+
         .Alpha = Me.Alpha
         .Angle = Me.Angle
         .AnimateWhileMoving = Me.AnimateWhileMoving
@@ -713,24 +752,24 @@ Dim l_pthPath As Fury2Path
         .CastShadow = Me.CastShadow
         .Color = Me.Color
         .DiffuseLight = Me.DiffuseLight
-        
+
         .State = Me.State
         .Pose = Me.Pose
         .Frame = Me.Frame
-        
+
         If AsTemplate Then
             .Position(0) = l_spOld.Position.X
             .Position(1) = l_spOld.Position.Y
             .Position(2) = l_spOld.Position.Z
         Else
         End If
-        
+
         .LinkBearing = Me.LinkBearing
         .LinkFrame = Me.LinkFrame
         .LinkPose = Me.LinkPose
         .LinkProperties = Me.LinkProperties
         .LinkState = Me.LinkState
-        
+
         .DisplayRotation = Me.DisplayRotation
         .RelativeRotation = Me.RelativeRotation
         .RotationAngle = Me.RotationAngle
@@ -756,14 +795,14 @@ Dim l_pthPath As Fury2Path
             .VelocityDecay = m_sngVelocityDecay
             .VelocityAccel = m_sngVelocityAccel
         End If
-        
+
         .Tag = Me.Tag
-        
+
         .IdleState = Me.IdleState
         .WalkState = Me.WalkState
-        
+
         .AIUpdateRate = Me.AIUpdateRate
-        
+
         If Not Fast Then
             .Paths.Clear
             For Each l_pthPath In Paths
@@ -771,12 +810,12 @@ Dim l_pthPath As Fury2Path
             Next l_pthPath
             Set .Path = .Paths(1)
         End If
-       
+
         If .ScriptOverride And AsTemplate Then
         Else
             .ScriptSource = Me.ScriptSource
         End If
-        
+
         If Not Fast Then
             If AsTemplate Then
             Else
@@ -805,6 +844,7 @@ Public Property Let DepthmapOverride(ByVal NewValue As Boolean)
 End Property
 
 Public Sub Die()
+Attribute Die.VB_Description = "Destroys the current sprite, removing it from its map and unloading its associated objects."
 On Error Resume Next
 Dim l_lyrLayer As Fury2MapLayer
     m_booDestroyed = True
@@ -825,7 +865,7 @@ Dim l_lyrLayer As Fury2MapLayer
 End Sub
 
 Public Function Duplicate() As Fury2Sprite
-Attribute Duplicate.VB_Description = "Creates a new copy of the sprite."
+Attribute Duplicate.VB_Description = "Creates a new deep copy of the sprite."
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
     Set l_sprSprite = New Fury2Sprite
@@ -862,6 +902,7 @@ Public Property Get BlockingType() As Fury2SpriteBlockingTypes
 End Property
 
 Public Sub Face(ByRef Point)
+Attribute Face.VB_Description = "Rotates the sprite to face a given point."
 On Error Resume Next
     If VarType(Point) = vbObject Then
         Angle = mvarEngine.Math.AngleBetween(X, Y, Point.X, Point.Y)
@@ -871,6 +912,7 @@ On Error Resume Next
 End Sub
 
 Public Sub Fade(Optional ByVal FromAlpha = -1, Optional ByVal ToAlpha = -1, Optional ByVal Speed = 1 / 60)
+Attribute Fade.VB_Description = "Begins fading the sprite's alpha to a new value."
 On Error Resume Next
 Dim l_sngAlpha As Single
     If ToAlpha = -1 Then
@@ -921,6 +963,7 @@ Public Property Get Frame() As Long
 End Property
 
 Public Sub Free()
+Attribute Free.VB_Description = "Frees the sprite and its associated objects."
 On Error Resume Next
 Dim l_posPose As Fury2Pose
 Dim l_pthPath As Fury2Path
@@ -1114,11 +1157,11 @@ Dim l_pthPath As Fury2Path
                 Err.Clear
                 .ReadSegment_End
             .ReadSegment_End
-            
+
             ' ai settings
             .ReadSegment_Begin
             .ReadSegment_End
-            
+
             .ReadSegment_Begin
                 .Load l_bytValue
                 m_spParam.Type = l_bytValue
@@ -1146,21 +1189,21 @@ Dim l_pthPath As Fury2Path
                 .ReadSegment_End
                 .Load Ignore
             .ReadSegment_End
-            
+
             ' state mappings
             .ReadSegment_Begin
             .ReadSegment_End
-            
+
             Set m_posPoses = New Fury2Poses
             m_posPoses.SetParent Me
             .Load m_posPoses
-            
+
             ' path
             Set m_pthPath = New Fury2Path
             m_pthPath.SetParent Me
             .Load m_pthPath
             Paths.Add m_pthPath
-            
+
             ' paths
             .ReadSegment_Begin
                 l_lngValue = 0
@@ -1174,7 +1217,7 @@ Dim l_pthPath As Fury2Path
                     Next l_lngIndex
                 End If
             .ReadSegment_End
-            
+
             .Load m_staStates
         .ReadSegment_End
         VelocityMultiplier = -32767
@@ -1267,10 +1310,10 @@ Dim l_pthPath As Fury2Path
                 Err.Clear
                 .WriteSegment_End
             .WriteSegment_End
-            
+
             .WriteSegment_Begin
             .WriteSegment_End
-            
+
             .WriteSegment_Begin
                 .Save CByte(m_spParam.Type)
                 .Save CBool(m_spParam.Stats.Cull)
@@ -1285,14 +1328,14 @@ Dim l_pthPath As Fury2Path
                 .WriteSegment_End
                 .Save Ignore
             .WriteSegment_End
-            
+
             .WriteSegment_Begin
             .WriteSegment_End
-            
+
             .Save m_posPoses
-            
+
             .Save m_pthPath
-            
+
             ' paths
             .WriteSegment_Begin
                 .Save Paths.Count - 1
@@ -1303,9 +1346,9 @@ Dim l_pthPath As Fury2Path
                     End If
                 Next l_pthPath
             .WriteSegment_End
-            
+
             .Save m_staStates
-        
+
         .WriteSegment_End
     End With
 End Sub
@@ -1325,6 +1368,7 @@ Attribute Layer.VB_Description = "*The numeric index of the layer containing the
 End Property
 
 Public Sub Load()
+Attribute Load.VB_Description = "Loads the sprite's configuration data."
 On Error Resume Next
     If Engine.EditMode Then
     Else
@@ -1336,13 +1380,14 @@ On Error Resume Next
     If m_booDestroyed Then Exit Sub
     m_posPoses.LoadGraphics
     UpdateState True
-    
+
     InitAreas
 '    UpdatePose True
 '    UpdateFrame True
 End Sub
 
 Public Sub LoadTemplate()
+Attribute LoadTemplate.VB_Description = "Loads the sprite's template and applies it."
 On Error Resume Next
 Dim l_sprTemplate As Fury2Sprite, l_strTemplateSprite As String, l_strTemplateIndex As String
     If Trim(m_strTemplate) = "" Then
@@ -1371,12 +1416,13 @@ Public Property Get Name() As String
 End Property
 
 Public Function ObjectCollisionCheck(Optional ByVal XOffset As Single = 0, Optional ByVal YOffset As Single = 0, Optional ByVal Class As Long = -1) As Object
+Attribute ObjectCollisionCheck.VB_Description = "Performs a collision check and returns the object that was collided with."
 On Error Resume Next
 Dim l_rctThis As Fury2Rect, l_rctThat As Fury2Rect
 Dim l_sprSprite As Fury2Sprite, l_araArea As Fury2Area
     Set l_rctThis = Me.Rectangle(False)
     l_rctThis.Translate CLng(XOffset), CLng(YOffset)
-    
+
     For Each l_sprSprite In m_sprSprites
         If l_sprSprite Is Me Then
         Else
@@ -1390,7 +1436,7 @@ Dim l_sprSprite As Fury2Sprite, l_araArea As Fury2Area
             End If
         End If
     Next l_sprSprite
-    
+
     For Each l_araArea In m_mapMap.Areas
         Set l_rctThat = l_araArea.Rectangle
         If l_rctThat.Intersect(l_rctThis) Then
@@ -1412,6 +1458,7 @@ Attribute Parent.VB_Description = "*The sprite's parent (if any)."
 End Property
 
 Public Function PerformAction(Optional ByVal Activator = Nothing, Optional ByRef Action = "Activate") As Boolean
+Attribute PerformAction.VB_Description = "Performs an action on the sprite's script. Returns True if successful."
 On Error Resume Next
     mvarEngine.ContextLevelAdd Name + " : PerformAction(" + Action + ")"
     Err.Clear
@@ -1432,6 +1479,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Paths() As Fury2Collection
+Attribute Paths.VB_Description = "The paths defined for this sprite."
 On Error Resume Next
     Set Paths = m_colPaths
 End Property
@@ -1446,6 +1494,7 @@ Public Property Set Path(ByVal NewPath As Fury2Path)
 End Property
 
 Public Sub SwitchPath(ByVal ID As Variant)
+Attribute SwitchPath.VB_Description = "Switches the current path to a new one."
 On Error Resume Next
     PathIndex = CLng(ID)
     Set m_pthPath = Paths(ID)
@@ -1535,6 +1584,7 @@ On Error Resume Next
 End Property
 
 Public Function PointInside(ByVal X As Long, ByVal Y As Long, Optional ByVal Onscreen As Boolean = True) As Boolean
+Attribute PointInside.VB_Description = "Returns True if the specified point is inside the sprite. If Onscreen is true, the point is in display coordinates, otherwise it is in blocking coordinates."
 On Error Resume Next
     If Onscreen Then
         If X < Floor(m_spParam.Position.X - (m_spParam.Graphic.Rectangle.Width / 2)) Then Exit Function
@@ -1572,6 +1622,7 @@ On Error Resume Next
 End Property
 
 Public Sub Render(ByVal Surface As Fury2Image, ByVal X As Long, ByVal Y As Long)
+Attribute Render.VB_Description = "Renders the sprite to an image."
 On Error Resume Next
 Dim m_cpCamera As CameraParam
 Dim m_spSprite As SpriteParam
@@ -1701,9 +1752,9 @@ Dim l_strName As String
                 End With
             End If
             Set mvarEngine.IObjThis = Me
-        
+
             m_objScript.F2OInit Me, m_mapMap
-        
+
             If (m_objScript Is Nothing) Then
                 Engine.DebugOut "Unable to load script for sprite """ & Name & """"
                 m_booScriptLoadFailed = True
@@ -1786,6 +1837,7 @@ Public Property Get ZHeight() As Single
 End Property
 
 Public Property Let ZHeight(ByVal NewValue As Single)
+Attribute ZHeight.VB_Description = "Sets the Z height value used in lighting calculations."
     m_spParam.ZHeight = NewValue
 End Property
 
@@ -1840,6 +1892,7 @@ Attribute States.VB_Description = "~The sprite's defined states."
 End Property
 
 Public Sub Teleport(ByVal X, ByVal Y, Optional ByVal Z = 0, Optional ByVal Layer = -1)
+Attribute Teleport.VB_Description = "Teleports the sprite to a new location."
 On Error Resume Next
     If Layer <> -1 Then
         If Layer <> m_lngLayer Then
@@ -1876,6 +1929,7 @@ On Error Resume Next
 End Sub
 
 Public Sub Update()
+Attribute Update.VB_Description = "Updates the sprite."
 On Error Resume Next
 Dim l_sprCollided As Fury2Sprite
     If Not Ignore Then
@@ -1898,7 +1952,7 @@ Dim l_sprCollided As Fury2Sprite
     Else
         AttachedGraphic.Update
     End If
-    
+
     'm_spParam.Params.SpecialFX = fxSoftShadow
     If m_booDisplayRotation Then
         If m_booRelativeRotation Then
@@ -1914,20 +1968,20 @@ Dim l_sprCollided As Fury2Sprite
             RotationAngle = Angle + RotationOffset
         End If
     End If
-        
+
     If m_spParam.Events.Moved Then
         UpdateAreas
     End If
-        
+
     If SpinVelocity <> 0 Then
         ReselectPose
     End If
-    
+
     UpdateAnimation
-    
+
     If Not Ignore Then
         UpdatePath
-       
+
         If (CLng(m_spParam.Position.X) <> CLng(m_spOldParam.Position.X)) Or (CLng(m_spParam.Position.Y) <> CLng(m_spOldParam.Position.Y)) Then
             If m_booScript_Step Then
                 mvarEngine.ContextLevelAdd "Sprite_Step"
@@ -1941,7 +1995,7 @@ Dim l_sprCollided As Fury2Sprite
                 mvarEngine.ContextLevelRemove
             End If
         End If
-        
+
         If m_spParam.Events.FadedOut Then
             mvarEngine.ContextLevelAdd "Sprite_FadeOut"
             Err.Clear
@@ -1953,11 +2007,11 @@ Dim l_sprCollided As Fury2Sprite
             Err.Clear
             mvarEngine.ContextLevelRemove
         End If
-        
+
         If m_spParam.Events.CollidedWith <> 0 Then
             mvarEngine.ContextLevelAdd "Sprite_Hit"
             Set l_sprCollided = m_mapMap.Layers(m_lngLayer).Sprites(m_spParam.Events.CollidedWith)
-        
+
             Err.Clear
             If (m_lngID_Hit <> -1) Then
                 mvarEngine.InvokeMember m_objScript, m_lngID_Hit, Array(l_sprCollided)
@@ -1991,7 +2045,7 @@ Dim l_sprCollided As Fury2Sprite
             mvarEngine.ContextLevelRemove
         End If
     End If
-    
+
     If m_sprAttached Is Nothing Then
     Else
         With m_sprAttached
@@ -2035,7 +2089,7 @@ Dim l_sprCollided As Fury2Sprite
             If LinkFrame Then Me.Frame = .Frame
         End With
     End If
-    
+
     m_spOldParam = m_spParam
     If Not Ignore Then
         If m_booScript_Update Then
@@ -2192,7 +2246,7 @@ Dim l_araArea As Fury2Area, l_booWasIn As Boolean, l_booIsIn As Boolean
         l_booWasIn = False
         l_booIsIn = False
         l_araArea.DualIntersect l_rctOld, l_rctCurrent, l_booWasIn, l_booIsIn
-        
+
         If (Not l_booWasIn) And (l_booIsIn) Then
             ' Enter
             If Me.Name Like l_araArea.NamePattern Then
@@ -2209,7 +2263,7 @@ Dim l_araArea As Fury2Area, l_booWasIn As Boolean, l_booIsIn As Boolean
                 l_araArea.Action Me, "Leave"
             End If
         End If
-        
+
         Err.Clear
     Next l_araArea
     m_booAreasUpdated = False
@@ -2229,7 +2283,7 @@ Dim l_araArea As Fury2Area
                 l_araArea.Action Me, "Enter"
             End If
         End If
-        
+
         Err.Clear
     Next l_araArea
 End Sub
@@ -2346,7 +2400,7 @@ On Error Resume Next
 End Property
 
 Public Property Get WalkSpeed() As Single
-Attribute WalkSpeed.VB_Description = "The maximum speed for the sprite's movement. (This is an alias for Poses(Pose).WalkSpeed.)"
+Attribute WalkSpeed.VB_Description = "The maximum speed for the sprite's movement. (This is an alias for States(State).MaxVelocity.)"
     WalkSpeed = m_staState.MaxVelocity
 End Property
 
@@ -2377,6 +2431,7 @@ Public Property Get X() As Single
 End Property
 
 Public Property Let X(ByVal NewValue As Single)
+Attribute X.VB_Description = "The sprite's X position."
     m_spParam.Position.X = NewValue
 End Property
 
@@ -2419,6 +2474,7 @@ Attribute XForce.VB_Description = "*"
 End Property
 
 Public Property Get Y() As Single
+Attribute Y.VB_Description = "The sprite's Y position."
     Y = m_spParam.Position.Y
 End Property
 
@@ -2460,6 +2516,7 @@ Public Property Let YVelocity(ByVal NewValue As Single)
 End Property
 
 Public Property Get Z() As Single
+Attribute Z.VB_Description = "The sprite's Z position."
     Z = m_spParam.Position.Z
 End Property
 
@@ -2492,12 +2549,14 @@ Attribute Pressure.VB_Description = "*"
 End Property
 
 Public Sub ApplyForce(ByVal X As Single, ByVal Y As Single)
+Attribute ApplyForce.VB_Description = "Applies a force to the sprite."
 On Error Resume Next
     m_spParam.Velocity.CXF = m_spParam.Velocity.CXF + X
     m_spParam.Velocity.CYF = m_spParam.Velocity.CYF + Y
 End Sub
 
 Public Function CreatePath() As Fury2Path
+Attribute CreatePath.VB_Description = "Creates a new path."
 On Error Resume Next
     Set CreatePath = New Fury2Path
     CreatePath.SetParent Me
@@ -2537,3 +2596,6 @@ End Property
 Public Property Get LastVelocity() As Single
     LastVelocity = m_spOldParam.Velocity.V
 End Property
+
+
+

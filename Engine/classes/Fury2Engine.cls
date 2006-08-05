@@ -96,34 +96,62 @@ End Type
 
 ' Public objects/singletons
 Public Arrays As Fury2Arrays
+Attribute Arrays.VB_VarDescription = "Contains utility functions for working with arrays."
 Public Math As Fury2Math
+Attribute Math.VB_VarDescription = "Contains utility functions for working with numbers and performing arithmetic."
 Public Strings As Fury2Strings
+Attribute Strings.VB_VarDescription = "The default string table."
 Public Mouse As Fury2Mouse
+Attribute Mouse.VB_VarDescription = "The mouse."
 Public Keyboard As Fury2Keyboard
+Attribute Keyboard.VB_VarDescription = "The keyboard."
 Public Joysticks As Fury2Collection
+Attribute Joysticks.VB_VarDescription = "All of the joysticks currently connected to the computer."
 Public Party As Fury2Party
+Attribute Party.VB_VarDescription = "The current party object."
 Public Configuration As Fury2ConfigurationFile
+Attribute Configuration.VB_VarDescription = "The current configuration."
 Public WindowSkin As Fury2WindowSkin
+Attribute WindowSkin.VB_VarDescription = "The default window skin used for menus and message boxes."
 Public MenuCursor As Fury2Graphic
+Attribute MenuCursor.VB_VarDescription = "The default cursor used for menus."
 Public MouseCursor As Fury2Image
+Attribute MouseCursor.VB_VarDescription = "The image drawn to represent the mouse cursor."
 Public Font As Fury2Font
+Attribute Font.VB_VarDescription = "The default font used for message boxes, menus, textelements, the console, and other objects."
 Public Controls As Fury2Collection
+Attribute Controls.VB_VarDescription = "All of the input controls currently defined."
 Public Timers As Fury2Collection
+Attribute Timers.VB_VarDescription = "All of the timers currently defined."
 Public Map As Fury2Map
+Attribute Map.VB_VarDescription = "The map currently being updated."
 Public SavedMaps As Fury2Collection
+Attribute SavedMaps.VB_VarDescription = "All of the maps currently saved in memory."
 Public Filesystem As Fury2Filesystem
+Attribute Filesystem.VB_VarDescription = "The engine's filesystem."
 Public ConsoleItems As Fury2Collection
+Attribute ConsoleItems.VB_VarDescription = "All of the text currently in the console."
 Public Debugger As Fury2Debugger
+Attribute Debugger.VB_VarDescription = "The debugger currently attached to the engine, if any."
 Public SoundListener As Fury2Sprite
+Attribute SoundListener.VB_VarDescription = "The sprite that the sound engine's listener is currently attached to, if any."
 Public IObjThis As Object
 Public MessageWindows As Fury2Collection
+Attribute MessageWindows.VB_VarDescription = "All of the message windows that are currently open."
 Public MessageQueue As Fury2Collection
+Attribute MessageQueue.VB_VarDescription = "All of the message windows that are currently waiting to open."
 Public ActionQueue As Fury2Collection
+Attribute ActionQueue.VB_VarDescription = "A queue of Fury2Event objects that will be executed at the end of the current frame."
 Public BGMStack As Fury2Collection
+Attribute BGMStack.VB_VarDescription = "A list of all the BGMs that have been pushed onto the stack by PushBGM."
 Public CurrentBGM As Sound
+Attribute CurrentBGM.VB_VarDescription = "The sound currently playing as a BGM, if any."
 Public CurrentBGMChannel As Channel
+Attribute CurrentBGMChannel.VB_VarDescription = "The channel that the current BGM is playing on, if any."
 Public CurrentBGMFader As Fury2SoundFader
+Attribute CurrentBGMFader.VB_VarDescription = "The fader that is currently controlling the BGM volume, if any."
 Public ScreenshotOverlay As Fury2Image
+Attribute ScreenshotOverlay.VB_VarDescription = "The image that should be overlaid on screenshots when saved."
 
 ' Event hooks
 Public RedrawHook As Fury2Event, UpdateHook As Fury2Event, LostFocusHook As Fury2Event, GotFocusHook As Fury2Event
@@ -163,65 +191,115 @@ Attribute m_imeIMEEngine.VB_VarHelpID = -1
 
 ' Non-game configuration variables
 Public ScreenshotPattern As String
+Attribute ScreenshotPattern.VB_VarDescription = "The filename pattern to use when saving screenshots."
 Public LogDebugMessages As Boolean
+Attribute LogDebugMessages.VB_VarDescription = "Logs debug messages to the Console if True."
 Public LogToClipboard As Boolean
+Attribute LogToClipboard.VB_VarDescription = "Logs console text to the clipboard if True."
 Public LogToFile As Boolean
+Attribute LogToFile.VB_VarDescription = "Logs console text to a logfile if True."
 Public EditMode As Boolean
+Attribute EditMode.VB_VarDescription = "If True, the engine is in Editor mode."
 Public HarassCPU As Boolean
+Attribute HarassCPU.VB_VarDescription = "If False, the engine will attempt to use as little CPU power as necessary. This may reduce framerates and impact the effectiveness of framerate balancing."
 Public HideLog As Boolean
 
 ' Game configuration variables
 Public Strict As Boolean
 Public DisableUserInput As Boolean
+Attribute DisableUserInput.VB_VarDescription = "Disables keyboard and mouse input from the user."
 Public ScriptLanguage As String
+Attribute ScriptLanguage.VB_VarDescription = "The name of the script language currently being used."
 Public DisableCameraBuffers As Boolean
 Public DefaultMessageTop As Single
+Attribute DefaultMessageTop.VB_VarDescription = "The default Y position for new message boxes (0.0 - 1.0)."
 Public SmartMessageBoxPositioning As Boolean
+Attribute SmartMessageBoxPositioning.VB_VarDescription = "If True, new message boxes will attempt to position themselves in an intelligent place based on the player's location."
 Public EnableObjectEvents As Boolean
 Public DefaultFont As String
+Attribute DefaultFont.VB_VarDescription = "Specifies a default font to load at startup."
 Public DefaultWindowSkin As String
+Attribute DefaultWindowSkin.VB_VarDescription = "Specifies a default window skin to load at startup."
 Public DefaultCursor As String
+Attribute DefaultCursor.VB_VarDescription = "Specifies a default menu cursor to load at startup."
 Public DisableMovement As Boolean
+Attribute DisableMovement.VB_VarDescription = "Disables player movement."
 Public EnableTimers As Boolean
+Attribute EnableTimers.VB_VarDescription = "Enables timers."
 Public ClearMapBG As Boolean
+Attribute ClearMapBG.VB_VarDescription = "Causes cameras to clear themselves before rendering maps."
 Public DisableMoveQueue As Boolean
 Public DefaultBGMVolume As Single
+Attribute DefaultBGMVolume.VB_VarDescription = "The default volume to use when playing BGMs (0.0 - 1.0)"
 Public DefaultSampleVolume As Single
+Attribute DefaultSampleVolume.VB_VarDescription = "The default volume to use when playing samples (0.0 - 1.0)"
 Public GameTimePaused As Boolean
+Attribute GameTimePaused.VB_VarDescription = "Pauses the GameTime so that it will not continue increasing."
 Public ActivationDistance As Single
+Attribute ActivationDistance.VB_VarDescription = "Specifies the default distance for an object to search when looking for another object to activate."
 Public ScaleBlocking As Boolean
+Attribute ScaleBlocking.VB_VarDescription = "Specifies that a sprite's blocking should scale with its ScaleLevel, instead of just its displayed image."
 Public VelocityDecay As Single
 Attribute VelocityDecay.VB_VarDescription = "Controls the rate at which objects accelerate and decelerate when under the control of a path or controller object."
 Public OutputPlugin As String
+Attribute OutputPlugin.VB_VarDescription = "The name of the current output plugin."
 Public VSync As Boolean
+Attribute VSync.VB_VarDescription = "If True, the current output plugin will attempt to perform Vertical Sync if possible. Will lower framerates but prevent tearing."
 Public DisableSound As Boolean
+Attribute DisableSound.VB_VarDescription = "Disables the sound engine."
 Public StartMap As String
+Attribute StartMap.VB_VarDescription = "The default map to load at startup."
 Public StartX As Single
+Attribute StartX.VB_VarDescription = "The default X location to start the player at."
 Public StartY As Single
+Attribute StartY.VB_VarDescription = "The default Y location to start the player at."
 Public StartLayer As Long
+Attribute StartLayer.VB_VarDescription = "The default layer to start the player on."
 Public HideConfiguration As Boolean
+Attribute HideConfiguration.VB_VarDescription = "If True, the configuration dialog will not appear at startup."
 Public ClearEveryFrame As Boolean
+Attribute ClearEveryFrame.VB_VarDescription = "If True, before Redrawing the engine will Clear the backbuffer."
 Public ClearBackgroundColor As Long
+Attribute ClearBackgroundColor.VB_VarDescription = "Specifies what color the Backbuffer should clear to every frame."
 Public RepeatDelay As Single
 Public GameName As String
+Attribute GameName.VB_VarDescription = "Specifies the name of the current game."
 Public DesiredFramerate As Long
+Attribute DesiredFramerate.VB_VarDescription = "Specifies the target framerate for the framerate balancer."
 Public WindowCaption As String
+Attribute WindowCaption.VB_VarDescription = "Specifies the caption for the game window."
 Public BalanceFramerate As Boolean
+Attribute BalanceFramerate.VB_VarDescription = "If True, the game engine will attempt to process updates at DesiredFramerate frames per second, and will skip redrawing when necessary to do so."
 Public ShowFPS As Boolean
+Attribute ShowFPS.VB_VarDescription = "If True, the current framerate will be displayed in the game window."
 Public ShowTitlebar As Boolean
+Attribute ShowTitlebar.VB_VarDescription = "If True, the game window will show a titlebar."
 Public ScreenWidth As Long
+Attribute ScreenWidth.VB_VarDescription = "Specifies the width of the Backbuffer."
 Public ScreenHeight As Long
+Attribute ScreenHeight.VB_VarDescription = "Specifies the height of the Backbuffer."
 Public Fullscreen As Boolean
+Attribute Fullscreen.VB_VarDescription = "If True, the game will attempt to run fullscreen."
 Public ScreenScaleRatio As Single
+Attribute ScreenScaleRatio.VB_VarDescription = "Specifies the level of output scaling to apply to the backbuffer. Values below 1.0 are not guaranteed to work."
 Public ScreenScaleMode As Long
+Attribute ScreenScaleMode.VB_VarDescription = "Specifies what type of scaling to use when drawing the backbuffer, if the ScreenScaleRatio is not 1.0. Valid values are: 0=Linear, 1=Bilinear, 2=Scale2x"
 Public MaxFrameskip As Long
+Attribute MaxFrameskip.VB_VarDescription = "The maximum number of updates that can be performed for every Redraw."
 Public TrapKeys As Boolean
+Attribute TrapKeys.VB_VarDescription = "If True, keyboard input will be buffered into KeysEntered instead of being processed normally."
 Public DefaultTransition As Fury2Event
+Attribute DefaultTransition.VB_VarDescription = "Specifies a default transition handler to use when switching maps. This handler is called before and after a map change."
 Public DefaultTransitionLength As Single
+Attribute DefaultTransitionLength.VB_VarDescription = "Specifies the default length (in seconds) for transitions."
 Public DefaultControllerAngles As Variant
+Attribute DefaultControllerAngles.VB_VarDescription = "Specifies the movement angles to use by default when creating a Fury2Controller."
 Public DefaultControllerStyle As Fury2ControllerStyles
+Attribute DefaultControllerStyle.VB_VarDescription = "Specifies the default style to use when creating a Fury2Controller."
 Public AutoOptimizeImages As Boolean
+Attribute AutoOptimizeImages.VB_VarDescription = "If True, images will be optimized for improved rendering performance when loaded. Optimization may negatively affect certain bizarre rendering tricks."
 Public ConsoleEnabled As Boolean
+Attribute ConsoleEnabled.VB_VarDescription = "If True, the player can open a debugging console by pressing the ` key."
 
 ' Private state/configuration variables
 Private m_dblLastFlushTime As Double
@@ -269,25 +347,45 @@ Private m_strIMEText As String
 
 ' Public state variables
 Public ErrorOccurred As Boolean
+Attribute ErrorOccurred.VB_VarDescription = "If True, an error has occurred."
 Public VelocityMultiplier As Single
+Attribute VelocityMultiplier.VB_VarDescription = "Specifies a constant multiplier to apply to the speed of all movement."
 Public AnimationMultiplier As Single
+Attribute AnimationMultiplier.VB_VarDescription = "Specifies a constant multiplier to apply to the speed of all animation."
 Public GameTime As Long
+Attribute GameTime.VB_VarDescription = "The current time in seconds since the game has started."
 Public ActivePictureSlots As Long
+Attribute ActivePictureSlots.VB_VarDescription = "The number of picture slots currently in use."
 Public ScriptObjectCount As Long
+Attribute ScriptObjectCount.VB_VarDescription = "The number of script objects currently defined."
 Public HTTPRequestCount As Long
+Attribute HTTPRequestCount.VB_VarDescription = "The number of HTTP requests currently in use."
 Public FPS As Long
+Attribute FPS.VB_VarDescription = "The current framerate."
 Public Terminating As Boolean
+Attribute Terminating.VB_VarDescription = "If True, the game engine is shutting down."
 Public TerminateEngine As Boolean
+Attribute TerminateEngine.VB_VarDescription = "If True, the game engine is preparing to shut down."
 Public Paused As Boolean
+Attribute Paused.VB_VarDescription = "If True, the game engine will not perform updates."
 Public Running As Boolean
+Attribute Running.VB_VarDescription = "If True, the game is running."
 Public FrameCount As Long
+Attribute FrameCount.VB_VarDescription = "The number of frames that have been rendered since the game started."
 Public SubthreadCount As Long
+Attribute SubthreadCount.VB_VarDescription = "The number of subthreads currently active."
 Public KeysEntered As String
+Attribute KeysEntered.VB_VarDescription = "The buffer that recieves text input if TrapKeys is True."
 Public CurrentGame As String
+Attribute CurrentGame.VB_VarDescription = "The game that is currently running."
 Public Halted As Boolean
+Attribute Halted.VB_VarDescription = "If True, the engine is halted for some reason (most likely an error)."
 Public ConsoleText As String
+Attribute ConsoleText.VB_VarDescription = "The text currently being entered into the console by the user."
 Public ConsoleHeight As Long
+Attribute ConsoleHeight.VB_VarDescription = "The current display height of the console, if it is open."
 Public ConsoleVisible As Boolean
+Attribute ConsoleVisible.VB_VarDescription = "If True, the console is open."
 
 ' Private runtime constants
 Private m_curCPUFrequency As Currency
@@ -313,12 +411,14 @@ Dim m_teNew As Fury2TextElement
 End Function
 
 Function AddTextElementRealtime(Text, ByVal X As Long, ByVal Y As Long) As Fury2TextElement
+Attribute AddTextElementRealtime.VB_Description = "Creates a new text element that is updated every frame and adds it to the plugin stack."
 Attribute AddTextElementRealtime.VB_MemberFlags = "40"
 On Error Resume Next
     Set AddTextElementRealtime = AddTextElement(Text, X, Y, True)
 End Function
 
 Public Function BindEvent(ByRef Method, Optional ByVal Object = Nothing, Optional ByRef BindParameters As Variant = Nothing) As Fury2Event
+Attribute BindEvent.VB_Description = "Creates a Fury2Event object and binds it to a given method of a given object. Also can optionally bind one or more arguments to pass to the method when it is invoked. Bound parameters are passed after normal parameters."
 On Error Resume Next
     If VarType(Method) = vbString Then
         If Len(Trim(ToString(Method))) = 0 Then Exit Function
@@ -352,6 +452,7 @@ On Error Resume Next
 End Function
 
 Function CallByName(ByVal Obj As Object, ByVal Member As String, ByVal CallType As Long, ParamArray Parameters() As Variant)
+Attribute CallByName.VB_Description = "Calls a given method of a given object by name, and optionally passes parameters."
 On Error Resume Next
     Select Case UBound(Parameters)
     Case 0
@@ -376,6 +477,7 @@ On Error Resume Next
 End Function
 
 Public Function CreateAddress(ByVal Host As String, ByVal Port As Long) As VBENetAddress
+Attribute CreateAddress.VB_Description = "Creates a network address."
 On Error Resume Next
 Dim l_adrAddress As VBENetAddress
     If m_booENetInitialized Then
@@ -387,6 +489,7 @@ Dim l_adrAddress As VBENetAddress
 End Function
 
 Public Function CreateAddressFromString(ByVal Text As String) As VBENetAddress
+Attribute CreateAddressFromString.VB_Description = "Creates a network address from an address string."
 On Error Resume Next
 Dim l_adrAddress As VBENetAddress
     If m_booENetInitialized Then
@@ -397,6 +500,7 @@ Dim l_adrAddress As VBENetAddress
 End Function
 
 Public Function CreateClientHost(Optional ByVal ServerCount As Long = 1, Optional ByVal IncomingBandwidthLimit As Long = 0, Optional ByVal OutgoingBandwidthLimit As Long = 0) As VBENetHost
+Attribute CreateClientHost.VB_Description = "Creates a network host."
 On Error Resume Next
 Dim l_hosHost As VBENetHost
     If m_booENetInitialized Then
@@ -412,6 +516,7 @@ Dim l_hosHost As VBENetHost
 End Function
 
 Public Function CreateHardwareImage(ByVal Width As Long, ByVal Height As Long) As Fury2Image
+Attribute CreateHardwareImage.VB_Description = "Creates a hardware-accelerated image, if available."
 On Error Resume Next
     Set CreateHardwareImage = m_objOutputPlugin.CreateImage(Width, Height)
     If CreateHardwareImage Is Nothing Then
@@ -420,6 +525,7 @@ On Error Resume Next
 End Function
 
 Public Function CreateMenu(Items, Optional ByVal Area As Fury2Rect = Nothing, Optional SelectEvent = Nothing, Optional CloseEvent = Nothing, Optional MoveEvent = Nothing, Optional ByVal Cursor As Fury2Graphic = Nothing, Optional ByVal WindowSkin As Fury2WindowSkin = Nothing) As Fury2Menu
+Attribute CreateMenu.VB_Description = "Creates a new menu object."
 On Error Resume Next
 Dim NewMenu As Fury2Menu
 Dim m_lngItems As Long
@@ -459,6 +565,7 @@ Dim m_lngItems As Long
 End Function
 
 Public Function CreatePacket(Optional ByVal Length As Long = 0, Optional ByVal Reliable As Boolean = False) As VBENetPacket
+Attribute CreatePacket.VB_Description = "Creates a network packet."
 On Error Resume Next
 Dim l_pktPacket As VBENetPacket
     If m_booENetInitialized Then
@@ -471,6 +578,7 @@ Dim l_pktPacket As VBENetPacket
 End Function
 
 Public Function CreatePacketFromFile(ByVal File As VirtualFile, Optional ByVal Reliable As Boolean = False)
+Attribute CreatePacketFromFile.VB_Description = "Creates a network packet containing the contents of a file."
 On Error Resume Next
 Dim l_pktPacket As VBENetPacket
     If m_booENetInitialized Then
@@ -484,6 +592,7 @@ Dim l_pktPacket As VBENetPacket
 End Function
 
 Public Function CreateServerHost(ByVal Address As VBENetAddress, Optional ByVal ClientCount As Long = 32, Optional ByVal IncomingBandwidthLimit As Long = 0, Optional ByVal OutgoingBandwidthLimit As Long = 0) As VBENetHost
+Attribute CreateServerHost.VB_Description = "Creates a network host configured to be a server."
 On Error Resume Next
 Dim l_hosHost As VBENetHost
     If m_booENetInitialized Then
@@ -516,6 +625,7 @@ On Error Resume Next
 End Function
 
 Function CreateTimerEvent(ByVal BeginTime As Long, ByVal EndTime As Long, ByVal Script As String, Optional ByVal RepeatDelay As Long = 0, Optional ByVal ActivationType As Long = F2TE_Normal)
+Attribute CreateTimerEvent.VB_Description = "Creates a timer event."
 On Error Resume Next
 Dim m_teNew As Fury2TimerEvent
     Set m_teNew = New Fury2TimerEvent
@@ -534,6 +644,7 @@ Dim m_teNew As Fury2TimerEvent
 End Function
 
 Function DataType(ByRef Data As Variant) As String
+Attribute DataType.VB_Description = "Returns the data type of a value."
 On Error Resume Next
 Dim l_lngType As Long, l_strArray As String
     DataType = "Unknown"
@@ -575,6 +686,7 @@ On Error Resume Next
 End Function
 
 Function Evaluate(ByRef Expr)
+Attribute Evaluate.VB_Description = "Evaluates an expression and returns its value."
 On Error Resume Next
 Dim l_varValue As Variant
 Dim l_objValue As Object
@@ -589,22 +701,13 @@ Dim l_objValue As Object
 End Function
 
 Function ResolveName(ByRef Name) As Object
+Attribute ResolveName.VB_Description = "Attempts to resolve a name into an object."
 On Error Resume Next
     Set ResolveName = m_ScriptEngine.ResolveName(Name)
 End Function
 
-#If EnableBehaviors = 1 Then
-Public Function F2Behavior(BType) As Fury2Behavior
-On Error Resume Next
-Dim m_facBehavior As fury2behaviorfactory
-    Set m_facBehavior = New fury2behaviorfactory
-    m_facBehavior.BehaviorType = CLng(BType)
-    m_facBehavior.Instantiate
-    Set F2Behavior = m_facBehavior.TrueObject
-End Function
-#End If
-
 Public Function F2Camera(Optional ByVal Rectangle As Fury2Rect = Nothing, Optional ByVal Map As Long = 1) As Fury2Camera
+Attribute F2Camera.VB_Description = "Creates a Fury2Camera object."
 On Error Resume Next
     If Rectangle Is Nothing Then Set Rectangle = Backbuffer.Rectangle
     Set F2Camera = New Fury2Camera
@@ -634,6 +737,7 @@ Dim l_lngIndex As Long
 End Function
 
 Public Function F2Control(ByVal Name As String) As Fury2InputControl
+Attribute F2Control.VB_Description = "Creates a Fury2InputControl object."
 On Error Resume Next
     Set F2Control = New Fury2InputControl
     F2Control.SetEngine Me
@@ -641,7 +745,7 @@ On Error Resume Next
 End Function
 
 Public Function F2Controller(ByVal Obj, Optional ByVal Camera As Fury2Camera = Nothing) As Fury2Controller
-Attribute F2Controller.VB_Description = "Creates a controller object."
+Attribute F2Controller.VB_Description = "Creates a controller object, and attaches it to a sprite or camera."
 On Error Resume Next
 Dim m_f2cController As Fury2Controller
     If Obj Is Nothing Then
@@ -663,20 +767,24 @@ End Function
 
 Public Function F2Counter() As Fury2Counter
     Set F2Counter = New Fury2Counter
+On Error Resume Next
     Set F2Counter.Engine = Me
 End Function
 
 Public Function F2Dispatcher() As Fury2EventDispatcher
     Set F2Dispatcher = New Fury2EventDispatcher
+On Error Resume Next
 End Function
 
 Public Function F2Font() As Fury2Font
+Attribute F2Font.VB_Description = "Creates a new Fury2Font object."
 On Error Resume Next
     Set F2Font = New Fury2Font
     F2Font.SetEngine Me
 End Function
 
 Public Function F2Graphic(Images, Optional ByVal XCenter As Long = -32767, Optional ByVal YCenter As Long = -32767, Optional ByVal BlitMode As SFXBlitModes = -1, Optional ByVal LoopMode As Fury2LoopModes = F2LM_Restart, Optional ByVal AnimationDelay As Long = 5) As Fury2Graphic
+Attribute F2Graphic.VB_Description = "Creates a new Fury2Graphic object, optionally filling it with one or more image frames and setting parameters."
 On Error Resume Next
 Dim l_gfcGraphic As Fury2Graphic
 Dim l_imgImage As Fury2Image
@@ -727,7 +835,7 @@ Dim l_lngImages As Long
 End Function
 
 Public Function F2Map(Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal Layers As Long = 1, Optional ByVal Tileset As Fury2Tileset = Nothing) As Fury2Map
-Attribute F2Map.VB_Description = "Creates a map object."
+Attribute F2Map.VB_Description = "Creates a new empty Fury2Map object, optionally specifying a size and tileset."
 On Error Resume Next
 Dim m_newMap As Fury2Map
     Set m_newMap = New Fury2Map
@@ -741,23 +849,28 @@ Dim m_newMap As Fury2Map
 End Function
 
 Public Function F2ParticleEngine() As Fury2ParticleEngine
+Attribute F2ParticleEngine.VB_Description = "Creates a new Fury2ParticleEngine object."
 On Error Resume Next
     Set F2ParticleEngine = New Fury2ParticleEngine
     F2ParticleEngine.SetEngine Me
 End Function
 
 Public Function F2Sequence() As Fury2Sequence
+Attribute F2Sequence.VB_Description = "Creates a new Fury2Sequence object."
 On Error Resume Next
     Set F2Sequence = New Fury2Sequence
     F2Sequence.SetEngine Me
 End Function
 
 Public Function F2Slider() As Fury2Slider
+Attribute F2Slider.VB_Description = "Creates a new Fury2Slider object."
+On Error Resume Next
     Set F2Slider = New Fury2Slider
     Set F2Slider.Engine = Me
 End Function
 
 Public Function F2SoundObject(ByVal Filename As String, Optional ByVal Repeat As Boolean = True) As Fury2SoundObject
+Attribute F2SoundObject.VB_Description = "Creates a new Fury2SoundObject from a given sound file."
 On Error Resume Next
 Dim l_sndSound As Fury2SoundObject
     Set l_sndSound = New Fury2SoundObject
@@ -768,6 +881,7 @@ Dim l_sndSound As Fury2SoundObject
 End Function
 
 Public Function F2Sprite() As Fury2Sprite
+Attribute F2Sprite.VB_Description = "Creates a new, empty Fury2Sprite object."
 On Error Resume Next
 Dim l_sprNew As Fury2Sprite
     Set l_sprNew = New Fury2Sprite
@@ -826,12 +940,14 @@ Dim m_NewTileset As Fury2Tileset
 End Function
 
 Public Function F2WindowSkin() As Fury2WindowSkin
+Attribute F2WindowSkin.VB_Description = "Creates a new, empty Fury2WindowSkin object."
 On Error Resume Next
     Set F2WindowSkin = New Fury2WindowSkin
     F2WindowSkin.SetEngine Me
 End Function
 
 Function FadeBGM(Optional ByVal FromVolume As Single = -1, Optional ByVal ToVolume As Single = -1, Optional ByVal Length As Double = 1) As Fury2SoundFader
+Attribute FadeBGM.VB_Description = "Fades the current BGM to a new volume value. If no FromVolume is specified, the current volume is used. If no ToVolume is specified, the DefaultBGMVolume is used. If no Length is specified, the DefaultTransitionLength is used."
 On Error Resume Next
 Dim l_fadFader As Fury2SoundFader
     If CurrentBGMChannel Is Nothing Then Exit Function
@@ -856,6 +972,7 @@ Dim l_fadFader As Fury2SoundFader
 End Function
 
 Public Function GenerateScriptObject(ByRef Source As String) As Object
+Attribute GenerateScriptObject.VB_Description = "Creates an object from a specified object script."
 On Error Resume Next
 Dim l_csScript As Fury2ScriptCache
 Dim l_strSource As String
@@ -918,56 +1035,67 @@ Dim l_strSourceL As String
 End Function
 
 Public Function GetFile(ByRef Filename As String) As String
+Attribute GetFile.VB_Description = "Reads the contents of a file."
 On Error Resume Next
     GetFile = Filesystem.File(Filename).Text
 End Function
 
 Public Function GetPictureAlpha(ByVal Slot As Long) As Single
+Attribute GetPictureAlpha.VB_Description = "Returns the opacity of a picture slot."
 On Error Resume Next
     GetPictureAlpha = m_picPictures(Slot).Alpha
 End Function
 
 Public Function GetPictureHeight(ByVal Slot As Long) As Long
+Attribute GetPictureHeight.VB_Description = "Returns the width of a picture slot."
 On Error Resume Next
     GetPictureHeight = m_picPictures(Slot).DestRect.Height
 End Function
 
 Public Function GetPictureImage(ByVal Slot As Long) As Fury2Image
+Attribute GetPictureImage.VB_Description = "Returns the image placed in a picture slot."
 On Error Resume Next
     Set GetPictureImage = m_picPictures(Slot).Picture
 End Function
 
 Public Function GetPictureRectangle(ByVal Slot As Long) As Fury2Rect
+Attribute GetPictureRectangle.VB_Description = "Returns the rectangle of a picture slot."
 On Error Resume Next
     Set GetPictureRectangle = m_picPictures(Slot).DestRect
 End Function
 
 Public Function GetPictureSourceRectangle(ByVal Slot As Long) As Fury2Rect
+Attribute GetPictureSourceRectangle.VB_Description = "Returns the source rectangle of a picture slot."
 On Error Resume Next
     Set GetPictureSourceRectangle = m_picPictures(Slot).SourceRect
 End Function
 
 Public Function GetPictureTile(ByVal Slot As Long) As Boolean
+Attribute GetPictureTile.VB_Description = "Returns the tiling state of a picture slot."
 On Error Resume Next
     GetPictureTile = m_picPictures(Slot).Tile
 End Function
 
 Public Function GetPictureWidth(ByVal Slot As Long) As Long
+Attribute GetPictureWidth.VB_Description = "Returns the width of a picture slot."
 On Error Resume Next
     GetPictureWidth = m_picPictures(Slot).DestRect.Width
 End Function
 
 Public Function GetPictureX(ByVal Slot As Long) As Long
+Attribute GetPictureX.VB_Description = "Returns the X coordinate of a picture slot (top-left)."
 On Error Resume Next
     GetPictureX = m_picPictures(Slot).DestRect.left
 End Function
 
 Public Function GetPictureY(ByVal Slot As Long) As Long
+Attribute GetPictureY.VB_Description = "Returns the Y coordinate of a picture slot (top-right)."
 On Error Resume Next
     GetPictureY = m_picPictures(Slot).DestRect.top
 End Function
 
 Public Function GetReferenceCount(ByVal Obj As Object) As Long
+Attribute GetReferenceCount.VB_Description = "Returns an estimate of the number of references currently held to a given object."
 On Error Resume Next
 Dim m_objObj As IShellFolderEx_TLB.IUnknown
     Set m_objObj = Obj
@@ -977,11 +1105,13 @@ Dim m_objObj As IShellFolderEx_TLB.IUnknown
 End Function
 
 Public Function GetUserInput(Optional ByRef Prompt As String = "Input:") As String
+Attribute GetUserInput.VB_Description = "Displays a Win32 input box requesting that the user input some text."
 On Error Resume Next
     GetUserInput = InputBox(Prompt)
 End Function
 
 Public Function GrabScreen(Optional ByVal ForceRedraw As Boolean = True) As Fury2Image
+Attribute GrabScreen.VB_Description = "Grabs a copy of the current contents of the screen and stores it in a new image. If ForceRedraw is True, the screen is redrawn first."
 On Error Resume Next
 Dim l_imgCopy As Fury2Image
     If ForceRedraw Then
@@ -993,13 +1123,13 @@ Dim l_imgCopy As Fury2Image
 End Function
 
 Public Function HiTimer() As Double
-Attribute HiTimer.VB_Description = "Returns an extremely accurate timer value."
+Attribute HiTimer.VB_Description = "Returns a timer value that can be used for timing purposes."
 On Error Resume Next
     HiTimer = SoftFX.GetTime() - m_dblTimeOffset
 End Function
 
 Public Function HookEvents(ByVal Obj As Object, Optional ByVal Priority As Boolean = False) As Boolean
-Attribute HookEvents.VB_Description = "Hooks an object into the engine's event system. Usually used for plugins."
+Attribute HookEvents.VB_Description = "Hooks an object into the engine's event system so that it recieves notification of events."
 On Error Resume Next
 Dim l_plgObj As Fury2Plugin
     If EditMode Then
@@ -1047,6 +1177,7 @@ Dim l_plgObj As Fury2Plugin
 End Function
 
 Function HTTPGet(ByVal URL As String, Optional ByVal Port As Long = 80, Optional ByRef CompleteEvent = "", Optional ByRef ProgressEvent = "") As Fury2HTTPRequest
+Attribute HTTPGet.VB_Description = "Performs an HTTP Get operation. A request object is returned that can be used to check the status of the operation."
 On Error Resume Next
 Dim l_reqRequest As Fury2HTTPRequest
     Set l_reqRequest = New Fury2HTTPRequest
@@ -1060,6 +1191,7 @@ Dim l_reqRequest As Fury2HTTPRequest
 End Function
 
 Function HTTPPost(ByVal URL As String, Optional ByRef Data As Variant = Nothing, Optional ByVal Port As Long = 80, Optional ByRef CompleteEvent = "", Optional ByRef ProgressEvent = "") As Fury2HTTPRequest
+Attribute HTTPPost.VB_Description = "Performs an HTTP Post operation. A request object is returned that can be used to check the status of the operation."
 On Error Resume Next
 Dim l_reqRequest As Fury2HTTPRequest
     Set l_reqRequest = New Fury2HTTPRequest
@@ -1073,6 +1205,7 @@ Dim l_reqRequest As Fury2HTTPRequest
 End Function
 
 Function IIf(ByVal Expression As Boolean, ByRef TruePart, Optional ByRef FalsePart = 0)
+Attribute IIf.VB_Description = "If Expression is True, TruePart is returned, otherwise FalsePart is returned."
 On Error Resume Next
     IIf = VBA.IIf(Expression, TruePart, FalsePart)
 End Function
@@ -1134,6 +1267,7 @@ Static m_lngHere As Long
 End Function
 
 Public Function InstantiateByName(ByRef Name As String) As Object
+Attribute InstantiateByName.VB_Description = "Creates a new instance of a given type and returns it."
 On Error Resume Next
 Dim l_objItem As Object
 Dim l_parItem As Fury2Party
@@ -1161,6 +1295,7 @@ Dim l_parItem As Fury2Party
 End Function
 
 Function JoinX(Arr As Variant, Optional ByVal Delimiter As String = " ", Optional ByVal QuoteStrings As Boolean = False) As String
+Attribute JoinX.VB_Description = "Joins together the contents of an array into a string, inserting Delimiter between each item, and if QuoteStrings is true, strings will have quotes placed around them to keep them seperate."
 On Error Resume Next
 Dim m_lngLB As Long, m_lngUB As Long, m_lngCount As Long
 Dim m_lngItems As Long
@@ -1181,6 +1316,7 @@ Dim m_lngItems As Long
 End Function
 
 Function LoadBrush(ByVal Filename As String) As Object
+Attribute LoadBrush.VB_Description = "Loads a Fury2Brush from a file."
 On Error Resume Next
 Dim m_brsBrush As Fury2Brush
 Dim m_glbGlobals As Fury2Globals
@@ -1195,6 +1331,7 @@ Dim m_glbGlobals As Fury2Globals
 End Function
 
 Public Function LoadFlags(ByVal File As VirtualFile)
+Attribute LoadFlags.VB_Description = "Loads the current state of the Flags array from a file."
 On Error Resume Next
 Dim l_lngFlags As Long, l_lngCount As Long
 Dim l_strName As String, l_varValue As Variant, l_lngType As Long, l_strType As String
@@ -1236,6 +1373,7 @@ Dim l_strName As String, l_varValue As Variant, l_lngType As Long, l_strType As 
 End Function
 
 Public Function CreateDefaultCursor() As Fury2Graphic
+Attribute CreateDefaultCursor.VB_Description = "Creates the default menu cursor image that is used if no cursor file has been used. This image is created on demand."
 On Error Resume Next
 Dim l_imgArrow As Fury2Image
 Dim l_lngSize As Long
@@ -1249,6 +1387,7 @@ Dim l_lngSize As Long
 End Function
 
 Public Function LoadFont(ByVal Filename As String) As Fury2Font
+Attribute LoadFont.VB_Description = "Loads a font from a .f2font file."
 On Error Resume Next
     Set LoadFont = New Fury2Font
     LoadFont.SetEngine Me
@@ -1257,12 +1396,14 @@ End Function
 
 Public Function LoadFromFile(ByRef Obj As Object, ByVal File As Object) As Boolean
 Attribute LoadFromFile.VB_MemberFlags = "40"
+Attribute LoadFromFile.VB_Description = "Loads a given object from a given file. If the load was successful, True is returned."
 On Error Resume Next
 Dim l_glbGlobals As New Fury2Globals
     LoadFromFile = l_glbGlobals.LoadFromFile(Obj, File)
 End Function
 
 Public Function LoadGame(ByVal Game As String) As Boolean
+Attribute LoadGame.VB_Description = "Loads a new game from a given path. If the load failed, False is returned."
 On Error Resume Next
 Dim l_varScripts As Variant, l_lngScripts As Long
 Dim l_varPackages As Variant, l_lngPackages As Long
@@ -1529,7 +1670,7 @@ Dim l_strError As String
 End Function
 
 Public Function LoadImage(ByVal Filename As String, Optional ByVal IgnoreErrors As Boolean = False) As Fury2Image
-Attribute LoadImage.VB_Description = "Loads an image file into the cache and returns an image object."
+Attribute LoadImage.VB_Description = "Loads an image file into the cache and returns a reference to it if successful. If IgnoreErrors is False, a failed image load will halt the game."
 On Error Resume Next
 Dim m_imgPicture As Fury2Image
 Dim m_imgSecondRef As Fury2Image
@@ -1567,6 +1708,7 @@ Dim m_imgSecondRef As Fury2Image
 End Function
 
 Public Function LoadImages(ParamArray Filenames() As Variant) As Variant
+Attribute LoadImages.VB_Description = "Loads one or more images and returns them in an array."
 On Error Resume Next
 Dim l_imgImages As Variant
 Dim l_lngImages As Long
@@ -1585,6 +1727,7 @@ Dim l_lngImages As Long
 End Function
 
 Public Function LoadMapFile(ByVal Filename As String) As Fury2Map
+Attribute LoadMapFile.VB_Description = "Loads a map from a .f2map file and returns it."
 On Error Resume Next
     Set LoadMapFile = New Fury2Map
     LoadMapFile.SetEngine Me
@@ -1593,6 +1736,7 @@ On Error Resume Next
 End Function
 
 Function LoadOutputPlugin(ByRef NewPlugin As String) As Object
+Attribute LoadOutputPlugin.VB_Description = "Loads a new output plugin."
 On Error Resume Next
 Dim l_objTemp As Object
     Err.Clear
@@ -1621,7 +1765,7 @@ Dim l_objTemp As Object
 End Function
 
 Public Function LoadPlugin(ByRef DLLFile As String, ByRef PluginName As String) As Object
-Attribute LoadPlugin.VB_Description = "Loads a plugin from a DLL."
+Attribute LoadPlugin.VB_Description = "Loads a plugin object from a DLL."
 On Error Resume Next
 Dim l_filFile As Fury2File
     DebugOut "Loading plugin """ & DLLFile & """"
@@ -1649,6 +1793,7 @@ Dim l_filFile As Fury2File
 End Function
 
 Function LoadSample(ByRef Filename As String) As Sound
+Attribute LoadSample.VB_Description = "Loads a Sample from a sound file and returns it."
 On Error Resume Next
     DebugOut "Loading sample """ & Filename & """"
     Set LoadSample = SoundEngine.Load(Filename, "Sample")
@@ -1656,6 +1801,7 @@ On Error Resume Next
 End Function
 
 Function LoadSprite(ByVal Filename As String, Optional ByVal Index = 1) As Fury2Sprite
+Attribute LoadSprite.VB_Description = "Loads a single Fury2Sprite from a sprite collection and returns it. You can specify which sprite to load using the Index argument. Note that the entire collection will be loaded before the sprite can be accessed, so if other sprites in this collection have scripts, those scripts may execute."
 On Error Resume Next
 Dim m_sprSprites As Fury2Sprites
 Dim l_sprSprite As Fury2Sprite
@@ -1677,7 +1823,7 @@ Dim l_sprSprite As Fury2Sprite
 End Function
 
 Function LoadSprites(ByVal Filename As String) As Fury2Sprites
-Attribute LoadSprites.VB_Description = "Loads sprites from a sprite collection."
+Attribute LoadSprites.VB_Description = "Loads a sprite collection from a .f2sprites file and returns it."
 On Error Resume Next
 Dim m_sprSprites As Fury2Sprites
 Dim m_glbGlobals As Fury2Globals
@@ -1698,6 +1844,7 @@ Dim m_glbGlobals As Fury2Globals
 End Function
 
 Public Function LoadTileset(ByVal Filename As String) As Fury2Tileset
+Attribute LoadTileset.VB_Description = "Loads a tileset and returns it."
 On Error Resume Next
     Set LoadTileset = m_Tilesets(LCase(Trim(Filename)))
     If LoadTileset Is Nothing Then
@@ -1709,6 +1856,7 @@ On Error Resume Next
 End Function
 
 Public Function LoadUserData(ByRef Filename As String, Optional ByVal Data As Object = Nothing) As Object
+Attribute LoadUserData.VB_Description = "Loads a UserData object from a file. If an existing object is passed into Data, it will be overwritten."
 On Error Resume Next
 Dim l_vfFile As VirtualFile
 Dim l_strType As String
@@ -1719,6 +1867,7 @@ Dim l_objData As Object
 End Function
 
 Public Function LoadUserDataFromFile(ByVal File As VirtualFile, Optional ByVal Data As Object = Nothing) As Object
+Attribute LoadUserDataFromFile.VB_Description = "Loads a UserData object from a file. If an existing object is passed into Data, it will be overwritten."
 On Error Resume Next
 Dim l_strType As String
     File.ReadSegment_Begin
@@ -1734,6 +1883,7 @@ Dim l_strType As String
 End Function
 
 Public Function LoadVideo(ByVal Filename As String) As Fury2Video
+Attribute LoadVideo.VB_Description = "Loads a video clip from a file and returns it."
 On Error Resume Next
 Dim l_vidNew As Fury2Video
     Set l_vidNew = Videos(Filename)
@@ -1750,6 +1900,7 @@ Dim l_vidNew As Fury2Video
 End Function
 
 Public Function LoadWindowSkin(ByVal Filename As String) As Fury2WindowSkin
+Attribute LoadWindowSkin.VB_Description = "Loads a window skin from a file and returns it."
 On Error Resume Next
     Set LoadWindowSkin = New Fury2WindowSkin
     LoadWindowSkin.SetEngine Me
@@ -1757,6 +1908,7 @@ On Error Resume Next
 End Function
 
 Public Function Maximum(ParamArray Values() As Variant) As Variant
+Attribute Maximum.VB_Description = "Returns the largest value of the values passed."
 On Error Resume Next
 Dim l_lngItems As Long, l_varBiggest As Variant
     l_varBiggest = Empty
@@ -1769,7 +1921,7 @@ Dim l_lngItems As Long, l_varBiggest As Variant
 End Function
 
 Public Function MessageBox(Text, Optional ByVal Area As Fury2Rect = Nothing, Optional ByVal Portrait As Object = Nothing, Optional CloseEvent = Nothing, Optional ByVal TextColor As Long = -1, Optional ByVal Alpha As Single = 1, Optional ByVal Queue As Boolean = False, Optional ByVal Hook As Boolean = True) As Fury2MessageWindow
-Attribute MessageBox.VB_Description = "Opens a message box."
+Attribute MessageBox.VB_Description = "Creates a new message box, calls HookEvents on it if Hook is True, and then returns it. If Queue is true, the message box will be queued if an existing message box is already open."
 On Error Resume Next
 Dim NewMessage As Fury2MessageWindow
     Set NewMessage = New Fury2MessageWindow
@@ -1822,11 +1974,13 @@ Dim NewMessage As Fury2MessageWindow
 End Function
 
 Public Function MessageBoxQueue(Text, Optional ByVal Area As Fury2Rect = Nothing, Optional ByVal Portrait As Object = Nothing, Optional CloseEvent = Nothing, Optional ByVal TextColor As Long = -1, Optional ByVal Alpha As Single = 1, Optional ByVal Hook As Boolean = True) As Fury2MessageWindow
+Attribute MessageBoxQueue.VB_Description = "Creates a new message box, calls HookEvents on it if Hook is True, and then returns it. The message box will be queued if an existing message box is already open."
 On Error Resume Next
     Set MessageBoxQueue = MessageBox(Text, Area, Portrait, CloseEvent, TextColor, Alpha, True, Hook)
 End Function
 
 Public Function Minimum(ParamArray Values() As Variant) As Variant
+Attribute Minimum.VB_Description = "Returns the smallest value of the values passed."
 On Error Resume Next
 Dim l_lngItems As Long, l_varSmallest As Variant
     l_varSmallest = Empty
@@ -1839,18 +1993,20 @@ Dim l_lngItems As Long, l_varSmallest As Variant
 End Function
 
 Public Function NullEvent() As Fury2Event
+Attribute NullEvent.VB_Description = "Returns a null Fury2Event object that will do nothing when invoked."
 On Error Resume Next
 '    Set NullEvent = New Fury2Event
 '    NullEvent.SetEngine Me
 End Function
 
 Public Function ParseCodes(ByRef Str As String) As String
+Attribute ParseCodes.VB_Description = "Parses a string that contains substitution codes (<%=expression%>) into a normal string."
 On Error Resume Next
     ParseCodes = ScriptEngine.ParseCodes(Str)
 End Function
 
 Public Function ParseString(ByRef Str, Optional ByRef Variables = Nothing)
-Attribute ParseString.VB_Description = "Parses inline scripts in a string."
+Attribute ParseString.VB_Description = "Parses inline scripts in a string. Optional replacement values can be specified."
 On Error Resume Next
 Dim l_strText As String, l_strConstant As String, l_strValue As String
 Dim l_strOldText As String
@@ -1904,6 +2060,7 @@ Dim l_varVariables As Variant, l_lngVariables As Long, l_booFound As Boolean
 End Function
 
 Function PlaySample(ByRef Filename As String) As Channel
+Attribute PlaySample.VB_Description = "Loads a sample from a file and plays it. Returns the channel it was played on."
 On Error Resume Next
 Dim l_sndSample As Sound
     Set l_sndSample = LoadSample(Filename)
@@ -1912,52 +2069,19 @@ Dim l_sndSample As Sound
 End Function
 
 Public Function RegisterDLL(ByVal Filename As String) As Boolean
-Attribute RegisterDLL.VB_Description = "Installs a DLL."
+Attribute RegisterDLL.VB_Description = "Installs a COM DLL."
 On Error Resume Next
     RegisterDLL = RegisterServer(Filename, True)
 End Function
 
 Public Function ReloadGame() As Boolean
+Attribute ReloadGame.VB_Description = "Reloads the current game. Returns False if unsuccessful."
 On Error Resume Next
     Terminating = True
 End Function
-
-'Function GridSprite(Image As String, Optional Width = 0, Optional Height = 0, Optional MaskColor = -32767, Optional AnimDelay = 6) As Fury2Sprite
-'On Error Resume Next
-'Dim l_imgImage As Fury2Image
-'Dim l_lngPoses As Long, l_lngFrames As Long
-'    Set l_imgImage = LoadImage(Image)
-'    If l_imgImage Is Nothing Then Exit Function
-'    If Height < 1 Or Width < 1 Then Exit Function
-'    'If (l_imgImage.Width Mod Width) <> 0 Then Exit Function
-'    'If (l_imgImage.Height Mod Height) <> 0 Then Exit Function
-'    Set GridSprite = New Fury2Sprite
-'    With GridSprite
-'        .Name = "Grid Sprite"
-'        .WalkSpeed = 1
-'        .TrueMovement = True
-'        .AnimateWhileMoving = True
-'        If l_imgImage.AlphaChannel Then
-'            .Effect = 1
-'        End If
-'        .States(1).DirectionPoses = l_imgImage.Height \ Height
-'        With .Poses
-'            For l_lngPoses = 1 To l_imgImage.Height \ Height
-'                .AddPose 0, 0, F2LM_PingPong, "Pose " & l_lngPoses
-'                With .Item(l_lngPoses)
-'                    .Blocking.Width = CLng(Width)
-'                    .Blocking.Height = CLng(Height)
-'                    .Frames.AddFrame Image, F2Rect(0, (l_lngPoses - 1) * Height, Width, Height, False), (Width - 1) / 2, (Height - 1) / 2, AnimDelay, CLng(MaskColor)
-'                    For l_lngFrames = 1 To l_imgImage.Width \ Width
-'                        .Frames.AddFrame Image, F2Rect((l_lngFrames - 1) * Width, (l_lngPoses - 1) * Height, Width, Height, False), (Width - 1) / 2, (Height - 1) / 2, AnimDelay, CLng(MaskColor)
-'                    Next l_lngFrames
-'                End With
-'            Next l_lngPoses
-'        End With
-'    End With
-'End Function
 '
 Function RM2kSprite(ByVal Charset As String, Optional ByVal Char As Long = 0, Optional ByVal AnimDelay As Long = 6) As Fury2Sprite
+Attribute RM2kSprite.VB_Description = "Creates a new sprite from an RPG Maker 200x spriteset and returns it."
 On Error Resume Next
 Dim m_lngXOffset As Long, m_lngYOffset As Long
 Dim m_lngMaskColor As Long
@@ -2004,56 +2128,9 @@ Dim m_lngPoses As Long
         End With
     End With
 End Function
-'
-'Function StaticSprite(Image As String, Optional Width = 0, Optional Height = 0, Optional MaskColor = -32767) As Fury2Sprite
-'On Error Resume Next
-'Dim m_imgImage As Fury2Image
-'    Set m_imgImage = LoadImage(Image)
-'    Set StaticSprite = New Fury2Sprite
-'    With StaticSprite
-'        .Name = "Static Sprite"
-'        .WalkSpeed = 1
-'        .TrueMovement = True
-'        .States(1).DirectionPoses = 1
-'        .AnimateWhileMoving = False
-'        With .Poses
-'            .AddPose 0, 0, 0, "Normal"
-'            With .Item(1)
-'                .Blocking.Width = CLng(Width)
-'                .Blocking.Height = CLng(Height)
-'                .Frames.AddFrame Image, m_imgImage.Rectangle, (m_imgImage.Width - 1) / 2, (m_imgImage.Height - 1) / 2, 0, CLng(MaskColor)
-'            End With
-'        End With
-'    End With
-'End Function
-'
-'Function StaticRotatingSprite(Path As String, Optional Width = 0, Optional Height = 0, Optional MaskColor = -32767, Optional Frames As Variant) As Fury2Sprite
-'On Error Resume Next
-'Dim m_imgImage As Fury2Image
-'Dim m_lngFrames As Long
-'    If IsMissing(Frames) Then Set StaticRotatingSprite = StaticSprite(Path, Width, Height, MaskColor): Exit Function
-'    Set StaticRotatingSprite = New Fury2Sprite
-'    With StaticRotatingSprite
-'        .Name = "Static Rotating Sprite"
-'        .WalkSpeed = 1
-'        .TrueMovement = True
-'        .States(1).DirectionPoses = (UBound(Frames) - LBound(Frames)) + 1
-'        .AnimateWhileMoving = False
-'        With .Poses
-'            For m_lngFrames = LBound(Frames) To UBound(Frames)
-'                .AddPose 0, 0, 0, "Angle #" + CStr(m_lngFrames)
-'                With .Item(.Count)
-'                    .Blocking.Width = CLng(Width)
-'                    .Blocking.Height = CLng(Height)
-'                    Set m_imgImage = LoadImage(Path + CStr(Frames(m_lngFrames)))
-'                    .Frames.AddFrame Path + CStr(Frames(m_lngFrames)), m_imgImage.Rectangle, (m_imgImage.Width - 1) / 2, (m_imgImage.Height - 1) / 2, 0, CLng(MaskColor)
-'                End With
-'            Next m_lngFrames
-'        End With
-'    End With
-'End Function
 
 Public Function SaveFlags(ByVal File As VirtualFile)
+Attribute SaveFlags.VB_Description = "Saves the current Flags array to a file."
 On Error Resume Next
 Dim l_filFile As VirtualFile
 Dim l_lngFlags As Long
@@ -2072,32 +2149,38 @@ Dim l_lngFlags As Long
 End Function
 
 Public Function SaveToFile(ByRef Obj As Object, ByRef File As Object) As Boolean
+Attribute SaveToFile.VB_Description = "Saves a given object to a File. If the save was successful, True is returned."
 On Error Resume Next
 Dim l_glbGlobals As New Fury2Globals
     SaveToFile = l_glbGlobals.SaveToFile(Obj, File)
 End Function
 
 Public Sub SaveImage(ByVal Image As Fury2Image, ByVal Filename As String)
+Attribute SaveImage.VB_Description = "Saves an image to a PNG file."
 On Error Resume Next
     Image.SavePNG Filesystem.CreateFile(Filename).GetRealFilename
 End Sub
 
 Function ToBoolean(Value) As Boolean
+Attribute ToBoolean.VB_Description = "Attempts to convert Value to a boolean and returns the result."
 On Error Resume Next
     ToBoolean = CBool(Value)
 End Function
 
 Function ToInteger(Value) As Long
+Attribute ToInteger.VB_Description = "Attempts to convert Value to an integer and returns the result."
 On Error Resume Next
     ToInteger = CLng(Value)
 End Function
 
 Function ToNumber(Value) As Double
+Attribute ToNumber.VB_Description = "Attempts to convert Value to a floating-point number and returns the result."
 On Error Resume Next
     ToNumber = CDbl(Value)
 End Function
 
 Function ToString(Value, Optional ByVal QuoteStrings As Boolean = False) As String
+Attribute ToString.VB_Description = "Attempts to convert Value to a string and returns the result. If QuoteStrings is specified, strings within arrays will have quotes surrounding them."
 On Error Resume Next
 Dim l_vtType As VariantTypeConstants
     l_vtType = VarType(Value)
@@ -2151,6 +2234,7 @@ Dim l_vtType As VariantTypeConstants
 End Function
 
 Function TTFont(ByVal Name As String, Optional ByVal Size As Single = 9, Optional ByVal Bold As Boolean = False, Optional ByVal Italic As Boolean = False) As StdFont
+Attribute TTFont.VB_Description = "Creates a TrueType Font object that can be used to create a Fury2Font."
 On Error Resume Next
     Set TTFont = New StdFont
     With TTFont
@@ -2162,12 +2246,13 @@ On Error Resume Next
 End Function
 
 Public Function UnregisterDLL(Filename) As Boolean
-Attribute UnregisterDLL.VB_Description = "Uninstalls a DLL."
+Attribute UnregisterDLL.VB_Description = "Uninstalls a COM DLL."
 On Error Resume Next
     UnregisterDLL = RegisterServer(CStr(Filename), False)
 End Function
 
 Function VariableName(Name) As String
+Attribute VariableName.VB_Description = "Converts a string into a valid identifier that can be used as the name of a class, sub, function, or variable."
 On Error Resume Next
 Dim m_lngChars As Long
 Dim m_strOut As String
@@ -2197,6 +2282,7 @@ Dim m_bytIn() As Byte
 End Function
 
 Public Function Which(Value As Variant, ParamArray Options() As Variant) As Long
+Attribute Which.VB_Description = "Selects a value from a set of options, based on an index."
 On Error Resume Next
 Dim l_lngValues As Long
     Which = 0
@@ -2221,6 +2307,7 @@ End Function
 'End Function
 
 Public Function YesNo(ByVal BVal As Boolean) As String
+Attribute YesNo.VB_Description = "Returns either ""Yes"" or ""No"" based on the value of BVal."
 On Error Resume Next
     If BVal Then
         YesNo = "Yes"
@@ -2235,13 +2322,9 @@ On Error Resume Next
     Set Backbuffer = m_imgBackbuffer
 End Property
 
-#If EnableBehaviors = 1 Then
-Public Property Get Behavior() As Fury2BehaviorConstructor
-    Set Behavior = m_Behavior
-End Property
-#End If
 
 Public Property Get BGMVolume() As Single
+Attribute BGMVolume.VB_Description = "Returns the current volume of the current BGM."
 On Error Resume Next
     BGMVolume = CurrentBGMChannel.Volume
 End Property
@@ -2259,6 +2342,7 @@ On Error Resume Next
 End Property
 
 Public Property Get ClipboardText() As String
+Attribute ClipboardText.VB_Description = "The current text of the clipboard."
 On Error Resume Next
     If Clipboard.GetFormat(vbCFText) Then
         ClipboardText = Clipboard.GetText(vbCFText)
@@ -2277,6 +2361,7 @@ On Error Resume Next
 End Property
 
 Public Property Get EventHooks() As Collection
+Attribute EventHooks.VB_Description = "The event hooks currently active."
 On Error Resume Next
     Set EventHooks = m_colPluginStack
 End Property
@@ -2289,18 +2374,23 @@ On Error Resume Next
 End Property
 
 Public Property Get Flags(ByRef Index As String) As Variant
+Attribute Flags.VB_Description = "An array of global game settings. Same as Flag()."
 Attribute Flags.VB_MemberFlags = "40"
+On Error Resume Next
     Flags = Flag(Index)
 End Property
 
 Public Property Get GFXEngine() As Object
+Attribute GFXEngine.VB_Description = "The current video driver."
 Attribute GFXEngine.VB_MemberFlags = "40"
 On Error Resume Next
     Set GFXEngine = m_objOutputPlugin
 End Property
 
 Public Property Get Icon() As String
+Attribute Icon.VB_Description = "The icon displayed in the game window's title bar."
 Attribute Icon.VB_MemberFlags = "40"
+On Error Resume Next
     Icon = m_strIcon
 End Property
 
@@ -2311,11 +2401,13 @@ On Error Resume Next
 End Property
 
 Public Property Get IME() As IMEEngine
+Attribute IME.VB_Description = "The current IME, if any. Used for international text input support."
 On Error Resume Next
     Set IME = m_imeIMEEngine
 End Property
 
 Public Property Get Joystick() As Fury2Joystick
+Attribute Joystick.VB_Description = "The default joystick (same as Joysticks(1), if any joysticks are installed)."
 On Error Resume Next
     Set Joystick = Joysticks(1)
 End Property
@@ -2328,26 +2420,31 @@ End Property
 
 Public Property Get Maps() As Fury2Maps
 Attribute Maps.VB_Description = "The maps currently loaded in the engine. There is usually only one, but it is possible to have multiple maps running at once."
+On Error Resume Next
     Set Maps = mvarMaps
 End Property
 
 Public Property Get Player() As Object
+Attribute Player.VB_Description = "Returns the PartyMember that is leading the current Party, if any."
 On Error Resume Next
     Set Player = Party.Item(Party.Leader)
 End Property
 
 Public Property Get ScriptContext() As String
+Attribute ScriptContext.VB_Description = "Returns the current script execution context."
 On Error Resume Next
     ScriptContext = Join(m_strScriptContext, ">")
 End Property
 
 Public Property Get ScriptEngine() As ScriptEngine
+Attribute ScriptEngine.VB_Description = "The script engine."
 Attribute ScriptEngine.VB_MemberFlags = "40"
 On Error Resume Next
     Set ScriptEngine = m_ScriptEngine
 End Property
 
 Public Property Get SmoothScaling() As Boolean
+Attribute SmoothScaling.VB_Description = "If True, sprites will be scaled using bilinear filtering."
 On Error Resume Next
     SmoothScaling = m_booSmoothScaling
 End Property
@@ -2359,30 +2456,36 @@ On Error Resume Next
 End Property
 
 Public Property Get Time() As Double
+Attribute Time.VB_Description = "The current time."
 On Error Resume Next
     Time = HiTimer
 End Property
 
 Public Property Get TimerEvents() As Fury2Collection
+On Error Resume Next
     Set TimerEvents = m_colTimerEvents
 End Property
 
 Public Property Get Transitions() As Fury2Transitions
-Attribute Transitions.VB_Description = "The transition library."
+Attribute Transitions.VB_Description = "The transition library. Contains various commands that can be used to perform transitions."
+On Error Resume Next
     Set Transitions = m_objTransitions
 End Property
 
 Public Property Get Version() As String
 Attribute Version.VB_Description = "Returns the version of the engine."
+On Error Resume Next
     Version = "Fury² " + Choose(App.Major + 1, "Alpha", "Beta", "Release") + " " + Format(App.Minor, "00") + " Build " + Format(App.Revision, "00000")
 End Property
 
 Public Property Get VideoDriver() As Object
+Attribute VideoDriver.VB_Description = "The current video driver."
 On Error Resume Next
     Set VideoDriver = m_objVideoDriver
 End Property
 
 Public Property Let BGMVolume(ByVal Volume As Single)
+Attribute BGMVolume.VB_Description = "The current volume of the current BGM."
 On Error Resume Next
     CurrentBGM.Volume = Volume
     CurrentBGMChannel.Volume = Volume
@@ -2390,6 +2493,7 @@ On Error Resume Next
 End Property
 
 Public Property Let ClipboardText(ByRef NewText As String)
+Attribute ClipboardText.VB_Description = "The text currently contained in the clipboard."
 On Error Resume Next
     Clipboard.Clear
     Clipboard.SetText NewText, vbCFText
@@ -2397,6 +2501,7 @@ On Error Resume Next
 End Property
 
 Public Property Let Flag(ByRef Index As String, ByVal NewValue As Variant)
+Attribute Flag.VB_Description = "An array of global game settings."
 On Error Resume Next
 Dim m_Value As Variant
     Err.Clear
@@ -2413,6 +2518,8 @@ Dim m_Value As Variant
 End Property
 
 Public Property Let Flags(ByRef Index As String, ByVal NewValue As Variant)
+Attribute Flags.VB_Description = "An array of global game settings. Same as Flag()."
+On Error Resume Next
     Flag(Index) = NewValue
 End Property
 
@@ -2463,12 +2570,14 @@ On Error Resume Next
 End Sub
 
 Public Sub AdjustGameClock(ByVal Amount As Double)
+Attribute AdjustGameClock.VB_Description = "Adjusts the value of the game clock by a certain amount."
 On Error Resume Next
     m_dblTimeOffset = m_dblTimeOffset - Amount
     ResetTiming
 End Sub
 
 Public Sub AnimatePicture(ByVal Slot As Long, Optional ByVal Length As Double = 1, Optional ByVal NewX As Long = -32767, Optional ByVal NewY As Long = -32767, Optional ByVal NewWidth As Long = -32767, Optional ByVal NewHeight As Long = -32767, Optional ByRef EndScript = "")
+Attribute AnimatePicture.VB_Description = "Animates the position and size of a picture slot over time."
 On Error Resume Next
     If Slot < 0 Or Slot > c_lngMaxPictureSlot Then Exit Sub
     With m_picPictures(Slot)
@@ -2485,6 +2594,7 @@ On Error Resume Next
 End Sub
 
 Sub BeginTrace()
+On Error Resume Next
     #If DebugFeatures = 1 Then
     m_booTrace = True
     #End If
@@ -2504,23 +2614,24 @@ On Error Resume Next
 End Sub
 
 Public Sub Break(Optional ByVal Name As String = "")
+Attribute Break.VB_Description = "Stops the execution of a given subthread (if no subthread name is specified, the current subthread is stopped)."
 On Error Resume Next
-Dim l_lngm_thrSubthreads As Long
+Dim l_lngSubthreads As Long
     If Trim(Name) = "" Then
         DebugOut "Breaking subthread"
         m_booBreak = True
     Else
-        For l_lngm_thrSubthreads = UBound(m_thrSubthreads) To LBound(m_thrSubthreads) Step -1
-            With m_thrSubthreads(l_lngm_thrSubthreads)
+        For l_lngSubthreads = UBound(m_thrSubthreads) To LBound(m_thrSubthreads) Step -1
+            With m_thrSubthreads(l_lngSubthreads)
                 If LCase(Trim(.Name)) = LCase(Trim(Name)) Then
                     If .Running Then
-                        DebugOut "Breaking subthread #" & l_lngm_thrSubthreads & " (" & .Name & ")"
+                        DebugOut "Breaking subthread #" & l_lngSubthreads & " (" & .Name & ")"
                         .Running = False
                         Exit For
                     End If
                 End If
             End With
-        Next l_lngm_thrSubthreads
+        Next l_lngSubthreads
     End If
 End Sub
 
@@ -2576,6 +2687,7 @@ On Error Resume Next
 End Sub
 
 Public Sub ClearConsole()
+Attribute ClearConsole.VB_Description = "Clears the contents of the console."
 On Error Resume Next
     ConsoleItems.Clear
     Err.Clear
@@ -2591,6 +2703,7 @@ Dim l_strLeft As String, l_strRight As String
 End Sub
 
 Public Sub ConsoleCommand(ByRef Command As String)
+Attribute ConsoleCommand.VB_Description = "Executes a command as if it was entered into the console."
 On Error Resume Next
     If left(Trim(Command), 1) = "?" Then
         Err.Clear
@@ -2654,6 +2767,7 @@ On Error Resume Next
 End Sub
 
 Public Sub ControlActivate(Control As Fury2InputControl)
+Attribute ControlActivate.VB_Description = "Simulates activation of an InputControl."
 On Error Resume Next
 Dim Obj As Object
 Dim pObj As Fury2Plugin
@@ -2689,6 +2803,7 @@ Dim pObj As Fury2Plugin
 End Sub
 
 Public Sub ControlDeactivate(Control As Fury2InputControl)
+Attribute ControlDeactivate.VB_Description = "Simulates deactivation of an InputControl."
 On Error Resume Next
 Dim Obj As Object
 Dim pObj As Fury2Plugin
@@ -2717,6 +2832,7 @@ Dim pObj As Fury2Plugin
 End Sub
 
 Public Sub CriticalError(Source As String, Location As String, Optional Description As String = "Unknown Error")
+Attribute CriticalError.VB_Description = "Displays a critical error message and halts the engine."
 On Error Resume Next
 Dim m_lngHandle As Long
 Dim m_strError As String
@@ -2784,6 +2900,7 @@ On Error Resume Next
 End Sub
 
 Public Sub DebugOut(ByRef Text)
+Attribute DebugOut.VB_Description = "Logs text to the debugger, if one is attached to the game."
 On Error Resume Next
 Dim l_strCBoard As String
 Dim l_strText As String
@@ -2936,11 +3053,13 @@ On Error Resume Next
 End Sub
 
 Public Sub DisableIME()
+Attribute DisableIME.VB_Description = "Disables the IME."
 On Error Resume Next
     m_imeIMEEngine.Enabled = False
 End Sub
 
 Public Sub EmptyImageCache()
+Attribute EmptyImageCache.VB_Description = "Empties out the image cache."
 On Error Resume Next
 Dim l_imgImage As Fury2Image
     If m_Images.Count < 1 Then Exit Sub
@@ -2963,6 +3082,7 @@ On Error Resume Next
 End Sub
 
 Public Sub EnableIME()
+Attribute EnableIME.VB_Description = "Enables the IME."
 On Error Resume Next
     m_imeIMEEngine.Enabled = True
 End Sub
@@ -3266,6 +3386,7 @@ On Error Resume Next
 End Sub
 
 Public Sub FlushImageCache()
+Attribute FlushImageCache.VB_Description = "Removes unused images from the image cache."
 On Error Resume Next
 Dim m_objObj As IShellFolderEx_TLB.IUnknown, m_lngCount As Long
 Dim m_imgObj As Fury2Image, m_lngObj As Long
@@ -3816,6 +3937,7 @@ Dim l_lngThreadID As Long
 End Sub
 
 Sub GoFullscreen()
+Attribute GoFullscreen.VB_Description = "Attempts to switch to fullscreen mode."
 On Error Resume Next
     Err.Clear
     Transitions.FadeOut 1
@@ -3825,6 +3947,7 @@ On Error Resume Next
 End Sub
 
 Sub GoWindowed()
+Attribute GoWindowed.VB_Description = "Attempts to switch to windowed mode."
 On Error Resume Next
     Err.Clear
     Transitions.FadeOut 1
@@ -3855,6 +3978,7 @@ Dim m_lngSlot As Long
 End Sub
 
 Sub HideConsole()
+Attribute HideConsole.VB_Description = "Hides the console, if it's open."
 On Error Resume Next
     #If DebugFeatures = 1 Then
         m_sngConsoleStartOffset = m_sngConsoleOffset
@@ -3888,7 +4012,7 @@ Dim m_lngSlot As Long
 End Sub
 
 Public Sub HookEvent(ByRef Name As String, ByVal EventHook)
-Attribute HookEvent.VB_Description = "Redirects an engine event to a script function."
+Attribute HookEvent.VB_Description = "Attaches an engine event to a script function or Fury2Event."
 On Error Resume Next
     Select Case LCase(Trim(Name))
     Case "redraw"
@@ -3911,6 +4035,7 @@ On Error Resume Next
 End Sub
 
 Public Sub Include(ByVal Filename As String, Optional ByVal Require As Boolean = True)
+Attribute Include.VB_Description = "Loads a script file and runs it. If Require is True, a failed Include will halt the engine."
 On Error Resume Next
 Dim l_strText As String
 Dim l_strModule As String
@@ -3968,6 +4093,7 @@ On Error Resume Next
 End Sub
 
 Public Sub InitDefaultControls()
+Attribute InitDefaultControls.VB_Description = "Initializes the default control bindings (arrow keys to move, A to select, S to cancel)"
 On Error Resume Next
     Set Controls = F2Collection()
     Controls.Add F2Control("OK"), "OK"
@@ -4259,10 +4385,13 @@ On Error Resume Next
 End Sub
 
 Public Property Get InIDE() As Boolean
+Attribute InIDE.VB_Description = "If True, the engine is currently running in an IDE."
+On Error Resume Next
     InIDE = mdlFury2.InIDE
 End Property
 
 Public Sub iTerminate()
+Attribute iTerminate.VB_MemberFlags = "40"
 On Error Resume Next
     Class_Terminate
 End Sub
@@ -4294,7 +4423,7 @@ On Error Resume Next
 End Sub
 
 Public Sub LoadMap(ByVal FilenameOrMap, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
-Attribute LoadMap.VB_Description = "Loads a map."
+Attribute LoadMap.VB_Description = "Loads a map into the game engine. The specified location/layer will be passed to the MapLoad event."
 On Error Resume Next
 Dim m_gblGlobal As Fury2Globals
 Dim m_lngSprites As Long, m_lngLayers As Long
@@ -4516,6 +4645,7 @@ Dim m_lngWidth As Long, m_lngHeight As Long
 End Sub
 
 Public Sub Mute()
+Attribute Mute.VB_Description = "Silences the sound engine."
 On Error Resume Next
     m_sngMutePreviousVolume = SoundEngine.MasterVolume
     SoundEngine.MasterVolume = 0
@@ -4532,6 +4662,7 @@ Attribute Panic.VB_MemberFlags = "40"
 End Sub
 
 Public Sub Transition(Optional ByVal Length As Double = -1, Optional ByVal Param = Nothing)
+Attribute Transition.VB_Description = "Invokes the default transition handler."
 On Error Resume Next
     If Length = -1 Then
         Length = DefaultTransitionLength
@@ -4632,6 +4763,7 @@ On Error Resume Next
 End Sub
 
 Sub PopBGM(Optional ByVal Crossfade As Boolean = True)
+Attribute PopBGM.VB_Description = "Pops a BGM from the BGM stack."
 On Error Resume Next
 Dim l_sndOld As Sound
     Set l_sndOld = BGMStack.Item(BGMStack.Count)
@@ -4667,11 +4799,13 @@ Dim l_objObject As Object
 End Sub
 
 Sub PopHotspots()
+Attribute PopHotspots.VB_Description = "Pops a set of hotspots from the hotspot stack."
 On Error Resume Next
     m_hsHotspots = m_hsSavedHotspots
 End Sub
 
 Sub PopPictures()
+Attribute PopPictures.VB_Description = "Pops a set of picture slots from the picture stack."
 On Error Resume Next
 Dim l_lngSlot As Long
     For l_lngSlot = 0 To c_lngMaxPictureSlot
@@ -4681,7 +4815,7 @@ Dim l_lngSlot As Long
 End Sub
 
 Sub PushBGM(ByVal Filename As String, Optional ByVal Crossfade As Boolean = True)
-Attribute PushBGM.VB_MemberFlags = "40"
+Attribute PushBGM.VB_Description = "Pushes the current BGM onto the stack, and begins playing a new BGM. The current BGM can be restored with PopBGM."
 On Error Resume Next
     BGMStack.Add CurrentBGM
     SwitchBGM Filename, Crossfade
@@ -4708,11 +4842,13 @@ On Error Resume Next
 End Sub
 
 Sub PushHotspots()
+Attribute PushHotspots.VB_Description = "Pushes the current hotspots onto the hotspot stack."
 On Error Resume Next
     m_hsSavedHotspots = m_hsHotspots
 End Sub
 
 Sub PushPictures()
+Attribute PushPictures.VB_Description = "Pushes the current picture slots onto the picture stack."
 On Error Resume Next
 Dim l_lngSlot As Long
     For l_lngSlot = 0 To c_lngMaxPictureSlot
@@ -4741,7 +4877,7 @@ Dim Evt As Fury2QueueEvent
 End Sub
 
 Public Sub Quit()
-Attribute Quit.VB_Description = "Shuts down the engine and unloads it from memory."
+Attribute Quit.VB_Description = "Shuts down the current game, and then shuts down the engine."
 On Error Resume Next
     ContextLevelAdd "Quit"
     Fury2VideoEventSink_Closed
@@ -4842,6 +4978,7 @@ Dim l_rctConsole As Fury2Rect, l_rctTextbox As Fury2Rect
 End Sub
 
 Public Sub RedrawIME()
+Attribute RedrawIME.VB_Description = "Redraws the IME's input display."
 On Error Resume Next
 Dim l_rctText As Fury2Rect
 Dim l_rctCandidates As Fury2Rect
@@ -4881,6 +5018,7 @@ Dim l_lngCandidates As Long, l_lngY As Long, l_lngHeight As Long
 End Sub
 
 Public Sub RedrawPictures()
+Attribute RedrawPictures.VB_Description = "Redraws all active picture slots."
 On Error Resume Next
 Dim l_lngPictures As Long, l_objPic As Fury2Image, l_objGraph As Fury2Graphic
     If ActivePictureSlots > 0 Then
@@ -4947,6 +5085,7 @@ Dim l_lngHotspot As Long
 End Sub
 
 Public Sub ResetKeys()
+Attribute ResetKeys.VB_Description = "Resets the state of all keyboard keys."
 On Error Resume Next
     Keyboard.Reset
 End Sub
@@ -4959,6 +5098,8 @@ On Error Resume Next
 End Sub
 
 Public Sub ResetTiming()
+Attribute ResetTiming.VB_Description = "Resets the timing logic used by the framerate counter and framerate balancer."
+Dim l_ctlControl As Fury2InputControl
 On Error Resume Next
 Dim l_ctlControl As Fury2InputControl
     For Each l_ctlControl In Controls
@@ -4968,7 +5109,7 @@ Dim l_ctlControl As Fury2InputControl
 End Sub
 
 Public Sub ResizeOutput(ByVal X As Long, ByVal Y As Long)
-Attribute ResizeOutput.VB_Description = "Resizes the output window."
+Attribute ResizeOutput.VB_Description = "Resizes the output window to a new size."
 On Error Resume Next
     Err.Clear
     m_objOutputPlugin.ScaleRatio = ScreenScaleRatio
@@ -4978,7 +5119,7 @@ On Error Resume Next
 End Sub
 
 Public Sub ResizePicture(ByVal Slot As Long, Optional ByVal NewWidth As Long = -32767, Optional ByVal NewHeight As Long = -32767)
-Attribute ResizePicture.VB_Description = "Resizes a picture slot. (Not the actual  picture being displayed - just the coordinates)"
+Attribute ResizePicture.VB_Description = "Resizes a picture slot. (Not the actual picture being displayed - just the coordinates)"
 On Error Resume Next
 Dim m_lngWidth As Long, m_lngHeight As Long
     If Slot < 0 Or Slot > c_lngMaxPictureSlot Then Exit Sub
@@ -4995,6 +5136,7 @@ Dim m_lngWidth As Long, m_lngHeight As Long
 End Sub
 
 Public Sub RunCode(ByRef Code)
+Attribute RunCode.VB_Description = "Runs a block of script code."
 On Error Resume Next
     ContextLevelAdd "RunCode"
     m_ScriptEngine.AddCode ToString(Code)
@@ -5012,6 +5154,7 @@ On Error Resume Next
 End Sub
 
 Public Sub SaveUserData(ByRef Filename As String, ByVal Data As Object)
+Attribute SaveUserData.VB_Description = "Saves an object's data to a file that can be later loaded by the engine or editor as UserData."
 On Error Resume Next
 Dim l_vfFile As VirtualFile
 Dim l_strType As String
@@ -5023,6 +5166,7 @@ Dim l_objData As Object
 End Sub
 
 Public Sub SaveUserDataToFile(ByVal File As VirtualFile, ByVal Data As Object)
+Attribute SaveUserDataToFile.VB_Description = "Saves an object's data to a file that can be later loaded by the engine or editor as UserData."
 On Error Resume Next
 Dim l_strType As String
 Dim l_objData As Object
@@ -5087,31 +5231,38 @@ On Error Resume Next
 End Sub
 
 Public Sub SetPictureBlitMode(ByVal Slot As Long, ByVal BlitMode As SFXBlitModes)
+Attribute SetPictureBlitMode.VB_Description = "Sets the blend mode of a picture slot."
 On Error Resume Next
     m_picPictures(Slot).EffectMode = BlitMode + 1
 End Sub
 
 Public Sub SetPictureImage(ByVal Slot As Long, ByRef Image As Object)
+Attribute SetPictureImage.VB_Description = "Sets the image occupying a picture slot."
 On Error Resume Next
     Set m_picPictures(Slot).Picture = Image
 End Sub
 
 Public Sub SetPictureRectangle(ByVal Slot As Long, ByVal Rectangle As Fury2Rect)
+Attribute SetPictureRectangle.VB_Description = "Sets the rectangle of a picture slot."
 On Error Resume Next
     Set m_picPictures(Slot).DestRect = Rectangle
 End Sub
 
 Public Sub SetPictureSourceRectangle(ByVal Slot As Long, ByVal Rectangle As Fury2Rect)
+Attribute SetPictureSourceRectangle.VB_Description = "Sets the source rectangle of a picture slot."
 On Error Resume Next
     Set m_picPictures(Slot).SourceRect = Rectangle
 End Sub
 
 Public Sub SetPictureTile(ByVal Slot As Long, ByVal Tile As Boolean)
+Attribute SetPictureTile.VB_Description = "Sets the tiling mode of a picture slot."
 On Error Resume Next
     m_picPictures(Slot).Tile = Tile
 End Sub
 
 Sub ShowConsole()
+Attribute ShowConsole.VB_Description = "Shows the console."
+On Error Resume Next
     #If DebugFeatures = 1 Then
         If ConsoleEnabled Then
             ConsoleVisible = True
@@ -5208,7 +5359,7 @@ On Error Resume Next
 End Sub
 
 Sub StopBGM(Optional ByVal Fade As Boolean = True)
-Attribute StopBGM.VB_Description = "Stops the currently playing BGM."
+Attribute StopBGM.VB_Description = "Stops the currently playing BGM. If Fade is True, the BGM will fade out before stopping."
 On Error Resume Next
     If Fade Then
         Set FadeBGM(, 0).EndEvent = BindEvent("Kill", CurrentBGMChannel)
@@ -5221,6 +5372,7 @@ On Error Resume Next
 End Sub
 
 Public Sub Subthread(Optional ByVal Name As String = "")
+Attribute Subthread.VB_Description = "Begins a new subthread, optionally with a name. This function will not return until Break has been called to halt the subthread."
 On Error Resume Next
     DebugOut "Starting subthread"
     m_booSubthreadStarted = True
@@ -5228,6 +5380,7 @@ On Error Resume Next
 End Sub
 
 Public Sub Swap(ByRef One, ByRef Two)
+Attribute Swap.VB_Description = "Swaps the contents of two specified variables."
 On Error Resume Next
 Dim Temp
     If VarType(Two) = vbObject Then
@@ -5248,7 +5401,7 @@ Dim Temp
 End Sub
 
 Sub SwitchBGM(ByVal BGM, Optional ByVal Crossfade As Boolean = True)
-Attribute SwitchBGM.VB_Description = "Changes the currently playing BGM. If the BGM specified is already playing, nothing happens."
+Attribute SwitchBGM.VB_Description = "Changes the currently playing BGM. If the BGM specified is already playing, nothing happens. If Crossfade is True, the two BGMs will fade in/out smoothly."
 On Error Resume Next
 Dim l_sndBGM As Sound
     If VarType(BGM) = vbObject Then
@@ -5281,6 +5434,7 @@ Dim l_sndBGM As Sound
 End Sub
 
 Public Sub SetDefaultTransition(ByVal NewTransition As String)
+Attribute SetDefaultTransition.VB_Description = "Changes the default transition to a new one, by name."
 On Error Resume Next
 Dim l_strParts As Variant
     l_strParts = Split(NewTransition, " ")
@@ -5292,7 +5446,7 @@ Dim l_strParts As Variant
 End Sub
 
 Public Sub SwitchMap(ByVal FilenameOrMap, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
-Attribute SwitchMap.VB_Description = "Switches from the current map to a new one."
+Attribute SwitchMap.VB_Description = "Switches from the current map to a new one. The specified location/layer will be passed to the MapLoad event. The default transition will be invoked to smooth the change between maps."
 On Error Resume Next
 Dim m_imgOld As Fury2Image
     ContextLevelAdd "SwitchMap(""" + ToString(FilenameOrMap) + """, " + CStr(Index) + ")"
@@ -5308,6 +5462,7 @@ Dim m_imgOld As Fury2Image
 End Sub
 
 Sub SwitchOutputPlugin(ByRef NewPlugin As String)
+Attribute SwitchOutputPlugin.VB_Description = "Switches to a new output plugin by name."
 On Error Resume Next
     If m_objOutputPlugin Is Nothing Then
     Else
@@ -5365,6 +5520,7 @@ Dim m_camCamera As Fury2Camera
 End Sub
 
 Public Sub TakeScreenshot()
+Attribute TakeScreenshot.VB_Description = "Takes a screenshot and saves it."
 On Error Resume Next
 Dim l_imgScreen As Fury2Image
 Dim l_lngIndex As Long
@@ -5387,7 +5543,7 @@ Dim l_strFilename As String
 End Sub
 
 Public Sub TextOut(ByRef Text)
-Attribute TextOut.VB_Description = "Outputs text to the engine log."
+Attribute TextOut.VB_Description = "Outputs text to the console."
 On Error Resume Next
 Dim l_strText As String
     If Debugger Is Nothing Then Else Debugger.DebugTextOut ToString(Text)
@@ -5413,7 +5569,7 @@ Dim l_strText As String
 End Sub
 
 Sub Trace(ByRef Text)
-Attribute Trace.VB_Description = "Outputs text to the debugging window."
+Attribute Trace.VB_Description = "Outputs text to the debugging trace window."
 On Error Resume Next
     Set frmTrace.Engine = Me
     If frmTrace.Visible Then
@@ -5434,6 +5590,7 @@ On Error Resume Next
 End Sub
 
 Public Sub TriggerInputEvent(EventName As String, ParamArray Args() As Variant)
+Attribute TriggerInputEvent.VB_Description = "Triggers an input event by name, with specified arguments."
 On Error Resume Next
 Dim l_booOldState As Boolean
 Dim l_sngMultiplier As Single
@@ -5530,6 +5687,7 @@ Dim m_lngCameras As Long
 End Sub
 
 Public Sub Unmute()
+Attribute Unmute.VB_Description = "Unmutes the sound system."
 On Error Resume Next
     SoundEngine.MasterVolume = m_sngMutePreviousVolume
 End Sub
@@ -5703,6 +5861,7 @@ Dim l_evtEvent As Fury2QueueEvent
 End Sub
 
 Public Sub UpdateKeyboard()
+Attribute UpdateKeyboard.VB_Description = "Updates the state of the keyboard."
 On Error Resume Next
     'If InIDE Then Exit Sub
     ContextLevelAdd "UpdateKeyboard"
@@ -5786,6 +5945,7 @@ Dim m_lngPictures As Long, l_objGraph As Fury2Graphic
 End Sub
 
 Public Sub UpdateActionQueue()
+Attribute UpdateActionQueue.VB_Description = "Processes any actions in the action queue."
 On Error Resume Next
 Dim l_lngCount As Long
 Dim l_evtAction As Fury2Event
@@ -5865,7 +6025,7 @@ Dim l_lngWindow As Long, l_lngGameWindow
 End Sub
 
 Public Sub Wait(Time)
-Attribute Wait.VB_Description = "Waits a certain number of seconds."
+Attribute Wait.VB_Description = "Waits a certain number of seconds. This function will not return until it has finished waiting."
 On Error Resume Next
 Dim StartTime As Double, EndTime As Double
 Dim I As Long
@@ -5891,7 +6051,7 @@ Dim I As Long
 End Sub
 
 Public Sub Yield(Optional ByVal Sync As Boolean = True)
-Attribute Yield.VB_Description = "Pauses the engine and allows other applications and system processes to execute. Useful in long processing loops."
+Attribute Yield.VB_Description = "Pauses the engine for a short amount of time and allows other applications and system processes to execute. Useful in long processing loops."
 On Error Resume Next
     If Running Then Else Exit Sub
     If Running = True Then DoEvents
@@ -5901,6 +6061,7 @@ On Error Resume Next
 End Sub
 
 Public Sub Using(ByVal Namespace, Optional ByVal Alias As String = "")
+Attribute Using.VB_Description = "Adds the contents of an object into the global namespace."
 On Error Resume Next
 Dim l_objObject As Object
     If VarType(Namespace) = vbString Then

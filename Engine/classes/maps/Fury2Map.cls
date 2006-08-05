@@ -93,6 +93,7 @@ On Error Resume Next
 End Sub
 
 Public Function CreateLayer() As Fury2MapLayer
+Attribute CreateLayer.VB_Description = "Creates a new layer and returns it."
 On Error Resume Next
 Dim l_lyrNew As Fury2MapLayer
     Set l_lyrNew = New Fury2MapLayer
@@ -125,6 +126,7 @@ Dim l_lyrLayer As Fury2MapLayer
 End Sub
 
 Sub AddSprite(ByVal Sprite As Fury2Sprite, ByVal Layer As Long, Optional ByVal X As Single = -32767, Optional ByVal Y As Single = -32767)
+Attribute AddSprite.VB_Description = "Adds a sprite to the map at a given location."
 On Error Resume Next
 Dim m_lngLayer As Long
 Dim m_sngX As Single, m_sngY As Single
@@ -149,6 +151,7 @@ Attribute Areas.VB_Description = "All the areas defined for the map."
 End Property
 
 Function Blocked(ByVal Layer As Long, ByVal X As Single, ByVal Y As Single, Optional ByVal W As Single = 1, Optional ByVal H As Single = 1, Optional ByVal ExcludeSprite As Fury2Sprite) As Boolean
+Attribute Blocked.VB_Description = "Performs a collison check at a given location."
 On Error Resume Next
 Dim l_lngResult As Long
 Dim l_rctArea As Fury2Rect
@@ -214,6 +217,7 @@ Attribute CollisionType.VB_MemberFlags = "40"
 End Property
 
 Sub CopyTo(ByVal Target As Fury2Map, Optional ByVal X As Long = 0, Optional ByVal Y As Long = 0, Optional ByVal Layer As Long = 1)
+Attribute CopyTo.VB_Description = "Copies the map's contents to another map at a given location."
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long, l_lngLayer As Long
 Dim l_sngX1 As Single, l_sngY1 As Single
@@ -370,6 +374,7 @@ Dim l_lyrLayer As Fury2MapLayer
 End Property
 
 Public Sub Init(Optional ByVal ShowStatus As Boolean = True)
+Attribute Init.VB_Description = "Initializes the map."
 Attribute Init.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_lngLayers As Long
@@ -436,7 +441,7 @@ Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
     m_booScriptFailed = False
     Set m_objScript = Nothing
-    
+
     With File
         .ReadSegment_Begin
             .ReadSegment_Begin
@@ -513,6 +518,7 @@ Friend Property Get lHeight() As Long
 End Property
 
 Public Sub Load()
+Attribute Load.VB_Description = "Loads the map's configuration data."
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_lyrLayer As Fury2MapLayer
@@ -638,11 +644,13 @@ Public Property Get Objects() As Fury2MapObjects
 End Property
 
 Public Property Get Rectangle() As Fury2Rect
+Attribute Rectangle.VB_Description = "A rectangle containing the bounds of the map."
 On Error Resume Next
     Set Rectangle = F2Rect(0, 0, MaxX, MaxY)
 End Property
 
 Public Sub Render(ByVal Surface As Fury2Image, Optional ByVal SourceX As Long = 0, Optional ByVal SourceY As Long = 0, Optional ByVal ShowSprites As Boolean = True)
+Attribute Render.VB_Description = "Renders the map's contents to an image."
 On Error Resume Next
 Dim l_imgSurface As Fury2Image
 Dim l_camCamera As Fury2Camera
@@ -823,6 +831,7 @@ Dim l_mobObject As Fury2MapObject
 End Sub
 
 Sub Update()
+Attribute Update.VB_Description = "Updates the map."
 Attribute Update.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_lngLayers As Long
@@ -890,4 +899,5 @@ Dim l_lyrLayer As Fury2MapLayer
         End With
     Next l_lyrLayer
 End Property
+
 

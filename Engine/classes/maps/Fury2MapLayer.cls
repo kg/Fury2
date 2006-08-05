@@ -76,6 +76,7 @@ On Error Resume Next
 End Sub
 
 Public Property Get RenderEvent() As Fury2Event
+Attribute RenderEvent.VB_Description = "Specifies an event that will be invoked every time this layer is rendered."
 On Error Resume Next
     Set RenderEvent = mvarRenderEvent
 End Property
@@ -86,6 +87,7 @@ On Error Resume Next
 End Property
 
 Public Property Get RenderTarget() As Long
+Attribute RenderTarget.VB_Description = "Specifies a render target to draw this layer to."
 On Error Resume Next
     RenderTarget = mvarRenderTarget + 1
 End Property
@@ -96,6 +98,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Index() As Long
+Attribute Index.VB_Description = "The index of the layer."
     Index = mvarIndex
 End Property
 
@@ -105,6 +108,7 @@ Friend Property Let Index(ByVal NewIndex As Long)
 End Property
 
 Public Sub AddCollisionLine(ByVal x1 As Single, ByVal y1 As Single, ByVal x2 As Single, ByVal y2 As Single)
+Attribute AddCollisionLine.VB_Description = "Adds a collision line to the layer."
 On Error Resume Next
     ReDim Preserve mvarBlockingLines(LBound(mvarBlockingLines) To UBound(mvarBlockingLines) + 1)
     With mvarBlockingLines(UBound(mvarBlockingLines))
@@ -160,6 +164,7 @@ Dim m_lngX As Long, m_lngY As Long
 End Sub
 
 Sub ClearCollisionLines()
+Attribute ClearCollisionLines.VB_Description = "Erases a layer's collision lines."
 On Error Resume Next
     ReDim mvarBlockingLines(0 To 0)
 End Sub
@@ -289,6 +294,7 @@ Dim m_lyrNew As Fury2MapLayer
 End Function
 
 Public Property Let Effect(ByVal vData As Fury2LayerEffects)
+Attribute Effect.VB_Description = "The render effect used when drawing the layer."
     mvarEffect = vData
     If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
@@ -377,6 +383,7 @@ Dim m_lngTile As Long
 End Sub
 
 Public Function GetCollisionLine(ByVal Index As Long) As Fury2Rect
+Attribute GetCollisionLine.VB_Description = "Retrieves a rectangle encompassing a given collision line."
 On Error Resume Next
     With mvarBlockingLines(Index)
         Set GetCollisionLine = F2Rect(.Start.X, .Start.Y, .end.X, .end.Y)
@@ -398,6 +405,7 @@ Public Property Let Height(ByVal NewHeight As Long)
 End Property
 
 Public Property Get Height() As Long
+Attribute Height.VB_Description = "The height of the layer."
     Height = mvarHeight
 End Property
 
@@ -722,6 +730,7 @@ On Error Resume Next
 End Property
 
 Public Sub RandomReplace(ByVal Tile As Integer, ParamArray Replacements())
+Attribute RandomReplace.VB_Description = "Replaces a given tile with a randomly selected tile from a list of replacements"
 On Error Resume Next
 Dim m_lngX As Long, m_lngY As Long
 Dim m_lngCount As Long
@@ -739,6 +748,7 @@ Dim m_intTile As Integer
 End Sub
 
 Public Sub RemoveCollisionLine(ByVal Index As Long)
+Attribute RemoveCollisionLine.VB_Description = "Removes a collision line"
 On Error Resume Next
 Dim m_lngLines As Long
     If Index < 0 Then Exit Sub
@@ -757,6 +767,7 @@ Dim m_lngLines As Long
 End Sub
 
 Public Sub RenderBlocking(ByVal Surface As Fury2Image, Optional ByVal XOffset As Single = 0, Optional ByVal YOffset As Single = 0)
+Attribute RenderBlocking.VB_Description = "Renders a layer's blocking to an image"
 On Error Resume Next
     SoftFX.RenderCollisionLines Surface.Handle, VarPtr(mvarBlockingLines(LBound(mvarBlockingLines))), UBound(mvarBlockingLines) - LBound(mvarBlockingLines) + 1, XOffset, YOffset
 End Sub
@@ -779,6 +790,7 @@ Dim m_intTile As Integer, m_intNewTile As Integer
 End Sub
 
 Public Sub Resize(ByVal Width As Long, ByVal Height As Long)
+Attribute Resize.VB_Description = "Resizes the layer, erasing its previous contents"
 Attribute Resize.VB_MemberFlags = "40"
 On Error Resume Next
     If (Width <= 0) Or (Height <= 0) Then Exit Sub
@@ -789,6 +801,7 @@ On Error Resume Next
 End Sub
 
 Public Sub ResizePreserve(ByVal Width As Long, ByVal Height As Long)
+Attribute ResizePreserve.VB_Description = "Resizes the layer, keeping its previous contents"
 Attribute ResizePreserve.VB_MemberFlags = "40"
 On Error Resume Next
 Dim mvarOldTiles() As Integer, mvarCopyRows As Long, m_lngRowCount As Long, mvarOldBlocking() As Byte
@@ -815,6 +828,7 @@ Dim mvarOldTiles() As Integer, mvarCopyRows As Long, m_lngRowCount As Long, mvar
 End Sub
 
 Public Function SetCollisionLine(ByVal Index As Long, NewLine)
+Attribute SetCollisionLine.VB_Description = "Replaces a collision line"
 On Error Resume Next
     With mvarBlockingLines(Index)
         .Start.X = NewLine.left
@@ -887,6 +901,7 @@ Dim m_lngCount As Long
 End Function
 
 Public Function TileGravity(Optional ByVal Column As Long = -1, Optional ByVal EmptyTile As Integer = -1) As Boolean
+Attribute TileGravity.VB_Description = "Shifts tiles downwards (optionally in a single column)."
 Attribute TileGravity.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_lngX As Long, m_lngY As Long
@@ -1000,10 +1015,12 @@ Public Property Let Width(ByVal NewWidth As Long)
 End Property
 
 Public Property Get Width() As Long
+Attribute Width.VB_Description = "The width of the layer."
     Width = mvarWidth
 End Property
 
 Public Property Get MaxX() As Long
+Attribute MaxX.VB_Description = "The maximum x-coordinate of the layer."
     If Prerendered Then
         MaxX = Width
     Else
@@ -1012,6 +1029,7 @@ Public Property Get MaxX() As Long
 End Property
 
 Public Property Get MaxY() As Long
+Attribute MaxY.VB_Description = "The maximum y-coordinate of the layer."
     If Prerendered Then
         MaxY = Height
     Else
@@ -1024,6 +1042,7 @@ Public Property Get WrapX() As Boolean
 End Property
 
 Public Property Let WrapX(ByVal NewWrapX As Boolean)
+Attribute WrapX.VB_Description = "The layer's horizontal wrapping mode."
     mvarWrapX = NewWrapX
 End Property
 
@@ -1032,6 +1051,8 @@ Public Property Get WrapY() As Boolean
 End Property
 
 Public Property Let WrapY(ByVal NewWrapY As Boolean)
+Attribute WrapY.VB_Description = "The layer's vertical wrapping mode."
     mvarWrapY = NewWrapY
 End Property
+
 

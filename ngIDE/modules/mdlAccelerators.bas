@@ -51,5 +51,6 @@ On Error Resume Next
         .AddAccelerator vbKeyTab, BindEvent(g_edEditor, "Action_PreviousWindow"), True, True
         .AddAccelerator vbKeyF8, BindEvent(g_edEditor, "Show_FileSidebar")
         .AddAccelerator vbKeyF9, BindEvent(g_edEditor, "Game_Debug")
+        .Enabled = True
     End With
 End Sub

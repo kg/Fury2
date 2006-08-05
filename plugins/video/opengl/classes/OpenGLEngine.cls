@@ -210,7 +210,7 @@ On Error Resume Next
     m_OutForm.Show
     Err.Clear
     GLInit m_OutForm.HWND, m_OutForm.HDC
-    GLSetShaderLoadCallback AddressOf ShaderLoadCallback
+    GLSetShaderLoadCallback AddressOf ShaderLoadCallback, AddressOf ShaderLoadFailCallback
     If Err <> 0 Then
         MsgBox "Unable to load OpenGL!", vbExclamation, "Error"
         m_booError = True
@@ -251,6 +251,10 @@ End Sub
 Private Sub Class_Initialize()
 On Error Resume Next
     ShaderPath = App.Path & "\shaders\"
+    If LCase(Trim(Dir(App.Path & "\shaders", vbDirectory))) = "shaders" Then
+    Else
+        MsgBox "OpenGL Shaders not found!", vbExclamation, "OpenGL Warning"
+    End If
     SetImageTag 0, 0, 0
     Set m_DX7 = New DirectX7
     Set m_DD7 = m_DX7.DirectDrawCreate("")

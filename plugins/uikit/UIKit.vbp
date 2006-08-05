@@ -5,6 +5,7 @@ Reference=*\G{3B10323B-FEC1-4FAA-9A62-89666AC5A420}#41.2#0#..\..\..\binary\sys\g
 Reference=*\G{3CB89DD9-2E5A-45D3-A6FF-E87B0081CDCC}#1.0#409#..\..\..\libraries\tlb\SoftFX.tlb#Fury² Game Creation System SoftFX library
 Reference=*\G{68A39602-29B3-4A8A-A98F-690528BEAEA3}#6.2#0#..\..\..\binary\sys\filesystem.dll#Fury² Game Creation System Filesystem
 Reference=*\G{E1FC63F4-12A9-4534-8260-36B55E1D7736}#13.0#0#..\..\..\binary\sys\script2.dll#Fury² Game Creation System Script Engine (2)
+Reference=*\G{64651516-73E5-402B-B989-94EAE4C6A049}#1.0#409#..\..\..\libraries\tlb\Win32.tlb#Win32 API
 Class=Window; classes\Window.cls
 Class=iWidget; interfaces\iWidget.cls
 Class=iContainer; interfaces\iContainer.cls

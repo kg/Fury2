@@ -31,7 +31,9 @@ Dim l_lngLibrary As Long
 Dim l_strFilename As String
 Dim l_lngResult As Long
 Dim l_booFailed As Boolean
+Dim l_lngCount As Long
     If InIDE Then
+        Compromise.SetEnabled 0
         LoadLibraries = True
         Exit Function
     End If
@@ -39,23 +41,24 @@ Dim l_booFailed As Boolean
         LoadLibraries = True
         Exit Function
     End If
+    Compromise.LoadCompromise
     ChDrive Left(App.Path, 2)
     ChDir App.Path
     Set l_colLibraries = New Collection
-    l_colLibraries.Add "debugger.dll"
-    l_colLibraries.Add "packages2.dll"
-    l_colLibraries.Add "graphics.dll"
+    l_colLibraries.Add "packages3.dll"
     l_colLibraries.Add "filesystem.dll"
+    l_colLibraries.Add "graphics.dll"
+    l_colLibraries.Add "vbscript.dll"
     l_colLibraries.Add "scriptengine.dll"
     l_colLibraries.Add "script2.dll"
     l_colLibraries.Add "sound2.dll"
+    l_colLibraries.Add "debugger.dll"
     l_colLibraries.Add "video.dll"
     l_colLibraries.Add "engine.dll"
     l_colLibraries.Add "SSubTmr6.dll"
     l_colLibraries.Add "vbalHook6.dll"
     l_colLibraries.Add "MDIActiveX.ocx"
     l_colLibraries.Add "cFScroll.ocx"
-    l_colLibraries.Add "cmcs21.ocx"
     l_colLibraries.Add "vbalDTab6.ocx"
     l_colLibraries.Add "vbalIml6.ocx"
     l_colLibraries.Add "vbalSBar6.ocx"
@@ -74,14 +77,25 @@ Dim l_booFailed As Boolean
     frmLoadingLibraries.SetText ""
     frmLoadingLibraries.SetProgress 0
     Compromise.Initialize
-    For l_lngLibrary = 1 To l_colLibraries.Count
+    l_lngCount = l_colLibraries.Count
+'    l_lngCount = CLng(InputBox("Number of libraries to load:", , l_lngCount))
+    For l_lngLibrary = 1 To l_lngCount
         l_strFilename = l_colLibraries(l_lngLibrary)
         frmLoadingLibraries.SetText l_strFilename
+        frmLoadingLibraries.Refresh
         If Not InIDE Then
-            l_lngResult = Compromise.Register(App.Path + "\\" + l_strFilename)
+            l_lngResult = 0
+            If FileExists(App.Path + "\" + l_strFilename) Then
+                l_lngResult = Compromise.Unregister(App.Path + "\" + l_strFilename)
+                l_lngResult = Compromise.Register(App.Path + "\" + l_strFilename)
+            End If
             If (l_lngResult = 1) Then
             Else
-                l_lngResult = Compromise.Register(App.Path + "\editor\" + l_strFilename)
+                l_lngResult = 0
+                If FileExists(App.Path + "\editor\" + l_strFilename) Then
+                    l_lngResult = Compromise.Unregister(App.Path + "\editor\" + l_strFilename)
+                    l_lngResult = Compromise.Register(App.Path + "\editor\" + l_strFilename)
+                End If
                 If (l_lngResult = 1) Then
                 Else
                     MsgBox "Unable to load: " + l_colLibraries(l_lngLibrary), vbExclamation, "Error"
@@ -123,20 +137,9 @@ Dim l_varFiles As Variant
     Err.Clear
     g_strVersion = Engine.Fury2Globals.GetEngineVersion()
     If (Err <> 0) Or Len(Trim(g_strVersion)) = "" Then
-        Select Case MsgBox("Unable to load engine. Click Retry to attempt to repair installation.", vbExclamation Or vbRetryCancel, "Error")
-        Case vbRetry
-            InstallEngine
-            Err.Clear
-            g_strVersion = Engine.Fury2Globals.GetEngineVersion()
-            If (Err <> 0) Or Len(Trim(g_strVersion)) = "" Then
-                MsgBox "Installation failed.", vbCritical, "Error"
-                F2Shutdown
-                End
-            End If
-        Case Else
-            F2Shutdown
-            End
-        End Select
+        MsgBox "Unable to load engine." + vbCrLf + Err.Description, vbExclamation, "Error"
+        F2Shutdown
+        End
     End If
     Err.Clear
     Load frmIcons
@@ -223,6 +226,7 @@ Dim l_strDocs As String
         g_dbgDebugger.GameEngine.Quit
         DoEvents
     End If
+    frmMain.SaveSettings
     If frmMain.WindowState <> 0 Then frmMain.WindowState = 0
     If g_edEditor.Options.OpenPreviousGameAtStartup Then
         mdlRegistry.WriteRegSetting "Previous Game", g_edEditor.GamePath

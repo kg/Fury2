@@ -88,10 +88,7 @@ namespace GLSL {
   void Variable::set(Pixel value) {
     if (this->isValid()) {
       Vec4 vec;
-      vec.V[0] = value[::Red] / 255.0f;
-      vec.V[1] = value[::Green] / 255.0f;
-      vec.V[2] = value[::Blue] / 255.0f;
-      vec.V[3] = value[::Alpha] / 255.0f;
+      Global->ColorToFloat4(value, &(vec.V[0]));
       glUniform4fvARB(this->Handle, 1, &(vec.V[0]));
       Global->checkError();
     }

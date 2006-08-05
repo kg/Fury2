@@ -204,6 +204,7 @@ Dim l_lngRefCount As Long
     If l_lngMaxWidth < 1 Then l_lngMaxWidth = 32767
     l_rctArea.Width = l_lngMaxWidth
     l_rctArea.Height = 32767
+    l_optOptions.Opacity = 255
     l_optOptions.EnableColorCodes = CByte(CLng(Abs(EnableColorCodes)))
     l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
     l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
@@ -239,6 +240,7 @@ Dim l_optOptions As TextParam
     l_lngMaxHeight = 32767
     l_rctArea.Width = l_lngMaxWidth
     l_rctArea.Height = l_lngMaxHeight
+    l_optOptions.Opacity = 255
     l_optOptions.EnableColorCodes = CByte(CLng(Abs(EnableColorCodes)))
     l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
     l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
@@ -263,6 +265,7 @@ Dim l_optOptions As TextParam
     l_lngMaxHeight = 32767
     l_rctArea.Width = l_lngMaxWidth
     l_rctArea.Height = l_lngMaxHeight
+    l_optOptions.Opacity = 255
     l_optOptions.EnableColorCodes = CByte(CLng(Abs(EnableColorCodes)))
     l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
     l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
@@ -341,6 +344,7 @@ End Property
 Private Sub ParseOptions(ByRef TheArray As Variant, ByRef Output As TextParam)
 On Error Resume Next
     With Output
+        .Opacity = 255
         If UBound(TheArray) >= 0 Then .Scroll_X = CLng(TheArray(0))
         If UBound(TheArray) >= 1 Then .Scroll_Y = CLng(TheArray(1))
         If UBound(TheArray) >= 2 Then .Selection_Start = CLng(TheArray(2))
@@ -378,6 +382,7 @@ Dim l_optOptions As TextParam
     Set l_rctRectangle = Rectangle
     If Err <> 0 Then Exit Function
     ParseOptions Options, l_optOptions
+    l_optOptions.Opacity = 255
     l_optOptions.CharFromPoint = 1
     l_optOptions.CharFromPoint_X = X
     l_optOptions.CharFromPoint_Y = Y
@@ -416,12 +421,13 @@ Dim l_optOptions As TextParam
     Else
         m_fpmFontParam.EffectMode = 0
     End If
-    m_fpmFontParam.FillColor = SetAlpha(m_fpmFontParam.FillColor, GetAlpha(m_fpmFontParam.FillColor) * CSng(Alpha))
+'    m_fpmFontParam.FillColor = SetAlpha(m_fpmFontParam.FillColor, GetAlpha(m_fpmFontParam.FillColor) * CSng(Alpha))
     If IsMissing(Options) Then
         ParseOptions Array(), l_optOptions
     Else
         ParseOptions Options, l_optOptions
     End If
+    l_optOptions.Opacity = Alpha * 255
     l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
     l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
     If l_imgSurface Is Nothing Then
@@ -429,6 +435,7 @@ Dim l_optOptions As TextParam
     Else
         Call SoftFX.RenderText(l_strText, l_imgSurface.Handle, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions)
     End If
+    m_fpmFontParam.FillColor = l_lngColor
     Draw = l_optOptions.Lines
     If l_optOptions.Height > 0 Then
         HeightOut = (l_optOptions.Height - m_fpmFontParam.BaseHeight) + m_lngFullHeight
@@ -436,7 +443,6 @@ Dim l_optOptions As TextParam
         HeightOut = 0
     End If
     l_imgSurface.Dirty = True
-    m_fpmFontParam.FillColor = l_lngColor
 End Function
 
 Public Function DrawCentered(ByVal Surface As Fury2Image, ByRef Text, ByVal Rectangle As Fury2Rect, Optional ByVal Color, Optional ByVal Alpha As Single = 1, Optional Options As Variant, Optional HeightOut) As Long
@@ -465,6 +471,7 @@ Dim l_lngXO As Long, l_lngYO As Long
     Else
         ParseOptions Options, l_optOptions
     End If
+    l_optOptions.Opacity = CSng(Alpha) * 255
     l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
     l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
     Call SoftFX.RenderText(l_strText, 0, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions)
@@ -483,11 +490,11 @@ Dim l_lngXO As Long, l_lngYO As Long
     Else
         m_fpmFontParam.EffectMode = 0
     End If
-    m_fpmFontParam.FillColor = SetAlpha(m_fpmFontParam.FillColor, GetAlpha(m_fpmFontParam.FillColor) * CSng(Alpha))
     If IsMissing(Options) Then
     Else
         ParseOptions Options, l_optOptions
     End If
+    l_optOptions.Opacity = CSng(Alpha) * 255
     l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
     l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
     Call SoftFX.RenderText(l_strText, l_imgSurface.Handle, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions)
@@ -496,9 +503,9 @@ Dim l_lngXO As Long, l_lngYO As Long
     Else
         HeightOut = 0
     End If
+    m_fpmFontParam.FillColor = l_lngColor
     DrawCentered = l_optOptions.Lines
     l_imgSurface.Dirty = True
-    m_fpmFontParam.FillColor = l_lngColor
 End Function
 
 Public Property Get Alpha() As Single
@@ -797,7 +804,7 @@ Dim l_lngPointer As Long
     If m_lngCharCount > c_lngMaxGlyphs Then
         m_lngCharCount = c_lngMaxGlyphs
     End If
-    Debug.Print "Glyph Count: " & m_lngCharCount
+'    Debug.Print "Glyph Count: " & m_lngCharCount
     l_lngMapCount = m_lngCharCount + 1
     If l_lngMapCount < 256 Then l_lngMapCount = 256
     For l_lngCharIndices = LBound(l_lngGlyphs) To UBound(l_lngGlyphs)

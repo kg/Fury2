@@ -687,12 +687,7 @@ End Function
 Friend Sub WriteFile(Filename As String, Text As String)
 On Error Resume Next
 Dim l_lngHandle As Long
-    l_lngHandle = FreeFile
-    Kill Filename
-    Open Filename For Binary Access Write As #l_lngHandle
-        Put #l_lngHandle, 1, Text
-    Close #l_lngHandle
-    Exit Sub
+    WriteTextFile Filename, Text
 End Sub
 
 Public Sub CreateFolderTree(ByVal Path As String)

@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.2#0"; "ngUI.ocx"
 Begin VB.Form frmInsertSprite 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Insert Sprite"
@@ -187,6 +187,7 @@ Dim l_lngFiles As Long, l_lngSprites As Long
             For l_lngFiles = 1 To l_flsFiles.Count
                 With l_flsFiles.File(l_lngFiles)
                     SetProgress (l_lngFiles - 1) / l_flsFiles.Count
+                    Debug.Print .Name
                     Set l_scSprites = Engine.LoadSprites(.Name)
                     lstSprites.ListItems.AddNew(.Title).Enabled = False
                     l_lngSprites = 1
@@ -207,7 +208,7 @@ Dim l_lngFiles As Long, l_lngSprites As Long
                     l_scSprites.Clear
                 End With
             Next l_lngFiles
-            SetProgress 100
+            SetProgress 1
         End If
     End If
     cmdOK.Enabled = lstSprites.SelectedItemCount > 0
@@ -237,7 +238,7 @@ End Sub
 Private Sub Form_Activate()
 On Error Resume Next
     Debug.Print "frmInsertSprite_Activate"
-    lstSprites.ListItems.Clear
+    'lstSprites.ListItems.Clear
     RefreshSpriteList
 End Sub
 

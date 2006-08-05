@@ -669,10 +669,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\3rdparty\lzo\minilzo.c"
-				>
-			</File>
-			<File
 				RelativePath=".\module\Override.cpp"
 				>
 			</File>
@@ -903,23 +899,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\3rdparty\lzo\lzoconf.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\3rdparty\lzo\lzodefs.h"
-				>
-			</File>
-			<File
 				RelativePath=".\header\memcpy_amd.hpp"
 				>
 			</File>
 			<File
 				RelativePath=".\header\MersenneTwister.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\3rdparty\lzo\minilzo.h"
 				>
 			</File>
 			<File

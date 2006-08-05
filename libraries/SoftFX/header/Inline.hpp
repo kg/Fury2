@@ -192,19 +192,19 @@ void inline _SmallCopy(void* dest, void* source, DoubleWord bytes) {
 }
 
 template <class T> void inline _Copy(void* dest, void* source, DoubleWord count) {
-#if (defined(ASSEMBLY))
-    if ((Processor::SSE)) {
 #if (defined(DISABLE_SSE))
-        memcpy(dest, source, count * sizeof(T));
+  memcpy(dest, source, count * sizeof(T));
 #else
-        memcpy_amd(dest, source, count * sizeof(T));
-#endif
-    } else {
-        // screw writing my own copy, pfft
-        memcpy(dest, source, count * sizeof(T));
-    }
-#else
-    memcpy(dest, source, count * sizeof(T));
+  #if (defined(ASSEMBLY))
+      if ((Processor::SSE)) {
+          memcpy_amd(dest, source, count * sizeof(T));
+      } else {
+          // screw writing my own copy, pfft
+          memcpy(dest, source, count * sizeof(T));
+      }
+  #else
+      memcpy(dest, source, count * sizeof(T));
+  #endif
 #endif
     return;
 }

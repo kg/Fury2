@@ -15,10 +15,12 @@ Option Explicit
 Public Name As String
 Public Functions As Collection
 Public Variables As Collection
+Public DataVariables As Collection
 
 Private Sub Class_Initialize()
 On Error Resume Next
     Set Functions = New Collection
     Set Variables = New Collection
+    Set DataVariables = New Collection
 End Sub
 

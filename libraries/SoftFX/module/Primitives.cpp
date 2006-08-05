@@ -1282,6 +1282,22 @@ FILTERSIMPLE_ROWEND
 //    LookupDeallocate(yCTable);
 FILTERSIMPLE_END
 
+Export int FilterSimple_ConvexPolygon_Outline(Image *Image, SimplePolygon *InPoly, Pixel Color) {
+    if (!Image)
+      return Failure;
+    if (!Image->initialized())
+      return Failure;
+    if (!InPoly)
+      return Failure;
+    int edges = InPoly->GetEdgeCount();
+    FLine edge;
+    for (int e = 0; e < edges; e++) {
+      edge = InPoly->GetEdgeLine(e);
+      FilterSimple_Line_AA(Image, edge.Start.X, edge.Start.Y, edge.End.X, edge.End.Y, Color);
+    }
+    return Success;
+}
+
 Export int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel Color, RenderFunction *Renderer, DoubleWord RenderArgument) {
     if (!Image) {
         return Failure;

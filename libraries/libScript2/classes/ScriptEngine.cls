@@ -69,19 +69,6 @@ Dim l_objModule As Object
     End If
 End Property
 
-Public Function ModuleExists(Optional Name As String = vbNullString) As Boolean
-On Error Resume Next
-Dim l_objModule As Object
-    Err.Clear
-    Set l_objModule = m_Engine.GetScriptDispatch(Name)
-    If l_objModule Is Nothing Or Err.Number <> 0 Then
-        ModuleExists = False
-        Err.Clear
-    Else
-        ModuleExists = True
-    End If
-End Function
-
 Public Function CreateSingleton(Name As String, Code As String) As Object
 On Error Resume Next
 Dim l_strScript As String
@@ -158,22 +145,21 @@ On Error Resume Next
     End Select
 End Function
 
-Public Function Eval(ByRef Expr As String)
+Public Function EvalObject(ByRef Expr As String) As Object
 On Error Resume Next
+Dim l_strScript As String
+    l_strScript = ParseCodes(Expr)
     Err.Clear
-    Eval = m_Engine.EvalExpr(ParseCodes(Expr), "")
-    If Err.Number = 438 Then
-        Err.Clear
-        Set Eval = m_Engine.EvalExpr(ParseCodes(Expr), "")
-    End If
+    Set EvalObject = m_Engine.EvalExpr(l_strScript, "")
 End Function
 
-Public Sub CreateModule(ByRef Name As String, ByRef Code As String)
+Public Function Eval(ByRef Expr As String) As Variant
 On Error Resume Next
-    m_Engine.AddNamespace Name
-    AddCode Code, Name
-'    AddObject Name, Namespace(Name), True, True, True
-End Sub
+Dim l_strScript As String
+    l_strScript = ParseCodes(Expr)
+    Err.Clear
+    Eval = m_Engine.EvalExpr(l_strScript, "")
+End Function
 
 Public Function ParseCodes(ByRef Str As String) As String
 On Error Resume Next
@@ -189,15 +175,11 @@ On Error Resume Next
     m_Engine.AddObject Name, AddMembers, AddEvents, Visible, Obj
 End Sub
 
-Sub AddCode(Code As String, Optional ByRef Module As String = "")
+Sub AddCode(Code As String)
 On Error Resume Next
 Dim l_strCode As String
     l_strCode = ParseCodes(Code)
-    If Len(Module) > 0 Then
-        m_Engine.ParseScriptText l_strCode, Module
-    Else
-        m_Engine.ParseScriptText l_strCode
-    End If
+    m_Engine.ParseScriptText l_strCode
 End Sub
 
 Sub Init(Optional ByVal hWnd As Long = 0)

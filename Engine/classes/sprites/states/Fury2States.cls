@@ -74,14 +74,23 @@ End Sub
 
 Public Function Duplicate() As Fury2States
 On Error Resume Next
-Dim m_lngStates As Long
+Dim m_staState As Fury2State
     Set Duplicate = New Fury2States
     With Duplicate
-        If mCol.Count > 0 Then
-            For m_lngStates = 1 To mCol.Count
-                Duplicate.Add mCol.Item(m_lngStates).Duplicate
-            Next m_lngStates
-        End If
+        For Each m_staState In mCol
+            .AddFast m_staState.Duplicate
+        Next m_staState
+    End With
+End Function
+
+Public Function Clone() As Fury2States
+On Error Resume Next
+Dim m_staState As Fury2State
+    Set Clone = New Fury2States
+    With Clone
+        For Each m_staState In mCol
+            .AddFast m_staState
+        Next m_staState
     End With
 End Function
 
@@ -118,6 +127,11 @@ On Error Resume Next
         End If
     End If
     Err.Clear
+End Sub
+
+Public Sub AddFast(ByVal Obj As Fury2State)
+On Error Resume Next
+    mCol.Add Obj
 End Sub
 
 Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2State

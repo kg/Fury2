@@ -37,13 +37,13 @@ Begin VB.Form frmScriptFile
       Width           =   60
    End
    Begin ngPlugins.Script scScript 
-      Height          =   3015
+      Height          =   2580
       Left            =   0
       TabIndex        =   0
       Top             =   0
-      Width           =   4560
-      _ExtentX        =   8043
-      _ExtentY        =   5318
+      Width           =   4635
+      _ExtentX        =   8176
+      _ExtentY        =   4551
    End
    Begin sMDIinActiveX.MDIActiveX extender 
       Left            =   30
@@ -108,7 +108,7 @@ On Error Resume Next
 Static s_booHere As Boolean
     If s_booHere Then Exit Sub
     s_booHere = True
-    scScript.Control.ExecuteCmd cmCmdFind
+    'scScript.Control.ExecuteCmd cmCmdFind
     Err.Clear
     s_booHere = False
 End Sub
@@ -118,7 +118,7 @@ On Error Resume Next
 Static s_booHere As Boolean
     If s_booHere Then Exit Sub
     s_booHere = True
-    scScript.Control.ExecuteCmd cmCmdFindReplace
+    'scScript.Control.ExecuteCmd cmCmdFindReplace
     Err.Clear
     s_booHere = False
 End Sub
@@ -207,7 +207,7 @@ On Error Resume Next
 Dim l_lngFileHandle As Long
     m_strFilename = Filename
     Err.Clear
-    scScript.Control.SaveFile m_strFilename, False
+    WriteTextFile m_strFilename, scScript.Text
     iDocument_Save = (Err.Number = 0)
     If iDocument_Save Then
         SetFilename Filename
@@ -222,14 +222,14 @@ End Property
 Private Sub iEditingCommands_CanCopy(NewValue As Boolean)
 On Error Resume Next
     With scScript.Control
-        NewValue = .CanCopy
+'        NewValue = .CanCopy
     End With
 End Sub
 
 Private Sub iEditingCommands_CanCut(NewValue As Boolean)
 On Error Resume Next
     With scScript.Control
-        NewValue = .CanCut
+'        NewValue = .CanCut
     End With
 End Sub
 
@@ -243,57 +243,56 @@ End Sub
 Private Sub iEditingCommands_CanPaste(NewValue As Boolean)
 On Error Resume Next
     With scScript.Control
-        NewValue = .CanPaste
+'        NewValue = .CanPaste
     End With
 End Sub
 
 Private Sub iEditingCommands_CanRedo(NewValue As Boolean)
 On Error Resume Next
     With scScript.Control
-        NewValue = .CanRedo
+'        NewValue = .CanRedo
     End With
 End Sub
 
 Private Sub iEditingCommands_CanSelectAll(NewValue As Boolean)
 On Error Resume Next
     With scScript.Control
-        NewValue = (.SelLength < .TextLength) And (.TextLength > 0)
+'        NewValue = (.SelLength < .TextLength) And (.TextLength > 0)
     End With
 End Sub
 
 Private Sub iEditingCommands_CanSelectNone(NewValue As Boolean)
 On Error Resume Next
     With scScript.Control
-        NewValue = .SelLength > 0
+'        NewValue = .SelLength > 0
     End With
 End Sub
 
 Private Sub iEditingCommands_CanUndo(NewValue As Boolean)
 On Error Resume Next
     With scScript.Control
-        NewValue = .CanUndo
+'        NewValue = .CanUndo
     End With
 End Sub
 
 Private Sub iEditingCommands_Copy()
 On Error Resume Next
     With scScript.Control
-        .ExecuteCmd cmCmdCopy
+'        .ExecuteCmd cmCmdCopy
     End With
 End Sub
 
 Private Sub iEditingCommands_Cut()
 On Error Resume Next
     With scScript.Control
-        .ExecuteCmd cmCmdCut
+'        .ExecuteCmd cmCmdCut
     End With
 End Sub
 
 Private Sub iEditingCommands_Delete()
 On Error Resume Next
-Dim l_rngSel As New Range
     With scScript.Control
-        .ExecuteCmd cmCmdDelete
+'        .ExecuteCmd cmCmdDelete
 '        If .SelLength > 0 Then
 '            .SelText = ""
 '        Else
@@ -308,36 +307,35 @@ End Sub
 Private Sub iEditingCommands_Paste()
 On Error Resume Next
     With scScript.Control
-        .ExecuteCmd cmCmdPaste
+'        .ExecuteCmd cmCmdPaste
     End With
 End Sub
 
 Private Sub iEditingCommands_Redo()
 On Error Resume Next
     With scScript.Control
-        .ExecuteCmd cmCmdRedo
+'        .ExecuteCmd cmCmdRedo
     End With
 End Sub
 
 Private Sub iEditingCommands_SelectAll()
 On Error Resume Next
     With scScript.Control
-        .ExecuteCmd cmCmdSelectAll
+'        .ExecuteCmd cmCmdSelectAll
     End With
 End Sub
 
 Private Sub iEditingCommands_SelectNone()
 On Error Resume Next
-Dim l_rngSel As New Range
     With scScript.Control
-        .SetSel l_rngSel, True
+'        .SetSel l_rngSel, True
     End With
 End Sub
 
 Private Sub iEditingCommands_Undo()
 On Error Resume Next
     With scScript.Control
-        .ExecuteCmd cmCmdUndo
+'        .ExecuteCmd cmCmdUndo
     End With
 End Sub
 
@@ -348,5 +346,5 @@ End Property
 
 Private Sub scScript_SelectionChange()
 On Error Resume Next
-    Editor.SetLocation "Line " & scScript.Control.GetSel(True).StartLineNo & ", Col " & scScript.Control.GetSel(True).StartColNo
+'    Editor.SetLocation "Line " & scScript.Control.GetSel(True).StartLineNo & ", Col " & scScript.Control.GetSel(True).StartColNo
 End Sub

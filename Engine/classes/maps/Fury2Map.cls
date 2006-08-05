@@ -195,7 +195,6 @@ End Sub
 
 Private Sub Class_Terminate()
 On Error Resume Next
-    Engine.DebugOut "Fury2Map_Terminate"
 End Sub
 
 Public Sub Clear()
@@ -321,13 +320,13 @@ Dim m_lyrLayer As Fury2MapLayer
         m_lyrLayer.Free
     Next m_lyrLayer
     m_sprSprites.Free
+    m_objScript.F2OInit Nothing, Nothing
     Set m_objScript = Nothing
     Set m_araAreas = Nothing
     Set m_tmrTimerEvents = Nothing
     Set m_lyrLayers = Nothing
     Set m_mobObjects = Nothing
     Set m_sprSprites = Nothing
-'    Class_Initialize
 End Sub
 
 Function GetSetting(Setting) As String

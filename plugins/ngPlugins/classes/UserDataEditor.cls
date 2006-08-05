@@ -109,7 +109,7 @@ Dim l_objNew As Object
         If Not (frmCreateUserData.Cancelled) Then
             l_frmNew.SetFilename ""
             l_frmNew.RefreshAll
-            Set l_objNew = Engine.ScriptEngine.Eval(frmCreateUserData.Expression)
+            Set l_objNew = Engine.ScriptEngine.EvalObject(frmCreateUserData.Expression)
             Set iFileTypePlugin_CreateNew = l_frmNew
             Set iFileTypePlugin_CreateNew.Plugin = Me
             Set l_frmNew.Data = l_objNew

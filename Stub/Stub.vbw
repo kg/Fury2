@@ -2,3 +2,7 @@ frmNull = 81, 33, 1005, 639, C, -483, 233, 441, 839, C
 mdlMain = 36, 8, 960, 615, C
 cBrowseForFolder = 44, 50, 825, 570, C
 mBrowseForFolder = 44, 62, 943, 565, C
+mdlResources = 44, 50, 899, 545, C
+frmLoading = 110, 125, 965, 620, C, 132, 150, 987, 645, C
+Compromise = 44, 50, 899, 545, C
+mdlShellFolders = 110, 125, 965, 620, C

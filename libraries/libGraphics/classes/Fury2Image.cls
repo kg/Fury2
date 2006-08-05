@@ -361,6 +361,8 @@ On Error Resume Next
 End Property
 
 Public Property Get Duplicate() As Fury2Image
+Attribute Duplicate.VB_Description = "*"
+Attribute Duplicate.VB_MemberFlags = "400"
 On Error Resume Next
     Set Duplicate = New Fury2Image
     Duplicate.Copy Me

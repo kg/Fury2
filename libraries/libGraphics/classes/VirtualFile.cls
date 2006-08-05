@@ -19,6 +19,7 @@ Implements IVirtualFileSaveable
 
 Private Declare Sub memcpyvb Lib "kernel32" Alias "RtlMoveMemory" (Destination As Any, Source As Any, ByVal Length As Long)
 
+Private m_lngSegmentMode As Long
 Private m_booWriteMode As Boolean
 Private m_bytData() As Byte
 Private m_lngCursorPos As Long
@@ -29,7 +30,18 @@ Private m_lngBookmark As Long
 Private m_lngSegmentCount As Long
 Private m_booBigEndian As Boolean
 
+Public Property Get SegmentMode() As Long
+On Error Resume Next
+    SegmentMode = m_lngSegmentMode
+End Property
+
+Public Property Let SegmentMode(ByVal NewValue As Long)
+On Error Resume Next
+    m_lngSegmentMode = NewValue
+End Property
+
 Public Property Get Pointer() As Long
+Attribute Pointer.VB_Description = "Returns a pointer to the beginning of the file"
 On Error Resume Next
     Pointer = VarPtr(m_bytData(LBound(m_bytData)))
 End Property
@@ -43,6 +55,7 @@ Dim m_lngIdx As Long
 End Sub
 
 Public Property Get BigEndian() As Boolean
+Attribute BigEndian.VB_Description = "Determines whether the byte order of data will be flipped"
     BigEndian = m_booBigEndian
 End Property
 
@@ -51,6 +64,7 @@ Public Property Let BigEndian(ByVal NewValue As Boolean)
 End Property
 
 Public Property Get Data() As Byte()
+Attribute Data.VB_Description = "A copy of the file's data"
 On Error Resume Next
     Data = m_bytData
 End Property
@@ -88,6 +102,7 @@ End Property
 'End Sub
 
 Public Property Get SegmentLength() As Long
+Attribute SegmentLength.VB_Description = "The length of the current segment"
 On Error Resume Next
     If m_lngSegmentCount > 0 Then
         SegmentLength = m_colSegLengths(m_lngSegmentCount)
@@ -101,6 +116,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Length() As Long
+Attribute Length.VB_Description = "The number of bytes in the file"
 On Error Resume Next
     Length = UBound(m_bytData) + 1
 End Property
@@ -111,6 +127,7 @@ On Error Resume Next
 End Property
 
 Public Property Get CursorPos() As Long
+Attribute CursorPos.VB_Description = "The location of the read/write cursor in the file"
 On Error Resume Next
     CursorPos = m_lngCursorPos
 End Property
@@ -121,6 +138,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Position() As Long
+Attribute Position.VB_Description = "The location of the read/write cursor in the file"
 On Error Resume Next
     Position = m_lngCursorPos
 End Property
@@ -146,6 +164,7 @@ Dim m_lngLength As Long
 End Sub
 
 Public Function EOF() As Boolean
+Attribute EOF.VB_Description = "Returns True if the cursor is at or past the end of the file"
 On Error Resume Next
     If (m_lngCursorPos > (UBound(m_bytData) + 1)) Then
         EOF = True
@@ -153,6 +172,7 @@ On Error Resume Next
 End Function
 
 Public Function EOS() As Boolean
+Attribute EOS.VB_Description = "Returns True if the cursor is at or past the end of the current segment"
 On Error Resume Next
     If m_lngSegmentCount <= 0 Then Exit Function
     If (m_lngCursorPos >= ((m_colSegStarts(m_lngSegmentCount) + (m_colSegLengths(m_lngSegmentCount) + 4)))) Then
@@ -171,6 +191,7 @@ On Error Resume Next
 End Sub
 
 Public Sub LoadFile(ByVal Filename As String)
+Attribute LoadFile.VB_Description = "Loads the contents of Filename into the file"
 On Error Resume Next
 Dim m_lngFileHandle As Long
 Dim m_lngLoadSegment As Long
@@ -203,6 +224,7 @@ Dim m_lngLength As Long
 End Sub
 
 Public Sub LoadFromString(ByRef Data As String)
+Attribute LoadFromString.VB_Description = "Loads Data into the file"
 On Error Resume Next
 Dim m_booCancel As Boolean
     m_lngSegmentCount = 0
@@ -216,11 +238,13 @@ Dim m_booCancel As Boolean
 End Sub
 
 Public Function SaveToString() As String
+Attribute SaveToString.VB_Description = "Converts the contents of the file into a string and returns them"
 On Error Resume Next
     SaveToString = m_bytData
 End Function
 
 Public Sub LoadFileCompressed(ByVal Filename As String)
+Attribute LoadFileCompressed.VB_Description = "Loads the contents of Filename and decompresses them into the file"
 On Error Resume Next
 Dim m_lngFileHandle As Long
 Dim m_lngSourceLength As Long
@@ -273,6 +297,7 @@ Dim m_bytCompressed() As Byte
 End Sub
 
 Public Sub SaveFile(ByVal Filename As String)
+Attribute SaveFile.VB_Description = "Saves the contents of the file to disk as Filename"
 On Error Resume Next
 Dim m_lngFileHandle As Long
     Name Filename As Filename & "~"
@@ -292,6 +317,7 @@ Dim m_lngFileHandle As Long
 End Sub
 
 Private Sub EnsureLength(Length As Long)
+Attribute EnsureLength.VB_Description = "Ensures that the file is at least Length bytes long"
 On Error Resume Next
     If UBound(m_bytData) = -1 Then
         ReDim m_bytData(0 To Length - 2)
@@ -304,6 +330,7 @@ On Error Resume Next
 End Sub
 
 Public Sub RawSave(ByVal DataPointer As Long, ByVal Length As Long)
+Attribute RawSave.VB_Description = "Copies Length bytes of data from the location DataPointer into the file"
 On Error Resume Next
     If DataPointer < 16 Then Exit Sub
     EnsureLength m_lngCursorPos + Length
@@ -313,6 +340,7 @@ On Error Resume Next
 End Sub
 
 Public Function LoadBytes(ByVal Length As Long) As Byte()
+Attribute LoadBytes.VB_Description = "Loads Length bytes from the file and returns them"
 On Error Resume Next
 Dim l_bytData() As Byte
     If (m_lngCursorPos + (Length - 1)) > (UBound(m_bytData) + 1) Then Exit Function
@@ -323,6 +351,7 @@ Dim l_bytData() As Byte
 End Function
 
 Public Sub RawLoad(ByVal DataPointer As Long, ByVal Length As Long)
+Attribute RawLoad.VB_Description = "Reads Length bytes of data from the file and copies them to the location DataPointer"
 On Error Resume Next
     If DataPointer < 16 Then Exit Sub
     If ((m_lngCursorPos + (Length - 1)) > (UBound(m_bytData) + 1)) Or EOS Then
@@ -334,6 +363,7 @@ On Error Resume Next
 End Sub
 
 Public Sub RawSaveCompressed(ByVal DataPointer As Long, ByVal Length As Long)
+Attribute RawSaveCompressed.VB_Description = "Copies Length bytes of data from the location DataPointer into the file and compresses them"
 On Error Resume Next
 Dim m_bytTemp() As Byte, m_lngLength As Long
     m_bytTemp = zlibCompressBytesP(DataPointer, Length)
@@ -346,6 +376,7 @@ Dim m_bytTemp() As Byte, m_lngLength As Long
 End Sub
 
 Public Sub RawLoadCompressed(ByVal DataPointer As Long, ByVal Length As Long)
+Attribute RawLoadCompressed.VB_Description = "Reads Length bytes of compressed data from the file and copies them to the location DataPointer"
 On Error Resume Next
 Dim m_bytTemp() As Byte, m_lngLength As Long
     Load m_lngLength
@@ -356,12 +387,14 @@ Dim m_bytTemp() As Byte, m_lngLength As Long
 End Sub
 
 Public Sub SaveVariant(ByRef Data)
+Attribute SaveVariant.VB_Description = "Saves the type of Data and then the data itself (use with LoadVariant)"
 On Error Resume Next
     Save CInt(VarType(Data))
     Save Data
 End Sub
 
 Public Sub Save(ByRef Data)
+Attribute Save.VB_Description = "Saves Data to the file"
 On Error Resume Next
 Dim m_bytValue As Byte
 Dim m_intValue As Integer
@@ -398,13 +431,17 @@ Dim m_colData As IVirtualFileCollection
             Set m_objData = Data
             m_objData.Serialize Me
         Else
-            Err.Clear
             On Error Resume Next
+            Err.Clear
             Data.Class_Save Me
-            Data.Object_Save Me
-            If Err <> 0 Then
-                Err.Raise 10243, "VirtualFile.Save", "Object does not support VirtualFile serialization"
-                On Error Resume Next
+            If Err = 0 Then
+            Else
+                Err.Clear
+                Data.Object_Save Me
+                If Err = 0 Then
+                Else
+                    Err.Raise 10243, "VirtualFile.Save", "Object does not support VirtualFile serialization"
+                End If
             End If
         End If
     Case Is >= vbArray
@@ -495,6 +532,7 @@ Dim m_colData As IVirtualFileCollection
 End Sub
 
 Public Sub SaveCString(ByRef Data As String)
+Attribute SaveCString.VB_Description = "Saves a null-terminated ASCII string to the file"
 On Error Resume Next
 Dim m_bytText() As Byte
     Err.Clear
@@ -511,6 +549,7 @@ Dim m_bytText() As Byte
 End Sub
 
 Public Sub LoadCString(ByRef Data As String)
+Attribute LoadCString.VB_Description = "Loads a null-terminated ASCII string and stores it in Data"
 On Error Resume Next
 Dim m_lngIndex As Long
 Dim m_bytText() As Byte
@@ -558,6 +597,7 @@ Dim l_booArray As Boolean
 End Function
 
 Public Sub LoadGeneric(ByRef Data, ByVal VarType As String)
+Attribute LoadGeneric.VB_Description = "Loads data of type VarType into Data"
 On Error Resume Next
     ' Fills the data type so that the proper type is loaded. Used for VBscript.
     Select Case GetTypeId(VarType)
@@ -584,6 +624,7 @@ On Error Resume Next
 End Sub
 
 Public Sub Load(ByRef Data)
+Attribute Load.VB_Description = "Loads an arbitrary type from the file and stores it in Data. The type is determined by the current type of Data."
 On Error Resume Next
 Dim m_bytValue As Byte
 Dim m_intValue As Integer
@@ -653,6 +694,7 @@ Dim l_varData As Variant
             Load m_lngCount
             If m_lngCount > 0 Then
                 For m_lngItems = 1 To m_lngCount
+                    Set m_objLoad = Nothing
                     Set m_objLoad = m_colData.CreateNew
                     Load m_objLoad
                     m_colData.AddItem m_objLoad
@@ -663,13 +705,17 @@ Dim l_varData As Variant
             Set m_objData = Data
             m_objData.Deserialize Me
         Else
-            Err.Clear
             On Error Resume Next
+            Err.Clear
             Data.Class_Load Me
-            Data.Object_Load Me
-            If Err <> 0 Then
-                Err.Raise 10243, "VirtualFile.Load", "Object does not support VirtualFile serialization"
-                Exit Sub
+            If Err = 0 Then
+            Else
+                Err.Clear
+                Data.Object_Load Me
+                If Err = 0 Then
+                Else
+                    Err.Raise 10243, "VirtualFile.Save", "Object does not support VirtualFile serialization"
+                End If
             End If
         End If
     Case Is >= vbArray
@@ -769,6 +815,7 @@ Dim l_varData As Variant
 End Sub
 
 Public Function LoadVariant(Optional ByVal ForceType As VbVarType = vbVariant) As Variant
+Attribute LoadVariant.VB_Description = "Loads data of an arbitrary type and returns it. If ForceType is specified, that type of data is loaded. Otherwise, the data type is loaded from the file first."
 On Error Resume Next
 Dim l_intType As Integer
 Dim l_varData As Variant
@@ -803,6 +850,7 @@ Dim l_varData As Variant
 End Function
 
 Public Function ReadString(Optional ByVal EndOfString As String = vbCrLf) As String
+Attribute ReadString.VB_Description = "Reads characters from the file until it hits the character sequence EndOfString, and returns the results"
 On Error Resume Next
 Dim m_lngChars As Long
 Dim m_booEnded As Boolean
@@ -818,9 +866,11 @@ Dim m_bytText() As Byte
         m_lngChars = m_lngChars + 1
     Loop
     ReadString = m_bytText
+    m_lngCursorPos = m_lngCursorPos + Len(ReadString)
 End Function
 
 Public Function ReadStringUnicode(Optional ByVal EndOfString As String = vbCrLf) As String
+Attribute ReadStringUnicode.VB_Description = "Reads characters from the file until it hits the character sequence EndOfString, and returns the results"
 On Error Resume Next
 Dim m_lngChars As Long
 Dim m_strText As String
@@ -834,9 +884,11 @@ Dim m_booEnded As Boolean
         m_lngChars = m_lngChars + 1
     Loop
     ReadStringUnicode = m_strText
+    m_lngCursorPos = m_lngCursorPos + (Len(ReadString) * 2)
 End Function
 
 Sub WriteData(ByRef Data() As Byte)
+Attribute WriteData.VB_Description = "Writes the bytes Data to the file"
 On Error Resume Next
 Dim l_lngLength As Long
     Err.Clear
@@ -845,25 +897,31 @@ Dim l_lngLength As Long
     EnsureLength m_lngCursorPos + l_lngLength
     memcpyvb m_bytData(m_lngCursorPos - 1), Data(LBound(Data)), l_lngLength
     m_lngCursorPos = m_lngCursorPos + l_lngLength
+    IncSegLength l_lngLength
 End Sub
 
 Sub WriteString(ByRef Text As String)
+Attribute WriteString.VB_Description = "Copies Text to the file as ASCII"
 On Error Resume Next
 Dim m_bytText() As Byte
     EnsureLength m_lngCursorPos + Len(Text)
     m_bytText = StrConv(Text, vbFromUnicode)
     memcpyvb m_bytData(m_lngCursorPos - 1), m_bytText(0), Len(Text)
     m_lngCursorPos = m_lngCursorPos + Len(Text)
+    IncSegLength Len(Text)
 End Sub
 
 Sub WriteStringUnicode(ByRef Text As String)
+Attribute WriteStringUnicode.VB_Description = "Copies Text to the file"
 On Error Resume Next
     EnsureLength m_lngCursorPos + (Len(Text) * 2)
     memcpyvb m_bytData(m_lngCursorPos - 1), ByVal StrPtr(Text), Len(Text) * 2
     m_lngCursorPos = m_lngCursorPos + (Len(Text) * 2)
+    IncSegLength Len(Text) * 2
 End Sub
 
 Public Sub MoveCursor(ByVal Location As Long)
+Attribute MoveCursor.VB_Description = "Repositions the cursor to Location"
 On Error Resume Next
     m_lngCursorPos = Location
     If m_lngCursorPos < 1 Then m_lngCursorPos = 1
@@ -881,15 +939,22 @@ On Error Resume Next
 End Sub
 
 Public Sub WriteSegment_Begin()
+Attribute WriteSegment_Begin.VB_Description = "Begins writing a new segment"
 On Error Resume Next
     m_colSegStarts.Add m_lngCursorPos
-    m_lngCursorPos = m_lngCursorPos + 4
+    Select Case m_lngSegmentMode
+    Case 1
+        m_lngCursorPos = m_lngCursorPos + 2
+    Case Else
+        m_lngCursorPos = m_lngCursorPos + 4
+    End Select
     m_colSegLengths.Add 0
     m_lngSegmentCount = m_lngSegmentCount + 1
     m_booWriteMode = True
 End Sub
 
 Public Sub WriteSegment_End()
+Attribute WriteSegment_End.VB_Description = "Finishes writing the current segment"
 On Error Resume Next
 Dim m_lngEnd As Long
     m_lngEnd = m_lngCursorPos
@@ -902,8 +967,9 @@ Dim m_lngEnd As Long
 End Sub
 
 Public Sub ReadSegment_Begin()
+Attribute ReadSegment_Begin.VB_Description = "Begins reading a new segment"
 On Error Resume Next
-Dim m_lngLength As Long
+Dim m_lngLength As Long, m_intLength As Integer
     If m_lngSegmentCount > 0 And EOS = True Then
         m_colSegStarts.Add m_lngCursorPos
         m_colSegLengths.Add 0
@@ -912,13 +978,20 @@ Dim m_lngLength As Long
         Exit Sub
     End If
     m_colSegStarts.Add m_lngCursorPos
-    Load m_lngLength
-    m_colSegLengths.Add m_lngLength
+    Select Case m_lngSegmentMode
+    Case 1
+        Load m_intLength
+        m_colSegLengths.Add CLng(m_intLength)
+    Case Else
+        Load m_lngLength
+        m_colSegLengths.Add m_lngLength
+    End Select
     m_lngSegmentCount = m_lngSegmentCount + 1
     m_booWriteMode = False
 End Sub
 
 Public Sub ReadSegment_End()
+Attribute ReadSegment_End.VB_Description = "Finishes reading the current segment and skips to the end"
 On Error Resume Next
     m_lngCursorPos = m_colSegStarts(m_lngSegmentCount) + m_colSegLengths(m_lngSegmentCount) + 4
     m_colSegLengths.Remove m_lngSegmentCount
@@ -927,6 +1000,7 @@ On Error Resume Next
 End Sub
 
 Public Sub ReadSegment_Cancel()
+Attribute ReadSegment_Cancel.VB_Description = "Cancels reading the current segment"
 On Error Resume Next
     m_colSegLengths.Remove m_lngSegmentCount
     m_colSegStarts.Remove m_lngSegmentCount
@@ -934,6 +1008,7 @@ On Error Resume Next
 End Sub
 
 Public Sub WriteSegment_Cancel()
+Attribute WriteSegment_Cancel.VB_Description = "Cancels writing the current segment"
 On Error Resume Next
     m_colSegLengths.Remove m_lngSegmentCount
     m_colSegStarts.Remove m_lngSegmentCount
@@ -941,6 +1016,7 @@ On Error Resume Next
 End Sub
 
 Public Sub Skip(Length As Long)
+Attribute Skip.VB_Description = "Skips forward by Length bytes"
 On Error Resume Next
     m_lngCursorPos = m_lngCursorPos + Length
     If m_booWriteMode Then IncSegLength Length

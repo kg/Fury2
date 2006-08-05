@@ -22,12 +22,8 @@ Option Explicit
 
 Public m_booIDE As Boolean
 Private m_lngLog As Long
-'Public m_booEditor As Boolean
 Public m_booTrace As Boolean
-'Public m_booCritical As Boolean
-'Public m_booShutdown As Boolean
 Public DefaultEngine As Fury2Engine
-'Public m_Engine As Fury2Engine
 Public m_Globals As New Fury2Globals
 Public SystemRoot As String
 Public m_booMouseVisible As Boolean, m_booOldMouse As Boolean
@@ -245,10 +241,10 @@ On Error Resume Next
 Dim lResult As Long
     If Topmost Then
         Window.ZOrder
-        lResult = SetWindowPos(Window.hWnd, Topmost, 0, 0, 0, 0, NoMove Or NoSize)
+        lResult = SetWindowPos(Window.hwnd, Topmost, 0, 0, 0, 0, NoMove Or NoSize)
         Window.ZOrder
     Else
-        lResult = SetWindowPos(Window.hWnd, NotTopMost, 0, 0, 0, 0, NoMove Or NoSize)
+        lResult = SetWindowPos(Window.hwnd, NotTopMost, 0, 0, 0, 0, NoMove Or NoSize)
     End If
 End Sub
 

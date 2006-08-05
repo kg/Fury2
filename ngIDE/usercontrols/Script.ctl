@@ -1,10 +1,11 @@
 VERSION 5.00
-Object = "{665BF2B8-F41F-4EF4-A8D0-303FBFFC475E}#2.0#0"; "cmcs21.ocx"
 Begin VB.UserControl Script 
    ClientHeight    =   3600
    ClientLeft      =   0
    ClientTop       =   0
    ClientWidth     =   4800
+   ControlContainer=   -1  'True
+   EditAtDesignTime=   -1  'True
    BeginProperty Font 
       Name            =   "Tahoma"
       Size            =   8.25
@@ -18,14 +19,24 @@ Begin VB.UserControl Script
    KeyPreview      =   -1  'True
    ScaleHeight     =   3600
    ScaleWidth      =   4800
-   Begin CodeSenseCtl.CodeSense csScript 
-      Height          =   3450
+   Begin VB.TextBox txtScript 
+      BorderStyle     =   0  'None
+      BeginProperty Font 
+         Name            =   "Courier New"
+         Size            =   11.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   3600
       Left            =   0
-      OleObjectBlob   =   "Script.ctx":0000
+      MultiLine       =   -1  'True
+      ScrollBars      =   3  'Both
       TabIndex        =   0
-      TabStop         =   0   'False
       Top             =   0
-      Width           =   4680
+      Width           =   4800
    End
 End
 Attribute VB_Name = "Script"
@@ -56,41 +67,129 @@ Option Explicit
 Public Event Change()
 Public Event SelectionChange()
 
+Public Property Get CanUndo() As Boolean
+On Error Resume Next
+    CanUndo = False
+End Property
+
+Public Property Get CanRedo() As Boolean
+On Error Resume Next
+    CanRedo = False
+End Property
+
+Public Property Get CanCut() As Boolean
+On Error Resume Next
+    CanCut = txtScript.SelLength > 0
+End Property
+
+Public Property Get CanCopy() As Boolean
+On Error Resume Next
+    CanCopy = txtScript.SelLength > 0
+End Property
+
+Public Property Get CanPaste() As Boolean
+On Error Resume Next
+    CanPaste = Clipboard.GetFormat(vbCFText)
+End Property
+
+Public Property Get CanDelete() As Boolean
+On Error Resume Next
+    CanDelete = txtScript.SelLength > 0
+End Property
+
+Public Sub Cut()
+On Error Resume Next
+    Copy
+    Delete
+End Sub
+
+Public Sub Copy()
+On Error Resume Next
+    Clipboard.Clear
+    Clipboard.SetText txtScript.SelText
+End Sub
+
+Public Sub Paste()
+On Error Resume Next
+    txtScript.SelText = Clipboard.GetText()
+End Sub
+
+Public Sub Delete()
+On Error Resume Next
+    txtScript.SelText = ""
+End Sub
+
+Public Sub Undo()
+On Error Resume Next
+End Sub
+
+Public Sub Redo()
+On Error Resume Next
+End Sub
+
+Public Property Get hwnd() As Long
+On Error Resume Next
+    hwnd = UserControl.hwnd
+End Property
+
+Public Sub OpenFile(ByVal Filename As String)
+On Error Resume Next
+    txtScript.Text = ReadTextFile(Filename)
+End Sub
+
 Public Property Get Text() As String
-    Text = csScript.Text
+On Error Resume Next
+    Text = txtScript.Text
 End Property
 
 Public Property Let Text(ByRef NewText As String)
-    csScript.Text = NewText
+On Error Resume Next
+    txtScript.Text = NewText
 End Property
 
-Public Property Get Control() As CodeSense
+Public Property Get Control() As TextBox
 Attribute Control.VB_UserMemId = 0
 Attribute Control.VB_MemberFlags = "600"
 On Error Resume Next
-    Set Control = csScript
+    Set Control = txtScript
 End Property
 
-Private Sub csScript_Change(ByVal Control As CodeSenseCtl.ICodeSense)
+Private Sub txtScript_Change()
+On Error Resume Next
     RaiseEvent Change
 End Sub
 
-Private Sub csScript_SelChange(ByVal Control As CodeSenseCtl.ICodeSense)
+Private Sub txtScript_KeyDown(KeyCode As Integer, Shift As Integer)
+On Error Resume Next
     RaiseEvent SelectionChange
+End Sub
+
+Private Sub txtScript_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+    RaiseEvent SelectionChange
+End Sub
+
+Private Sub txtScript_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+On Error Resume Next
+    If Button <> 0 Then
+        RaiseEvent SelectionChange
+    End If
 End Sub
 
 Private Sub UserControl_Resize()
 On Error Resume Next
-    csScript.Move 0, 0, UserControl.ScaleWidth, UserControl.ScaleHeight
+'    edScript.Resize 0, 0, UserControl.ScaleWidth, UserControl.ScaleHeight
+    txtScript.Move 0, 0, UserControl.ScaleWidth, UserControl.ScaleHeight
 End Sub
 
 Private Sub UserControl_Show()
 On Error Resume Next
-    InitializeF2Script
-    csScript.Language = "F2Script"
-    With csScript
-        .SetColor cmClrNumber, RGB(0, 64, 96)
-        .SetColor cmClrKeyword, RGB(0, 0, 160)
-        .SetColor cmClrOperator, RGB(160, 0, 0)
-    End With
+'    tmrInit.Enabled = True
+ '    InitializeF2Script
+'    edScript.Language = "F2Script"
+'    With edScript
+'        .SetColor cmClrNumber, RGB(0, 64, 96)
+'        .SetColor cmClrKeyword, RGB(0, 0, 160)
+'        .SetColor cmClrOperator, RGB(160, 0, 0)
+'    End With
 End Sub

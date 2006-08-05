@@ -251,6 +251,14 @@ library Win32 {
         AlphaBlend_Dest_No_Alpha = 0x20
     };
 
+    enum ShellFolderIDs {
+        ShellFolder_Desktop = 0x0010,
+        ShellFolder_ApplicationData = 0x001a,
+        ShellFolder_LocalApplicationData = 0x001c,
+        ShellFolder_MyDocuments = 0x0005,
+        ShellFolder_ProgramFiles = 0x0026
+    };
+
     struct LargeInt {
 	    int Low, High;
     };
@@ -599,6 +607,76 @@ library Win32 {
         int StringLength([string] char* String);
         [entry("lstrlenW")]
         int StringLength_Unicode([string] wchar_t* String);
+        [entry("lstrlenA")]
+        int StringLengthFromPointer([in] void* String);
+        [entry("lstrlenW")]
+        int StringLengthFromPointer_Unicode([in] void* String);
+
+        [entry("LoadLibraryA")]
+        int LoadLibrary([string] char* Path);
+        [entry("LoadLibraryW")]
+        int LoadLibrary_Unicode([string] wchar_t* Path);
+        [entry("LoadLibraryExA")]
+        int LoadLibraryEx([string] char* Path, int Reserved, int Flags);
+        [entry("LoadLibraryExW")]
+        int LoadLibraryEx_Unicode([string] wchar_t* Path, int Reserved, int Flags);
+        [entry("FreeLibrary")]
+        int FreeLibrary(int Handle);
+        [entry("GetModuleHandleA")]
+        int GetModuleHandleFromPointer(int Module);
+        [entry("GetModuleHandleA")]
+        int GetModuleHandle([string] char* Filename);
+        [entry("GetModuleHandleW")]
+        int GetModuleHandle_Unicode([string] wchar_t* Filename);
+
+        [entry("BeginUpdateResourceW")]
+        int BeginUpdateResource([string] wchar_t* Filename, int EraseExistingResources);
+        [entry("UpdateResourceW")]
+        int UpdateResource(int Handle, [string] wchar_t* ResourceType, [string] wchar_t* ResourceName, short Language, [in] void* Data, int DataLength);
+        [entry("UpdateResourceW")]
+        int UpdateResourceByType(int Handle, int ResourceType, [string] wchar_t* ResourceName, short Language, [in] void* Data, int DataLength);
+        [entry("UpdateResourceW")]
+        int UpdateResourceByTypeAndID(int Handle, int ResourceType, int ResourceID, short Language, [in] void* Data, int DataLength);
+        [entry("FindResourceA")]
+        int FindResource(int Module, [string] char* ResourceName, [string] char* ResourceType);
+        [entry("FindResourceW")]
+        int FindResource_Unicode(int Module, [string] wchar_t* ResourceName, [string] wchar_t* ResourceType);
+        [entry("FindResourceA")]
+        int FindResourceID(int Module, [string] char* ResourceName, int ResourceType);
+        [entry("FindResourceW")]
+        int FindResourceID_Unicode(int Module, [string] wchar_t* ResourceName, int ResourceType);
+        [entry("FindResourceExA")]
+        int FindResourceEx(int Module, [string] char* ResourceType, [string] char* ResourceName, short Language);
+        [entry("FindResourceExW")]
+        int FindResourceEx_Unicode(int Module, [string] wchar_t* ResourceType, [string] wchar_t* ResourceName, short Language);
+        [entry("FindResourceExA")]
+        int FindResourceExplicit(int Module, int ResourceType, int ResourceName, short Language);
+        [entry("LoadResource")]
+        int LoadResource(int Module, int Resource);
+        [entry("LockResource")]
+        int LockResource(int ResourceHandle);
+        [entry("SizeofResource")]
+        int SizeofResource(int Module, int Resource);
+        [entry("EnumResourceTypesA")]
+        int EnumResourceTypes(int Module, int Callback, int lParam);
+        [entry("EnumResourceTypesW")]
+        int EnumResourceTypes_Unicode(int Module, int Callback, int lParam);
+        [entry("EnumResourceNamesA")]
+        int EnumResourceNames(int Module, [string] char* ResourceType, int Callback, int lParam);
+        [entry("EnumResourceNamesW")]
+        int EnumResourceNames_Unicode(int Module, [string] wchar_t* ResourceType, int Callback, int lParam);
+        [entry("EnumResourceNamesA")]
+        int EnumResourceNamesID(int Module, int ResourceType, int Callback, int lParam);
+        [entry("EnumResourceNamesW")]
+        int EnumResourceNamesID_Unicode(int Module, int ResourceType, int Callback, int lParam);
+        [entry("EnumResourceLanguagesA")]
+        int EnumResourceLanguages(int Module, [string] char* ResourceType, [string] char* ResourceName, int Callback, int lParam);
+        [entry("EnumResourceLanguagesW")]
+        int EnumResourceLanguages_Unicode(int Module, [string] wchar_t* ResourceType, [string] wchar_t* ResourceName, int Callback, int lParam);
+        [entry("EnumResourceLanguagesA")]
+        int EnumResourceLanguagesEx(int Module, int ResourceType, int ResourceName, int Callback, int lParam);
+        [entry("EndUpdateResourceW")]
+        int EndUpdateResource(int Handle, int DiscardChanges);
 
     }
 
@@ -616,6 +694,14 @@ library Win32 {
     module OLEPro32 {
         [entry("OleCreatePictureIndirect")]
         int CreatePictureIndirect([in] struct PictureDescriptor *PictureDescriptor, [in] struct IId *IId, [in] int TakeOwnership, [out] Picture** Pointer); 
+    }
+
+    [dllname("shell32")]
+    module Shell32 {
+        [entry("SHGetSpecialFolderPathA")]
+        int GetSpecialFolderPath(int hWnd, [out] void* sOut, enum ShellFolderIDs nFolder, int fCreate);
+        [entry("SHGetSpecialFolderPathW")]
+        int GetSpecialFolderPath_Unicode(int hWnd, [out] void* sOut, enum ShellFolderIDs nFolder, int fCreate);
     }
 
     [dllname("msimg32")]

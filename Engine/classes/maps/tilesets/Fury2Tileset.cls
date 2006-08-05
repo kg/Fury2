@@ -265,8 +265,21 @@ End Function
 Sub Free()
 On Error Resume Next
     DeallocateTileset
-    SetParent Nothing
-    Set mvarBuffer = New Fury2Image
+    Set m_lyrParent = Nothing
+    Set m_engEngine = Nothing
+    Set mvarBuffer = Nothing
+    m_colTileData.Clear
+    Set m_colTileData = Nothing
+End Sub
+
+Sub InternalFree()
+On Error Resume Next
+    Handle = 0
+    Set m_lyrParent = Nothing
+    Set m_engEngine = Nothing
+    Set mvarBuffer = Nothing
+    m_colTileData.Clear
+    Set m_colTileData = Nothing
 End Sub
 
 Public Function GenerateBuffer() As Fury2Image
@@ -469,6 +482,7 @@ Dim l_tstTileset As Fury2Tileset
     RefTileset Handle
     RowWidth = l_tstTileset.RowWidth
     TransparentTile = l_tstTileset.TransparentTile
+    Set l_tstTileset = Nothing
 End Sub
 
 Public Property Get MaskColor() As Long
@@ -530,7 +544,6 @@ Dim l_imgImage As Fury2Image
                         Else
                             l_varData = Array()
                             l_varData = .LoadVariant
-                            Debug.Print l_lngIndex; m_engEngine.ToString(l_varData)
                             m_colTileData.Add l_varData
                         End If
                     .ReadSegment_End

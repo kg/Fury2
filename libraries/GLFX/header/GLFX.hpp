@@ -360,6 +360,7 @@ Export inline int WrapValue(int value, int minimum, int maximum) {
 extern GLFXGlobal* Global;
 
 typedef void (ShaderLoadCallback)(const char* filename, char** source);
+typedef void (ShaderFailCallback)(const char* filename);
 
 #include "Override.hpp"
 #include "Import_SoftFX.hpp"

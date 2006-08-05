@@ -496,7 +496,8 @@ namespace GL {
     }
     endDraw();
     textureColor = color;
-    float fv[4] = {color[::Red] / 255.0f, color[::Green] / 255.0f, color[::Blue] / 255.0f, color[::Alpha] / 255.0f};
+    float fv[4];
+    Global->ColorToFloat4(color, fv);
     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, fv);
     Global->checkError();
   }
@@ -505,7 +506,8 @@ namespace GL {
     if (color != fogColor) {
       endDraw();
       fogColor = color;
-      float fv[4] = {fogColor[::Red] / 255.0f, fogColor[::Green] / 255.0f, fogColor[::Blue] / 255.0f, fogColor[::Alpha] / 255.0f};
+      float fv[4];
+      Global->ColorToFloat4(fogColor, fv);
       glFogfv(GL_FOG_COLOR, fv);
     }
   }
@@ -521,7 +523,9 @@ namespace GL {
       endDraw();
       blendColor = color;
       if (GLEW_EXT_blend_color) {
-        glBlendColorEXT(blendColor[::Red] / 255.0f, blendColor[::Green] / 255.0f, blendColor[::Blue] / 255.0f, blendColor[::Alpha] / 255.0f);
+        float fv[4];
+        Global->ColorToFloat4(color, fv);
+        glBlendColorEXT(fv[0], fv[1], fv[2], fv[3]);
       }
     }
   }
@@ -557,7 +561,7 @@ namespace GL {
     }
   }
 
-  void drawRectangle(FX::Rectangle& rect) {
+  inline void drawRectangle(FX::Rectangle& rect) {
     beginDraw(GL_QUADS);
     float x = rect.Left, y = rect.Top, x2 = rect.Left + rect.Width, y2 = rect.Top + rect.Height;
     glVertex2f(x, y);
@@ -566,7 +570,7 @@ namespace GL {
     glVertex2f(x, y2);
   }
 
-  void drawGradientRectangle(FX::Rectangle& rect, Pixel colorTL, Pixel colorTR, Pixel colorBL, Pixel colorBR) {
+  inline void drawGradientRectangle(FX::Rectangle& rect, Pixel colorTL, Pixel colorTR, Pixel colorBL, Pixel colorBR) {
     beginDraw(GL_QUADS);
     float x = rect.Left, y = rect.Top, x2 = rect.Left + rect.Width, y2 = rect.Top + rect.Height;
     setVertexColor(colorTL);
@@ -579,7 +583,7 @@ namespace GL {
     glVertex2f(x, y2);
   }
 
-  void drawTexturedRectangle(FX::Rectangle& rect, float U1, float V1, float U2, float V2) {
+  inline void drawTexturedRectangle(FX::Rectangle& rect, float U1, float V1, float U2, float V2) {
     beginDraw(GL_QUADS);
     float x = rect.Left, y = rect.Top, x2 = rect.Left + rect.Width, y2 = rect.Top + rect.Height;
     glTexCoord2f(U1, V1);
@@ -592,7 +596,7 @@ namespace GL {
     glVertex2f(x, y2);
   }
 
-  void drawTexturedRectangleF(float X, float Y, float W, float H, float U1, float V1, float U2, float V2) {
+  inline void drawTexturedRectangleF(float X, float Y, float W, float H, float U1, float V1, float U2, float V2) {
     beginDraw(GL_QUADS);
     glTexCoord2f(U1, V1);
     glVertex2f(X, Y);

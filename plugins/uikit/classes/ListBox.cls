@@ -18,6 +18,7 @@ Public Visible As Boolean
 Public Parent As Object
 Public EventHandler As Object
 Public Name As String
+Public Label As String
 Public AutoSizeHeight As Boolean
 Public SelectedItem As Long
 Private m_colItems As ItemCollection
@@ -174,6 +175,7 @@ End Sub
 
 Private Function iWidget_HitTest(ByVal X As Long, ByVal Y As Long) As Boolean
 On Error Resume Next
+    If Me.Visible = False Then Exit Function
     iWidget_HitTest = Me.Rectangle.PointInside(X, Y)
 End Function
 
@@ -315,7 +317,7 @@ End Sub
 Private Sub iWidget_Redraw(ByVal Parent As iContainer, ByVal Surface As libGraphics.Fury2Image, ByVal XOffset As Long, ByVal YOffset As Long, ByVal Opacity As Single)
 On Error Resume Next
 Dim l_rctNew As Fury2Rect, l_rctItem As Fury2Rect
-
+Dim l_rctLabel As Fury2Rect
 Dim l_staState As SkinState
 Dim l_lngHeight As Long, l_itmItem As Object, l_lngItem As Long, l_lngY As Long, l_lngItemHeight As Long
 Dim l_lngWidth As Long
@@ -346,6 +348,10 @@ Dim l_lngWidth As Long
         End If
         l_rctItem.Width = l_lngWidth
         m_staState.WindowSkin.Draw Surface, l_rctNew, Opacity
+        Set l_staState = Skin.States("label")
+        Set l_rctLabel = l_staState.Font.GetTextRectangle(Label)
+        l_rctLabel.Translate l_rctNew.Left - (l_rctLabel.Width) - l_staState.EdgeOffset, l_rctNew.Top
+        l_staState.Font.Draw Surface, Label, l_rctLabel, l_staState.TextColor, Opacity
         .PushClipRectangle l_rctNew
         l_lngItem = 1
         For Each l_itmItem In m_colItems

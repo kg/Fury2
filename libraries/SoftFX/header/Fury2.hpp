@@ -78,8 +78,7 @@ enum SpriteObstructionTypes {
     sotUpwardRect = 0,
     sotCenteredRect = 1,
     sotCenteredSphere = 2,
-    sotUpwardPolygon = 3,
-    sotCenteredPolygon = 4
+    sotCenteredPolygon = 3
 };
 
 struct SpriteObstruction {
@@ -202,6 +201,8 @@ struct SpriteParam {
     short Index;
     AnimatedGraphicParam *pAttachedGraphic;
     float ZHeight;
+    float ZLeft;
+    float ZRight;
     unsigned short Reserved1;
     unsigned short Reserved2;
     SpriteParam *pNext;
@@ -227,19 +228,80 @@ struct SpriteParam {
 };
 
 inline bool operator<= (const SpriteParam& lhs, const SpriteParam& rhs) {
-    if (lhs.Position.Y - lhs.Position.Z <= rhs.Position.Y - rhs.Position.Z) {
+  float lw = (lhs.Graphic.Rectangle.Width) / 2.0f;
+  float lx = lhs.Position.X - (lhs.Graphic.XCenter - lw);
+  float lx1 = lx - lw;
+  float lx2 = lx + lw;
+  float ly = lhs.Position.Y - lhs.Position.Z;
+  float ly1 = ly + lhs.ZLeft;
+  float ly2 = ly + lhs.ZRight;
+  float rw = (rhs.Graphic.Rectangle.Width) / 2.0f;
+  float rx = rhs.Position.X - (rhs.Graphic.XCenter - rw);
+  float rx1 = rx - rw;
+  float rx2 = rx + rw;
+  float ry = rhs.Position.Y - rhs.Position.Z;
+  bool overR = (lx2 > rx1) && (lx2 < rx2);
+  bool overL = (lx1 > rx1) && (lx1 < rx2);
+  if (overL || overR) {
+    // x overlap
+    float rp1 = (lx1 - rx1) / (rx2 - rx1);
+    float rp2 = (lx2 - rx1) / (rx2 - rx1);
+    // rhs.y @ lhs.x1
+    float ry1 = ry + (rhs.ZLeft + (rhs.ZRight - rhs.ZLeft) * rp1);
+    // rhs.y @ lhs.x2
+    float ry2 = ry + (rhs.ZLeft + (rhs.ZRight - rhs.ZLeft) * rp2);
+    if (overL && overR) {
+      // inside
+      if ((ly1 <= ry1) || (ly2 <= ry2))
         return true;
-    } else if (lhs.Position.Y - lhs.Position.Z == rhs.Position.Y - rhs.Position.Z) {
-        if (lhs.Position.X < rhs.Position.X) {
-            return true;
-        } else if (lhs.Position.X == rhs.Position.X) {
-            return (lhs.Index < rhs.Index);
-        } else {
-            return false;
-        }
+      if ((ly1 > ry1) && (ly2 > ry2))
+        return false;
+    } else if (overL) {
+      // to the right (lx1 inside)
+      if (ly1 <= ry1)
+        return true;
+      if (ly1 > ry1)
+        return false;
     } else {
+      // to the left (lx2 inside)
+      if (ly2 <= ry2)
+        return true;
+      if (ly2 > ry2)
         return false;
     }
+    if (lx <= rx)
+      return true;
+    else if (lx == rx)
+      return (lhs.Index <= rhs.Index);
+    else
+      return false;
+  } else {
+    // no x overlap
+    if (ly <= ry)
+      return true;
+    else if (ly == ry) {
+      if (lx <= rx)
+        return true;
+      else if (lx == rx)
+        return (lhs.Index <= rhs.Index);
+      else
+        return false;
+    } else
+      return false;
+  }
+  if (lhs.Position.Y - lhs.Position.Z <= rhs.Position.Y - rhs.Position.Z) {
+      return true;
+  } else if (lhs.Position.Y - lhs.Position.Z == rhs.Position.Y - rhs.Position.Z) {
+      if (lhs.Position.X < rhs.Position.X) {
+          return true;
+      } else if (lhs.Position.X == rhs.Position.X) {
+          return (lhs.Index <= rhs.Index);
+      } else {
+          return false;
+      }
+  } else {
+      return false;
+  }
 }
 
 template<>
@@ -303,6 +365,24 @@ struct TextParam {
 	  int TabStopCount;
 	  int* TabStops;
     Byte EnableColorCodes;
+    int Opacity;
+};
+
+struct RenderSpritesParam {
+    int ShadowImage;
+    int FrameRectangleColor;
+    int BlockingColor;
+    int OrientationLineColor;
+    int VelocityLineColor;
+    int SortingLineColor;
+    Byte DrawFrames;
+    Byte DrawSecondaryImages;
+    Byte DrawAttachedGraphics;
+    Byte DrawFrameRectangles;
+    Byte DrawBlocking;
+    Byte DrawOrientationLines;
+    Byte DrawVelocityLines;
+    Byte DrawSortingLines;
 };
 
 struct KerningPair {

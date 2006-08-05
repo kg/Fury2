@@ -52,6 +52,15 @@ Private mvarGridWidth As Long
 Private mvarGridHeight As Long
 Private mvarMaxPoses As Long
 Private mvarMaxFrames As Long
+Private mvarImageWidth As Long
+Private mvarImageHeight As Long
+Private mvarEngine As Fury2Engine
+
+Friend Sub SetEngine(ByRef Engine As Fury2Engine)
+On Error Resume Next
+    Set mvarEngine = Engine
+    Image = Image
+End Sub
 
 Public Property Let MaxPoses(ByVal vData As Long)
     mvarMaxPoses = vData
@@ -145,11 +154,26 @@ End Property
 
 Public Property Let Image(ByVal vData As String)
 Attribute Image.VB_Description = "The filename of the image.{ImagePath}"
+On Error Resume Next
+Dim l_imgImage As Fury2Image
     mvarImage = vData
+    Set l_imgImage = mvarEngine.LoadImage(mvarImage, True)
+    If (l_imgImage Is Nothing) Then
+        mvarImageWidth = 0
+        mvarImageHeight = 0
+    Else
+        mvarImageWidth = l_imgImage.Width
+        mvarImageHeight = l_imgImage.Height
+    End If
 End Property
 
 Public Property Get Image() As String
     Image = mvarImage
+End Property
+
+Public Property Get ImageSize() As String
+On Error Resume Next
+    ImageSize = mvarImageWidth & "x" & mvarImageHeight
 End Property
 
 Public Property Let CellHeight(ByVal vData As Long)
@@ -168,6 +192,26 @@ End Property
 
 Public Property Get CellWidth() As Long
     CellWidth = mvarCellWidth
+End Property
+
+Public Property Let CellsX(ByVal NewValue As Single)
+On Error Resume Next
+    mvarCellWidth = ((mvarImageWidth - mvarMarginLeft - mvarMarginRight) / NewValue) - mvarGridWidth
+End Property
+
+Public Property Get CellsX() As Single
+On Error Resume Next
+    CellsX = (mvarImageWidth - mvarMarginLeft - mvarMarginRight) / (mvarCellWidth + mvarGridWidth)
+End Property
+
+Public Property Let CellsY(ByVal NewValue As Single)
+On Error Resume Next
+    mvarCellHeight = ((mvarImageHeight - mvarMarginTop - mvarMarginBottom) / NewValue) - mvarGridHeight
+End Property
+
+Public Property Get CellsY() As Single
+On Error Resume Next
+    CellsY = (mvarImageHeight - mvarMarginTop - mvarMarginBottom) / (mvarCellHeight + mvarGridHeight)
 End Property
 
 Public Property Let AlignmentX(ByVal vData As Single)
@@ -225,6 +269,7 @@ On Error Resume Next
         .Load mvarMaxPoses
         .Load mvarMaxFrames
         .Load mvarMultiRowPoses
+        Image = Image
     End With
 End Sub
 

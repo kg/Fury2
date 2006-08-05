@@ -65,7 +65,7 @@ void setRenderer(int Renderer, Pixel RenderArgument) {
     if (RenderArgument[::Alpha] > 0) {
       setFogColor(RenderArgument);
       enableFog();
-      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
+      setFogOpacity(Global->FloatLookup[RenderArgument[::Alpha]]);
     } else {
       disableFog();
     }
@@ -96,7 +96,7 @@ void setRenderer(int Renderer, Pixel RenderArgument) {
     if (RenderArgument[::Alpha] > 0) {
       setFogColor(RenderArgument);
       enableFog();
-      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
+      setFogOpacity(Global->FloatLookup[RenderArgument[::Alpha]]);
     } else {
       disableFog();
     }
@@ -110,7 +110,7 @@ void setMaskRenderer(int Renderer, Pixel RenderArgument) {
     if (RenderArgument[::Alpha] > 0) {
       setFogColor(RenderArgument);
       enableFog();
-      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
+      setFogOpacity(Global->FloatLookup[RenderArgument[::Alpha]]);
     } else {
       disableFog();
     }
@@ -119,7 +119,7 @@ void setMaskRenderer(int Renderer, Pixel RenderArgument) {
     if (RenderArgument[::Alpha] > 0) {
       setFogColor(RenderArgument);
       enableFog();
-      setFogOpacity(RenderArgument[::Alpha] / 255.0f);
+      setFogOpacity(Global->FloatLookup[RenderArgument[::Alpha]]);
     } else {
       disableFog();
     }
@@ -182,6 +182,7 @@ defOverride(Allocate_Context) {
   SetImagePitch(Image, 0);
   SetImagePointer(Image, Null);
   SetImageLocked(Image, true);
+  Global->NullShader = new GLSL::FragmentShader();
 	return Success;
 }
 
@@ -883,7 +884,7 @@ defOverride(BlitSimple_Merge_Opacity) {
     GLSL::useProgram(*shader);
     shader->getVariable("tex").set(0);
     shader->getVariable("framebuffer").set(1);
-    shader->getVariable("opacity").set(Opacity / 255.0f);
+    shader->getVariable("opacity").set(Global->FloatLookup[ClipByte(Opacity)]);
     SoftFX::SetImageDirty(Source, 0);
     BlitSimple_Shader_FBTex_Core(Parameters, shader);
     GLSL::disableProgram();
@@ -1085,7 +1086,7 @@ defOverride(BlitSimple_Normal_Tint) {
   setVertexColor(White);
   setBlendColor(White);
   setFogColor(Color);
-  setFogOpacity(Color[::Alpha] / 255.0f);
+  setFogOpacity(Global->FloatLookup[Color[::Alpha]]);
   enableFog();
   BlitSimple_Core(Parameters);
   disableFog();
@@ -1103,7 +1104,7 @@ defOverride(BlitSimple_Normal_Tint_Opacity) {
   setVertexColor(White);
   setBlendColor(Pixel(255, 255, 255, Opacity));
   setFogColor(Color);
-  setFogOpacity(Color[::Alpha] / 255.0f);
+  setFogOpacity(Global->FloatLookup[Color[::Alpha]]);
   enableFog();
   BlitSimple_Core(Parameters);
   disableFog();
@@ -1163,7 +1164,7 @@ defOverride(BlitSimple_Matte_Tint) {
   setBlendMode<SourceAlpha>();
   setVertexColor(White);
   setFogColor(Color);
-  setFogOpacity(Color[::Alpha] / 255.0f);
+  setFogOpacity(Global->FloatLookup[Color[::Alpha]]);
   enableFog();
   prepMatte(Source);
   BlitSimple_Core(Parameters);
@@ -1182,7 +1183,7 @@ defOverride(BlitSimple_Matte_Tint_Opacity) {
   setBlendMode<SourceAlpha>();
   setVertexColor(Pixel(255, 255, 255, Opacity));
   setFogColor(Color);
-  setFogOpacity(Color[::Alpha] / 255.0f);
+  setFogOpacity(Global->FloatLookup[Color[::Alpha]]);
   enableFog();
   prepMatte(Source);
   BlitSimple_Core(Parameters);
@@ -1258,7 +1259,7 @@ defOverride(BlitSimple_SourceAlpha_Tint) {
   setTextureColor(White);
   setVertexColor(White);
   setFogColor(Color);
-  setFogOpacity(Color[::Alpha] / 255.0f);
+  setFogOpacity(Global->FloatLookup[Color[::Alpha]]);
   enableFog();
   BlitSimple_Core(Parameters);
   disableFog();
@@ -1278,7 +1279,7 @@ defOverride(BlitSimple_SourceAlpha_Tint_Opacity) {
   setTextureColor(White);
   setVertexColor(Pixel(255, 255, 255, Opacity));
   setFogColor(Color);
-  setFogOpacity(Color[::Alpha] / 255.0f);
+  setFogOpacity(Global->FloatLookup[Color[::Alpha]]);
   enableFog();
   BlitSimple_Core(Parameters);
   disableFog();
@@ -2734,7 +2735,7 @@ Texture* tex;
     if (Layer->TintColor[::Alpha] > 0) {
       enableFog();
       setFogColor(Layer->TintColor);
-      setFogOpacity(Layer->TintColor[::Alpha] / 255.0f);
+      setFogOpacity(Global->FloatLookup[Layer->TintColor[::Alpha]]);
     }
     break;
   case 1:
@@ -2744,7 +2745,7 @@ Texture* tex;
     if (Layer->TintColor[::Alpha] > 0) {
       enableFog();
       setFogColor(Layer->TintColor);
-      setFogOpacity(Layer->TintColor[::Alpha] / 255.0f);
+      setFogOpacity(Global->FloatLookup[Layer->TintColor[::Alpha]]);
     }
     break;
   case 3:
@@ -3111,7 +3112,7 @@ int BlitDeformMask_GLSL(Override::OverrideParameters *Parameters) {
   program->getVariable("tex").set(0);
   program->getVariable("mesh").set(1);
   program->getVariable("mask").set(2);
-  program->getVariable("opacity").set(Opacity / 255.0f);
+  program->getVariable("opacity").set(Global->FloatLookup[ClipByte(Opacity)]);
   float u1, v1, u2, v2;
   u1 = Global->MeshTexture->U(0.5);
   v1 = Global->MeshTexture->V(0.5);

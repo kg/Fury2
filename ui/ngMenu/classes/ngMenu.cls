@@ -231,7 +231,7 @@ Dim l_lngImageWidth As Long
     Next l_miItem
     RaiseEvent Reflow
     UpdateMouse
-    Host.Redraw
+    If Not (Host Is Nothing) Then Host.Redraw
 End Sub
 
 Friend Sub UpdateMouse()
@@ -247,10 +247,10 @@ Dim l_miNewHover As ngMenuItem
             l_miNewHover.MouseEnter
         Else
         End If
-        Host.Redraw m_miHover.Rectangle
+        If Not (Host Is Nothing) Then Host.Redraw m_miHover.Rectangle
         Set m_miHover = l_miNewHover
         RaiseEvent ItemHover(m_miHover)
-        Host.Redraw m_miHover.Rectangle
+        If Not (Host Is Nothing) Then Host.Redraw m_miHover.Rectangle
         DoShowChildMenu
     End If
 End Sub
@@ -434,6 +434,7 @@ End Sub
 
 Friend Sub DoShowChildMenu()
 On Error Resume Next
+    If Host Is Nothing Then Exit Sub
     If Host.This.ChildMenu Is m_miHover.ChildMenu Then
     Else
         If GetCapture = Host.This.ChildMenu.Host.hwnd Then

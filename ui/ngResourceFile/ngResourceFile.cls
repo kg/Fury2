@@ -16,14 +16,14 @@ Private Const c_dblMaxAge As Double = 10 * 60
 Private Declare Function GetTempPath Lib "kernel32" Alias "GetTempPathA" (ByVal nBufferLength As Long, ByVal lpBuffer As String) As Long
 Private m_colCollection As Collection
 Private m_strFilename As String
-Private m_szaArchive As SAWZipNG.Archive
+'Private m_szaArchive As SAWZipNG.Archive
+Private m_zipZip As Zip
 Private m_dblOpenedAt As Double
 
 Friend Sub Free()
 On Error Resume Next
 Dim l_resResource As ngResource
-    m_szaArchive.Close
-    Set m_szaArchive = Nothing
+    Set m_zipZip = Nothing
     For Each l_resResource In m_colCollection
         l_resResource.Free
     Next l_resResource
@@ -38,86 +38,99 @@ Friend Property Let Filename(ByRef NewValue As String)
     m_strFilename = NewValue
 End Property
 
-Friend Property Get Archive() As SAWZipNG.Archive
-    Set Archive = m_szaArchive
+Friend Property Get Archive() As Zip
+    Set Archive = m_zipZip
 End Property
 
-Friend Property Set Archive(ByVal NewValue As SAWZipNG.Archive)
-    Set m_szaArchive = NewValue
+Friend Property Set Archive(ByVal NewValue As Zip)
+    Set m_zipZip = NewValue
 End Property
 
-Friend Property Get ReadFile(ByRef Filename As String) As Byte()
+'Friend Property Get Archive() As SAWZipNG.Archive
+'    Set Archive = m_szaArchive
+'End Property
+'
+'Friend Property Set Archive(ByVal NewValue As SAWZipNG.Archive)
+'    Set m_szaArchive = NewValue
+'End Property
+
+Friend Function ReadFile(ByRef Filename As String) As Byte()
 On Error Resume Next
 Dim l_lngIndex As Long
 Dim l_strFilename As String, l_strPath As String
 Dim l_lngLength As Long
 Dim l_lngHandle As Long
 Dim l_bytFile() As Byte
-    l_lngIndex = m_szaArchive.FindFile(Filename, FF_NON_SENSITIVE)
+    If Len(Filename) < 1 Then Exit Function
     l_strPath = Space(256)
     l_lngLength = GetTempPath(255, l_strPath)
-    l_strPath = Left(l_strPath, l_lngLength)
-    If m_szaArchive.ExtractAs(l_lngIndex, l_strPath, "ngRes.tmp", False) Then
+    If l_lngLength > 0 Then
+        m_zipZip.UnPack m_strFilename, l_strPath, Replace(Filename, "\", "/")
+        l_strPath = Left(l_strPath, l_lngLength)
         l_lngHandle = FreeFile()
-        Open l_strPath & "ngRes.tmp" For Binary Access Read As #l_lngHandle
+        Open l_strPath & Filename For Binary Access Read As #l_lngHandle
             ReDim l_bytFile(0 To LOF(l_lngHandle) - 1)
             Get #l_lngHandle, 1, l_bytFile
         Close #l_lngHandle
-        Kill l_strPath & "ngRes.tmp"
+        Kill l_strPath & Filename
         ReadFile = l_bytFile
     End If
-End Property
+End Function
 
-Friend Property Get ExtractFile(ByRef Filename As String) As String
+Friend Function ExtractFile(ByRef Filename As String) As String
 On Error Resume Next
 Dim l_lngIndex As Long
 Dim l_strFilename As String, l_strPath As String
 Dim l_lngLength As Long
-    l_lngIndex = m_szaArchive.FindFile(Filename, FF_NON_SENSITIVE)
+    If Len(Filename) < 1 Then Exit Function
     l_strPath = Space(256)
     l_lngLength = GetTempPath(255, l_strPath)
-    l_strPath = Left(l_strPath, l_lngLength)
-    If m_szaArchive.ExtractAs(l_lngIndex, l_strPath, "ngRes.tmp", False) Then
-        ExtractFile = l_strPath & "ngRes.tmp"
+    If l_lngLength > 0 Then
+        l_strPath = Left(l_strPath, l_lngLength)
+        m_zipZip.UnPack m_strFilename, l_strPath, Replace(Filename, "\", "/")
+        ExtractFile = l_strPath & Filename
     End If
-End Property
+End Function
 
 Friend Sub Reopen()
 On Error Resume Next
     m_dblOpenedAt = Timer
-    m_szaArchive.Close
-    m_szaArchive.Open m_strFilename, OM_READONLY
+'    m_szaArchive.Close
+'    m_szaArchive.Open m_strFilename, OM_READONLY
 End Sub
 
 Friend Sub Refresh()
 On Error Resume Next
 Dim l_lngFiles As Long
-Dim l_fiInfo As SAWZipNG.FileInfo
+'Dim l_fiInfo As SAWZipNG.FileInfo
+Dim l_fiInfo As XZip.Item
+Dim l_itmFiles As XZip.Items
 Dim l_resResource As ngResource
     m_dblOpenedAt = Timer
     For Each l_resResource In m_colCollection
         l_resResource.Free
     Next l_resResource
     Set m_colCollection = New Collection
-    m_szaArchive.Close
-    m_szaArchive.Open m_strFilename, OM_READONLY
-    For l_lngFiles = 0 To m_szaArchive.FileCount - 1
+    Set l_itmFiles = m_zipZip.Contents(m_strFilename)
+    For l_lngFiles = 1 To l_itmFiles.Count
         Set l_resResource = New ngResource
-        Set l_fiInfo = m_szaArchive.GetFileInfo(l_lngFiles)
-        l_resResource.Filename = l_fiInfo.Filename
-        Select Case LCase(Mid(l_fiInfo.Filename, InStrRev(l_fiInfo.Filename, ".")))
-        Case ".png", ".gif", ".jpg", ".jpeg", ".bmp", ".tga"
-            l_resResource.ResourceType = rtyImage
-        Case ".ico"
-            l_resResource.ResourceType = rtyIcon
-        Case ".txt"
-            l_resResource.ResourceType = rtyText
-        Case ".f2script", ".vbs", ".js", ".f2sf"
-            l_resResource.ResourceType = rtyScript
-        Case Else
-        End Select
-        l_resResource.SetParent Me
-        m_colCollection.Add l_resResource, l_fiInfo.Filename
+        Set l_fiInfo = l_itmFiles.Item(l_lngFiles)
+        If (l_fiInfo.Type = tFile) Then
+            l_resResource.Filename = Replace(l_fiInfo.Path + l_fiInfo.Name, "/", "\")
+            Select Case LCase(Mid(l_fiInfo.Name, InStrRev(l_fiInfo.Name, ".")))
+            Case ".png", ".gif", ".jpg", ".jpeg", ".bmp", ".tga"
+                l_resResource.ResourceType = rtyImage
+            Case ".ico"
+                l_resResource.ResourceType = rtyIcon
+            Case ".txt"
+                l_resResource.ResourceType = rtyText
+            Case ".f2script", ".vbs", ".js", ".f2sf"
+                l_resResource.ResourceType = rtyScript
+            Case Else
+            End Select
+            l_resResource.SetParent Me
+            m_colCollection.Add l_resResource, Replace(l_fiInfo.Path + l_fiInfo.Name, "/", "\")
+        End If
     Next l_lngFiles
 End Sub
 

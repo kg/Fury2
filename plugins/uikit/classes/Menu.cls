@@ -173,6 +173,7 @@ End Sub
 
 Private Function iWidget_HitTest(ByVal X As Long, ByVal Y As Long) As Boolean
 On Error Resume Next
+    If Me.Visible = False Then Exit Function
     iWidget_HitTest = Me.Rectangle.PointInside(X, Y)
 End Function
 

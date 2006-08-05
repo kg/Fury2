@@ -117,6 +117,8 @@ inline void DebugOut(const wchar_t* string) {
   }
 #endif
 
+#include "memory.hpp"
+#include "string.hpp"
 #include "types.hpp"
 #include "util.hpp"
 #include "registry.hpp"

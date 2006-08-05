@@ -39,8 +39,10 @@ Implements IVirtualFileSaveable
 
 Private mvarScriptFailed As Boolean
 Public ScriptSource As String
+Attribute ScriptSource.VB_VarDescription = "The source code of the object's script."
 Public Index As Long
-Private mvarScript As Object
+Attribute Index.VB_VarDescription = "The area's numeric index in the parent Fury2Areas collection."
+Private m_objScript As Object
 Private mvarX As Long
 Private mvarY As Long
 Private mvarWidth As Long
@@ -50,15 +52,29 @@ Private mvarMoveInterval As Long
 Private mvarRandomChance As Single
 Private mvarNamePattern As String
 Private mvarName As String
-Private mvarScript_Activate As Boolean
-Private mvarScript_Enter As Boolean
-Private mvarScript_Move As Boolean
-Private mvarScript_Leave As Boolean
-Private mvarScript_Load As Boolean
+Private m_objScript_Activate As Boolean
+Private m_objScript_Enter As Boolean
+Private m_objScript_Move As Boolean
+Private m_objScript_Leave As Boolean
+Private m_objScript_Load As Boolean
 Private Type StringUDT
     Length As Long
     Text As String
 End Type
+Private m_lngID_Activate As Long
+Private m_lngID_Enter As Long
+Private m_lngID_Move As Long
+Private m_lngID_Leave As Long
+Private m_lngID_Load As Long
+
+Friend Sub BindScript()
+On Error Resume Next
+    m_lngID_Activate = mvarMap.Engine.ScriptEngine.ResolveMember(m_objScript, "Activate")
+    m_lngID_Load = mvarMap.Engine.ScriptEngine.ResolveMember(m_objScript, "Load")
+    m_lngID_Enter = mvarMap.Engine.ScriptEngine.ResolveMember(m_objScript, "Enter")
+    m_lngID_Move = mvarMap.Engine.ScriptEngine.ResolveMember(m_objScript, "Move")
+    m_lngID_Leave = mvarMap.Engine.ScriptEngine.ResolveMember(m_objScript, "Leave")
+End Sub
 
 Public Function Duplicate() As Fury2Area
 On Error Resume Next
@@ -79,10 +95,12 @@ End Function
 Public Sub Free()
 On Error Resume Next
     Set mvarMap = Nothing
-    Set mvarScript = Nothing
+    m_objScript.F2OInit Nothing, Nothing
+    Set m_objScript = Nothing
 End Sub
 
 Public Function PointInside(ByVal X As Long, ByVal Y As Long) As Boolean
+Attribute PointInside.VB_Description = "Returns true if the specified location is inside the area."
 On Error Resume Next
     If X < mvarX Then Exit Function
     If Y < mvarY Then Exit Function
@@ -101,17 +119,18 @@ Friend Sub SetParent(Parent As Fury2Map)
 End Sub
     
 Function SupportsAction(ByVal Name As String) As Boolean
+Attribute SupportsAction.VB_Description = "Returns True if the object's script supports a given action."
 On Error Resume Next
     With mvarMap.Engine.ScriptEngine.Language
         Select Case LCase(Trim(Name))
         Case "enter"
-            SupportsAction = mvarScript_Enter
+            SupportsAction = m_objScript_Enter
         Case "leave"
-            SupportsAction = mvarScript_Leave
+            SupportsAction = m_objScript_Leave
         Case "move"
-            SupportsAction = mvarScript_Move
+            SupportsAction = m_objScript_Move
         Case "activate"
-            SupportsAction = mvarScript_Activate
+            SupportsAction = m_objScript_Activate
         Case Else
             SupportsAction = .ImplementsMethod(ScriptSource, Name)
         End Select
@@ -120,52 +139,74 @@ On Error Resume Next
 End Function
     
 Function Action(Optional ByVal Activator As Object, Optional ByVal ActionName As String = "Activate") As Boolean
+Attribute Action.VB_Description = "Invokes a given action on the object's script."
 On Error Resume Next
+Dim l_lngID As Long
     mvarMap.Engine.ContextLevelAdd "Area_" + ActionName
     ActionName = LCase(Trim(ActionName))
     Select Case ActionName
     Case "enter"
-        If Not mvarScript_Enter Then
+        If Not m_objScript_Enter Then
             Action = False
             mvarMap.Engine.ContextLevelRemove
             Exit Function
         End If
+        l_lngID = m_lngID_Enter
     Case "leave"
-        If Not mvarScript_Leave Then
+        If Not m_objScript_Leave Then
             Action = False
             mvarMap.Engine.ContextLevelRemove
             Exit Function
         End If
+        l_lngID = m_lngID_Leave
     Case "activate"
-        If Not mvarScript_Activate Then
+        If Not m_objScript_Activate Then
             Action = False
             mvarMap.Engine.ContextLevelRemove
             Exit Function
         End If
+        l_lngID = m_lngID_Activate
     Case "move"
-        If Not mvarScript_Move Then
+        If Not m_objScript_Move Then
             Action = False
             mvarMap.Engine.ContextLevelRemove
             Exit Function
         End If
+        l_lngID = m_lngID_Move
     Case Else
     End Select
-    Action = True
-    If Script Is Nothing Then Else CallByName Script, ActionName, VbMethod, Activator
-    If Err.Number <> 0 Then
-        Err.Clear
-        If Script Is Nothing Then Else CallByName Script, ActionName, VbMethod
-        If Err.Number <> 0 Then Action = False
+    If Not (Script Is Nothing) Then
+        Action = True
+        If l_lngID <> -1 Then
+            Err.Clear
+            mvarMap.Engine.InvokeMember m_objScript, l_lngID, Array(Activator)
+            If Err.Number <> 0 Then
+                Err.Clear
+                mvarMap.Engine.InvokeMember m_objScript, l_lngID
+                If Err <> 0 Then
+                    Action = False
+                End If
+            End If
+        Else
+            Err.Clear
+            CallByName Script, ActionName, VbMethod, Activator
+            If Err.Number <> 0 Then
+                Err.Clear
+                CallByName Script, ActionName, VbMethod
+                If Err.Number <> 0 Then Action = False
+            End If
+        End If
     End If
     mvarMap.Engine.ContextLevelRemove
 End Function
 
 Public Property Get Script() As Object
+Attribute Script.VB_Description = "The object's script."
 On Error Resume Next
 Dim l_strScript As String
     Err.Clear
     If Trim(ScriptSource) = "" Then Exit Property
-    If mvarScript Is Nothing Then
+    If m_objScript Is Nothing Then
         If (mvarScriptFailed = False) Then
             Err.Clear
             With mvarMap.Engine.ScriptEngine.Language
@@ -175,27 +216,29 @@ Dim l_strScript As String
                 .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "newThis", True) & .LineTerminator & _
                 .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "newMap", True) _
                 ) & .LineTerminator & ScriptSource
-                mvarScript_Load = .ImplementsMethod(l_strScript, "Load")
-                mvarScript_Activate = .ImplementsMethod(l_strScript, "Activate")
-                mvarScript_Enter = .ImplementsMethod(l_strScript, "Enter")
-                mvarScript_Move = .ImplementsMethod(l_strScript, "Move")
-                mvarScript_Leave = .ImplementsMethod(l_strScript, "Leave")
-                Set mvarScript = mvarMap.Engine.GenerateScriptObject(l_strScript)
+                m_objScript_Load = .ImplementsMethod(l_strScript, "Load")
+                m_objScript_Activate = .ImplementsMethod(l_strScript, "Activate")
+                m_objScript_Enter = .ImplementsMethod(l_strScript, "Enter")
+                m_objScript_Move = .ImplementsMethod(l_strScript, "Move")
+                m_objScript_Leave = .ImplementsMethod(l_strScript, "Leave")
+                Set m_objScript = mvarMap.Engine.GenerateScriptObject(l_strScript)
+                BindScript
             End With
             Set mvarMap.Engine.IObjThis = Me
-            mvarScript.F2OInit Me, mvarMap
-            mvarScript.Initialize
-            If (mvarScript Is Nothing) Then
+            m_objScript.F2OInit Me, mvarMap
+            m_objScript.Initialize
+            If (m_objScript Is Nothing) Then
                 mvarMap.Engine.DebugOut "Unable to load script for area """ & Name & """"
                 mvarScriptFailed = True
             End If
         End If
     End If
-    Set Script = mvarScript
+    Set Script = m_objScript
     Err.Clear
 End Property
 
 Public Property Let X(ByVal vData As Long)
+Attribute X.VB_Description = "The X coordinate of the area, in pixels."
     mvarX = vData
 End Property
 
@@ -204,6 +247,7 @@ Public Property Get X() As Long
 End Property
 
 Public Property Let Y(ByVal vData As Long)
+Attribute Y.VB_Description = "The Y coordinate of the area, in pixels."
     mvarY = vData
 End Property
 
@@ -212,6 +256,7 @@ Public Property Get Y() As Long
 End Property
 
 Public Property Let Width(ByVal vData As Long)
+Attribute Width.VB_Description = "The width of the area, in pixels."
     mvarWidth = vData
 End Property
 
@@ -220,6 +265,7 @@ Public Property Get Width() As Long
 End Property
 
 Public Property Let Height(ByVal vData As Long)
+Attribute Height.VB_Description = "The height of the area, in pixels."
     mvarHeight = vData
 End Property
 
@@ -228,6 +274,7 @@ Public Property Get Height() As Long
 End Property
 
 Public Property Set Rectangle(vData As Fury2Rect)
+Attribute Rectangle.VB_Description = "The rectangle of the area."
     With vData
         mvarX = .left
         mvarY = .top
@@ -237,6 +284,7 @@ Public Property Set Rectangle(vData As Fury2Rect)
 End Property
 
 Public Property Get MoveInterval() As Long
+Attribute MoveInterval.VB_Description = "Determines how often (in frames) individual Move events are fired."
     MoveInterval = mvarMoveInterval
 End Property
 
@@ -245,6 +293,7 @@ Public Property Let MoveInterval(ByVal NewInterval As Long)
 End Property
 
 Public Property Get RandomChance() As Single
+Attribute RandomChance.VB_Description = "Specifies a random chance for the Move event to fire."
     RandomChance = mvarRandomChance
 End Property
 
@@ -253,6 +302,7 @@ Public Property Let RandomChance(ByVal NewChance As Single)
 End Property
 
 Public Property Get Name() As String
+Attribute Name.VB_Description = "The name of the area."
     Name = mvarName
 End Property
 
@@ -261,6 +311,7 @@ Public Property Let Name(ByVal NewName As String)
 End Property
 
 Public Property Get NamePattern() As String
+Attribute NamePattern.VB_Description = "Specifies an optional mask to apply to sprites before firing events for them."
     NamePattern = mvarNamePattern
 End Property
 
@@ -300,22 +351,22 @@ End Sub
 
 Friend Property Get Script_Activate() As Boolean
 On Error Resume Next
-    Script_Activate = mvarScript_Activate
+    Script_Activate = m_objScript_Activate
 End Property
 
 Friend Property Get Script_Enter() As Boolean
 On Error Resume Next
-    Script_Enter = mvarScript_Enter
+    Script_Enter = m_objScript_Enter
 End Property
 
 Friend Property Get Script_Move() As Boolean
 On Error Resume Next
-    Script_Move = mvarScript_Move
+    Script_Move = m_objScript_Move
 End Property
 
 Friend Property Get Script_Leave() As Boolean
 On Error Resume Next
-    Script_Leave = mvarScript_Leave
+    Script_Leave = m_objScript_Leave
 End Property
 
 Private Sub Class_Initialize()

@@ -49,7 +49,7 @@ Private mvarMatteColor As Long
 Private mvarDelay As Long
 Private mvarImage As Fury2Image
 Private mvarScript As String
-Private mvarParent As Fury2Pose
+Private mvarParent As WeakReference
 Private mvarIndex As Long
 
 Public Function AddSecondaryImage(Optional ByRef Filename As String = "", Optional ByVal ImageType As SecondaryImageTypes = siOverlay) As Fury2SecondaryImage
@@ -78,23 +78,26 @@ Public Property Get Index() As Long
 End Property
 
 Public Property Get Parent() As Fury2Pose
-    Set Parent = mvarParent
+    Set Parent = WRGetPose(mvarParent)
 End Property
 
 Friend Sub SetParent(ByRef Parent As Fury2Pose)
 On Error Resume Next
-    Set mvarParent = Parent
+    WRSet mvarParent, Parent
 End Sub
 
-Public Sub RunScript()
+Public Sub RunScript(Optional ByVal Object As Fury2Sprite = Nothing)
 On Error Resume Next
     If Len(mvarScript) < 1 Then Exit Sub
-    With mvarParent.Parent.Engine.ScriptEngine
-        Set mvarParent.Parent.Engine.IObjThis = mvarParent.Parent
-        .AddCode .Language.GenerateAssignment("Object", "IObjThis", True)
-        .AddCode mvarScript
-        Set mvarParent.Parent.Engine.IObjThis = Nothing
-        .AddCode .Language.GenerateAssignment("Object", "IObjThis", True)
+    If Object Is Nothing Then
+        Set Object = WRGetPose(mvarParent).Parent
+    End If
+    With Object.Engine
+        Set .IObjThis = Object
+        .ScriptEngine.AddCode .ScriptEngine.Language.GenerateAssignment("Object", "IObjThis", True)
+        .ScriptEngine.AddCode mvarScript
+        Set .IObjThis = Nothing
+        .ScriptEngine.AddCode .ScriptEngine.Language.GenerateAssignment("Object", "IObjThis", True)
     End With
 End Sub
 
@@ -107,27 +110,32 @@ Public Property Let Script(ByRef Value As String)
     mvarScript = Value
 End Property
 
-Public Sub LoadGraphics()
+Public Sub LoadGraphics(Optional ByVal Object As Fury2Sprite = Nothing)
 On Error Resume Next
 Dim l_varVariables As Variant
 Dim l_strFilename As String
 Dim l_siImage As Fury2SecondaryImage
-    Set mvarSecondaryImages.Engine = mvarParent.Parent.Engine
+Dim l_posParent As Fury2Pose
+    Set l_posParent = WRGetPose(mvarParent)
+    If Object Is Nothing Then
+        Set Object = l_posParent.Parent
+    End If
+    Set mvarSecondaryImages.Engine = Object.Engine
     l_varVariables = Array(Array("i", mvarIndex), Array("Index", mvarIndex), _
-        Array("p", mvarParent.Index), Array("pose", mvarParent.Index), _
-        Array("pn", mvarParent.Name), Array("posename", mvarParent.Name), _
-        Array("n", mvarParent.Parent.Name), Array("name", mvarParent.Parent.Name))
-    l_strFilename = mvarParent.Parent.Engine.ParseString(mvarFilename, l_varVariables)
+        Array("p", l_posParent.Index), Array("pose", l_posParent.Index), _
+        Array("pn", l_posParent.Name), Array("posename", l_posParent.Name), _
+        Array("n", Object.Name), Array("name", Object.Name))
+    l_strFilename = Object.Engine.ParseString(mvarFilename, l_varVariables)
     If Not mvarImage Is Nothing Then
         If mvarImage.Name <> Filename Then
             Set mvarImage = Nothing
         End If
     End If
     If mvarImage Is Nothing Then
-        Set mvarImage = mvarParent.Parent.Engine.LoadImage(l_strFilename)
+        Set mvarImage = Object.Engine.LoadImage(l_strFilename)
     End If
     If mvarImage Is Nothing Then
-        mvarParent.Parent.Engine.CriticalError "Fury2PoseFrame.LoadGraphics", "Unable to load frame: " + l_strFilename
+        Object.Engine.CriticalError "Fury2PoseFrame.LoadGraphics", "Unable to load frame: " + l_strFilename
     Else
         mvarImage.MatteColor = mvarMatteColor
     End If
@@ -146,7 +154,7 @@ Dim l_siImage As Fury2SecondaryImage
     Next l_siImage
     mvarSecondaryImages.Clear
     Set mvarSecondaryImages = Nothing
-    Set mvarParent = Nothing
+    WRFree mvarParent
     Set mvarImage = Nothing
 End Sub
 

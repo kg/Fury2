@@ -42,14 +42,20 @@ Implements Fury2Object
 Implements IVirtualFileCollection
 Implements IVirtualFileSaveable
 
-Public index As Long
+Public Index As Long
 Private mCol As Collection
 Private mvarLooping As Boolean
-Private mvarParent As Fury2Sprite
+Private mvarParent As WeakReference
+
+Public Sub Free()
+On Error Resume Next
+    WRFree mvarParent
+    Clear
+End Sub
 
 Public Property Get Current() As Fury2Waypoint
 On Error Resume Next
-    Set Current = mCol(index)
+    Set Current = mCol(Index)
 End Property
 
 Public Function Duplicate() As Fury2Path
@@ -60,7 +66,7 @@ Dim l_wpNode As Fury2Waypoint
     For Each l_wpNode In mCol
         l_pthNew.AddObject l_wpNode.Duplicate()
     Next l_wpNode
-    l_pthNew.index = index
+    l_pthNew.Index = Index
     l_pthNew.Looping = mvarLooping
     Set Duplicate = l_pthNew
 End Function
@@ -70,31 +76,31 @@ On Error Resume Next
     IInspectableCollection_ItemCount = mCol.Count
 End Property
 
-Private Property Set IInspectableCollection_ItemValue(ByVal index As Long, ByVal RHS As Variant)
+Private Property Set IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
 On Error Resume Next
 End Property
 
-Private Property Let IInspectableCollection_ItemValue(ByVal index As Long, ByVal RHS As Variant)
+Private Property Let IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
 On Error Resume Next
 End Property
 
-Private Property Get IInspectableCollection_ItemValue(ByVal index As Long) As Variant
+Private Property Get IInspectableCollection_ItemValue(ByVal Index As Long) As Variant
 On Error Resume Next
     Err.Clear
-    Set IInspectableCollection_ItemValue = mCol(index)
+    Set IInspectableCollection_ItemValue = mCol(Index)
     If Err <> 0 Then
-        IInspectableCollection_ItemValue = mCol(index)
+        IInspectableCollection_ItemValue = mCol(Index)
     End If
 End Property
 
 Friend Sub SetParent(ByRef Parent As Fury2Sprite)
 On Error Resume Next
-    Set mvarParent = Parent
+    WRSet mvarParent, Parent
 End Sub
 
 Public Sub SkipTo(ByVal NewIndex As Long)
 On Error Resume Next
-    Skip (NewIndex - index)
+    Skip (NewIndex - Index)
 End Sub
 
 Public Sub Skip(Optional ByVal Count As Long = 1)
@@ -110,14 +116,16 @@ Public Sub Completed()
 On Error Resume Next
 Dim l_objWaypoint As Fury2Waypoint
     Set l_objWaypoint = Current
-    mvarParent.WaypointReached l_objWaypoint
-    If l_objWaypoint.ReachedEvent <> "" Then
-        mvarParent.Map.Engine.ScriptEngine.AddCode l_objWaypoint.ReachedEvent
-    End If
+    With WRGetSprite(mvarParent)
+        .WaypointReached l_objWaypoint
+        If l_objWaypoint.ReachedEvent <> "" Then
+            .Map.Engine.ScriptEngine.AddCode l_objWaypoint.ReachedEvent
+        End If
+    End With
     If mvarLooping Then
-        index = WrapValue(index + 1, 1, mCol.Count)
+        Index = WrapValue(Index + 1, 1, mCol.Count)
     Else
-        index = index + 1
+        Index = Index + 1
     End If
 End Sub
 
@@ -140,7 +148,7 @@ On Error Resume Next
     Do While mCol.Count > 1
         mCol.Remove 1
     Loop
-    index = 1
+    Index = 1
 End Sub
 
 Sub Reset()
@@ -223,7 +231,7 @@ End Property
 Private Sub Class_Initialize()
 On Error Resume Next
     Set mCol = New Collection
-    index = 1
+    Index = 1
 End Sub
 
 Private Sub Class_Terminate()
@@ -246,9 +254,9 @@ On Error Resume Next
     Set IVirtualFileCollection_CreateNew = New Fury2Waypoint
 End Function
 
-Private Function IVirtualFileCollection_GetItem(ByVal index As Long) As Object
+Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object
 On Error Resume Next
-    Set IVirtualFileCollection_GetItem = mCol.Item(index)
+    Set IVirtualFileCollection_GetItem = mCol.Item(Index)
 End Function
 
 Private Sub IVirtualFileCollection_Reset()
@@ -264,7 +272,7 @@ End Sub
 Private Sub IVirtualFileCollection_LoadHeader(File As libGraphics.VirtualFile)
 On Error Resume Next
     File.Load mvarLooping
-    index = 1
+    Index = 1
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)

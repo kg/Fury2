@@ -43,6 +43,7 @@ Private mvarWidth As Long
 Private mvarHeight As Long
 
 Public Property Get Width() As Long
+Attribute Width.VB_Description = "The width of the blocking rectangle."
     Width = mvarWidth
 End Property
 
@@ -51,6 +52,7 @@ Public Property Let Width(ByVal NewWidth As Long)
 End Property
 
 Public Property Get Polygon() As Fury2Polygon
+Attribute Polygon.VB_Description = "The blocking polygon used if the sprite's BlockingMode is set to polygon."
     Set Polygon = mvarPolygon
 End Property
 
@@ -59,6 +61,7 @@ Public Property Set Polygon(ByVal NewPoly As Fury2Polygon)
 End Property
 
 Public Property Get Height() As Long
+Attribute Height.VB_Description = "The height of the blocking rectangle."
     Height = mvarHeight
 End Property
 

@@ -88,22 +88,22 @@ End Function
 
 Public Function LoadResourceFile(ByRef Filename As String) As ngResourceFile
 On Error Resume Next
-Dim l_szaArchive As SAWZipNG.Archive
+'Dim l_szaArchive As SAWZipNG.Archive
 Dim l_rfFile As ngResourceFile
     Set l_rfFile = g_colResourceCache(Filename)
     If l_rfFile Is Nothing Then
-        Set l_szaArchive = New SAWZipNG.Archive
+'        Set l_szaArchive = New SAWZipNG.Archive
         Err.Clear
-        Call l_szaArchive.Open(Filename, OM_READONLY)
-        If Err <> 0 Then
-            Err.Clear
-            Exit Function
-        End If
-        If l_szaArchive.Closed Then
-            Exit Function
-        End If
+'        Call l_szaArchive.Open(Filename, OM_READONLY)
+'        If Err <> 0 Then
+'            Err.Clear
+'            Exit Function
+'        End If
+'        If l_szaArchive.Closed Then
+'            Exit Function
+'        End If
         Set l_rfFile = New ngResourceFile
-        Set l_rfFile.Archive = l_szaArchive
+        Set l_rfFile.Archive = New XZip.Zip
         l_rfFile.Filename = Filename
         l_rfFile.Refresh
         g_colResourceCache.Add l_rfFile
@@ -114,7 +114,7 @@ End Function
 Private Sub Class_Initialize()
 On Error Resume Next
     F2Init
-    g_booEnableThemes = True
+    'g_booEnableThemes = True
     If g_colResourceCache Is Nothing Then
         Set g_colResourceCache = New Collection
     End If

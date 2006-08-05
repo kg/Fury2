@@ -47,9 +47,9 @@ Private m_engEngine As Fury2Engine
 Public Sub Changed()
 On Error Resume Next
 Dim l_lngItem As Long
-    If mvarMembers.count > 0 Then
-        For l_lngItem = 1 To mvarMembers.count
-            mvarMembers(l_lngItem).index = l_lngItem
+    If mvarMembers.Count > 0 Then
+        For l_lngItem = 1 To mvarMembers.Count
+            mvarMembers(l_lngItem).Index = l_lngItem
         Next l_lngItem
     End If
 End Sub
@@ -64,15 +64,15 @@ Public Property Get Engine() As Fury2Engine
     Set Engine = m_engEngine
 End Property
 
-Public Sub InitMap(ByVal index As Long, ByVal StartX As Single, ByVal StartY As Single, ByVal Layer As Long)
+Public Sub InitMap(ByVal Index As Long, ByVal StartX As Single, ByVal StartY As Single, ByVal Layer As Long)
 On Error Resume Next
 Dim m_lngItems As Long
-    If mvarMembers.count > 0 Then
-        For m_lngItems = 1 To mvarMembers.count
-            mvarMembers(m_lngItems).InitMap index, StartX, StartY, Layer
+    If mvarMembers.Count > 0 Then
+        For m_lngItems = 1 To mvarMembers.Count
+            mvarMembers(m_lngItems).InitMap Index, StartX, StartY, Layer
         Next m_lngItems
     End If
-    If mvarMembers.count > 0 Then
+    If mvarMembers.Count > 0 Then
         If Controller Is Nothing Then
         Else
             Engine.UnHookEvents Controller
@@ -80,8 +80,7 @@ Dim m_lngItems As Long
         End If
         Set Controller = Engine.F2Controller(mvarMembers(Leader).Sprite, Engine.Cameras(1))
         If Controller Is Nothing Then
-            Set Controller = New Fury2Controller
-            Set Controller.Camera = Engine.Cameras(1)
+            Set Controller = Engine.F2Controller(Nothing, Engine.Cameras(1))
         End If
         Engine.HookEvents Controller
     End If
@@ -92,7 +91,7 @@ On Error Resume Next
     Err.Clear
     With Engine.ScriptEngine
         .AddCode .Language.GenerateAssignment("NewPartyMember", .Language.GenerateInstantiation("PartyMember"), True)
-        Set CreateMember = .Eval("NewPartyMember")
+        Set CreateMember = .EvalObject("NewPartyMember")
     End With
     Err.Clear
 End Function
@@ -126,8 +125,8 @@ Dim m_lngMembers As Long, m_strName As String
   Set Item = mvarMembers(vntIndexKey)
   If VarType(vntIndexKey) = vbString And Item Is Nothing Then
         m_strName = LCase(Trim(CStr(vntIndexKey)))
-        If mvarMembers.count > 0 Then
-            For m_lngMembers = 1 To mvarMembers.count
+        If mvarMembers.Count > 0 Then
+            For m_lngMembers = 1 To mvarMembers.Count
                 If LCase(Trim(mvarMembers(m_lngMembers).Name)) = m_strName Then
                     Set Item = mvarMembers(m_lngMembers)
                     Exit For
@@ -137,9 +136,9 @@ Dim m_lngMembers As Long, m_strName As String
   End If
 End Property
 
-Public Property Get count() As Long
-Attribute count.VB_MemberFlags = "40"
-    count = mvarMembers.count
+Public Property Get Count() As Long
+Attribute Count.VB_MemberFlags = "40"
+    Count = mvarMembers.Count
 End Property
 
 Public Sub Remove(vntIndexKey As Variant)

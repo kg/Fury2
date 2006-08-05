@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.12#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.2#0"; "ngUI.ocx"
 Begin VB.UserControl EntityList 
    AutoRedraw      =   -1  'True
    ClientHeight    =   3600
@@ -66,7 +66,7 @@ Attribute VB_Exposed = False
 '
 
 Option Explicit
-Private Declare Function ClientToScreen Lib "user32" (ByVal hwnd As Long, lpPoint As PointAPI) As Long
+Private Declare Function ClientToScreen Lib "user32" (ByVal hwnd As Long, lpPoint As POINTAPI) As Long
 Private m_objBoundObject As Object
 Private m_booEnableDragging As Boolean
 Private m_booEnableMultiSelect As Boolean
@@ -223,7 +223,7 @@ On Error Resume Next
 Dim l_lngMenuX As Long, l_lngMenuY As Long
 Dim l_lngY As Long, l_lngIndex As Long
 Dim l_objObject As Object
-Dim l_ptPoint As PointAPI
+Dim l_ptPoint As POINTAPI
     If BoundObject Is Nothing Then Exit Sub
     l_lngY = Y + vsScrollbar.Value
     l_lngIndex = (l_lngY \ m_lngItemHeight) + 1
@@ -272,6 +272,7 @@ End Sub
 Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_lngY As Long, l_lngIndex As Long, l_lngOldIndex As Long
+Dim l_objObject As Object, l_strName As String
     l_lngY = Y + vsScrollbar.Value
     l_lngIndex = (l_lngY \ m_lngItemHeight) + 1
     If (Button = 1) And (m_booDragging) And (m_booEnableDragging) Then
@@ -284,6 +285,16 @@ Dim l_lngY As Long, l_lngIndex As Long, l_lngOldIndex As Long
                 m_booDragged = True
             End If
         End If
+    End If
+    If (l_lngIndex >= 1) And (l_lngIndex <= BoundObject.Count) Then
+        Set l_objObject = BoundObject(l_lngIndex)
+        l_strName = l_objObject.Name
+        If Err <> 0 Then
+            l_strName = Replace(NamePattern, "%i", CStr(l_lngIndex))
+        End If
+        UserControl.extender.ToolTipText = l_strName
+    Else
+        UserControl.extender.ToolTipText = ""
     End If
 End Sub
 
@@ -302,7 +313,7 @@ Private Sub UserControl_Paint()
 On Error Resume Next
 Static m_booHere As Boolean
 Dim l_lngY As Long, l_lngHeight As Long, l_lngItems As Long, l_lngMaxHeight As Long
-Dim l_objObject As Object, l_rctItem As Rect
+Dim l_objObject As Object, l_rctItem As RECT
 Dim l_strName As String
     If m_booActive = False Then Exit Sub
     If m_booHere Then Exit Sub

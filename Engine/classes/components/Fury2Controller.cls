@@ -47,12 +47,15 @@ Public Style As Long
 Public TurnSpeed As Double
 Public TileBased As Boolean
 
+Private m_sngAngles(0 To 7) As Single
+
 Private BlockAccumulator As Long
 Private InputState(0 To 3) As Boolean
 
 Public LeftBinding As String, UpBinding As String, RightBinding As String, DownBinding As String, ActivateBinding As String
 
 Private Sub Class_Initialize()
+On Error Resume Next
     ScrollSpeed = 1
     MoveCamera = True
     Enabled = True
@@ -61,6 +64,36 @@ Private Sub Class_Initialize()
     RightBinding = "Right"
     DownBinding = "Down"
     ActivateBinding = "OK"
+    Angles = Array(0, 45, 90, 135, 180, 225, 270, 315)
+End Sub
+
+Public Property Get Angles() As Variant
+On Error Resume Next
+Dim l_varAngles As Variant
+Dim l_lngAngles As Long
+    ReDim l_varAngles(0 To UBound(m_sngAngles))
+    For l_lngAngles = 0 To UBound(m_sngAngles)
+        l_varAngles(l_lngAngles) = m_sngAngles(l_lngAngles)
+    Next l_lngAngles
+    Angles = l_varAngles
+End Property
+
+Public Property Let Angles(ByRef NewAngles As Variant)
+On Error Resume Next
+Dim l_lngAngles As Long
+    For l_lngAngles = 0 To UBound(m_sngAngles)
+        m_sngAngles(l_lngAngles) = CSng(NewAngles(l_lngAngles))
+    Next l_lngAngles
+End Property
+
+Private Sub Class_Terminate()
+On Error Resume Next
+    If TypeOf Obj Is Fury2Sprite Then
+        If Engine.GetReferenceCount(Obj) = 4 Then
+            Obj.Free
+            Set Obj = Nothing
+        End If
+    End If
 End Sub
 
 Private Sub Fury2Plugin_ControlActivate(Control As Fury2InputControl)
@@ -246,28 +279,28 @@ Dim l_sngRotDir As Single, l_sngThrust As Single
                                 ' Direct movement
                                 If InputState(3) = False And InputState(0) = False And _
                                 InputState(1) = True And InputState(2) = False Then
-                                    .Angle = 90 ' Right
+                                    .Angle = m_sngAngles(2) ' Right
                                 ElseIf InputState(3) = False And InputState(0) = False And _
                                 InputState(1) = True And InputState(2) = True Then
-                                    .Angle = 135 ' Down-Right
+                                    .Angle = m_sngAngles(3) ' Down-Right
                                 ElseIf InputState(3) = False And InputState(0) = False And _
                                 InputState(1) = False And InputState(2) = True Then
-                                    .Angle = 180 ' Down
+                                    .Angle = m_sngAngles(4) ' Down
                                 ElseIf InputState(3) = True And InputState(0) = False And _
                                 InputState(1) = False And InputState(2) = True Then
-                                    .Angle = 225 ' Down-Left
+                                    .Angle = m_sngAngles(5) ' Down-Left
                                 ElseIf InputState(3) = True And InputState(0) = False And _
                                 InputState(1) = False And InputState(2) = False Then
-                                    .Angle = 270 ' Left
+                                    .Angle = m_sngAngles(6) ' Left
                                 ElseIf InputState(3) = True And InputState(0) = True And _
                                 InputState(1) = False And InputState(2) = False Then
-                                    .Angle = 315 ' Up-Left
+                                    .Angle = m_sngAngles(7) ' Up-Left
                                 ElseIf InputState(3) = False And InputState(0) = True And _
                                 InputState(1) = False And InputState(2) = False Then
-                                    .Angle = 0 ' Up
+                                    .Angle = m_sngAngles(0) ' Up
                                 ElseIf InputState(3) = False And InputState(0) = True And _
                                 InputState(1) = True And InputState(2) = False Then
-                                    .Angle = 45 ' Up-Right
+                                    .Angle = m_sngAngles(1) ' Up-Right
                                 End If
                                 If InputState(3) Or InputState(1) Or InputState(0) Or InputState(2) Then
                                     If (.State = .IdleState) Then .State = .WalkState

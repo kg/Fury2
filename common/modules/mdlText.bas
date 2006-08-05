@@ -11,26 +11,64 @@ Attribute VB_Name = "mdlText"
 Option Explicit
 
 Public Enum TextFormats
-    tfASCII
+    tfAscii
     tfUTF8
     tfUCS2LittleEndian
     tfUCS2BigEndian
 End Enum
 
-Public Function EncodeTextFormat(ByRef Text As String, ByVal NewFormat As TextFormats) As Byte()
+Public Function EncodeTextFormat(ByRef Text As String, ByVal NewFormat As TextFormats, Optional ByRef IsUTF8 As Boolean = False) As Byte()
 On Error Resume Next
+Dim l_bytData() As Byte
     Select Case NewFormat
-    Case tfASCII
+    Case tfAscii
         EncodeTextFormat = Text
     Case tfUCS2LittleEndian
         EncodeTextFormat = ChrW(&HFEFF) & Text
     Case tfUCS2BigEndian
-        ' Unimplemented
+        EncodeTextFormat = ChrW(&HFEFF) & Text
+        SwapEndianness EncodeTextFormat, 2
     Case tfUTF8
-        ' Unimplemented
+        EncodeTextFormat = EncodeUTF8(Text, IsUTF8)
     Case Else
     End Select
 End Function
+
+Public Sub WriteTextFile(ByRef Filename As String, ByRef Text As String, Optional ByVal Format As TextFormats = tfUTF8)
+On Error Resume Next
+Dim l_lngHandle As Long, l_lngLength As Long
+Dim l_bytHeader() As Byte, l_bytData() As Byte
+Dim l_fmtFormat As TextFormats
+Dim l_booUTF8 As Boolean
+    Err.Clear
+    l_lngHandle = FreeFile()
+    Open Filename + "_" For Binary Access Write As #l_lngHandle
+        If Err <> 0 Then
+            Err.Raise Err.Number, "WriteTextFile:OpenFile", Err.Description
+            Exit Sub
+        End If
+        l_bytData = EncodeTextFormat(Text, Format, l_booUTF8)
+        If (l_booUTF8) Then
+            Put #l_lngHandle, 1, CByte(&HEF)
+            Put #l_lngHandle, 2, CByte(&HBB)
+            Put #l_lngHandle, 3, CByte(&HBF)
+            Put #l_lngHandle, 4, l_bytData
+        Else
+            Put #l_lngHandle, 1, l_bytData
+        End If
+    Close #l_lngHandle
+    If Err <> 0 Then
+        Err.Raise Err.Number, "WriteTextFile:" & Err.Source, Err.Description
+        Exit Sub
+    End If
+    Err.Clear
+    Kill Filename
+    Name Filename + "_" As Filename
+    If Err <> 0 Then
+        Err.Raise Err.Number, "WriteTextFile:Save", Err.Description
+        Exit Sub
+    End If
+End Sub
 
 Public Function ReadTextFile(ByRef Filename As String) As String
 On Error Resume Next
@@ -46,7 +84,7 @@ Dim l_fmtFormat As TextFormats
         End If
         l_lngLength = LOF(l_lngHandle)
         If l_lngLength < 3 Then
-            l_fmtFormat = tfASCII
+            l_fmtFormat = tfAscii
             ReDim l_bytData(0 To l_lngLength - 1)
             Get #l_lngHandle, 1, l_bytData
             ReadTextFile = ReadTextData(l_bytData, l_fmtFormat)
@@ -69,7 +107,7 @@ Dim l_fmtFormat As TextFormats
                 Get #l_lngHandle, 3, l_bytData
                 ReadTextFile = ReadTextData(l_bytData, l_fmtFormat)
             Else
-                l_fmtFormat = tfASCII
+                l_fmtFormat = tfAscii
                 ReDim l_bytData(0 To l_lngLength - 1)
                 Get #l_lngHandle, 1, l_bytData
                 ReadTextFile = ReadTextData(l_bytData, l_fmtFormat)
@@ -85,7 +123,7 @@ End Function
 Public Function ReadTextData(ByRef Data() As Byte, ByVal Format As TextFormats) As String
 On Error Resume Next
     Select Case Format
-    Case tfASCII
+    Case tfAscii
         ReadTextData = StrConv(Data, vbUnicode)
         If Err <> 0 Then
             Err.Raise Err.Number, "ReadTextData:StrConv", Err.Description
@@ -108,6 +146,52 @@ On Error Resume Next
         End If
         ReadTextData = Data
     End Select
+End Function
+
+Public Function EncodeUTF8(ByRef Text As String, Optional ByRef IsUTF8 As Boolean = False) As Byte()
+On Error Resume Next
+Dim l_lngCharacter As Long
+Dim l_lngLength As Long
+Dim l_bytBuffer() As Byte, l_lngBufferLength As Long
+Dim l_bytNewData(0 To 2) As Byte
+Dim l_lngValue As Long
+    Err.Clear
+    ReDim l_bytBuffer(0 To 4095)
+    l_lngBufferLength = 0
+    l_lngCharacter = 1
+    Do While l_lngCharacter <= Len(Text)
+        l_lngValue = AscW(Mid(Text, l_lngCharacter, 1))
+        If (l_lngValue >= &HFFFF&) Then
+            ' Character outside supported range. Visual Basic strings are two bytes per character.
+            Err.Raise 6, "EncodeUTF8", "Overflow (character value outside of supported range)"
+            Exit Function
+        ElseIf (l_lngValue >= &H800&) Then
+            ' 3 bytes
+            l_lngLength = 3
+            l_bytNewData(0) = (&HE0) Or (l_lngValue And &HF)
+            l_bytNewData(1) = (&H80) Or ((l_lngValue \ 16) And &H3F)
+            l_bytNewData(2) = (&H80) Or ((l_lngValue \ 1024) And &H3F)
+            IsUTF8 = True
+        ElseIf (l_lngValue >= &H80&) Then
+            ' 2 bytes
+            l_lngLength = 2
+            l_bytNewData(0) = (&HC0) Or (l_lngValue And &H1F)
+            l_bytNewData(1) = (&H80) Or ((l_lngValue \ 64) And &H3F)
+            IsUTF8 = True
+        ElseIf (l_lngValue <= &H7F&) Then
+            ' 1 byte
+            l_lngLength = 1
+            l_bytNewData(0) = l_lngValue And &H7F
+        End If
+        l_lngBufferLength = l_lngBufferLength + l_lngLength
+        If (l_lngBufferLength > (UBound(l_bytBuffer) - LBound(l_bytBuffer) + 1)) Then
+            ReDim Preserve l_bytBuffer(0 To UBound(l_bytBuffer) + 4096)
+        End If
+        CopyMemory ByVal VarPtr(l_bytBuffer(l_lngBufferLength - l_lngLength)), ByVal VarPtr(l_bytNewData(0)), l_lngLength
+        l_lngCharacter = l_lngCharacter + 1
+    Loop
+    ReDim Preserve l_bytBuffer(0 To l_lngBufferLength - 1)
+    EncodeUTF8 = l_bytBuffer
 End Function
 
 Public Function DecodeUTF8(ByRef Data() As Byte) As String

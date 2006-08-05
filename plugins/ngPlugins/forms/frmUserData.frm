@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.2#0"; "ngUI.ocx"
 Begin VB.Form frmUserData 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -28,7 +28,7 @@ Begin VB.Form frmUserData
    ShowInTaskbar   =   0   'False
    Begin VB.Timer tmrRedrawUI 
       Enabled         =   0   'False
-      Interval        =   33
+      Interval        =   50
       Left            =   3990
       Top             =   3420
    End
@@ -106,6 +106,8 @@ Private Enum UserDataEditorViews
     View_Custom
 End Enum
 
+Public EnableProperties As Boolean
+
 Private Const c_lngUndoStackLength As Long = 50
 Private Const c_lngRedoStackLength As Long = 25
 
@@ -127,6 +129,11 @@ Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
 Private m_lngCurrentView As UserDataEditorViews
 
+Public Property Get Filename() As String
+On Error Resume Next
+    Filename = m_strFilename
+End Property
+
 Private Property Get iDocument_DocumentIcon() As libGraphics.Fury2Image
 On Error Resume Next
     Set iDocument_DocumentIcon = Editor.LoadResources("ng").ItemData("icons\user data.png")
@@ -140,9 +147,50 @@ On Error Resume Next
         Set m_objUI = Engine.ScriptEngine.Namespace.CreateEditorUI(m_objData)
     End If
     Set m_cntUI = m_objUI.This
-    Me.Caption = IIf(Trim(m_strFilename) = "", "Untitled.f2data (Object)", GetTitle(m_strFilename) & " (" & TypeName(m_objData) & ")")
+    Me.Caption = IIf(Trim(m_strFilename) = "", "Untitled.f2data (" & TypeName(m_objData) & ")", GetTitle(m_strFilename) & " (" & TypeName(m_objData) & ")")
+    Set m_objUI.Editor = Me
+    m_objUI.Editor_Initialize
     Err.Clear
+    SelectTab 1
     Redraw
+End Property
+
+Public Sub SetTabs(ByRef Tabs As Variant)
+On Error Resume Next
+Dim l_lngTabs As Long
+    tsViews.Tabs.Clear
+    For l_lngTabs = LBound(Tabs) To UBound(Tabs)
+        tsViews.Tabs.AddNew CStr(Tabs(l_lngTabs)), "t" & CStr(l_lngTabs)
+    Next l_lngTabs
+End Sub
+
+Public Sub Inspect(ByVal Object As Object, Optional ByVal Title As String = "")
+On Error Resume Next
+    tsViews.SelectTab tsViews.Tabs(1)
+    If Len(Trim(Title)) = 0 Then
+        Title = TypeName(Object)
+    End If
+    insProperties.Inspect Object, Title, True, , True
+End Sub
+
+Public Sub SelectTab(ByVal TabIndex As Long)
+On Error Resume Next
+    tsViews.SelectTab tsViews.Tabs(TabIndex + 1)
+End Sub
+
+Public Property Get RedrawRate() As Long
+On Error Resume Next
+    RedrawRate = tmrRedrawUI.Interval
+End Property
+
+Public Property Let RedrawRate(ByVal Rate As Long)
+On Error Resume Next
+    tmrRedrawUI.Interval = Rate
+End Property
+
+Public Property Get Document() As iDocument
+On Error Resume Next
+    Set Document = Me
 End Property
 
 Public Property Get Data() As Object
@@ -360,15 +408,14 @@ Dim l_objObject As Object
     insProperties.Visible = False
     picUI.Visible = False
     tsViews_Resize
-    Select Case m_lngCurrentView
-    Case View_Properties
+    m_objUI.Editor_TabSelected m_lngCurrentView
+    If (m_lngCurrentView = View_Properties) And (EnableProperties) Then
         insProperties.Visible = True
         tmrRedrawUI.Enabled = False
-    Case View_Custom
+    Else
         picUI.Visible = True
         tmrRedrawUI.Enabled = True
-    Case Else
-    End Select
+    End If
     Redraw
     Screen.MousePointer = 0
 End Sub
@@ -435,13 +482,11 @@ End Function
 
 Private Sub tsViews_Resize()
 On Error Resume Next
-    Select Case m_lngCurrentView
-    Case View_Properties
+    If (m_lngCurrentView = View_Properties) And (EnableProperties) Then
         insProperties.Move (2) + tsViews.Left, tsViews.Top + tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - tsViews.IdealHeight - 3
-    Case View_Custom
+    Else
         picUI.Move (2) + tsViews.Left, tsViews.Top + tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - tsViews.IdealHeight - 3
-    Case Else
-    End Select
+    End If
 End Sub
 
 Private Sub tsViews_TabSelected(TheTab As ngTab)
@@ -468,6 +513,7 @@ End Sub
 Private Sub Form_Load()
 On Error Resume Next
 '    vsTileset.Width = GetScrollbarSize(vsTileset)
+    EnableProperties = True
     InitViews
     Form_Activate
 End Sub
@@ -679,6 +725,7 @@ End Sub
 Private Sub picUI_KeyDown(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
     m_cntUI.KeyDown KeyCode, Shift
+    RedrawUI
 End Sub
 
 Private Sub picUI_KeyPress(KeyAscii As Integer)
@@ -689,11 +736,13 @@ End Sub
 Private Sub picUI_KeyUp(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
     m_cntUI.KeyUp KeyCode, Shift
+    RedrawUI
 End Sub
 
 Private Sub picUI_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
     m_cntUI.MouseDown Button, Shift, X, Y
+    RedrawUI
 End Sub
 
 Private Sub picUI_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -704,6 +753,7 @@ End Sub
 Private Sub picUI_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
     m_cntUI.MouseUp Button, Shift, X, Y
+    RedrawUI
 End Sub
 
 Private Sub picUI_Resize()

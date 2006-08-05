@@ -35,11 +35,11 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Implements IInspectable
 Implements Fury2Object
 Implements IVirtualFileSaveable
-Private mvarParent As Fury2Sprite
+'Private mvarParent As Fury2Sprite
+Private mvarParent As WeakReference
 Private mvarLoopMode As Fury2LoopModes
-Private mvarXVelocity As Single
-Private mvarYVelocity As Single
-'Private mvarEndScript As String
+Private mvarZLeft As Single
+Private mvarZRight As Single
 Private mvarFrames As Fury2PoseFrames
 Private mvarBlocking As Fury2Blocking
 Private mvarName As String
@@ -55,7 +55,7 @@ End Property
 
 Public Property Get Parent() As Fury2Sprite
 On Error Resume Next
-    Set Parent = mvarParent
+    Set Parent = WRGetSprite(mvarParent)
 End Property
 
 Public Property Get EndScript() As String
@@ -72,12 +72,13 @@ On Error Resume Next
     mvarFrames(mvarFrames.Count).Script = RHS
 End Property
 
-Sub Free()
+Sub Free(ByVal Object As Fury2Sprite)
 Attribute Free.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_fraFrame As Fury2PoseFrame
-    Set mvarParent = Nothing
+    WRFree mvarParent
     If mvarFrames Is Nothing Then Exit Sub
+    mvarFrames.SetParent Nothing
     If mvarFrames.Count > 0 Then
         For Each l_fraFrame In mvarFrames
             If l_fraFrame Is Nothing Then
@@ -118,27 +119,31 @@ End Sub
 Sub Play()
 Attribute Play.VB_Description = "Sets the sprite's current pose to this pose and plays it from the beginning."
 On Error Resume Next
-    mvarParent.SetPose Me
-    mvarParent.Animate = True
-    mvarParent.Frame = 1
-    mvarParent.AnimationDirection = 1
+    With WRGetSprite(mvarParent)
+        .SetPose Me
+        .Animate = True
+        .Frame = 1
+        .AnimationDirection = 1
+    End With
     Err.Clear
 End Sub
 
 Sub PlayBackwards()
 Attribute PlayBackwards.VB_Description = "Sets the sprite's current pose to this pose and plays it from the end, backwards."
 On Error Resume Next
-    mvarParent.SetPose Me
-    mvarParent.Animate = True
-    mvarParent.Frame = mvarFrames.Count
-    mvarParent.AnimationDirection = -1
+    With WRGetSprite(mvarParent)
+        .SetPose Me
+        .Animate = True
+        .Frame = mvarFrames.Count
+        .AnimationDirection = -1
+    End With
     Err.Clear
 End Sub
 
 Friend Sub SetParent(Parent As Fury2Sprite)
 On Error Resume Next
 Dim l_fraFrame As Fury2PoseFrame
-    Set mvarParent = Parent
+    WRSet mvarParent, Parent
     If mvarFrames.Count = 0 Then Exit Sub
     For Each l_fraFrame In mvarFrames
         l_fraFrame.SetParent Me
@@ -163,9 +168,8 @@ On Error Resume Next
         .Blocking.SetValues mvarBlocking.Width, mvarBlocking.Height
         Set .Blocking.Polygon = mvarBlocking.Polygon.Duplicate()
         .LoopMode = mvarLoopMode
-        .XVelocity = mvarXVelocity
-        .YVelocity = mvarYVelocity
-        .EndScript = Me.EndScript
+        .ZLeft = mvarZLeft
+        .ZRight = mvarZRight
         Set .Frames = mvarFrames.Duplicate
     End With
 End Function
@@ -184,30 +188,22 @@ On Error Resume Next
     Set BlockingPolygon = mvarBlocking.Polygon
 End Property
 
-Public Property Let YVelocity(ByVal vData As Single)
-Attribute YVelocity.VB_Description = "The Y Velocity multiplier for the pose. (Only works if the sprite's TrueMovement flag is set to false.)"
-'used when assigning a value to the property, on the left side of an assignment.
-'Syntax: X.YVelocity = 5
-    mvarYVelocity = vData
+Public Property Let ZLeft(ByVal vData As Single)
+Attribute ZLeft.VB_Description = "The sorting value for the left side of the sprite."
+    mvarZLeft = vData
 End Property
 
-Public Property Get YVelocity() As Single
-'used when retrieving value of a property, on the right side of an assignment.
-'Syntax: Debug.Print X.YVelocity
-    YVelocity = mvarYVelocity
+Public Property Get ZLeft() As Single
+    ZLeft = mvarZLeft
 End Property
 
-Public Property Let XVelocity(ByVal vData As Single)
-Attribute XVelocity.VB_Description = "The X Velocity multiplier for the pose. (Only works if the sprite's TrueMovement flag is set to false.)"
-'used when assigning a value to the property, on the left side of an assignment.
-'Syntax: X.XVelocity = 5
-    mvarXVelocity = vData
+Public Property Let ZRight(ByVal vData As Single)
+Attribute ZRight.VB_Description = "The sorting value for the right side of the sprite."
+    mvarZRight = vData
 End Property
 
-Public Property Get XVelocity() As Single
-'used when retrieving value of a property, on the right side of an assignment.
-'Syntax: Debug.Print X.XVelocity
-    XVelocity = mvarXVelocity
+Public Property Get ZRight() As Single
+    ZRight = mvarZRight
 End Property
 
 Public Property Get Name() As String
@@ -218,7 +214,7 @@ End Property
 Public Property Let Name(NewName As String)
 On Error Resume Next
     mvarName = NewName
-    If mvarParent Is Nothing Then Exit Property
+    If WRIsNull(mvarParent) Then Exit Property
     LoadGraphics
 End Property
 
@@ -243,8 +239,7 @@ Dim l_strTemp As String
         .ReadSegment_Begin
             .Load mvarName
             .ReadSegment_Begin
-                .Load mvarXVelocity
-                .Load mvarYVelocity
+                .Skip 8
                 .Load mvarLoopMode
             .ReadSegment_End
             .Load mvarBlocking
@@ -255,6 +250,8 @@ Dim l_strTemp As String
             If Len(l_strTemp) > 0 Then
                 mvarFrames(mvarFrames.Count).Script = l_strTemp
             End If
+            .Load mvarZLeft
+            .Load mvarZRight
         .ReadSegment_End
     End With
 End Sub
@@ -265,13 +262,15 @@ On Error Resume Next
         .WriteSegment_Begin
             .Save mvarName
             .WriteSegment_Begin
-                .Save mvarXVelocity
-                .Save mvarYVelocity
+                .Save CSng(0)
+                .Save CSng(0)
                 .Save mvarLoopMode
             .WriteSegment_End
             .Save mvarBlocking
             .Save mvarFrames
             .Save ""
+            .Save mvarZLeft
+            .Save mvarZRight
         .WriteSegment_End
     End With
 End Sub

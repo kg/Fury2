@@ -40,17 +40,17 @@ Option Explicit
 Private Declare Function UpdateWindow Lib "user32" (ByVal hwnd As Long) As Long
 Private Declare Function InvalidateRect Lib "user32" (ByVal hwnd As Long, lpRect As Rect, ByVal bErase As Long) As Long
 
-Event OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, y As Single)
-Event OLEDragOver(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, y As Single, State As Integer)
+Event OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
+Event OLEDragOver(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single, State As Integer)
 Event SelectionChange()
 Event ItemContextMenu(ByRef Item As ngListItem)
 Event ItemSelect(ByRef Item As ngListItem)
 Event DragBegin(ByRef Cancel As Boolean)
 Event DragMoveItem(ByRef Item As ngListItem, ByVal OldIndex As Long, ByVal NewIndex As Long)
 Event DragComplete()
-Event MouseDown(ByRef Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
-Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
-Event MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
+Event MouseDown(ByRef Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+Event MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
 Event Reflow()
 Event Resize()
 Event Redraw()
@@ -370,6 +370,7 @@ Dim l_lngImageWidth As Long, l_lngImageHeight As Long
 Dim l_dtfFlags As DrawTextFlags
 Dim l_rctText As Rect
 Dim l_rctFocus As Rect
+Dim l_lngWrap As Long
     With Item
         Set l_rctItem = .Rectangle
         If l_rctItem.Intersect(m_imgSurface.ClipRectangle) Then
@@ -400,21 +401,25 @@ Dim l_rctFocus As Rect
             l_rctText.Top = l_rctItem.Top + Metrics(lbmTextMargin)
             l_rctText.Right = l_rctItem.Left + l_rctItem.Width - Metrics(lbmTextMargin)
             l_rctText.Bottom = l_rctItem.Top + l_rctItem.Height - Metrics(lbmTextMargin)
+            l_lngWrap = DrawText_Wrap_None
+            If InStr(.Text, vbCrLf) Then
+                l_lngWrap = DrawText_Wrap_WordBreak
+            End If
             Select Case .TextAlignment
             Case btaLeft
-                l_dtfFlags = DrawText_Align_Left Or DrawText_Align_Center_Vertical Or DrawText_Wrap_None Or DrawText_NoPrefix
+                l_dtfFlags = DrawText_Align_Left Or DrawText_Align_Center_Vertical Or l_lngWrap Or DrawText_NoPrefix
                 l_rctText.Left = l_rctItem.Left + l_lngImageWidth + Metrics(lbmTextMargin) + Metrics(lbmImageMargin)
                 l_rctImage.RelLeft = l_rctItem.Left + Metrics(lbmImageMargin)
             Case btaRight
-                l_dtfFlags = DrawText_Align_Right Or DrawText_Align_Center_Vertical Or DrawText_Wrap_None Or DrawText_NoPrefix
+                l_dtfFlags = DrawText_Align_Right Or DrawText_Align_Center_Vertical Or l_lngWrap Or DrawText_NoPrefix
                 l_rctText.Right = l_rctItem.Left + l_rctItem.Width - l_lngImageWidth - Metrics(lbmTextMargin) - Metrics(lbmImageMargin)
                 l_rctImage.RelLeft = l_rctItem.Right - l_lngImageWidth - Metrics(lbmImageMargin)
             Case btaTop
-                l_dtfFlags = DrawText_Align_Top Or DrawText_Align_Center_Horizontal Or DrawText_Wrap_None Or DrawText_NoPrefix
+                l_dtfFlags = DrawText_Align_Top Or DrawText_Align_Center_Horizontal Or l_lngWrap Or DrawText_NoPrefix
                 l_rctText.Bottom = l_rctItem.Top + l_rctItem.Height - l_lngImageHeight - Metrics(lbmTextMargin)
                 l_rctImage.RelTop = l_rctItem.Bottom - l_lngImageHeight - Metrics(lbmImageMargin)
             Case btaBottom
-                l_dtfFlags = DrawText_Align_Bottom Or DrawText_Align_Center_Horizontal Or DrawText_Wrap_None Or DrawText_NoPrefix
+                l_dtfFlags = DrawText_Align_Bottom Or DrawText_Align_Center_Horizontal Or l_lngWrap Or DrawText_NoPrefix
                 l_rctText.Top = l_rctItem.Top + l_lngImageHeight + Metrics(lbmTextMargin)
                 l_rctImage.RelTop = l_rctItem.Top + Metrics(lbmImageMargin)
             End Select
@@ -450,7 +455,7 @@ Dim l_fntOld As StdFont
     If Not m_booVisible Then Exit Sub
     If DisableUpdates Then Exit Sub
     If Area Is Nothing Then
-        Set Area = m_imgSurface.Rectangle
+        If Not (m_imgSurface Is Nothing) Then Set Area = m_imgSurface.Rectangle
     End If
     If UserControl.Ambient.UserMode Then
         If m_imgSurface Is Nothing Then Exit Sub
@@ -469,15 +474,15 @@ Dim l_fntOld As StdFont
     End If
 End Sub
 
-Public Function ItemFromPoint(ByVal x As Long, ByVal y As Long) As ngListItem
+Public Function ItemFromPoint(ByVal X As Long, ByVal Y As Long) As ngListItem
 On Error Resume Next
 Dim l_liItem As ngListItem
     If m_imgSurface Is Nothing Then Exit Function
     If m_licListItems Is Nothing Then Exit Function
-    y = y + vsScroll.Value
+    Y = Y + vsScroll.Value
     For Each l_liItem In m_licListItems
         With l_liItem
-            If y >= .Top And y < (.Top + .Height) Then
+            If Y >= .Top And Y < (.Top + .Height) Then
                 Set ItemFromPoint = l_liItem
                 Exit For
             End If
@@ -573,17 +578,17 @@ On Error Resume Next
     Set m_fntFont = UserControl.Ambient.Font
 End Sub
 
-Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_booCancel As Boolean
 Dim l_booOldState As Boolean
 Dim l_booToggle As Boolean
 Dim l_liNew As ngListItem
-    RaiseEvent MouseDown(Button, Shift, x, y)
-    m_lngStartX = x
-    m_lngStartY = y
+    RaiseEvent MouseDown(Button, Shift, X, Y)
+    m_lngStartX = X
+    m_lngStartY = Y
 '    If m_liFocus Is Nothing Then UpdateMouse
-    Set l_liNew = ItemFromPoint(x, y)
+    Set l_liNew = ItemFromPoint(X, Y)
     If Button = 1 Then
         If l_liNew Is Nothing Then Exit Sub
         l_booToggle = (Shift And vbCtrlMask) = vbCtrlMask
@@ -602,22 +607,22 @@ Dim l_liNew As ngListItem
     End If
 End Sub
 
-Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_lngY As Long
 Dim l_liTarget As ngListItem, l_liItem As ngListItem
 Dim l_lngItems As Long
 Dim l_lngOldIndex As Long, l_lngNewIndex As Long
 Dim l_lngDragTarget As Long
-    RaiseEvent MouseMove(Button, Shift, x, y)
-    If (Abs(x - m_lngStartX) > 2) Or (Abs(y - m_lngStartY) > 2) Then
+    RaiseEvent MouseMove(Button, Shift, X, Y)
+    If (Abs(X - m_lngStartX) > 2) Or (Abs(Y - m_lngStartY) > 2) Then
         m_booDragged = True
     End If
     If (Button = 1) Then
         If m_licDragItems.Count < 1 Then
         Else
-            Set l_liTarget = ItemFromPoint(x, y)
-            l_lngY = y + vsScroll.Value
+            Set l_liTarget = ItemFromPoint(X, Y)
+            l_lngY = Y + vsScroll.Value
             If l_liTarget Is Nothing Then
                 If l_lngY <= 0 Then
                     l_lngDragTarget = 1
@@ -652,14 +657,14 @@ Dim l_lngDragTarget As Long
     End If
 End Sub
 
-Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim l_liHover As ngListItem
 Dim l_booToggle As Boolean
-    RaiseEvent MouseUp(Button, Shift, x, y)
+    RaiseEvent MouseUp(Button, Shift, X, Y)
     EndDrag
     If Not m_booDragged Then
-        Set l_liHover = ItemFromPoint(x, y)
+        Set l_liHover = ItemFromPoint(X, Y)
         If l_liHover.Selected Then
             If Shift = 0 Then
                 SelectItems l_liHover.Index
@@ -670,14 +675,14 @@ Dim l_booToggle As Boolean
     Reflow
 End Sub
 
-Private Sub UserControl_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub UserControl_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
-    RaiseEvent OLEDragDrop(Data, Effect, Button, Shift, x, y)
+    RaiseEvent OLEDragDrop(Data, Effect, Button, Shift, X, Y)
 End Sub
 
-Private Sub UserControl_OLEDragOver(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, y As Single, State As Integer)
+Private Sub UserControl_OLEDragOver(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single, State As Integer)
 On Error Resume Next
-    RaiseEvent OLEDragOver(Data, Effect, Button, Shift, x, y, State)
+    RaiseEvent OLEDragOver(Data, Effect, Button, Shift, X, Y, State)
 End Sub
 
 Private Sub UserControl_Paint()

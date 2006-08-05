@@ -45,6 +45,17 @@ Private m_obsObstructions() As LightingObstruction
 Private m_plnPlanes() As LightingPlane2
 Private m_lyrLayer As Fury2MapLayer
 
+Public Function LightFromSprite(ByVal Sprite As Fury2Sprite) As Fury2LightSource
+On Error Resume Next
+Dim l_litLight As Fury2LightSource
+    For Each l_litLight In m_colLights
+        If l_litLight.AttachedSprite Is Sprite Then
+            Set LightFromSprite = l_litLight
+            Exit For
+        End If
+    Next l_litLight
+End Function
+
 Friend Sub SetParent(ByVal Parent As Fury2MapLayer)
 On Error Resume Next
 Dim l_litLight As Fury2LightSource
@@ -275,11 +286,12 @@ On Error Resume Next
     m_envEnvironment.LightCount = m_colLights.Count
 End Sub
 
-Public Sub Render(ByRef Camera As LightingCamera)
+Public Function Render(ByRef Camera As LightingCamera) As Long
 On Error Resume Next
 Dim l_litLight As Fury2LightSource
 Dim l_lngIndex As Long
 Dim l_booDestroyed As Boolean
+Dim l_lngCount As Long
     l_lngIndex = 0
     If m_colLights.Count > 0 Then
         For Each l_litLight In m_colLights
@@ -304,7 +316,7 @@ Dim l_booDestroyed As Boolean
     m_envEnvironment.PlaneCount = UBound(m_plnPlanes)
     m_envEnvironment.Planes = VarPtr(m_plnPlanes(1))
     m_envEnvironment.Matrix = m_lngMatrix
-    SoftFX.RenderLightingEnvironment Camera, m_envEnvironment
+    l_lngCount = SoftFX.RenderLightingEnvironment(Camera, m_envEnvironment)
     l_lngIndex = 0
     For Each l_litLight In Lights
         With l_litLight
@@ -312,7 +324,8 @@ Dim l_booDestroyed As Boolean
         End With
         l_lngIndex = l_lngIndex + 1
     Next l_litLight
-End Sub
+    Render = l_lngCount
+End Function
 
 Public Property Get AmbientLight() As Long
 Attribute AmbientLight.VB_Description = "{Color}"

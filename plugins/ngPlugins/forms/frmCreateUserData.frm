@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.10#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.2#0"; "ngUI.ocx"
 Begin VB.Form frmCreateUserData 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Create User Data"
@@ -26,32 +26,20 @@ Begin VB.Form frmCreateUserData
    ShowInTaskbar   =   0   'False
    StartUpPosition =   2  'CenterScreen
    Visible         =   0   'False
-   Begin ngUI.ngListBox lstFunctions 
-      Height          =   4890
-      Left            =   135
-      TabIndex        =   4
-      Top             =   570
-      Width           =   5835
-      _ExtentX        =   10292
-      _ExtentY        =   8625
-      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Tahoma"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      AllowReorder    =   0   'False
-      AllowMultiSelect=   0   'False
-      AllowNullSelection=   0   'False
+   Begin ngPlugins.Script scExpression 
+      Height          =   3600
+      Left            =   675
+      TabIndex        =   3
+      Top             =   1065
+      Width           =   4800
+      _ExtentX        =   8467
+      _ExtentY        =   6350
    End
    Begin ngUI.ngListBox lstClasses 
       Height          =   4890
-      Left            =   60
-      TabIndex        =   3
-      Top             =   300
+      Left            =   30
+      TabIndex        =   2
+      Top             =   285
       Width           =   5835
       _ExtentX        =   10292
       _ExtentY        =   8625
@@ -105,7 +93,6 @@ Begin VB.Form frmCreateUserData
    Begin ngUI.ngTabStrip tsViews 
       Height          =   5190
       Left            =   30
-      TabIndex        =   2
       Top             =   30
       Width           =   5910
       _ExtentX        =   10425
@@ -144,6 +131,7 @@ Public Expression As String
 Public Sub RefreshClassList()
 On Error Resume Next
 Dim l_clsClass As ScriptClass
+Dim l_fnFunction As ScriptFunction
     lstClasses.ListItems.Clear
     For Each l_clsClass In Engine.ScriptEngine.State.Classes
         If Left(l_clsClass.Name, 2) = "SO" Then
@@ -153,20 +141,6 @@ Dim l_clsClass As ScriptClass
         End If
     Next l_clsClass
     cmdOK.Enabled = lstClasses.SelectedItemCount > 0
-End Sub
-
-Public Sub RefreshFunctionList()
-On Error Resume Next
-Dim l_fnFunction As ScriptFunction
-    lstFunctions.ListItems.Clear
-    For Each l_fnFunction In Engine.ScriptEngine.State.Functions
-        If l_fnFunction.Arguments.Count = 0 Then
-            If l_fnFunction.ReturnsValue Then
-                lstFunctions.ListItems.AddNew l_fnFunction.Name, l_fnFunction.Name & "()"
-            End If
-        End If
-    Next l_fnFunction
-    cmdOK.Enabled = lstFunctions.SelectedItemCount > 0
 End Sub
 
 Private Sub cmdCancel_Click()
@@ -187,10 +161,10 @@ On Error Resume Next
     Expression = Engine.ScriptEngine.Language.GenerateInstantiation(Item.key)
 End Sub
 
-Private Sub lstFunctions_ItemSelect(Item As ngUI.ngListItem)
+Private Sub scExpression_Change()
 On Error Resume Next
     cmdOK.Enabled = True
-    Expression = Engine.ScriptEngine.Language.GenerateFunctionCall(Item.key, "")
+    Expression = scExpression.Text
 End Sub
 
 Private Sub tsViews_TabSelected(TheTab As ngTab)
@@ -200,12 +174,12 @@ On Error Resume Next
     Select Case TheTab.Index
     Case 1
         lstClasses.Visible = True
-        lstFunctions.Visible = False
+        scExpression.Visible = False
         RefreshClassList
     Case 2
-        lstFunctions.Visible = True
+        scExpression.Visible = True
         lstClasses.Visible = False
-        RefreshFunctionList
+        scExpression_Change
     Case Else
     End Select
 End Sub
@@ -213,10 +187,9 @@ End Sub
 Private Sub Form_Load()
 On Error Resume Next
     tsViews.Tabs.AddNew "Existing Class"
-    tsViews.Tabs.AddNew "Function"
+    tsViews.Tabs.AddNew "Expression"
     lstClasses.Move tsViews.Left + 2, tsViews.Top + tsViews.IdealHeight + 1, tsViews.Width - 4, tsViews.Height - tsViews.IdealHeight - 3
-    lstFunctions.Move lstClasses.Left, lstClasses.Top, lstClasses.Width, lstClasses.Height
+    scExpression.Move lstClasses.Left, lstClasses.Top, lstClasses.Width, lstClasses.Height
     lstClasses.Colors(lbcBackground) = ConvertSystemColor(SystemColor_Button_Highlight)
-    lstFunctions.Colors(lbcBackground) = ConvertSystemColor(SystemColor_Button_Highlight)
     tsViews_TabSelected tsViews.Tabs(1)
 End Sub

@@ -203,6 +203,7 @@ Private Type ObjectItem
     SpecialType As ObjectItemTypes
     DropdownValues() As Variant
     DropdownText() As String
+    InspectorType As Boolean
 End Type
 
 Public InspectAny As Boolean
@@ -425,7 +426,7 @@ Dim l_lngItems As Long, l_lngY As Long
         End If
         txtEdit.Move l_lngNameWidth + 6 + l_lngLeftSpace, m_lngEditY - vsScroll.Value + 2 + picHierarchy.Height, vsScroll.Left - (l_lngNameWidth + 8) - l_lngButtonWidth - l_lngLeftSpace, m_lngItemHeight - 2
         l_vtType = VarType(m_oiItems(m_lngSelectedItem).Value)
-        txtEdit.Locked = ((m_oiItems(m_lngSelectedItem).CallTypes And VbLet) <> VbLet) And (Not (TypeOf m_oiItems(m_lngSelectedItem).Value Is IInspectorType))
+        txtEdit.Locked = ((m_oiItems(m_lngSelectedItem).CallTypes And VbLet) <> VbLet) And (Not m_oiItems(m_lngSelectedItem).InspectorType)
         txtEdit.ForeColor = IIf(txtEdit.Locked, vbButtonShadow, vbWindowText)
         Select Case l_vtType
         Case vbObject
@@ -509,6 +510,7 @@ Dim l_colObject As IInspectableCollection
     If m_objObject Is Nothing Then Exit Sub
     For l_lngItems = LBound(m_oiItems) To UBound(m_oiItems)
         With m_oiItems(l_lngItems)
+            .InspectorType = False
             If ((.CallTypes And VbGet) = VbGet) Then
                 If .SpecialType = OIT_CollectionItem Then
                     l_varValue = Empty
@@ -545,6 +547,7 @@ Dim l_colObject As IInspectableCollection
                             End If
                         Else
                             If TypeOf l_varValue Is IInspectorType Then
+                                .InspectorType = True
                                 Set m_itValue = l_varValue
                                 l_strValue = m_itValue.ToString
                                 If IsEmpty(l_varFirstValue) Then l_varFirstValue = l_strValue
@@ -583,6 +586,7 @@ Dim l_colObject As IInspectableCollection
                     l_booInspectorType = (TypeOf .Value Is IInspectorType)
                 End If
                 If l_booInspectorType Then
+                    .InspectorType = True
                     Set m_itValue = .Value
                     .ValueText = m_itValue.ToString
                 Else
@@ -977,8 +981,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_Filename Then
             l_strValue = SelectFiles(, "Select File...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -989,8 +993,8 @@ Dim l_booOldLocked As Boolean
         ElseIf m_oiItems(m_lngSelectedItem).SpecialType = OIT_ImageFilename Then
             l_strValue = SelectFiles("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...", False)
             If Trim(l_strValue) <> "" Then
-                If InStr(l_strValue, DefaultEngine.FileSystem.Root) Then
-                    l_strValue = Replace(l_strValue, DefaultEngine.FileSystem.Root, "/")
+                If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+                    l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
                     l_strValue = Replace(l_strValue, "\", "/")
                     txtEdit.Text = l_strValue
                     EditBoxChanged
@@ -1649,9 +1653,17 @@ Dim l_colObject As IInspectableCollection
         l_lngHere = l_lngHere - 1
         Exit Sub
     End If
-    If TypeOf m_oiItems(m_lngSelectedItem).Value Is IInspectorType Then
-        Set l_itValue = m_oiItems(m_lngSelectedItem).Value
-        l_itValue.FromString l_strText
+    If m_oiItems(m_lngSelectedItem).InspectorType Then
+        If m_booMultiple Then
+            For l_lngObject = LBound(m_objObjects) To UBound(m_objObjects)
+                Set l_objObject = m_objObjects(l_lngObject)
+                Set l_itValue = CallByName(l_objObject, m_oiItems(m_lngSelectedItem).Name, VbGet)
+                l_itValue.FromString l_strText
+            Next l_lngObject
+        Else
+            Set l_itValue = m_oiItems(m_lngSelectedItem).Value
+            l_itValue.FromString l_strText
+        End If
         RefreshValues
         RefreshEditBox
         RaiseEvent AfterItemChange(l_varOldValue, l_itValue)

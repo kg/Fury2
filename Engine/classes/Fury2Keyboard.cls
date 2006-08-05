@@ -13,6 +13,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
 Private Declare Function GetAsyncKeyState Lib "user32" (ByVal vKey As Long) As Integer
+Private Declare Function GetKeyboardState Lib "user32" (ByVal bKeys As Long) As Long
 
 '
 '    Engine (Fury² Game Creation System Runtime Engine)
@@ -109,14 +110,10 @@ On Error Resume Next
 Dim l_evtBinding As Fury2Event
 Dim l_ctlBinding As Fury2InputControl
     If Key < 0 Or Key > c_lngKeyCount Then Exit Sub
-    If m_booState(Key) Then
-        Exit Sub
-    End If
+    If m_booState(Key) Then Exit Sub
     Set l_evtBinding = m_objBindings(Key)
     Set l_ctlBinding = m_objBindings(Key)
     m_booState(Key) = True
-'    If m_booActive(Key) Then Exit Sub
-'    m_booActive(Key) = True
     If Not (l_evtBinding Is Nothing) Then
         l_evtBinding.Invoke
     ElseIf Not (l_ctlBinding Is Nothing) Then
@@ -125,7 +122,6 @@ Dim l_ctlBinding As Fury2InputControl
             l_ctlBinding.Activate
         End If
     End If
-'    m_booActive(Key) = False
 End Sub
 
 Friend Sub KeyUp(ByVal Key As Long)
@@ -155,8 +151,10 @@ Public Sub Update()
 On Error Resume Next
 Dim l_lngKeys As Long
 Dim l_booState As Boolean
+Dim l_bytState(0 To 255) As Byte
+    GetKeyboardState ByVal VarPtr(l_bytState(0))
     For l_lngKeys = 32 To 127
-        l_booState = (GetAsyncKeyState(l_lngKeys) < 0)
+        l_booState = (l_bytState(l_lngKeys) And &H80) = &H80
         If l_booState <> m_booState(l_lngKeys) Then
             If l_booState = False Then
                 KeyUp l_lngKeys

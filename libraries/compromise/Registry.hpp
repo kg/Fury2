@@ -56,9 +56,9 @@ inline DWORD convertRegValueType(RegValueTypes type) {
 
 class VirtualRegValue {
 public:
-  wstring Name;
+  WString Name;
   RegValueTypes Type;
-  wstring Text;
+  WString Text;
   unsigned DWord;
 
   VirtualRegValue()
@@ -69,7 +69,7 @@ public:
   {
   }
 
-  VirtualRegValue(wstring name, RegValueTypes type, void* data, unsigned dataLength, bool wide)
+  VirtualRegValue(const WString& name, RegValueTypes type, void* data, unsigned dataLength, bool wide)
     :Name(name),
      Type(type),
      Text(NullString),
@@ -78,11 +78,10 @@ public:
     switch (type) {
       case RegString: {
         if (wide) {
-          Text = wstring((wchar_t*)data, ((wchar_t*)data)+(dataLength/2)-1);
+          Text = WString((wchar_t*)data, (dataLength/2));
           DebugOut_("Value(" << Text << ")\n");
         } else {
-          string ascii((const char*)data, (const char*)data+dataLength-1);
-          Text = wstring(ascii.begin(), ascii.end());
+          Text = WString((const char*)data, dataLength);;
           DebugOut_("Value(" << Text << ")\n");
         }
         break;
@@ -93,7 +92,7 @@ public:
     }
   }
 
-  VirtualRegValue(wstring name, wstring data)
+  VirtualRegValue(WString name, WString data)
     :Name(name),
      Type(RegString),
      Text(data),
@@ -101,7 +100,7 @@ public:
   {
   }
 
-  VirtualRegValue(wstring name, unsigned data)
+  VirtualRegValue(WString name, unsigned data)
     :Name(name),
      Type(RegDWord),
      Text(NullString),
@@ -109,7 +108,7 @@ public:
   {
   }
 
-  VirtualRegValue(wstring name, RegValueTypes type)
+  VirtualRegValue(WString name, RegValueTypes type)
     :Name(name),
      Type(type),
      Text(NullString),
@@ -133,7 +132,7 @@ public:
   {
   }
 
-  VirtualRegValue(wstring data)
+  VirtualRegValue(WString data)
     :Name(NullString),
      Type(RegString),
      Text(data),
@@ -149,31 +148,40 @@ public:
   {
   }
 
-  inline wstring toString() {
-    wstringstream buffer;
-    switch (Type) {
-      case RegDWord:
-        buffer << DWord;
-        break;
-      case RegString:
-        buffer << Text;
-        break;
-    }
-    return buffer.str();
+  ~VirtualRegValue() {
+  }
+//private:
+  VirtualRegValue(const VirtualRegValue& other)
+    :Name(other.Name),
+     Type(other.Type),
+     Text(other.Text),
+     DWord(other.DWord)
+  {
   }
 
+  inline const VirtualRegValue& operator=(const VirtualRegValue& rhs) {
+    if ((&rhs) == (this))
+      return *this;
+    Name = rhs.Name;
+    Text = rhs.Text;
+    Type = rhs.Type;
+    DWord = rhs.DWord;
+    return *this;
+  }
 };
+
+typedef std::map<WString, VirtualRegKey, ltwstring> VirtualRegKeys;
+typedef std::map<WString, VirtualRegValue, ltwstring> VirtualRegValues;
 
 class VirtualRegKey {
 public:
-  wstring Name;
-  map<wstring, VirtualRegKey> Children;
+  WString Name;
+  VirtualRegKeys Children;
   VirtualRegValue Default;
-  map<wstring, VirtualRegValue> Values;
+  VirtualRegValues Values;
   bool Deleted;
-  unsigned DeletedChildren;
 
-  VirtualRegKey(wstring name) 
+  VirtualRegKey(WString name) 
     :Name(name),
      Default(RegString),
      Deleted(false)
@@ -186,14 +194,45 @@ public:
      Deleted(false)
   {
   }
+//private:
+  VirtualRegKey(const VirtualRegKey& other)
+    :Name(other.Name),
+     Default(other.Default),
+     Deleted(other.Deleted),
+     Children(other.Children),
+     Values(other.Values)
+  {
+  }
+
+  inline const VirtualRegKey& operator=(const VirtualRegKey& rhs) {
+    if ((&rhs) == (this))
+      return *this;
+    Name = rhs.Name;
+    Default = rhs.Default;
+    Children = rhs.Children;
+    Values = rhs.Values;
+    Deleted = rhs.Deleted;
+    return *this;
+  }
 };
 
 class VirtualRegistry {
 public:
-  std::map<wstring, VirtualRegKey> Keys;
+  VirtualRegKeys Keys;
 
   VirtualRegistry()
   {
+  }
+private:
+  VirtualRegistry(const VirtualRegistry& other)
+    :Keys(other.Keys)
+  {
+  }
+
+  inline const VirtualRegistry& operator=(const VirtualRegistry& rhs) {
+    if ((&rhs) == (this))
+      return *this;
+    Keys = rhs.Keys;
   }
 };
 
@@ -201,37 +240,58 @@ class RegKeyHandle {
 public:
   unsigned ID;
   VirtualRegKey* Key;
-  wstring Name;
+  WString Name;
+  HKEY RealKey;
 
   RegKeyHandle()
     :ID(0),
      Key(Null),
-     Name(NullString)
+     Name(),
+     RealKey(Null)
   {
   }
 
-  RegKeyHandle(unsigned id, wstring name) 
+  RegKeyHandle(unsigned id, const WString& name) 
     :ID(id),
      Key(Null),
-     Name(name)
+     Name(name),
+     RealKey(Null)
   {
   }
 
-  RegKeyHandle(unsigned id, VirtualRegKey* key, wstring name) 
+  RegKeyHandle(unsigned id, VirtualRegKey* key, const WString& name) 
     :ID(id),
      Key(key),
-     Name(name)
+     Name(name),
+     RealKey(Null)
   {
+  }
+
+  RegKeyHandle(const RegKeyHandle& other)
+    :ID(other.ID),
+     Key(other.Key),
+     Name(other.Name),
+     RealKey(other.RealKey)
+  {
+  }
+
+  inline const RegKeyHandle& operator=(const RegKeyHandle& rhs) {
+    if ((&rhs) == (this))
+      return *this;
+    ID = rhs.ID;
+    Key = rhs.Key;
+    Name = rhs.Name;
+    RealKey = rhs.RealKey;
   }
 };
 
-typedef std::map<unsigned, RegKeyHandle> RegKeyHandles;
+typedef std::map<unsigned, RegKeyHandle*> RegKeyHandles;
 
 unsigned RegKeyDefine (VirtualRegKey* Key);
 void RegKeyDefine (unsigned newID, unsigned oldID);
 void RegKeyDefine (unsigned ID, VirtualRegKey* Key);
-void RegKeyNameDefine (unsigned ID, wstring Name);
-const wstring& RegKeyNameResolve (unsigned ID);
+void RegKeyNameDefine (unsigned ID, const WString& Name);
+void RegKeyNameResolve (unsigned ID, WString** Out);
 bool RegKeyGetVirtual (unsigned ID);
 bool RegKeyGetVirtual (HKEY Key);
 VirtualRegKey* RegKeyGetPtr (unsigned ID);
@@ -242,11 +302,15 @@ int RegKeyUndefine (unsigned ID);
 //bool VRegGetVirtualized (HKEY Root);
 //void VRegSetVirtualized (HKEY Root, bool state);
 
-VirtualRegKey* VRegKeyCreate (const wstring& Path);
-int VRegKeyDelete (const wstring& Path);
-bool VRegKeyIsDeleted (const wstring& Path);
-VirtualRegKey* VRegKeyResolve (const wstring& Path);
-VirtualRegKey* VRegKeyResolve (VirtualRegKey* Parent, const wstring& Path);
+VirtualRegKey* VRegKeyCreate (const WString& Path);
+int VRegKeyDelete (const WString& Path);
+bool VRegKeyIsDeleted (const WString& Path);
+VirtualRegKey* VRegKeyResolve (const WString& Path);
+VirtualRegKey* VRegKeyResolve (VirtualRegKey* Parent, const WString& Path);
 
-VirtualRegValue* VRegValueGet (VirtualRegKey* Key, const wstring& Name);
+VirtualRegValue* VRegValueGet (VirtualRegKey* Key, const WString& Name);
 VirtualRegValue* VRegValueSet (VirtualRegKey* Key, const VirtualRegValue& Value);
+
+void VRegDump ();
+void VRegDump (const VirtualRegKey& key);
+void VRegFree ();

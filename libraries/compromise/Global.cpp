@@ -36,10 +36,17 @@ const RegistryRoot& GetRegistryRoot(unsigned index) {
 
 void InstallTrampolines ();
 
-void VRegInitialize () {
+bool VirtualizeWrites() {
+  return (GetCurrentThread() == VirtualizedThread);
+}
+
+void VRegInitialize() {
   for (unsigned r = 0; r < RegistryRootCount; r++) {
-    pRegistry->Keys[RegistryRoots[r].Name] = VirtualRegKey(RegistryRoots[r].Name);
-    RegKeyDefine(unsigned(RegistryRoots[r].ID), get(pRegistry->Keys, RegistryRoots[r].Name));
+    WString name(RegistryRoots[r].Name);
+    pRegistry->Keys[name.ToLower()] = name;
+    VirtualRegKey* ptr = get(pRegistry->Keys, name);
+    (*pRegistryHandles)[unsigned(RegistryRoots[r].ID)] = new RegKeyHandle(unsigned(RegistryRoots[r].ID), ptr, ptr->Name);
+//    RegKeyDefine(unsigned(RegistryRoots[r].ID), get(pRegistry->Keys, name));
   }
 }
 
@@ -52,13 +59,13 @@ BOOL WINAPI DllMain(
 class _Global {
 public:
   bool initialized;
-  VirtualRegistry Registry;
-  RegKeyHandles RegistryHandles;
-  std::vector<wstring> RegisteredDLLs;
+  std::vector<WString> RegisteredDLLs;
+  unsigned VirtualHandleOffset;
 
   _Global() {
-    pRegistry = &Registry;
-    pRegistryHandles = &RegistryHandles;
+    VirtualHandleOffset = VirtualRegKeyBase;
+    pRegistry = new VirtualRegistry();
+    pRegistryHandles = new RegKeyHandles();
     initialized = true;
   }
 };
@@ -67,34 +74,47 @@ static _Global Global;
 VirtualRegistry* pRegistry;
 RegKeyHandles* pRegistryHandles;
 bool TrampolinesInstalled = false;
-bool VirtualizeWrites = false;
+bool DisableTrampolines = false;
+HANDLE VirtualizedThread = 0;
 bool EnableOverrides = false;
 HKEY LastEnumKey = 0;
 unsigned LastEnumIndex = 0xFFFFFFFF;
 unsigned EnumOffset = 0;
-unsigned VirtualHandleOffset = VirtualRegKeyBase;
 
-bool GetDLLRegistered(const wstring& Filename) {
-  std::vector<wstring>::iterator iter = std::find(Global.RegisteredDLLs.begin(), Global.RegisteredDLLs.end(), Filename);
+unsigned GetRegKeyHandle() {
+  return Global.VirtualHandleOffset++;
+}
+
+bool GetDLLRegistered(const WString& Filename) {
+  std::vector<WString>::iterator iter = std::find(Global.RegisteredDLLs.begin(), Global.RegisteredDLLs.end(), Filename);
   if (iter != Global.RegisteredDLLs.end()) {
     return true;
   }
   return false;
 }
 
-void SetDLLRegistered(const wstring& Filename, bool State) {
+void SetDLLRegistered(const WString& Filename, bool State) {
   if (State) {
     SetDLLRegistered(Filename, false);
     Global.RegisteredDLLs.push_back(Filename);
   } else {
-    std::vector<wstring>::iterator iter = std::find(Global.RegisteredDLLs.begin(), Global.RegisteredDLLs.end(), Filename);
+    std::vector<WString>::iterator iter = std::find(Global.RegisteredDLLs.begin(), Global.RegisteredDLLs.end(), Filename);
     if (iter != Global.RegisteredDLLs.end()) {
       Global.RegisteredDLLs.erase(iter);
     }
   }
 }
 
-Export inline int IsSupported() {
+Export int GetEnabled() {
+  return DisableTrampolines == false;
+}
+
+Export void SetEnabled(int Value) {
+  DisableTrampolines = (Value == 0);
+}
+
+Export int IsSupported() {
+  OutputDebugStringA("IsSupported()\n");
   OSVERSIONINFO info;
   memset(&info, 0, sizeof(OSVERSIONINFO));
   info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -108,10 +128,10 @@ Export int Initialize() {
       InstallTrampolines();
       VRegInitialize();
       EnableOverrides = true;
-      OutputDebugString("Initialize()=1\n");
+      OutputDebugStringA("Initialize()=1\n");
       return Success;
     }
-    OutputDebugString("Initialize()=0\n");
+    OutputDebugStringA("Initialize()=0\n");
     return Failure;
   } else {
     return Failure;
@@ -120,10 +140,60 @@ Export int Initialize() {
 
 Export int Uninitialize() {
   if (EnableOverrides) {
-    OutputDebugString("Uninitialize()\n");
+    OutputDebugStringA("Uninitialize()\n");
+#ifdef _DEBUG
+    VRegDump();
+#endif
+    VRegFree();
     EnableOverrides = false;
     return Success;
   } else {
     return Failure;
   }
+}
+
+WString _wstr(const LPCWSTR ptr, bool escape) {
+  if (ptr) {
+    int len = wcslen(ptr);
+    std::wstringstream buffer;
+    if (escape) {
+      buffer << L"\"" << WString((const wchar_t*)ptr, len) << L"\"";
+    } else {
+      buffer << WString((const wchar_t*)ptr, len);
+    }
+    return WString(buffer.str().c_str());
+  } else {
+    if (escape) {
+      return WString(L"<null>");
+    } else {
+      return WString(L"");
+    }
+  }
+}
+
+WString _wstr(const LPCWSTR ptr) {
+  return _wstr(ptr, true);
+}
+
+WString _str(const LPCSTR ptr, bool escape) {
+  if (ptr) {
+    int len = strlen(ptr);
+    std::wstringstream buffer;
+    if (escape) {
+      buffer << L"\"" << WString((const char*)ptr, len) << L"\"";
+      return WString(buffer.str().c_str());
+    } else {
+      return WString((const char*)ptr, len);
+    }
+  } else {
+    if (escape) {
+      return WString(L"<null>");
+    } else {
+      return WString(L"");
+    }
+  }
+}
+
+WString _str(const LPCSTR ptr) {
+  return _str(ptr, true);
 }

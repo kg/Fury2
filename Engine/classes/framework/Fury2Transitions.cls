@@ -45,490 +45,267 @@ Public Property Get Engine() As Fury2Engine
     Set Engine = m_engEngine
 End Property
 
+Sub DoFade(ByVal Length As Double, ByVal Mode As Long)
+On Error Resume Next
+    If Mode = 0 Then
+        FadeOut Length / 2
+    ElseIf Mode = 1 Then
+        FadeIn Length / 2
+    End If
+End Sub
+
+Sub DoCrossfade(ByVal Length As Double, ByVal Mode As Long)
+On Error Resume Next
+Static s_imgOldFrame As Fury2Image
+    If Mode = 0 Then
+        Set s_imgOldFrame = Engine.GrabScreen(False)
+    ElseIf Mode = 1 Then
+        Crossfade Length, s_imgOldFrame
+        Set s_imgOldFrame = Nothing
+    End If
+End Sub
+
+Sub DoWipe(ByVal Length As Double, ByVal Mode As Long, ByVal Direction As String)
+On Error Resume Next
+Static s_imgOldFrame As Fury2Image
+    If Mode = 0 Then
+        Set s_imgOldFrame = Engine.GrabScreen(False)
+    ElseIf Mode = 1 Then
+        Wipe Direction, Length, False, s_imgOldFrame
+        Set s_imgOldFrame = Nothing
+    End If
+End Sub
+
+Sub DoSmoothWipe(ByVal Length As Double, ByVal Mode As Long, ByVal Direction As String, Optional ByVal Size = 1 / 20)
+On Error Resume Next
+Static s_imgOldFrame As Fury2Image
+    If Mode = 0 Then
+        Set s_imgOldFrame = Engine.GrabScreen(False)
+    ElseIf Mode = 1 Then
+        SmoothWipe Direction, Length, CSng(Size), s_imgOldFrame
+        Set s_imgOldFrame = Nothing
+    End If
+End Sub
+
+Sub DoSlide(ByVal Length As Double, ByVal Mode As Long, ByVal Direction As String)
+On Error Resume Next
+Static s_imgOldFrame As Fury2Image
+    If Mode = 0 Then
+        Set s_imgOldFrame = Engine.GrabScreen(False)
+    ElseIf Mode = 1 Then
+        Slide Direction, Length, False, s_imgOldFrame
+        Set s_imgOldFrame = Nothing
+    End If
+End Sub
+
+Sub Wipe(ByVal Direction As String, Optional ByVal Length As Double = 1, Optional ByVal Reverse As Boolean = False, Optional ByVal OldImage As Fury2Image = Nothing)
+On Error Resume Next
+Dim m_imgOld As Fury2Image
+    If OldImage Is Nothing Then
+        Set m_imgOld = Engine.GrabScreen(False)
+    Else
+        Set m_imgOld = OldImage
+    End If
+    Select Case LCase(Trim(Direction))
+    Case "left"
+        Transition Engine.BindEvent("WipeHorizontal_Render", Me, Array(m_imgOld, -1#)), Length, Reverse
+    Case "right"
+        Transition Engine.BindEvent("WipeHorizontal_Render", Me, Array(m_imgOld, 1#)), Length, Reverse
+    Case "up"
+        Transition Engine.BindEvent("WipeVertical_Render", Me, Array(m_imgOld, -1#)), Length, Reverse
+    Case "down"
+        Transition Engine.BindEvent("WipeVertical_Render", Me, Array(m_imgOld, 1#)), Length, Reverse
+    Case Else
+    End Select
+End Sub
+
+Sub Slide(ByVal Direction As String, Optional ByVal Length As Double = 1, Optional ByVal Reverse As Boolean = False, Optional ByVal OldImage As Fury2Image = Nothing)
+On Error Resume Next
+Dim m_imgOld As Fury2Image
+    If OldImage Is Nothing Then
+        Set m_imgOld = Engine.GrabScreen(False)
+    Else
+        Set m_imgOld = OldImage
+    End If
+    Select Case LCase(Trim(Direction))
+    Case "left"
+        Transition Engine.BindEvent("Slide_Render", Me, Array(m_imgOld, -1#, 0#)), Length, Reverse
+    Case "right"
+        Transition Engine.BindEvent("Slide_Render", Me, Array(m_imgOld, 1#, 0#)), Length, Reverse
+    Case "up"
+        Transition Engine.BindEvent("Slide_Render", Me, Array(m_imgOld, 0#, -1#)), Length, Reverse
+    Case "down"
+        Transition Engine.BindEvent("Slide_Render", Me, Array(m_imgOld, 0#, 1#)), Length, Reverse
+    Case Else
+    End Select
+End Sub
+
+Sub SmoothWipe(ByVal Direction As String, Optional ByVal Length As Double = 1, Optional ByVal Size As Single = 1 / 20, Optional ByVal OldImage As Fury2Image = Nothing)
+On Error Resume Next
+Dim m_imgOld As Fury2Image
+Dim l_imgMask As Fury2Image
+    If Size > 0.5 Then Size = 0.5
+    If Size < 0.01 Then Size = 0.01
+    If OldImage Is Nothing Then
+        Set m_imgOld = Engine.GrabScreen(False)
+    Else
+        Set m_imgOld = OldImage
+    End If
+    Select Case LCase(Trim(Direction))
+    Case "left"
+        Set l_imgMask = F2Image(Engine.ScreenWidth * Size, Engine.ScreenHeight)
+        l_imgMask.GradientFill l_imgMask.Rectangle, Array(F2RGB(255, 255, 255, 255), F2RGB(255, 255, 255, 0), "H")
+        Transition Engine.BindEvent("SmoothWipeHorizontal_Render", Me, Array(m_imgOld, l_imgMask, -1#)), Length, False
+    Case "right"
+        Set l_imgMask = F2Image(Engine.ScreenWidth * Size, Engine.ScreenHeight)
+        l_imgMask.GradientFill l_imgMask.Rectangle, Array(F2RGB(255, 255, 255, 0), F2RGB(255, 255, 255, 255), "H")
+        Transition Engine.BindEvent("SmoothWipeHorizontal_Render", Me, Array(m_imgOld, l_imgMask, 1#)), Length, False
+    Case "up"
+        Set l_imgMask = F2Image(Engine.ScreenWidth, Engine.ScreenHeight * Size)
+        l_imgMask.GradientFill l_imgMask.Rectangle, Array(F2RGB(255, 255, 255, 255), F2RGB(255, 255, 255, 0), "V")
+        Transition Engine.BindEvent("SmoothWipeVertical_Render", Me, Array(m_imgOld, l_imgMask, -1#)), Length, False
+    Case "down"
+        Set l_imgMask = F2Image(Engine.ScreenWidth, Engine.ScreenHeight * Size)
+        l_imgMask.GradientFill l_imgMask.Rectangle, Array(F2RGB(255, 255, 255, 0), F2RGB(255, 255, 255, 255), "V")
+        Transition Engine.BindEvent("SmoothWipeVertical_Render", Me, Array(m_imgOld, l_imgMask, 1#)), Length, False
+    Case Else
+    End Select
+End Sub
+
 Sub FadeOut(Optional ByVal Length As Double = 1, Optional ByVal BackColor As Long = 0)
 On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_dblStart As Double, m_dblNow As Double, m_dblEnd As Double, m_dblLength As Double
-Dim m_lngBackColor As Long
-Dim m_sngVolume As Single
-    If Length = -1 Then Length = 1
-    If Length <= 0 Then Exit Sub
-    If Engine.SpecialFX = False Then
-        Exit Sub
-    End If
-    If m_booTransitioning Then Exit Sub
-    m_booTransitioning = True
-    Engine.ContextLevelAdd "Transitions.FadeOut"
-    m_lngBackColor = CLng(BackColor)
-    Call F2SetAlpha(m_lngBackColor, 255)
-    m_dblStart = HiResTimer
-    m_dblLength = CDbl(Length)
-    m_dblEnd = m_dblStart + m_dblLength
-    m_dblNow = m_dblStart
-    Do Until m_dblNow >= m_dblEnd
-        m_dblNow = HiResTimer
-        m_sngAlpha = (m_dblNow - m_dblStart) / m_dblLength
-        Engine.UpdateBackbuffer
-        Call F2SetAlpha(m_lngBackColor, m_sngAlpha * 255)
-        Engine.Backbuffer.Fill Engine.Backbuffer.Rectangle, m_lngBackColor, RenderMode_SourceAlpha
-        Engine.FlipScreen
-        Engine.Yield True
-    Loop
-    Call F2SetAlpha(m_lngBackColor, 0)
-    Engine.Backbuffer.Clear m_lngBackColor
-    Engine.FlipScreen
-    Engine.Yield True
-    Engine.ContextLevelRemove
-    Engine.ResetTiming
-    m_booTransitioning = False
-    Err.Clear
+    Transition Engine.BindEvent("Fade_Render", Me, Array(BackColor)), Length, False
 End Sub
 
 Sub FadeIn(Optional ByVal Length As Double = 1, Optional ByVal BackColor As Long = 0)
 On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_dblStart As Double, m_dblNow As Double, m_dblEnd As Double, m_dblLength As Double
-Dim m_lngBackColor As Long
-    If Length = -1 Then Length = 1
-    If Length <= 0 Then Exit Sub
-    If Engine.SpecialFX = False Then
-        Exit Sub
-    End If
-    If m_booTransitioning Then Exit Sub
-    m_booTransitioning = True
-    Engine.ContextLevelAdd "Transitions.FadeIn"
-    m_lngBackColor = CLng(BackColor)
-    Call F2SetAlpha(m_lngBackColor, 0)
-    Engine.Backbuffer.Clear m_lngBackColor
-    Engine.FlipScreen
-    Engine.Yield True
-    m_dblStart = HiResTimer
-    m_dblLength = CDbl(Length)
-    m_dblEnd = m_dblStart + m_dblLength
-    m_dblNow = m_dblStart
-    Do Until m_dblNow >= m_dblEnd
-        m_dblNow = HiResTimer
-        m_sngAlpha = 1 - ((m_dblNow - m_dblStart) / m_dblLength)
-        Engine.UpdateBackbuffer
-        Call F2SetAlpha(m_lngBackColor, m_sngAlpha * 255)
-        Engine.Backbuffer.Fill Engine.Backbuffer.Rectangle, m_lngBackColor, RenderMode_SourceAlpha
-        Engine.FlipScreen
-        Engine.Yield True
-    Loop
-    Call F2SetAlpha(m_lngBackColor, 255)
-    Engine.ContextLevelRemove
-    Engine.ResetTiming
-    m_booTransitioning = False
-    Err.Clear
+    Transition Engine.BindEvent("Fade_Render", Me, Array(BackColor)), Length, True
 End Sub
 
-Sub Crossfade(Optional ByVal Length As Double = 1, Optional OldImage = Nothing)
+Sub Crossfade(Optional ByVal Length As Double = 1, Optional ByVal OldImage As Fury2Image = Nothing)
 On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_dblStart As Double, m_dblNow As Double, m_dblEnd As Double, m_dblLength As Double
 Dim m_imgOld As Fury2Image
-    If Length = -1 Then Length = 1
-    If Length <= 0 Then Exit Sub
-    If Engine.SpecialFX = False Then Exit Sub
-    If m_booTransitioning Then Exit Sub
-    m_booTransitioning = True
-    Engine.ContextLevelAdd "Transitions.Crossfade"
-    m_dblStart = HiResTimer
-    m_dblLength = CDbl(Length)
-    m_dblEnd = m_dblStart + m_dblLength
-    m_dblNow = m_dblStart
     If OldImage Is Nothing Then
-        Set m_imgOld = Engine.Backbuffer.Duplicate
+        Set m_imgOld = Engine.GrabScreen(False)
     Else
         Set m_imgOld = OldImage
     End If
-    Engine.Sync
-    Do Until m_dblNow >= m_dblEnd
-        m_dblNow = HiResTimer
-        m_sngAlpha = 1 - ((m_dblNow - m_dblStart) / m_dblLength)
+    Transition Engine.BindEvent("Crossfade_Render", Me, Array(m_imgOld)), Length, True
+End Sub
+
+Sub Transition(ByVal Proc As Fury2Event, Optional ByVal Length As Double = 1, Optional ByVal Reverse As Boolean)
+On Error Resume Next
+Dim m_sldTransition As Fury2Slider
+    If Length = -1 Then Length = 1
+    If Length <= 0 Then Exit Sub
+    If m_booTransitioning Then Exit Sub
+    m_booTransitioning = True
+    Engine.ContextLevelAdd "Transition"
+    If Reverse Then
+        Proc.Invoke Engine.Backbuffer, 1
+    Else
+        Proc.Invoke Engine.Backbuffer, 0
+    End If
+    Set m_sldTransition = Engine.F2Slider()
+    m_sldTransition.Start Length
+    Do Until m_sldTransition.Finished
         Engine.UpdateBackbuffer
-        Engine.Backbuffer.Blit Engine.Backbuffer.Rectangle, m_imgOld.Rectangle, m_imgOld, m_sngAlpha, BlitMode_Normal
+        If Reverse Then
+            Proc.Invoke Engine.Backbuffer, 1 - m_sldTransition.Progress
+        Else
+            Proc.Invoke Engine.Backbuffer, m_sldTransition.Progress
+        End If
         Engine.FlipScreen
-        Engine.Yield False
+        Engine.Yield True
     Loop
+    Engine.UpdateBackbuffer
+    If Reverse Then
+        Proc.Invoke Engine.Backbuffer, 0
+    Else
+        Proc.Invoke Engine.Backbuffer, 1
+    End If
+    Engine.FlipScreen
+    Engine.Yield True
     Engine.ContextLevelRemove
     Engine.ResetTiming
     m_booTransitioning = False
     Err.Clear
 End Sub
 
-#If EnableAllTransitions Then
-Sub CircleIn(Optional Length = 1, Optional OldImage = Nothing)
+Sub Fade_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal BackColor As Long)
 On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_dblStart As Double, m_dblNow As Double, m_dblEnd As Double, m_dblLength As Double
-Dim m_imgBackbuffer As Fury2Image
-Dim m_imgMask As Fury2Image
-    If Length = -1 Then Length = 1
-    If Length <= 0 Then Exit Sub
-    If Engine.SpecialFX = False Then Exit Sub
-    If m_booTransitioning Then Exit Sub
-    Engine.FrameBuildup = 0
-    m_booTransitioning = True
-    Engine.ContextLevelAdd "Transitions.CircleIn"
-    Err.Clear
-    m_dblStart = HiResTimer
-    m_dblLength = CDbl(Length)
-    m_dblEnd = m_dblStart + m_dblLength
-    m_dblNow = m_dblStart
-    If OldImage Is Nothing Then
-        Set m_imgBackbuffer = Engine.Backbuffer.Duplicate
-    Else
-        Set m_imgBackbuffer = OldImage
-    End If
-    Set m_imgMask = F2Image(Engine.Backbuffer.Width, Engine.Backbuffer.Height)
-    Engine.Update
-    Engine.Redraw
-    Do Until m_dblNow >= m_dblEnd
-        m_dblNow = HiResTimer
-        m_sngAlpha = ((m_dblNow - m_dblStart) / m_dblLength)
-        Engine.UpdateBackbuffer
-        m_imgMask.Copy m_imgBackbuffer
-        m_imgMask.DrawCircleFilledFast m_imgMask.Width \ 2, m_imgMask.Height \ 2, (vbMax(m_imgBackbuffer.Width, m_imgBackbuffer.Height) * 0.6) * m_sngAlpha, c_lngNullColor + 1
-        m_imgMask.MaskColor = c_lngNullColor + 1
-        Engine.Backbuffer.Blit Engine.Backbuffer.Rectangle, m_imgBackbuffer.Rectangle, m_imgMask
-        Engine.FlipScreen
-        Engine.Yield False
-    Loop
-    Engine.UpdateBackbuffer
-    Engine.FlipScreen
-    Engine.Yield False
-    Set m_imgBackbuffer = Nothing
-    Engine.ContextLevelRemove
-    m_booTransitioning = False
-    Err.Clear
+    Surface.Fill Surface.Rectangle, SetAlpha(BackColor, Progress * 255), RenderMode_SourceAlpha
 End Sub
 
-Sub SmoothFadeUp(Optional Speed = -1, Optional OldImage = Nothing)
+Sub Crossfade_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image)
 On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_imgBackbuffer As Fury2Image
-Dim m_imgMask As Fury2Image
-Dim m_lngSpeed As Long
-    If Engine.SpecialFX = False Then Exit Sub
-    If m_booTransitioning Then Exit Sub
-    m_booTransitioning = True
-    Engine.ContextLevelAdd "Transitions.SmoothFadeUp"
-    m_lngSpeed = Speed
-    If m_lngSpeed = -1 Then m_lngSpeed = 50
-    Err.Clear
-    If m_lngSpeed <= 2 Then Exit Sub
-    If OldImage Is Nothing Then
-        Set m_imgBackbuffer = Engine.Backbuffer.Duplicate
-    Else
-        Set m_imgBackbuffer = OldImage
-    End If
-    Set m_imgMask = F2Image(Engine.Backbuffer.Width, Engine.Backbuffer.Height)
-    Engine.Update
-    Engine.Redraw
-    For m_lngFade = 0 To (m_lngSpeed) - 1
-        m_sngAlpha = 1 - (CSng(m_lngFade) / CSng(m_lngSpeed))
-        Engine.UpdateBackbuffer
-        m_imgMask.Clear F2Black
-        m_imgMask.GradientFill F2Rect(0, 0, m_imgMask.Width, m_imgMask.Height, False), F2RGB(255, 255, 255, (m_sngAlpha) * 512), F2RGB(255, 255, 255, (m_sngAlpha - 0.5) * 512), f2gVertical
-        m_imgBackbuffer.LoadChannel m_imgMask, f2aAlpha, f2aRed
-        Engine.Backbuffer.Blit Engine.Backbuffer.Rectangle, m_imgBackbuffer.Rectangle, m_imgBackbuffer, 1, BlitMode_SourceAlpha
-        Engine.FlipScreen
-        Engine.Yield False
-    Next m_lngFade
-    Engine.UpdateBackbuffer
-    Engine.FlipScreen
-    Engine.Yield False
-    Set m_imgBackbuffer = Nothing
-    Engine.ContextLevelRemove
-    m_booTransitioning = False
-    Err.Clear
+    Surface.Blit , , OldImage, Progress, BlitMode_Normal
 End Sub
 
-Sub SmoothFadeDown(Optional Speed = -1, Optional OldImage = Nothing)
+Sub WipeHorizontal_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image, ByVal Direction As Single)
 On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_imgBackbuffer As Fury2Image
-Dim m_imgMask As Fury2Image
-Dim m_lngSpeed As Long
-    If Engine.SpecialFX = False Then Exit Sub
-    If m_booTransitioning Then Exit Sub
-    m_booTransitioning = True
-    Engine.ContextLevelAdd "Transitions.SmoothFadeDown"
-    m_lngSpeed = Speed
-    If m_lngSpeed = -1 Then m_lngSpeed = 50
-    Err.Clear
-    If m_lngSpeed <= 2 Then Exit Sub
-    If OldImage Is Nothing Then
-        Set m_imgBackbuffer = Engine.Backbuffer.Duplicate
+Dim l_sngX As Single
+Dim l_rctRect As Fury2Rect
+    l_sngX = Surface.Width * IIf(Direction < 0, 1 - Progress, Progress)
+    If Direction < 0 Then
+        Set l_rctRect = F2Rect(0, 0, l_sngX, Surface.Height)
     Else
-        Set m_imgBackbuffer = OldImage
+        Set l_rctRect = F2Rect(l_sngX, 0, Surface.Width, Surface.Height)
     End If
-    Set m_imgMask = F2Image(Engine.Backbuffer.Width, Engine.Backbuffer.Height)
-    Engine.Update
-    Engine.Redraw
-    For m_lngFade = 0 To (m_lngSpeed) - 1
-        m_sngAlpha = 1 - (CSng(m_lngFade) / CSng(m_lngSpeed))
-        Engine.UpdateBackbuffer
-        m_imgMask.Clear F2Black
-        m_imgMask.GradientFill F2Rect(0, 0, m_imgMask.Width, m_imgMask.Height, False), F2RGB(255, 255, 255, (m_sngAlpha - 0.5) * 512), F2RGB(255, 255, 255, (m_sngAlpha) * 512), f2gVertical
-        m_imgBackbuffer.LoadChannel m_imgMask, f2aAlpha, f2aRed
-        Engine.Backbuffer.Blit Engine.Backbuffer.Rectangle, m_imgBackbuffer.Rectangle, m_imgBackbuffer, 1, BlitMode_SourceAlpha
-        Engine.FlipScreen
-        Engine.Yield False
-    Next m_lngFade
-    Engine.UpdateBackbuffer
-    Engine.FlipScreen
-    Engine.Yield False
-    Set m_imgBackbuffer = Nothing
-    Engine.ContextLevelRemove
-    m_booTransitioning = False
-    Err.Clear
+    Surface.Blit l_rctRect, l_rctRect, OldImage, 1, BlitMode_Normal
 End Sub
 
-Sub SmoothFadeLeft(Optional Speed = -1, Optional OldImage = Nothing)
+Sub WipeVertical_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image, ByVal Direction As Single)
 On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_imgBackbuffer As Fury2Image
-Dim m_imgMask As Fury2Image
-Dim m_lngSpeed As Long
-    If Engine.SpecialFX = False Then Exit Sub
-    If m_booTransitioning Then Exit Sub
-    m_booTransitioning = True
-    Engine.ContextLevelAdd "Transitions.SmoothFadeLeft"
-    m_lngSpeed = Speed
-    If m_lngSpeed = -1 Then m_lngSpeed = 50
-    Err.Clear
-    If m_lngSpeed <= 2 Then Exit Sub
-    If OldImage Is Nothing Then
-        Set m_imgBackbuffer = Engine.Backbuffer.Duplicate
+Dim l_sngY As Single
+Dim l_rctRect As Fury2Rect
+    l_sngY = Surface.Height * IIf(Direction < 0, 1 - Progress, Progress)
+    If Direction < 0 Then
+        Set l_rctRect = F2Rect(0, 0, Surface.Width, l_sngY)
     Else
-        Set m_imgBackbuffer = OldImage
+        Set l_rctRect = F2Rect(0, l_sngY, Surface.Width, Surface.Height)
     End If
-    Set m_imgMask = F2Image(Engine.Backbuffer.Width, Engine.Backbuffer.Height)
-    Engine.Update
-    Engine.Redraw
-    For m_lngFade = 0 To (m_lngSpeed) - 1
-        m_sngAlpha = 1 - (CSng(m_lngFade) / CSng(m_lngSpeed))
-        Engine.UpdateBackbuffer
-        m_imgMask.Clear F2Black
-        m_imgMask.GradientFill F2Rect(0, 0, m_imgMask.Width, m_imgMask.Height, False), F2RGB(255, 255, 255, (m_sngAlpha) * 512), F2RGB(255, 255, 255, (m_sngAlpha - 0.5) * 512), f2gHorizontal
-        m_imgBackbuffer.LoadChannel m_imgMask, f2aAlpha, f2aRed
-        Engine.Backbuffer.Blit Engine.Backbuffer.Rectangle, m_imgBackbuffer.Rectangle, m_imgBackbuffer, 1, BlitMode_SourceAlpha
-        Engine.FlipScreen
-        Engine.Yield False
-    Next m_lngFade
-    Engine.UpdateBackbuffer
-    Engine.FlipScreen
-    Engine.Yield False
-    Set m_imgBackbuffer = Nothing
-    Engine.ContextLevelRemove
-    m_booTransitioning = False
-    Err.Clear
+    Surface.Blit l_rctRect, l_rctRect, OldImage, 1, BlitMode_Normal
 End Sub
 
-Sub SmoothFadeRight(Optional Speed = -1, Optional OldImage = Nothing)
+Sub SmoothWipeHorizontal_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image, ByVal Mask As Fury2Image, ByVal Direction As Single)
 On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_imgBackbuffer As Fury2Image
-Dim m_imgMask As Fury2Image
-Dim m_lngSpeed As Long
-    If Engine.SpecialFX = False Then Exit Sub
-    If m_booTransitioning Then Exit Sub
-    m_booTransitioning = True
-    Engine.ContextLevelAdd "Transitions.SmoothFadeRight"
-    m_lngSpeed = Speed
-    If m_lngSpeed = -1 Then m_lngSpeed = 50
-    Err.Clear
-    If m_lngSpeed <= 2 Then Exit Sub
-    If OldImage Is Nothing Then
-        Set m_imgBackbuffer = Engine.Backbuffer.Duplicate
+Dim l_sngX As Single
+Dim l_rctRectMask As Fury2Rect, l_rctRect As Fury2Rect
+    l_sngX = (Surface.Width) * IIf(Direction < 0, 1 - Progress, Progress)
+    If Direction < 0 Then
+        Set l_rctRectMask = F2Rect(l_sngX, 0, Mask.Width, Mask.Height, False)
+        Set l_rctRect = F2Rect(0, 0, l_sngX, Surface.Height)
     Else
-        Set m_imgBackbuffer = OldImage
+        Set l_rctRectMask = F2Rect(l_sngX, 0, Mask.Width, Mask.Height, False)
+        Set l_rctRect = F2Rect(l_sngX + Mask.Width, 0, Surface.Width, Surface.Height)
     End If
-    Set m_imgMask = F2Image(Engine.Backbuffer.Width, Engine.Backbuffer.Height)
-    Engine.Update
-    Engine.Redraw
-    For m_lngFade = 0 To (m_lngSpeed) - 1
-        m_sngAlpha = 1 - (CSng(m_lngFade) / CSng(m_lngSpeed))
-        Engine.UpdateBackbuffer
-        m_imgMask.Clear F2Black
-        m_imgMask.GradientFill F2Rect(0, 0, m_imgMask.Width, m_imgMask.Height, False), F2RGB(255, 255, 255, (m_sngAlpha - 0.5) * 512), F2RGB(255, 255, 255, (m_sngAlpha) * 512), f2gHorizontal
-        m_imgBackbuffer.LoadChannel m_imgMask, f2aAlpha, f2aRed
-        Engine.Backbuffer.Blit Engine.Backbuffer.Rectangle, m_imgBackbuffer.Rectangle, m_imgBackbuffer, 1, BlitMode_SourceAlpha
-        Engine.FlipScreen
-        Engine.Yield False
-    Next m_lngFade
-    Engine.UpdateBackbuffer
-    Engine.FlipScreen
-    Engine.Yield False
-    Set m_imgBackbuffer = Nothing
-    Engine.ContextLevelRemove
-    m_booTransitioning = False
-    Err.Clear
+    Surface.MaskBlit l_rctRectMask, l_rctRectMask, Mask.Rectangle, OldImage, Mask, 1, BlitMode_Normal
+    Surface.Blit l_rctRect, l_rctRect, OldImage, 1, BlitMode_Normal
 End Sub
 
-Sub SlideLeft(Optional Speed = -1, Optional OldImage = Nothing)
+Sub SmoothWipeVertical_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image, ByVal Mask As Fury2Image, ByVal Direction As Single)
 On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_imgBackbuffer As Fury2Image
-Dim m_lngSpeed As Long
-    If Engine.SpecialFX = False Then Exit Sub
-    If m_booTransitioning Then Exit Sub
-    m_booTransitioning = True
-    Engine.FrameBuildup = 0
-    Engine.ContextLevelAdd "Transitions.SlideLeft"
-    m_lngSpeed = Speed
-    If m_lngSpeed = -1 Then m_lngSpeed = 80
-    Err.Clear
-    If m_lngSpeed <= 2 Then Exit Sub
-    If OldImage Is Nothing Then
-        Set m_imgBackbuffer = Engine.Backbuffer.Duplicate
+Dim l_sngY As Single
+Dim l_rctRectMask As Fury2Rect, l_rctRect As Fury2Rect
+    l_sngY = (Surface.Height) * IIf(Direction < 0, 1 - Progress, Progress)
+    If Direction < 0 Then
+        Set l_rctRectMask = F2Rect(0, l_sngY, Mask.Width, Mask.Height, False)
+        Set l_rctRect = F2Rect(0, 0, Surface.Width, l_sngY)
     Else
-        Set m_imgBackbuffer = OldImage
+        Set l_rctRectMask = F2Rect(0, l_sngY, Mask.Width, Mask.Height, False)
+        Set l_rctRect = F2Rect(0, l_sngY + Mask.Height, Surface.Width, Surface.Height)
     End If
-    Engine.Update
-    Engine.Redraw
-    For m_lngFade = 0 To (m_lngSpeed) - 1
-        m_sngAlpha = 1 - (CSng(m_lngFade) / CSng(m_lngSpeed))
-        Engine.UpdateBackbuffer
-        Engine.Backbuffer.Slide (m_sngAlpha * Engine.Backbuffer.Width), 0
-        Engine.Backbuffer.Blit F2Rect(-(Engine.Backbuffer.Width - (m_sngAlpha * Engine.Backbuffer.Width)), 0, Engine.Backbuffer.Width, Engine.Backbuffer.Height, False), m_imgBackbuffer.Rectangle, m_imgBackbuffer
-        Engine.FlipScreen
-        Engine.Yield False
-    Next m_lngFade
-    Engine.UpdateBackbuffer
-    Engine.FlipScreen
-    Engine.Yield False
-    Set m_imgBackbuffer = Nothing
-    Engine.ContextLevelRemove
-    m_booTransitioning = False
-    Err.Clear
+    Surface.MaskBlit l_rctRectMask, l_rctRectMask, Mask.Rectangle, OldImage, Mask, 1, BlitMode_Normal
+    Surface.Blit l_rctRect, l_rctRect, OldImage, 1, BlitMode_Normal
 End Sub
 
-Sub SlideRight(Optional Speed = -1, Optional OldImage = Nothing)
+Sub Slide_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image, ByVal XDirection As Single, ByVal YDirection As Single)
 On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_imgBackbuffer As Fury2Image
-Dim m_lngSpeed As Long
-    If Engine.SpecialFX = False Then Exit Sub
-    If m_booTransitioning Then Exit Sub
-    m_booTransitioning = True
-    Engine.FrameBuildup = 0
-    Engine.ContextLevelAdd "Transitions.SlideRight"
-    m_lngSpeed = Speed
-    If m_lngSpeed = -1 Then m_lngSpeed = 80
-    Err.Clear
-    If m_lngSpeed <= 2 Then Exit Sub
-    If OldImage Is Nothing Then
-        Set m_imgBackbuffer = Engine.Backbuffer.Duplicate
-    Else
-        Set m_imgBackbuffer = OldImage
-    End If
-    Engine.Update
-    Engine.Redraw
-    For m_lngFade = 0 To (m_lngSpeed) - 1
-        m_sngAlpha = 1 - (CSng(m_lngFade) / CSng(m_lngSpeed))
-        Engine.UpdateBackbuffer
-        Engine.Backbuffer.Slide -(m_sngAlpha * Engine.Backbuffer.Width), 0
-        Engine.Backbuffer.Blit F2Rect((Engine.Backbuffer.Width - (m_sngAlpha * Engine.Backbuffer.Width)), 0, Engine.Backbuffer.Width, Engine.Backbuffer.Height, False), m_imgBackbuffer.Rectangle, m_imgBackbuffer
-        Engine.FlipScreen
-        Engine.Yield False
-    Next m_lngFade
-    Engine.UpdateBackbuffer
-    Engine.FlipScreen
-    Engine.Yield False
-    Set m_imgBackbuffer = Nothing
-    Engine.ContextLevelRemove
-    m_booTransitioning = False
-    Err.Clear
+Dim l_sngX As Single, l_sngY As Single
+Dim l_rctRect As Fury2Rect
+    l_sngX = XDirection * Progress * Surface.Width
+    l_sngY = YDirection * Progress * Surface.Height
+    Set l_rctRect = F2Rect(l_sngX, l_sngY, Surface.Width, Surface.Height, False)
+    Surface.Blit l_rctRect, , OldImage, 1, BlitMode_Normal
 End Sub
-
-Sub SlideUp(Optional Speed = -1, Optional OldImage = Nothing)
-On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_imgBackbuffer As Fury2Image
-Dim m_lngSpeed As Long
-    If Engine.SpecialFX = False Then Exit Sub
-    If m_booTransitioning Then Exit Sub
-    m_booTransitioning = True
-    Engine.FrameBuildup = 0
-    Engine.ContextLevelAdd "Transitions.SlideUp"
-    m_lngSpeed = Speed
-    If m_lngSpeed = -1 Then m_lngSpeed = 80
-    Err.Clear
-    If m_lngSpeed <= 2 Then Exit Sub
-    If OldImage Is Nothing Then
-        Set m_imgBackbuffer = Engine.Backbuffer.Duplicate
-    Else
-        Set m_imgBackbuffer = OldImage
-    End If
-    Engine.Update
-    Engine.Redraw
-    For m_lngFade = 0 To (m_lngSpeed) - 1
-        m_sngAlpha = 1 - (CSng(m_lngFade) / CSng(m_lngSpeed))
-        Engine.UpdateBackbuffer
-        Engine.Backbuffer.Slide 0, (m_sngAlpha * Engine.Backbuffer.Height)
-        Engine.Backbuffer.Blit F2Rect(0, -(Engine.Backbuffer.Height - (m_sngAlpha * Engine.Backbuffer.Height)), Engine.Backbuffer.Width, Engine.Backbuffer.Height, False), m_imgBackbuffer.Rectangle, m_imgBackbuffer
-        Engine.FlipScreen
-        Engine.Yield False
-    Next m_lngFade
-    Engine.UpdateBackbuffer
-    Engine.FlipScreen
-    Engine.Yield False
-    Set m_imgBackbuffer = Nothing
-    Engine.ContextLevelRemove
-    m_booTransitioning = False
-    Err.Clear
-End Sub
-
-Sub SlideDown(Optional Speed = -1, Optional OldImage = Nothing)
-On Error Resume Next
-Dim m_lngFade As Long
-Dim m_sngAlpha As Single
-Dim m_imgBackbuffer As Fury2Image
-Dim m_lngSpeed As Long
-    If Engine.SpecialFX = False Then Exit Sub
-    If m_booTransitioning Then Exit Sub
-    m_booTransitioning = True
-    Engine.FrameBuildup = 0
-    Engine.ContextLevelAdd "Transitions.SlideDown"
-    m_lngSpeed = Speed
-    If m_lngSpeed = -1 Then m_lngSpeed = 80
-    Err.Clear
-    If m_lngSpeed <= 2 Then Exit Sub
-    If OldImage Is Nothing Then
-        Set m_imgBackbuffer = Engine.Backbuffer.Duplicate
-    Else
-        Set m_imgBackbuffer = OldImage
-    End If
-    Engine.Update
-    Engine.Redraw
-    For m_lngFade = 0 To (m_lngSpeed) - 1
-        m_sngAlpha = 1 - (CSng(m_lngFade) / CSng(m_lngSpeed))
-        Engine.UpdateBackbuffer
-        Engine.Backbuffer.Slide 0, -(m_sngAlpha * Engine.Backbuffer.Height)
-        Engine.Backbuffer.Blit F2Rect(0, (Engine.Backbuffer.Height - (m_sngAlpha * Engine.Backbuffer.Height)), Engine.Backbuffer.Width, Engine.Backbuffer.Height, False), m_imgBackbuffer.Rectangle, m_imgBackbuffer
-        Engine.FlipScreen
-        Engine.Yield False
-    Next m_lngFade
-    Engine.UpdateBackbuffer
-    Engine.FlipScreen
-    Engine.Yield False
-    Set m_imgBackbuffer = Nothing
-    Engine.ContextLevelRemove
-    m_booTransitioning = False
-    Err.Clear
-End Sub
-#End If

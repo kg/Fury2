@@ -50,10 +50,21 @@ Private mvarFirst As Long, mvarSortedFirst As Long
 Private mvarFilename As String
 Private mvarParent As Fury2Map
 Private mvarEngine As Fury2Engine
+Private m_optOptions As RenderSpritesParam
+
+Public Sub SetOptions(ByRef NewOptions As RenderSpritesParam)
+On Error Resume Next
+    m_optOptions = NewOptions
+End Sub
+
+Friend Function GetOptions() As RenderSpritesParam
+On Error Resume Next
+    GetOptions = m_optOptions
+End Function
 
 Private Property Get IInspectableCollection_ItemCount() As Long
 On Error Resume Next
-    IInspectableCollection_ItemCount = mCol.count
+    IInspectableCollection_ItemCount = mCol.Count
 End Property
 
 Private Property Set IInspectableCollection_ItemValue(ByVal Index As Long, ByVal RHS As Variant)
@@ -104,11 +115,11 @@ Sub Free()
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
     Set mvarParent = Nothing
-    If mCol.count = 0 Then Exit Sub
+    If mCol.Count = 0 Then Exit Sub
     For Each l_sprSprite In mCol
         l_sprSprite.Free
     Next l_sprSprite
-    Do While mCol.count > 0
+    Do While mCol.Count > 0
         mCol.Remove 1
     Loop
     mvarDirty = True
@@ -123,12 +134,12 @@ Public Property Get Parent() As Fury2Map
     Set Parent = mvarParent
 End Property
 
-Sub Clear()
+Sub Clear(Optional ByVal Force As Boolean = False)
 On Error Resume Next
 Dim m_lngSprites As Long
-    If mvarParent Is Nothing Then
+    If (mvarParent Is Nothing) And (Force = False) Then
     Else
-        Do While mCol.count > 0
+        Do While mCol.Count > 0
             Remove 1
         Loop
     End If
@@ -143,7 +154,7 @@ Dim l_lngFillSprites As Long
 Dim l_sprSprite As Fury2Sprite, l_sprNext As Fury2Sprite
     If mvarParent Is Nothing Then Exit Sub
     If mvarIndex < 1 Then Exit Sub
-    If mCol.count < 1 Then Exit Sub
+    If mCol.Count < 1 Then Exit Sub
     mvarDirty = False
     l_lngFillSprites = 1
     mvarFirst = mCol.Item(1).Pointer
@@ -183,7 +194,7 @@ On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
     Set SpriteFromPoint = Nothing
-    If mCol.count < 1 Then Exit Function
+    If mCol.Count < 1 Then Exit Function
     With l_rctArea
         .x1 = X
         .y1 = Y
@@ -200,7 +211,7 @@ On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
     Set SpriteFromScreenPoint = Nothing
-    If mCol.count < 1 Then Exit Function
+    If mCol.Count < 1 Then Exit Function
     With l_rctArea
         .x1 = X
         .y1 = Y
@@ -221,7 +232,7 @@ Dim l_rctArea As FRect
     l_rctArea.x2 = Area.right
     l_rctArea.y2 = Area.bottom
     Set SpriteFromArea = Nothing
-    If mCol.count < 1 Then Exit Function
+    If mCol.Count < 1 Then Exit Function
     l_lngExclude = Exclude.Pointer
     l_lngResult = SoftFX.FindSprite(mCol.Item(1).Pointer, l_rctArea, l_lngExclude, CLng(MustBeSolid), Class, ExcludedClass)
     If l_lngResult > 0 Then Set SpriteFromArea = mCol.Item(l_lngResult)
@@ -236,7 +247,7 @@ Dim l_rctArea As FRect
     l_rctArea.x2 = Area.right
     l_rctArea.y2 = Area.bottom
     Set SpriteFromScreenArea = Nothing
-    If mCol.count < 1 Then Exit Function
+    If mCol.Count < 1 Then Exit Function
     l_lngExclude = Exclude.Pointer
     l_lngResult = SoftFX.FindSpriteOnscreen(mCol.Item(1).Pointer, l_rctArea, l_lngExclude, CLng(MustBeSolid), Class, ExcludedClass)
     If l_lngResult > 0 Then Set SpriteFromScreenArea = mCol.Item(l_lngResult)
@@ -300,7 +311,7 @@ Dim l_lngExclude As Long
             ReDim Preserve l_varResult(0 To l_lngSize - 1)
         End If
         Set l_varResult(l_lngCount) = Item(l_lngResult)
-        If (l_lngResult = mCol.count) Then
+        If (l_lngResult = mCol.Count) Then
             l_lngStart = 0
         Else
             l_lngStart = Item(l_lngResult + 1).Pointer
@@ -338,7 +349,7 @@ Dim l_lngExclude As Long
             ReDim Preserve l_varResult(0 To l_lngSize - 1)
         End If
         Set l_varResult(l_lngCount) = Item(l_lngResult)
-        If (l_lngResult = mCol.count) Then
+        If (l_lngResult = mCol.Count) Then
             l_lngStart = 0
         Else
             l_lngStart = Item(l_lngResult + 1).Pointer
@@ -396,7 +407,7 @@ Dim l_lngCount As Long, l_lngSize As Long
             ReDim Preserve l_varResult(0 To l_lngSize - 1)
         End If
         Set l_varResult(l_lngCount) = Item(l_lngResult)
-        If (l_lngResult = mCol.count) Then
+        If (l_lngResult = mCol.Count) Then
             l_lngStart = 0
         Else
             l_lngStart = Item(l_lngResult + 1).Pointer
@@ -440,7 +451,7 @@ On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
 Dim l_seoOptions As SpriteEngineOptions
 Dim l_lngSprites As Long
-    If mCol.count = 0 Then Exit Sub
+    If mCol.Count = 0 Then Exit Sub
     l_lngSprites = 1
     If mvarDirty Then RefreshList
     With Map.Layers(CLayer)
@@ -460,11 +471,12 @@ End Sub
 Public Sub Render(Surface As Fury2Image, Optional ByVal XOffset As Long = 0, Optional ByVal YOffset As Long = 0)
 On Error Resume Next
 Dim l_camCamera As CameraParam
+Dim l_optOptions As RenderSpritesParam
 Dim l_lngRenderTargets() As Long
     If mvarDirty Then RefreshList
     Sort
     Err.Clear
-    If mCol.count = 0 Then
+    If mCol.Count = 0 Then
     Else
         Err.Clear
         With l_camCamera
@@ -482,22 +494,27 @@ Dim l_lngRenderTargets() As Long
             .Rectangle.Width = Surface.Width
             .Rectangle.Height = Surface.Height
         End With
-        RenderSprites mvarSortedFirst, l_camCamera
+        l_optOptions = GetOptions
+        RenderSprites mvarSortedFirst, l_camCamera, l_optOptions
     End If
 End Sub
 
-Public Sub Redraw(ByRef Param As CameraParam, Optional OutputBuffer As Fury2Image = Nothing)
+Public Function Redraw(ByRef Param As CameraParam, Optional OutputBuffer As Fury2Image = Nothing) As Long
 On Error Resume Next
 Dim l_camCamera As CameraParam
+Dim l_optOptions As RenderSpritesParam
+Dim l_lngCount As Long
     If mvarDirty Then RefreshList
     Err.Clear
-    If mCol.count = 0 Then
+    If mCol.Count = 0 Then
     Else
         Err.Clear
         l_camCamera = Param
-        RenderSprites mvarSortedFirst, l_camCamera
+        l_optOptions = GetOptions
+        l_lngCount = RenderSprites(mvarSortedFirst, l_camCamera, l_optOptions)
     End If
-End Sub
+    Redraw = l_lngCount
+End Function
 
 Friend Sub RemoveQuick(Obj)
 On Error Resume Next
@@ -543,8 +560,8 @@ Public Sub Add(ByVal Obj As Fury2Sprite, Optional LoadScript As Boolean = True, 
 On Error Resume Next
 Dim m_lngSprites As Long
 Dim m_objScript As Object
-    If Position = -1 Then Position = mCol.count + 1
-    If mCol.count >= c_lngMaxSprites Then Exit Sub
+    If Position = -1 Then Position = mCol.Count + 1
+    If mCol.Count >= c_lngMaxSprites Then Exit Sub
     If TypeOf Obj Is Fury2Sprite Then Else Exit Sub
     If Find(Obj) Then Exit Sub
     Obj.SetParent Parent
@@ -563,9 +580,9 @@ Dim m_objScript As Object
         Obj.Initialize
         Obj.Load
     End If
-    Obj.Index = mCol.count + 1
+    Obj.Index = mCol.Count + 1
     Obj.SetLayer mvarIndex
-    If (Position > mCol.count) Then
+    If (Position > mCol.Count) Then
         mCol.Add Obj
     ElseIf (Position <= 1) Then
         mCol.Add Obj, , 1
@@ -579,8 +596,8 @@ End Sub
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)
 On Error Resume Next
 Dim l_objObject As Object
-    If FromIndex < 1 Or FromIndex > mCol.count Then Exit Sub
-    If ToIndex < 1 Or ToIndex > (mCol.count + 1) Then Exit Sub
+    If FromIndex < 1 Or FromIndex > mCol.Count Then Exit Sub
+    If ToIndex < 1 Or ToIndex > (mCol.Count + 1) Then Exit Sub
     If FromIndex = ToIndex Then Exit Sub
     Set l_objObject = mCol.Item(FromIndex)
     Remove FromIndex
@@ -609,7 +626,7 @@ On Error Resume Next
 Dim l_lngSprites As Long
 Dim l_objObject As Object, l_strKey As String
 Dim l_sprSprite As Fury2Sprite
-    If mCol.count < 1 Then Exit Function
+    If mCol.Count < 1 Then Exit Function
     If VarType(vntIndexKey) = vbObject Then
         Set l_objObject = vntIndexKey
         l_lngSprites = 1
@@ -650,7 +667,7 @@ Attribute Item.VB_UserMemId = 0
 On Error Resume Next
 Dim m_lngSprites As Long
 Dim m_strName As String
-    If mCol.count < 1 Then Exit Property
+    If mCol.Count < 1 Then Exit Property
     If VarType(vntIndexKey) = vbObject Then
         Set Item = vntIndexKey
     ElseIf VarType(vntIndexKey) = vbString Then
@@ -660,9 +677,9 @@ Dim m_strName As String
     End If
 End Property
 
-Public Property Get count() As Long
+Public Property Get Count() As Long
 On Error Resume Next
-    count = mCol.count
+    Count = mCol.Count
 End Property
 
 Public Sub Remove(vntIndexKey As Variant)
@@ -670,7 +687,7 @@ On Error Resume Next
 Dim m_lngSprites As Long, m_lngIndex As Long
 Dim l_sprSprite As Fury2Sprite
 Dim l_sprFind As Fury2Sprite
-    If mCol.count < 1 Then Exit Sub
+    If mCol.Count < 1 Then Exit Sub
     m_lngSprites = Find(vntIndexKey)
     Set l_sprFind = mCol(m_lngSprites)
     If mvarParent Is Nothing Then
@@ -679,7 +696,7 @@ Dim l_sprFind As Fury2Sprite
     End If
     mCol.Remove m_lngSprites
     mvarDirty = True
-    If mCol.count < 1 Then Exit Sub
+    If mCol.Count < 1 Then Exit Sub
     Err.Clear
 End Sub
 
@@ -697,6 +714,9 @@ Private Sub Class_Initialize()
     Set mCol = New Collection
     Set mColUpdate = New Collection
     mvarDirty = True
+    m_optOptions.DrawFrames = True
+    m_optOptions.DrawSecondaryImages = True
+    m_optOptions.DrawAttachedGraphics = True
 End Sub
 
 Private Sub Class_Terminate()
@@ -716,7 +736,7 @@ End Sub
 
 Private Property Get IVirtualFileCollection_Count() As Long
 On Error Resume Next
-    IVirtualFileCollection_Count = mCol.count
+    IVirtualFileCollection_Count = mCol.Count
 End Property
 
 Private Function IVirtualFileCollection_CreateNew() As Object
@@ -735,7 +755,7 @@ End Function
 
 Private Sub IVirtualFileCollection_Reset()
 On Error Resume Next
-    Do While mCol.count > 0
+    Do While mCol.Count > 0
         Remove 1
     Loop
     Set mCol = New Collection
@@ -748,7 +768,6 @@ End Sub
 
 Private Sub IVirtualFileCollection_LoadHeader(File As libGraphics.VirtualFile)
 On Error Resume Next
-    DoEvents
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)

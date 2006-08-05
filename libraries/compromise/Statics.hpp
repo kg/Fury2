@@ -20,9 +20,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 extern VirtualRegistry* pRegistry;
 extern RegKeyHandles* pRegistryHandles;
 extern bool TrampolinesInstalled;
-extern bool VirtualizeWrites;
+extern HANDLE VirtualizedThread;
 extern bool EnableOverrides;
-extern unsigned VirtualHandleOffset;
 extern HKEY LastEnumKey;
 extern unsigned LastEnumIndex;
 extern unsigned EnumOffset;

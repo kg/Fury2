@@ -15,7 +15,10 @@ public:
   int OutputWidth, OutputHeight;
   int ScaleMode;
   GLSL::FragmentShader* GlobalShader;
+  GLSL::FragmentShader* NullShader;
   ShaderLoadCallback* _ShaderLoadCallback;
+  ShaderFailCallback* _ShaderFailCallback;
+  float FloatLookup[256];
 
   GLFXGlobal() {
     DC = Null;
@@ -29,7 +32,21 @@ public:
     RadialImage = 0;
     RenderFunction = 0;
     _ShaderLoadCallback = 0;
+    _ShaderFailCallback = 0;
     GlobalShader = 0;
+    NullShader = 0;
+    for (int i = 0; i < 255; i++) {
+      FloatLookup[i] = float(i) / 255.0f;
+    }
+    FloatLookup[0] = 0.0f;
+    FloatLookup[255] = 1.0f;
+  }
+
+  inline void ColorToFloat4(Pixel color, float* out) {
+    out[0] = FloatLookup[color[::Red]];
+    out[1] = FloatLookup[color[::Green]];
+    out[2] = FloatLookup[color[::Blue]];
+    out[3] = FloatLookup[color[::Alpha]];
   }
   
   void CleanupShaders();

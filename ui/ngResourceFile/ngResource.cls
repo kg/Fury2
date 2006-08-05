@@ -91,9 +91,13 @@ End Function
 
 Public Function LoadImage() As Fury2Image
 On Error Resume Next
-Dim l_bytImage() As Byte
-    l_bytImage = m_rcfParent.ReadFile(m_strFilename)
-    Set LoadImage = F2ImageFromByteArray(l_bytImage)
+Dim l_strFilename As String
+    l_strFilename = m_rcfParent.ExtractFile(m_strFilename)
+    Set LoadImage = F2LoadImage(l_strFilename)
+    Kill l_strFilename
+'Dim l_bytImage() As Byte
+'    l_bytImage = m_rcfParent.ReadFile(m_strFilename)
+'    Set LoadImage = F2ImageFromByteArray(l_bytImage)
 End Function
 
 Public Function LoadText() As String

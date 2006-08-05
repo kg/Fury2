@@ -47,11 +47,14 @@ Private m_booAutoScroll As Boolean
 Private m_booAutoListSwitch As Boolean
 Private m_booAlwaysShowLighting As Boolean
 Private m_booAlwaysShowSprites As Boolean
+Private m_booAlwaysShowBlocking As Boolean
+Private m_booAlwaysShowSpriteRectangles As Boolean
 Private m_booShowGrid As Boolean
 Private m_booSnapToGrid As Boolean
 Private m_booEnableWrapping As Boolean
 Private m_booEnableParallax As Boolean
 Private m_booPreserveTilesetRows As Boolean
+Private m_sngGridScale As Single
 
 Public Property Get AlwaysShowSprites() As Boolean
     AlwaysShowSprites = m_booAlwaysShowSprites
@@ -59,6 +62,22 @@ End Property
 
 Public Property Let AlwaysShowSprites(ByVal NewValue As Boolean)
     m_booAlwaysShowSprites = NewValue
+End Property
+
+Public Property Get AlwaysShowSpriteRectangles() As Boolean
+    AlwaysShowSpriteRectangles = m_booAlwaysShowSpriteRectangles
+End Property
+
+Public Property Let AlwaysShowSpriteRectangles(ByVal NewValue As Boolean)
+    m_booAlwaysShowSpriteRectangles = NewValue
+End Property
+
+Public Property Get AlwaysShowBlocking() As Boolean
+    AlwaysShowBlocking = m_booAlwaysShowBlocking
+End Property
+
+Public Property Let AlwaysShowBlocking(ByVal NewValue As Boolean)
+    m_booAlwaysShowBlocking = NewValue
 End Property
 
 Public Property Get AlwaysShowLighting() As Boolean
@@ -107,6 +126,17 @@ End Property
 
 Public Property Let AutoListSwitch(NewValue As Boolean)
     m_booAutoListSwitch = NewValue
+End Property
+
+Public Property Get GridScale() As Single
+    GridScale = m_sngGridScale
+End Property
+
+Public Property Let GridScale(NewValue As Single)
+    m_sngGridScale = NewValue
+    If m_sngGridScale <= 0 Then
+        m_sngGridScale = 1
+    End If
 End Property
 
 Public Property Get ShowGrid() As Boolean
@@ -211,6 +241,7 @@ On Error Resume Next
     m_lngBackgroundColor = F2Black
     m_booEnableWrapping = False
     m_booEnableParallax = False
+    m_sngGridScale = 1
 End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
@@ -231,8 +262,11 @@ On Error Resume Next
         .Load m_lngPathNodeColor
         .Load m_booAlwaysShowLighting
         .Load m_booAlwaysShowSprites
-        If Not .EOS Then .Load m_lngGridColor
-        If Not .EOS Then .Load m_booAutoListSwitch
+        .Load m_lngGridColor
+        .Load m_booAutoListSwitch
+        .Load m_booAlwaysShowSpriteRectangles
+        .Load m_booAlwaysShowBlocking
+        .Load m_sngGridScale
     End With
 End Sub
 
@@ -256,5 +290,8 @@ On Error Resume Next
         .Save m_booAlwaysShowSprites
         .Save m_lngGridColor
         .Save m_booAutoListSwitch
+        .Save m_booAlwaysShowSpriteRectangles
+        .Save m_booAlwaysShowBlocking
+        .Save m_sngGridScale
     End With
 End Sub

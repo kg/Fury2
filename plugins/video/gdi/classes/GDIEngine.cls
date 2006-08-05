@@ -234,7 +234,7 @@ End Sub
 
 Private Sub m_OutForm_Paint()
 On Error Resume Next
-    m_objHooked.Paint
+'    m_objHooked.Paint
 End Sub
 
 Private Sub m_OutForm_QueryUnload(Cancel As Integer, UnloadMode As Integer)

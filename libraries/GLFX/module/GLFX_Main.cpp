@@ -52,9 +52,10 @@ Export void* GLAllocateBytes(int Size) {
   return malloc(Size);
 }
 
-Export int GLSetShaderLoadCallback(ShaderLoadCallback* callback) {
+Export int GLSetShaderLoadCallback(ShaderLoadCallback* callback, ShaderFailCallback* failCallback) {
   if (!Global) return Failure;
   Global->_ShaderLoadCallback = callback;
+  Global->_ShaderFailCallback = failCallback;
   return Success;
 }
 
@@ -191,11 +192,15 @@ void GLFXGlobal::CleanupShaders() {
 }
 
 GLenum GLFXGlobal::checkError() {
+#ifdef _DEBUG
   GLenum e = checkGLErrors();
   if (e) {
     int x = abs(-1);
   }
   return e;
+#else
+  return 0;
+#endif
 }
 
 GLSL::Program* GLFXGlobal::GetShader(std::string& key) {
@@ -214,6 +219,9 @@ GLSL::Program* GLFXGlobal::GetShader(std::string& key) {
       }
     }
     if (program == 0) {
+      _DebugTrace("Loading shader: ");
+      _DebugTrace(key.c_str());
+      _DebugTrace("\n");
       GLSL::FragmentShader* shader = this->LoadShader(key.c_str());
       if (shader) {
         GLSL::FragmentShader* global = Global->GlobalShader;
@@ -243,6 +251,7 @@ GLSL::Program* GLFXGlobal::GetShader(std::string& key) {
 
 GLSL::FragmentShader* GLFXGlobal::LoadShader(const char* filename) {
   if (!_ShaderLoadCallback) return 0;
+  if (!_ShaderFailCallback) return 0;
   char* text = 0;
   _ShaderLoadCallback(filename, &text);
   if (text) {
@@ -253,5 +262,6 @@ GLSL::FragmentShader* GLFXGlobal::LoadShader(const char* filename) {
     text = 0;
     return shader;
   }
-  return 0;
+  _ShaderFailCallback(filename);
+  return NullShader;
 }

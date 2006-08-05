@@ -12,7 +12,7 @@ Public Declare Function GLInstallFBAllocateHook Lib "GLFX" Alias "_GLInstallFBAl
 Public Declare Function GLUninstallFBAllocateHook Lib "GLFX" Alias "_GLUninstallFBAllocateHook@0" () As Long
 Public Declare Function GLAllocateBytes Lib "GLFX" Alias "_GLAllocateBytes@4" (ByVal Length As Long) As Long
 Public Declare Function GLGetStringLength Lib "GLFX" Alias "_GLGetStringLength@4" (ByVal StringPtr As Long) As Long
-Public Declare Function GLSetShaderLoadCallback Lib "GLFX" Alias "_GLSetShaderLoadCallback@4" (ByVal Callback As Long) As Long
+Public Declare Function GLSetShaderLoadCallback Lib "GLFX" Alias "_GLSetShaderLoadCallback@8" (ByVal Callback As Long, ByVal FailCallback As Long) As Long
 Public Declare Function GLGetShader Lib "GLFX" Alias "_GLGetShader@4" (ByVal Shader As String) As Long
 Public Declare Function GLShaderBlit Lib "GLFX" Alias "_GLShaderBlit@28" (ByVal Dest As Long, ByVal Source As Long, ByRef DestRect As Rectangle, ByRef SourceRect As Rectangle, ByVal Renderer As Long, ByVal Scaler As Long, ByVal Shader As Long) As Long
 Public Declare Function GLGetFeatureSupport Lib "GLFX" Alias "_GLGetFeatureSupport@4" (ByVal Name As String) As Long
@@ -47,6 +47,22 @@ Dim l_lngLines As Long
     ParseShader = Join(l_strLines, vbCrLf)
 End Function
 
+Public Sub ShaderLoadFailCallback(ByVal NamePtr As Long)
+On Error Resume Next
+Dim l_lngLength As Long
+Dim l_bytName() As Byte
+Dim l_strName As String
+Dim l_lngFile As Long
+    l_lngLength = GLGetStringLength(NamePtr)
+    ReDim l_bytName(0 To l_lngLength - 1)
+    CopyMemory ByVal VarPtr(l_bytName(0)), ByVal NamePtr, l_lngLength
+    l_strName = StrConv(l_bytName, vbUnicode)
+    l_lngFile = FreeFile
+    Open App.Path & "\opengl.log" For Append As #l_lngFile
+        Print #l_lngFile, "OpenGL shader """ & l_strName & """ failed to load."
+    Close #l_lngFile
+End Sub
+
 Public Sub ShaderLoadCallback(ByVal NamePtr As Long, ByRef SourcePtr As Long)
 On Error Resume Next
 Dim l_lngLength As Long
@@ -59,7 +75,6 @@ Dim l_lngNull As Long
     CopyMemory ByVal VarPtr(l_bytName(0)), ByVal NamePtr, l_lngLength
     l_lngLength = 0
     l_strName = StrConv(l_bytName, vbUnicode)
-    Debug.Print "Load shader """ & l_strName & """"
     l_strText = ReadTextFile(ShaderPath & l_strName & ".fs")
     l_strText = ParseShader(l_strText)
     l_lngLength = Len(l_strText) + 1

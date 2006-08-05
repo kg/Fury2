@@ -17,8 +17,8 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 '
 '   ::fury² Sound engine::
 '
-Private Const c_lngMaxChannels = 1024
-Private Const c_lngMaxSoftwareChannels = 64
+Private Const c_lngMaxChannels = 512
+Private Const c_lngMaxSoftwareChannels = 24
 
 Private m_colGroups As Collection
 Private m_colSounds As Collection
@@ -26,6 +26,16 @@ Private m_lngFMod As Long
 Private m_cgMaster As Channelgroup
 Public Enabled As Boolean
 Public m_Engine As Object
+
+Public Property Get CPUUsage() As Variant
+On Error Resume Next
+Dim l_sngDSP As Single
+Dim l_sngStream As Single
+Dim l_sngUpdate As Single
+Dim l_sngTotal As Single
+    Call fmodex.FMOD_System_GetCPUUsage(m_lngFMod, l_sngDSP, l_sngStream, l_sngUpdate, l_sngTotal)
+    CPUUsage = Array(l_sngTotal, l_sngDSP, l_sngStream, l_sngUpdate)
+End Property
 
 Friend Function CreateChannelGroupH(ByVal Handle As Long) As Channelgroup
 On Error Resume Next

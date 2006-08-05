@@ -47,8 +47,6 @@ Private mvarDepthmapImage As Fury2Image
 Private mvarDepthmapXRatio As Single, mvarDepthmapYRatio As Single
 Private mvarName As String
 Private mvarDisableBlocking As Boolean
-Private mvarBlockGridWidth As Long
-Private mvarBlockGridHeight As Long
 Private mvarPreRendered As Boolean
 Private mvarParallaxX As Single
 Private mvarParallaxY As Single
@@ -57,7 +55,6 @@ Private mvarAlpha As Single
 Private mvarEffect As Fury2LayerEffects
 Private mvarLit As Boolean
 Private mvarTiles() As Integer
-Private mvarBlocking() As Byte
 Private mvarBlockingLines() As FLine
 Private mvarSprites As Fury2Sprites
 Private mvarTileset As Fury2Tileset
@@ -130,71 +127,12 @@ Public Property Get Alpha() As Single
     Alpha = mvarAlpha
 End Property
 
-Public Property Get Blocking(ByVal X As Long, ByVal Y As Long) As Long
-Attribute Blocking.VB_Description = "Gets or sets a blocking value from the layer."
-On Error Resume Next
-    If (X < 0) Or (Y < 0) Or (X > UBound(mvarBlocking, 1)) Or (Y > UBound(mvarBlocking, 2)) Then Exit Property
-    Blocking = mvarBlocking(X, Y)
-End Property
-
-Public Property Let Blocking(ByVal X As Long, ByVal Y As Long, ByVal Value As Long)
-On Error Resume Next
-    If (X < 0) Or (Y < 0) Or (X > UBound(mvarBlocking, 1)) Or (Y > UBound(mvarBlocking, 2)) Then Exit Property
-    mvarBlocking(X, Y) = CByte(Abs(Value))
-End Property
-
-Public Property Get BlockingArray() As Byte()
-Attribute BlockingArray.VB_Description = "*Returns all the layer's blocking data as an array."
-On Error Resume Next
-    BlockingArray = mvarBlocking()
-End Property
-
-Public Property Let BlockingArray(NewBlocking() As Byte)
-On Error Resume Next
-    mvarBlocking() = NewBlocking()
-End Property
-
-Public Property Get BlockingGridHeight() As Long
-Attribute BlockingGridHeight.VB_Description = "The height (in pixels) of each cell in the layer's blocking grid."
-    BlockingGridHeight = mvarBlockGridHeight
-End Property
-
-Public Property Let BlockingGridHeight(ByVal NewHeight As Long)
-    If NewHeight < 1 Then
-        mvarBlockGridHeight = mvarTileset.TileHeight
-    Else
-        mvarBlockGridHeight = NewHeight
-    End If
-End Property
-
-Public Property Get BlockingGridWidth() As Long
-Attribute BlockingGridWidth.VB_Description = "The width (in pixels) of each cell in the layer's blocking grid."
-    BlockingGridWidth = mvarBlockGridWidth
-End Property
-
-Public Property Let BlockingGridWidth(ByVal NewWidth As Long)
-    If NewWidth < 1 Then
-        mvarBlockGridWidth = mvarTileset.TileWidth
-    Else
-        mvarBlockGridWidth = NewWidth
-    End If
-End Property
-
-Public Property Get BlockingPointer() As Long
-Attribute BlockingPointer.VB_Description = "*"
-Attribute BlockingPointer.VB_MemberFlags = "40"
-On Error Resume Next
-    BlockingPointer = VarPtr(mvarBlocking(0, 0))
-End Property
-
 Private Sub Class_Initialize()
 On Error Resume Next
     mvarVisible = True
     mvarRenderTarget = 0
     ParallaxX = 1
     ParallaxY = 1
-    mvarBlockGridWidth = 16
-    mvarBlockGridHeight = 16
     mvarName = "Untitled"
     ReDim mvarBlockingLines(0)
     Set mvarLighting = New Fury2LayerLighting
@@ -328,20 +266,6 @@ Public Property Let DepthmapYRatio(ByVal NewDepthmapYRatio As Single)
     If Not (mvarParent Is Nothing) Then mvarParent.Engine.Cameras.Dirty
 End Property
 
-Public Property Get DisableBlocking() As Boolean
-Attribute DisableBlocking.VB_Description = "This flag disables loading, saving, and manipulation of this layer's blocking data."
-    DisableBlocking = mvarDisableBlocking
-End Property
-
-Public Property Let DisableBlocking(ByVal NewDisable As Boolean)
-    mvarDisableBlocking = NewDisable
-    If NewDisable = True Then
-        ReDim mvarBlocking(0 To 0, 0 To 0)
-    Else
-        ReDim mvarBlocking(0 To (((UBound(mvarTiles, 1) + 1) * mvarTileset.TileWidth) \ mvarBlockGridWidth) - 1, 0 To (((UBound(mvarTiles, 2) + 1) * mvarTileset.TileHeight) \ mvarBlockGridHeight) - 1)
-    End If
-End Property
-
 Public Function Duplicate() As Fury2MapLayer
 Attribute Duplicate.VB_Description = "Creates a copy of the layer."
 On Error Resume Next
@@ -357,9 +281,7 @@ Dim m_lyrNew As Fury2MapLayer
         .Name = mvarName
         .Lit = mvarLit
         .Tiles = mvarTiles
-        .BlockingArray = mvarBlocking
-        .BlockingGridWidth = mvarBlockGridWidth
-        .BlockingGridHeight = mvarBlockGridHeight
+        .CollisionLines = CollisionLines
         Set .Tileset = mvarTileset.Duplicate
     End With
     Set Duplicate = m_lyrNew
@@ -425,7 +347,7 @@ End Sub
 Sub Free()
 Attribute Free.VB_MemberFlags = "40"
 On Error Resume Next
-    Erase mvarBlocking
+    Erase mvarBlockingLines
     Erase mvarTiles
     Set mvarAnimations = Nothing
     Set mvarDepthmapImage = Nothing
@@ -508,42 +430,25 @@ Dim m_lngLineCount As Long
                 .ReadSegment_End
                 .Load mvarPreRendered
                 .ReadSegment_Begin
-'                    .Load mvarPreRenderedAnimDelay
-'                    .Load mvarPreRenderedAnimFrame
                 .ReadSegment_End
-                If .SegmentLeft < 12 Then
-                    mvarBlockGridWidth = -1
-                    mvarBlockGridHeight = -1
-                Else
-                    .ReadSegment_Begin
-                        .Load mvarBlockGridWidth
-                        .Load mvarBlockGridHeight
-                    .ReadSegment_End
-                End If
-                If .SegmentLeft < 16 Then
-                Else
-                    .Load mvarDepthmap
-                    .ReadSegment_Begin
-                        .Load mvarDepthmapXRatio
-                        .Load mvarDepthmapYRatio
-                    .ReadSegment_End
-                End If
+                .ReadSegment_Begin
+                .ReadSegment_End
+                .Load mvarDepthmap
+                .ReadSegment_Begin
+                    .Load mvarDepthmapXRatio
+                    .Load mvarDepthmapYRatio
+                .ReadSegment_End
                 .Load mvarColor
                 .Load mvarRenderTarget
             .ReadSegment_End
             mvarTileset.Free
+            Set mvarTileset = Nothing
             Set mvarTileset = New Fury2Tileset
             mvarTileset.SetParent Me
             mvarTileset.SetEngine Me.Parent.Engine
             .Load mvarTileset
             If mvarPreRendered Then
                 mvarTileset.DeallocateTileset
-            End If
-            If mvarBlockGridWidth <= 0 Then
-                mvarBlockGridWidth = mvarTileset.TileWidth
-            End If
-            If mvarBlockGridHeight <= 0 Then
-                mvarBlockGridHeight = mvarTileset.TileHeight
             End If
             If mvarEffect < 0 Then
                 If mvarTileset.HasAlpha Then
@@ -561,7 +466,8 @@ Dim m_lngLineCount As Long
             If Prerendered Then
                 ResizePreserve 1, 1
             End If
-            mdlFileUtils.Load2DByteArray mvarBlocking, File
+            .ReadSegment_Begin
+            .ReadSegment_End
             .Load mvarAnimations
             mvarSprites.Free
             Set mvarSprites = New Fury2Sprites
@@ -584,7 +490,6 @@ Dim m_lngLineCount As Long
             .Load mvarLighting
         .ReadSegment_End
     End With
-    If mvarDisableBlocking Then ReDim mvarBlocking(0 To 0, 0 To 0)
     mvarParent.Engine.ContextLevelRemove
 End Sub
 
@@ -611,12 +516,8 @@ On Error Resume Next
                 .WriteSegment_End
                 .Save mvarPreRendered
                 .WriteSegment_Begin
-'                    .Save mvarPreRenderedAnimDelay
-'                    .Save mvarPreRenderedAnimFrame
                 .WriteSegment_End
                 .WriteSegment_Begin
-                    .Save mvarBlockGridWidth
-                    .Save mvarBlockGridHeight
                 .WriteSegment_End
                 .Save mvarDepthmap
                 .WriteSegment_Begin
@@ -629,7 +530,8 @@ On Error Resume Next
             .Save mvarTileset
             .Skip 4
             mdlFileUtils.Save2DIntArray mvarTiles, File
-            mdlFileUtils.Save2DByteArray mvarBlocking, File
+            .WriteSegment_Begin
+            .WriteSegment_End
             .Save mvarAnimations
             .Save mvarSprites
             .Save mvarDisableBlocking
@@ -881,28 +783,9 @@ Attribute Resize.VB_MemberFlags = "40"
 On Error Resume Next
     If (Width <= 0) Or (Height <= 0) Then Exit Sub
     ReDim mvarTiles(0 To Width - 1, 0 To Height - 1)
-    ReDim mvarBlocking(0 To ((Width * mvarTileset.TileWidth) \ mvarBlockGridWidth) - 1, 0 To ((Height * mvarTileset.TileHeight) \ mvarBlockGridHeight) - 1)
     mvarWidth = Width
     mvarHeight = Height
     Clear mvarTileset.TransparentTile
-End Sub
-
-Sub ResizeBlocking()
-Attribute ResizeBlocking.VB_MemberFlags = "40"
-On Error Resume Next
-Dim mvarCopyRows As Long, m_lngRowCount As Long, mvarOldBlocking() As Byte
-Dim m_lngWidth As Long, m_lngHeight As Long
-    m_lngWidth = UBound(mvarTiles, 1) + 1
-    m_lngHeight = UBound(mvarTiles, 2) + 1
-    Err.Clear
-    mvarOldBlocking() = mvarBlocking()
-    ReDim mvarBlocking(0 To ((m_lngWidth * mvarTileset.TileWidth) \ mvarBlockGridWidth) - 1, 0 To ((m_lngHeight * mvarTileset.TileHeight) \ mvarBlockGridHeight) - 1)
-    m_lngRowCount = UBound(mvarOldBlocking, 2)
-    If m_lngRowCount > UBound(mvarBlocking, 2) Then m_lngRowCount = UBound(mvarBlocking, 2)
-    For mvarCopyRows = 0 To m_lngRowCount
-        CopyMemory mvarBlocking(0, mvarCopyRows), mvarOldBlocking(0, mvarCopyRows), ClipValue((UBound(mvarOldBlocking, 1) + 1), 0, UBound(mvarBlocking, 1))
-    Next mvarCopyRows
-    Err.Clear
 End Sub
 
 Public Sub ResizePreserve(ByVal Width As Long, ByVal Height As Long)
@@ -915,21 +798,13 @@ Dim mvarOldTiles() As Integer, mvarCopyRows As Long, m_lngRowCount As Long, mvar
     End If
     Err.Clear
     mvarOldTiles() = mvarTiles()
-    mvarOldBlocking() = mvarBlocking()
     ReDim mvarTiles(0 To Width - 1, 0 To Height - 1)
-    ReDim mvarBlocking(0 To ((Width * mvarTileset.TileWidth) \ mvarBlockGridWidth) - 1, 0 To ((Height * mvarTileset.TileHeight) \ mvarBlockGridHeight) - 1)
     Clear mvarTileset.TransparentTile
     m_lngRowCount = UBound(mvarOldTiles, 2)
     If m_lngRowCount > UBound(mvarTiles, 2) Then m_lngRowCount = UBound(mvarTiles, 2)
     For mvarCopyRows = 0 To m_lngRowCount
         ProgressUpdate (m_lngRowCount / mvarCopyRows) * 100
         CopyMemory mvarTiles(0, mvarCopyRows), mvarOldTiles(0, mvarCopyRows), ClipValue((UBound(mvarOldTiles, 1) + 1), 0, UBound(mvarTiles, 1) + 1) * 2
-    Next mvarCopyRows
-    m_lngRowCount = UBound(mvarOldBlocking, 2)
-    If m_lngRowCount > UBound(mvarBlocking, 2) Then m_lngRowCount = UBound(mvarBlocking, 2)
-    For mvarCopyRows = 0 To m_lngRowCount
-        ProgressUpdate (m_lngRowCount / mvarCopyRows) * 100
-        CopyMemory mvarBlocking(0, mvarCopyRows), mvarOldBlocking(0, mvarCopyRows), ClipValue((UBound(mvarOldBlocking, 1) + 1), 0, UBound(mvarBlocking, 1) + 1)
     Next mvarCopyRows
     If Prerendered Then
     Else

@@ -74,7 +74,9 @@ End Function
 
 Private Function iFileTypePlugin_CreateNew(Optional ByVal EnableWizard As Boolean = True) As iDocument
 On Error Resume Next
-Dim l_frmNew As New frmScriptFile
+Dim l_frmNew As frmScriptFile
+    Set l_frmNew = New frmScriptFile
+    Load l_frmNew
     l_frmNew.SetFilename ""
     Set iFileTypePlugin_CreateNew = l_frmNew
     Set iFileTypePlugin_CreateNew.Plugin = Me
@@ -92,7 +94,7 @@ End Function
 Private Function iFileTypePlugin_LoadFromFilename(Filename As String) As iDocument
 On Error Resume Next
 Dim l_frmNew As New frmScriptFile
-    l_frmNew.scScript.Control.OpenFile Filename
+    l_frmNew.scScript.OpenFile Filename
     l_frmNew.SetFilename Filename
     Set iFileTypePlugin_LoadFromFilename = l_frmNew
     Set iFileTypePlugin_LoadFromFilename.Plugin = Me

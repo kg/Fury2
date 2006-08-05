@@ -17,74 +17,38 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-inline std::wstring _wstr(const LPCWSTR ptr, bool escape) {
-  if (ptr) {
-    std::wstringstream buffer;
-    if (escape) {
-      buffer << L"\"" << std::wstring((const wchar_t*)ptr) << L"\"";
-    } else {
-      buffer << std::wstring((const wchar_t*)ptr);
-    }
-    return buffer.str();
-  } else {
-    if (escape) {
-      return std::wstring(L"<null>");
-    } else {
-      return std::wstring(L"");
-    }
-  }
-}
+bool VirtualizeWrites();
 
-inline std::wstring _wstr(const LPCWSTR ptr) {
-  return _wstr(ptr, true);
-}
+WString _wstr (const LPCWSTR ptr, bool escape);
+WString _wstr (const LPCWSTR ptr);
 
-inline std::wstring _str(const LPCSTR ptr, bool escape) {
-  if (ptr) {
-    std::wstringstream buffer;
-    std::string ascii = std::string((const char*)ptr);
-    if (escape) {
-      buffer << L"\"" << std::wstring(ascii.begin(), ascii.end()) << L"\"";
-    } else {
-      buffer << std::wstring(ascii.begin(), ascii.end());
-    }
-    return buffer.str();
-  } else {
-    if (escape) {
-      return std::wstring(L"<null>");
-    } else {
-      return std::wstring(L"");
-    }
-  }
-}
+WString _str (const LPCSTR ptr, bool escape);
+WString _str (const LPCSTR ptr);
 
-inline std::wstring _str(const LPCSTR ptr) {
-  return _str(ptr, true);
-}
-
-template <class T> std::vector<T>* split(const T& Text, const T& Separator) {
-  std::vector<T> *results = new std::vector<T>();
-  int position = 0;
-  int next_position = Text.find(Separator, position);
-  if (next_position != std::string::npos) {
-    while (next_position != std::string::npos) {
-      if ((next_position - position) <= 0) {
-        results->push_back(T(L""));
-      } else {
-        results->push_back(T(Text.begin() + position, Text.begin() + next_position));
-      }
-      position = next_position + Separator.size();
-      next_position = Text.find(Separator, position);
-    }
-    results->push_back(T(Text.begin() + position, Text.end()));
-  } else {
-    results->push_back(Text);
-  }
-  return results;
-}
+//
+//template <class T> std::vector<T>* split(const T& Text, const T& Separator) {
+//  std::vector<T> *results = new std::vector<T>();
+//  int position = 0;
+//  int next_position = Text.Find(Separator, position);
+//  if (next_position != AString::npos) {
+//    while (next_position != AString::npos) {
+//      if ((next_position - position) <= 0) {
+//        results->push_back(T(L""));
+//      } else {
+//        results->push_back(T(Text.begin() + position, Text.begin() + next_position));
+//      }
+//      position = next_position + Separator.size();
+//      next_position = Text.find(Separator, position);
+//    }
+//    results->push_back(T(Text.begin() + position, Text.end()));
+//  } else {
+//    results->push_back(Text);
+//  }
+//  return results;
+//}
 
 template<class T> T toLower(const T& Text) {
-  T output;
+  T output(Text);
   output.resize(Text.size());
   std::transform(Text.begin(), Text.end(), output.begin(), tolower);
   return output;
@@ -97,27 +61,29 @@ template<class T> T toUpper(const T& Text) {
   return output;
 }
 
-template<class K, class T> T* get(std::map<K, T>& Container, const K& Key) {
-  std::map<K, T>::iterator iter = Container.find(Key);
-  if (iter != Container.end()) {
-    return &(iter->second);
-  } else {
+template<class K, class T, class C, class A> T* get(std::map<K, T, C, A>& Container, const K& Key) {
+  std::map<K, T, C, A>::iterator iter = Container.find(Key);
+  if (iter == Container.end()) {
     return Null;
+  } else {
+    //const K& key = iter->first;
+    //assert(key == Key);
+    return &(iter->second);
   }
 }
 
-template<class K, class T> int remove(std::map<K, T>& Container, const K& Key) {
-  std::map<K, T>::iterator iter = Container.find(Key);
-  if (iter != Container.end()) {
+template<class K, class T, class C, class A> int remove(std::map<K, T, C, A>& Container, const K& Key) {
+  std::map<K, T, C, A>::iterator iter = Container.find(Key);
+  if (iter == Container.end()) {
+    return 0;
+  } else {
     Container.erase(iter);
     return 1;
-  } else {
-    return 0;
   }
 }
 
-inline wstring* getNameOfKey(HKEY key) {
-  wstring* str;
+inline WString* getNameOfKey(HKEY key) {
+  WString* str;
   HMODULE hLib = LoadLibraryW(L"ntdll.dll");
   procQueryKey* queryKey = (procQueryKey*)GetProcAddress(hLib, "NtQueryKey");
   void* pInfo = malloc(2048);
@@ -126,8 +92,7 @@ inline wstring* getNameOfKey(HKEY key) {
   if (result == 0) {
     KEY_BASIC_INFORMATION* info = (KEY_BASIC_INFORMATION*)pInfo;
     wchar_t* nameStart = (wchar_t*)(unsigned(pInfo) + sizeof(LARGE_INTEGER) + (sizeof(ULONG)*2));
-    wchar_t* nameEnd = nameStart + info->NameLength/2;
-    str = new wstring(nameStart, nameEnd);
+    str = new WString(nameStart, info->NameLength/2);
     FreeLibrary(hLib);
     free(pInfo);
     return str;
@@ -137,3 +102,12 @@ inline wstring* getNameOfKey(HKEY key) {
     return Null;
   }
 }
+
+struct ltwstring
+{
+  bool operator()(const WString& s1, const WString& s2) const
+  {
+    return s1 < s2;
+//    return wcscmp(s1.Data, s2.Data) < 0;
+  }
+};

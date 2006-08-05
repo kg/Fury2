@@ -12,6 +12,11 @@ library Compromise {
         [entry("_Uninitialize@0")]
         int UnInitialize(void);
 
+        [entry("_GetEnabled@0")]
+        int GetEnabled(void);
+        [entry("_SetEnabled@4")]
+        void SetEnabled(int State);
+
         [entry("_Register@4")]
         int Register([in,string]const wchar_t* Filename);
         [entry("_Unregister@4")]

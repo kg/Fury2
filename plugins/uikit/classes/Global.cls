@@ -12,8 +12,14 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Option Explicit
+Private Type WidgetGroup
+    Variable As String
+    Values() As String
+End Type
+
 Implements Fury2Object
 Implements Fury2Plugin
+Public DebugForms As Boolean
 Public Engine As Fury2Engine
 Public Skins As Fury2Collection
 Public Fonts As Fury2Collection
@@ -118,6 +124,192 @@ On Error Resume Next
     Desktop.Container.SetFocus Forms(Name).This
 End Sub
 
+Function GetLevelVar(ByVal Level As Long) As String
+On Error Resume Next
+    If Level = 1 Then
+        GetLevelVar = "This"
+    Else
+        GetLevelVar = "NewWidget" & (Level - 1)
+    End If
+End Function
+
+Function ParseFormScript(ByRef Text As String) As String
+On Error Resume Next
+Dim l_strScript As String
+Dim l_strConstructor As String
+Dim l_strBlock As String
+Dim l_strOutput As String
+Dim l_strLines() As String
+Dim Lang As IScriptLanguage
+Dim l_lngWidget As Long
+Dim l_wgWidgetGroups() As WidgetGroup
+Dim l_lngWidgetGroups As Long
+Dim l_strName As String, l_strType As String
+Dim l_lngPos As Long
+Dim l_strIndent As String
+Dim l_booOmitLine As Boolean
+Dim l_strVar As String
+Dim l_lngLine As Long, l_strLine As String, l_strToken As String, l_strArgs As String
+Dim l_lngNames As Long
+Dim l_lngWidgetCount As Long
+    Set Lang = Engine.ScriptEngine.Language
+    l_lngWidgetGroups = 0
+    l_strLines = Lang.SplitLines(Text)
+    l_strOutput = "Public This" & Lang.LineTerminator & _
+        "Public Name" & Lang.LineTerminator
+    l_strIndent = String(4, " ")
+    l_strConstructor = "On Error Resume Next" & Lang.LineTerminator & _
+        "Dim NewWidget1, NewWidget2, NewWidget3, NewWidget4, NewWidget5, NewWidget6, NewWidget7, NewWidget8, NewWidget9" & Lang.LineTerminator
+    For l_lngLine = LBound(l_strLines) To UBound(l_strLines)
+        l_strLine = Trim(l_strLines(l_lngLine))
+        l_booOmitLine = False
+        If (Mid(l_strLine, 1, 1) = "'") Then
+        Else
+            If InStr(l_strLine, " ") Then
+                l_strToken = Left(l_strLine, InStr(l_strLine, " ") - 1)
+                l_strArgs = Mid(l_strLine, InStr(l_strLine, " ") + 1)
+                Select Case LCase(l_strToken)
+                Case "widgets"
+                    l_booOmitLine = True
+                    l_lngPos = InStr(l_strArgs, "(")
+                    If (l_lngPos > 1) Then
+                        l_strName = Trim(Left(l_strArgs, l_lngPos - 1))
+                        l_strType = Trim(Mid(l_strArgs, l_lngPos + 1))
+                        l_strType = Trim(Left(l_strType, Len(l_strType) - 1))
+                        
+                        l_lngWidgetGroups = l_lngWidgetGroups + 1
+                        ReDim Preserve l_wgWidgetGroups(0 To l_lngWidgetGroups - 1)
+                        With l_wgWidgetGroups(l_lngWidgetGroups - 1)
+                            .Variable = l_strName
+                            .Values = Split(l_strType, " ")
+                        End With
+                        
+                        l_strIndent = String((l_lngWidget + l_lngWidgetGroups + 1) * 4, " ")
+                    
+                    End If
+                Case "widget"
+                    l_lngWidgetCount = l_lngWidgetCount + 1
+                    l_strConstructor = l_strConstructor & l_strBlock
+                    l_strBlock = ""
+                    l_booOmitLine = True
+                    l_lngPos = InStr(l_strArgs, "(")
+                    If (l_lngPos > 1) Then
+                        l_lngWidget = l_lngWidget + 1
+                        l_strName = Trim(Left(l_strArgs, l_lngPos - 1))
+                        l_strType = Trim(Mid(l_strArgs, l_lngPos + 1))
+                        l_strType = Trim(Left(l_strType, Len(l_strType) - 1))
+                        
+                        If l_lngWidgetGroups = 0 Then
+                            l_strOutput = l_strOutput & "Public " & l_strName & Lang.LineTerminator
+                        Else
+                            With l_wgWidgetGroups(l_lngWidgetGroups - 1)
+                                For l_lngNames = LBound(.Values) To UBound(.Values)
+                                    l_strOutput = l_strOutput & "Public " & _
+                                        Replace(l_strName, .Variable, .Values(l_lngNames)) & _
+                                        Lang.LineTerminator
+                                Next l_lngNames
+                            End With
+                        End If
+                        
+                        l_strName = """" + l_strName + """"
+                        l_strType = """" + l_strType + """"
+                        l_strVar = GetLevelVar(l_lngWidget)
+                        
+                        If (l_lngWidget = 1) Then
+                            l_strBlock = l_strBlock & _
+                                l_strIndent & Lang.GenerateAssignment("Name", l_strName, False) & Lang.LineTerminator
+                        End If
+                        
+                        l_strBlock = l_strBlock & _
+                            l_strIndent & Lang.GenerateAssignment(l_strVar, _
+                                Lang.GenerateFunctionCall("CreateWidget", _
+                                    Array(l_strType, l_strName)), _
+                                True) & Lang.LineTerminator
+                        l_strBlock = l_strBlock & _
+                            l_strIndent & "With " & l_strVar & Lang.LineTerminator
+                        
+                        l_strIndent = String((l_lngWidget + l_lngWidgetGroups + 1) * 4, " ")
+                        
+                        ' Assign the eventhandler at the start of any given constructor; set it to the form by default
+                        l_strBlock = l_strBlock & _
+                            l_strIndent & Lang.GenerateAssignment(".EventHandler", "Me", True) & Lang.LineTerminator
+                    
+                    End If
+                Case "end"
+                    If Trim(LCase(l_strArgs)) = "widget" Then
+                        l_booOmitLine = True
+                        
+                        If (l_lngWidget = 1) Then
+                            ' Call Container.Sync at the end of a top-level constructor
+                            l_strBlock = l_strBlock & _
+                                l_strIndent & ".Container.Sync" & Lang.LineTerminator
+                        End If
+                                               
+                        l_lngWidget = l_lngWidget - 1
+                        l_strIndent = String((l_lngWidget + l_lngWidgetGroups + 1) * 4, " ")
+                        
+                        l_strBlock = l_strBlock & _
+                            l_strIndent & "End With" & Lang.LineTerminator
+                        If (l_lngWidget > 0) Then
+                            l_strBlock = l_strBlock & _
+                                l_strIndent & ".Children.Add " & l_strVar & Lang.LineTerminator
+                        End If
+                        
+                        If l_lngWidgetGroups = 0 Then
+                            l_strConstructor = l_strConstructor & _
+                                l_strBlock
+                        Else
+                            With l_wgWidgetGroups(l_lngWidgetGroups - 1)
+                                l_strConstructor = l_strConstructor & _
+                                    Left(l_strIndent, Len(l_strIndent) - 4) & "' Widgets " & .Variable & Lang.LineTerminator
+                                For l_lngNames = LBound(.Values) To UBound(.Values)
+                                    l_strConstructor = l_strConstructor & _
+                                        Replace(l_strBlock, .Variable, .Values(l_lngNames))
+                                Next l_lngNames
+                                l_strConstructor = l_strConstructor & _
+                                    Left(l_strIndent, Len(l_strIndent) - 4) & "' End Widgets" & Lang.LineTerminator
+                            End With
+                        End If
+                        l_strBlock = ""
+                        
+                        l_strVar = GetLevelVar(l_lngWidget)
+                    ElseIf (Trim(LCase(l_strArgs))) = "widgets" Then
+                        l_booOmitLine = True
+                        
+                        l_lngWidgetGroups = l_lngWidgetGroups - 1
+                        If l_lngWidgetGroups > 0 Then
+                            ReDim Preserve l_wgWidgetGroups(0 To l_lngWidgetGroups - 1)
+                        Else
+                            Erase l_wgWidgetGroups
+                        End If
+                        l_strIndent = String((l_lngWidget + l_lngWidgetGroups + 1) * 4, " ")
+                    End If
+                End Select
+            Else
+            End If
+        End If
+        If l_booOmitLine Then
+        Else
+            If l_lngWidget > 0 Then
+                l_strBlock = l_strBlock & l_strIndent & l_strLine & vbCrLf
+            Else
+                l_strScript = l_strScript & l_strLines(l_lngLine) & vbCrLf
+            End If
+        End If
+    Next l_lngLine
+    If (l_lngWidgetCount = 0) Then
+        ParseFormScript = Text
+    Else
+        l_strConstructor = l_strConstructor & _
+            "On Error Goto 0" & Lang.LineTerminator & _
+            l_strIndent & "Form_Initialize"
+        l_strOutput = l_strOutput & _
+            l_strScript & Lang.LineTerminator & _
+            Lang.GenerateClassMethod("Class_Initialize", "", l_strConstructor) & Lang.LineTerminator
+        ParseFormScript = l_strOutput
+    End If
+End Function
+
 Function LoadForm(ByVal Path As String) As Object
 On Error Resume Next
 Dim l_strName As String
@@ -127,6 +319,10 @@ Dim l_strChosenName As String
         Engine.CriticalError "UIKit", "LoadForm", "File not found: " & Path
     End If
     l_strScript = Engine.FileSystem.File(Path).Text
+    l_strScript = ParseFormScript(l_strScript)
+    If DebugForms Then
+        Engine.FileSystem.CreateFile(Path & ".f2script").Text = l_strScript
+    End If
     Set LoadForm = Engine.GenerateScriptObject(l_strScript)
     l_strChosenName = l_strName
     l_strChosenName = CStr(LoadForm.Name)
@@ -139,7 +335,7 @@ End Function
 
 Function DuplicateForm(ByVal Form As Object) As Object
 On Error Resume Next
-    Set DuplicateForm = Engine.ScriptEngine.Eval(Engine.ScriptEngine.Language.GenerateInstantiation(TypeName(Form)))
+    Set DuplicateForm = Engine.ScriptEngine.EvalObject(Engine.ScriptEngine.Language.GenerateInstantiation(TypeName(Form)))
 End Function
 
 Sub LoadSkinDef(ByRef Skin As SkinState, ByRef Path As String)

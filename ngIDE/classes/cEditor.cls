@@ -776,6 +776,24 @@ On Error Resume Next
     m_sngPauseClicked = HiResTimer
 End Sub
 
+Public Property Get folder() As String
+On Error Resume Next
+    If InIDE Then
+        folder = App.Path & "\..\..\binary\sys\"
+    Else
+        folder = App.Path & "\"
+    End If
+End Property
+
+Public Property Get EnginePath() As String
+On Error Resume Next
+    If InIDE Then
+        EnginePath = App.Path & "\..\..\binary\sys\fury².exe"
+    Else
+        EnginePath = App.Path & "\fury².exe"
+    End If
+End Property
+
 Public Sub Game_Run()
 On Error Resume Next
     If InIDE Then
@@ -798,6 +816,11 @@ On Error Resume Next
     End If
     Err.Clear
 End Sub
+
+Public Property Get GameName() As String
+On Error Resume Next
+    GameName = Engine.GameName
+End Property
 
 Friend Property Let GamePath(NewPath As String)
     m_strGamePath = NewPath
@@ -908,6 +931,7 @@ End Sub
 Public Sub NewDocument(ByRef Doc As iDocument)
 On Error Resume Next
     If Doc Is Nothing Then Exit Sub
+    ngUI.ThemesEnabled = m_optOptions.EnableThemes
     SetBusyState True
     frmMain.ShowChild Doc
     frmMain.HideInactiveWindows
@@ -1198,7 +1222,7 @@ End Sub
 
 Public Property Get Version() As String
 On Error Resume Next
-    Version = "ngIDE " + Choose(App.Major + 1, "Alpha", "Beta", "Release") + " " + CStr(App.Minor) + " Build " + CStr(App.Revision)
+    Version = "ngIDE " + Choose(App.Major + 1, "Alpha", "Beta", "Release") + " " + Format(App.Minor, "00") + " Build " + Format(App.Revision, "00000")
 End Property
 
 Public Sub RunMacroFromFile(ByVal Filename As String)

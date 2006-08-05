@@ -2,7 +2,7 @@ VERSION 5.00
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{EF59A10B-9BC4-11D3-8E24-44910FC10000}#11.0#0"; "vbalEdit.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.2#0"; "ngUI.ocx"
 Begin VB.MDIForm frmMain 
    AutoShowChildren=   0   'False
    BackColor       =   &H8000000C&
@@ -51,14 +51,14 @@ Begin VB.MDIForm frmMain
          Strikethrough   =   0   'False
       EndProperty
       ForeColor       =   &H80000013&
-      Height          =   1200
+      Height          =   1500
       Left            =   0
-      ScaleHeight     =   80
+      ScaleHeight     =   100
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   555
       TabIndex        =   2
       TabStop         =   0   'False
-      Top             =   5070
+      Top             =   4770
       Visible         =   0   'False
       Width           =   8325
       Begin vbalEdit.vbalRichEdit reLog 
@@ -73,7 +73,7 @@ Begin VB.MDIForm frmMain
          Version         =   1
          BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
             Name            =   "Courier New"
-            Size            =   11.25
+            Size            =   9.75
             Charset         =   0
             Weight          =   400
             Underline       =   0   'False
@@ -91,12 +91,12 @@ Begin VB.MDIForm frmMain
    End
    Begin ngUI.ngToolbar tbrLeft 
       Align           =   3  'Align Left
-      Height          =   2910
+      Height          =   2610
       Left            =   0
       Top             =   2160
       Width           =   720
       _ExtentX        =   1270
-      _ExtentY        =   5133
+      _ExtentY        =   4604
    End
    Begin VB.PictureBox picFileSidebar 
       Align           =   4  'Align Right
@@ -111,9 +111,9 @@ Begin VB.MDIForm frmMain
          Strikethrough   =   0   'False
       EndProperty
       ForeColor       =   &H80000013&
-      Height          =   2910
+      Height          =   2610
       Left            =   6330
-      ScaleHeight     =   194
+      ScaleHeight     =   174
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   133
       TabIndex        =   6
@@ -350,8 +350,8 @@ Implements iCustomMenuHandler
 
 Private Const WM_MDIGETACTIVE = &H229
 Private Declare Function W32SetFocus Lib "user32" (ByVal hwnd As Long) As Long
-Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
-Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.Rect) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
+Private Declare Function GetClientRect Lib "user32" (ByVal hwnd As Long, lpRect As Win32.RECT) As Long
 
 Private m_lngFocus As Long
 Private m_strStatusText As String
@@ -458,7 +458,7 @@ End Sub
 
 Private Function GetToolbarX(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
+Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarX = (l_ptToolbar.X - (IIf(Docked, l_ptWindow.X, 0)))
@@ -466,7 +466,7 @@ End Function
 
 Private Function GetToolbarY(Toolbar As Object, Optional Docked As Boolean = True)
 On Error Resume Next
-Dim l_ptWindow As PointAPI, l_ptToolbar As PointAPI
+Dim l_ptWindow As POINTAPI, l_ptToolbar As POINTAPI
     ClientToScreen Me.hwnd, l_ptWindow
     ClientToScreen Toolbar.hwnd, l_ptToolbar
     GetToolbarY = (l_ptToolbar.Y - (IIf(Docked, l_ptWindow.Y, 0)))
@@ -754,7 +754,6 @@ End Sub
 Public Sub InitToolbars()
 On Error Resume Next
 Dim l_fntMarlett As StdFont
-    RefreshMenus
     Set tbrMenus.ResourceFile = g_edEditor.Resources
     tbrMenus.ResourcePattern = "toolbar\*.png"
     Set tbrMain.ResourceFile = g_edEditor.Resources
@@ -805,6 +804,16 @@ On Error Resume Next
 End Sub
 
 Public Sub InitSidebars()
+On Error Resume Next
+    picFileSidebar.Visible = ReadRegSetting("Sidebars\Filesystem", False)
+    RefreshFileSidebar
+    picLog.Visible = ReadRegSetting("Sidebars\Log", False)
+End Sub
+
+Public Sub SaveSettings()
+On Error Resume Next
+    WriteRegSetting "Sidebars\Filesystem", picFileSidebar.Visible
+    WriteRegSetting "Sidebars\Log", picLog.Visible
 End Sub
 
 Public Sub InitMenus()
@@ -924,6 +933,7 @@ Dim l_mnuMenu As ngMenu
             Set .HideEvent = BindEvent(Me, "Menu_Hide", Array(l_mnuMenu))
         End With
     Next l_mnuMenu
+    RefreshMenus
 End Sub
 
 'Private Sub iCustomMenuHandler_DefineMenu(Caption As String, key As String, Optional ParentKey As String, Optional AcceleratorString As String = "", Optional Icon As stdole.Picture = Nothing, Optional HelpText As String = "", Optional ByVal Checked As Boolean = False, Optional ByVal Enabled As Boolean = True)
@@ -1143,7 +1153,7 @@ End Sub
 
 Private Sub picStatus_Paint()
 On Error Resume Next
-Dim l_rctStatus As Rect
+Dim l_rctStatus As RECT
     picStatus.Line (0, 0)-(picStatus.ScaleWidth - 1, picStatus.ScaleHeight - 1), picStatus.BackColor, BF
     SetBackgroundMode picStatus.hdc, BackgroundMode_Opaque
     SetBackgroundColor picStatus.hdc, GetSystemColor(SystemColor_Button_Face)
@@ -1929,9 +1939,9 @@ Dim l_lngLeftSpace As Long, l_lngRightSpace As Long
 Dim l_lngTopSpace As Long, l_lngBottomSpace As Long
 Dim l_lngTextHeight As Long, l_lngTitleHeight As Long
 Dim l_lngWidth As Long, l_lngHeight As Long
-Dim l_rctWindow As Win32.Rect
+Dim l_rctWindow As Win32.RECT
 Dim l_lngWindowWidth As Long, l_lngWindowHeight As Long
-Dim l_rctTextSize As Win32.Rect, l_rctText As Win32.Rect
+Dim l_rctTextSize As Win32.RECT, l_rctText As Win32.RECT
 Dim l_sngCloseTime As Single
 Dim l_strWaitingNotices As String
     GetClientRect Me.hwnd, l_rctWindow

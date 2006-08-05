@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.7#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.2#0"; "ngUI.ocx"
 Begin VB.Form frmSpriteImporter 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Sprite Importer"
@@ -82,7 +82,6 @@ Begin VB.Form frmSpriteImporter
    Begin ngUI.ngTabStrip tsViews 
       Height          =   5190
       Left            =   30
-      TabIndex        =   4
       Top             =   30
       Width           =   5910
       _ExtentX        =   10425

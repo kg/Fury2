@@ -103,10 +103,10 @@ End Sub
 Sub Free()
 On Error Resume Next
 Dim l_posPose As Fury2Pose
-    Set m_sprParent = Nothing
     For Each l_posPose In mCol
-        l_posPose.Free
+        l_posPose.Free m_sprParent
     Next l_posPose
+    Set m_sprParent = Nothing
 End Sub
 
 Sub TranslateAlignment(X, Y)
@@ -184,25 +184,38 @@ End Sub
 
 Public Function Duplicate() As Fury2Poses
 On Error Resume Next
-Dim m_lngPoses As Long
+Dim m_posPose As Fury2Pose
     Set Duplicate = New Fury2Poses
     With Duplicate
-        If mCol.Count > 0 Then
-            For m_lngPoses = 1 To mCol.Count
-                Duplicate.Add mCol.Item(m_lngPoses).Duplicate
-            Next m_lngPoses
-        End If
+        For Each m_posPose In mCol
+            .AddFast m_posPose.Duplicate
+        Next m_posPose
+        .Reindex
     End With
 End Function
 
-Public Sub AddPose(XVelocity, YVelocity, Optional AnimType = 1, Optional Name As String = "")
+Public Function Clone() As Fury2Poses
+On Error Resume Next
+Dim m_posPose As Fury2Pose
+    Set Clone = New Fury2Poses
+    With Clone
+        For Each m_posPose In mCol
+            .AddFast m_posPose
+        Next m_posPose
+    End With
+End Function
+
+Friend Sub AddFast(ByVal Object As Fury2Pose)
+On Error Resume Next
+    mCol.Add Object
+End Sub
+
+Public Sub AddPose(Optional AnimType = 1, Optional Name As String = "")
 On Error Resume Next
 Dim m_posPose As Fury2Pose
     If mCol.Count >= c_lngMaxPoses Then Exit Sub
     Set m_posPose = New Fury2Pose
     With m_posPose
-        .XVelocity = XVelocity
-        .YVelocity = YVelocity
         .LoopMode = CLng(AnimType)
         .Name = Name
     End With

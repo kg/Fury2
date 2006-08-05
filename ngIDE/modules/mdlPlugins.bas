@@ -222,6 +222,7 @@ Dim l_plgPlugin As iPlugin
         InstallPlugin "ngPlugins.TilesetEditor", "\ng.dll"
         InstallPlugin "ngPlugins.CommandBrowser", "\ng.dll"
         InstallPlugin "ngPlugins.UserDataEditor", "\ng.dll"
+        InstallPlugin "ngPlugins.GamePacker", "\ng.dll"
         InstallPlugin "tk.TKTilesetImporter", "\tk.dll"
         InstallPlugin "tk.TKBoardImporter", "\tk.dll"
         l_lngCount = ReadRegSetting("Plugins\Count", 0)

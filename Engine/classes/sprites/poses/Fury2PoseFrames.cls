@@ -38,7 +38,7 @@ Implements Fury2Object
 Implements IVirtualFileCollection
 Implements IVirtualFileSaveable
 Implements IInspectableCollection
-Private m_posParent As Fury2Pose
+Private m_posParent As WeakReference
 Private mCol As Collection
 
 Private Property Get IInspectableCollection_ItemCount() As Long
@@ -64,12 +64,12 @@ On Error Resume Next
 End Property
 
 Public Property Get Parent() As Fury2Pose
-    Set Parent = m_posParent
+    Set Parent = WRGetPose(m_posParent)
 End Property
 
 Friend Sub SetParent(Pose As Fury2Pose)
 On Error Resume Next
-    Set m_posParent = Pose
+    WRSet m_posParent, Pose
 End Sub
 
 Friend Sub Reindex()
@@ -205,14 +205,13 @@ End Sub
 
 Public Function Duplicate() As Fury2PoseFrames
 On Error Resume Next
-Dim m_lngFrames As Long
+Dim m_fraFrame As Fury2PoseFrame
     Set Duplicate = New Fury2PoseFrames
     With Duplicate
-        If mCol.Count > 0 Then
-            For m_lngFrames = 1 To mCol.Count
-                .Add mCol.Item(m_lngFrames).Duplicate
-            Next m_lngFrames
-        End If
+        For Each m_fraFrame In mCol
+            .AddFast m_fraFrame
+        Next m_fraFrame
+        .Reindex
     End With
 End Function
 
@@ -228,14 +227,20 @@ Dim m_fraFrame As Fury2PoseFrame
         .YCenter = CSng(YCenter)
         .Delay = CLng(Delay)
         .MaskColor = CLng(MaskColor)
-        Set .Parent = m_posParent
+        Set .Parent = Parent
     End With
     Add m_fraFrame
 End Sub
 
+Public Sub AddFast(ByVal Obj As Fury2PoseFrame)
+On Error Resume Next
+    Obj.SetParent Parent
+    mCol.Add Obj
+End Sub
+
 Public Sub Add(Obj As Fury2PoseFrame, Optional ByVal sKey, Optional ByVal AtIndex)
 On Error Resume Next
-    Obj.SetParent m_posParent
+    Obj.SetParent Parent
     If IsMissing(sKey) Then
         If IsMissing(AtIndex) Then
             mCol.Add Obj
@@ -294,10 +299,12 @@ Attribute NewEnum.VB_UserMemId = -4
 End Property
 
 Private Sub Class_Initialize()
+On Error Resume Next
     Set mCol = New Collection
 End Sub
 
 Private Sub Class_Terminate()
+On Error Resume Next
     Set mCol = Nothing
 End Sub
 
@@ -316,7 +323,7 @@ Private Function IVirtualFileCollection_CreateNew() As Object
 On Error Resume Next
 Dim l_fraNew As Fury2PoseFrame
     Set l_fraNew = New Fury2PoseFrame
-    l_fraNew.SetParent m_posParent
+    l_fraNew.SetParent Parent
     Set IVirtualFileCollection_CreateNew = l_fraNew
 End Function
 

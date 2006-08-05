@@ -29,6 +29,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "../header/Filters.hpp"
 #include <math.h>
 
+const float fRadian = 3.14159265358979 / 180.0f;
+
 int ClipFloatLine(Rectangle *Rect, FLine *Line);
 int ClipLine(Rectangle *Rect, ILine *Line);
 Export int ClipLine(Image *Image, ILine *Line);
@@ -657,7 +659,6 @@ SpriteParam *pCurrent = List, *pCheck;
 VelocityVector vSpeed, vCheck;
 int iCount = 0;
 bool bCollided = false;
-float fRadian = 3.14159265358979 / 180.0;
 std::vector<ForceEntry> forceEntries;
 std::vector<ForceEntry>::iterator currentEntry;
 ForceEntry newEntry;
@@ -869,15 +870,15 @@ int iCount = 0;
                     if (Clip2D_PairToRect(&rctDest, &rctSource, &(Camera->Rectangle))) {
                         pCurrent->Culled = false;
                     }
-                } else if (pCurrent->Params.Scale > 0) {
-                    w *= pCurrent->Params.Scale / 2;
+                } else if (pCurrent->Params.Scale != 0) {
+                    w *= abs(pCurrent->Params.Scale) / 2;
                     if ((y) < Camera->Rectangle.Top) goto nextsprite;
                     if ((y - h) > Camera->Rectangle.bottom()) goto nextsprite;
                     if ((x + w) < Camera->Rectangle.Left) goto nextsprite;
                     if ((x - w) > Camera->Rectangle.right()) goto nextsprite;
                     rctDest.Left = ceil(x - (w));
                     rctDest.Top = ceil(y - (h * pCurrent->Params.Scale));
-                    rctDest.Width = pCurrent->Graphic.Rectangle.Width * pCurrent->Params.Scale;
+                    rctDest.Width = pCurrent->Graphic.Rectangle.Width * abs(pCurrent->Params.Scale);
                     rctDest.Height = pCurrent->Graphic.Rectangle.Height * pCurrent->Params.Scale;
                     rctSource = pCurrent->Graphic.Rectangle;
                     rctCopy = rctDest;
@@ -899,7 +900,7 @@ SpriteParam *result = Null;
   return result;
 }
 
-Export int RenderSprites(SpriteParam *Start, CameraParam *Camera) {
+Export int RenderSprites(SpriteParam *Start, CameraParam *Camera, RenderSpritesParam *Options) {
 SpriteParam *pCurrent = Start;
 Rectangle rctDest, rctSource, rctCopy;
 Image *pImage, *pTarget;
@@ -916,15 +917,16 @@ Pixel white = Pixel(255,255,255,255);
     if (!Start) return Failure;
     if (!Camera) return Failure;
     if (!Camera->pImage()) return Failure;
+    if (!Options) return Failure;
     poly.Allocate(4);
     while (pCurrent) {
-      iCount++;
-      if (pCurrent->Visible) {
+      if ((pCurrent->Visible) && (!(pCurrent->Culled))) {
         pTarget = Camera->pImage();
         if (pCurrent->Params.RenderTarget < Camera->RenderTargetCount) {
           pTarget = Camera->pRenderTargets[pCurrent->Params.RenderTarget];
         }
         if ((pCurrent->Params.Alpha != 0)) {
+          iCount++;
           switch  (pCurrent->Params.SpecialFX) {
           default:
           case 0:
@@ -932,13 +934,11 @@ Pixel white = Pixel(255,255,255,255);
           case fxHardShadow:
             break;
           case fxSoftShadow:
-            if (ShadowImage) {
-              rctDest.Left = x - (pCurrent->Obstruction.W / 2.0);
-              rctDest.Top = y - (pCurrent->Obstruction.H);
-              rctDest.Width = pCurrent->Obstruction.W;
-              rctDest.Height = pCurrent->Obstruction.H;
-              rctSource = ShadowImage->getRectangle();
-              BlitResample_Subtractive_Opacity(pTarget, ShadowImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
+            if (Options->ShadowImage) {
+              Image* shadowImage = (Image*)Options->ShadowImage;
+              rctDest = pCurrent->getRectangle();
+              rctSource = shadowImage->getRectangle();
+              BlitResample_Subtractive_Opacity(pTarget, shadowImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
             }
             break;
           case fxCastShadow:
@@ -947,15 +947,23 @@ Pixel white = Pixel(255,255,255,255);
           iSecondaryImage = -1;
           while (iSecondaryImage < pCurrent->Graphic.SecondaryImageCount) {
             if (iSecondaryImage >= 0) {
-              switch (pCurrent->Graphic.pSecondaryImages[iSecondaryImage].ImageType) {
-                case siOverlay:
-                  currentImage = pCurrent->Graphic.pSecondaryImages[iSecondaryImage].pImage;
-                default:
-                  currentImage = 0;
-                  break;
+              if (Options->DrawSecondaryImages) {
+                switch (pCurrent->Graphic.pSecondaryImages[iSecondaryImage].ImageType) {
+                  case siOverlay:
+                    currentImage = pCurrent->Graphic.pSecondaryImages[iSecondaryImage].pImage;
+                  default:
+                    currentImage = 0;
+                    break;
+                }
+              } else {
+                currentImage = 0;
               }
             } else {
-              currentImage = pCurrent->Graphic.pImage;
+              if (Options->DrawFrames) {
+                currentImage = pCurrent->Graphic.pImage;
+              } else {
+                currentImage = 0;
+              }
             }
             iSecondaryImage++;
             if (currentImage) {
@@ -1021,6 +1029,13 @@ Pixel white = Pixel(255,255,255,255);
                         BlitSimple_Merge_Opacity(pTarget, currentImage, &rctDest, rctSource.Left, rctSource.Top, abs(pCurrent->Params.Alpha) * Camera->Alpha);
                         break;
                     }
+                    if (Options->DrawFrameRectangles) {
+                      Rectangle rctOutline = rctDest;
+                      FilterSimple_Box(pTarget, &rctOutline, Options->FrameRectangleColor);
+                    }
+                    if (Options->DrawSortingLines) {
+                      FilterSimple_Line_AA(pTarget, rctDest.Left, rctDest.bottom_exclusive() + pCurrent->ZLeft, rctDest.right_exclusive(), rctDest.bottom_exclusive() + pCurrent->ZRight, Options->SortingLineColor);
+                    }
                 }
               } else {
                 if (rotated) {
@@ -1058,6 +1073,9 @@ Pixel white = Pixel(255,255,255,255);
                   poly.Append(TexturedVertex(px[3] + x, py[3] + y, pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.bottom_exclusive()));
                   FilterSimple_ConvexPolygon_Textured(pTarget, currentImage, &poly, DefaultSampleFunction, renderer, pCurrent->Params.Color.V);
                 } else {
+                  if (pCurrent->Params.Scale < 0) {
+                    w = w + 1;
+                  }
                   w *= abs(pCurrent->Params.Scale) / 2;
                   rctDest.Left = ceil(x - (w));
                   rctDest.Top = ceil(y - (h * pCurrent->Params.Scale));
@@ -1088,13 +1106,20 @@ Pixel white = Pixel(255,255,255,255);
                       BlitResample_Subtractive_Opacity(pTarget, currentImage, &rctDest, &rctSource, DefaultSampleFunction, pCurrent->Params.Alpha * Camera->Alpha);
                       break;
                     }
+                    if (Options->DrawFrameRectangles) {
+                      Rectangle rctOutline = rctDest;
+                      FilterSimple_Box(pTarget, &rctOutline, Options->FrameRectangleColor);
+                    }
+                    if (Options->DrawSortingLines) {
+                      FilterSimple_Line_AA(pTarget, rctDest.Left, rctDest.bottom_exclusive() + pCurrent->ZLeft, rctDest.right_exclusive(), rctDest.bottom_exclusive() + pCurrent->ZRight, Options->SortingLineColor);
+                    }
                   }
                 }
               }
             }
           }
         }
-        if (pCurrent->pAttachedGraphic) {
+        if ((pCurrent->pAttachedGraphic != Null) && (Options->DrawAttachedGraphics)) {
           if (pCurrent->pAttachedGraphic->pFrames) {
             pImage = pCurrent->pAttachedGraphic->pFrames[ClipValue(pCurrent->pAttachedGraphic->Frame,0,pCurrent->pAttachedGraphic->FrameCount - 1)];
             if (pImage) {
@@ -1106,6 +1131,23 @@ Pixel white = Pixel(255,255,255,255);
             }
           }
         }
+        if ((Options->DrawBlocking) && (pCurrent->Stats.Solid)) {
+          SimplePolygon* poly = pCurrent->getPolygon();
+          poly->Translate(-Camera->ViewportX, -Camera->ViewportY);
+          FilterSimple_ConvexPolygon_Outline(pTarget, poly, Options->BlockingColor);
+          delete poly;
+        }
+        if ((Options->DrawOrientationLines) || (Options->DrawVelocityLines)) {
+          FPoint start = FPoint(pCurrent->Position.X - Camera->ViewportX, pCurrent->Position.Y - Camera->ViewportY);
+          FPoint vel = FPoint(pCurrent->Velocity.X + (sin(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V) + pCurrent->Velocity.XF,
+                              pCurrent->Velocity.Y + (-cos(pCurrent->Velocity.B * fRadian) * pCurrent->Velocity.V) + pCurrent->Velocity.YF);
+          FPoint ori = FPoint((sin(pCurrent->Velocity.B * fRadian) * 10.0f),
+                              (-cos(pCurrent->Velocity.B * fRadian) * 10.0f));
+          if (Options->DrawOrientationLines)
+            FilterSimple_Line_AA(pTarget, start.X, start.Y, start.X + ori.X, start.Y + ori.Y, Options->OrientationLineColor);
+          if (Options->DrawVelocityLines)
+            FilterSimple_Line_AA(pTarget, start.X, start.Y, start.X + vel.X, start.Y + vel.Y, Options->VelocityLineColor);
+        } 
       }
 nextsprite:        
       pCurrent = pCurrent->pSortedNext;
@@ -1307,10 +1349,8 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
   nextFont = Font;
 
   enableClipping = true;
-  textColor = Font->FillColor;
-  nextColor = textColor;
+  nextColor = textColor = Font->FillColor;
   shadowColor = Font->ShadowColor;
-  shadowColor[::Alpha] = AlphaLookup(shadowColor[::Alpha], textColor[::Alpha]);
   draw_shadow = (shadowColor[::Alpha] > 0);
   
   int X = 0, buffer_X = Rect->Left + Options->Scroll_X;
@@ -1523,14 +1563,14 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
           if (draw_caret) {
             if (buffer_index == Options->Caret_Position) {
               dest.setValues(X, buffer_Y, 1, row_height);
-              FilterSimple_Fill_SourceAlpha(Dest, &dest, Options->Caret_Color);
+              FilterSimple_Fill_SourceAlpha(Dest, &dest, ScaleAlpha(Options->Caret_Color, Options->Opacity));
             }
           }
 
           if (draw_selection) {
             if ((buffer_index >= Options->Selection_Start) && (buffer_index < Options->Selection_End)) {
               dest.setValues(X, buffer_Y, _current->XIncrement, row_height);
-              FilterSimple_Fill_SourceAlpha(Dest, &dest, Options->Selection_Color);
+              FilterSimple_Fill_SourceAlpha(Dest, &dest, ScaleAlpha(Options->Selection_Color, Options->Opacity));
             }
           }
 
@@ -1550,24 +1590,24 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
               shadow.Top += 1;
               
               if (currentFont->EffectMode == 1) {
-                BlitSimple_Font_Merge_RGB_Opacity(Dest, _current->pImage, &shadow, 0, 0, shadowColor, Font->Alpha);
+                BlitSimple_Font_Merge_RGB_Opacity(Dest, _current->pImage, &shadow, 0, 0, shadowColor, AlphaLookup(Font->Alpha, ClipByte(Options->Opacity)));
               } else {
-                BlitSimple_Font_SourceAlpha_RGB_Opacity(Dest, _current->pImage, &shadow, 0, 0, shadowColor, Font->Alpha);
+                BlitSimple_Font_SourceAlpha_RGB_Opacity(Dest, _current->pImage, &shadow, 0, 0, shadowColor, AlphaLookup(Font->Alpha, ClipByte(Options->Opacity)));
               }
             }
 
 			      charsDrawn++;
             if (currentFont->EffectMode == 1) {
               if (textColor.V == (DoubleWord)0xFFFFFFFF) {
-                BlitSimple_Merge_Opacity(Dest, _current->pImage, &dest, 0, 0, Font->Alpha);
+                BlitSimple_Merge_Opacity(Dest, _current->pImage, &dest, 0, 0, AlphaLookup(Font->Alpha, ClipByte(Options->Opacity)));
               } else {
-                BlitSimple_Font_Merge_RGB_Opacity(Dest, _current->pImage, &dest, 0, 0, textColor, Font->Alpha);
+                BlitSimple_Font_Merge_RGB_Opacity(Dest, _current->pImage, &dest, 0, 0, textColor, AlphaLookup(Font->Alpha, ClipByte(Options->Opacity)));
               }
             } else {
               if (textColor.V == (DoubleWord)0xFFFFFFFF) {
-                BlitSimple_Automatic_SourceAlpha_Opacity(Dest, _current->pImage, &dest, 0, 0, Font->Alpha);
+                BlitSimple_Automatic_SourceAlpha_Opacity(Dest, _current->pImage, &dest, 0, 0, AlphaLookup(Font->Alpha, ClipByte(Options->Opacity)));
               } else {
-                BlitSimple_Font_SourceAlpha_RGB_Opacity(Dest, _current->pImage, &dest, 0, 0, textColor, Font->Alpha);
+                BlitSimple_Font_SourceAlpha_RGB_Opacity(Dest, _current->pImage, &dest, 0, 0, textColor, AlphaLookup(Font->Alpha, ClipByte(Options->Opacity)));
               }
             }
           }
@@ -1597,7 +1637,7 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
       if (done && draw_caret) {
         if (buffer_index == Options->Caret_Position) {
           dest.setValues(X, buffer_Y, 1, row_height);
-          FilterSimple_Fill_SourceAlpha(Dest, &dest, Options->Caret_Color);
+          FilterSimple_Fill_SourceAlpha(Dest, &dest, ScaleAlpha(Options->Caret_Color, ClipByte(Options->Opacity)));
         }
       }
       if (done && locate_char) {
@@ -1638,15 +1678,14 @@ Export int RenderText(wchar_t *Text, Image *Dest, Rectangle *Rect, FontParam *Fo
     last_width = buffer_width;
     last_X = buffer_X;
 
+    if (nextFont != currentFont) {
+      currentFont = nextFont;
+    }
+
     if (nextColor != textColor) {
       textColor = nextColor;
       shadowColor = currentFont->ShadowColor;
-      shadowColor[::Alpha] = AlphaLookup(shadowColor[::Alpha], textColor[::Alpha]);
       draw_shadow = (shadowColor[::Alpha] > 0);
-    }
-
-    if (nextFont != currentFont) {
-      currentFont = nextFont;
     }
 
   }
@@ -2016,7 +2055,6 @@ float h = this->Obstruction.H / 2;
 FRect v;
     switch (this->Obstruction.Type) {
       case sotUpwardRect:
-      case sotUpwardPolygon:
         v.X1 = (this->Position.X) - (w);
         v.X2 = (this->Position.X) + (w);
         v.Y1 = (this->Position.Y) - (this->Obstruction.H);
@@ -2041,8 +2079,8 @@ FRect v;
 }
 
 Polygon<FPoint>* SpriteParam::getPolygon() {
-float w = this->Obstruction.W / 2;
-float h = this->Obstruction.H / 2;
+float w = (this->Obstruction.W) / 2.0f;
+float h = (this->Obstruction.H) / 2.0f;
 FRect r;
 Polygon<FPoint> *v = new Polygon<FPoint>();
 Polygon<FPoint> *base;
@@ -2070,11 +2108,6 @@ Polygon<FPoint> *base;
         v->Append(r.BottomRight());
         v->Append(r.BottomLeft());
         break;
-      case sotUpwardPolygon:
-        base = (Polygon<FPoint>*)this->Obstruction.Polygon;
-        v->Copy(*base);
-        v->Translate(this->Position.X, this->Position.Y - (this->Obstruction.H));
-        break;
       case sotCenteredPolygon:
         base = (Polygon<FPoint>*)this->Obstruction.Polygon;
         v->Copy(*base);
@@ -2085,8 +2118,7 @@ Polygon<FPoint> *base;
 }
 
 bool SpriteParam::touches(SpriteParam *other) {
-  if ((this->Obstruction.Type == sotUpwardPolygon) || (this->Obstruction.Type == sotCenteredPolygon) ||
-    (other->Obstruction.Type == sotUpwardPolygon) || (other->Obstruction.Type == sotCenteredPolygon)) {
+  if ((this->Obstruction.Type == sotCenteredPolygon) || (other->Obstruction.Type == sotCenteredPolygon)) {
     Polygon<FPoint> *pOther = other->getPolygon();
     bool result = this->touches(pOther);
     delete pOther;
@@ -2120,7 +2152,7 @@ bool SpriteParam::touches(SpriteParam *other, VelocityVector *other_speed) {
 
 inline int SpriteParam::touches(FLine *lines, int line_count) {
 FRect rct = this->getRect();
-  if ((this->Obstruction.Type == sotUpwardPolygon) || (this->Obstruction.Type == sotCenteredPolygon)) {
+  if ((this->Obstruction.Type == sotCenteredPolygon)) {
     Polygon<FPoint> *poly = this->getPolygon();
     int result = CheckLineCollide2(&rct, poly, lines, line_count);
     delete poly;
@@ -2133,7 +2165,7 @@ FRect rct = this->getRect();
 inline int SpriteParam::touches(CollisionMatrix *Matrix) {
 FRect rct;
   rct = this->getRect();
-  if ((this->Obstruction.Type == sotUpwardPolygon) || (this->Obstruction.Type == sotCenteredPolygon)) {
+  if ((this->Obstruction.Type == sotCenteredPolygon)) {
     Polygon<FPoint> *poly = this->getPolygon();
     bool result = Matrix->collisionCheck(&rct, poly);
     delete poly;
@@ -2480,6 +2512,7 @@ int mx1 = 0, my1 = 0, mx2 = 0, my2 = 0, mx = 0, my = 0;
 Lighting::Sector *Sector = Null;
 bool Ignore = false, Scaling = false;
 int SpriteCount = 0;
+int iCount = 0;
 Pixel SavedColor, LightColor;
 Image* RenderTarget;
 Image* NormalMap;
@@ -3021,18 +3054,22 @@ fuzzyrender:
                           LightColor[::Alpha] = a;
                         }
                         BlitSimple_NormalMap_Additive_SourceAlpha(Camera->OutputBuffer, Sprite->Graphic.pSecondaryImages[si].pImage, &rctDest, rctSource.Left, rctSource.Top, &LightVector, LightColor);
+                        iCount++;
                       }
                     }
                   }
                   break;
                 case siGlowMap:
                   BlitSimple_Additive(Camera->OutputBuffer, Sprite->Graphic.pSecondaryImages[si].pImage, &rctDest, rctSource.Left, rctSource.Top);
+                  iCount++;
                   break;
                 case siShadowMap:
                   BlitSimple_Subtractive(Camera->OutputBuffer, Sprite->Graphic.pSecondaryImages[si].pImage, &rctDest, rctSource.Left, rctSource.Top);
+                  iCount++;
                   break;
                 case siLightMap:
                   BlitSimple_Lightmap_RGB(Camera->OutputBuffer, Sprite->Graphic.pSecondaryImages[si].pImage, &rctDest, rctSource.Left, rctSource.Top);
+                  iCount++;
                   break;
                 default:
                   break;
@@ -3044,16 +3081,20 @@ fuzzyrender:
                 iTemp = Sprite->Graphic.pImage->MatteColor.V;
                 Sprite->Graphic.pImage->MatteColor = Sprite->Graphic.MaskColor;
                 BlitSimple_Matte_Tint_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, SavedColor, abs(Sprite->Params.Alpha) * 255);
+                iCount++;
                 Sprite->Graphic.pImage->MatteColor.V = iTemp;
                 break;
               case 1:
                 BlitSimple_SourceAlpha_Tint_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, SavedColor, abs(Sprite->Params.Alpha) * 255);
+                iCount++;
                 break;
               case 7:
                 if (Camera->SaturationMode == 1) {
                   BlitSimple_Screen_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(Sprite->Params.Alpha) * 255);
+                  iCount++;
                 } else {
                   BlitSimple_Additive_Opacity(Camera->OutputBuffer, Sprite->Graphic.pImage, &rctDest, rctSource.Left, rctSource.Top, abs(Sprite->Params.Alpha) * 255);
+                  iCount++;
                 }
               case 2: case 3: case 4: case 5: case 6: case 8:
                   break;
@@ -3107,6 +3148,7 @@ fuzzyrender:
             int pw = PlaneTexture->Width;
             PlaneTexture->Width = rctSource.Width;
             BlitResample_Normal(Camera->OutputBuffer, PlaneTexture, &rctWall, &rctSource, DefaultSampleFunction);
+            iCount++;
             PlaneTexture->Width = pw;
           }
         }
@@ -3120,7 +3162,7 @@ fuzzyrender:
   ShadowPoly.Deallocate();
   GradientShadowPoly.Deallocate();
 
-  return Success;
+  return iCount;
 }
 
 Export int RenderLines_Masked(Image *Image, FLine *Lines, Byte *Mask, Pixel Color, int Count, float XOffset, float YOffset) {

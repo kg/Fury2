@@ -418,6 +418,7 @@ Dim l_optOptions As TextParam
     Else
         ParseOptions Options, l_optOptions
     End If
+    l_optOptions.Opacity = 255
     l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
     l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
     Call SoftFX.RenderText(l_strText, l_imgSurface.Handle, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions)
@@ -481,6 +482,7 @@ Dim l_lngXO As Long, l_lngYO As Long
         ParseOptions Options, l_optOptions
     End If
     l_optOptions.TabStopCount = UBound(m_lngTabStops) + 1
+    l_optOptions.Opacity = 255
     l_optOptions.TabStopPointer = VarPtr(m_lngTabStops(0))
     Call SoftFX.RenderText(l_strText, l_imgSurface.Handle, l_rctRectangle.GetRectangle, m_fpmFontParam, l_optOptions)
     If l_optOptions.Height > 0 Then

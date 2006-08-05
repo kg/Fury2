@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.12#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
 Begin VB.Form frmTest 
    BackColor       =   &H000000FF&
    Caption         =   "ngToolbar Test"
@@ -22,6 +22,16 @@ Begin VB.Form frmTest
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   419
    StartUpPosition =   3  'Windows Default
+   Begin ngUI.ngViewport ngViewport1 
+      Align           =   1  'Align Top
+      Height          =   3600
+      Left            =   0
+      TabIndex        =   3
+      Top             =   195
+      Width           =   6285
+      _ExtentX        =   11086
+      _ExtentY        =   6350
+   End
    Begin VB.CommandButton Command1 
       Caption         =   "Command1"
       BeginProperty Font 
@@ -64,6 +74,15 @@ Begin VB.Form frmTest
       _ExtentX        =   6059
       _ExtentY        =   1349
    End
+   Begin ngUI.ngToolbar tbrTest 
+      Align           =   1  'Align Top
+      Height          =   195
+      Left            =   0
+      Top             =   0
+      Width           =   6285
+      _ExtentX        =   11086
+      _ExtentY        =   344
+   End
    Begin ngUI.ngListBox lbxTest 
       Height          =   3600
       Left            =   330
@@ -85,15 +104,6 @@ Begin VB.Form frmTest
       AllowMultiSelect=   0   'False
       AllowNullSelection=   0   'False
    End
-   Begin ngUI.ngToolbar tbrTest 
-      Align           =   1  'Align Top
-      Height          =   195
-      Left            =   0
-      Top             =   0
-      Width           =   6285
-      _ExtentX        =   11086
-      _ExtentY        =   344
-   End
 End
 Attribute VB_Name = "frmTest"
 Attribute VB_GlobalNameSpace = False
@@ -110,10 +120,10 @@ Dim m_mnuSubChild As ngMenu
 Public Sub MenuShow()
 On Error Resume Next
     m_mnuTest.Items.RemoveByKeys "*"
-    m_mnuTest.Items.addnew "&Item 1", "Alt+F4", "Item1", F2ImageFromPicture(Me.Icon)
-    m_mnuTest.Items.addnew "I&tem 2", "None", "Item2", F2Image(4, 4), , , False
-    m_mnuTest.Items.addnew "-"
-    m_mnuTest.Items.addnew "Item &Number Three", "Ctrl+Alt+Del", "Item3"
+    m_mnuTest.Items.AddNew "&Item 1", "Alt+F4", "Item1", F2ImageFromPicture(Me.Icon)
+    m_mnuTest.Items.AddNew "I&tem 2", "None", "Item2", F2Image(4, 4), , , False
+    m_mnuTest.Items.AddNew "-"
+    m_mnuTest.Items.AddNew "Item &Number Three", "Ctrl+Alt+Del", "Item3"
 End Sub
 
 Public Sub ItemClicked(Item)
@@ -138,7 +148,7 @@ On Error Resume Next
     If tsTabs.tabs.Count > 0 Then
         tsTabs.tabs.Clear
     Else
-        tsTabs.tabs.addnew "Test"
+        tsTabs.tabs.AddNew "Test"
     End If
     tsTabs.AutoSize
 End Sub
@@ -158,53 +168,53 @@ Dim l_lngIndex As Long
     tbrTest.Orientation = tboHorizontal
 '    tbrTest.ResourcePattern = "*.png"
 '    tbrTest.LoadTheme "theme\toolbar\"
-    Set tbrTest.Buttons.addnew("Left", "Test1", "tileset", , , btaLeft).Font = Me.Font
-    tbrTest.Buttons.addnew "Right", "Test2", l_imgTest, , , btaRight
-    tbrTest.Buttons.addnew "-"
-    tbrTest.Buttons.addnew "Top", "Test3", l_imgTest, , , btaTop
-    tbrTest.Buttons.addnew "Bottom", "Test4", l_imgTest, , , btaBottom
-    tbrTest.Buttons.addnew "-"
-    tbrTest.Buttons.addnew "Text Only", "Test5"
-    tbrTest.Buttons.addnew , "Test6", l_imgTest
-    tbrTest.Buttons.addnew "-"
-    tbrTest.Buttons.addnew "Disabled", "Test7", l_imgTest, , , , False
-    tbrTest.Buttons.addnew "-"
-    tbrTest.Buttons.addnew "Toggle", "Test8", F2ImageFromPicture(Me.Icon), , bsyCheck
+    Set tbrTest.Buttons.AddNew("Left", "Test1", "tileset", , , btaLeft).Font = Me.Font
+    tbrTest.Buttons.AddNew "Right", "Test2", l_imgTest, , , btaRight
+    tbrTest.Buttons.AddNew "-"
+    tbrTest.Buttons.AddNew "Top", "Test3", l_imgTest, , , btaTop
+    tbrTest.Buttons.AddNew "Bottom", "Test4", l_imgTest, , , btaBottom
+    tbrTest.Buttons.AddNew "-"
+    tbrTest.Buttons.AddNew "Text Only", "Test5"
+    tbrTest.Buttons.AddNew , "Test6", l_imgTest
+    tbrTest.Buttons.AddNew "-"
+    tbrTest.Buttons.AddNew "Disabled", "Test7", l_imgTest, , , , False
+    tbrTest.Buttons.AddNew "-"
+    tbrTest.Buttons.AddNew "Toggle", "Test8", F2ImageFromPicture(Me.Icon), , bsyCheck
     tbrTest.AutoSize
     lbxTest.AllowReorder = True
     For l_lngIndex = 0 To 99
-        lbxTest.ListItems.addnew "Item &" & l_lngIndex
+        lbxTest.ListItems.AddNew "Item &" & l_lngIndex
     Next l_lngIndex
 '    Set tsTabs.ResourceFile = l_rfFile
 '    tsTabs.ResourcePattern = "*.png"
 '    tsTabs.LoadTheme "theme\tabstrip\"
     tsTabs.ShowCloseButtons = True
-    tsTabs.tabs.addnew "Tab 1", , F2ImageFromPicture(Me.Icon)
-    tsTabs.tabs.addnew "Tab 2", , F2ImageFromPicture(Me.Icon)
-    tsTabs.tabs.addnew "Tab 3", , F2ImageFromPicture(Me.Icon)
-    tsTabs.tabs.addnew "Tab 4"
-    tsTabs.tabs.addnew "Tab 5"
-    tsTabs.tabs.addnew "Tab 6"
-    tsTabs.tabs.addnew "Tab 7"
-    tsTabs.tabs.addnew "Tab 8"
-    tsTabs.tabs.addnew "Tab 9"
-    tsTabs.tabs.addnew "Tab 10"
+    tsTabs.tabs.AddNew "Tab 1", , F2ImageFromPicture(Me.Icon)
+    tsTabs.tabs.AddNew "Tab 2", , F2ImageFromPicture(Me.Icon)
+    tsTabs.tabs.AddNew "Tab 3", , F2ImageFromPicture(Me.Icon)
+    tsTabs.tabs.AddNew "Tab 4"
+    tsTabs.tabs.AddNew "Tab 5"
+    tsTabs.tabs.AddNew "Tab 6"
+    tsTabs.tabs.AddNew "Tab 7"
+    tsTabs.tabs.AddNew "Tab 8"
+    tsTabs.tabs.AddNew "Tab 9"
+    tsTabs.tabs.AddNew "Tab 10"
     Set m_mnuTest = CreateMenu()
-    m_mnuTest.Items.addnew "&Item 1", "Alt+F4", "Item1", F2ImageFromPicture(Me.Icon)
-    m_mnuTest.Items.addnew "I&tem 2", "None", "Item2", F2Image(4, 4), , , False
-    m_mnuTest.Items.addnew "-"
-    m_mnuTest.Items.addnew "Item &Number Three", "Ctrl+Alt+Del", "Item3"
+    m_mnuTest.Items.AddNew "&Item 1", "Alt+F4", "Item1", F2ImageFromPicture(Me.Icon)
+    m_mnuTest.Items.AddNew "I&tem 2", "None", "Item2", F2Image(4, 4), , , False
+    m_mnuTest.Items.AddNew "-"
+    m_mnuTest.Items.AddNew "Item &Number Three", "Ctrl+Alt+Del", "Item3"
     Set m_mnuTest.SelectEvent = BindEvent(Me, "ItemClicked")
     Set m_mnuChild = CreateMenu()
-    m_mnuChild.Items.addnew "Item 1", , "Item1"
-    m_mnuChild.Items.addnew "Item 2", , "Item2"
-    m_mnuChild.Items.addnew "-"
-    m_mnuChild.Items.addnew "Item 3", , "Item3"
-    m_mnuChild.Items.addnew "Item 4", , "Item4"
+    m_mnuChild.Items.AddNew "Item 1", , "Item1"
+    m_mnuChild.Items.AddNew "Item 2", , "Item2"
+    m_mnuChild.Items.AddNew "-"
+    m_mnuChild.Items.AddNew "Item 3", , "Item3"
+    m_mnuChild.Items.AddNew "Item 4", , "Item4"
     Set m_mnuTest.Items(1).ChildMenu = m_mnuChild
     Set m_mnuSubChild = CreateMenu()
-    m_mnuSubChild.Items.addnew "Item 1", , "Item1"
-    m_mnuSubChild.Items.addnew "Item 2", , "Item2"
+    m_mnuSubChild.Items.AddNew "Item 1", , "Item1"
+    m_mnuSubChild.Items.AddNew "Item 2", , "Item2"
     Set m_mnuTest.ShowEvent = BindEvent(Me, "MenuShow")
     Set m_mnuChild.Items(2).ChildMenu = m_mnuSubChild
 End Sub

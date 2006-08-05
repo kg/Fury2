@@ -125,6 +125,7 @@ Dim l_docDocument As iDocument
 Dim l_docSprites As frmSprites
     Load frmSpriteImporter
     m_objEditor.LoadSettings "SpriteImporter\Settings", frmSpriteImporter.Options
+    frmSpriteImporter.Options.SetEngine m_objEditor.Engine
     frmSpriteImporter.RefreshSettings
     frmSpriteImporter.Show vbModal
     If Not (frmSpriteImporter.Options Is Nothing) Then

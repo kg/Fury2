@@ -21,8 +21,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 typedef int procDllVoid();
 
-bool GetDLLRegistered(const wstring& Filename);
-void SetDLLRegistered(const wstring& Filename, bool state);
+bool GetDLLRegistered(const WString& Filename);
+void SetDLLRegistered(const WString& Filename, bool state);
 
 int DoDllInvoke(const wchar_t* Filename, const char* FunctionName) {
   HMODULE hLibrary = LoadLibraryW(Filename);
@@ -46,20 +46,40 @@ int DoDllInvoke(const wchar_t* Filename, const char* FunctionName) {
 }
 
 Export int Register(const wchar_t* Filename) {
-  wstring filename(Filename);
+  WString filename(Filename);
   if (GetDLLRegistered(filename))
     return 1;
-  VirtualizeWrites = true;
+  VirtualizedThread = GetCurrentThread();
   int result = DoDllInvoke(Filename, "DllRegisterServer");
   SetDLLRegistered(Filename, true);
-  VirtualizeWrites = false;
+  VirtualizedThread = 0;
+  if (result==0)
+    OutputDebugStringA("Register()=0\n");
+  else
+    OutputDebugStringA("Register()=1\n");
   return result;
 }
 
 Export int Unregister(const wchar_t* Filename) {
-  VirtualizeWrites = true;
+  VirtualizedThread = GetCurrentThread();
   int result = DoDllInvoke(Filename, "DllUnregisterServer");
   SetDLLRegistered(Filename, false);
-  VirtualizeWrites = false;
+  VirtualizedThread = 0;
+  if (result==0)
+    OutputDebugStringA("Unregister()=0\n");
+  else
+    OutputDebugStringA("Unregister()=1\n");
   return result;
+}
+
+Export void* MemAllocate(unsigned Count) {
+//return new unsigned char[Count];
+  return malloc(Count);
+}
+
+Export void MemDeallocate(void* Ptr) {
+  //if (Ptr)
+  //  delete[] ((unsigned char*)Ptr);
+  if (Ptr)
+    free(Ptr);
 }

@@ -21,107 +21,123 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 extern unsigned GetRegistryRootCount();
 extern const RegistryRoot& GetRegistryRoot(unsigned index);
+extern unsigned GetRegKeyHandle();
 
 extern LONG WINAPI Real_RegOpenKeyExW(HKEY a0, LPCWSTR a1,
   DWORD a2, REGSAM a3, PHKEY a4);
 
 unsigned RegKeyDefine(VirtualRegKey *Key) {
-  unsigned id = VirtualHandleOffset;
-  VirtualHandleOffset++;
-  RegKeyHandle handle(id, Key, Key->Name);
-  (*pRegistryHandles)[id] = handle;
+  unsigned id = GetRegKeyHandle();
+  (*pRegistryHandles)[id] = new RegKeyHandle(id, Key, WString(Key->Name));
   return id;
 }
 
 void RegKeyDefine(unsigned newID, unsigned oldID) {
+  if (newID == oldID)
+    return;
+  assert(!((newID >= 0x80000000) && (newID < 0x90000000)));
+  //RegKeyHandles::iterator iter = pRegistryHandles->find(newID);
+  //if (iter != pRegistryHandles->end())
+  //  assert(false);
   RegKeyHandles::iterator iter = pRegistryHandles->find(oldID);
-  if (iter != pRegistryHandles->end()) {
-    (*pRegistryHandles)[newID] = iter->second;
-    (*pRegistryHandles)[newID].ID = newID;
+  if (iter == pRegistryHandles->end()) {
+  } else {
+    (*pRegistryHandles)[newID] = new RegKeyHandle(*(iter->second));
+    (*pRegistryHandles)[newID]->ID = newID;
   }
 }
 
 void RegKeyDefine(unsigned ID, VirtualRegKey *Key) {
-  RegKeyHandle handle(ID, Key, Key->Name);
-  (*pRegistryHandles)[ID] = handle;
+  assert(!((ID >= 0x80000000) && (ID < 0x90000000)));
+  (*pRegistryHandles)[ID] = new RegKeyHandle(ID, Key, Key->Name);
 }
 
-void RegKeyNameDefine(unsigned ID, wstring Name) {
+void RegKeyNameDefine(unsigned ID, const WString& Name) {
+  assert(!((ID >= 0x80000000) && (ID < 0x90000000)));
   RegKeyHandles::iterator iter = pRegistryHandles->find(ID);
-  if (iter != pRegistryHandles->end()) {
-    // Already defined
+  if (iter == pRegistryHandles->end()) {
+    assert(Name.Length < 256);
+    (*pRegistryHandles)[ID] = new RegKeyHandle(ID, Name);
   } else {
-    RegKeyHandle handle(ID, Name);
-    (*pRegistryHandles)[ID] = handle;
+    // Already defined
+    (*pRegistryHandles)[ID]->Name = Name;
   }
   return;
 }
 
-const wstring& RegKeyNameResolve(unsigned ID) {
-  wstringstream *buffer;
-  wstring *str;
+void RegKeyNameResolve(unsigned ID, WString** Out) {
+  *Out = 0;
   RegKeyHandles::iterator iter = pRegistryHandles->find(ID);
-  if (iter != pRegistryHandles->end()) {
-    return iter->second.Name;
+  if (iter == pRegistryHandles->end()) {
+    return;
   } else {
-    // this leaks objects.
-    buffer = new wstringstream();
-    *buffer << "0x";
-    *buffer << (void*)ID;
-    str = new wstring(buffer->str());
-    delete buffer;
-    return *str;
+    *Out = &(iter->second->Name);
+    return;
   }
 }
 
 VirtualRegKey* RegKeyGetPtr(unsigned ID) {
   RegKeyHandles::iterator iter = pRegistryHandles->find(ID);
   VirtualRegKey* ptr = Null;
-  if (iter != pRegistryHandles->end()) {
-    ptr = iter->second.Key;
-    return ptr;
-  } else {
+  if (iter == pRegistryHandles->end()) {
     for (unsigned r = 0; r < GetRegistryRootCount(); r++) {
       if (ID == (unsigned)(GetRegistryRoot(r).ID)) {
         return VRegKeyResolve(GetRegistryRoot(r).Name);
       }
     }
     return Null;
+  } else {
+    ptr = iter->second->Key;
+    //if (ptr)
+    //  ptr->Name = iter->second->Name;
+    return ptr;
   }
 }
 
 bool RegKeyIsDeleted(unsigned ID) {
   RegKeyHandles::iterator iter = pRegistryHandles->find(ID);
   VirtualRegKey* ptr = Null;
-  if (iter != pRegistryHandles->end()) {
-    ptr = iter->second.Key;
-    if (ptr)
-      return ptr->Deleted;
+  if (iter == pRegistryHandles->end()) {
     return false;
   } else {
+    ptr = iter->second->Key;
+    if (ptr)
+      return ptr->Deleted;
     return false;
   }
 }
 
 void RegKeysInvalidate(VirtualRegKey *Key) {
+  assert(false);
   RegKeyHandles::iterator iter = pRegistryHandles->begin();
-  while (iter != pRegistryHandles->end()) {
-    if (iter->second.Key == Key) {
-      iter->second.Key = Null;
+  while (!(iter == pRegistryHandles->end())) {
+    if (iter->second->Key == Key) {
+      iter->second->Key = Null;
     }
     ++iter;
   }
 }
 
 int RegKeyUndefine(unsigned ID) {
+  if (ID >= 0x80000000 && ID < 0x90000000) 
+    return 0;
   RegKeyHandles::iterator iter = pRegistryHandles->find(ID);
-  if ((ID >= 0x80000000) && (ID < 0x90000000))
-    return 0;
-  if (iter != pRegistryHandles->end()) {
-    pRegistryHandles->erase(iter);
-    return 0;
-  } else {
+  if (iter == pRegistryHandles->end()) {
     return ERROR_INVALID_HANDLE;
+  } else {
+    if (iter->second->ID == ID) {
+      assert(!((iter->second->ID >= 0x80000000) && (iter->second->ID < 0x90000000)));
+      RegKeyHandle* handle = iter->second;
+      iter->second = 0;
+      pRegistryHandles->erase(iter);
+      handle->ID = 0;
+      handle->Key = 0;
+      handle->Name.Erase();
+      delete handle;
+      return 0;
+    } else {
+      return ERROR_INVALID_HANDLE;
+    }
   }
 }
 
@@ -130,10 +146,10 @@ bool RegKeyGetVirtual(unsigned ID) {
     return true;
   } else {
     RegKeyHandles::iterator iter = pRegistryHandles->find(ID);
-    if (iter != pRegistryHandles->end()) {
-      return (iter->second.Key != Null);
-    } else {
+    if (iter == pRegistryHandles->end()) {
       return false;
+    } else {
+      return (iter->second->Key != Null);
     }
   }
 }
@@ -142,73 +158,75 @@ bool RegKeyGetVirtual(HKEY Key) {
   return RegKeyGetVirtual(unsigned(Key));
 }
 
-//bool VRegGetVirtualized(HKEY Root) {
-//  std::vector<HKEY>::iterator iter = std::find(pRegistry->Roots.begin(), pRegistry->Roots.end(), Root);
-//  if (iter != pRegistry->Roots.end())
-//    return true;
-//  return false;
-//}
-//
-//void VRegSetVirtualized(HKEY Root, bool state) {
-//  if (state) {
-//    VRegSetVirtualized(Root, false);
-//    pRegistry->Roots.push_back(Root);
-//  } else {
-//    std::vector<HKEY>::iterator iter = std::find(pRegistry->Roots.begin(), pRegistry->Roots.end(), Root);
-//    if (iter != pRegistry->Roots.end())
-//      pRegistry->Roots.erase(iter);
-//  }
-//}
-
-VirtualRegKey* VRegKeyCreate(const wstring& Path) {
+VirtualRegKey* VRegKeyCreate(const WString& Path) {
   VirtualRegKey* key = Null;//VRegKeyResolve(Path);
   //if (key) {
   //  return key;
   //} else {
     wstringstream buffer;
-    vector<wstring> *parts = split<wstring>(Path, L"\\");
-    vector<wstring>::iterator iter;
+    vector<WString> *parts = Path.Split(L'\\');
+    vector<WString>::iterator iter;
     int i = 0;
     for (iter = parts->begin(); iter != parts->end(); ++iter) {
-      VirtualRegKey* ikey = Null;
-      if (i)
-        buffer << L"\\";
-      buffer << *iter;
-      wstring iterLow = toLower(*iter);
-      if (!key) {
-        ikey = get(pRegistry->Keys, iterLow);
-      } else {
-        ikey = get(key->Children, iterLow);
+      if (iter->Length) {
+        VirtualRegKey* ikey = Null;
+        if (i)
+          buffer << L"\\";
+        buffer << *iter;
+        WString newName(buffer.str().c_str());
+        WString iterLow(iter->ToLower());
+        ikey = Null;
+        if (!key) {
+          ikey = get(pRegistry->Keys, iterLow);
+          if (ikey)
+            assert(ikey->Name.EndsWithI(iterLow));
+        } else {
+          ikey = get(key->Children, iterLow);
+          if (ikey)
+            assert(ikey->Name.EndsWithI(iterLow));
+        }
+        if (!ikey) {
+          if (key == Null) {
+            DebugOut_("key==Null at " << *iter << " in " << Path << "\n");
+            assert(false);
+          }
+          key->Deleted = false;
+          VirtualRegKey newKey = VirtualRegKey(newName);
+          newKey.Default.Text = WString();
+          key->Children[iterLow] = newKey;
+          ikey = key = get(key->Children, iterLow);
+        } else {
+          if (ikey->Name.EqualsI(newName)) {
+            if (ikey && ikey->Deleted)
+              ikey->Deleted = false;
+            key = ikey;
+          } else {
+            VRegDump(*key);
+            assert(false);
+          }
+        }
+        i++;
       }
-      if (!ikey) {
-        assert(key);
-        key->Deleted = false;
-        key->Children[iterLow] = VirtualRegKey(buffer.str());
-        ikey = key = get(key->Children, iterLow);
-      } else {
-        if (ikey && ikey->Deleted)
-          ikey->Deleted = false;
-        key = ikey;
-      }
-      i++;
     }
     delete parts;
+    if (key == 0)
+      assert(false);
     return key;
   //}
 }
 
-bool VRegKeyIsDeleted(const wstring& Path) {
-  vector<wstring> *parts = split<wstring>(toLower(Path), L"\\");
-  vector<wstring>::iterator iter;
+bool VRegKeyIsDeleted(const WString& Path) {
+  vector<WString> *parts = Path.ToLower().Split(L'\\');
+  vector<WString>::iterator iter;
   VirtualRegKey* key = Null;
   VirtualRegKey* lastKey = Null;
-  wstring* part = Null;
+  WString* part = Null;
   for (iter = parts->begin(); iter != parts->end(); ++iter) {
     VirtualRegKey* ikey = Null;
     if (!key) {
-      ikey = get(pRegistry->Keys, toLower(*iter));
+      ikey = get(pRegistry->Keys, iter->ToLower());
     } else {
-      ikey = get(key->Children, toLower(*iter));
+      ikey = get(key->Children, iter->ToLower());
     }
     if (!ikey) {
       delete parts;
@@ -225,18 +243,18 @@ bool VRegKeyIsDeleted(const wstring& Path) {
   return false;
 }
 
-int VRegKeyDelete(const wstring& Path) {
-  vector<wstring> *parts = split<wstring>(toLower(Path), L"\\");
-  vector<wstring>::iterator iter;
+int VRegKeyDelete(const WString& Path) {
+  vector<WString> *parts = Path.ToLower().Split(L'\\');
+  vector<WString>::iterator iter;
   VirtualRegKey* key = Null;
   VirtualRegKey* lastKey = Null;
-  wstring* part = Null;
+  WString* part = Null;
   for (iter = parts->begin(); iter != parts->end(); ++iter) {
     VirtualRegKey* ikey = Null;
     if (!key) {
-      ikey = get(pRegistry->Keys, toLower(*iter));
+      ikey = get(pRegistry->Keys, iter->ToLower());
     } else {
-      ikey = get(key->Children, toLower(*iter));
+      ikey = get(key->Children, iter->ToLower());
     }
     if (!ikey) {
       delete parts;
@@ -255,12 +273,14 @@ int VRegKeyDelete(const wstring& Path) {
   return 0;
 }
 
-VirtualRegKey* VRegKeyResolve (const wstring& Path) {
-  if (Path.find_first_of(L"\\")) {
-    vector<wstring> *parts = split<wstring>(toLower(Path), L"\\");
-    vector<wstring>::iterator iter;
+VirtualRegKey* VRegKeyResolve (const WString& Path) {
+  if (Path.Find(L'\\') >= 0) {
+    vector<WString> *parts = Path.ToLower().Split(L'\\');
+    vector<WString>::iterator iter;
     VirtualRegKey* key = Null;
     VirtualRegKey* result = Null;
+    unsigned i = 0;
+    unsigned c = parts->size();
     for (iter = parts->begin(); iter != parts->end(); ++iter) {
       if (!key) {
         result = key = get(pRegistry->Keys, *iter);
@@ -271,8 +291,11 @@ VirtualRegKey* VRegKeyResolve (const wstring& Path) {
         if (!key)
           break;
       }
+      i++;
     }
     delete parts;
+    if (i < c)
+      return Null;
     return result;
   } else {
     // Root name
@@ -281,12 +304,14 @@ VirtualRegKey* VRegKeyResolve (const wstring& Path) {
   return Null;
 }
 
-VirtualRegKey* VRegKeyResolve (VirtualRegKey* Parent, const wstring& Path) {
+VirtualRegKey* VRegKeyResolve (VirtualRegKey* Parent, const WString& Path) {
   assert(Parent);
-  vector<wstring> *parts = split<wstring>(toLower(Path), L"\\");
-  vector<wstring>::iterator iter;
+  vector<WString> *parts = Path.ToLower().Split(L'\\');
+  vector<WString>::iterator iter;
   VirtualRegKey* key = Null;
   VirtualRegKey* result = Null;
+  unsigned i = 0;
+  unsigned c = parts->size();
   for (iter = parts->begin(); iter != parts->end(); ++iter) {
     if (!key) {
       result = key = get(Parent->Children, *iter);
@@ -297,23 +322,24 @@ VirtualRegKey* VRegKeyResolve (VirtualRegKey* Parent, const wstring& Path) {
       if (!key)
         break;
     }
+    i++;
   }
   delete parts;
+  if (i < c)
+    return Null;
   return result;
 }
 
-VirtualRegValue* VRegValueGet (VirtualRegKey* Key, const wstring& Name) {
+VirtualRegValue* VRegValueGet (VirtualRegKey* Key, const WString& Name) {
   assert(Key);
   if (Name.size() == 0) {
     VirtualRegValue* ptr = &(Key->Default);
     return ptr;
   } else {
-    VirtualRegValue* ptr = get(Key->Values, toLower(Name));
-    if (!ptr) {
-      VirtualRegKey* child = get(Key->Children, toLower(Name));
-      if (child)
+    VirtualRegKey* child = get(Key->Children, Name.ToLower());
+    VirtualRegValue* ptr = get(Key->Values, Name.ToLower());
+    if (child)
         ptr = &(child->Default);
-    }
     return ptr;
   }
 }
@@ -324,18 +350,19 @@ VirtualRegValue* VRegValueSet (VirtualRegKey* Key, const VirtualRegValue& Value)
     Key->Default = Value;
     return &(Key->Default);
   } else {
-    VirtualRegValue* ptr = get(Key->Values, toLower(Value.Name));
+    WString keyString = Value.Name.ToLower();
+    VirtualRegValue* ptr = get(Key->Values, keyString);
     if (ptr) {
       *ptr = Value;
     } else {
-      Key->Values[toLower(Value.Name)] = Value;
-      ptr = get(Key->Values, toLower(Value.Name));
+      Key->Values[keyString] = Value;
+      ptr = get(Key->Values, keyString);
     }
     return ptr;
   }
 }
 
-LONG Virtual_RegOpenKeyEx(HKEY a0, wstring a1, DWORD a2, REGSAM a3, PHKEY a4) {
+LONG Virtual_RegOpenKeyEx(HKEY a0, WString a1, DWORD a2, REGSAM a3, PHKEY a4) {
   unsigned hKey = unsigned(a0);
   VirtualRegKey* key = RegKeyGetPtr(hKey);
   if (key) {
@@ -362,14 +389,24 @@ LONG Virtual_RegOpenKeyEx(HKEY a0, wstring a1, DWORD a2, REGSAM a3, PHKEY a4) {
   }
 }
 
-LONG Virtual_RegCreateKeyEx(HKEY a0, wstring a1, DWORD a2, DWORD a3, DWORD a4, REGSAM a5, LPSECURITY_ATTRIBUTES a6, PHKEY a7, LPDWORD a8) {
+LONG Virtual_RegCreateKeyEx(HKEY a0, WString a1, DWORD a2, DWORD a3, DWORD a4, REGSAM a5, LPSECURITY_ATTRIBUTES a6, PHKEY a7, LPDWORD a8) {
   wstringstream buffer;
-  buffer << RegKeyNameResolve(unsigned(a0));
+  WString *keyname = 0;
+  RegKeyNameResolve(unsigned(a0), &keyname);
+  if (keyname)
+    assert(keyname->Length > 0);
+  else
+    return ERROR_INVALID_HANDLE;
+  buffer << keyname;
   buffer << L"\\";
   buffer << a1;
-  VirtualRegKey* ptr = VRegKeyCreate(buffer.str());
+  WString sKey = WString(buffer.str().c_str());
+  VirtualRegKey* ptr = VRegKeyCreate(sKey);
   if (ptr) {
-    *a7 = (HKEY)RegKeyDefine(ptr);
+    unsigned key = RegKeyDefine(ptr);
+    //RegKeyNameDefine(key, sKey);
+    *a7 = reinterpret_cast<HKEY>(key);
+    DebugOut_("Created " << sKey << "\n");
     return ERROR_SUCCESS;
   } else {
     *a7 = Null;
@@ -377,24 +414,25 @@ LONG Virtual_RegCreateKeyEx(HKEY a0, wstring a1, DWORD a2, DWORD a3, DWORD a4, R
   }
 }
 
-LONG Virtual_RegSetValueEx(HKEY a0, wstring a1, DWORD a2, DWORD a3, BYTE* a4, DWORD a5, bool wide) {
+LONG Virtual_RegSetValueEx(HKEY a0, WString a1, DWORD a2, DWORD a3, BYTE* a4, DWORD a5, bool wide) {
   unsigned hKey = unsigned(a0);
   VirtualRegKey* key = RegKeyGetPtr(hKey);
   if (!key) {
     wstringstream buffer;
-    buffer << RegKeyNameResolve(unsigned(a0));
-    key = VRegKeyCreate(buffer.str());
+    WString *keyname;
+    RegKeyNameResolve(unsigned(a0), &keyname);
+    buffer << keyname;
+    key = VRegKeyCreate(WString(buffer.str().c_str()));
   }
   if (key) {
-    VirtualRegValue value(a1, getRegValueType(a3), a4, a5, wide);
-    VRegValueSet(key, value);
+    VRegValueSet(key, VirtualRegValue(a1, getRegValueType(a3), a4, a5, wide));
     return ERROR_SUCCESS;
   } else {
     return ERROR_INVALID_HANDLE;
   }
 }
 
-LONG Virtual_RegQueryValueEx(HKEY a0, wstring a1, LPDWORD a2, LPDWORD a3, LPBYTE a4, LPDWORD a5, bool wide) {
+LONG Virtual_RegQueryValueEx(HKEY a0, WString a1, LPDWORD a2, LPDWORD a3, LPBYTE a4, LPDWORD a5, bool wide) {
   unsigned hKey = unsigned(a0);
   VirtualRegKey* key = RegKeyGetPtr(hKey);
   if (key) {
@@ -405,29 +443,33 @@ LONG Virtual_RegQueryValueEx(HKEY a0, wstring a1, LPDWORD a2, LPDWORD a3, LPBYTE
       switch (value->Type) {
         case RegString: {
           if (wide) {
-            const wchar_t* src = value->Text.c_str();
+            const wchar_t* src = value->Text.pointer();
             DWORD sz = 4096;
-            if (a5)
+            if (a5) {
               sz = *a5;
+              if (a4)
+                memset(a4, 0, sz);
+            }
             sz = min(sz, (value->Text.size()+1) * sizeof(wchar_t));
             if (a5)
               *a5 = sz;
             if (a4) {
               memcpy(a4, src, sz);
-              memset(a4 + (value->Text.size() * sizeof(wchar_t)), 0, sizeof(wchar_t));
             }
           } else {
-            string temp(value->Text.begin(), value->Text.end());
-            const char* src = temp.c_str();
+            AString temp(value->Text);
+            const char* src = temp.pointer();
             DWORD sz = 4096;
-            if (a5)
+            if (a5) {
               sz = *a5;
+              if (a4)
+                memset(a4, 0, sz);
+            }
             sz = min(sz, temp.size()+1);
             if (a5)
               *a5 = sz;
             if (a4) {
               memcpy(a4, src, sz);
-              memset(a4 + temp.size(), 0, 1);
             }
           }
           break;
@@ -444,9 +486,44 @@ LONG Virtual_RegQueryValueEx(HKEY a0, wstring a1, LPDWORD a2, LPDWORD a3, LPBYTE
       }
       return ERROR_SUCCESS;
     } else {
+      if (a4 && a5)
+        memset(a4, 0, *a5);
       return ERROR_FILE_NOT_FOUND;
     }
   } else {
+    if (a4 && a5)
+      memset(a4, 0, *a5);
     return ERROR_INVALID_HANDLE;
   }
+}
+
+void VRegDump(const VirtualRegKey& key) {
+  DebugOut_(key.Name << "\\\n");
+  {
+    DebugOut_("Default=" << key.Default.Text << "\n");
+    VirtualRegValues::const_iterator iter = key.Values.begin();
+    while (iter != key.Values.end()) {
+      DebugOut_(iter->second.Name << "=" << iter->second.Text << "\n");
+      ++iter;
+    }
+  }
+  {
+    VirtualRegKeys::const_iterator iter = key.Children.begin();
+    while (iter != key.Children.end()) {
+      VRegDump(iter->second);
+      ++iter;
+    }
+  }
+}
+
+void VRegDump() {
+  VirtualRegKeys::const_iterator iter = pRegistry->Keys.begin();
+  while (iter != pRegistry->Keys.end()) {
+    VRegDump(iter->second);
+    ++iter;
+  }
+}
+
+void VRegFree() {
+  pRegistry->Keys.clear();
 }

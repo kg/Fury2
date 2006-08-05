@@ -51,6 +51,7 @@ Export extern int FilterSimple_Line_Gradient_AA(Image *Image, float X1, float Y1
 Export extern int FilterSimple_RenderStroke(Image *Dest, Stroke *TheStroke, RenderFunction *Renderer, DoubleWord RenderArgument);
 #ifdef _POLYGON_HPP_
 Export extern int FilterSimple_ConvexPolygon(Image *Image, SimplePolygon *InPoly, Pixel Color, RenderFunction *Renderer, DoubleWord RenderArgument);
+Export extern int FilterSimple_ConvexPolygon_Outline(Image *Image, SimplePolygon *InPoly, Pixel Color);
 Export extern int FilterSimple_ConvexPolygon_Textured(Image *Dest, Image *Texture, TexturedPolygon *InPoly, ScalerFunction *Scaler, RenderFunction *Renderer, DoubleWord RenderArgument);
 Export extern int FilterSimple_ConvexPolygon_AntiAlias(Image *Image, SimplePolygon *InPoly, Pixel Color, RenderFunction *Renderer, DoubleWord RenderArgument);
 Export extern int FilterSimple_ConvexPolygon_Textured_AntiAlias(Image *Dest, Image *Texture, TexturedPolygon *InPoly, ScalerFunction *Scaler, RenderFunction *Renderer, DoubleWord RenderArgument);

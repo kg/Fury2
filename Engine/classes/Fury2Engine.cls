@@ -86,6 +86,7 @@ Private Type Fury2QueueEvent
     LParam2 As Long
     LParam3 As Long
     LParam4 As Long
+    TimeStamp As Double
 End Type
 
 Private Type Fury2m_thrSubthreadstate
@@ -117,6 +118,7 @@ Public SoundListener As Fury2Sprite
 Public IObjThis As Object
 Public MessageWindows As Fury2Collection
 Public MessageQueue As Fury2Collection
+Public ActionQueue As Fury2Collection
 Public BGMStack As Fury2Collection
 Public CurrentBGM As Sound
 Public CurrentBGMChannel As Channel
@@ -173,18 +175,13 @@ Public Strict As Boolean
 Public DisableUserInput As Boolean
 Public ScriptLanguage As String
 Public DisableCameraBuffers As Boolean
-Public MaxPathWait As Long
 Public DefaultMessageTop As Single
 Public SmartMessageBoxPositioning As Boolean
 Public EnableObjectEvents As Boolean
 Public DefaultFont As String
 Public DefaultWindowSkin As String
 Public DefaultCursor As String
-Public RangedProjectileChecks As Boolean
-Public TouchDelay As Long
-Public AutoThrottle As Boolean
 Public DisableMovement As Boolean
-Public AccurateRotation As Boolean
 Public EnableTimers As Boolean
 Public ClearMapBG As Boolean
 Public DisableMoveQueue As Boolean
@@ -206,7 +203,6 @@ Public HideConfiguration As Boolean
 Public ClearEveryFrame As Boolean
 Public ClearBackgroundColor As Long
 Public RepeatDelay As Single
-Public SpecialFX As Boolean
 Public GameName As String
 Public DesiredFramerate As Long
 Public WindowCaption As String
@@ -220,9 +216,12 @@ Public ScreenScaleRatio As Single
 Public ScreenScaleMode As Long
 Public MaxFrameskip As Long
 Public TrapKeys As Boolean
-Public DefaultTransition As Long
+Public DefaultTransition As Fury2Event
 Public DefaultTransitionLength As Single
+Public DefaultControllerAngles As Variant
+Public DefaultControllerStyle As Fury2ControllerStyles
 Public AutoOptimizeImages As Boolean
+Public ConsoleEnabled As Boolean
 
 ' Private state/configuration variables
 Private m_dblLastFlushTime As Double
@@ -236,6 +235,7 @@ Private m_lngConsoleCaretPosition As Long
 Private m_lngInterruptTimer As Long
 Private m_booErrorsOff As Boolean, m_booErrorOccurred As Boolean
 Private m_booBreak As Boolean, m_booResetClock As Boolean
+Private m_booSubthreadStarted As Boolean
 Private m_booHaltScripts As Boolean
 Private m_lngLastWindow As Long
 Private m_picSavedPictures() As Fury2Picture
@@ -576,10 +576,15 @@ End Function
 
 Function Evaluate(ByRef Expr)
 On Error Resume Next
+Dim l_varValue As Variant
+Dim l_objValue As Object
     Err.Clear
-    Evaluate = m_ScriptEngine.Eval(ToString(Expr))
-    If (Err.Number = 438) Then
-        Set Evaluate = m_ScriptEngine.Eval(ToString(Expr))
+    Set l_objValue = m_ScriptEngine.EvalObject(ToString(Expr))
+    If l_objValue Is Nothing Then
+        l_varValue = m_ScriptEngine.Eval(ToString(Expr))
+        Evaluate = l_varValue
+    Else
+        Set Evaluate = l_objValue
     End If
 End Function
 
@@ -648,6 +653,8 @@ Dim m_f2cController As Fury2Controller
     With m_f2cController
         Set .Obj = Obj
         Set .Camera = Camera
+        .Angles = DefaultControllerAngles
+        .Style = DefaultControllerStyle
         Err.Clear
     End With
     Set F2Controller = m_f2cController
@@ -852,10 +859,50 @@ Public Function GenerateScriptObject(ByRef Source As String) As Object
 On Error Resume Next
 Dim l_csScript As Fury2ScriptCache
 Dim l_strSource As String
-    l_strSource = LCase(Trim(Source))
+Dim l_colDataVars As Collection
+Dim l_strLines() As String, l_lngLine As Long
+Dim l_strLine As String, l_strToken As String, l_strArgs As String
+Dim l_strVars() As String, l_lngVars As Long
+Dim l_strData As String, l_strVar As String
+    l_strSource = Source
+    ' Parse data members
+    Set l_colDataVars = New Collection
+    l_strLines = ScriptEngine.Language.SplitLines(l_strSource)
+    For l_lngLine = LBound(l_strLines) To UBound(l_strLines)
+        l_strLine = Trim(l_strLines(l_lngLine))
+        If InStr(l_strLine, " ") Then
+            l_strToken = left(l_strLine, InStr(l_strLine, " ") - 1)
+            l_strArgs = Mid(l_strLine, InStr(l_strLine, " ") + 1)
+            Select Case LCase(l_strToken)
+            Case "publicdata", "privatedata"
+                l_strVars = Split(l_strArgs, ",")
+                For l_lngVars = LBound(l_strVars) To UBound(l_strVars)
+                    l_colDataVars.Add l_strVars(l_lngVars)
+                Next l_lngVars
+            End Select
+        End If
+    Next l_lngLine
+    If (l_colDataVars.Count > 0) Then
+        With ScriptEngine.Language
+            l_strData = ""
+            For l_lngVars = 1 To l_colDataVars.Count
+                l_strVar = l_colDataVars(l_lngVars)
+                l_strData = l_strData + .GenerateSubCall("File" + .MethodOperator + "SaveVariant", l_strVar)
+            Next l_lngVars
+            l_strSource = l_strSource + vbCrLf + .GenerateClassMethod("Object_Save", "File", l_strData)
+            l_strData = ""
+            For l_lngVars = 1 To l_colDataVars.Count
+                l_strVar = l_colDataVars(l_lngVars)
+                l_strData = l_strData + .GenerateAssignment(l_strVar, .GenerateFunctionCall("File" + .MethodOperator + "LoadVariant", ""), False)
+            Next l_lngVars
+            l_strSource = l_strSource + vbCrLf + .GenerateClassMethod("Object_Load", "File", l_strData)
+        End With
+    End If
+Dim l_strSourceL As String
+    l_strSourceL = LCase(Trim(l_strSource))
     For Each l_csScript In ScriptCache
-        If l_csScript.Source = l_strSource Then
-            Set GenerateScriptObject = ScriptEngine.Eval(ScriptEngine.Language.GenerateInstantiation(l_csScript.Name))
+        If l_csScript.Source = l_strSourceL Then
+            Set GenerateScriptObject = ScriptEngine.EvalObject(ScriptEngine.Language.GenerateInstantiation(l_csScript.Name))
             Exit Function
         End If
     Next l_csScript
@@ -865,9 +912,9 @@ Dim l_strSource As String
     l_csScript.Source = l_strSource
     ScriptCache.Add l_csScript
     With ScriptEngine.Language
-        ScriptEngine.AddCode .GenerateClass(l_csScript.Name, Source)
+        ScriptEngine.AddCode .GenerateClass(l_csScript.Name, l_strSource)
     End With
-    Set GenerateScriptObject = ScriptEngine.Eval(ScriptEngine.Language.GenerateInstantiation(l_csScript.Name))
+    Set GenerateScriptObject = ScriptEngine.EvalObject(ScriptEngine.Language.GenerateInstantiation(l_csScript.Name))
 End Function
 
 Public Function GetFile(ByRef Filename As String) As String
@@ -956,6 +1003,7 @@ Attribute HookEvents.VB_Description = "Hooks an object into the engine's event s
 On Error Resume Next
 Dim l_plgObj As Fury2Plugin
     If EditMode Then
+        If Obj Is Nothing Then Exit Function
         If TypeOf Obj Is Fury2Plugin Then
             Set l_plgObj = Obj
             Set l_plgObj.Engine = Me
@@ -973,7 +1021,10 @@ Dim l_plgObj As Fury2Plugin
             Set Obj.Engine = Me
         End If
         If Err.Number <> 0 Then
-            DebugOut "Warning: HookEvents called on " & ToString(Obj) & ", has no Engine property"
+            If LCase(Trim(TypeName(Obj))) = "vbscripttypeinfo" Then
+            Else
+                DebugOut "Warning: HookEvents called on " & ToString(Obj) & ", has no Engine property"
+            End If
         End If
         UnHookEvents Obj
         Obj.Startup
@@ -1173,7 +1224,7 @@ Dim l_strName As String, l_varValue As Variant, l_lngType As Long, l_strType As 
                     Case vbObject
                         .Load l_strType
                         l_varValue = Nothing
-                        Set l_varValue = ScriptEngine.Eval("New " & l_strType)
+                        Set l_varValue = ScriptEngine.EvalObject("New " & l_strType)
                     End Select
                     .Load l_varValue
                     m_FlagNames.Add LCase(l_strName)
@@ -1182,6 +1233,19 @@ Dim l_strName As String, l_varValue As Variant, l_lngType As Long, l_strType As 
             End If
         .ReadSegment_End
     End With
+End Function
+
+Public Function CreateDefaultCursor() As Fury2Graphic
+On Error Resume Next
+Dim l_imgArrow As Fury2Image
+Dim l_lngSize As Long
+    l_lngSize = 9 * 2
+    Set l_imgArrow = F2Image(l_lngSize, l_lngSize)
+    l_imgArrow.AlphaChannel = True
+    l_imgArrow.Clear 0
+    l_imgArrow.AntiAliasConvexPolygon Array(Array(0, 0), Array(l_lngSize - 1, l_lngSize / 2), Array(0, l_lngSize - 1)), F2Black, RenderMode_Merge
+    l_imgArrow.AntiAliasConvexPolygon Array(Array(2, 2), Array(l_lngSize - 3, l_lngSize / 2), Array(2, l_lngSize - 3)), F2White, RenderMode_Merge
+    Set CreateDefaultCursor = F2Graphic(l_imgArrow.Resample(l_lngSize \ 2, l_lngSize \ 2, ResampleMode_Bilinear_High_Quality), , , BlitMode_SourceAlpha)
 End Function
 
 Public Function LoadFont(ByVal Filename As String) As Fury2Font
@@ -1203,6 +1267,7 @@ On Error Resume Next
 Dim l_varScripts As Variant, l_lngScripts As Long
 Dim l_varPackages As Variant, l_lngPackages As Long
 Dim l_objObject As Object, l_varTest As Variant
+Dim l_strError As String
     ContextLevelAdd "LoadGame"
     DebugOut "Loading game """ & Game & """"
     Set ConsoleItems = F2Collection()
@@ -1241,15 +1306,9 @@ Dim l_objObject As Object, l_varTest As Variant
     Configuration.Load "global.f2config"
     ParseConfiguration
     DebugOut "Initializing script engine"
-    InitScriptEngine
-    l_varTest = Evaluate("5 + 5")
-    If (CLng(l_varTest) <> 10) Then
-        MsgBox "Unable to initialize script engine!", vbCritical, "Error"
-        Exit Function
-    End If
-    l_varTest = Evaluate("Engine.Version")
-    If (CStr(l_varTest) <> Version) Then
-        MsgBox "Unable to initialize script engine!", vbCritical, "Error"
+    l_strError = InitScriptEngine
+    If Len(l_strError) > 0 Then
+        MsgBox "Unable to initialize script engine!" & vbCrLf & l_strError, vbCritical, "Error"
         Exit Function
     End If
     DebugOut "Initializing network library"
@@ -1427,6 +1486,7 @@ Dim l_objObject As Object, l_varTest As Variant
     ElseIf DefaultCursor <> "" Then
         Set MenuCursor = F2Graphic(LoadImage(Trim(Split(DefaultCursor, "@")(0))), Split(Split(DefaultCursor, "@")(1), ",")(0), Split(Split(DefaultCursor, "@")(1), ",")(1))
     Else
+        Set MenuCursor = CreateDefaultCursor()
         DebugOut "No default cursor specified"
     End If
     LoadProgress "Game", 20
@@ -1540,8 +1600,14 @@ Dim l_objTemp As Object
     If Not (Debugger Is Nothing) Then Set l_objTemp = Debugger.DebugCreateOutputPlugin()
     If l_objTemp Is Nothing Then
         Err.Clear
-        If (InIDE() = False) And (Compromise.IsSupported() = 1) Then Compromise.Register RootPath + "video_" + NewPlugin + ".dll"
-        Set l_objTemp = CreateObject("video_" + CStr(Trim(NewPlugin)) + "." + CStr(Trim(NewPlugin)) + "Engine")
+        If (InIDE() = False) And (Compromise.IsSupported() = 1) Then
+            If Compromise.Register(App.Path + "\video_" + NewPlugin + ".dll") = 0 Then
+                If Compromise.Register(RootPath + "\video_" + NewPlugin + ".dll") = 0 Then
+                End If
+            End If
+        Else
+        End If
+        Set l_objTemp = CreateObject("Video_" + CStr(Trim(NewPlugin)) + "." + CStr(Trim(NewPlugin)) + "Engine")
         If Err.Number <> 0 Then
             If Err.Number <> 0 Then CriticalError "LoadOutputPlugin """ + CStr(NewPlugin) + """", "CreateObject()", Err.Description + "(Error #" + CStr(Err.Number) + ")"
         End If
@@ -1592,10 +1658,18 @@ End Function
 Function LoadSprite(ByVal Filename As String, Optional ByVal Index = 1) As Fury2Sprite
 On Error Resume Next
 Dim m_sprSprites As Fury2Sprites
+Dim l_sprSprite As Fury2Sprite
     Err.Clear
     Set m_sprSprites = LoadSprites(Filename)
     If m_sprSprites Is Nothing Then Exit Function
     Set LoadSprite = m_sprSprites(Index)
+    For Each l_sprSprite In m_sprSprites
+        If l_sprSprite Is LoadSprite Then
+        Else
+            l_sprSprite.Free
+        End If
+    Next l_sprSprite
+    m_sprSprites.Clear
     Set m_sprSprites = Nothing
     If Err <> 0 Then
         Set LoadSprite = Nothing
@@ -1903,7 +1977,7 @@ Dim m_lngPoses As Long
         .AnimateWhileMoving = True
         With .Poses
             For m_lngPoses = 1 To 4
-                .AddPose 0, 0, 1, "Pose"
+                .AddPose 1, "Pose"
                 With .Item(m_lngPoses)
                     .Blocking.Width = 16
                     .Blocking.Height = 12
@@ -1917,23 +1991,15 @@ Dim m_lngPoses As Long
             Next m_lngPoses
             With .Item(1)
                 .Name = "Up"
-                .XVelocity = 0
-                .YVelocity = -1
             End With
             With .Item(2)
                 .Name = "Right"
-                .XVelocity = 1
-                .YVelocity = 0
             End With
             With .Item(3)
                 .Name = "Down"
-                .XVelocity = 0
-                .YVelocity = 1
             End With
             With .Item(4)
                 .Name = "Left"
-                .XVelocity = -1
-                .YVelocity = 0
             End With
         End With
     End With
@@ -2010,6 +2076,11 @@ On Error Resume Next
 Dim l_glbGlobals As New Fury2Globals
     SaveToFile = l_glbGlobals.SaveToFile(Obj, File)
 End Function
+
+Public Sub SaveImage(ByVal Image As Fury2Image, ByVal Filename As String)
+On Error Resume Next
+    Image.SavePNG Filesystem.CreateFile(Filename).GetRealFilename
+End Sub
 
 Function ToBoolean(Value) As Boolean
 On Error Resume Next
@@ -2466,7 +2537,7 @@ Private Sub Class_Initialize()
 On Error Resume Next
     InitVariables
     InitLog
-    
+
     If EditMode Then
         InitScriptEngine
     End If
@@ -2585,7 +2656,7 @@ End Sub
 Public Sub ControlActivate(Control As Fury2InputControl)
 On Error Resume Next
 Dim Obj As Object
-Dim PObj As Fury2Plugin
+Dim pObj As Fury2Plugin
     If (Not Control.State) Then ContextLevelRemove: Exit Sub
     If Control.Handled Then
         Debug.Print "Recieved already handled input event: " & Control.Name & " Activated"
@@ -2596,13 +2667,13 @@ Dim PObj As Fury2Plugin
     Control.Consumed = False
     Err.Clear
     For Each Obj In m_colPluginStack
-        Set PObj = Nothing
-        Set PObj = Obj
+        Set pObj = Nothing
+        Set pObj = Obj
         Err.Clear
-        If PObj Is Nothing Then
+        If pObj Is Nothing Then
             Obj.ControlActivate Control
         Else
-            PObj.ControlActivate Control
+            pObj.ControlActivate Control
         End If
         If Control.Consumed Then
             Control.Consumed = False
@@ -2620,7 +2691,7 @@ End Sub
 Public Sub ControlDeactivate(Control As Fury2InputControl)
 On Error Resume Next
 Dim Obj As Object
-Dim PObj As Fury2Plugin
+Dim pObj As Fury2Plugin
     If Control.State Then ContextLevelRemove: Exit Sub
     If Control.Handled Then
         Debug.Print "Recieved already handled input event: " & Control.Name & " Deactivated"
@@ -2630,12 +2701,12 @@ Dim PObj As Fury2Plugin
     ContextLevelAdd "ControlDeactivate"
     Control.Consumed = False
     For Each Obj In m_colPluginStack
-        Set PObj = Nothing
-        Set PObj = Obj
-        If PObj Is Nothing Then
+        Set pObj = Nothing
+        Set pObj = Obj
+        If pObj Is Nothing Then
             Obj.ControlDeactivate Control
         Else
-            PObj.ControlDeactivate Control
+            pObj.ControlDeactivate Control
         End If
         If Control.Consumed Then Control.Consumed = False: ContextLevelRemove: Exit Sub
     Next Obj
@@ -2942,18 +3013,18 @@ End Sub
 Private Sub Event_KeyDown(Evt As Fury2QueueEvent)
 On Error Resume Next
 Dim Obj As Object, m_lngKeyCode As Long
-Dim PObj As Fury2Plugin
+Dim pObj As Fury2Plugin
     If ConsoleVisible Then Exit Sub
     If Not Keyboard.Enabled Then Exit Sub
     ContextLevelAdd "KeyDown"
     m_lngKeyCode = CLng(Evt.LParam1)
     For Each Obj In m_colPluginStack
-        Set PObj = Nothing
-        Set PObj = Obj
-        If PObj Is Nothing Then
+        Set pObj = Nothing
+        Set pObj = Obj
+        If pObj Is Nothing Then
             Obj.KeyDown m_lngKeyCode, CLng(Evt.LParam2)
         Else
-            PObj.KeyDown m_lngKeyCode, CLng(Evt.LParam2)
+            pObj.KeyDown m_lngKeyCode, CLng(Evt.LParam2)
         End If
         If m_lngKeyCode = 0 Then ContextLevelRemove: Exit Sub
     Next Obj
@@ -2997,14 +3068,14 @@ Dim Obj As Object, m_lngKeyCode As Long
     ContextLevelAdd "KeyUp"
     m_lngKeyCode = CLng(Evt.LParam1)
     Keyboard.KeyUp m_lngKeyCode
-    Dim PObj As Fury2Plugin
+    Dim pObj As Fury2Plugin
     For Each Obj In m_colPluginStack
-        Set PObj = Nothing
-        Set PObj = Obj
-        If PObj Is Nothing Then
+        Set pObj = Nothing
+        Set pObj = Obj
+        If pObj Is Nothing Then
             Obj.KeyUp m_lngKeyCode, CLng(Evt.LParam2)
         Else
-            PObj.KeyUp m_lngKeyCode, CLng(Evt.LParam2)
+            pObj.KeyUp m_lngKeyCode, CLng(Evt.LParam2)
         End If
         If m_lngKeyCode = 0 Then ContextLevelRemove: Exit Sub
     Next Obj
@@ -3026,15 +3097,15 @@ Dim l_lngHotspots As Long, l_booInside As Boolean
     m_lngY = Evt.LParam4
     m_varX = Evt.LParam3
     m_varY = Evt.LParam4
-    Dim PObj As Fury2Plugin
+    Dim pObj As Fury2Plugin
     For Each Obj In m_colPluginStack
-        Set PObj = Nothing
-        Set PObj = Obj
-        If PObj Is Nothing Then
+        Set pObj = Nothing
+        Set pObj = Obj
+        If pObj Is Nothing Then
             Obj.MouseDown Evt.LParam1, Evt.LParam2, m_varX, m_varY
             If m_varX = -32767 Or m_varY = -32767 Then ContextLevelRemove: Exit Sub
         Else
-            PObj.MouseDown Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
+            pObj.MouseDown Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
             If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
         End If
     Next Obj
@@ -3077,15 +3148,15 @@ Dim l_lngHotspots As Long, l_booInside As Boolean
     m_lngY = Evt.LParam4
     m_varX = Evt.LParam3
     m_varY = Evt.LParam4
-    Dim PObj As Fury2Plugin
+    Dim pObj As Fury2Plugin
     For Each Obj In m_colPluginStack
-        Set PObj = Nothing
-        Set PObj = Obj
-        If PObj Is Nothing Then
+        Set pObj = Nothing
+        Set pObj = Obj
+        If pObj Is Nothing Then
             Obj.MouseMove Evt.LParam1, Evt.LParam2, m_varX, m_varY
             If m_varX = -32767 Or m_varY = -32767 Then ContextLevelRemove: Exit Sub
         Else
-            PObj.MouseMove Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
+            pObj.MouseMove Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
         End If
         If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
     Next Obj
@@ -3128,15 +3199,15 @@ Dim m_lngHotspots As Long
     m_lngY = Evt.LParam4
     m_varX = Evt.LParam3
     m_varY = Evt.LParam4
-    Dim PObj As Fury2Plugin
+    Dim pObj As Fury2Plugin
     For Each Obj In m_colPluginStack
-        Set PObj = Nothing
-        Set PObj = Obj
-        If PObj Is Nothing Then
+        Set pObj = Nothing
+        Set pObj = Obj
+        If pObj Is Nothing Then
             Obj.MouseUp Evt.LParam1, Evt.LParam2, m_varX, m_varY
             If m_varX = -32767 Or m_varY = -32767 Then ContextLevelRemove: Exit Sub
         Else
-            PObj.MouseUp Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
+            pObj.MouseUp Evt.LParam1, Evt.LParam2, m_lngX, m_lngY
         End If
         If m_lngX = -32767 Or m_lngY = -32767 Then ContextLevelRemove: Exit Sub
     Next Obj
@@ -3213,6 +3284,7 @@ Dim l_lngImagesFlushed As Long, l_lngTilesetsFlushed As Long
                 Set m_objObj = Nothing
                 If m_lngCount <= 2 Then
                     Set m_imgObj = m_Images(m_lngObj)
+                    m_imgObj.Deallocate
                     Set m_imgObj = Nothing
                     m_Images.Remove m_lngObj
                     l_lngImagesFlushed = l_lngImagesFlushed + 1
@@ -3236,6 +3308,7 @@ Dim l_lngImagesFlushed As Long, l_lngTilesetsFlushed As Long
                 Set m_objObj = Nothing
                 If m_lngCount <= 2 Then
                     Set m_tsObj = m_Tilesets(m_lngObj)
+                    m_tsObj.Free
                     Set m_tsObj = Nothing
                     m_Tilesets.Remove m_lngObj
                     l_lngTilesetsFlushed = l_lngTilesetsFlushed + 1
@@ -3337,10 +3410,12 @@ Dim l_evtBinding As Fury2Event, l_booActive As Boolean
                 TraceOpen
             End If
         Else
-            If ConsoleVisible Then
-                HideConsole
-            Else
-                ShowConsole
+            If ConsoleEnabled Then
+                If ConsoleVisible Then
+                    HideConsole
+                Else
+                    ShowConsole
+                End If
             End If
         End If
     Case 67 ' C
@@ -3399,6 +3474,9 @@ Dim l_evtBinding As Fury2Event, l_booActive As Boolean
     Case vbKeyLeft
         If ConsoleVisible Then
             m_lngConsoleCaretPosition = m_lngConsoleCaretPosition - 1
+            If m_lngConsoleCaretPosition < 0 Then
+                m_lngConsoleCaretPosition = 0
+            End If
         End If
     Case vbKeyRight
         If ConsoleVisible Then
@@ -3479,16 +3557,16 @@ Dim l_strTemp As String
     ElseIf KeyAscii = 96 Or KeyAscii = 127 Then
     Else
         Dim Obj As Object, m_lngKeyAscii As Long
-        Dim PObj As Fury2Plugin
+        Dim pObj As Fury2Plugin
         m_lngKeyAscii = KeyAscii
         For Each Obj In m_colReversePluginStack
             If Not (Obj Is Nothing) Then
-                Set PObj = Nothing
-                Set PObj = Obj
-                If PObj Is Nothing Then
+                Set pObj = Nothing
+                Set pObj = Obj
+                If pObj Is Nothing Then
                     Obj.KeyPress m_lngKeyAscii
                 Else
-                    PObj.KeyPress m_lngKeyAscii
+                    pObj.KeyPress m_lngKeyAscii
                 End If
                 If m_lngKeyAscii = 0 Then: Exit Sub
             End If
@@ -3573,8 +3651,6 @@ End Sub
 Public Sub Fury2VideoEventSink_Paint()
 Attribute Fury2VideoEventSink_Paint.VB_MemberFlags = "40"
 On Error Resume Next
-'    m_imgBackbuffer.Dirty = True
-'    m_objOutputPlugin.Flip
 End Sub
 
 Private Sub Fury2VideoEventSink_Resize()
@@ -3633,6 +3709,9 @@ Dim l_lngThreadID As Long
         If Elapsed < 0 Then Elapsed = 0
         If BalanceFramerate Then
             FramesElapsed = FramesElapsed + Floor((Elapsed) / m_sngFrameLength)
+            If m_booSubthreadStarted Then
+                FramesElapsed = 1
+            End If
             If FramesElapsed > MaxFrameskip Then FramesElapsed = MaxFrameskip
             Elapsed = Elapsed - ((Floor((Elapsed) / m_sngFrameLength)) * m_sngFrameLength)
             If Elapsed < 0 Then Elapsed = 0
@@ -3642,12 +3721,15 @@ Dim l_lngThreadID As Long
         End If
         If m_booResetClock Then
             m_booResetClock = False
+            m_sngLastSecond = HiTimer
+            m_lngFPSAccumulator = 0
             FramesElapsed = 1
             Elapsed = 0
         End If
-        
+
         If FramesElapsed >= 1 Then
-            
+
+            m_booSubthreadStarted = False
             Do While FramesElapsed > 0
                 If Not (Debugger Is Nothing) Then Debugger.DebugFrameStart
                 If Halted Then
@@ -3671,33 +3753,39 @@ Dim l_lngThreadID As Long
                 UpdatePictures
                 If Terminating Then Exit Do
                 If Not (Debugger Is Nothing) Then Debugger.DebugFrameEnd
+                If m_booSubthreadStarted Then Exit Do
             Loop
-            
+
             If Terminating Then Exit Do
             UpdateTimers
             If Terminating Then Exit Do
+            Mouse.Update
             UpdateEvents
+            UpdateKeyboard
             If Terminating Then Exit Do
             UpdateWindow
             If Terminating Then Exit Do
-            
+
             Redraw
             If Terminating Then Exit Do
-        
+
             FlipScreen
             If Terminating Then Exit Do
-        
+
+            UpdateActionQueue
+            If Terminating Then Exit Do
+
             m_lngFPSAccumulator = m_lngFPSAccumulator + 1
-            
+
         End If
-        
+
         FrameEnd = HiTimer
-        
-        If BalanceFramerate And (UpdateOverflowCount > (DesiredFramerate / 4)) Then
+
+        If BalanceFramerate And (UpdateOverflowCount > DesiredFramerate) Then
             BalanceFramerate = False
-            DebugOut "Framerate balancing auto-disabled (game too slow)"
+            TextOut "Framerate balancing auto-disabled (game too slow)"
         End If
-        
+
         If (FrameEnd - m_sngLastSecond) >= 1# Then
             UpdateOverflowCount = 0
             frmProfile.ProfileTextHeight = ProfileTextCurrentHeight
@@ -3713,10 +3801,10 @@ Dim l_lngThreadID As Long
                 End If
             End If
         End If
-        
+
         DoEvents
         If Me.HarassCPU Then Else SleepEx 1, True
-        
+
         m_sngLastFrameEnd = FrameEnd
     Loop
     SubthreadCount = SubthreadCount - 1
@@ -3822,7 +3910,7 @@ On Error Resume Next
     End Select
 End Sub
 
-Public Sub IncludeModule(ByVal Filename As String, Optional ByVal ModuleName As String = "", Optional ByVal Require As Boolean = True)
+Public Sub Include(ByVal Filename As String, Optional ByVal Require As Boolean = True)
 On Error Resume Next
 Dim l_strText As String
 Dim l_strModule As String
@@ -3844,7 +3932,7 @@ Dim l_strModule As String
         If Not Filesystem.FileExists(Filename) Then
             If m_booErrorsOff Then
             Else
-                CriticalError "IncludeModule", "IncludeModule", "Script not found: " + ToString(Filename)
+                CriticalError "Include", "Include", "Script not found: " + ToString(Filename)
             End If
             Exit Sub
         End If
@@ -3855,18 +3943,7 @@ Dim l_strModule As String
     End If
     ContextLevelAdd Filename
     l_strModule = VariableName(Filesystem.GetTitle(Filename))
-    If Len(ModuleName) > 0 Then
-        If Not m_ScriptEngine.ModuleExists(ModuleName) Then
-            m_ScriptEngine.CreateModule ModuleName, Filesystem.File(Filename).Text
-            If Err <> 0 Then
-                Err.Clear
-        '        m_ScriptEngine.Error.Clear
-            End If
-            ContextLevelRemove
-            Exit Sub
-        End If
-    End If
-    m_ScriptEngine.AddCode Filesystem.File(Filename).Text, ModuleName
+    m_ScriptEngine.AddCode Filesystem.File(Filename).Text
     If Err <> 0 Then
         Err.Clear
 '        m_ScriptEngine.Error.Clear
@@ -3874,17 +3951,11 @@ Dim l_strModule As String
     ContextLevelRemove
 End Sub
 
-Public Sub Include(ByVal Filename As String, Optional ByVal Require As Boolean = True)
-Attribute Include.VB_Description = "Loads a script file."
-On Error Resume Next
-    IncludeModule Filename, , Require
-End Sub
-
 Friend Sub Init(Parameters As String)
 On Error Resume Next
     Randomize Timer
     m_booMouseVisible = True
-    
+
     If LoadGame(Parameters) Then
         EngineLoop
     Else
@@ -4027,9 +4098,14 @@ Dim l_lngHandle As Long
     End If
 End Sub
 
-Friend Sub InitScriptEngine()
+Friend Function InitScriptEngine() As String
 On Error Resume Next
+Dim l_varTest As Variant
     Set m_ScriptEngine = New ScriptEngine
+    If m_ScriptEngine Is Nothing Then
+        InitScriptEngine = "Unable to create object. " & Err.Description
+        Exit Function
+    End If
     Set m_ScriptEngine.Language = m_ScriptEngine.LoadLanguage(ScriptLanguage)
     Load frmScriptSink
     frmScriptSink.Visible = False
@@ -4047,7 +4123,17 @@ On Error Resume Next
         Using Strings, "Strings"
     End If
     If EditMode Then m_ScriptEngine.AddObject "Editor", m_objNotify, False, False, True
-End Sub
+    l_varTest = Evaluate("5 + 5")
+    If CLng(l_varTest) <> 10& Then
+        InitScriptEngine = "Sanity test failed. Arithmetic error."
+        Exit Function
+    End If
+    l_varTest = Evaluate("Engine.Version")
+    If (CStr(l_varTest) <> Version) Then
+        InitScriptEngine = "Sanity test failed. Interop error."
+        Exit Function
+    End If
+End Function
 
 Friend Sub InitSoundEngine()
 On Error Resume Next
@@ -4072,7 +4158,7 @@ On Error Resume Next
     ReDim m_hsSavedHotspots(0 To c_lngMaxHotspot)
     ReDim m_strScriptContext(0 To 0)
     ReDim m_evtEventQueue(0 To c_lngMaxEventQueue)
-    
+
     Set Mouse = New Fury2Mouse
     Mouse.SetEngine Me
     Set Keyboard = New Fury2Keyboard
@@ -4083,6 +4169,7 @@ On Error Resume Next
     Set Timers = F2Collection()
     Set MessageQueue = F2Collection()
     Set MessageWindows = F2Collection()
+    Set ActionQueue = F2Collection()
     Set Graphics = F2Collection()
     Set Hosts = F2Collection()
     Set Videos = F2Collection()
@@ -4098,6 +4185,12 @@ On Error Resume Next
     Set m_objConstants = New Fury2ScriptConstants
     Set m_objTransitions = New Fury2Transitions
     m_objTransitions.SetEngine Me
+    If Not (DefaultTransition Is Nothing) Then
+        If TypeOf DefaultTransition.Object Is Fury2Transitions Then
+            Set DefaultTransition.Object = m_objTransitions
+            DefaultTransition.ResolveMethod
+        End If
+    End If
     Set m_colTimerEvents = New Fury2TimerEvents
     m_colTimerEvents.SetEngine Me
     Set Filesystem = New Fury2Filesystem
@@ -4113,9 +4206,9 @@ On Error Resume Next
     Set Party = New Fury2Party
     Party.SetEngine Me
     Set SavedMaps = F2Collection()
-    
+
     InitNamespaces
-    
+
     Call QueryPerformanceFrequency(m_curCPUFrequency)
     m_dblTimeOffset = 0
     m_booRanStartEvent = False
@@ -4128,7 +4221,6 @@ On Error Resume Next
     DefaultBGMVolume = 0.65
     DefaultSampleVolume = 1
     ActivationDistance = c_lngDefaultActivationDistance
-    MaxPathWait = c_lngDefaultMaxPathWait
     ScriptLanguage = "VBScript"
     MaxFrameskip = c_lngMaxFrameskip
     OutputPlugin = "GDI"
@@ -4141,22 +4233,23 @@ On Error Resume Next
     EnableTimers = True
     ClearMapBG = True
     StartLayer = 1
-    TouchDelay = 20
     DisableCameraBuffers = True
     DisableSound = False
-    SpecialFX = True
     ScreenWidth = 320
     ScreenHeight = 240
     ScreenScaleRatio = 1
     ShowTitlebar = True
     ShowFPS = True
+    ConsoleEnabled = True
     HarassCPU = True
     Paused = False
     Running = Not EditMode
     LogToFile = True
     LogToClipboard = False
     AutoOptimizeImages = True
-    
+    DefaultControllerAngles = Array(0, 45, 90, 135, 180, 225, 270, 315)
+    DefaultControllerStyle = F2CS_Direct
+
     PushPictures
     PushHotspots
 
@@ -4389,7 +4482,6 @@ On Error Resume Next
         Else
             Debugger.InterruptPoll Interrupt
         End If
-        DoEvents
     End If
 End Sub
 
@@ -4439,11 +4531,19 @@ Attribute Panic.VB_MemberFlags = "40"
     TerminateProcess GetCurrentProcess, 1
 End Sub
 
+Public Sub Transition(Optional ByVal Length As Double = -1, Optional ByVal Param = Nothing)
+On Error Resume Next
+    If Length = -1 Then
+        Length = DefaultTransitionLength
+    End If
+    DefaultTransition.Invoke Length, Param
+End Sub
+
 Friend Sub ParseConfiguration()
 On Error Resume Next
 Dim l_varValues, l_strSetting As String
     With Configuration
-    
+
         l_varValues = Split(.Settings("Screen Mode"), "@")
         l_varValues = Split(l_varValues(0), "x")
         ScreenWidth = CLng(l_varValues(0))
@@ -4457,14 +4557,14 @@ Dim l_varValues, l_strSetting As String
         Case Else
             ScreenScaleMode = 0
         End Select
-        
+
         Fullscreen = .ToBoolean("Fullscreen")
         VSync = .ToBoolean("Vertical Sync")
-        
+
         Icon = .Settings("Icon")
         GameName = .Settings("Title")
         WindowCaption = .Settings("Title")
-        
+
         If Trim(.Settings("Framerate") = "~") Then
             DesiredFramerate = 60
             BalanceFramerate = False
@@ -4472,38 +4572,37 @@ Dim l_varValues, l_strSetting As String
             DesiredFramerate = CLng(Split(.Settings("Framerate"), "fps")(0))
             BalanceFramerate = True
         End If
-        
-        SpecialFX = .ToBoolean("Special FX")
+
         OutputPlugin = .Settings("Output Plugin")
         VSync = .ToBoolean("Vertical Sync")
-        
+
         ShowTitlebar = .ToBoolean("Show Titlebar")
         ShowFPS = .ToBoolean("Show Framerate")
-        
+
         StartMap = .Settings("Default Map")
         l_varValues = Split(.Settings("Default Start Position"), "@")
         StartLayer = CLng(l_varValues(0))
         l_varValues = Split(l_varValues(1), ",")
         StartX = CSng(l_varValues(0))
         StartY = CSng(l_varValues(1))
-        
+
         DefaultWindowSkin = .Settings("Default Window Skin")
         DefaultCursor = .Settings("Default Cursor")
         DefaultFont = .Settings("Default Font")
-        DefaultTransition = Which(LCase(Trim(.Settings("Default Transition"))), "fade", "crossfade", "smooth fade left", "smooth fade right", "smooth fade up", "smooth fade down", "slide left", "slide right", "slide up", "slide down", "circle in")
+        SetDefaultTransition Trim(.Settings("Default Transition"))
         DefaultTransitionLength = CSng(.Settings("Default Transition Length"))
-        
+
         DisableSound = Not .ToBoolean("Enable Sound")
-        
+
         ScriptLanguage = .Settings("Language")
-        
+
         DefaultBGMVolume = CSng(.Settings("Music Volume"))
         DefaultSampleVolume = CSng(.Settings("Sound Volume"))
-                
+
         HideConfiguration = Not .ToBoolean("Show Configuration Dialog")
-        
+
         Strict = .ToBoolean("Strict")
-    
+
     End With
 End Sub
 
@@ -4636,6 +4735,7 @@ Dim Evt As Fury2QueueEvent
         .LParam2 = LParam2
         .LParam3 = LParam3
         .LParam4 = LParam4
+        .TimeStamp = HiTimer
     End With
     m_evtEventQueue(m_lngEventQueueLength - 1) = Evt
 End Sub
@@ -4653,7 +4753,7 @@ Attribute Redraw.VB_Description = "Forces the engine to redraw."
 On Error Resume Next
 Dim l_lngObjects As Long, l_booBehind As Boolean
 Dim l_lngCount As Long
-Dim PObj As Fury2Plugin, Obj As Object
+Dim pObj As Fury2Plugin, Obj As Object
     If Running Then Else Exit Sub
     If Halted Then Exit Sub
     ContextLevelAdd "Redraw"
@@ -4662,13 +4762,13 @@ Dim PObj As Fury2Plugin, Obj As Object
     RedrawCameras
     If m_colReversePluginStack.Count > 0 Then
         For Each Obj In m_colReversePluginStack
-            Set PObj = Nothing
-            Set PObj = Obj
+            Set pObj = Nothing
+            Set pObj = Obj
             Err.Clear
-            If Not (PObj Is Nothing) Then
+            If Not (pObj Is Nothing) Then
                 l_booBehind = False
-                l_booBehind = PObj.DrawBehind
-                If l_booBehind Then PObj.Redraw
+                l_booBehind = pObj.DrawBehind
+                If l_booBehind Then pObj.Redraw
             End If
         Next Obj
     End If
@@ -4676,15 +4776,15 @@ Dim PObj As Fury2Plugin, Obj As Object
     If m_colReversePluginStack.Count > 0 Then
         For Each Obj In m_colReversePluginStack
             If Not (Obj Is Nothing) Then
-                Set PObj = Nothing
-                Set PObj = Obj
+                Set pObj = Nothing
+                Set pObj = Obj
                 Err.Clear
-                If PObj Is Nothing Then
+                If pObj Is Nothing Then
                     Obj.Redraw
                 Else
                     l_booBehind = False
-                    l_booBehind = PObj.DrawBehind
-                    If Not l_booBehind Then PObj.Redraw
+                    l_booBehind = pObj.DrawBehind
+                    If Not l_booBehind Then pObj.Redraw
                 End If
             End If
         Next Obj
@@ -4894,26 +4994,16 @@ Dim m_lngWidth As Long, m_lngHeight As Long
     End With
 End Sub
 
-Public Sub RunCode(ByRef Code, Optional ByRef Module As String = "")
+Public Sub RunCode(ByRef Code)
 On Error Resume Next
     ContextLevelAdd "RunCode"
-    If (Len(Module) < 1) Or (m_ScriptEngine.ModuleExists(Module)) Then
-        m_ScriptEngine.AddCode ToString(Code), Module
-    Else
-        m_ScriptEngine.CreateModule Module, ToString(Code)
-    End If
+    m_ScriptEngine.AddCode ToString(Code)
     If Err <> 0 Then
         Err.Clear
 '        m_ScriptEngine.Error.Clear
     End If
     ContextLevelRemove
 End Sub
-
-Public Property Get Module(ByRef ModuleName As String) As Object
-On Error Resume Next
-    Set Module = m_ScriptEngine.Namespace(ModuleName)
-    Err.Clear
-End Property
 
 Public Sub SaveMapState(ByVal Index As Long, ByRef Name As String)
 Attribute SaveMapState.VB_Description = "Saves the current state of a map."
@@ -5023,12 +5113,14 @@ End Sub
 
 Sub ShowConsole()
     #If DebugFeatures = 1 Then
-        ConsoleVisible = True
-        m_sngConsoleStartOffset = m_sngConsoleOffset
-        m_sngConsoleEndOffset = 0
-        m_sngConsoleStartTime = HiTimer
-        m_sngConsoleEndTime = HiTimer + 0.33
-        m_booConsoleSliding = True
+        If ConsoleEnabled Then
+            ConsoleVisible = True
+            m_sngConsoleStartOffset = m_sngConsoleOffset
+            m_sngConsoleEndOffset = 0
+            m_sngConsoleStartTime = HiTimer
+            m_sngConsoleEndTime = HiTimer + 0.33
+            m_booConsoleSliding = True
+        End If
     #End If
 End Sub
 
@@ -5131,6 +5223,7 @@ End Sub
 Public Sub Subthread(Optional ByVal Name As String = "")
 On Error Resume Next
     DebugOut "Starting subthread"
+    m_booSubthreadStarted = True
     Game Name
 End Sub
 
@@ -5187,18 +5280,28 @@ Dim l_sndBGM As Sound
     Err.Clear
 End Sub
 
+Public Sub SetDefaultTransition(ByVal NewTransition As String)
+On Error Resume Next
+Dim l_strParts As Variant
+    l_strParts = Split(NewTransition, " ")
+    If UBound(l_strParts) > 0 Then
+        Set DefaultTransition = BindEvent("Do" & l_strParts(0), Transitions, Arrays.Slice(l_strParts, UBound(l_strParts) - LBound(l_strParts), 1))
+    Else
+        Set DefaultTransition = BindEvent("Do" & l_strParts(0), Transitions)
+    End If
+End Sub
+
 Public Sub SwitchMap(ByVal FilenameOrMap, Optional ByVal LoadX As Single = vbNull, Optional ByVal LoadY As Single = vbNull, Optional ByVal Layer As Long = -1, Optional ByVal Index As Long = 1)
 Attribute SwitchMap.VB_Description = "Switches from the current map to a new one."
 On Error Resume Next
 Dim m_imgOld As Fury2Image
     ContextLevelAdd "SwitchMap(""" + ToString(FilenameOrMap) + """, " + CStr(Index) + ")"
     If DefaultTransition <> TR_None Then Set m_imgOld = m_imgBackbuffer.Duplicate
-    Transition DefaultTransition, , 0
+    Transition -1, 0
     LoadMap FilenameOrMap, LoadX, LoadY, Layer, Index
     Sync
     Redraw
-    Transition DefaultTransition, , 1
-    Transition DefaultTransition, , m_imgOld
+    Transition -1, 1
     Set m_imgOld = Nothing
     ContextLevelRemove
     Err.Clear
@@ -5330,88 +5433,6 @@ On Error Resume Next
     frmTrace.Show
 End Sub
 
-Sub Transition(ByVal TransitionIndex As Fury2TransitionTypes, Optional ByVal Speed As Double = -1, Optional Param)
-On Error Resume Next
-    Select Case TransitionIndex
-    Case Fury2TransitionTypes.TR_None
-    Case Fury2TransitionTypes.TR_Fade
-        If IsMissing(Param) Then
-            Transitions.FadeOut Speed
-            Transitions.FadeIn Speed
-        ElseIf VarType(Param) = vbObject Then
-        Else
-            If CLng(Param) = 0 Then
-                Transitions.FadeOut Speed
-            ElseIf CLng(Param) = 1 Then
-                Transitions.FadeIn Speed
-            End If
-        End If
-    #If EnableAllTransitions Then
-    Case Fury2TransitionTypes.TR_SlideLeft
-        If IsMissing(Param) Then
-            Transitions.SlideLeft Speed
-        ElseIf VarType(Param) = vbObject Then
-            Transitions.SlideLeft Speed, Param
-        End If
-    Case Fury2TransitionTypes.TR_SlideRight
-        If IsMissing(Param) Then
-            Transitions.SlideRight Speed
-        ElseIf VarType(Param) = vbObject Then
-            Transitions.SlideRight Speed, Param
-        End If
-    Case Fury2TransitionTypes.TR_SlideUp
-        If IsMissing(Param) Then
-            Transitions.SlideUp Speed
-        ElseIf VarType(Param) = vbObject Then
-            Transitions.SlideUp Speed, Param
-        End If
-    Case Fury2TransitionTypes.TR_SlideDown
-        If IsMissing(Param) Then
-            Transitions.SlideDown Speed
-        ElseIf VarType(Param) = vbObject Then
-            Transitions.SlideDown Speed, Param
-        End If
-    Case Fury2TransitionTypes.TR_SmoothFadeLeft
-        If IsMissing(Param) Then
-            Transitions.SmoothFadeLeft Speed
-        ElseIf VarType(Param) = vbObject Then
-            Transitions.SmoothFadeLeft Speed, Param
-        End If
-    Case Fury2TransitionTypes.TR_SmoothFadeRight
-        If IsMissing(Param) Then
-            Transitions.SmoothFadeRight Speed
-        ElseIf VarType(Param) = vbObject Then
-            Transitions.SmoothFadeRight Speed, Param
-        End If
-    Case Fury2TransitionTypes.TR_SmoothFadeUp
-        If IsMissing(Param) Then
-            Transitions.SmoothFadeUp Speed
-        ElseIf VarType(Param) = vbObject Then
-            Transitions.SmoothFadeUp Speed, Param
-        End If
-    Case Fury2TransitionTypes.TR_SmoothFadeDown
-        If IsMissing(Param) Then
-            Transitions.SmoothFadeDown Speed
-        ElseIf VarType(Param) = vbObject Then
-            Transitions.SmoothFadeDown Speed, Param
-        End If
-    Case Fury2TransitionTypes.TR_CircleIn
-        If IsMissing(Param) Then
-            Transitions.CircleIn Speed
-        ElseIf VarType(Param) = vbObject Then
-            Transitions.CircleIn Speed, Param
-        End If
-    #End If
-'    Case Fury2TransitionTypes.TR_Crossfade
-    Case Else
-        If IsMissing(Param) Then
-            Transitions.Crossfade Speed
-        ElseIf VarType(Param) = vbObject Then
-            Transitions.Crossfade Speed, Param
-        End If
-    End Select
-End Sub
-
 Public Sub TriggerInputEvent(EventName As String, ParamArray Args() As Variant)
 On Error Resume Next
 Dim l_booOldState As Boolean
@@ -5520,7 +5541,7 @@ Dim m_sngTimer As Single
 Dim m_lngTimers As Long
 Dim m_lngHooks As Long
 Dim l_camCamera As Fury2Camera
-Dim PObj As Fury2Plugin, Obj As Object
+Dim pObj As Fury2Plugin, Obj As Object
 Dim m_lngMaps As Long, l_mapMap As Fury2Map
 Static m_sngLastTimer As Single
     If Running Then Else Exit Sub
@@ -5528,8 +5549,6 @@ Static m_sngLastTimer As Single
     If m_objOutputPlugin.Closed Then Fury2VideoEventSink_Closed
     ContextLevelAdd "Update"
     FrameCount = FrameCount + 1
-    UpdateKeyboard
-    Mouse.Update
     If Not Paused Then
         m_sngTimer = HiTimer
         If Int(m_sngTimer) <> Int(m_sngLastTimer) Then
@@ -5571,12 +5590,12 @@ Static m_sngLastTimer As Single
             m_lngHooks = 1
             For Each Obj In m_colPluginStack
                 If Not (Obj Is Nothing) Then
-                    Set PObj = Nothing
-                    Set PObj = Obj
-                    If PObj Is Nothing Then
+                    Set pObj = Nothing
+                    Set pObj = Obj
+                    If pObj Is Nothing Then
                         Obj.Update
                     Else
-                        PObj.Update
+                        pObj.Update
                     End If
                     Err.Clear
                     m_lngHooks = m_lngHooks + 1
@@ -5656,26 +5675,23 @@ Dim l_evtEvent As Fury2QueueEvent
         m_evtEventQueue(m_lngQueue).LParam2 = 0
         m_evtEventQueue(m_lngQueue).LParam3 = 0
         m_evtEventQueue(m_lngQueue).LParam4 = 0
+        If (l_evtEvent.Type <> -1) Then
+            l_lngProcessedCount = l_lngProcessedCount + 1
+        End If
         With l_evtEvent
             l_lngType = .Type
             Select Case l_lngType
             Case 0 ' KeyDown
                 Event_KeyDown l_evtEvent
-                l_lngProcessedCount = l_lngProcessedCount + 1
             Case 1 ' KeyUp
                 Event_KeyUp l_evtEvent
-                l_lngProcessedCount = l_lngProcessedCount + 1
             Case 2 ' MouseDown
                 Event_MouseDown l_evtEvent
-                l_lngProcessedCount = l_lngProcessedCount + 1
             Case 3 ' MouseMove
                 Event_MouseMove l_evtEvent
-                l_lngProcessedCount = l_lngProcessedCount + 1
             Case 4 ' MouseUp
                 Event_MouseUp l_evtEvent
-                l_lngProcessedCount = l_lngProcessedCount + 1
             Case -1 ' None
-            Case Else ' ?
             End Select
         End With
         m_lngQueue = m_lngQueue + 1
@@ -5769,13 +5785,27 @@ Dim m_lngPictures As Long, l_objGraph As Fury2Graphic
     Next m_lngPictures
 End Sub
 
+Public Sub UpdateActionQueue()
+On Error Resume Next
+Dim l_lngCount As Long
+Dim l_evtAction As Fury2Event
+    l_lngCount = ActionQueue.Count
+    Do While l_lngCount > 0
+        Set l_evtAction = Nothing
+        Set l_evtAction = ActionQueue(1)
+        ActionQueue.Remove 1
+        l_evtAction.Invoke
+        l_lngCount = l_lngCount - 1
+    Loop
+End Sub
+
 Public Sub UpdateTimers()
 Attribute UpdateTimers.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_tmrTimer As Fury2Timer
 Dim m_lngTimers As Long
 Dim m_lngHooks As Long
-Dim Obj As Object, PObj As Fury2Plugin
+Dim Obj As Object, pObj As Fury2Plugin
 Dim l_gphGraphic As Fury2Graphic
 Dim l_vidVideo As Fury2Video
     If EnableTimers Then
@@ -5806,12 +5836,12 @@ Dim l_vidVideo As Fury2Video
         ContextLevelAdd "SyncUpdate"
         For Each Obj In m_colPluginStack
             Err.Clear
-            Set PObj = Nothing
-            Set PObj = Obj
-            If PObj Is Nothing Then
+            Set pObj = Nothing
+            Set pObj = Obj
+            If pObj Is Nothing Then
                 Obj.SyncUpdate
             Else
-                PObj.SyncUpdate
+                pObj.SyncUpdate
             End If
         Next Obj
         ContextLevelRemove
@@ -5877,7 +5907,7 @@ Dim l_objObject As Object
         If Len(Alias) < 1 Then
             Alias = VariableName(Namespace)
         End If
-        Set l_objObject = m_ScriptEngine.Eval(CStr(Namespace))
+        Set l_objObject = m_ScriptEngine.EvalObject(CStr(Namespace))
     Else
         Set l_objObject = Namespace
     End If

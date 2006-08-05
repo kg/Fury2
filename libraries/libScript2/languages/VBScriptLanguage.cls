@@ -31,9 +31,9 @@ End Function
 Private Function IScriptLanguage_GenerateClassMethod(Name As String, Args As Variant, Code As String) As String
 On Error Resume Next
     If (VarType(Args) And vbArray) = vbArray Then
-        IScriptLanguage_GenerateClassMethod = "Function " & Name & "(" & Join(Args, ",") & ")" & vbCrLf & Code & vbCrLf & "End Function" & vbCrLf
+        IScriptLanguage_GenerateClassMethod = "Public Sub " & Name & "(" & Join(Args, ",") & ")" & vbCrLf & Code & vbCrLf & "End Sub" & vbCrLf
     Else
-        IScriptLanguage_GenerateClassMethod = "Function " & Name & "(" & Args & ")" & vbCrLf & Code & vbCrLf & "End Function" & vbCrLf
+        IScriptLanguage_GenerateClassMethod = "Public Sub " & Name & "(" & Args & ")" & vbCrLf & Code & vbCrLf & "End Sub" & vbCrLf
     End If
 End Function
 
@@ -69,7 +69,11 @@ On Error Resume Next
     If (VarType(Args) And vbArray) = vbArray Then
         IScriptLanguage_GenerateFunctionCall = Name & "(" & Join(Args, ", ") & ")"
     Else
-        IScriptLanguage_GenerateFunctionCall = Name & "(" & Args & ")"
+        If Len(Trim(Args)) = 0 Then
+            IScriptLanguage_GenerateFunctionCall = Name
+        Else
+            IScriptLanguage_GenerateFunctionCall = Name & "(" & Args & ")"
+        End If
     End If
 End Function
 
@@ -118,8 +122,9 @@ Dim l_varLines As Variant, l_lngLines As Long, l_varTokens As Variant
 Dim l_strToken As String, l_strToken2 As String, l_varVariables As Variant
 Dim l_clsClass As ScriptClass, l_fnFunction As ScriptFunction, l_varVariable As ScriptVariable, l_argArgument As ScriptArgument
 Dim l_lngVariable As Long
-    '   Strip smart quotes and other idiocies
+Dim l_booData As Boolean
     If Len(Code) < 2 Then IScriptLanguage_ParseCode = Code: Exit Function
+    '   Strip smart quotes and other idiocies
     m_strText = Replace(Replace(Replace(Replace(Replace(Code, "”", """"), "“", """"), "…", "..."), "’", "'"), "‘", "'")
     m_lngPos = 1
     '   Multi-Line String
@@ -144,10 +149,10 @@ Dim l_lngVariable As Long
             Set l_clsClass = New ScriptClass
             l_clsClass.Name = Trim(l_varTokens(1))
             State.Classes.Add l_clsClass
-        Case "sub", "function", "dim", "public", "private"
+        Case "sub", "function", "dim", "public", "private", "publicdata", "privatedata"
             l_strToken = LCase(Trim(l_varTokens(0)))
             l_strToken2 = l_varTokens(1)
-            If l_strToken = "public" Or l_strToken = "private" Or l_strToken = "dim" Then
+            If InStr(l_strToken, "public") Or InStr(l_strToken, "private") Or l_strToken = "dim" Then
                 l_strToken = l_varTokens(1)
                 l_strToken2 = l_varTokens(2)
             End If
@@ -170,6 +175,11 @@ Dim l_lngVariable As Long
                 End If
             Case Else
                 ' Variable
+                If InStr(l_strToken, "data") Then
+                    l_booData = True
+                Else
+                    l_booData = False
+                End If
                 l_varTokens = Split(l_varLines(l_lngLines), ",")
                 l_varTokens(0) = Mid(Trim(l_varTokens(0)), InStr(Trim(l_varTokens(0)), " ") + 1)
                 For l_lngVariable = LBound(l_varTokens) To UBound(l_varTokens)
@@ -196,6 +206,8 @@ Dim l_lngVariable As Long
         End Select
     Next l_lngLines
     State.LinesOfCode = State.LinesOfCode + UBound(l_varLines) + 1
+    m_strText = Replace(m_strText, "PublicData ", "Public ", , , vbTextCompare)
+    m_strText = Replace(m_strText, "PrivateData ", "Private ", , , vbTextCompare)
     IScriptLanguage_ParseCode = m_strText
 End Function
 
@@ -230,50 +242,55 @@ Dim l_lngLineChar As Long
 Dim l_lngLength As Long
 Dim l_booLineBreak As Boolean
 Dim l_booContinueLine As Boolean
-    ReDim l_varLines(0 To 31)
-    l_lngLength = Len(Text)
-    l_lngChar = 1
-    l_lngLineChar = 1
-    l_strLine = String(256, " ")
-    Do
-        l_strChar = Mid(Text, l_lngChar, 1)
-        If l_strChar = "_" Then
-            l_booContinueLine = True
-        ElseIf l_strChar = vbCr Then
-            If l_booContinueLine Then
-                l_booContinueLine = False
-                l_booLineBreak = False
-            Else
-                l_booLineBreak = True
-            End If
-        ElseIf l_strChar = vbLf Then
-            If l_booLineBreak Then
-                l_varLines(l_lngLineCount) = Left(l_strLine, l_lngLineChar - 1)
-                l_lngLineChar = 1
-                l_lngLineCount = l_lngLineCount + 1
-                If l_lngLineCount > UBound(l_varLines) Then
-                    ReDim Preserve l_varLines(0 To UBound(l_varLines) + 32)
-                End If
-            Else
-                l_booContinueLine = False
-            End If
-        Else
-            If l_lngLineChar > Len(l_strLine) Then
-                l_strLine = l_strLine & String(256, " ")
-            End If
-            Mid(l_strLine, l_lngLineChar, 1) = l_strChar
-            l_lngLineChar = l_lngLineChar + 1
-            l_booContinueLine = False
-            l_booLineBreak = False
-        End If
-        l_lngChar = l_lngChar + 1
-    Loop Until l_lngChar > l_lngLength
-    If (l_lngLineChar > 1) Then
-        l_varLines(l_lngLineCount) = Left(l_strLine, l_lngLineChar - 1)
-        l_lngLineCount = l_lngLineCount + 1
-    End If
-    ReDim Preserve l_varLines(0 To l_lngLineCount - 1)
-    IScriptLanguage_SplitLines = l_varLines
+'    If Not InStr(Text, vbCrLf) Then
+'        ReDim l_varLines(0 To 0)
+'        l_varLines(0) = Text
+'        IScriptLanguage_SplitLines = l_varLines
+'    End If
+'    ReDim l_varLines(0 To 31)
+'    l_lngLength = Len(Text)
+'    l_lngChar = 1
+'    l_lngLineChar = 1
+'    l_strLine = String(256, " ")
+'    Do
+'        l_strChar = Mid(Text, l_lngChar, 1)
+'        If l_strChar = "_" Then
+'            l_booContinueLine = True
+'        ElseIf l_strChar = vbCr Then
+'            If l_booContinueLine Then
+'                l_booContinueLine = False
+'                l_booLineBreak = False
+'            Else
+'                l_booLineBreak = True
+'            End If
+'        ElseIf l_strChar = vbLf Then
+'            If l_booLineBreak Then
+'                l_varLines(l_lngLineCount) = Left(l_strLine, l_lngLineChar - 1)
+'                l_lngLineChar = 1
+'                l_lngLineCount = l_lngLineCount + 1
+'                If l_lngLineCount > UBound(l_varLines) Then
+'                    ReDim Preserve l_varLines(0 To UBound(l_varLines) + 32)
+'                End If
+'            Else
+'                l_booContinueLine = False
+'            End If
+'        Else
+'            If l_lngLineChar > Len(l_strLine) Then
+'                l_strLine = l_strLine & String(256, " ")
+'            End If
+'            Mid(l_strLine, l_lngLineChar, 1) = l_strChar
+'            l_lngLineChar = l_lngLineChar + 1
+'            l_booContinueLine = False
+'            l_booLineBreak = False
+'        End If
+'        l_lngChar = l_lngChar + 1
+'    Loop Until l_lngChar > l_lngLength
+'    If (l_lngLineChar > 1) Then
+'        l_varLines(l_lngLineCount) = Left(l_strLine, l_lngLineChar - 1)
+'        l_lngLineCount = l_lngLineCount + 1
+'    End If
+'    ReDim Preserve l_varLines(0 To l_lngLineCount - 1)
+    IScriptLanguage_SplitLines = Split(Text, vbCrLf)
 End Function
 
 Private Property Get IScriptLanguage_ThisKeyword() As String

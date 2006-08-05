@@ -415,6 +415,29 @@ On Error Resume Next
     ArraySlice = Slice(Source, Length, Start)
 End Function
 
+Function ArrayRotate(Source As Variant, ByVal Shift As Long)
+On Error Resume Next
+    ArrayRotate = Rotate(Source, Shift)
+End Function
+
+Function Rotate(Source As Variant, ByVal Shift As Long)
+On Error Resume Next
+Dim l_varNew As Variant
+Dim m_lngSourceLB As Long, m_lngSourceUB As Long
+Dim m_lngCopy As Long
+    If (VarType(Source) And vbArray) <> vbArray Then Exit Function
+    Err.Clear
+    m_lngSourceLB = LBound(Source)
+    m_lngSourceUB = UBound(Source)
+    ReDim l_varNew(m_lngSourceLB To m_lngSourceUB)
+    For m_lngCopy = m_lngSourceLB To m_lngSourceUB
+        Assign l_varNew(m_lngCopy), Source(WrapValue(m_lngCopy + Shift, m_lngSourceLB, m_lngSourceUB))
+    Next m_lngCopy
+    Err.Clear
+    Rotate = l_varNew
+    Err.Clear
+End Function
+
 Function Slice(Source As Variant, ByVal Length As Long, Optional ByVal Start As Long = 0)
 On Error Resume Next
 Dim l_varNew As Variant

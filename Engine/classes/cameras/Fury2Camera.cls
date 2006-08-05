@@ -38,17 +38,45 @@ Implements Fury2Object
 Implements IVirtualFileSaveable
 
 Public EnableHardwareSurfaces As Boolean
+Attribute EnableHardwareSurfaces.VB_VarDescription = "If True, the Camera will attempt to use hardware acceleration when available."
 Public OutputSurface As Fury2Image
 Public AntiAliasLighting As Boolean
+Attribute AntiAliasLighting.VB_VarDescription = "If True, shadows will be rendered antialiased."
 Public LightingScaleRatio As Single
 Public EnableParallax As Boolean
+Attribute EnableParallax.VB_VarDescription = "If True, parallax scrolling will be enabled."
 Public EnableWrapping As Boolean
+Attribute EnableWrapping.VB_VarDescription = "If True, layer wrapping will be enabled."
 Public EnableLighting As Boolean
+Attribute EnableLighting.VB_VarDescription = "If True, the lighting engine will be enabled on this Camera."
 Public AutoTintLayers As Boolean
+Attribute AutoTintLayers.VB_VarDescription = "If True, individual layers will be automatically hued based on their index."
+Public BlockingColor As Long
+Attribute BlockingColor.VB_VarDescription = "Specifies the color used to draw blocking lines."
+Public FrameRectangleColor As Long
+Attribute FrameRectangleColor.VB_VarDescription = "The color used when drawing sprite frame rectangles."
+Public OrientationLineColor As Long
+Public VelocityLineColor As Long
+Public SortingLineColor As Long
+Public ShowSingleLayerBlocking As Long
+Public ShowSingleLayerSpriteBlocking As Long
+Public ShowSingleLayerSpriteFrameRectangles As Long
+Public ShowSingleLayerSpriteOrientationLines As Long
+Public ShowSingleLayerSpriteVelocityLines As Long
+Public ShowSingleLayerSpriteSortingLines As Long
+Public ShowSingleLayerSprites As Long
+Public ShowLayerBlocking As Boolean
+Public ShowSpriteBlocking As Boolean
+Public ShowSpriteFrameRectangles As Boolean
+Public ShowSpriteOrientationLines As Boolean
+Public ShowSpriteVelocityLines As Boolean
+Public ShowSpriteSortingLines As Boolean
 Public ShowSprites As Boolean
 Public ShowTiles As Boolean
 Public DisableBuffer As Boolean
+Attribute DisableBuffer.VB_VarMemberFlags = "40"
 Public LightmapBlitMode As SFXBlitModes
+Attribute LightmapBlitMode.VB_VarDescription = "The render effect used to display the lightmap."
 
 Private mvarRenderTargets As Fury2Collection
 Private mvarLightingSoftness As Single
@@ -76,6 +104,8 @@ Private mvarConstrainToMap As Boolean
 Private mvarUnGhostLayer As Long
 Private m_engEngine As Fury2Engine
 Private m_filBlur As Fury2ConvolutionFilter
+Public RenderComplexity As Long
+Attribute RenderComplexity.VB_VarDescription = "Contains the number of sprites and lighting objects rendered in the last frame."
 
 Public Function AddRenderTarget(Optional ByVal AutoSize As Boolean = False, Optional ByVal Index As Long = -1) As Fury2Image
 On Error Resume Next
@@ -89,6 +119,7 @@ On Error Resume Next
 End Function
 
 Public Property Get Alpha() As Single
+Attribute Alpha.VB_Description = "The opacity of the camera."
     Alpha = mvarAlpha
 End Property
 
@@ -99,11 +130,13 @@ On Error Resume Next
 End Property
 
 Public Property Get Buffer() As Fury2Image
+Attribute Buffer.VB_Description = "The surface the camera renders to."
 On Error Resume Next
     Set Buffer = GetRenderTarget(1)
 End Property
 
 Public Sub CenterOn(ByVal X As Single, ByVal Y As Single)
+Attribute CenterOn.VB_Description = "Centers the camera on a location."
 On Error Resume Next
 Dim m_sngNewX As Single, m_sngNewY As Single
     m_sngNewX = Ceil(X - (mvarWidth / 2))
@@ -122,6 +155,11 @@ On Error Resume Next
     EnableWrapping = True
     LightingScaleRatio = 1
     LightmapBlitMode = BlitMode_Lightmap_RGB
+    BlockingColor = F2RGB(255, 0, 0, 255)
+    VelocityLineColor = F2RGB(0, 220, 0, 255)
+    OrientationLineColor = F2RGB(220, 220, 220, 255)
+    FrameRectangleColor = F2RGB(255, 255, 255, 255)
+    SortingLineColor = F2RGB(255, 0, 0, 255)
     Gamma = 1#
 End Sub
 
@@ -140,6 +178,7 @@ Dim l_imgTarget As Fury2Image
 End Sub
 
 Public Property Get ConstrainToMap() As Boolean
+Attribute ConstrainToMap.VB_Description = "If True, the camera will not scroll beyond the borders of the map it is viewing."
     ConstrainToMap = mvarConstrainToMap
 End Property
 
@@ -148,11 +187,13 @@ Public Property Let ConstrainToMap(ByVal NewValue As Boolean)
 End Property
 
 Public Sub CopyToDC(ByVal hdc As Long)
+Attribute CopyToDC.VB_MemberFlags = "40"
 On Error Resume Next
     CopyImageToDC hdc, F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer
 End Sub
 
 Public Property Get Dirty() As Boolean
+Attribute Dirty.VB_MemberFlags = "40"
     Dirty = mvarDirty
 End Property
 
@@ -165,6 +206,7 @@ Public Property Get Engine() As Fury2Engine
 End Property
 
 Sub FlushBuffer()
+Attribute FlushBuffer.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_sngNewX As Single, m_sngNewY As Single, m_booAnimated As Boolean
 Dim m_lngLayers As Long
@@ -198,6 +240,7 @@ Dim l_imgTarget As Fury2Image
 End Sub
 
 Public Property Get Gamma() As Single
+Attribute Gamma.VB_Description = "The brightness level of the camera."
     Gamma = mvarGamma
 End Property
 
@@ -207,6 +250,7 @@ On Error Resume Next
 End Property
 
 Public Property Let Height(ByVal vData As Long)
+Attribute Height.VB_Description = "The height of the camera in pixels."
 On Error Resume Next
     mvarHeight = vData
     mvarDirty = True
@@ -217,6 +261,7 @@ Public Property Get Height() As Long
 End Property
 
 Sub Init()
+Attribute Init.VB_MemberFlags = "40"
 On Error Resume Next
     Err.Clear
     If mvarMap <> 0 Then Set mvarViewingMap = Engine.Maps(mvarMap)
@@ -256,6 +301,7 @@ Public Property Let LightingSoftness(ByVal NewValue As Single)
 End Property
 
 Public Property Get Lightmap() As Fury2Image
+Attribute Lightmap.VB_Description = "The lighting surface used by the camera."
 On Error Resume Next
     Set Lightmap = GetRenderTarget(2)
 End Property
@@ -275,6 +321,7 @@ Public Property Get Map() As Long
 End Property
 
 Public Sub Move(ByVal XDistance As Single, ByVal YDistance As Single)
+Attribute Move.VB_Description = "Scrolls the camera by a certain amount."
 On Error Resume Next
 Dim m_sngOldX As Single, m_sngOldY As Single
     If mvarViewingMap Is Nothing Then Exit Sub
@@ -334,13 +381,8 @@ Dim m_lngEffects As Long
     Engine.Backbuffer.ResetClipRectangle
     If mvarAlpha = 0 Then
     ElseIf mvarAlpha = 1 Then
-        'If (mvarGamma = 0) Or (Engine.SpecialFX = False) Then
-            Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer.Rectangle, Buffer, 1, BlitMode_Normal
-            If Err.Number <> 0 Then Engine.Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2Black
-        'Else
-        '    Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer.Rectangle, Buffer, ((mvarGamma) / 255), BlitMode_Matte_Tint, F2White
-        '    If Err.Number <> 0 Then Engine.Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2Black
-        'End If
+        Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer.Rectangle, Buffer, 1, BlitMode_Normal
+        If Err.Number <> 0 Then Engine.Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2Black
     Else
         Engine.Backbuffer.Blit F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), Buffer.Rectangle, Buffer, mvarAlpha, BlitMode_Normal
         If Err.Number <> 0 Then Engine.Backbuffer.Fill F2Rect(mvarX, mvarY, mvarWidth, mvarHeight, False), F2RGB(0, 0, 0, mvarAlpha * 255)
@@ -349,6 +391,7 @@ Dim m_lngEffects As Long
 End Sub
 
 Public Sub Render(Optional ByVal Area As Fury2Rect = Nothing, Optional ByVal Output As Fury2Image = Nothing)
+Attribute Render.VB_Description = "Renders a portion of the viewed map to Output, using the Camera's current settings."
 On Error Resume Next
 Dim cX As Long, cY As Long, cTile As Long
 Dim StartX As Long, StartY As Long, EndX As Long, EndY As Long
@@ -373,6 +416,7 @@ Dim l_lyrLayer As Fury2MapLayer
 Dim l_sngAlpha As Single
 Dim l_lcaCamera As LightingCamera
 Dim l_sprSprite As Fury2Sprite
+Dim l_optOptions As RenderSpritesParam
 Dim l_lngTargets() As Long
 Dim mvarViewportTrueX As Long, mvarViewportTrueY As Long
 Dim l_mopObject As Fury2MapObject
@@ -440,6 +484,7 @@ Dim l_mopObject As Fury2MapObject
     If Area.bottom <= 0 Then Exit Sub
     If Area.left >= l_imgBuffer.Width Then Exit Sub
     If Area.top >= l_imgBuffer.Height Then Exit Sub
+    RenderComplexity = 0
     l_imgBuffer.ClipRect Area
     Set l_imgBuffer.ClipRectangle = Area
     End With
@@ -580,12 +625,31 @@ Dim l_mopObject As Fury2MapObject
                 Err.Clear
                 If ShowTiles Then RenderTilemapLayer Tilemap, CameraParam
             End If
-            If ShowSprites Then
+            If ShowLayerBlocking Or (ShowSingleLayerBlocking = Layers) Then
+                SoftFX.MultiPrimitive_Line_AA_Ptr l_imgBuffer.Handle, l_lyrLayer.CollisionLinePointer(0), BlockingColor, l_lyrLayer.CollisionLineCount, m_lngVPX, m_lngVPY
+            End If
+            If ShowSprites Or (ShowSingleLayerSprites = Layers) Then
                 CameraParam.ParallaxX = l_lyrLayer.ParallaxX
                 CameraParam.ParallaxY = l_lyrLayer.ParallaxY
                 CameraParam.ViewportX = (mvarViewportX * l_lyrLayer.ParallaxX)
                 CameraParam.ViewportY = (mvarViewportY * l_lyrLayer.ParallaxY)
                 l_lyrLayer.Sprites.Cull CameraParam
+                With l_optOptions
+                    .BlockingColor = BlockingColor
+                    .DrawAttachedGraphics = 1
+                    .DrawBlocking = IIf(ShowSpriteBlocking Or (ShowSingleLayerSpriteBlocking = Layers), 1, 0)
+                    .DrawFrameRectangles = IIf(ShowSpriteFrameRectangles Or (ShowSingleLayerSpriteFrameRectangles = Layers), 1, 0)
+                    .DrawFrames = 1
+                    .DrawOrientationLines = IIf(ShowSpriteOrientationLines Or (ShowSingleLayerSpriteOrientationLines = Layers), 1, 0)
+                    .DrawSecondaryImages = 1
+                    .DrawVelocityLines = IIf(ShowSpriteVelocityLines Or (ShowSingleLayerSpriteVelocityLines = Layers), 1, 0)
+                    .DrawSortingLines = IIf(ShowSpriteSortingLines Or (ShowSingleLayerSpriteSortingLines = Layers), 1, 0)
+                    .FrameRectangleColor = FrameRectangleColor
+                    .OrientationLineColor = OrientationLineColor
+                    .VelocityLineColor = VelocityLineColor
+                    .SortingLineColor = SortingLineColor
+                End With
+                l_lyrLayer.Sprites.SetOptions l_optOptions
                 l_lyrLayer.Sprites.Sort
                 If Err.Number <> 0 Then Engine.CriticalError "Fury2Camera.Redraw", "Layers(" + CStr(Layers) + ").Sprites.Sort Me": Exit Sub
             End If
@@ -603,15 +667,17 @@ Dim l_mopObject As Fury2MapObject
                     .ScrollY = mvarViewportY
                     .AntiAlias = CByte(IIf(AntiAliasLighting, 255, 0))
                 End With
-                If ShowSprites Then
+                If ShowSprites Or (ShowSingleLayerSprites = Layers) Then
                     l_lyrLayer.Lighting.SetFirstSprite l_lyrLayer.Sprites.Pointer
                 Else
                     l_lyrLayer.Lighting.SetFirstSprite 0
                 End If
-                l_lyrLayer.Lighting.Render l_lcaCamera
+                RenderComplexity = RenderComplexity + l_lyrLayer.Lighting.Render(l_lcaCamera)
             End If
-            If ShowSprites Then
-                l_lyrLayer.Sprites.Redraw CameraParam, l_imgBuffer
+            If ShowSprites Or (ShowSingleLayerSprites = Layers) Then
+                CameraParam.Alpha = Me.Alpha * l_sngAlpha * 255
+                RenderComplexity = RenderComplexity + l_lyrLayer.Sprites.Redraw(CameraParam, l_imgBuffer)
+                CameraParam.Alpha = Me.Alpha * 255
                 If Err.Number <> 0 Then Engine.CriticalError "Fury2Camera.Redraw", "Layers(" + CStr(Layers) + ").Sprites.Redraw l_imgBuffer, Area": Exit Sub
                 Err.Clear
             End If
@@ -658,6 +724,7 @@ Dim l_mopObject As Fury2MapObject
 End Sub
 
 Public Function RenderTargetArray() As Long()
+Attribute RenderTargetArray.VB_Description = "Contains the handles of all the render targets defined by this Camera."
 On Error Resume Next
 Dim l_lngTargets() As Long
 Dim l_lngIndex As Long
@@ -675,6 +742,7 @@ Dim l_imgTarget As Fury2Image
 End Function
 
 Public Function RenderTargetCount() As Long
+Attribute RenderTargetCount.VB_Description = "Returns the number of render targets defined by this Camera."
 On Error Resume Next
     RenderTargetCount = mvarRenderTargets.Count
 End Function
@@ -701,6 +769,7 @@ On Error Resume Next
 End Property
 
 Sub Reposition(ByVal L As Long, ByVal T As Long, ByVal W As Long, ByVal H As Long, Optional ByVal Absolute = True)
+Attribute Reposition.VB_Description = "Relocates the Camera."
 On Error Resume Next
     If mvarMap <> 0 Then Set mvarViewingMap = Engine.Maps(mvarMap)
     If CBool(Absolute) = True Then
@@ -732,6 +801,7 @@ On Error Resume Next
 End Property
 
 Public Sub ScrollTo(ByVal NewX As Single, ByVal NewY As Single, Optional ByVal Speed As Double = 1)
+Attribute ScrollTo.VB_Description = "Performs a smooth-scroll of the camera at speed Speed."
 On Error Resume Next
     mvarViewportXVelocity = Speed
     mvarViewportYVelocity = Speed
@@ -769,12 +839,14 @@ On Error Resume Next
 End Sub
 
 Public Sub SetMap(Obj As Fury2Map)
+Attribute SetMap.VB_MemberFlags = "40"
 On Error Resume Next
     Set mvarViewingMap = Obj
     mvarMap = 0
 End Sub
 
 Public Property Get UnGhostLayer() As Long
+Attribute UnGhostLayer.VB_Description = "If this value is set to the index of a layer, that layer will be shown at full opacity and all other layers will be shown at half opacity."
 On Error Resume Next
     UnGhostLayer = mvarUnGhostLayer
 End Property
@@ -832,6 +904,7 @@ On Error Resume Next
 End Property
 
 Public Property Let ViewportX(ByVal vData As Single)
+Attribute ViewportX.VB_Description = "The X scroll position of the camera."
     If mvarConstrainToMap Then
         If mvarViewingMap.MaxX <= mvarWidth Then
             mvarViewportX = -(mvarWidth - (mvarViewingMap.MaxX)) \ 2
@@ -848,6 +921,7 @@ Public Property Get ViewportX() As Single
 End Property
 
 Public Property Let ViewportY(ByVal vData As Single)
+Attribute ViewportY.VB_Description = "The Y scroll position of the camera."
     If mvarConstrainToMap Then
         If mvarViewingMap.MaxY <= mvarHeight Then
             mvarViewportY = -(mvarHeight - (mvarViewingMap.MaxY)) \ 2
@@ -874,6 +948,7 @@ Public Property Get Width() As Long
 End Property
 
 Public Property Let X(ByVal vData As Long)
+Attribute X.VB_Description = "The X position of the camera."
     mvarX = ClipValue(vData, 0, Engine.ScreenWidth - mvarWidth)
 End Property
 
@@ -887,6 +962,7 @@ On Error Resume Next
 End Function
 
 Public Property Let Y(ByVal vData As Long)
+Attribute Y.VB_Description = "The Y position of the camera."
     mvarY = ClipValue(vData, 0, Engine.ScreenHeight - mvarHeight)
 End Property
 

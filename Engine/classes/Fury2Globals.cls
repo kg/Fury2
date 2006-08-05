@@ -109,7 +109,6 @@ Public Enum Fury2SpriteBlockingTypes
     F2BT_UpwardRect
     F2BT_CenteredRect
     F2BT_CenteredSphere
-    F2BT_UpwardPolygon
     F2BT_CenteredPolygon
 End Enum
 
@@ -167,6 +166,11 @@ Public Enum Fury2TweenModes
     F2TM_Sinusoidal = 3
 End Enum
 
+Public Enum Fury2ControllerStyles
+    F2CS_Direct = 0
+    F2CS_Steered = 1
+End Enum
+
 Private l_lngF2State As Long
 Public LoadError As String
 
@@ -179,16 +183,19 @@ Attribute Fury2Initialize.VB_Description = "Initializes the engine library."
 On Error Resume Next
     If l_lngF2State = 0 Then F2Init
     l_lngF2State = l_lngF2State + 1
-    Compromise.Initialize
+    If InIDE Then
+    Else
+        Compromise.Initialize
+    End If
     SetProfilerCallbacks AddressOf ProfileClear, AddressOf ProfilePrint, AddressOf ProfileQuery
 End Sub
 
 Sub Fury2Terminate()
 Attribute Fury2Terminate.VB_Description = "Unloads the library from memory."
 On Error Resume Next
-    Compromise.UnInitialize
     If InIDE Then
     Else
+        Compromise.UnInitialize
         TerminateProcess GetCurrentProcess, 0
     End If
 End Sub

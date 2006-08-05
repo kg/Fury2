@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.2#0"; "ngUI.ocx"
 Begin VB.Form frmMap 
    BorderStyle     =   0  'None
    ClientHeight    =   5580
@@ -341,6 +341,7 @@ Private Enum BlockingTools
     BlockingTool_Line
     BlockingTool_PolyLine
     BlockingTool_Rectangle
+    BlockingTool_Parallelogram
     BlockingTool_Select
     BlockingTool_Move
 End Enum
@@ -417,6 +418,8 @@ Private m_lngDisplayWidth As Long, m_lngDisplayHeight As Long
 Private m_booVisible As Boolean
 
 Private m_booDraggingArea As Boolean
+Private m_booDrawingArea As Boolean, m_booResizingArea As Boolean
+Private m_lngAreaEdge As Long
 Private m_booDraggingSprite As Boolean
 Private m_booDraggingLight As Boolean, m_booResizingLight As Boolean, m_booRotatingLight As Boolean
 Private m_booDraggingObject As Boolean
@@ -487,9 +490,18 @@ Private WithEvents elLights As EntityList
 Attribute elLights.VB_VarHelpID = -1
 Private WithEvents elObjects As EntityList
 Attribute elObjects.VB_VarHelpID = -1
+Private elList_Name As String
 
 Private WithEvents m_tbrToolbar As ngToolbar
 Attribute m_tbrToolbar.VB_VarHelpID = -1
+
+Public Sub BeforeSave()
+On Error Resume Next
+    If tmrReloadScript.Enabled Then
+        tmrReloadScript.Enabled = False
+        tmrReloadScript_Timer
+    End If
+End Sub
 
 Public Property Get SelectedObject() As Fury2MapObject
 On Error Resume Next
@@ -580,6 +592,7 @@ End Sub
 Private Function iDocument_Save(Filename As String) As Boolean
 On Error Resume Next
 Dim l_vfFile As VirtualFile
+    BeforeSave
     Err.Clear
     Set l_vfFile = F2File()
     SaveToFile m_mapMap, l_vfFile
@@ -949,7 +962,12 @@ End Function
 
 Public Property Get ActiveType() As String
 On Error Resume Next
-    Select Case LCase(Trim(Me.ActiveControl.Name))
+Dim l_strControl As String
+    l_strControl = LCase(Trim(Me.ActiveControl.Name))
+    If (l_strControl = "ellist") Then
+        l_strControl = LCase(Trim(elList_Name))
+    End If
+    Select Case l_strControl
     Case "scmap"
         ActiveType = "Script"
     Case "scobject"
@@ -2062,6 +2080,10 @@ End Sub
 
 Private Sub elSprites_ItemSelected(ByVal Item As Long)
 On Error Resume Next
+    If tmrReloadScript.Enabled Then
+        tmrReloadScript.Enabled = False
+        tmrReloadScript_Timer
+    End If
     m_lngSelectedSprite = ClipValue(Item, 0, SelectedLayer.Sprites.Count)
     m_lngSelectedPath = 1
     InspectorChanged
@@ -2251,6 +2273,7 @@ On Error Resume Next
         .Remove "Zoom"
         .Remove "Tools"
         .Remove "RunMacro"
+        .Remove "SaveImage"
     End With
 End Sub
 
@@ -2290,6 +2313,7 @@ On Error Resume Next
             End With
         End With
         .AddNew "Run &Macro...", , "RunMacro", "Run Macro", , , , , BindEvent(Me, "RunMacro"), , 4
+        .AddNew "Save &Image...", , "SaveImage", "save", , , , , BindEvent(Me, "SaveImage"), , 5
     End With
 End Sub
 
@@ -2323,9 +2347,9 @@ Private Sub iEditingCommands_CanCopy(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Script"
-        NewValue = scMap.Control.CanCopy
+        NewValue = scMap.CanCopy
     Case "Object Script"
-        NewValue = scObject.Control.CanCopy
+        NewValue = scObject.CanCopy
     Case "Layers"
         NewValue = (elLayers.SelectedItem > 0)
     Case "Areas"
@@ -2350,9 +2374,9 @@ Private Sub iEditingCommands_CanCut(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Script"
-        NewValue = scMap.Control.CanCut
+        NewValue = scMap.CanCut
     Case "Object Script"
-        NewValue = scObject.Control.CanCut
+        NewValue = scObject.CanCut
     Case "Layers"
         NewValue = (elLayers.SelectedItem > 0) And (m_mapMap.Layers.Count > 1)
     Case "Areas"
@@ -2377,9 +2401,9 @@ Private Sub iEditingCommands_CanDelete(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Script"
-        NewValue = scMap.Control.CanCut
+        NewValue = scMap.CanCut
     Case "Object Script"
-        NewValue = scObject.Control.CanCut
+        NewValue = scObject.CanCut
     Case "Layers"
         NewValue = (elLayers.SelectedItem > 0) And (m_mapMap.Layers.Count > 1)
     Case "Areas"
@@ -2408,9 +2432,9 @@ Private Sub iEditingCommands_CanPaste(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Script"
-        NewValue = scMap.Control.CanPaste
+        NewValue = scMap.CanPaste
     Case "Object Script"
-        NewValue = scObject.Control.CanPaste
+        NewValue = scObject.CanPaste
     Case "Layers"
         NewValue = ClipboardContainsFormat(CF_MapLayer)
     Case "Areas"
@@ -2435,9 +2459,9 @@ Private Sub iEditingCommands_CanRedo(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Script"
-        NewValue = scMap.Control.CanRedo
+        NewValue = scMap.CanRedo
     Case "Object Script"
-        NewValue = scObject.Control.CanRedo
+        NewValue = scObject.CanRedo
     Case Else
         NewValue = (m_colRedo.Count > 0)
     End Select
@@ -2465,9 +2489,9 @@ Private Sub iEditingCommands_CanUndo(NewValue As Boolean)
 On Error Resume Next
     Select Case ActiveType
     Case "Script"
-        NewValue = scMap.Control.CanUndo
+        NewValue = scMap.CanUndo
     Case "Object Script"
-        NewValue = scObject.Control.CanUndo
+        NewValue = scObject.CanUndo
     Case Else
         NewValue = (m_colUndo.Count > 0)
     End Select
@@ -2477,9 +2501,9 @@ Private Sub iEditingCommands_Copy()
 On Error Resume Next
     Select Case ActiveType
     Case "Script"
-        scMap.Control.Copy
+        scMap.Copy
     Case "Object Script"
-        scObject.Control.Copy
+        scObject.Copy
     Case "Layers"
         CopyLayer
     Case "Areas"
@@ -2502,9 +2526,9 @@ Private Sub iEditingCommands_Cut()
 On Error Resume Next
     Select Case ActiveType
     Case "Script"
-        scMap.Control.Cut
+        scMap.Cut
     Case "Object Script"
-        scObject.Control.Cut
+        scObject.Cut
     Case "Layers"
         CutLayer
     Case "Areas"
@@ -2545,9 +2569,9 @@ On Error Resume Next
     Case "Brush"
         DeleteBrush
     Case "Script"
-        scMap.Control.ExecuteCmd cmCmdDelete
+        scMap.Delete
     Case "Object Script"
-        scObject.Control.ExecuteCmd cmCmdDelete
+        scMap.Delete
     Case Else
     End Select
 End Sub
@@ -2556,9 +2580,9 @@ Private Sub iEditingCommands_Paste()
 On Error Resume Next
     Select Case ActiveType
     Case "Script"
-        scMap.Control.Paste
+        scMap.Paste
     Case "Object Script"
-        scObject.Control.Paste
+        scObject.Paste
     Case "Layers"
         PasteLayer
     Case "Areas"
@@ -2581,9 +2605,9 @@ Private Sub iEditingCommands_Redo()
 On Error Resume Next
     Select Case ActiveType
     Case "Script"
-        scMap.Control.Redo
+        scMap.Redo
     Case "Object Script"
-        scObject.Control.Redo
+        scObject.Redo
     Case Else
         Me.Redo
     End Select
@@ -2613,9 +2637,9 @@ Private Sub iEditingCommands_Undo()
 On Error Resume Next
     Select Case ActiveType
     Case "Script"
-        scMap.Control.Undo
+        scMap.Undo
     Case "Object Script"
-        scObject.Control.Undo
+        scObject.Undo
     Case Else
         Me.Undo
     End Select
@@ -2760,9 +2784,17 @@ Dim l_sndObject As Fury2SoundObject
         Case "script"
             Set m_ctlCurrentInspector = scObject
             If m_lngCurrentView = View_Sprites Then
-                scObject.Text = SelectedSprite.ScriptSource
+                If (SelectedSprite Is Nothing) Then
+                    scObject.Text = ""
+                Else
+                    scObject.Text = SelectedSprite.ScriptSource
+                End If
             ElseIf m_lngCurrentView = View_Areas Then
-                scObject.Text = SelectedArea.ScriptSource
+                If (SelectedArea Is Nothing) Then
+                    scObject.Text = ""
+                Else
+                    scObject.Text = SelectedArea.ScriptSource
+                End If
             End If
         Case "data"
             If tmrReloadScript.Enabled Then
@@ -2909,6 +2941,7 @@ Dim l_strSelectedTab As String
     Select Case LCase(Trim(tsLists.SelectedTab.key))
     Case "layers"
         Set elLayers = elList
+        elList_Name = "elLayers"
         RefreshLayers
         With tsInspector.Tabs
             If (m_lngCurrentView = View_Tiles) And (SelectedLayer.Prerendered = False) Then
@@ -2918,6 +2951,7 @@ Dim l_strSelectedTab As String
         End With
     Case "sprites"
         Set elSprites = elList
+        elList_Name = "elSprites"
         RefreshSprites
         With tsInspector.Tabs
             .AddNew "Sprite", "Sprite"
@@ -2927,6 +2961,7 @@ Dim l_strSelectedTab As String
         End With
     Case "paths"
         Set elPaths = elList
+        elList_Name = "elPaths"
         RefreshPaths
         With tsInspector.Tabs
             .AddNew "Sprite", "Sprite"
@@ -2934,12 +2969,14 @@ Dim l_strSelectedTab As String
         End With
     Case "lights"
         Set elLights = elList
+        elList_Name = "elLights"
         RefreshLights
         With tsInspector.Tabs
             .AddNew "Light", "Light"
         End With
     Case "areas"
         Set elAreas = elList
+        elList_Name = "elAreas"
         RefreshAreas
         With tsInspector.Tabs
             .AddNew "Area", "Area"
@@ -2947,6 +2984,7 @@ Dim l_strSelectedTab As String
         End With
     Case "objects"
         Set elObjects = elList
+        elList_Name = "elObjects"
         With tsInspector.Tabs
         End With
     Case Else
@@ -3497,7 +3535,7 @@ On Error Resume Next
     If m_voViewOptions.ShowGrid Then
 '        Filter_Grid_SourceAlpha m_imgBackbuffer.Handle, m_imgBackbuffer.Rectangle.GetRectangle, F2RGB(0, 0, 0, 96), m_lngTileWidth, m_lngTileHeight, -hsMap.Value + 1, -vsMap.Value + 1
 '        Filter_Grid_SourceAlpha m_imgBackbuffer.Handle, m_imgBackbuffer.Rectangle.GetRectangle, F2RGB(255, 255, 255, 127), m_lngTileWidth, m_lngTileHeight, -hsMap.Value, -vsMap.Value
-        Filter_Grid_SourceAlpha m_imgBackbuffer.Handle, m_imgBackbuffer.Rectangle.GetRectangle, m_voViewOptions.GridColor, m_lngTileWidth, m_lngTileHeight, -hsMap.Value, -vsMap.Value
+        Filter_Grid_SourceAlpha m_imgBackbuffer.Handle, m_imgBackbuffer.Rectangle.GetRectangle, m_voViewOptions.GridColor, m_lngTileWidth * m_voViewOptions.GridScale, m_lngTileHeight * m_voViewOptions.GridScale, -hsMap.Value, -vsMap.Value
     End If
     Select Case m_lngCurrentView
     Case View_Blocking
@@ -3548,7 +3586,7 @@ On Error Resume Next
 Dim l_rctSelection As Fury2Rect
     With SelectedLayer
         ReDim Preserve m_bytSelectedCollisionLines(0 To .CollisionLineCount)
-        SoftFX.MultiPrimitive_Line_AA_Ptr m_imgBackbuffer.Handle, .CollisionLinePointer(0), m_voViewOptions.BlockingColor, .CollisionLineCount, hsMap.Value, vsMap.Value
+'        SoftFX.MultiPrimitive_Line_AA_Ptr m_imgBackbuffer.Handle, .CollisionLinePointer(0), m_voViewOptions.BlockingColor, .CollisionLineCount, hsMap.Value, vsMap.Value
         SoftFX.RenderLines_Masked m_imgBackbuffer.Handle, .CollisionLinePointer(0), VarPtr(m_bytSelectedCollisionLines(1)), SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), 0, 2), 255), .CollisionLineCount, hsMap.Value, vsMap.Value
     End With
     Select Case Tool_Blocking
@@ -3565,6 +3603,28 @@ Dim l_rctSelection As Fury2Rect
             m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
             m_imgBackbuffer.AntiAliasLine Array(m_lngMouseX - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
             m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_lngMouseY - vsMap.Value, m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 0, 220, 127)
+        End If
+        m_imgBackbuffer.FilledEllipse Array(m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 220, 220, 127), 1, 1, RenderMode_SourceAlpha
+    Case BlockingTool_Parallelogram
+        If m_lngPoint > 1 Then
+            m_fptPoints(2).X = m_lngMouseX
+            m_fptPoints(2).Y = m_lngMouseY
+            m_imgBackbuffer.FilledEllipse Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 255), 1, 1
+            m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_fptPoints(1).X - hsMap.Value, m_fptPoints(1).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
+            m_imgBackbuffer.FilledEllipse Array(m_fptPoints(1).X - hsMap.Value, m_fptPoints(1).Y - vsMap.Value), F2RGB(220, 0, 220, 255), 1, 1
+            m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_fptPoints(2).X - hsMap.Value, m_fptPoints(2).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
+            Dim l_sngXD As Single, l_sngYD As Single
+            l_sngXD = m_fptPoints(2).X - m_fptPoints(0).X
+            l_sngYD = m_fptPoints(2).Y - m_fptPoints(0).Y
+            m_fptPoints(3).X = m_fptPoints(1).X + l_sngXD
+            m_fptPoints(3).Y = m_fptPoints(1).Y + l_sngYD
+            m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(2).X - hsMap.Value, m_fptPoints(2).Y - vsMap.Value, m_fptPoints(3).X - hsMap.Value, m_fptPoints(3).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
+            m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(1).X - hsMap.Value, m_fptPoints(1).Y - vsMap.Value, m_fptPoints(3).X - hsMap.Value, m_fptPoints(3).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
+        ElseIf m_lngPoint > 0 Then
+            m_imgBackbuffer.FilledEllipse Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value), F2RGB(220, 0, 220, 255), 1, 1
+            m_fptPoints(1).X = m_lngMouseX
+            m_fptPoints(1).Y = m_lngMouseY
+            m_imgBackbuffer.AntiAliasLine Array(m_fptPoints(0).X - hsMap.Value, m_fptPoints(0).Y - vsMap.Value, m_fptPoints(1).X - hsMap.Value, m_fptPoints(1).Y - vsMap.Value), F2RGB(220, 0, 220, 127)
         End If
         m_imgBackbuffer.FilledEllipse Array(m_lngMouseX - hsMap.Value, m_lngMouseY - vsMap.Value), F2RGB(220, 220, 220, 127), 1, 1, RenderMode_SourceAlpha
     Case BlockingTool_Select
@@ -3728,14 +3788,14 @@ Dim l_rctSelection As Fury2Rect
         For Each l_sprSprite In SelectedLayer.Sprites
             l_lngIndex = l_lngIndex + 1
             l_sngAlpha = IIf(l_lngIndex = m_lngSelectedSprite, 1, 0.66)
-            Set l_rctSprite = l_sprSprite.Rectangle(True).Copy.Translate(-hsMap.Value, -vsMap.Value)
             If l_lngIndex = m_lngSelectedSprite Then
+                Set l_rctSprite = l_sprSprite.Rectangle(True).Copy.Translate(-hsMap.Value, -vsMap.Value)
                 .Fill l_rctSprite, SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), RenderMode_SourceAlpha
             End If
-            .Box l_rctSprite, F2RGB(255, 255, 255, 220 * l_sngAlpha), RenderMode_SourceAlpha
-            .Box l_rctSprite.Adjust(-1, -1), F2RGB(0, 0, 0, 220 * l_sngAlpha), RenderMode_SourceAlpha
-            Set l_rctSprite = l_sprSprite.Rectangle(False).Copy.Translate(-hsMap.Value, -vsMap.Value)
-            .Box l_rctSprite, F2RGB(220, 0, 0, 220 * l_sngAlpha), RenderMode_SourceAlpha
+'            .Box l_rctSprite, F2RGB(255, 255, 255, 220 * l_sngAlpha), RenderMode_SourceAlpha
+'            .Box l_rctSprite.Adjust(-1, -1), F2RGB(0, 0, 0, 220 * l_sngAlpha), RenderMode_SourceAlpha
+'            Set l_rctSprite = l_sprSprite.Rectangle(False).Copy.Translate(-hsMap.Value, -vsMap.Value)
+'            .Box l_rctSprite, F2RGB(220, 0, 0, 220 * l_sngAlpha), RenderMode_SourceAlpha
         Next l_sprSprite
         With SelectedPath
             If .Count > 0 Then
@@ -3969,9 +4029,10 @@ Dim l_lngButtons As Long
                 .AddNew , "Tool(0)", "line", "Line", bsyGroup
                 .AddNew , "Tool(1)", "polygon", "Polygon", bsyGroup
                 .AddNew , "Tool(2)", "box", "Box", bsyGroup
+                .AddNew , "Tool(3)", "parallelogram", "Parallelogram", bsyGroup
                 .AddNew "-"
-                .AddNew , "Tool(3)", "selection", "Selection", bsyGroup
-                .AddNew , "Tool(4)", "mover", "Mover", bsyGroup
+                .AddNew , "Tool(4)", "selection", "Selection", bsyGroup
+                .AddNew , "Tool(5)", "mover", "Mover", bsyGroup
             Case View_Lighting
                 m_tbrToolbar.ResourcePattern = "map editor\tools\lighting\*.png"
                 .AddNew , "Tool(0)", "cursor", "Cursor", bsyGroup
@@ -4034,8 +4095,8 @@ On Error Resume Next
     m_lngMouseTileX = (m_lngMouseX) \ m_lngTileWidth
     m_lngMouseTileY = (m_lngMouseY) \ m_lngTileHeight
     If m_voViewOptions.SnapToGrid Then
-        m_lngMouseX = Round(m_lngMouseX / m_lngTileWidth) * m_lngTileWidth
-        m_lngMouseY = Round(m_lngMouseY / m_lngTileHeight) * m_lngTileHeight
+        m_lngMouseX = Round(m_lngMouseX / (m_lngTileWidth * m_voViewOptions.GridScale)) * (m_lngTileWidth * m_voViewOptions.GridScale)
+        m_lngMouseY = Round(m_lngMouseY / (m_lngTileHeight * m_voViewOptions.GridScale)) * (m_lngTileHeight * m_voViewOptions.GridScale)
     End If
     m_booMouseMoved = (m_lngMouseX <> m_lngLastMouseX) Or (m_lngMouseY <> m_lngLastMouseY)
     m_booMouseMovedTile = (m_lngMouseTileX <> m_lngLastMouseTileX) Or (m_lngMouseTileY <> m_lngLastMouseTileY)
@@ -4137,11 +4198,14 @@ End Sub
 Public Sub RefreshTool()
 On Error Resume Next
 Dim l_objObject As Object
+Dim l_lngX As Long, l_lngY As Long
     Set l_objObject = insTool.CurrentObject
     If TypeOf l_objObject Is MapEditorViewOptions Then
-        ResizeViewport
+        l_lngX = hsMap.Value
+        l_lngY = vsMap.Value
         ZoomChanged
-        Redraw
+        hsMap.Value = l_lngX
+        vsMap.Value = l_lngY
     End If
 End Sub
 
@@ -4197,6 +4261,7 @@ End Sub
 Public Sub ResizeViewport()
 On Error Resume Next
 Dim l_lngWidth As Long, l_lngHeight As Long
+Dim l_lngX As Long, l_lngY As Long
     hsMap.Tag = "lock"
     vsMap.Tag = "lock"
     m_lngWidth = m_mapMap.MaxX
@@ -4207,13 +4272,15 @@ Dim l_lngWidth As Long, l_lngHeight As Long
     m_lngViewHeight = ClipValue(Ceil(picMapViewport.ScaleHeight / Zoom), 1, m_mapMap.MaxY)
     m_lngDisplayWidth = l_lngWidth
     m_lngDisplayHeight = l_lngHeight
+    l_lngX = hsMap.Value
+    l_lngY = vsMap.Value
     picDisplayBuffer.Move 0, 0, m_lngViewWidth, m_lngViewHeight
     If m_mapMap.MaxX > m_lngViewWidth Then
         hsMap.Enabled = True
         hsMap.LargeChange = m_lngViewWidth
         hsMap.SmallChange = m_mapMap.Layers(1).Tileset.TileWidth
         hsMap.Max = m_mapMap.MaxX - m_lngViewWidth
-        hsMap.Value = ClipValue(hsMap.Value, hsMap.Min, hsMap.Max)
+        hsMap.Value = ClipValue(l_lngX, hsMap.Min, hsMap.Max)
     Else
         hsMap.Enabled = False
         hsMap.Value = 0
@@ -4223,7 +4290,7 @@ Dim l_lngWidth As Long, l_lngHeight As Long
         vsMap.LargeChange = m_lngViewHeight
         vsMap.SmallChange = m_mapMap.Layers(1).Tileset.TileHeight
         vsMap.Max = m_mapMap.MaxY - m_lngViewHeight
-        vsMap.Value = ClipValue(vsMap.Value, vsMap.Min, vsMap.Max)
+        vsMap.Value = ClipValue(l_lngY, vsMap.Min, vsMap.Max)
     Else
         vsMap.Enabled = False
         vsMap.Value = 0
@@ -4246,6 +4313,32 @@ Dim l_strFilename As String
         Editor.LogOutput "Running macro """ & l_strFilename & """"
         Engine.ScriptEngine.AddCode ReadTextFile(l_strFilename)
     End If
+End Sub
+
+Public Sub SaveImage()
+On Error Resume Next
+Dim l_strFilename As String
+Dim l_imgMap As Fury2Image
+    l_strFilename = Editor.SelectSaveFilename(, "PNG Images|*.png", "Save Image")
+    If Len(Trim(l_strFilename)) > 0 Then
+        If InStr(l_strFilename, ".png") Then
+        Else
+            l_strFilename = l_strFilename & ".png"
+        End If
+        Editor.SetStatus "Saving image..."
+        Editor.LogOutput "Generating map image..."
+        Editor.SetProgress 0
+        Set l_imgMap = F2Image(Map.MaxX, Map.MaxY)
+        Editor.SetProgress 0.25
+        Map.Render l_imgMap, 0, 0, True
+        Editor.SetProgress 0.75
+        Editor.LogOutput "Writing map image..."
+        l_imgMap.SavePNG l_strFilename
+        Set l_imgMap = Nothing
+        Editor.SetProgress 0
+        Editor.SetStatus ""
+    End If
+    Err.Clear
 End Sub
 
 Private Sub scMap_Change()
@@ -4550,7 +4643,7 @@ On Error Resume Next
                 m_booSelectingBlocking = True
                 Redraw
             End If
-        Case BlockingTool_Line, BlockingTool_PolyLine, BlockingTool_Rectangle
+        Case BlockingTool_Line, BlockingTool_PolyLine, BlockingTool_Rectangle, BlockingTool_Parallelogram
             If Button = 1 Then
                 m_fptPoints(m_lngPoint).X = m_lngMouseX
                 m_fptPoints(m_lngPoint).Y = m_lngMouseY
@@ -4589,7 +4682,7 @@ Dim l_lngLine As Long
             End If
             Redraw
         End If
-    Case BlockingTool_Line, BlockingTool_PolyLine, BlockingTool_Rectangle
+    Case BlockingTool_Line, BlockingTool_PolyLine, BlockingTool_Rectangle, BlockingTool_Parallelogram
         If m_booMouseMoved Then
             Redraw
         End If
@@ -4684,6 +4777,27 @@ Dim l_lngLine As Long
                     .AddCollisionLine m_fptPoints(0).X, m_fptPoints(0).Y, m_fptPoints(0).X, m_fptPoints(1).Y
                     .AddCollisionLine m_fptPoints(1).X, m_fptPoints(0).Y, m_fptPoints(1).X, m_fptPoints(1).Y
                     .AddCollisionLine m_fptPoints(0).X, m_fptPoints(1).Y, m_fptPoints(1).X, m_fptPoints(1).Y
+                    ReDim Preserve m_bytSelectedCollisionLines(0 To .CollisionLineCount)
+                    SelectCollisionLines .CollisionLineCount - 3, .CollisionLineCount
+                End With
+                Redraw
+            End If
+        End If
+    Case BlockingTool_Parallelogram
+        If Button = 1 Then
+            If m_lngPoint > 2 Then
+                BlockingUndoPush
+                With SelectedLayer
+                    m_lngPoint = 0
+                    Dim l_sngXD As Single, l_sngYD As Single
+                    l_sngXD = m_fptPoints(2).X - m_fptPoints(0).X
+                    l_sngYD = m_fptPoints(2).Y - m_fptPoints(0).Y
+                    m_fptPoints(3).X = m_fptPoints(1).X + l_sngXD
+                    m_fptPoints(3).Y = m_fptPoints(1).Y + l_sngYD
+                    .AddCollisionLine m_fptPoints(0).X, m_fptPoints(0).Y, m_fptPoints(1).X, m_fptPoints(1).Y
+                    .AddCollisionLine m_fptPoints(0).X, m_fptPoints(0).Y, m_fptPoints(2).X, m_fptPoints(2).Y
+                    .AddCollisionLine m_fptPoints(2).X, m_fptPoints(2).Y, m_fptPoints(3).X, m_fptPoints(3).Y
+                    .AddCollisionLine m_fptPoints(1).X, m_fptPoints(1).Y, m_fptPoints(3).X, m_fptPoints(3).Y
                     ReDim Preserve m_bytSelectedCollisionLines(0 To .CollisionLineCount)
                     SelectCollisionLines .CollisionLineCount - 3, .CollisionLineCount
                 End With
@@ -5155,6 +5269,10 @@ Dim l_sprNew As Fury2Sprite
                 m_sngDragStartY = l_sprOld.Y
                 MultiPropertyUndoPush l_sprNew, Array("X", "Y"), Array(m_sngDragStartX, m_sngDragStartY)
             Else
+                If tmrReloadScript.Enabled Then
+                    tmrReloadScript.Enabled = False
+                    tmrReloadScript_Timer
+                End If
                 m_lngSelectedSprite = SelectedLayer.Sprites.Find(l_sprNew)
             End If
             If ViewOptions.AutoListSwitch Then
@@ -5836,7 +5954,16 @@ On Error Resume Next
     If m_camCamera Is Nothing Then Set m_camCamera = DefaultEngine.F2Camera()
     With m_camCamera
         .DisableBuffer = True
-        .ShowSprites = (m_lngCurrentView = View_Sprites) Or (m_voViewOptions.AlwaysShowSprites)
+        .ShowSingleLayerSprites = IIf((m_lngCurrentView = View_Sprites), m_lngSelectedLayer, 0)
+        .ShowSprites = (m_voViewOptions.AlwaysShowSprites)
+        .ShowTiles = True
+        .ShowSingleLayerBlocking = IIf(m_lngCurrentView = View_Blocking, m_lngSelectedLayer, 0)
+        .ShowLayerBlocking = (m_voViewOptions.AlwaysShowBlocking)
+        .ShowSingleLayerSpriteBlocking = IIf(m_lngCurrentView = View_Sprites, m_lngSelectedLayer, 0)
+        .ShowSpriteBlocking = (m_voViewOptions.AlwaysShowBlocking)
+        .ShowSingleLayerSpriteFrameRectangles = IIf(m_lngCurrentView = View_Sprites, m_lngSelectedLayer, 0)
+        .ShowSpriteFrameRectangles = (m_voViewOptions.AlwaysShowSpriteRectangles)
+        .BlockingColor = m_voViewOptions.BlockingColor
         .EnableLighting = (m_lngCurrentView = View_Lighting) Or (m_voViewOptions.AlwaysShowLighting)
         .EnableParallax = m_voViewOptions.EnableParallax
         .EnableWrapping = m_voViewOptions.EnableWrapping

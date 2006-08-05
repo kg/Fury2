@@ -47,5 +47,5 @@ struct KEY_BASIC_INFORMATION {
 
 struct RegistryRoot {
   HKEY ID;
-  wstring Name;
+  const wchar_t Name[5];
 };

@@ -618,7 +618,7 @@ Dim l_lngColor As Long
 Dim l_rctArea As Rect
     If DisableUpdates Then Exit Sub
     If Area Is Nothing Then
-        Set Area = m_imgSurface.Rectangle
+        If Not (m_imgSurface Is Nothing) Then Set Area = m_imgSurface.Rectangle
     End If
     If UserControl.Ambient.UserMode Then
         If m_imgSurface Is Nothing Then Exit Sub

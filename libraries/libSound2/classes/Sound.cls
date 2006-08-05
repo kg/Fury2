@@ -40,9 +40,6 @@ Dim l_lngHandle As Long
     AddSyncPoint 0, "start"
     FMOD_Sound_GetLength m_lngHandle, l_lngLength, FMOD_TIMEUNIT_MS
     l_lngHandle = FreeFile
-    Open "C:\fmod.log" For Append As #l_lngHandle
-    Print #l_lngHandle, "Adding end-1 sync point to track " & m_strFilename & " @ " & (l_lngLength - 1000) & "ms, sound ID " & m_lngHandle
-    Close #l_lngHandle
     AddSyncPoint l_lngLength - 1000, "end-1"
     AddSyncPoint l_lngLength - c_lngEndOffset, "end"
 End Sub

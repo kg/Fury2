@@ -15,6 +15,7 @@ Option Explicit
 Implements iContainer
 Implements iWidget
 Implements Fury2UserdataUI
+Public FocusDirection As Long
 Public Visible As Boolean
 Public Parent As Object
 Public EventHandler As Object
@@ -386,7 +387,12 @@ Private Sub iWidget_GotFocus(ByVal Parent As iContainer, ByVal FromWidget As iWi
 On Error Resume Next
     Me.HaveFocus = True
     If Children.Count > 0 Then
-        iContainer_SetFocus GetFocusableChild(GetFocusCount)
+        If FocusDirection >= 0 Then
+            iContainer_SetFocus GetFocusableChild(1)
+        Else
+            iContainer_SetFocus GetFocusableChild(GetFocusCount)
+        End If
+        FocusDirection = 0
     Else
         iContainer_SetFocus Nothing
     End If
@@ -394,6 +400,7 @@ End Sub
 
 Private Function iWidget_HitTest(ByVal X As Long, ByVal Y As Long) As Boolean
 On Error Resume Next
+    If Me.Visible = False Then Exit Function
     iWidget_HitTest = Me.Rectangle.PointInside(X, Y)
 End Function
 
@@ -407,13 +414,13 @@ Dim l_objChild As Object
         If (GetFocusCount = 1) Then
             l_lngFocusIndex = 1
         ElseIf (l_lngFocusIndex = 0) Then
-            If Shift = vbShiftMask Then
+            If (Shift And vbShiftMask) = 0 Then
                 l_lngFocusIndex = 1
             Else
                 l_lngFocusIndex = GetFocusCount
             End If
         Else
-            If Shift = vbShiftMask Then
+            If (Shift And vbShiftMask) = 0 Then
                 l_lngFocusIndex = l_lngFocusIndex + 1
                 If (l_lngFocusIndex > GetFocusCount) Then
                     If (Parent Is Nothing) Then
@@ -434,6 +441,7 @@ Dim l_objChild As Object
             End If
         End If
         Set l_objChild = GetFocusableChild(l_lngFocusIndex)
+        l_objChild.FocusDirection = IIf((Shift And vbShiftMask) = 0, 1, -1)
         iContainer_SetFocus l_objChild
         KeyCode = 0
     End If

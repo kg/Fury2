@@ -12,13 +12,14 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Public Blocking As Boolean
-Public Object As Object
+Public Object
 Public Method As String
 Public MethodID As Long
 Public BoundParameters As Variant
 Private m_lngBlocked As Long
 Private m_engEngine As Fury2Engine
 Private m_seEngine As ScriptEngine
+Private m_strContextName As String
 
 Public Function Duplicate() As Fury2Event
 On Error Resume Next
@@ -50,7 +51,13 @@ End Property
 
 Public Sub ResolveMethod()
 On Error Resume Next
-    MethodID = m_seEngine.ResolveMember(Object, Method)
+Dim l_objObject As Object
+    If VarType(Object) = vbString Then
+        MethodID = -1
+    Else
+        Set l_objObject = Object
+        MethodID = m_seEngine.ResolveMember(l_objObject, Method)
+    End If
 End Sub
 
 Public Sub Bind(ByRef Meth As String, Optional ByVal Obj = Nothing, Optional ByRef BindParameters As Variant = Nothing)
@@ -67,6 +74,7 @@ On Error Resume Next
         BoundParameters = BindParameters
     End If
     ResolveMethod
+    m_strContextName = ""
 End Sub
 
 Public Function Invoke(ParamArray Parameters() As Variant) As Variant
@@ -84,7 +92,6 @@ Dim l_lngIndex As Long, l_lngIncrement As Long
         If Object Is Nothing Then Exit Function
         Set l_objObject = Object
     End If
-    Engine.ContextLevelAdd "Event(" & TypeName(l_objObject) & "." & Method & ")"
     If VarType(BoundParameters) = vbObject Then
         If (UBound(Parameters) >= 0) Then
             ReDim l_varParameters(0 To UBound(Parameters))
@@ -103,11 +110,12 @@ Dim l_lngIndex As Long, l_lngIncrement As Long
         End If
     Else
         If (UBound(Parameters) >= 0) Then
-            ReDim l_varParameters(0 To UBound(Parameters) + (UBound(BoundParameters) - LBound(BoundParameters) + 1))
+            ReDim l_varParameters(0 To (UBound(Parameters) - LBound(Parameters) + 1) + (UBound(BoundParameters) - LBound(BoundParameters) + 1) - 1)
+            l_lngParameterOffset = UBound(Parameters) - LBound(Parameters) + 1
         Else
             ReDim l_varParameters(0 To UBound(BoundParameters))
+            l_lngParameterOffset = 0
         End If
-        l_lngParameterOffset = (UBound(BoundParameters) - LBound(BoundParameters) + 1)
         If (MethodID <> -1) Then
             l_lngIndex = UBound(l_varParameters) - l_lngParameterOffset
             l_lngIncrement = -1
@@ -127,6 +135,13 @@ Dim l_lngIndex As Long, l_lngIncrement As Long
     l_lngParameterCount = -1
     l_lngParameterCount = UBound(l_varParameters)
     If (UBound(Parameters) >= 0) Then
+        If (MethodID <> -1) Then
+            l_lngIndex = UBound(l_varParameters)
+            l_lngIncrement = -1
+        Else
+            l_lngIndex = LBound(l_varParameters)
+            l_lngIncrement = 1
+        End If
         For l_lngParameters = LBound(Parameters) To UBound(Parameters)
             If VarType(Parameters(l_lngParameters)) = vbObject Then
                 Set l_varParameters(l_lngIndex) = Parameters(l_lngParameters)
@@ -137,6 +152,10 @@ Dim l_lngIndex As Long, l_lngIncrement As Long
         Next l_lngParameters
     End If
     Err.Clear
+    If Len(m_strContextName) = 0 Then
+        m_strContextName = "Event(" & TypeName(l_objObject) & "." & Method & ")"
+    End If
+    Engine.ContextLevelAdd m_strContextName
     m_lngBlocked = m_lngBlocked + 1
     If (MethodID <> -1) Then
         Invoke = m_seEngine.InvokeMember(l_objObject, MethodID, VbMethod, l_varParameters)
@@ -170,15 +189,17 @@ Dim l_lngIndex As Long, l_lngIncrement As Long
             Invoke = CallByName(l_objObject, Method, VbMethod)
         End Select
     End If
+    Erase l_varParameters
     m_lngBlocked = m_lngBlocked - 1
     If Err = 438 Then
-        Engine.DebugOut "Event failed to invoke: " & TypeName(l_objObject) & "." & Method
+        Engine.DebugOut "Invoke failed: " & m_strContextName
     End If
     Engine.ContextLevelRemove
 End Function
 
 Private Sub Class_Initialize()
 On Error Resume Next
+    MethodID = -1
     Method = ""
     Set Object = Nothing
     BoundParameters = Array()

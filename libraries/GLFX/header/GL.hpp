@@ -24,7 +24,7 @@ namespace GL {
     float X, Y;
   };
 
-  inline Texture* getTexture(int Image) {
+  __forceinline Texture* getTexture(int Image) {
     return reinterpret_cast<Texture*>(getNamedTag(Image, Texture));
   }
 
@@ -71,7 +71,7 @@ namespace GL {
     if (color[::Alpha]) {
       enableFog();
       setFogColor(color);
-      setFogOpacity(color[::Alpha] / 255.0f);
+      setFogOpacity(Global->FloatLookup[color[::Alpha]]);
     } else {
       disableFog();
     }

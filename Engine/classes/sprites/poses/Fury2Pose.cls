@@ -50,10 +50,12 @@ Friend Sub SetIndex(ByVal Index As Long)
 End Sub
 
 Public Property Get Index() As Long
+Attribute Index.VB_Description = "The index of this state."
     Index = mvarIndex
 End Property
 
 Public Property Get Parent() As Fury2Sprite
+Attribute Parent.VB_Description = "The sprite this pose belongs to."
 On Error Resume Next
     Set Parent = WRGetSprite(mvarParent)
 End Property
@@ -184,6 +186,7 @@ Public Property Set Blocking(vData As Fury2Blocking)
 End Property
 
 Public Property Get BlockingPolygon() As Fury2Polygon
+Attribute BlockingPolygon.VB_Description = "The blocking polygon for the pose."
 On Error Resume Next
     Set BlockingPolygon = mvarBlocking.Polygon
 End Property
@@ -274,4 +277,5 @@ On Error Resume Next
         .WriteSegment_End
     End With
 End Sub
+
 

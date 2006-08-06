@@ -17,16 +17,22 @@ Public Event Recieve(ByVal Peer As VBENetPeer, ByVal Channel As Long, ByVal Pack
 Public Event Disconnect(ByVal Peer As VBENetPeer)
 
 Public TimeSynchronizer As VBENetTimeSynchronizer
+Attribute TimeSynchronizer.VB_VarDescription = "The time synchronizer used for synchronizing game clocks."
 Public Tag As Variant
+Attribute Tag.VB_VarDescription = "An arbitrary piece of data attached to this host."
 Private m_colPeers As Collection
 Private m_lngHost As Long
 Private m_adrAddress As VBENetAddress
 Private m_engEngine As Fury2Engine
 Public ConnectEvent As Fury2Event
+Attribute ConnectEvent.VB_VarDescription = "This event is invoked when a new connection is made."
 Public RecieveEvent As Fury2Event
+Attribute RecieveEvent.VB_VarDescription = "This event is invoked when a packet is recieved."
 Public DisconnectEvent As Fury2Event
+Attribute DisconnectEvent.VB_VarDescription = "This event is invoked when a peer disconnects."
 
 Public Sub DisconnectAll()
+Attribute DisconnectAll.VB_Description = "Disconnects all peers connected to this host."
 On Error Resume Next
 Dim l_perPeer As VBENetPeer
     For Each l_perPeer In m_colPeers
@@ -43,6 +49,7 @@ Public Property Get Engine() As Fury2Engine
 End Property
 
 Public Property Get Peers() As Collection
+Attribute Peers.VB_Description = "All of the peers connected to this host."
 On Error Resume Next
     Set Peers = m_colPeers
 End Property
@@ -97,12 +104,14 @@ Dim l_booConsume As Boolean
 End Sub
 
 Public Sub Flush()
+Attribute Flush.VB_Description = "Flushes any queued packets."
 On Error Resume Next
     If m_lngHost = 0 Then Exit Sub
     enet_host_flush m_lngHost
 End Sub
 
 Public Function Poll(Optional ByVal Timeout As Long = 0) As Boolean
+Attribute Poll.VB_Description = "Polls for new packets."
 On Error Resume Next
 Dim l_evtEvent As ENetEvent
     If m_lngHost = 0 Then Exit Function
@@ -113,6 +122,7 @@ Dim l_evtEvent As ENetEvent
 End Function
 
 Public Function Broadcast(ByVal Packet As VBENetPacket, Optional ByVal Channel As Long = 0) As Boolean
+Attribute Broadcast.VB_Description = "Broadcasts a packet to all connected peers."
 On Error Resume Next
     If m_lngHost = 0 Then Exit Function
     enet_host_broadcast m_lngHost, Channel, Packet.Handle
@@ -121,11 +131,13 @@ On Error Resume Next
 End Function
 
 Public Function BroadcastFile(ByVal Data As VirtualFile, Optional ByVal Channel As Long = 0, Optional PacketFlags As Long = 0) As Boolean
+Attribute BroadcastFile.VB_Description = "Broadcasts a file to all connected peers."
 On Error Resume Next
     BroadcastFile = BroadcastBytes(Data.Data, Channel, PacketFlags)
 End Function
 
 Public Function BroadcastText(ByRef Data, Optional ByVal Channel As Long = 0, Optional PacketFlags As Long = 0) As Boolean
+Attribute BroadcastText.VB_Description = "Broadcasts a string to all connected peers."
 On Error Resume Next
 Dim l_bytData() As Byte
     l_bytData = Engine.ToString(Data)
@@ -133,6 +145,7 @@ Dim l_bytData() As Byte
 End Function
 
 Public Function BroadcastBytes(ByRef Data() As Byte, Optional ByVal Channel As Long = 0, Optional PacketFlags As Long = 0) As Boolean
+Attribute BroadcastBytes.VB_Description = "Broadcasts an array of bytes to all connected peers."
 On Error Resume Next
 Dim l_lngPacket As Long, l_lngLength As Long
     If m_lngHost = 0 Then Exit Function
@@ -177,6 +190,7 @@ On Error Resume Next
 End Function
 
 Public Function Connect(ByVal Address As VBENetAddress, Optional ByVal ChannelCount As Long = 1) As VBENetPeer
+Attribute Connect.VB_Description = "Connects to a new peer."
 On Error Resume Next
 Dim l_lngPeer As Long
 Dim l_perPeer As VBENetPeer
@@ -195,6 +209,7 @@ Dim l_perPeer As VBENetPeer
 End Function
 
 Public Property Get Address() As VBENetAddress
+Attribute Address.VB_Description = "The address of this host."
 On Error Resume Next
     Set Address = m_adrAddress
 End Property
@@ -215,6 +230,7 @@ On Error Resume Next
 End Sub
 
 Public Sub EnableSynchronization()
+Attribute EnableSynchronization.VB_Description = "Enables game clock synchronization."
 On Error Resume Next
     Set TimeSynchronizer = New VBENetTimeSynchronizer
     TimeSynchronizer.AttachServer Me
@@ -224,3 +240,4 @@ Public Sub DisableSynchronization()
 On Error Resume Next
     Set TimeSynchronizer = Nothing
 End Sub
+

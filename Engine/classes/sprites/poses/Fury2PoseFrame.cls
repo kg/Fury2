@@ -53,6 +53,7 @@ Private mvarParent As WeakReference
 Private mvarIndex As Long
 
 Public Function AddSecondaryImage(Optional ByRef Filename As String = "", Optional ByVal ImageType As SecondaryImageTypes = siOverlay) As Fury2SecondaryImage
+Attribute AddSecondaryImage.VB_Description = "Adds a new secondary image to this frame."
 On Error Resume Next
 Dim l_siImage As Fury2SecondaryImage
     Set l_siImage = New Fury2SecondaryImage
@@ -74,10 +75,12 @@ On Error Resume Next
 End Sub
 
 Public Property Get Index() As Long
+Attribute Index.VB_Description = "The index of this frame."
     Index = mvarIndex
 End Property
 
 Public Property Get Parent() As Fury2Pose
+Attribute Parent.VB_Description = "The pose this frame belongs to."
     Set Parent = WRGetPose(mvarParent)
 End Property
 
@@ -87,6 +90,7 @@ On Error Resume Next
 End Sub
 
 Public Sub RunScript(Optional ByVal Object As Fury2Sprite = Nothing)
+Attribute RunScript.VB_Description = "Runs this frame's script."
 On Error Resume Next
     If Len(mvarScript) < 1 Then Exit Sub
     If Object Is Nothing Then
@@ -183,6 +187,7 @@ Friend Sub SetImage(Img As Fury2Image)
 End Sub
 
 Public Property Set Image(RHS As Fury2Image)
+Attribute Image.VB_Description = "The image of this frame."
     Set mvarImage = RHS
 End Property
 
@@ -267,6 +272,7 @@ Public Property Get Rectangle() As Fury2Rect
 End Property
 
 Public Property Get SecondaryImages() As Fury2Collection
+Attribute SecondaryImages.VB_Description = "The secondary images attached to this frame."
 On Error Resume Next
     Set SecondaryImages = mvarSecondaryImages
 End Property
@@ -351,12 +357,19 @@ Friend Sub RefreshSecondaryImages()
 On Error Resume Next
 Dim l_siImage As Fury2SecondaryImage
 Dim l_lngIndex As Long
+    If mvarSecondaryImages Is Nothing Then Exit Sub
     ReDim m_siSecondaryImageParams(0 To mvarSecondaryImages.Count - 1)
     l_lngIndex = 0
     For Each l_siImage In mvarSecondaryImages
-        l_siImage.SetIndex l_lngIndex + 1
-        m_siSecondaryImageParams(l_lngIndex).ImageType = l_siImage.ImageType
-        m_siSecondaryImageParams(l_lngIndex).pImage = l_siImage.Image.Handle
+        If Not (l_siImage Is Nothing) Then
+            l_siImage.SetIndex l_lngIndex + 1
+            m_siSecondaryImageParams(l_lngIndex).ImageType = l_siImage.ImageType
+            If Not (l_siImage.Image Is Nothing) Then
+                m_siSecondaryImageParams(l_lngIndex).pImage = l_siImage.Image.Handle
+            Else
+                m_siSecondaryImageParams(l_lngIndex).pImage = 0
+            End If
+        End If
         l_lngIndex = l_lngIndex + 1
     Next l_siImage
 End Sub
@@ -380,3 +393,4 @@ Private Sub mvarSecondaryImages_Remove(ByVal Index As Long)
 On Error Resume Next
     RefreshSecondaryImages
 End Sub
+

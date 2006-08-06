@@ -6083,3 +6083,4 @@ Dim l_varArgs() As Variant
     Err.Clear
     InvokeMember = m_ScriptEngine.InvokeMember(Obj, Member, VbMethod, l_varArgs)
 End Function
+

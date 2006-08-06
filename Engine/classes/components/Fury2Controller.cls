@@ -37,15 +37,24 @@ Implements Fury2Object
 Implements Fury2Plugin
 Implements IVirtualFileSaveable
 Public Engine As Fury2Engine
+Attribute Engine.VB_VarDescription = "The engine this controller was created by."
 Public Obj As Object
+Attribute Obj.VB_VarDescription = "The object this controller is manipulating. Can be either a Fury2Sprite or a Fury2Camera."
 Public Camera As Object
+Attribute Camera.VB_VarDescription = "The Camera this controller is attached to."
 Public ScrollSpeed As Long
+Attribute ScrollSpeed.VB_VarDescription = "The speed at which this controller will scroll its attached camera."
 Public MoveCamera As Boolean
+Attribute MoveCamera.VB_VarDescription = "If True, this controller will attempt to move its attached camera along with the object it is controlling."
 Public CameraXOffset As Long, CameraYOffset As Long
 Public Enabled As Boolean
+Attribute Enabled.VB_VarDescription = "If True, this controller will respond to input and perform movement."
 Public Style As Long
+Attribute Style.VB_VarDescription = "Specifies the control style of the controller."
 Public TurnSpeed As Double
+Attribute TurnSpeed.VB_VarDescription = "Specifies the speed at which the controller will turn its object in steered mode."
 Public TileBased As Boolean
+Attribute TileBased.VB_VarDescription = "If True, this controller will operate in tile-based movement mode."
 
 Private m_sngAngles(0 To 7) As Single
 
@@ -53,6 +62,11 @@ Private BlockAccumulator As Long
 Private InputState(0 To 3) As Boolean
 
 Public LeftBinding As String, UpBinding As String, RightBinding As String, DownBinding As String, ActivateBinding As String
+Attribute ActivateBinding.VB_VarDescription = "Specifies the control to use as an Activate button."
+Attribute DownBinding.VB_VarDescription = "Specifies the control to use as a Down arrow."
+Attribute RightBinding.VB_VarDescription = "Specifies the control to use as a Right arrow."
+Attribute UpBinding.VB_VarDescription = "Specifies the control to use as a Up arrow."
+Attribute LeftBinding.VB_VarDescription = "Specifies the control to use as a Left arrow."
 
 Private Sub Class_Initialize()
 On Error Resume Next
@@ -68,6 +82,7 @@ On Error Resume Next
 End Sub
 
 Public Property Get Angles() As Variant
+Attribute Angles.VB_Description = "Specifies the angles that will be used for directional movement."
 On Error Resume Next
 Dim l_varAngles As Variant
 Dim l_lngAngles As Long
@@ -416,4 +431,5 @@ On Error Resume Next
         .WriteSegment_End
     End With
 End Sub
+
 

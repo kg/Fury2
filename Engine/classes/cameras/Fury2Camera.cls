@@ -213,6 +213,7 @@ Dim m_lngLayers As Long
 Dim m_lngRects As Long
 Dim m_rctObj As Fury2Rect
     If mvarViewingMap Is Nothing Then Exit Sub
+    If mvarViewingMap.Layers Is Nothing Then Exit Sub
     If mvarViewingMap.Layers.Count < 1 Then Exit Sub
     If (Engine.Cameras.Count = 1) And (Engine.DisableCameraBuffers) Then Exit Sub
     For m_lngLayers = 1 To mvarViewingMap.Layers.Count
@@ -325,6 +326,7 @@ Attribute Move.VB_Description = "Scrolls the camera by a certain amount."
 On Error Resume Next
 Dim m_sngOldX As Single, m_sngOldY As Single
     If mvarViewingMap Is Nothing Then Exit Sub
+    If mvarViewingMap.Layers Is Nothing Then Exit Sub
     If mvarViewingMap.Layers.Count < 1 Then Exit Sub
     If (Abs(XDistance) < 1) And (Abs(YDistance) < 1) Then Exit Sub
     m_sngOldX = mvarViewportX

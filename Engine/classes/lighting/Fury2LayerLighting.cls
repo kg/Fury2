@@ -36,7 +36,9 @@ Implements Fury2Object
 Implements IInspectable
 Implements IVirtualFileSaveable
 Public ResetLight As Boolean
+Attribute ResetLight.VB_VarDescription = "If True, when this layer is rendered it will erase the lightmap."
 Public RenderLight As Boolean
+Attribute RenderLight.VB_VarDescription = "If True, when this layer is rendered it will render the lightmap to the camera."
 Private m_lngMatrix As Long
 Private m_envEnvironment As LightingEnvironment
 Private m_colLights As Fury2LightSources
@@ -46,6 +48,7 @@ Private m_plnPlanes() As LightingPlane2
 Private m_lyrLayer As Fury2MapLayer
 
 Public Function LightFromSprite(ByVal Sprite As Fury2Sprite) As Fury2LightSource
+Attribute LightFromSprite.VB_Description = "Returns the light that is attached to a given sprite, if any."
 On Error Resume Next
 Dim l_litLight As Fury2LightSource
     For Each l_litLight In m_colLights
@@ -67,6 +70,7 @@ Dim l_litLight As Fury2LightSource
 End Sub
 
 Public Property Get Layer() As Fury2MapLayer
+Attribute Layer.VB_Description = "The map layer this lighting is attached to."
     Set Layer = m_lyrLayer
 End Property
 
@@ -124,10 +128,12 @@ On Error Resume Next
 End Function
 
 Public Function SightCheck(ByVal FromX As Single, ByVal FromY As Single, ByVal ToX As Single, ByVal ToY As Single, Optional ByRef IgnoreSprite1 = Nothing, Optional ByRef IgnoreSprite2 = Nothing) As Boolean
+Attribute SightCheck.VB_Description = "Performs a sight check from one location to another. IgnoreSprite1 and IgnoreSprite2 allow excluding one or two sprites from the calculation."
     SightCheck = SoftFX.SightCheck(m_envEnvironment, FromX, FromY, ToX, ToY, IIf(IgnoreSprite1 Is Nothing, 0, IgnoreSprite1.Pointer), IIf(IgnoreSprite2 Is Nothing, 0, IgnoreSprite2.Pointer))
 End Function
 
 Public Function Raycast(ByVal X As Single, ByVal Y As Single, Optional ByRef IgnoreSprite = Nothing) As Long
+Attribute Raycast.VB_Description = "Calculates the illumination value of a given point. IgnoreSprite allows excluding a given sprite from the lighting calculation."
     Raycast = SoftFX.RaycastPoint(m_envEnvironment, X, Y, IIf(IgnoreSprite Is Nothing, 0, IgnoreSprite.Pointer))
 End Function
 
@@ -328,7 +334,7 @@ Dim l_lngCount As Long
 End Function
 
 Public Property Get AmbientLight() As Long
-Attribute AmbientLight.VB_Description = "{Color}"
+Attribute AmbientLight.VB_Description = "{Color}The ambient color of the lighting. If ResetLight is true, the lightmap is cleared to this color."
     AmbientLight = m_envEnvironment.AmbientLight
 End Property
 
@@ -488,3 +494,4 @@ Dim l_litLight As Fury2LightSource
         End With
     Next l_litLight
 End Sub
+

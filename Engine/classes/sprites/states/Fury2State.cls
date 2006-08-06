@@ -43,6 +43,7 @@ Private mvarPoseOffset As Long
 Private mvarName As String
 
 Public Function Duplicate() As Fury2State
+Attribute Duplicate.VB_Description = "Creates a copy of this state."
 On Error Resume Next
     Set Duplicate = New Fury2State
     With Duplicate
@@ -54,6 +55,7 @@ On Error Resume Next
 End Function
 
 Public Property Let Name(ByVal vData As String)
+Attribute Name.VB_Description = "The name of this state."
     mvarName = vData
 End Property
 
@@ -62,6 +64,7 @@ Public Property Get Name() As String
 End Property
 
 Public Property Let PoseOffset(ByVal vData As Long)
+Attribute PoseOffset.VB_Description = "The index of the first pose used by this state."
     mvarPoseOffset = vData
 End Property
 
@@ -70,6 +73,7 @@ Public Property Get PoseOffset() As Long
 End Property
 
 Public Property Let MaxVelocity(ByVal vData As Single)
+Attribute MaxVelocity.VB_Description = "The maximum movement velocity of a sprite in this state."
     mvarMaxVelocity = vData
 End Property
 
@@ -78,6 +82,7 @@ Public Property Get MaxVelocity() As Single
 End Property
 
 Public Property Let DirectionPoses(ByVal vData As Long)
+Attribute DirectionPoses.VB_Description = "The number of poses used by this state."
     mvarDirectionPoses = vData
 End Property
 
@@ -114,4 +119,5 @@ On Error Resume Next
         .WriteSegment_End
     End With
 End Sub
+
 

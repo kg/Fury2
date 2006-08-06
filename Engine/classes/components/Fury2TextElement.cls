@@ -40,20 +40,31 @@ Implements IVirtualFileSaveable
 Public Engine As Fury2Engine
 Private m_strText As String
 Public Font As Fury2Font
+Attribute Font.VB_VarDescription = "The font to draw text with."
 Public Alpha As Single
+Attribute Alpha.VB_VarDescription = "The opacity of the text."
 Public ShadowColor As Long
+Attribute ShadowColor.VB_VarDescription = "The color to draw the text's shadow with."
 Public FadeSpeed As Double
+Attribute FadeSpeed.VB_VarDescription = "The speed at which to fade the text."
 Public Rectangle As Fury2Rect
+Attribute Rectangle.VB_VarDescription = "The rectangle in which to draw the text."
 Public Color As Long
+Attribute Color.VB_VarDescription = "The color with which to draw the text."
 Public Realtime As Boolean
+Attribute Realtime.VB_VarDescription = "If True, any expressions in the text will be reparsed every frame."
 Public WrapMode As Long
+Attribute WrapMode.VB_VarDescription = "Determines the wrapping mode of the text."
 Public Center As Boolean
+Attribute Center.VB_VarDescription = "If True, text will be centered within the rectangle."
 
 Public Property Get DrawBehind() As Boolean
+Attribute DrawBehind.VB_Description = "If True, the text will be drawn behind picture slots."
     DrawBehind = False
 End Property
 
 Public Property Let Text(NewText As String)
+Attribute Text.VB_Description = "The text to draw."
 On Error Resume Next
     m_strText = NewText
     If Realtime Then
@@ -196,4 +207,5 @@ End Sub
 
 Private Sub Fury2Plugin_OutputPluginChanged()
 End Sub
+
 

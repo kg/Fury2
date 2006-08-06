@@ -78,6 +78,7 @@ On Error Resume Next
 End Sub
 
 Public Sub AddSubFont(ByVal Font As Fury2Font, Optional ByVal Name As String = "")
+Attribute AddSubFont.VB_Description = "Adds a subfont to this font with a given name"
 On Error Resume Next
     If Len(Name) < 1 Then
         Name = Font.Title
@@ -102,6 +103,7 @@ Attribute Engine.VB_Description = "*"
 End Property
 
 Public Property Get TabStops() As Variant
+Attribute TabStops.VB_Description = "Sets the tabstops used by this font."
 On Error Resume Next
 Dim l_varTabStops As Variant
 Dim l_lngStops As Long
@@ -149,6 +151,7 @@ On Error Resume Next
 End Function
 
 Public Function Duplicate() As Fury2Font
+Attribute Duplicate.VB_Description = "Duplicates the font."
 On Error Resume Next
 Dim l_colNewImages As Collection, l_lngImages As Long, l_lngParams As Long, l_cpmNewParams() As CharacterParam
     Set Duplicate = New Fury2Font
@@ -195,6 +198,7 @@ Public Property Let Codeset(NewCodeset As String)
 End Property
 
 Public Function GetTextRectangle(Text, Optional ByVal MaximumWidth As Long = -1, Optional ByVal EnableColorCodes As Boolean = True) As Fury2Rect
+Attribute GetTextRectangle.VB_Description = "Gets the rectangle occupied by a piece of text."
 On Error Resume Next
 Dim l_lngMaxWidth As Long
 Dim l_rctArea As Rectangle
@@ -227,6 +231,7 @@ Dim l_lngRefCount As Long
 End Function
 
 Public Function TextWidth(Text, Optional ByVal MaxWidth As Long = -1, Optional ByVal EnableColorCodes As Boolean = True) As Long
+Attribute TextWidth.VB_Description = "Gets the width of a piece of text."
 On Error Resume Next
 Dim l_strText As String
 Dim l_rctArea As Rectangle
@@ -253,6 +258,7 @@ Dim l_optOptions As TextParam
 End Function
 
 Public Function TextHeight(Text, Optional ByVal MaxWidth As Long = -1, Optional ByVal EnableColorCodes As Boolean = True) As Long
+Attribute TextHeight.VB_Description = "Gets the height of a piece of text."
 On Error Resume Next
 Dim l_strText As String
 Dim l_rctArea As Rectangle
@@ -278,14 +284,17 @@ Dim l_optOptions As TextParam
 End Function
 
 Public Property Get Height() As Long
+Attribute Height.VB_Description = "Returns the height of an average line of text."
     Height = m_fpmFontParam.BaseHeight
 End Property
 
 Public Property Let Height(NewValue As Long)
+Attribute Height.VB_Description = " "
     m_fpmFontParam.BaseHeight = NewValue
 End Property
 
 Public Property Get FullHeight() As Long
+Attribute FullHeight.VB_Description = "Returns the full occupied height (including descenders) of a line of text."
 On Error Resume Next
     FullHeight = m_lngFullHeight
 End Property
@@ -325,6 +334,7 @@ On Error Resume Next
 End Property
 
 Public Property Get CharacterCount() As Long
+Attribute CharacterCount.VB_Description = "The number of characters in the font."
     CharacterCount = m_lngCharCount
 End Property
 
@@ -358,6 +368,7 @@ On Error Resume Next
 End Sub
 
 Public Function Options(Optional ByVal XScroll As Long = 0, Optional ByVal YScroll As Long = 0, _
+Attribute Options.VB_Description = "Builds an optionset for use with the draw commands."
     Optional ByVal SelectionStart As Long = 0, Optional ByVal SelectionEnd As Long = 0, _
     Optional ByVal SelectionColor As Long = 0, Optional ByVal CaretPosition As Long = 0, _
     Optional ByVal CaretColor As Long = 0, Optional ByVal MaxCharacters As Long = 0, Optional ByVal EnableColorCodes As Boolean = True) As Variant
@@ -365,6 +376,7 @@ Public Function Options(Optional ByVal XScroll As Long = 0, Optional ByVal YScro
 End Function
 
 Public Function IndexFromPoint(ByRef Text, ByVal Rectangle As Fury2Rect, ByVal X As Long, ByVal Y As Long, Optional Options As Variant) As Long
+Attribute IndexFromPoint.VB_Description = "Retrieves the index of the character at a given point within a string."
 On Error Resume Next
 Dim l_strText As String
 Dim l_rctRectangle As Fury2Rect
@@ -392,6 +404,7 @@ Dim l_optOptions As TextParam
 End Function
 
 Public Function Draw(ByVal Surface As Fury2Image, ByRef Text, ByVal Rectangle As Fury2Rect, Optional ByVal Color, Optional ByVal Alpha As Single = 1, Optional Options As Variant, Optional ByRef HeightOut) As Long
+Attribute Draw.VB_Description = "Draws a string to an image using various options."
 On Error Resume Next
 Dim l_imgSurface As Fury2Image
 Dim l_strText As String
@@ -446,6 +459,7 @@ Dim l_optOptions As TextParam
 End Function
 
 Public Function DrawCentered(ByVal Surface As Fury2Image, ByRef Text, ByVal Rectangle As Fury2Rect, Optional ByVal Color, Optional ByVal Alpha As Single = 1, Optional Options As Variant, Optional HeightOut) As Long
+Attribute DrawCentered.VB_Description = "Draws a string to an image using various options. Attempts to center the string within the rectangle."
 On Error Resume Next
 Dim l_imgSurface As Fury2Image
 Dim l_strText As String
@@ -538,6 +552,7 @@ Public Property Let ShadowColor(NewValue As Long)
 End Property
 
 Public Property Get WrapMode() As Fury2WrapModes
+Attribute WrapMode.VB_Description = "The wrapping mode for text."
     WrapMode = m_fpmFontParam.WrapMode
 End Property
 
@@ -546,6 +561,7 @@ Public Property Let WrapMode(ByVal NewValue As Fury2WrapModes)
 End Property
 
 Public Property Get UpperCaseOnly() As Boolean
+Attribute UpperCaseOnly.VB_Description = "If True, this font only contains uppercase characters, and lowercase text will be converted before being displayed."
     UpperCaseOnly = m_booUpperCaseOnly
 End Property
 
@@ -559,6 +575,7 @@ On Error Resume Next
 End Function
 
 Sub RemoveCharacter(Index As Long)
+Attribute RemoveCharacter.VB_Description = "Removes a character from the font."
 On Error Resume Next
 Dim m_lngMoveBack As Long
     m_colCharImages.Remove Index
@@ -573,6 +590,7 @@ Dim m_lngMoveBack As Long
 End Sub
 
 Sub AddCharacter(Image As Fury2Image, Optional MapValue As Long = 0)
+Attribute AddCharacter.VB_Description = "Adds a new character to the font."
 On Error Resume Next
     m_lngCharCount = m_lngCharCount + 1
     m_colCharImages.Add Image
@@ -615,6 +633,7 @@ End Sub
 'End Sub
 
 Function CreateFixed(ByVal Width As Long, ByVal Height As Long, Optional ByVal Count As Long = 256) As Boolean
+Attribute CreateFixed.VB_Description = "Creates a fixed-size font containing a certain number of characters."
 On Error Resume Next
 Dim l_lngChars As Long
 Dim l_imgCharacter As Fury2Image
@@ -643,6 +662,7 @@ Dim l_imgCharacter As Fury2Image
 End Function
 
 Sub AddDropShadow(ByVal Color As Long, Optional ByVal XOffset As Long = 0, Optional ByVal YOffset As Long = 0, Optional ByVal BlurLevel As Single = 1)
+Attribute AddDropShadow.VB_Description = "Adds a drop shadow to all the characters in the font."
 On Error Resume Next
 Dim l_imgCharacter As Fury2Image
 Dim l_imgClone As Fury2Image
@@ -668,6 +688,7 @@ Dim l_lngCharacter As Long
 End Sub
 
 Sub AddOutline(ByVal Color As Long, Optional ByVal Thickness As Long = 1)
+Attribute AddOutline.VB_Description = "Adds an outline to all the characters in the font."
 On Error Resume Next
 Dim l_imgCharacter As Fury2Image
 Dim l_imgClone As Fury2Image
@@ -691,6 +712,7 @@ Dim l_lngThick As Long, l_lngX As Long, l_lngY As Long
 End Sub
 
 Public Sub AdjustGamma(ByVal Gamma As Single)
+Attribute AdjustGamma.VB_Description = "Adjusts the gamma of all the characters in the font."
 On Error Resume Next
 Dim l_imgCharacter As Fury2Image
 Dim l_lngCharacter As Long
@@ -702,6 +724,7 @@ Dim l_lngCharacter As Long
 End Sub
 
 Public Sub Recolor(ByVal Color As Long)
+Attribute Recolor.VB_Description = "Recolors all the characters in the font."
 On Error Resume Next
 Dim l_imgCharacter As Fury2Image
 Dim l_lngCharacter As Long
@@ -714,16 +737,19 @@ Dim l_lngCharacter As Long
 End Sub
 
 Public Property Get CharacterWidth(ByVal Character As Long) As Long
+Attribute CharacterWidth.VB_Description = "The width of a character."
 On Error Resume Next
     CharacterWidth = m_cpmCharParams(Character - 1).XIncrement
 End Property
 
 Public Property Let CharacterWidth(ByVal Character As Long, ByVal Value As Long)
+Attribute CharacterWidth.VB_Description = "R"
 On Error Resume Next
     m_cpmCharParams(Character - 1).XIncrement = Value
 End Property
 
 Public Property Get CharacterHeight(ByVal Character As Long) As Long
+Attribute CharacterHeight.VB_Description = "The height of a character."
 On Error Resume Next
     CharacterHeight = m_cpmCharParams(Character - 1).YIncrement
 End Property
@@ -754,6 +780,7 @@ On Error Resume Next
 End Property
 
 Function ImportTTF(ByVal Font As StdFont, Optional ByVal Unicode As Boolean = False, Optional ByRef CharacterSet As String = "") As Boolean
+Attribute ImportTTF.VB_Description = "Imports a truetype font, optionally using one or more unicode character sets."
 On Error Resume Next
 Dim l_lngChars As Long, l_lngCharIndices As Long, l_lngCode As Long
 Dim l_imgNullChar As Fury2Image
@@ -923,6 +950,7 @@ Dim l_lngMax As Long
 End Sub
 
 Function ImportImage(ByVal Filename As String, ByVal Width As Long, ByVal Height As Long, Optional ByVal FirstCharacter As Long = 1) As Boolean
+Attribute ImportImage.VB_Description = "Imports a font image containing fixed-size characters."
 On Error Resume Next
 Dim l_imgFile As Fury2Image
 Dim l_lngX As Long, l_lngY As Long, l_imgChar As Fury2Image
@@ -971,6 +999,7 @@ Dim l_lngX As Long, l_lngY As Long, l_imgChar As Fury2Image
 End Function
 
 Function SaveRFN(ByVal Filename As String) As Boolean
+Attribute SaveRFN.VB_Description = "Saves a sphere font."
 On Error Resume Next
 Dim l_vfFont As VirtualFile
 Dim l_imgChar As Fury2Image
@@ -1015,6 +1044,7 @@ Dim l_lngChars As Long
 End Function
 
 Function ImportRFN(ByVal Filename) As Boolean
+Attribute ImportRFN.VB_Description = "Imports a sphere font."
 On Error Resume Next
 Dim l_vfFont As VirtualFile
 Dim l_intVersion As Integer
@@ -1110,6 +1140,7 @@ Dim l_bytValues() As Byte
 End Function
 
 Function Load(ByVal Filename As String) As Boolean
+Attribute Load.VB_Description = "Loads a font."
 On Error Resume Next
 Dim l_strExtension As String
     If InStr(Filename, ";") Then
@@ -1145,6 +1176,7 @@ Dim l_strExtension As String
 End Function
 
 Function Save(ByVal Filename As String) As Boolean
+Attribute Save.VB_Description = "Saves a .f2font version of this font."
 On Error Resume Next
     Save = Engine.SaveToFile(Me, Engine.Filesystem.CreateFile(Filename))
 End Function
@@ -1388,3 +1420,4 @@ On Error Resume Next
     m_fpmFontParam.SubFonts = VarPtr(m_sfSubfonts(0))
     Color = F2White
 End Sub
+

@@ -39,35 +39,54 @@ Implements Fury2Object
 Implements IVirtualFileSaveable
 
 Public Active As Boolean
+Attribute Active.VB_VarDescription = "If True, the message window will respond to input. If False, the message window is queued and waiting to be opened."
 Public Alpha As Single
+Attribute Alpha.VB_VarDescription = "The opacity of the window."
 Public AnimationDelay As Long
-#If EnableBehaviors = 1 Then
-Public Behaviors As Fury2Behaviors
-#End If
 Public ClickEvent As Fury2Event
+Attribute ClickEvent.VB_VarDescription = "This event will be invoked when the user clicks the window or presses the activate button."
 Public CloseEvent As Fury2Event
+Attribute CloseEvent.VB_VarDescription = "This event will be invoked when the window is closed."
 Public DrawBehind As Boolean
+Attribute DrawBehind.VB_VarDescription = "If True, the window will draw behind picture slots."
 Public DisableClose As Boolean
+Attribute DisableClose.VB_VarDescription = "If True, the user will be unable to close the window with input."
 Public Engine As Fury2Engine
 Public Enabled As Boolean
+Attribute Enabled.VB_VarDescription = "If True, the window will respond to and consume input."
 Public Rectangle As Fury2Rect
+Attribute Rectangle.VB_VarDescription = "The rectangle occupied by the window."
 Public TextColor As Long
+Attribute TextColor.VB_VarDescription = "The color of the window's text."
 Public Text As String
+Attribute Text.VB_VarDescription = "The text to display in the window. Text that does not fit will scroll vertically and be wrapped."
 Public Font As Fury2Font
-Public Image As Object
-Public MiddleImage As Object
+Attribute Font.VB_VarDescription = "The font to draw text with."
+Public Image As Fury2Image
+Attribute Image.VB_VarDescription = "An image to display on the left side of the window."
+Public MiddleImage As Fury2Image
+Attribute MiddleImage.VB_VarDescription = "An image to display in the center of the window."
 Public Queued As Boolean
-Public ShadowText As Boolean
+Attribute Queued.VB_VarDescription = "If True, this message window is queued and waiting to be shown."
 Public ScrollY As Long
+Attribute ScrollY.VB_VarDescription = "The vertical scroll position of the message's text."
 Public ScrollSpeed As Long
+Attribute ScrollSpeed.VB_VarDescription = "The speed at which scrolling is occurring."
 Public ScrollEnd As Long
+Attribute ScrollEnd.VB_VarDescription = "The point at which scrolling will stop."
 Public TotalHeight As Long
-Public WindowSkin As Object
+Attribute TotalHeight.VB_VarDescription = "The total height of the text in the window."
+Public WindowSkin As Fury2WindowSkin
+Attribute WindowSkin.VB_VarDescription = "The windowskin to draw the window with."
 Public WrapMode As Long
+Attribute WrapMode.VB_VarDescription = "Determines how text will be wrapped."
 Public First As Boolean, Last As Boolean
+Attribute Last.VB_VarDescription = "If True, the window is the last in the queue"
+Attribute First.VB_VarDescription = "If True, the window is the first in the queue"
 Private mvarOldDisable As Boolean
 
 Public Sub CloseWindow()
+Attribute CloseWindow.VB_Description = "Closes the window."
 On Error Resume Next
     If Not (CloseEvent Is Nothing) Then CloseEvent.Invoke
     Err.Clear
@@ -336,4 +355,6 @@ End Sub
 
 Private Sub Fury2Plugin_OutputPluginChanged()
 End Sub
+
+
 

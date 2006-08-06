@@ -42,6 +42,7 @@ On Error Resume Next
 End Property
 
 Public Property Get LVDecay() As Single
+Attribute LVDecay.VB_Description = "The amount of life velocity decay to apply to affected particles."
 On Error Resume Next
     LVDecay = m_modModifier.LVDecay
 End Property
@@ -52,6 +53,7 @@ On Error Resume Next
 End Property
 
 Public Property Get AVDecay() As Single
+Attribute AVDecay.VB_Description = "The amount of alpha velocity decay to apply to affected particles."
 On Error Resume Next
     AVDecay = m_modModifier.AVDecay
 End Property
@@ -62,6 +64,7 @@ On Error Resume Next
 End Property
 
 Public Property Get XVDecay() As Single
+Attribute XVDecay.VB_Description = "The amount of X velocity decay to apply to affected particles."
 On Error Resume Next
     XVDecay = m_modModifier.XVDecay
 End Property
@@ -72,6 +75,7 @@ On Error Resume Next
 End Property
 
 Public Property Get YVDecay() As Single
+Attribute YVDecay.VB_Description = "The amount of Y velocity decay to apply to affected particles."
 On Error Resume Next
     YVDecay = m_modModifier.YVDecay
 End Property
@@ -82,6 +86,7 @@ On Error Resume Next
 End Property
 
 Public Property Get LVDecayMode() As ParticleDecayModes
+Attribute LVDecayMode.VB_Description = "The type of decay to apply to life velocity."
 On Error Resume Next
     LVDecayMode = m_modModifier.LVDecayMode
 End Property
@@ -92,6 +97,7 @@ On Error Resume Next
 End Property
 
 Public Property Get AVDecayMode() As ParticleDecayModes
+Attribute AVDecayMode.VB_Description = "The type of decay to apply to alpha velocity."
 On Error Resume Next
     AVDecayMode = m_modModifier.AVDecayMode
 End Property
@@ -102,6 +108,7 @@ On Error Resume Next
 End Property
 
 Public Property Get XVDecayMode() As ParticleDecayModes
+Attribute XVDecayMode.VB_Description = "The type of decay to apply to X velocity."
 On Error Resume Next
     XVDecayMode = m_modModifier.XVDecayMode
 End Property
@@ -112,6 +119,7 @@ On Error Resume Next
 End Property
 
 Public Property Get YVDecayMode() As ParticleDecayModes
+Attribute YVDecayMode.VB_Description = "The type of decay to apply to Y velocity."
 On Error Resume Next
     YVDecayMode = m_modModifier.YVDecayMode
 End Property
@@ -122,6 +130,7 @@ On Error Resume Next
 End Property
 
 Public Property Get X() As Single
+Attribute X.VB_Description = "The X coordinate of the center of the modifier."
 On Error Resume Next
     X = m_modModifier.X
 End Property
@@ -132,6 +141,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Y() As Single
+Attribute Y.VB_Description = "The Y coordinate of the center of the modifier."
 On Error Resume Next
     Y = m_modModifier.Y
 End Property
@@ -142,6 +152,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Range() As Single
+Attribute Range.VB_Description = "The distance at which the modifier can operate."
 On Error Resume Next
     Range = m_modModifier.Range
 End Property
@@ -152,6 +163,7 @@ On Error Resume Next
 End Property
 
 Public Property Get RangeScale() As Single
+Attribute RangeScale.VB_Description = "The amount to scale the strength of the modifier by."
 On Error Resume Next
     RangeScale = m_modModifier.RangeScale
 End Property
@@ -162,6 +174,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Attraction() As Single
+Attribute Attraction.VB_Description = "The amount of gravitational attraction to apply to particles."
 On Error Resume Next
     Attraction = m_modModifier.Attraction
 End Property
@@ -172,6 +185,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Mass() As Single
+Attribute Mass.VB_Description = "The mass of the modifier (used for gravitational attraction)"
 On Error Resume Next
     Mass = m_modModifier.Mass
 End Property
@@ -182,6 +196,7 @@ On Error Resume Next
 End Property
 
 Public Property Get ExcludeType() As Long
+Attribute ExcludeType.VB_Description = "Excludes particles of a given type."
 On Error Resume Next
     ExcludeType = m_modModifier.ExcludeType
 End Property
@@ -192,6 +207,7 @@ On Error Resume Next
 End Property
 
 Public Property Get RequireType() As Long
+Attribute RequireType.VB_Description = "Requires that particles be of a given type."
 On Error Resume Next
     RequireType = m_modModifier.RequireType
 End Property
@@ -200,4 +216,5 @@ Public Property Let RequireType(ByVal NewValue As Long)
 On Error Resume Next
     m_modModifier.RequireType = NewValue
 End Property
+
 

@@ -52,6 +52,7 @@ On Error Resume Next
 End Sub
 
 Public Property Set Graphic(ByVal NewValue As Fury2Graphic)
+Attribute Graphic.VB_Description = "The image to draw if the particle is an image particle."
 On Error Resume Next
 Dim l_agpParam As AnimatedGraphicParam
     Set m_agpGraphic = NewValue
@@ -75,6 +76,7 @@ On Error Resume Next
 End Property
 
 Public Property Get LVDecay() As Single
+Attribute LVDecay.VB_Description = "The decay rate for life velocity."
 On Error Resume Next
     LVDecay = m_typType.LVDecay
 End Property
@@ -85,6 +87,7 @@ On Error Resume Next
 End Property
 
 Public Property Get AVDecay() As Single
+Attribute AVDecay.VB_Description = "The decay rate for alpha velocity."
 On Error Resume Next
     AVDecay = m_typType.AVDecay
 End Property
@@ -95,6 +98,7 @@ On Error Resume Next
 End Property
 
 Public Property Get XVDecay() As Single
+Attribute XVDecay.VB_Description = "The decay rate for X velocity."
 On Error Resume Next
     XVDecay = m_typType.XVDecay
 End Property
@@ -105,6 +109,7 @@ On Error Resume Next
 End Property
 
 Public Property Get YVDecay() As Single
+Attribute YVDecay.VB_Description = "The decay rate for Y velocity."
 On Error Resume Next
     YVDecay = m_typType.YVDecay
 End Property
@@ -115,6 +120,7 @@ On Error Resume Next
 End Property
 
 Public Property Get LVDecayMode() As ParticleDecayModes
+Attribute LVDecayMode.VB_Description = "The type of decay to apply to life velocity."
 On Error Resume Next
     LVDecayMode = m_typType.LVDecayMode
 End Property
@@ -125,16 +131,19 @@ On Error Resume Next
 End Property
 
 Public Property Get AVDecayMode() As ParticleDecayModes
+Attribute AVDecayMode.VB_Description = "The type of decay to apply to alpha velocity."
 On Error Resume Next
     AVDecayMode = m_typType.AVDecayMode
 End Property
 
 Public Property Let AVDecayMode(ByVal NewValue As ParticleDecayModes)
+Attribute AVDecayMode.VB_Description = " "
 On Error Resume Next
     m_typType.AVDecayMode = NewValue
 End Property
 
 Public Property Get XVDecayMode() As ParticleDecayModes
+Attribute XVDecayMode.VB_Description = "The type of decay to apply to X velocity."
 On Error Resume Next
     XVDecayMode = m_typType.XVDecayMode
 End Property
@@ -145,6 +154,7 @@ On Error Resume Next
 End Property
 
 Public Property Get YVDecayMode() As ParticleDecayModes
+Attribute YVDecayMode.VB_Description = "The type of decay to apply to Y velocity."
 On Error Resume Next
     YVDecayMode = m_typType.YVDecayMode
 End Property
@@ -155,6 +165,7 @@ On Error Resume Next
 End Property
 
 Public Property Get AMode() As ParticleAModes
+Attribute AMode.VB_Description = "Determines the effect of a particle's alpha on its rendering."
 On Error Resume Next
     AMode = m_typType.AMode
 End Property
@@ -165,11 +176,13 @@ On Error Resume Next
 End Property
 
 Public Property Get Color() As Long
+Attribute Color.VB_Description = "Determines the particle's color."
 On Error Resume Next
     Color = Colors(0)
 End Property
 
 Public Property Get Colors(ByVal Index As Long) As Long
+Attribute Colors.VB_Description = "Determines the colors used for the particle."
 On Error Resume Next
     Select Case Index
     Case 0
@@ -197,6 +210,7 @@ On Error Resume Next
 End Property
 
 Public Property Get LBehavior() As ParticleLBehaviors
+Attribute LBehavior.VB_Description = "Determines the effect of a particle's life."
 On Error Resume Next
     LBehavior = m_typType.LBehavior
 End Property
@@ -207,6 +221,7 @@ On Error Resume Next
 End Property
 
 Public Property Get LColorMode() As ParticleLColorModes
+Attribute LColorMode.VB_Description = "Determines the effect of a particle's life on its displayed color."
 On Error Resume Next
     LColorMode = m_typType.LColorMode
 End Property
@@ -217,6 +232,7 @@ On Error Resume Next
 End Property
 
 Public Property Get RenderTarget() As Long
+Attribute RenderTarget.VB_Description = "Determines the render target that particles of this type should be drawn to."
 On Error Resume Next
     RenderTarget = m_typType.RenderTarget
 End Property
@@ -227,6 +243,7 @@ On Error Resume Next
 End Property
 
 Public Property Get RenderType() As ParticleRenderTypes
+Attribute RenderType.VB_Description = "Determines the type of rendering to use for particles of this type."
 On Error Resume Next
     RenderType = m_typType.RenderType
 End Property
@@ -237,6 +254,7 @@ On Error Resume Next
 End Property
 
 Public Property Get RenderMode() As SFXRenderModes
+Attribute RenderMode.VB_Description = "Determines the blend mode to use when rendering particles of this type."
 On Error Resume Next
     RenderMode = m_typType.RenderMode
 End Property
@@ -247,6 +265,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Softness() As Single
+Attribute Softness.VB_Description = "Determines the softness of strokes rendered by particles of this type."
 On Error Resume Next
     Softness = m_typType.Softness
 End Property
@@ -257,6 +276,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Thickness() As Single
+Attribute Thickness.VB_Description = "Determines the thickness of strokes rendered by particles of this type."
 On Error Resume Next
     Thickness = m_typType.Thickness
 End Property
@@ -267,6 +287,7 @@ On Error Resume Next
 End Property
 
 Public Property Get EnableCollision() As Boolean
+Attribute EnableCollision.VB_Description = "If True, particles of this type will collide with objects and map collision."
 On Error Resume Next
     EnableCollision = m_typType.EnableCollision <> 0
 End Property
@@ -277,6 +298,7 @@ On Error Resume Next
 End Property
 
 Public Property Get CollisionResponse() As Single
+Attribute CollisionResponse.VB_Description = "Determines the amount of response to apply to a particle when it collides with something. 1.0 will provide a full strength bounce, and 0.0 will cause the particle to stop in place."
 On Error Resume Next
     CollisionResponse = m_typType.CollisionResponse
 End Property
@@ -297,6 +319,7 @@ On Error Resume Next
 End Sub
 
 Public Property Get DieEvent() As Fury2Event
+Attribute DieEvent.VB_Description = "This event will be invoked when a particle dies."
 On Error Resume Next
     Set DieEvent = m_evtDie
 End Property
@@ -312,6 +335,7 @@ On Error Resume Next
 End Property
 
 Public Property Get CollideEvent() As Fury2Event
+Attribute CollideEvent.VB_Description = "This event will be invoked when a particle collides with something."
 On Error Resume Next
     Set CollideEvent = m_evtCollide
 End Property
@@ -325,4 +349,5 @@ On Error Resume Next
         SetCollideCallback AddressOf ParticleCollideCallback
     End If
 End Property
+
 

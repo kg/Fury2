@@ -36,16 +36,28 @@ Option Explicit
 Implements IVirtualFileSaveable
 
 Public Name As String
+Attribute Name.VB_VarDescription = "The name of this graphic."
 Public ImageFilenames As Fury2Collection
+Attribute ImageFilenames.VB_VarDescription = "The filenames of the images in this graphic."
 Public Images As Fury2Collection
+Attribute Images.VB_VarDescription = "The images in this graphic."
 Public XCenter As Single, YCenter As Single
+Attribute YCenter.VB_VarDescription = "The Y centerpoint of this graphic."
+Attribute XCenter.VB_VarDescription = "The X centerpoint of this graphic."
 Public LoopMode As Fury2LoopModes
+Attribute LoopMode.VB_VarDescription = "Determines the graphic's looping behavior."
 Public BlitMode As SFXBlitModes
+Attribute BlitMode.VB_VarDescription = "The blit mode used when drawing this graphic."
 Public Alpha As Single
+Attribute Alpha.VB_VarDescription = "The opacity of this graphic."
 Public FadeSpeed As Double
+Attribute FadeSpeed.VB_VarDescription = "The speed at which this graphic should fade."
 Public AnimationDelay As Single
+Attribute AnimationDelay.VB_VarDescription = "The number of seconds between animation frames."
 Public AnimationFrame As Long
+Attribute AnimationFrame.VB_VarDescription = "The current animation frame."
 Public AnimationDirection As Long
+Attribute AnimationDirection.VB_VarDescription = "The direction in which animation will go."
 Private m_parParam As AnimatedGraphicParam
 Private m_lngImages() As Long
 Private m_sngLastFrame As Double
@@ -68,6 +80,7 @@ On Error Resume Next
 End Function
 
 Public Function Duplicate() As Fury2Graphic
+Attribute Duplicate.VB_Description = "Creates a copy of this graphic."
 On Error Resume Next
     Set Duplicate = New Fury2Graphic
     With Duplicate
@@ -114,6 +127,7 @@ Dim l_lngImages As Long
 End Sub
 
 Public Property Get CurrentImage() As Fury2Image
+Attribute CurrentImage.VB_Description = "The current frame of the graphic."
 On Error Resume Next
     AnimationFrame = WrapValue(AnimationFrame, 1, Images.count)
     Set CurrentImage = Images(AnimationFrame)
@@ -121,16 +135,19 @@ On Error Resume Next
 End Property
 
 Public Property Get Width() As Long
+Attribute Width.VB_Description = "The width of the graphic."
 On Error Resume Next
     Width = Images(AnimationFrame).Width
 End Property
 
 Public Property Get Height() As Long
+Attribute Height.VB_Description = "The height of the graphic."
 On Error Resume Next
     Height = Images(AnimationFrame).Height
 End Property
 
 Function Show(ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1, Optional ByVal Slot As Long = -1) As Long
+Attribute Show.VB_Description = "Shows the graphic in a given picture slot at a given location."
 On Error Resume Next
     If Slot = -1 Then Slot = Engine.ActivePictureSlots
     Engine.ShowPicture Slot, Images(AnimationFrame), Floor(X - XCenter), Floor(Y - YCenter), , , , , BlitMode, Alpha
@@ -138,6 +155,7 @@ On Error Resume Next
 End Function
 
 Sub Draw(ByVal Surface As Fury2Image, ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1)
+Attribute Draw.VB_Description = "Draws the graphic to an image at a given location."
 On Error Resume Next
 Dim l_imgFrame As Fury2Image
     If Images.count = 0 Then Exit Sub
@@ -151,6 +169,7 @@ Dim l_imgFrame As Fury2Image
 End Sub
 
 Sub Update()
+Attribute Update.VB_Description = "Updates the graphic's animation."
 On Error Resume Next
 Dim l_dblElapsed As Double
     If Images.count > 1 Then
@@ -191,6 +210,7 @@ On Error Resume Next
 End Sub
 
 Public Sub ReloadImages()
+Attribute ReloadImages.VB_Description = "Reloads the graphic's frames."
 On Error Resume Next
 Dim l_lngImage As Long, l_imgFile As Fury2Image
     Set Images = Engine.F2Collection()
@@ -258,3 +278,4 @@ Dim l_lngFilenames As Long
     End With
     Err.Clear
 End Sub
+

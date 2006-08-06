@@ -268,7 +268,7 @@ On Error Resume Next
     Set m_lyrParent = Nothing
     Set m_engEngine = Nothing
     Set mvarBuffer = Nothing
-    m_colTileData.Clear
+    If Not (m_colTileData Is Nothing) Then m_colTileData.Clear
     Set m_colTileData = Nothing
 End Sub
 

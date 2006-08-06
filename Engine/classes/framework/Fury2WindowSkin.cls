@@ -62,6 +62,7 @@ On Error Resume Next
 End Function
 
 Public Property Let Tint(ByVal Color As Long)
+Attribute Tint.VB_Description = "The tint color to apply to the window."
 On Error Resume Next
 Dim l_lngSection As Long
     For l_lngSection = LBound(m_wspParam.TintColors) To UBound(m_wspParam.TintColors)
@@ -70,6 +71,7 @@ Dim l_lngSection As Long
 End Property
 
 Public Property Get SectionTint(Section) As Long
+Attribute SectionTint.VB_Description = "The tint color to apply to a section of the window."
     SectionTint = m_wspParam.TintColors(CLng(Section))
 End Property
 
@@ -78,6 +80,7 @@ Public Property Let SectionTint(Section, Color As Long)
 End Property
 
 Public Property Get BlitMode() As SFXBlitModes
+Attribute BlitMode.VB_Description = "The blend mode to use when drawing the window."
     BlitMode = m_wspParam.RenderMode
 End Property
 
@@ -86,6 +89,7 @@ Public Property Let BlitMode(ByVal Value As SFXBlitModes)
 End Property
 
 Public Property Get EdgeOverlap() As Boolean
+Attribute EdgeOverlap.VB_Description = "If True, edges of the window skin are allowed to overlap with the window."
     EdgeOverlap = m_booEdgeOverlap
 End Property
 
@@ -94,6 +98,7 @@ Public Property Let EdgeOverlap(ByVal Value As Boolean)
 End Property
 
 Public Property Get EdgeOffset(Optional ByVal Edge As Long = 0) As Long
+Attribute EdgeOffset.VB_Description = "The offset of a given edge."
 On Error Resume Next
     If Edge = 0 Then
         EdgeOffset = (m_wspParam.EdgeOffsets(0) + m_wspParam.EdgeOffsets(1) + m_wspParam.EdgeOffsets(2) + m_wspParam.EdgeOffsets(3)) \ 4
@@ -115,6 +120,7 @@ On Error Resume Next
 End Property
 
 Public Property Get BackgroundColor(ByVal Corner As Long) As Long
+Attribute BackgroundColor.VB_Description = "The background color of a given corner of the window, if it has a gradient backdrop."
 On Error Resume Next
     BackgroundColor = m_wspParam.CornerColors(Corner)
 End Property
@@ -125,6 +131,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Overlap() As Long
+Attribute Overlap.VB_Description = "The amount of overlap for all the window's edges."
     Overlap = m_lngEdgeOverlap
 End Property
 
@@ -133,6 +140,7 @@ Public Property Let Overlap(ByVal NewValue As Long)
 End Property
 
 Public Property Let BackgroundMode(ByVal NewValue As Fury2WindowSkinBackgroundModes)
+Attribute BackgroundMode.VB_Description = "The background style of the window."
     m_wspParam.BackgroundMode = NewValue
 End Property
 
@@ -141,6 +149,7 @@ Public Property Get BackgroundMode() As Fury2WindowSkinBackgroundModes
 End Property
 
 Public Property Get Title() As String
+Attribute Title.VB_Description = "The window's title."
 Attribute Title.VB_MemberFlags = "200"
     Title = m_strTitle
 End Property
@@ -150,6 +159,7 @@ Public Property Let Title(NewTitle As String)
 End Property
 
 Public Property Get Author() As String
+Attribute Author.VB_Description = "The window's author."
     Author = m_strAuthor
 End Property
 
@@ -162,6 +172,7 @@ Public Property Get Filename() As String
 End Property
 
 Public Property Get MaskColor() As Long
+Attribute MaskColor.VB_Description = "The mask color to use for masked transparency."
     MaskColor = m_wspParam.MaskColor
 End Property
 
@@ -190,6 +201,7 @@ On Error Resume Next
 End Property
 
 Public Function AdjustRectangle(ByVal Rectangle As Fury2Rect) As Fury2Rect
+Attribute AdjustRectangle.VB_Description = "Adjusts a rectangle to accomodate the edges of a window skin."
 On Error Resume Next
 Dim l_rctRectangle As Fury2Rect
 Dim l_lngMax As Long
@@ -206,6 +218,7 @@ Dim l_lngMax As Long
 End Function
 
 Public Function UnadjustRectangle(ByVal Rectangle As Fury2Rect) As Fury2Rect
+Attribute UnadjustRectangle.VB_Description = "Unadjusts a rectangle to accomodate the edges of a window skin."
 On Error Resume Next
 Dim l_rctRectangle As Fury2Rect
 Dim l_lngMax As Long
@@ -222,6 +235,7 @@ Dim l_lngMax As Long
 End Function
 
 Public Sub Draw(Surface, Rectangle, Optional ByVal Alpha As Single = 1, Optional ByVal SectionFlags As Long = 0)
+Attribute Draw.VB_Description = "Draws a window skin to an image in a given rectangle."
 On Error Resume Next
 Dim l_imgSurface As Fury2Image
 Dim l_rctRectangle As Fury2Rect
@@ -243,6 +257,7 @@ Dim l_rctArea As Rectangle
 End Sub
 
 Sub Create(ByVal Width As Long, ByVal Height As Long, ByVal MiddleWidth As Long, ByVal MiddleHeight As Long)
+Attribute Create.VB_Description = "Creates a new window skin of a given size."
 On Error Resume Next
     Set m_imgImages(WS_TopLeft) = F2Image(Width, Height)
     Set m_imgImages(WS_TopRight) = F2Image(Width, Height)
@@ -262,6 +277,7 @@ On Error Resume Next
 End Sub
 
 Function ImportImage(ByVal Filename, Optional ByVal CornerWidth As Long = 8, Optional ByVal CornerHeight As Long = 8, Optional ByVal MiddleWidth As Long = 48, Optional ByVal MiddleHeight As Long = 48, Optional ByVal MaskColor As Long = 0) As Boolean
+Attribute ImportImage.VB_Description = "Imports an image as a window skin."
 On Error Resume Next
 Dim l_imgFile As Fury2Image
     Set l_imgFile = Engine.LoadImage(Filename, True)
@@ -308,6 +324,7 @@ Dim l_lngBitmaps As Long
 End Sub
 
 Function ImportRWS(ByVal Filename) As Boolean
+Attribute ImportRWS.VB_Description = "Imports a sphere window skin."
 On Error Resume Next
 Dim l_vfSkin As VirtualFile
 Dim l_lngLoadBitmaps As Long
@@ -367,6 +384,7 @@ Dim l_rwsHeader As RWS_Header
 End Function
 
 Function Load(ByRef Filename As String) As Boolean
+Attribute Load.VB_Description = "Loads a window skin."
 On Error Resume Next
 Dim l_strExtension As String
     If InStr(Filename, ".") Then
@@ -385,12 +403,14 @@ Dim l_strExtension As String
 End Function
 
 Function Save(ByVal Filename) As Boolean
+Attribute Save.VB_Description = "Saves a window skin."
 On Error Resume Next
     m_strFilename = Filename
     Save = Engine.SaveToFile(Me, Engine.Filesystem.CreateFile(Filename))
 End Function
 
 Function Duplicate() As Fury2WindowSkin
+Attribute Duplicate.VB_Description = "Creates a copy of this window skin."
 End Function
 
 Private Sub Class_Initialize()
@@ -448,4 +468,5 @@ Dim l_lngImages As Long
         Err.Clear
     End With
 End Sub
+
 

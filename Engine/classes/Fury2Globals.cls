@@ -226,6 +226,7 @@ On Error Resume Next
 End Function
 
 Function Fury2Load(Optional ByVal Parameters As String = "", Optional Mode As Fury2EngineModes = EM_Normal, Optional Notify As Object = Nothing, Optional ByRef Debugger As Fury2Debugger = Nothing, Optional ByRef EngineOut As Fury2Engine = Nothing) As Fury2Engine
+Attribute Fury2Load.VB_Description = "Loads a game into a new engine."
 On Error Resume Next
 Dim l_engNew As Fury2Engine
     LoadError = ""
@@ -496,3 +497,4 @@ Public Property Get Fury2Version() As String
 On Error Resume Next
     Fury2Version = "Fury² " + Choose(App.Major + 1, "Alpha", "Beta", "Release") + " " + CStr(App.Minor) + " Build " + CStr(App.Revision)
 End Property
+

@@ -35,7 +35,9 @@ Option Explicit
 Implements IVirtualFileSaveable
 Implements Fury2Object
 Public StartTime As Double
+Attribute StartTime.VB_VarDescription = "The time when this slider was started."
 Public EndTime As Double
+Attribute EndTime.VB_VarDescription = "The time when this slider will end."
 Private m_booPaused As Boolean
 Private m_dblPausedSince As Double
 Public Engine As Fury2Engine
@@ -46,6 +48,7 @@ On Error Resume Next
 End Function
 
 Public Property Get Paused() As Boolean
+Attribute Paused.VB_Description = "If True, the slider is paused and its progress will not increase until it is unpaused."
 On Error Resume Next
     Paused = m_booPaused
 End Property
@@ -65,6 +68,7 @@ Dim l_dblPausedTime As Double
 End Property
 
 Public Property Get TimeLeft() As Double
+Attribute TimeLeft.VB_Description = "The amount of time left (in seconds) until this slider is finished."
 On Error Resume Next
     If m_booPaused Then
         TimeLeft = EndTime - m_dblPausedSince
@@ -75,6 +79,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Finished() As Boolean
+Attribute Finished.VB_Description = "If True, this slider has finished progressing."
 On Error Resume Next
     If m_booPaused Then
         Finished = False
@@ -84,6 +89,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Progress() As Double
+Attribute Progress.VB_Description = "The progress (0.0 - 1.0) of this slider."
 On Error Resume Next
     If m_booPaused Then
         Progress = (m_dblPausedSince - StartTime) / (EndTime - StartTime)
@@ -95,6 +101,7 @@ On Error Resume Next
 End Property
 
 Public Sub Start(ByVal Length As Double)
+Attribute Start.VB_Description = "Starts the slider progressing for the next Length seconds."
 On Error Resume Next
     m_booPaused = False
     StartTime = Engine.HiTimer
@@ -116,3 +123,4 @@ On Error Resume Next
         File.Save EndTime
     File.WriteSegment_End
 End Sub
+

@@ -506,10 +506,12 @@ End Sub
 
 Friend Property Set Layers(ByVal vData As Fury2MapLayers)
 Attribute Layers.VB_Description = "The map's layers."
+On Error Resume Next
     Set m_lyrLayers = vData
 End Property
 
 Public Property Get Layers() As Fury2MapLayers
+On Error Resume Next
     Set Layers = m_lyrLayers
 End Property
 

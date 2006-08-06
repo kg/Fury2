@@ -13,15 +13,19 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 Public Blocking As Boolean
 Public Object
+Attribute Object.VB_VarDescription = "The object that contains the method to invoke."
 Public Method As String
+Attribute Method.VB_VarDescription = "The name of the method to invoke."
 Public MethodID As Long
 Public BoundParameters As Variant
+Attribute BoundParameters.VB_VarDescription = "The parameters to pass at the end of the parameter list when invoking the method."
 Private m_lngBlocked As Long
 Private m_engEngine As Fury2Engine
 Private m_seEngine As ScriptEngine
 Private m_strContextName As String
 
 Public Function Duplicate() As Fury2Event
+Attribute Duplicate.VB_Description = "Creates a copy of this event."
 On Error Resume Next
     Set Duplicate = New Fury2Event
     With Duplicate
@@ -52,15 +56,22 @@ End Property
 Public Sub ResolveMethod()
 On Error Resume Next
 Dim l_objObject As Object
-    If VarType(Object) = vbString Then
+    If m_seEngine Is Nothing Then
+        MethodID = -1
+    ElseIf VarType(Object) = vbString Then
         MethodID = -1
     Else
         Set l_objObject = Object
-        MethodID = m_seEngine.ResolveMember(l_objObject, Method)
+        If l_objObject Is Nothing Then
+            MethodID = -1
+        Else
+            MethodID = m_seEngine.ResolveMember(l_objObject, Method)
+        End If
     End If
 End Sub
 
 Public Sub Bind(ByRef Meth As String, Optional ByVal Obj = Nothing, Optional ByRef BindParameters As Variant = Nothing)
+Attribute Bind.VB_Description = "Binds this event to a new method."
 On Error Resume Next
     Method = Meth
     If VarType(Obj) = vbString Then
@@ -78,6 +89,7 @@ On Error Resume Next
 End Sub
 
 Public Function Invoke(ParamArray Parameters() As Variant) As Variant
+Attribute Invoke.VB_Description = "Invokes this event, optionally passing some parameters."
 On Error Resume Next
 Dim l_objObject As Object
 Dim l_varParameters() As Variant
@@ -204,3 +216,4 @@ On Error Resume Next
     Set Object = Nothing
     BoundParameters = Array()
 End Sub
+

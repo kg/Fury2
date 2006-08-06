@@ -14,10 +14,15 @@ Attribute VB_Exposed = True
 Option Explicit
 Implements Fury2Plugin
 Public Channel As Channel
+Attribute Channel.VB_VarDescription = "The channel to apply the volume fade to."
 Public VolumeStart As Single
+Attribute VolumeStart.VB_VarDescription = "The volume at which the fade should start."
 Public VolumeEnd As Single
+Attribute VolumeEnd.VB_VarDescription = "The volume at which the fade should end."
 Public Slider As Fury2Slider
+Attribute Slider.VB_VarDescription = "The slider controlling the fade."
 Public EndEvent As Fury2Event
+Attribute EndEvent.VB_VarDescription = "This event will be invoked when the fade completes."
 Private m_engEngine As Fury2Engine
 
 Friend Sub SetEngine(Engine As Fury2Engine)
@@ -98,3 +103,4 @@ End Sub
 
 Private Sub Fury2Plugin_Update()
 End Sub
+

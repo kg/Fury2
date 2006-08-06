@@ -446,6 +446,20 @@ Dim l_lngResult As Long
     Err.Clear
 End Function
 
+Friend Sub CullDead()
+On Error Resume Next
+Dim l_lngSprites As Long
+    If mCol.Count = 0 Then Exit Sub
+    l_lngSprites = 1
+    Do While l_lngSprites <= mCol.Count
+        If mCol(l_lngSprites) Is Nothing Then
+            mCol.Remove l_lngSprites
+        Else
+            l_lngSprites = l_lngSprites + 1
+        End If
+    Loop
+End Sub
+
 Public Sub Update(Map As Fury2Map, Optional CLayer As Long = 1, Optional SetIndex As Boolean = False)
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
@@ -466,6 +480,7 @@ Dim l_lngSprites As Long
             l_lngSprites = l_lngSprites + 1
         End With
     Next l_sprSprite
+    CullDead
 End Sub
 
 Public Sub Render(Surface As Fury2Image, Optional ByVal XOffset As Long = 0, Optional ByVal YOffset As Long = 0)
@@ -699,6 +714,26 @@ Dim l_sprFind As Fury2Sprite
     If mCol.Count < 1 Then Exit Sub
     Err.Clear
 End Sub
+
+Public Sub DelayRemove(vntIndexKey As Variant)
+On Error Resume Next
+Dim m_lngSprites As Long, m_lngIndex As Long
+Dim l_sprSprite As Fury2Sprite
+Dim l_sprFind As Fury2Sprite
+    If mCol.Count < 1 Then Exit Sub
+    m_lngSprites = Find(vntIndexKey)
+    Set l_sprFind = mCol(m_lngSprites)
+    If mvarParent Is Nothing Then
+    Else
+        mvarParent.Sprites.Remove l_sprFind
+    End If
+    mCol.Add Nothing, , , m_lngSprites
+    mCol.Remove m_lngSprites
+    mvarDirty = True
+    If mCol.Count < 1 Then Exit Sub
+    Err.Clear
+End Sub
+
 
 Public Property Get NewEnum() As IUnknown
 Attribute NewEnum.VB_UserMemId = -4

@@ -203,7 +203,6 @@ On Error Resume Next
 End Property
 
 Public Property Let RenderTarget(ByVal Index As Long)
-Attribute RenderTarget.VB_Description = ""
 On Error Resume Next
     m_spParam.Params.RenderTarget = Index - 1
 End Property
@@ -233,7 +232,6 @@ Attribute Pushable.VB_Description = "If True, other sprites can apply force to t
 End Property
 
 Public Property Let Pushable(ByVal NewValue As Boolean)
-Attribute Pushable.VB_Description = ""
     m_spParam.Stats.Pushable = CByte(Abs(CLng(NewValue)))
 End Property
 
@@ -243,7 +241,6 @@ Attribute CanPush.VB_Description = "If True, this sprite can apply force to othe
 End Property
 
 Public Property Let CanPush(ByVal NewValue As Boolean)
-Attribute CanPush.VB_Description = ""
     m_spParam.Stats.CanPush = CByte(Abs(CLng(NewValue)))
 End Property
 
@@ -253,7 +250,6 @@ Attribute VelocityMultiplier.VB_Description = "*"
 End Property
 
 Public Property Let VelocityMultiplier(ByVal NewValue As Single)
-Attribute VelocityMultiplier.VB_Description = ""
     m_spParam.Velocity.VM = NewValue
 End Property
 
@@ -268,7 +264,6 @@ Attribute Color.VB_Description = "The sprite's tint color.{Color}"
 End Property
 
 Public Property Let Color(ByVal NewColor As Long)
-Attribute Color.VB_Description = ""
     m_spParam.Params.Color = NewColor
 End Property
 
@@ -287,7 +282,6 @@ On Error Resume Next
 End Property
 
 Public Property Let VelocityDecay(ByVal NewValue As Single)
-Attribute VelocityDecay.VB_Description = ""
 On Error Resume Next
     m_sngVelocityDecay = NewValue
 End Property
@@ -303,7 +297,6 @@ On Error Resume Next
 End Property
 
 Public Property Let VelocityAccel(ByVal NewValue As Single)
-Attribute VelocityAccel.VB_Description = ""
 On Error Resume Next
     m_sngVelocityAccel = NewValue
 End Property
@@ -320,7 +313,6 @@ Attribute AIUpdateRate.VB_Description = "The number of frames between each time 
 End Property
 
 Public Property Let AIUpdateRate(ByVal NewValue As Long)
-Attribute AIUpdateRate.VB_Description = ""
 On Error Resume Next
     m_lngAIUpdateRate = Abs(NewValue)
 End Property
@@ -346,7 +338,6 @@ Attribute AttachX.VB_Description = "*"
 End Property
 
 Public Property Get AttachX() As Single
-Attribute AttachX.VB_Description = ""
     AttachX = m_sngAttachX
 End Property
 
@@ -356,7 +347,6 @@ Attribute AttachY.VB_Description = "*"
 End Property
 
 Public Property Get AttachY() As Single
-Attribute AttachY.VB_Description = ""
     AttachY = m_sngAttachY
 End Property
 
@@ -366,7 +356,6 @@ Attribute AttachH.VB_Description = "*"
 End Property
 
 Public Property Get AttachH() As Single
-Attribute AttachH.VB_Description = ""
     AttachH = m_sngAttachH
 End Property
 
@@ -376,7 +365,6 @@ Attribute AttachV.VB_Description = "*"
 End Property
 
 Public Property Get AttachV() As Single
-Attribute AttachV.VB_Description = ""
     AttachV = m_sngAttachV
 End Property
 
@@ -421,7 +409,6 @@ Attribute WalkState.VB_Description = "The state used while the sprite is in moti
 End Property
 
 Public Property Let WalkState(ByVal NewState As Long)
-Attribute WalkState.VB_Description = ""
 On Error Resume Next
     If State = m_lngWalkState Then
         State = NewState
@@ -435,7 +422,6 @@ Attribute IdleState.VB_Description = "The state used when the sprite is not in m
 End Property
 
 Public Property Let IdleState(ByVal NewState As Long)
-Attribute IdleState.VB_Description = ""
 On Error Resume Next
     If State = m_lngIdleState Then
         State = NewState
@@ -454,7 +440,6 @@ Attribute CastShadow.VB_Description = "If True, the sprite will cast a shadow wh
 End Property
 
 Public Property Let CastShadow(ByVal NewValue As Boolean)
-Attribute CastShadow.VB_Description = ""
     m_spParam.Params.SpecialFX = (m_spParam.Params.SpecialFX And (Not 4)) Or (IIf(NewValue, 4, 0))
 End Property
 
@@ -464,7 +449,6 @@ Attribute DisplayRotation.VB_Description = "If True, the sprite will be rotated 
 End Property
 
 Public Property Let DisplayRotation(ByVal Value As Boolean)
-Attribute DisplayRotation.VB_Description = ""
     m_booDisplayRotation = Value
 End Property
 
@@ -474,7 +458,6 @@ Attribute RelativeRotation.VB_Description = "If DisplayRotation is set, causes t
 End Property
 
 Public Property Let RelativeRotation(ByVal Value As Boolean)
-Attribute RelativeRotation.VB_Description = ""
     m_booRelativeRotation = Value
 End Property
 
@@ -484,7 +467,6 @@ Attribute Destroyed.VB_Description = "*This value is true if the sprite has been
 End Property
 
 Public Function Class_ToString() As String
-Attribute Class_ToString.VB_Description = ""
 On Error Resume Next
     Class_ToString = "Sprite: " & m_strName
 End Function
@@ -563,7 +545,6 @@ Attribute Alpha.VB_Description = "The opacity of the sprite."
 End Property
 
 Public Property Let Alpha(ByVal NewValue As Single)
-Attribute Alpha.VB_Description = ""
 On Error Resume Next
     m_spParam.Params.Alpha = NewValue
 End Property
@@ -574,7 +555,6 @@ Attribute Angle.VB_Description = "The direction the sprite is facing. (Also affe
 End Property
 
 Public Property Let Angle(ByVal NewValue As Single)
-Attribute Angle.VB_Description = ""
 On Error Resume Next
     If NewValue = m_spParam.Velocity.B Then Exit Property
     m_spParam.Velocity.B = NewValue
@@ -608,7 +588,6 @@ Attribute AnimateWhileMoving.VB_Description = "If True, the sprite will animate 
 End Property
 
 Public Property Let AnimateWhileMoving(ByVal NewValue As Boolean)
-Attribute AnimateWhileMoving.VB_Description = ""
     m_booAnimateWhileMoving = NewValue
 End Property
 
@@ -618,7 +597,6 @@ Attribute AnimateWhileStopped.VB_Description = "If True, the sprite will animate
 End Property
 
 Public Property Let AnimateWhileStopped(ByVal NewValue As Boolean)
-Attribute AnimateWhileStopped.VB_Description = ""
     m_booAnimateWhileStopped = NewValue
 End Property
 
@@ -628,7 +606,6 @@ Attribute AnimationDelay.VB_Description = "*The delay accumulator for animations
 End Property
 
 Public Property Let AnimationDelay(ByVal NewValue As Single)
-Attribute AnimationDelay.VB_Description = ""
     m_sngAnimationDelay = NewValue
 End Property
 
@@ -638,7 +615,6 @@ Attribute AnimationDirection.VB_Description = "*The direction animations are cur
 End Property
 
 Public Property Let AnimationDirection(ByVal NewValue As Long)
-Attribute AnimationDirection.VB_Description = ""
     If (NewValue = 0) Then Exit Property
     m_lngAnimationDirection = NewValue
 End Property
@@ -649,7 +625,6 @@ Attribute Class.VB_Description = "The sprite's class. Used for behaviors."
 End Property
 
 Public Property Get Class() As Fury2SpriteClasses
-Attribute Class.VB_Description = ""
     Class = m_spParam.Type
 End Property
 
@@ -857,7 +832,7 @@ Dim l_lyrLayer As Fury2MapLayer
         End If
     End If
     For Each l_lyrLayer In m_mapMap.Layers
-        l_lyrLayer.Sprites.Remove Me
+        l_lyrLayer.Sprites.DelayRemove Me
     Next l_lyrLayer
     m_mapMap.Sprites.Remove Me
     Free
@@ -2106,7 +2081,9 @@ Private Sub UpdatePath()
 On Error Resume Next
 Dim l_sngPathDistance As Single
 Dim l_lngRCX As Long, l_lngRCY As Long, l_lngRPX As Long, l_lngRPY As Long
+    If m_pthPath Is Nothing Then Exit Sub
     If m_pthPath.Index <= m_pthPath.Count Then
+        If m_pthPath.Current Is Nothing Then Exit Sub
         With m_pthPath.Current
             If .WaitRemainder > 0 Then
                 .WaitRemainder = .WaitRemainder - 1
@@ -2159,7 +2136,9 @@ On Error Resume Next
 Dim l_lngOldFrame As Long
 Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
     l_lngOldFrame = m_lngFrame
-    If m_fraFrame Is Nothing Then
+    If m_posPose Is Nothing Then
+    ElseIf m_posPose.Frames Is Nothing Then
+    ElseIf m_fraFrame Is Nothing Then
     Else
         If (m_spParam.Events.Moved And m_booAnimateWhileMoving) Or ((Not m_spParam.Events.Moved) And m_booAnimateWhileStopped) Then
             m_sngAnimationDelay = m_sngAnimationDelay + (1 * IIf(AnimationMultiplier = -32767, Engine.AnimationMultiplier, AnimationMultiplier))
@@ -2173,6 +2152,13 @@ Dim l_lngPrePose As Long, l_lngPreFrame As Long, l_lngPreState As Long
                 l_lngPreState = m_lngState
                 m_posPose.Frames(m_lngFrame).RunScript Me
                 If (l_lngPreFrame <> m_lngFrame) Or (l_lngPrePose <> m_lngPose) Or (l_lngPreState <> m_lngState) Then
+                    Exit Sub
+                End If
+                If m_posPose Is Nothing Then
+                    Exit Sub
+                ElseIf m_posPose.Frames Is Nothing Then
+                    Exit Sub
+                ElseIf m_fraFrame Is Nothing Then
                     Exit Sub
                 End If
                 If m_posPose.Frames.Count = 1 Then

@@ -55,6 +55,7 @@ Public Property Get Engine() As Fury2Engine
 End Property
 
 Public Property Let OneShot(ByVal vData As Boolean)
+Attribute OneShot.VB_Description = "If True, this timer will only fire once."
     mvarOneShot = vData
 End Property
 
@@ -63,6 +64,7 @@ Public Property Get OneShot() As Boolean
 End Property
 
 Public Property Let Realtime(ByVal vData As Boolean)
+Attribute Realtime.VB_Description = "If True, this timer will fire once for every Delay milliseconds that elapse."
     mvarRealtime = Realtime
 End Property
 
@@ -71,6 +73,7 @@ Public Property Get Realtime() As Boolean
 End Property
 
 Public Property Let GameOnly(ByVal vData As Boolean)
+Attribute GameOnly.VB_Description = "If True, this timer will only fire while the game is not paused."
     mvarGameOnly = GameOnly
 End Property
 
@@ -79,6 +82,7 @@ Public Property Get GameOnly() As Boolean
 End Property
 
 Public Property Let Enabled(ByVal vData As Boolean)
+Attribute Enabled.VB_Description = "If True, this timer is enabled."
     mvarEnabled = vData
     mvarLastFiring = CLng(Engine.HiTimer * 1000)
 End Property
@@ -88,6 +92,7 @@ Public Property Get Enabled() As Boolean
 End Property
 
 Public Property Let Delay(ByVal vData As Long)
+Attribute Delay.VB_Description = "The number of milliseconds between timer firings."
     mvarDelay = vData
 End Property
 
@@ -96,6 +101,7 @@ Public Property Get Delay() As Long
 End Property
 
 Public Property Let FireCode(ByVal vData As String)
+Attribute FireCode.VB_Description = "The code that will be executed when this timer fires."
     mvarFireCode = vData
 End Property
 
@@ -104,11 +110,15 @@ Public Property Get FireCode() As String
 End Property
 
 Public Sub Update()
+Attribute Update.VB_Description = "Updates the timer."
 On Error Resume Next
 Dim m_lngTime As Long
 Dim m_lngUpdatesDue As Long
 Dim m_lngUpdates As Long
     If Not mvarEnabled Then Exit Sub
+    If mvarLastFiring = 0 Then
+        mvarLastFiring = CLng(Engine.HiTimer * 1000)
+    End If
     Err.Clear
     m_lngTime = CLng(Engine.HiTimer * 1000)
     If mvarRealtime Then
@@ -149,9 +159,9 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error Resume Next
-    mvarLastFiring = Engine.HiTimer * 1000
 End Sub
 
 Private Sub Class_Terminate()
 On Error Resume Next
 End Sub
+

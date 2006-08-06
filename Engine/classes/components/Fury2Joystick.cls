@@ -78,6 +78,7 @@ End Enum
 
 Public Engine As Fury2Engine
 Public Bindings As Fury2JoystickBindings
+Attribute Bindings.VB_VarDescription = "The joystick's control bindings."
 Private m_ddcCaps As DIDEVCAPS
 Private m_devDevice As DirectInputDevice8
 Private m_djsState As DIJOYSTATE2, m_djsOldState As DIJOYSTATE2
@@ -93,6 +94,7 @@ Private m_lngHigh As Long
 Implements DirectXEvent8
 
 Public Property Get Enabled() As Boolean
+Attribute Enabled.VB_Description = "If True, this joystick will poll for updates and fire events."
     Enabled = m_booEnabled
 End Property
 
@@ -101,6 +103,7 @@ Public Property Let Enabled(ByVal NewValue As Boolean)
 End Property
 
 Public Function AddBinding(Name, Optional BoundControl As Fury2InputControl = Nothing) As Fury2JoystickBinding
+Attribute AddBinding.VB_Description = "Creates a new joystick binding."
 On Error Resume Next
 Dim m_jbBinding As Fury2JoystickBinding
     Set m_jbBinding = New Fury2JoystickBinding
@@ -115,6 +118,7 @@ Dim m_jbBinding As Fury2JoystickBinding
 End Function
 
 Public Function Axes(ByVal Index As Long) As Long
+Attribute Axes.VB_Description = "Returns the state of a joystick axis."
 On Error Resume Next
     If m_devDevice Is Nothing Then Axes = -1: Exit Function
     If Index >= m_ddcCaps.lAxes Then Axes = -1: Exit Function
@@ -126,6 +130,7 @@ On Error Resume Next
 End Function
 
 Public Function AxisName(ByVal Axis As Long) As String
+Attribute AxisName.VB_Description = "Returns the name of a joystick axis."
 On Error Resume Next
     If Axis < 1 Or Axis >= AX_Max Then
         AxisName = "Unknown Axis"
@@ -139,10 +144,12 @@ On Error Resume Next
 End Function
 
 Public Property Get BindingMenu() As Fury2Menu
+Attribute BindingMenu.VB_Description = "Creates a menu containing joystick bindings."
     Set BindingMenu = m_mnuBindings
 End Property
 
 Public Function Bound(ByVal BindType As Long, ByVal BindIndex As Long) As Boolean
+Attribute Bound.VB_Description = "Returns True if the specified binding is enabled."
 On Error Resume Next
 Dim l_bndBinding As Fury2JoystickBinding
     For Each l_bndBinding In Bindings
@@ -156,11 +163,13 @@ Dim l_bndBinding As Fury2JoystickBinding
 End Function
 
 Public Function ButtonName(ByVal Button As Long) As String
+Attribute ButtonName.VB_Description = "Returns the name of a button."
 On Error Resume Next
     ButtonName = CStr("Button " + CStr(CLng(Button + 1)))
 End Function
 
 Public Function Buttons(ByVal Button As Long) As Long
+Attribute Buttons.VB_Description = "Returns the state of a button."
 On Error Resume Next
     If m_devDevice Is Nothing Then Buttons = -1: Exit Function
     If Button >= m_ddcCaps.lButtons Then Buttons = -1: Exit Function
@@ -170,6 +179,7 @@ On Error Resume Next
 End Function
 
 Public Sub CancelConfig()
+Attribute CancelConfig.VB_Description = "Cancels the joystick configuration mode."
 On Error Resume Next
     With Engine
         .EnableObjectEvents = False
@@ -184,6 +194,7 @@ On Error Resume Next
 End Sub
 
 Public Sub ChangeConfig(ByVal Index As Long)
+Attribute ChangeConfig.VB_Description = "Changes a joystick configuration."
 On Error Resume Next
 Dim m_lngIndex As Long
     m_lngIndex = CLng(Index)
@@ -228,6 +239,7 @@ On Error Resume Next
 End Sub
 
 Public Property Get DescriptionWindow() As Fury2MessageWindow
+Attribute DescriptionWindow.VB_Description = "Returns a message window describing the selected joystick binding."
     Set DescriptionWindow = m_msgText
 End Property
 
@@ -297,6 +309,7 @@ Private Sub Fury2Plugin_Update()
 End Sub
 
 Public Sub HideConfig()
+Attribute HideConfig.VB_Description = "Hides the joystick configuration."
 On Error Resume Next
     With Engine
         .EnableObjectEvents = False
@@ -323,6 +336,7 @@ On Error Resume Next
 End Sub
 
 Public Function OldAxes(ByVal Index As Long) As Long
+Attribute OldAxes.VB_Description = "Returns the previous state of an axis."
 On Error Resume Next
     If m_devDevice Is Nothing Then OldAxes = -1: Exit Function
     If Index >= m_ddcCaps.lAxes Then OldAxes = -1: Exit Function
@@ -334,6 +348,7 @@ On Error Resume Next
 End Function
 
 Public Function OldButtons(ByVal Button As Long) As Long
+Attribute OldButtons.VB_Description = "Returns the previous state of a button."
 On Error Resume Next
     If m_devDevice Is Nothing Then OldButtons = -1: Exit Function
     If Button >= m_ddcCaps.lButtons Then OldButtons = -1: Exit Function
@@ -343,6 +358,7 @@ On Error Resume Next
 End Function
 
 Public Function OldPOVs(ByVal Index As Long) As Long
+Attribute OldPOVs.VB_Description = "Returns the previous state of a point-of-view hat."
 On Error Resume Next
     If m_devDevice Is Nothing Then OldPOVs = -1: Exit Function
     If Index >= m_ddcCaps.lPOVs Then OldPOVs = -1: Exit Function
@@ -356,6 +372,7 @@ Friend Function OldState() As DIJOYSTATE2
 End Function
 
 Sub Poll()
+Attribute Poll.VB_Description = "Polls for updates."
 On Error Resume Next
 Dim m_lngItem As Long
 Dim m_booDone As Boolean
@@ -410,11 +427,13 @@ Dim m_booDone As Boolean
 End Sub
 
 Public Function POVName(ByVal Direction As Long) As String
+Attribute POVName.VB_Description = "Returns the name of a point-of-view hat."
 On Error Resume Next
     POVName = "POV Hat @ " + CStr(CLng(Direction / 1000)) + " Degrees"
 End Function
 
 Public Function POVs(ByVal Index As Long) As Long
+Attribute POVs.VB_Description = "Returns the state of a point-of-view hat."
 On Error Resume Next
     If m_devDevice Is Nothing Then POVs = -1: Exit Function
     If Index >= m_ddcCaps.lPOVs Then POVs = -1: Exit Function
@@ -424,10 +443,12 @@ On Error Resume Next
 End Function
 
 Public Property Get PromptWindow() As Fury2MessageWindow
+Attribute PromptWindow.VB_Description = "Returns a prompt window."
     Set PromptWindow = m_msgPrompt
 End Property
 
 Public Sub ShowConfig()
+Attribute ShowConfig.VB_Description = "Shows the joystick configuration."
 On Error Resume Next
     InitConfig
     UpdateConfig
@@ -488,6 +509,7 @@ On Error Resume Next
 End Sub
 
 Public Sub UpdateConfig()
+Attribute UpdateConfig.VB_Description = "Updates configuration."
 On Error Resume Next
 Dim m_lngBindings As Long, m_bndBinding As Fury2JoystickBinding
     With m_mnuBindings
@@ -507,9 +529,12 @@ Private Sub Fury2Plugin_OutputPluginChanged()
 End Sub
 
 Public Property Get AxisLow() As Long
+Attribute AxisLow.VB_Description = "Returns the minimum value of an axis."
     AxisLow = m_lngLow
 End Property
 
 Public Property Get AxisHigh() As Long
+Attribute AxisHigh.VB_Description = "Returns the maximum value of an axis."
     AxisHigh = m_lngHigh
 End Property
+

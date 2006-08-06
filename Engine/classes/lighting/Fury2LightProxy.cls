@@ -64,6 +64,7 @@ Private m_engEngine As Fury2Engine
 Public Sub UpdateAttachment()
 On Error Resume Next
 Dim l_sprSprite As Fury2Sprite
+    If m_llParent Is Nothing Then Exit Sub
     Set l_sprSprite = m_llParent.Layer.Sprites(mvarAttachTo)
     If l_sprSprite Is Nothing Then
         Set l_sprSprite = m_llParent.Layer.Sprites(CLng(mvarAttachTo))
@@ -72,6 +73,7 @@ Dim l_sprSprite As Fury2Sprite
 End Sub
 
 Public Property Get Rectangle() As Fury2Rect
+Attribute Rectangle.VB_Description = "The rectangle of this light source."
 On Error Resume Next
 Dim l_sngX1 As Single, l_sngY1 As Single, l_sngX2 As Single, l_sngY2 As Single
 Dim l_sngW As Single, l_sngH As Single
@@ -94,6 +96,9 @@ End Property
 Friend Sub SetParent(ByRef Parent As Fury2LayerLighting)
 On Error Resume Next
     Set m_llParent = Parent
+    If Not (m_llParent Is Nothing) Then
+        Set m_engEngine = m_llParent.Layer.Parent.Engine
+    End If
 End Sub
 
 Friend Sub SetEngine(ByRef Engine As Fury2Engine)
@@ -111,6 +116,7 @@ On Error Resume Next
 End Sub
 
 Public Property Get AttachTo() As String
+Attribute AttachTo.VB_Description = "The name of the sprite to attach this light source to when the map loads."
 On Error Resume Next
     AttachTo = mvarAttachTo
 End Property
@@ -122,6 +128,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Alpha() As Single
+Attribute Alpha.VB_Description = "The opacity of this light source."
 On Error Resume Next
     Alpha = mvarAlpha
 End Property
@@ -155,6 +162,7 @@ Dim l_lngCacheWidth As Long, l_lngCacheHeight As Long
 End Sub
 
 Public Property Get EnableCache() As Boolean
+Attribute EnableCache.VB_Description = "If True, this light source will be cached when possible. Be aware that caching uses additional memory."
     EnableCache = mvarEnableCache
 End Property
 
@@ -172,6 +180,7 @@ Friend Property Let CacheValid(NewValue As Boolean)
 End Property
 
 Public Property Set Image(ByVal NewValue As Fury2Image)
+Attribute Image.VB_Description = "The image used by this light source. Allows specialized bitmap lighting."
     Set mvarImage = NewValue
 End Property
 
@@ -180,6 +189,7 @@ Public Property Get Image() As Fury2Image
 End Property
 
 Public Property Get ImageFilename() As String
+Attribute ImageFilename.VB_Description = "The filename of the image to use for this lightsource. Loaded at startup."
     ImageFilename = mvarImageFilename
 End Property
 
@@ -194,6 +204,7 @@ Public Property Get Cache() As Fury2Image
 End Property
 
 Public Property Get Name() As String
+Attribute Name.VB_Description = "The name of this light source."
     Name = mvarName
 End Property
 
@@ -202,6 +213,7 @@ Public Property Let Name(ByRef Value As String)
 End Property
 
 Public Property Get Fuzziness() As Long
+Attribute Fuzziness.VB_Description = "The fuzziness level of this light source if it is directional."
     Fuzziness = mvarFuzziness
 End Property
 
@@ -210,6 +222,7 @@ Public Property Let Fuzziness(ByVal NewValue As Long)
 End Property
 
 Public Sub Attach(ByVal Sprite As Fury2Sprite)
+Attribute Attach.VB_Description = "Attaches this light source to a sprite."
 On Error Resume Next
     Set mvarAttachedSprite = Sprite
 End Sub
@@ -246,7 +259,7 @@ On Error Resume Next
         End If
         .CacheValid = CByte(Abs(mvarCacheValid))
         .Image = 0
-        .Image = mvarImage.Handle
+        If Not (mvarImage Is Nothing) Then .Image = mvarImage.Handle
         .ImageAlignX = mvarImageAlignX
         .ImageAlignY = mvarImageAlignY
     End With
@@ -274,15 +287,18 @@ On Error Resume Next
 End Property
 
 Public Property Let Y(ByVal vData As Single)
+Attribute Y.VB_Description = "The Y coordinate of this light source."
     mvarY = vData
     UpdateCache
 End Property
 
 Public Property Get Y() As Single
+Attribute Y.VB_Description = "T"
     Y = mvarY
 End Property
 
 Public Property Let AttachX(ByVal vData As Single)
+Attribute AttachX.VB_Description = "The attachment X coordinate."
     mvarAttachX = vData
     UpdateCache
 End Property
@@ -292,6 +308,7 @@ Public Property Get AttachX() As Single
 End Property
 
 Public Property Let AttachY(ByVal vData As Single)
+Attribute AttachY.VB_Description = "The attachment Y coordinate."
     mvarAttachY = vData
     UpdateCache
 End Property
@@ -301,6 +318,7 @@ Public Property Get AttachY() As Single
 End Property
 
 Public Property Let ImageAlignX(ByVal vData As Long)
+Attribute ImageAlignX.VB_Description = "The X alignment of the image if this is a bitmap light."
     mvarImageAlignX = vData
     UpdateCache
 End Property
@@ -310,6 +328,7 @@ Public Property Get ImageAlignX() As Long
 End Property
 
 Public Property Let ImageAlignY(ByVal vData As Long)
+Attribute ImageAlignY.VB_Description = "The Y alignment of the image if this is a bitmap light."
     mvarImageAlignY = vData
     UpdateCache
 End Property
@@ -337,6 +356,7 @@ Public Property Get AttachV() As Single
 End Property
 
 Public Property Let X(ByVal vData As Single)
+Attribute X.VB_Description = "The X coordinate of the light."
     mvarX = vData
     UpdateCache
 End Property
@@ -346,6 +366,7 @@ Public Property Get X() As Single
 End Property
 
 Public Property Let Visible(ByVal vData As Boolean)
+Attribute Visible.VB_Description = "Determines whether this light is visible."
     mvarVisible = vData
 End Property
 
@@ -354,6 +375,7 @@ Public Property Get Visible() As Boolean
 End Property
 
 Public Property Let Spread(ByVal vData As Single)
+Attribute Spread.VB_Description = "The spread angle of the light. If <= 90, this is a directional light, otherwise it is a round light."
     mvarSpread = vData
     UpdateCache
 End Property
@@ -372,6 +394,7 @@ Public Property Get LightSize() As Single
 End Property
 
 Public Property Let SpinRate(ByVal vData As Single)
+Attribute SpinRate.VB_Description = "The rate at which this light should rotate if directional."
     mvarSpinRate = vData
 End Property
 
@@ -388,6 +411,7 @@ Public Property Get NoiseOpacity() As Single
 End Property
 
 Public Property Let FlickerLevel(ByVal vData As Single)
+Attribute FlickerLevel.VB_Description = "The amount of flickering this light should exhibit."
     mvarFlickerLevel = vData
 End Property
 
@@ -396,6 +420,7 @@ Public Property Get FlickerLevel() As Single
 End Property
 
 Public Property Let FalloffDistance(ByVal vData As Long)
+Attribute FalloffDistance.VB_Description = "The radius of the light."
     mvarFalloffDistance = vData
     UpdateCache
 End Property
@@ -415,6 +440,7 @@ Public Property Get Color() As Long
 End Property
 
 Public Property Get AttachedSprite() As Fury2Sprite
+Attribute AttachedSprite.VB_Description = "The sprite this light is attached to."
     Set AttachedSprite = mvarAttachedSprite
 End Property
 
@@ -424,6 +450,7 @@ Public Property Let Angle(ByVal vData As Single)
 End Property
 
 Public Property Get Angle() As Single
+Attribute Angle.VB_Description = "The angle this light is pointing towards."
     Angle = mvarAngle
 End Property
 
@@ -495,3 +522,4 @@ On Error Resume Next
         .WriteSegment_End
     End With
 End Sub
+

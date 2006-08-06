@@ -23,7 +23,9 @@ Attribute m_colGenerators.VB_VarHelpID = -1
 Private WithEvents m_colModifiers As Fury2Collection
 Attribute m_colModifiers.VB_VarHelpID = -1
 Public Framerate As Double
+Attribute Framerate.VB_VarDescription = "The framerate at which particle updates should occur."
 Public RenderLayer As Long
+Attribute RenderLayer.VB_VarDescription = "The layer where rendering should occur."
 Private m_mapMap As Fury2Map
 Private m_lngSprites() As Long
 Private m_lngHandle As Long
@@ -46,11 +48,13 @@ On Error Resume Next
 End Sub
 
 Public Property Get Count(Optional ByVal ParticleType As Long = -1) As Long
+Attribute Count.VB_Description = "The number of particles (optionally of a specific type) currently alive."
 On Error Resume Next
     Count = GetParticleCount(m_lngHandle, ParticleType)
 End Property
 
 Public Function AddType() As Fury2ParticleType
+Attribute AddType.VB_Description = "Defines a new type and returns it."
 On Error Resume Next
 Dim l_typType As Fury2ParticleType
     Set l_typType = New Fury2ParticleType
@@ -59,6 +63,7 @@ Dim l_typType As Fury2ParticleType
 End Function
 
 Public Function AddGenerator() As Fury2ParticleGenerator
+Attribute AddGenerator.VB_Description = "Defines a new generator and returns it."
 On Error Resume Next
 Dim l_genGenerator As Fury2ParticleGenerator
     Set l_genGenerator = New Fury2ParticleGenerator
@@ -67,6 +72,7 @@ Dim l_genGenerator As Fury2ParticleGenerator
 End Function
 
 Public Function AddModifier() As Fury2ParticleModifier
+Attribute AddModifier.VB_Description = "Defines a new modifier and returns it."
 On Error Resume Next
 Dim l_modModifier As Fury2ParticleModifier
     Set l_modModifier = New Fury2ParticleModifier
@@ -75,21 +81,25 @@ Dim l_modModifier As Fury2ParticleModifier
 End Function
 
 Public Property Get Types() As Fury2Collection
+Attribute Types.VB_Description = "The types currently defined."
 On Error Resume Next
     Set Types = m_colTypes
 End Property
 
 Public Property Get Generators() As Fury2Collection
+Attribute Generators.VB_Description = "The generators currently defined."
 On Error Resume Next
     Set Generators = m_colGenerators
 End Property
 
 Public Property Get Modifiers() As Fury2Collection
+Attribute Modifiers.VB_Description = "The modifiers currently defined."
 On Error Resume Next
     Set Modifiers = m_colModifiers
 End Property
 
 Public Sub Update()
+Attribute Update.VB_Description = "Updates the particle engine. Note that this is done based on the time elapsed since the previous update."
 On Error Resume Next
 Dim l_genGenerator As Fury2ParticleGenerator
 Dim l_dblNow As Double
@@ -104,6 +114,7 @@ Dim l_dblElapsed As Double
 End Sub
 
 Public Sub Render(ByVal Surface As Fury2Image, Optional ByVal XOffset As Single = 0, Optional ByVal YOffset As Single = 0)
+Attribute Render.VB_Description = "Renders the particle engine to a surface."
 On Error Resume Next
 Dim l_camCamera As ParticleCamera
 Dim l_lngSurface As Long
@@ -118,6 +129,7 @@ Dim l_lngSurface As Long
 End Sub
 
 Public Property Get Handle() As Long
+Attribute Handle.VB_Description = "R"
 On Error Resume Next
     Handle = m_lngHandle
 End Property
@@ -129,6 +141,7 @@ On Error Resume Next
 End Sub
 
 Public Sub AddCollisionLine(ByVal x1 As Single, ByVal y1 As Single, ByVal x2 As Single, ByVal y2 As Single)
+Attribute AddCollisionLine.VB_Description = "Adds a collision line to the particle engine's collision matrix."
 On Error Resume Next
 End Sub
 
@@ -270,4 +283,5 @@ Dim m_modModifier As Fury2ParticleModifier
     Set m_modModifier = m_colModifiers(Index)
     m_modModifier.RemoveFrom m_lngHandle
 End Sub
+
 

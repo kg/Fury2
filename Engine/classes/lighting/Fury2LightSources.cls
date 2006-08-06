@@ -84,7 +84,7 @@ On Error Resume Next
 Dim l_lngLightSources As Long
 Dim l_objObject As Object, l_strKey As String
 Dim l_litLightSource As Fury2LightSource
-    If mCol.count < 1 Then Exit Function
+    If mCol.Count < 1 Then Exit Function
     If VarType(vntIndexKey) = vbObject Then
         Set l_objObject = vntIndexKey
         l_lngLightSources = 1
@@ -116,9 +116,9 @@ End Sub
 
 Public Function AddNew(X As Long, Y As Long) As Fury2LightSource
 On Error Resume Next
-    If mCol.count >= c_lngMaxLightSources Then Exit Function
+    If mCol.Count >= c_lngMaxLightSources Then Exit Function
     mCol.Add New Fury2LightSource
-    With Item(mCol.count)
+    With Item(mCol.Count)
         .X = X - 32
         .Y = Y - 32
         .FalloffDistance = 50
@@ -134,11 +134,11 @@ On Error Resume Next
         If IsMissing(AtIndex) Then
             mCol.Add Obj
         Else
-            If (mCol.count = 0) Or (AtIndex > mCol.count) Then
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, , 1
-            ElseIf mCol.count > AtIndex Then
+            ElseIf mCol.Count > AtIndex Then
                 mCol.Add Obj, , AtIndex
             Else
                 mCol.Add Obj, , , AtIndex - 1
@@ -149,11 +149,11 @@ On Error Resume Next
         If IsMissing(AtIndex) Then
             mCol.Add Obj, sKey
         Else
-            If (mCol.count = 0) Or (AtIndex > mCol.count) Then
+            If (mCol.Count = 0) Or (AtIndex > mCol.Count) Then
                 mCol.Add Obj, sKey
             ElseIf AtIndex <= 1 Then
                 mCol.Add Obj, sKey, 1
-            ElseIf mCol.count > AtIndex Then
+            ElseIf mCol.Count > AtIndex Then
                 mCol.Add Obj, sKey, AtIndex
             Else
                 mCol.Add Obj, sKey, , AtIndex - 1
@@ -176,9 +176,9 @@ On Error Resume Next
   Set Item = mCol(vntIndexKey)
 End Property
 
-Public Property Get count() As Long
+Public Property Get Count() As Long
 On Error Resume Next
-    count = mCol.count
+    Count = mCol.Count
 End Property
 
 Public Sub Remove(vntIndexKey As Variant)
@@ -193,7 +193,7 @@ End Sub
 
 Public Sub Clear()
 On Error Resume Next
-    Do While mCol.count > 0
+    Do While mCol.Count > 0
         Item(1).Free
         mCol.Remove 1
     Loop
@@ -228,17 +228,20 @@ End Sub
 
 Private Property Get IVirtualFileCollection_Count() As Long
 On Error Resume Next
-    IVirtualFileCollection_Count = mCol.count
+    IVirtualFileCollection_Count = mCol.Count
 End Property
 
 Private Function IVirtualFileCollection_CreateNew() As Object
 On Error Resume Next
-    Set IVirtualFileCollection_CreateNew = New Fury2LightSource
+Dim l_lsLight As Fury2LightSource
+    Set l_lsLight = New Fury2LightSource
+    l_lsLight.SetParent mvarParent
+    Set IVirtualFileCollection_CreateNew = l_lsLight
 End Function
 
-Private Function IVirtualFileCollection_GetItem(ByVal index As Long) As Object
+Private Function IVirtualFileCollection_GetItem(ByVal Index As Long) As Object
 On Error Resume Next
-    Set IVirtualFileCollection_GetItem = mCol.Item(index)
+    Set IVirtualFileCollection_GetItem = mCol.Item(Index)
 End Function
 
 Private Sub IVirtualFileCollection_Reset()
@@ -257,8 +260,8 @@ End Sub
 Public Sub Move(ByVal FromIndex As Long, ByVal ToIndex As Long)
 On Error Resume Next
 Dim l_objObject As Object
-    If FromIndex < 1 Or FromIndex > mCol.count Then Exit Sub
-    If ToIndex < 1 Or ToIndex > (mCol.count + 1) Then Exit Sub
+    If FromIndex < 1 Or FromIndex > mCol.Count Then Exit Sub
+    If ToIndex < 1 Or ToIndex > (mCol.Count + 1) Then Exit Sub
     If FromIndex = ToIndex Then Exit Sub
     Set l_objObject = mCol.Item(FromIndex)
     Remove FromIndex

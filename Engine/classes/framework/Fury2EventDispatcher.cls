@@ -56,8 +56,11 @@ Public Enum DispatcherEvents
 End Enum
 
 Public Dispatchee As Object
+Attribute Dispatchee.VB_VarDescription = "The object that events should be dispatched to."
 Public Enabled As Boolean
+Attribute Enabled.VB_VarDescription = "If True, this dispatcher is enabled."
 Public DrawBehind As Boolean
+Attribute DrawBehind.VB_VarDescription = "If True, redraw events are recieved before picture slots have been drawn, otherwise redraw events are recieved after picture slots have been drawn."
 Public Backbuffer As Fury2Image
 Private m_booEventsEnabled(DispEvt_Max_Value) As Boolean
 Private m_engEngine As Fury2Engine
@@ -123,6 +126,7 @@ On Error Resume Next
 End Property
 
 Public Property Let EventEnabled(Index, ByVal Value As Boolean)
+Attribute EventEnabled.VB_Description = "Enables dispatching of a given event to the dispatchee."
 On Error Resume Next
     m_booEventsEnabled(ResolveEvent(Index)) = Value
 End Property
@@ -259,4 +263,5 @@ End Sub
 
 Private Sub Fury2Plugin_OutputPluginChanged()
 End Sub
+
 

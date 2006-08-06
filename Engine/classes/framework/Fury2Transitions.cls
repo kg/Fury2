@@ -99,6 +99,7 @@ Static s_imgOldFrame As Fury2Image
 End Sub
 
 Sub Wipe(ByVal Direction As String, Optional ByVal Length As Double = 1, Optional ByVal Reverse As Boolean = False, Optional ByVal OldImage As Fury2Image = Nothing)
+Attribute Wipe.VB_Description = "Performs a wipe transition. Direction is a string specifying one of four directions (up, right, down, left)"
 On Error Resume Next
 Dim m_imgOld As Fury2Image
     If OldImage Is Nothing Then
@@ -120,6 +121,7 @@ Dim m_imgOld As Fury2Image
 End Sub
 
 Sub Slide(ByVal Direction As String, Optional ByVal Length As Double = 1, Optional ByVal Reverse As Boolean = False, Optional ByVal OldImage As Fury2Image = Nothing)
+Attribute Slide.VB_Description = "Performs a slide transition. Direction is a string specifying one of four directions (up, right, down, left)"
 On Error Resume Next
 Dim m_imgOld As Fury2Image
     If OldImage Is Nothing Then
@@ -141,6 +143,7 @@ Dim m_imgOld As Fury2Image
 End Sub
 
 Sub SmoothWipe(ByVal Direction As String, Optional ByVal Length As Double = 1, Optional ByVal Size As Single = 1 / 20, Optional ByVal OldImage As Fury2Image = Nothing)
+Attribute SmoothWipe.VB_Description = "Performs a smooth wipe transition. Direction is a string specifying one of four directions (up, right, down, left)"
 On Error Resume Next
 Dim m_imgOld As Fury2Image
 Dim l_imgMask As Fury2Image
@@ -173,16 +176,19 @@ Dim l_imgMask As Fury2Image
 End Sub
 
 Sub FadeOut(Optional ByVal Length As Double = 1, Optional ByVal BackColor As Long = 0)
+Attribute FadeOut.VB_Description = "Performs a fade-out transition."
 On Error Resume Next
     Transition Engine.BindEvent("Fade_Render", Me, Array(BackColor)), Length, False
 End Sub
 
 Sub FadeIn(Optional ByVal Length As Double = 1, Optional ByVal BackColor As Long = 0)
+Attribute FadeIn.VB_Description = "Performs a fade-in transition."
 On Error Resume Next
     Transition Engine.BindEvent("Fade_Render", Me, Array(BackColor)), Length, True
 End Sub
 
 Sub Crossfade(Optional ByVal Length As Double = 1, Optional ByVal OldImage As Fury2Image = Nothing)
+Attribute Crossfade.VB_Description = "Performs a crossfade transition."
 On Error Resume Next
 Dim m_imgOld As Fury2Image
     If OldImage Is Nothing Then
@@ -194,6 +200,7 @@ Dim m_imgOld As Fury2Image
 End Sub
 
 Sub Transition(ByVal Proc As Fury2Event, Optional ByVal Length As Double = 1, Optional ByVal Reverse As Boolean)
+Attribute Transition.VB_Description = "Performs a generic transition for Length seconds, calling Proc to render it."
 On Error Resume Next
 Dim m_sldTransition As Fury2Slider
     If Length = -1 Then Length = 1
@@ -233,16 +240,19 @@ Dim m_sldTransition As Fury2Slider
 End Sub
 
 Sub Fade_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal BackColor As Long)
+Attribute Fade_Render.VB_Description = "The renderer for fade transitions."
 On Error Resume Next
     Surface.Fill Surface.Rectangle, SetAlpha(BackColor, Progress * 255), RenderMode_SourceAlpha
 End Sub
 
 Sub Crossfade_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image)
+Attribute Crossfade_Render.VB_Description = "The renderer for crossfade transitions."
 On Error Resume Next
     Surface.Blit , , OldImage, Progress, BlitMode_Normal
 End Sub
 
 Sub WipeHorizontal_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image, ByVal Direction As Single)
+Attribute WipeHorizontal_Render.VB_Description = "The renderer for horizontal wipe transitions."
 On Error Resume Next
 Dim l_sngX As Single
 Dim l_rctRect As Fury2Rect
@@ -256,6 +266,7 @@ Dim l_rctRect As Fury2Rect
 End Sub
 
 Sub WipeVertical_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image, ByVal Direction As Single)
+Attribute WipeVertical_Render.VB_Description = "The renderer for vertical wipe transitions."
 On Error Resume Next
 Dim l_sngY As Single
 Dim l_rctRect As Fury2Rect
@@ -269,6 +280,7 @@ Dim l_rctRect As Fury2Rect
 End Sub
 
 Sub SmoothWipeHorizontal_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image, ByVal Mask As Fury2Image, ByVal Direction As Single)
+Attribute SmoothWipeHorizontal_Render.VB_Description = "The renderer for horizontal smooth wipe transitions."
 On Error Resume Next
 Dim l_sngX As Single
 Dim l_rctRectMask As Fury2Rect, l_rctRect As Fury2Rect
@@ -285,6 +297,7 @@ Dim l_rctRectMask As Fury2Rect, l_rctRect As Fury2Rect
 End Sub
 
 Sub SmoothWipeVertical_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image, ByVal Mask As Fury2Image, ByVal Direction As Single)
+Attribute SmoothWipeVertical_Render.VB_Description = "The renderer for vertical smooth wipe transitions."
 On Error Resume Next
 Dim l_sngY As Single
 Dim l_rctRectMask As Fury2Rect, l_rctRect As Fury2Rect
@@ -301,6 +314,7 @@ Dim l_rctRectMask As Fury2Rect, l_rctRect As Fury2Rect
 End Sub
 
 Sub Slide_Render(ByVal Surface As Fury2Image, ByVal Progress As Double, ByVal OldImage As Fury2Image, ByVal XDirection As Single, ByVal YDirection As Single)
+Attribute Slide_Render.VB_Description = "The renderer for slide transitions."
 On Error Resume Next
 Dim l_sngX As Single, l_sngY As Single
 Dim l_rctRect As Fury2Rect
@@ -309,3 +323,4 @@ Dim l_rctRect As Fury2Rect
     Set l_rctRect = F2Rect(l_sngX, l_sngY, Surface.Width, Surface.Height, False)
     Surface.Blit l_rctRect, , OldImage, 1, BlitMode_Normal
 End Sub
+

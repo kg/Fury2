@@ -44,19 +44,32 @@ Implements IVirtualFileSaveable
 
 Private mCol As Collection
 Public Active As Boolean
+Attribute Active.VB_VarDescription = "If True, the menu will respond to input."
 Public DrawBehind As Boolean
+Attribute DrawBehind.VB_VarDescription = "If True, the menu will be drawn behind picture slots."
 Public Engine As Fury2Engine
+Attribute Engine.VB_VarDescription = "I"
 Public Rectangle As Fury2Rect
+Attribute Rectangle.VB_VarDescription = "The rectangle this menu occupies."
 Private m_lngSelectedItem As Long
 Public ScrollOffset As Long
+Attribute ScrollOffset.VB_VarDescription = "The scroll position of the menu (in items)."
 Public Cursor As Object
-Public WindowSkin As Object
+Attribute Cursor.VB_VarDescription = "The cursor that will be drawn next to the selected menu item."
+Public WindowSkin As Fury2WindowSkin
+Attribute WindowSkin.VB_VarDescription = "The window skin used by the menu."
 Public Font As Fury2Font
+Attribute Font.VB_VarDescription = "The Font used by the menu to draw items."
 Public MoveEvent As Fury2Event
+Attribute MoveEvent.VB_VarDescription = "This event will be invoked when the cursor moves."
 Public CloseEvent As Fury2Event
+Attribute CloseEvent.VB_VarDescription = "This event will be invoked when the menu is closed for any reason."
 Public SelectEvent As Fury2Event
+Attribute SelectEvent.VB_VarDescription = "This event will be invoked when an item is selected."
 Public Title As String
+Attribute Title.VB_VarDescription = "The title string to display at the top of the menu."
 Public TitleFont As Fury2Font
+Attribute TitleFont.VB_VarDescription = "The font to use to draw the title string."
 #If EnableBehaviors = 1 Then
 Public Behaviors As Fury2Behaviors
 #End If
@@ -65,6 +78,7 @@ Private m_lngVisibleLines As Long
 Private m_varLineHeights As Variant
 
 Public Property Get SelectedItem() As Long
+Attribute SelectedItem.VB_Description = "The index of the selected item."
 On Error Resume Next
     SelectedItem = m_lngSelectedItem
 End Property
@@ -78,6 +92,7 @@ On Error Resume Next
 End Property
 
 Public Sub Clear()
+Attribute Clear.VB_Description = "Removes all the items from the menu."
 On Error Resume Next
     Do While mCol.Count > 0
         mCol.Remove 1
@@ -179,6 +194,7 @@ Dim m_lngSpace As Long
 End Sub
 
 Public Sub Redraw()
+Attribute Redraw.VB_Description = "Redraws the menu."
 On Error Resume Next
 Static Here As Boolean
 Dim m_fntOldFont As StdFont
@@ -277,6 +293,7 @@ On Error Resume Next
 End Sub
 
 Public Sub Update()
+Attribute Update.VB_Description = "U"
 On Error Resume Next
 #If EnableBehaviors = 1 Then
     If Engine.EnableObjectEvents Then
@@ -291,6 +308,7 @@ On Error Resume Next
 End Sub
 
 Public Function Add(Caption As String, Optional Icon = Nothing, Optional SelectEvent = Nothing, Optional Index As Long = -1, Optional Color = &HFFFFFFFF) As Fury2MenuItem
+Attribute Add.VB_Description = "Adds a new item to the menu."
 On Error Resume Next
     Dim objNewMember As Fury2MenuItem
     Set objNewMember = New Fury2MenuItem
@@ -315,17 +333,20 @@ On Error Resume Next
 End Function
 
 Public Property Get Item(ByVal vntIndexKey As Variant) As Fury2MenuItem
+Attribute Item.VB_Description = "Retrieves an item from the menu."
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
   Set Item = mCol(vntIndexKey)
 End Property
 
 Public Property Get Count() As Long
+Attribute Count.VB_Description = "The number of items in the menu."
 On Error Resume Next
     Count = mCol.Count
 End Property
 
 Public Sub Remove(vntIndexKey As Variant)
+Attribute Remove.VB_Description = "Removes an item from the menu."
 On Error Resume Next
     mCol.Remove vntIndexKey
 End Sub
@@ -480,4 +501,5 @@ End Sub
 
 Private Sub Fury2Plugin_OutputPluginChanged()
 End Sub
+
 

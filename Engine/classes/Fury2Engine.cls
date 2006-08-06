@@ -1395,8 +1395,8 @@ On Error Resume Next
 End Function
 
 Public Function LoadFromFile(ByRef Obj As Object, ByVal File As Object) As Boolean
-Attribute LoadFromFile.VB_MemberFlags = "40"
 Attribute LoadFromFile.VB_Description = "Loads a given object from a given file. If the load was successful, True is returned."
+Attribute LoadFromFile.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_glbGlobals As New Fury2Globals
     LoadFromFile = l_glbGlobals.LoadFromFile(Obj, File)
@@ -4750,14 +4750,16 @@ On Error Resume Next
     CurrentBGM.LoopMode = LoopMode_Normal
     CurrentBGM.Loopcount = -1
     Set CurrentBGMChannel = CurrentBGM.Play(True)
-    CurrentBGMChannel.Priority = 0
-    If Fade Then
-        CurrentBGMChannel.Volume = 0
-        FadeBGM , DefaultBGMVolume
-    Else
-        CurrentBGMChannel.Volume = DefaultBGMVolume
+    If Not (CurrentBGMChannel Is Nothing) Then
+        CurrentBGMChannel.Priority = 0
+        If Fade Then
+            CurrentBGMChannel.Volume = 0
+            FadeBGM , DefaultBGMVolume
+        Else
+            CurrentBGMChannel.Volume = DefaultBGMVolume
+        End If
+        CurrentBGMChannel.Paused = False
     End If
-    CurrentBGMChannel.Paused = False
     SoundEngine.FlushCache
     Err.Clear
 End Sub
@@ -5099,7 +5101,6 @@ End Sub
 
 Public Sub ResetTiming()
 Attribute ResetTiming.VB_Description = "Resets the timing logic used by the framerate counter and framerate balancer."
-Dim l_ctlControl As Fury2InputControl
 On Error Resume Next
 Dim l_ctlControl As Fury2InputControl
     For Each l_ctlControl In Controls

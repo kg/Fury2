@@ -31,12 +31,29 @@ Option Explicit
 '    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 '
 Implements IVirtualFileSaveable
+Implements IInspectable
 Implements Fury2Object
+Public Offset As Double
 Public StartTime As Double
 Public Interval As Double
 Public Engine As Fury2Engine
 Private m_booPaused As Boolean
 Private m_dblPausedSince As Double
+
+Public Sub Restart()
+On Error Resume Next
+    StartTime = Engine.HiTimer
+    If m_booPaused Then
+        m_dblPausedSince = StartTime
+    End If
+End Sub
+
+Public Sub Reset()
+On Error Resume Next
+    StartTime = Engine.HiTimer
+    m_booPaused = True
+    m_dblPausedSince = StartTime
+End Sub
 
 Public Function Class_ToString() As String
 On Error Resume Next
@@ -64,9 +81,9 @@ End Property
 Public Property Get Value() As Double
 On Error Resume Next
     If m_booPaused Then
-        Value = (m_dblPausedSince - StartTime) / (Interval)
+        Value = ((m_dblPausedSince - StartTime) / (Interval)) + Offset
     Else
-        Value = (Engine.HiTimer - StartTime) / (Interval)
+        Value = ((Engine.HiTimer - StartTime) / (Interval)) + Offset
     End If
 End Property
 

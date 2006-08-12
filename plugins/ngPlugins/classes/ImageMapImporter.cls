@@ -123,6 +123,7 @@ Dim l_tstTileset As Fury2Tileset
                         .Tile(l_lngX, l_lngY) = l_lngIndex - 1
                     End With
                 Next l_lngX
+                m_objEditor.SetProgress l_lngY / l_lngTilesY
             Next l_lngY
         Else
             l_mapNew.Layers(l_mapNew.Layers.Count).Tile(0, 0) = 0

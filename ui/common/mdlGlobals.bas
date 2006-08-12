@@ -13,6 +13,19 @@ Global g_booEnableThemes As Boolean
 Global g_lngMenus As Long, g_lngMenuItems As Long, g_lngMenuHosts As Long, g_lngFontForms As Long
 Global g_colResourceCache As Collection
 
+Public Function FileExists(ByRef Filename As String) As Boolean
+On Error Resume Next
+Dim l_lngLength As Long
+    l_lngLength = -1
+    Err.Clear
+    l_lngLength = FileLen(Filename)
+    If l_lngLength >= 0 Then
+        FileExists = True
+    Else
+        FileExists = False
+    End If
+End Function
+
 Public Function ConvertSystemColor(ByVal Index As SystemColors) As Long
 On Error Resume Next
     ConvertSystemColor = SetAlpha(SwapChannels(GetSystemColor(Index), Red, Blue), 255)

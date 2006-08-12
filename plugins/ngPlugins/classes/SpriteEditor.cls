@@ -131,7 +131,7 @@ Dim l_frmNew As New frmSprites
 Dim l_scSprites As Fury2Sprites
 Dim l_sprSprite As Fury2Sprite
     Set l_scSprites = New Fury2Sprites
-    If LoadFromFile(l_scSprites, F2File(Filename)) Then
+    If LoadFromFile(l_scSprites, F2File(Filename), Editor.ProgressCallback) Then
         l_frmNew.SetFilename Filename
         l_frmNew.SetSprites l_scSprites
         For Each l_sprSprite In l_scSprites

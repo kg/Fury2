@@ -42,8 +42,8 @@ Attribute ImageFilenames.VB_VarDescription = "The filenames of the images in thi
 Public Images As Fury2Collection
 Attribute Images.VB_VarDescription = "The images in this graphic."
 Public XCenter As Single, YCenter As Single
-Attribute YCenter.VB_VarDescription = "The Y centerpoint of this graphic."
 Attribute XCenter.VB_VarDescription = "The X centerpoint of this graphic."
+Attribute YCenter.VB_VarDescription = "The Y centerpoint of this graphic."
 Public LoopMode As Fury2LoopModes
 Attribute LoopMode.VB_VarDescription = "Determines the graphic's looping behavior."
 Public BlitMode As SFXBlitModes
@@ -108,14 +108,14 @@ End Property
 Public Sub Refresh()
 On Error Resume Next
 Dim l_lngImages As Long
-    ReDim m_lngImages(0 To Images.count - 1)
-    If Images.count > 0 Then
+    ReDim m_lngImages(0 To Images.Count - 1)
+    If Images.Count > 0 Then
         For l_lngImages = LBound(m_lngImages) To UBound(m_lngImages)
             m_lngImages(l_lngImages) = CLng(Images(l_lngImages + 1).Handle)
         Next l_lngImages
     End If
     With m_parParam
-        .FrameCount = Images.count
+        .FrameCount = Images.Count
         .Frame = AnimationFrame
         .BlitMode = BlitMode
         .MatteColor = Images(AnimationFrame).MatteColor
@@ -129,7 +129,7 @@ End Sub
 Public Property Get CurrentImage() As Fury2Image
 Attribute CurrentImage.VB_Description = "The current frame of the graphic."
 On Error Resume Next
-    AnimationFrame = WrapValue(AnimationFrame, 1, Images.count)
+    AnimationFrame = WrapValue(AnimationFrame, 1, Images.Count)
     Set CurrentImage = Images(AnimationFrame)
     Err.Clear
 End Property
@@ -154,17 +154,18 @@ On Error Resume Next
     Show = Slot
 End Function
 
-Sub Draw(ByVal Surface As Fury2Image, ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1)
+Sub Draw(ByVal Surface As Fury2Image, ByVal X As Single, ByVal Y As Single, Optional ByVal Alpha As Single = 1, Optional ByVal ScalePercentage As Single = 1, Optional ByVal RotationAngle As Single = 0)
 Attribute Draw.VB_Description = "Draws the graphic to an image at a given location."
 On Error Resume Next
 Dim l_imgFrame As Fury2Image
-    If Images.count = 0 Then Exit Sub
+    If Images.Count = 0 Then Exit Sub
     If Surface Is Nothing Then Exit Sub
-    AnimationFrame = WrapValue(AnimationFrame, 1, Images.count)
+    AnimationFrame = WrapValue(AnimationFrame, 1, Images.Count)
     Set l_imgFrame = Images(AnimationFrame)
     If l_imgFrame Is Nothing Then Exit Sub
     With l_imgFrame
-        Surface.Blit F2Rect(Floor(X - XCenter), Floor(Y - YCenter), .Width, .Height, False), .Rectangle, l_imgFrame, Alpha * Me.Alpha, BlitMode
+        .Draw Surface, X - XCenter, Y - YCenter, Alpha * Me.Alpha, ScalePercentage, RotationAngle, BlitMode, , IIf(m_engEngine.SmoothScaling, ResampleMode_Bilinear, ResampleMode_Linear)
+'        Surface.Blit F2Rect(Floor(X - XCenter), Floor(Y - YCenter), .Width, .Height, False), .Rectangle, l_imgFrame, Alpha * Me.Alpha, BlitMode
     End With
 End Sub
 
@@ -172,24 +173,24 @@ Sub Update()
 Attribute Update.VB_Description = "Updates the graphic's animation."
 On Error Resume Next
 Dim l_dblElapsed As Double
-    If Images.count > 1 Then
+    If Images.Count > 1 Then
         l_dblElapsed = (Engine.HiTimer - m_sngLastFrame) / ((1 / Engine.DesiredFramerate) * AnimationDelay)
         If (l_dblElapsed >= 1) Then
             m_sngLastFrame = Engine.HiTimer - ((l_dblElapsed - Floor(l_dblElapsed)) * (1 / Engine.DesiredFramerate) * AnimationDelay)
             Select Case LoopMode
             Case F2LM_Restart
-                AnimationFrame = WrapValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.count)
+                AnimationFrame = WrapValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.Count)
             Case F2LM_PingPong
                 AnimationFrame = AnimationFrame + (AnimationDirection * Floor(l_dblElapsed))
                 If (AnimationFrame < 1) Then
                     AnimationFrame = 2
                     AnimationDirection = 1
-                ElseIf (AnimationFrame > Images.count) Then
-                    AnimationFrame = Images.count - 1
+                ElseIf (AnimationFrame > Images.Count) Then
+                    AnimationFrame = Images.Count - 1
                     AnimationDirection = -1
                 End If
             Case F2LM_OneShot
-                AnimationFrame = ClipValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.count)
+                AnimationFrame = ClipValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.Count)
             End Select
         End If
     End If
@@ -214,8 +215,8 @@ Attribute ReloadImages.VB_Description = "Reloads the graphic's frames."
 On Error Resume Next
 Dim l_lngImage As Long, l_imgFile As Fury2Image
     Set Images = Engine.F2Collection()
-    If ImageFilenames.count > 0 Then
-        For l_lngImage = 1 To ImageFilenames.count
+    If ImageFilenames.Count > 0 Then
+        For l_lngImage = 1 To ImageFilenames.Count
             Set l_imgFile = Nothing
             Set l_imgFile = Engine.LoadImage(CStr(ImageFilenames(l_lngImage)))
             Images.Add l_imgFile
@@ -264,8 +265,8 @@ On Error Resume Next
 Dim l_lngFilenames As Long
     With File
         .WriteSegment_Begin
-            .Save CLng(ImageFilenames.count)
-            For l_lngFilenames = 1 To ImageFilenames.count
+            .Save CLng(ImageFilenames.Count)
+            For l_lngFilenames = 1 To ImageFilenames.Count
                 .Save CStr(ImageFilenames(l_lngFilenames))
             Next l_lngFilenames
         .WriteSegment_End

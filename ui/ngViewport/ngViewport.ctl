@@ -42,6 +42,7 @@ Option Explicit
 Private Declare Function InvalidateRect Lib "user32" (ByVal hwnd As Long, lpRect As Rect, ByVal bErase As Long) As Long
 Private Declare Function UpdateWindow Lib "user32" (ByVal hwnd As Long) As Long
 
+Event SurfaceChanged()
 Event Scroll()
 Event MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
 Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
@@ -56,7 +57,7 @@ Public VirtualWidth As Long, VirtualHeight As Long
 Public MaxWidth As Long, MaxHeight As Long
 Public MinWidth As Long, MinHeight As Long
 
-Public BackgroundColor As Long
+Public BackgroundColor As OLE_COLOR
 Public ScrollBackground As Boolean
 Public BackgroundImage As Fury2Image
 
@@ -140,12 +141,14 @@ On Error Resume Next
     Repaint
 End Sub
 
+Public Sub RedrawAndPaint()
+On Error Resume Next
+    Redraw
+    Repaint
+End Sub
+
 Public Sub Repaint()
 On Error Resume Next
-'Dim l_rctWindow As Win32.Rect
-'    l_rctWindow.Right = UserControl.ScaleWidth
-'    l_rctWindow.Bottom = UserControl.ScaleHeight
-'    InvalidateRect UserControl.hwnd, l_rctWindow, 0
     UserControl_Paint
 End Sub
 
@@ -188,6 +191,7 @@ Dim l_booRealloc As Boolean
     ElseIf l_booRealloc Then
         m_imgSurface.Resize l_lngWidth, l_lngHeight, False
     End If
+    RaiseEvent SurfaceChanged
 End Sub
 
 Public Property Get ViewportWidth() As Long
@@ -244,7 +248,7 @@ End Sub
 Public Sub Scrolled()
 On Error Resume Next
     RaiseEvent Scroll
-    Redraw
+    RedrawAndPaint
 End Sub
 
 Private Sub vsScroll_Change()

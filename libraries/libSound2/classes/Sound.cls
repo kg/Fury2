@@ -26,6 +26,21 @@ Private m_strFilename As String
 Private m_seEngine As SoundEngine
 Private m_lngHandle As Long
 
+Public Property Get LoopPoints() As Variant
+On Error Resume Next
+Dim l_lngStart As Long, l_lngEnd As Long
+    fmodex.FMOD_Sound_GetLoopPoints m_lngHandle, l_lngStart, FMOD_TIMEUNIT_MS, l_lngEnd, FMOD_TIMEUNIT_MS
+    LoopPoints = Array(l_lngStart / 1000#, l_lngEnd / 1000#)
+End Property
+
+Public Property Let LoopPoints(ByRef NewValue As Variant)
+On Error Resume Next
+Dim l_lngStart As Long, l_lngEnd As Long
+    l_lngStart = CLng(NewValue(0) * 1000#)
+    l_lngEnd = CLng(NewValue(1) * 1000#)
+    fmodex.FMOD_Sound_SetLoopPoints m_lngHandle, l_lngStart, FMOD_TIMEUNIT_MS, l_lngEnd, FMOD_TIMEUNIT_MS
+End Property
+
 Friend Property Get SyncPointCount() As Long
 On Error Resume Next
 Dim l_lngCount As Long
@@ -44,10 +59,10 @@ Dim l_lngHandle As Long
     AddSyncPoint l_lngLength - c_lngEndOffset, "end"
 End Sub
 
-Friend Sub AddSyncPoint(ByVal Time As Long, Optional ByRef name As String = "")
+Friend Sub AddSyncPoint(ByVal Time As Long, Optional ByRef Name As String = "")
 On Error Resume Next
 Dim l_lngPoint As Long
-    FMOD_Sound_AddSyncPoint m_lngHandle, Time, FMOD_TIMEUNIT_MS, name, l_lngPoint
+    FMOD_Sound_AddSyncPoint m_lngHandle, Time, FMOD_TIMEUNIT_MS, Name, l_lngPoint
 End Sub
 
 Friend Sub RemoveSyncPoint(ByVal Index As Long)
@@ -71,11 +86,13 @@ End Property
 
 Public Sub Free()
 On Error Resume Next
-    FMOD_Sound_SetUserData m_lngHandle, 0
     If Not (m_seEngine Is Nothing) Then
         m_seEngine.Freed Me
+        If m_lngHandle <> 0 Then
+            FMOD_Sound_SetUserData m_lngHandle, 0
+            fmodex.FMOD_Sound_Release m_lngHandle
+        End If
     End If
-    If m_lngHandle <> 0 Then fmodex.FMOD_Sound_Release m_lngHandle
     m_lngHandle = 0
     Set m_seEngine = Nothing
     m_strFilename = ""
@@ -102,14 +119,14 @@ On Error Resume Next
     Handle = m_lngHandle
 End Property
 
-Public Property Get Loopcount() As Long
+Public Property Get LoopCount() As Long
 On Error Resume Next
 Dim l_lngValue As Long
     fmodex.FMOD_Sound_GetLoopCount m_lngHandle, l_lngValue
-    Loopcount = l_lngValue
+    LoopCount = l_lngValue
 End Property
 
-Public Property Let Loopcount(ByVal NewCount As Long)
+Public Property Let LoopCount(ByVal NewCount As Long)
 On Error Resume Next
     fmodex.FMOD_Sound_SetLoopCount m_lngHandle, NewCount
 End Property
@@ -254,21 +271,43 @@ Dim l_lngValue As Long
     Length = CDbl(l_lngValue) / 1000#
 End Property
 
-Public Property Get name() As String
+Public Property Get Name() As String
 On Error Resume Next
 Dim l_bytName() As Byte
 Dim l_strName As String
     ReDim l_bytName(0 To 512)
     fmodex.FMOD_Sound_GetName m_lngHandle, ByVal VarPtr(l_bytName(0)), 511
     l_strName = StrConv(l_bytName, vbUnicode)
-    name = Left(l_strName, InStr(l_strName, Chr(0)) - 1)
+    Name = Left(l_strName, InStr(l_strName, Chr(0)) - 1)
     Err.Clear
 End Property
 
 Public Function Play(Optional ByVal Paused As Boolean = False) As Channel
 On Error Resume Next
 Dim l_lngChannel As Long
-    Call fmodex.FMOD_System_PlaySound(m_seEngine.Handle, FMOD_CHANNEL_FREE, m_lngHandle, Paused, l_lngChannel)
+    Call fmodex.FMOD_System_PlaySound(m_seEngine.Handle, FMOD_CHANNEL_FREE, m_lngHandle, 1, l_lngChannel)
+    Call fmodex.FMOD_Channel_SetMode(l_lngChannel, FMOD_2D)
+'    Call fmodex.FMOD_Channel_SetMode(l_lngChannel, FMOD_3D_HEADRELATIVE)
+    Call fmodex.FMOD_Channel_Set3DSpread(l_lngChannel, 180)
+    Call fmodex.FMOD_Channel_SetPaused(l_lngChannel, 0)
+    Set Play = m_seEngine.CreateChannel(l_lngChannel, Me)
+End Function
+
+Public Function PlayAt(ByRef Location, Optional ByRef Velocity = Nothing, Optional ByVal Paused As Boolean = False) As Channel
+On Error Resume Next
+Dim l_vecLocation As FMOD_VECTOR
+Dim l_vecVelocity As FMOD_VECTOR
+Dim l_lngChannel As Long
+    l_vecLocation = FModVector(Location)
+    If VarType(Velocity) = vbObject Then
+    Else
+        l_vecVelocity = FModVector(Location)
+    End If
+    Call fmodex.FMOD_Sound_Set3DMinMaxDistance(m_lngHandle, m_seEngine.AudioScaleMin, m_seEngine.AudioScaleMax)
+    Call fmodex.FMOD_System_PlaySound(m_seEngine.Handle, FMOD_CHANNEL_FREE, m_lngHandle, 1, l_lngChannel)
+    Call fmodex.FMOD_Channel_SetMode(l_lngChannel, FMOD_3D_WORLDRELATIVE)
+    Call fmodex.FMOD_Channel_Set3DAttributes(l_lngChannel, l_vecLocation, l_vecVelocity)
+    Call fmodex.FMOD_Channel_SetPaused(l_lngChannel, 0)
     Set Play = m_seEngine.CreateChannel(l_lngChannel, Me)
 End Function
 

@@ -275,7 +275,7 @@ Dim l_rctText As Rect
     Set m_imgSurface.ClipRectangle = l_rctClip
 End Sub
 
-Friend Sub DrawSegment(ByVal x As Long, ByVal y As Long, ByRef Image As Fury2Image, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal BlitMode As SFXBlitModes = BlitMode_SourceAlpha, Optional ByVal Color As Long = -1, Optional ByVal Alpha As Single = 1, Optional ByVal Vertical As Boolean = False)
+Friend Sub DrawSegment(ByVal X As Long, ByVal Y As Long, ByRef Image As Fury2Image, Optional ByVal Width As Long = -1, Optional ByVal Height As Long = -1, Optional ByVal BlitMode As SFXBlitModes = BlitMode_SourceAlpha, Optional ByVal Color As Long = -1, Optional ByVal Alpha As Single = 1, Optional ByVal Vertical As Boolean = False)
 On Error Resume Next
 Dim l_lngX As Long, l_lngY As Long
 Dim l_rctStrip As Fury2Rect, l_rctDest As Fury2Rect
@@ -288,13 +288,13 @@ Dim l_rctClip As Fury2Rect
     End If
     With m_imgSurface
         If Vertical Then
-            l_lngY = y
-            Do While (l_lngY < (y + Height))
+            l_lngY = Y
+            Do While (l_lngY < (Y + Height))
                 Set l_rctClip = .ClipRectangle
                 .Blit F2Rect(0, l_lngY, 11, Image.Height, False), , Image, Alpha, BlitMode, Color
-                .ClippedSetClipRectangle F2Rect(x + 11, l_lngY, .Width, l_lngY + Image.Height)
+                .ClippedSetClipRectangle F2Rect(X + 11, l_lngY, .Width, l_lngY + Image.Height)
                 .Blit F2Rect(.Width - 12, l_lngY, 12, Image.Height, False), F2Rect(12, 0, 10, Image.Height, False), Image, Alpha, BlitMode, Color
-                .ClippedSetClipRectangle F2Rect(x, l_lngY, .Width - 12, l_lngY + Image.Height)
+                .ClippedSetClipRectangle F2Rect(X, l_lngY, .Width - 12, l_lngY + Image.Height)
                 Set l_rctDest = F2Rect(0, l_lngY, 1, Image.Height, False)
                 Set l_rctStrip = F2Rect(11, 0, 1, Image.Height, False)
                 For l_lngX = 0 To .Width
@@ -305,16 +305,16 @@ Dim l_rctClip As Fury2Rect
                 l_lngY = l_lngY + Image.Height
             Loop
         Else
-            l_lngX = x
-            Do While (l_lngX < (x + Width))
+            l_lngX = X
+            Do While (l_lngX < (X + Width))
                 Set l_rctClip = .ClipRectangle
-                .Blit F2Rect(l_lngX, y, Image.Width, 13, False), , Image, Alpha, BlitMode, Color
-                .ClippedSetClipRectangle F2Rect(l_lngX, y + 13, l_lngX + Image.Width, y + Height)
-                .Blit F2Rect(l_lngX, y + Height - 10, Image.Width, 10, False), F2Rect(0, 14, Image.Width, 10, False), Image, Alpha, BlitMode, Color
-                .ClippedSetClipRectangle F2Rect(l_lngX, y, l_lngX + Image.Width, y + Height - 10)
-                Set l_rctDest = F2Rect(l_lngX, y, Image.Width, 1, False)
+                .Blit F2Rect(l_lngX, Y, Image.Width, 13, False), , Image, Alpha, BlitMode, Color
+                .ClippedSetClipRectangle F2Rect(l_lngX, Y + 13, l_lngX + Image.Width, Y + Height)
+                .Blit F2Rect(l_lngX, Y + Height - 10, Image.Width, 10, False), F2Rect(0, 14, Image.Width, 10, False), Image, Alpha, BlitMode, Color
+                .ClippedSetClipRectangle F2Rect(l_lngX, Y, l_lngX + Image.Width, Y + Height - 10)
+                Set l_rctDest = F2Rect(l_lngX, Y, Image.Width, 1, False)
                 Set l_rctStrip = F2Rect(0, 13, Image.Width, 1, False)
-                For l_lngY = y To .Height
+                For l_lngY = Y To .Height
                     l_rctDest.RelTop = l_lngY
                     .Blit l_rctDest, l_rctStrip, Image, Alpha, BlitMode, Color
                 Next l_lngY
@@ -398,6 +398,11 @@ End Property
 Private Sub tmrFocusTracker_Timer()
 On Error Resume Next
 Dim l_lngWindow As Long
+    If Menu Is Nothing Then
+        tmrFocusTracker.Enabled = False
+        Unload Me
+        Exit Sub
+    End If
     l_lngWindow = GetFocus
     HasFocus = l_lngWindow = Me.hwnd
 End Sub
@@ -405,9 +410,14 @@ End Sub
 Private Sub tmrMouseTracker_Timer()
 On Error Resume Next
 Dim l_ptMouse As PointAPI
+    If Menu Is Nothing Then
+        tmrMouseTracker.Enabled = False
+        Unload Me
+        Exit Sub
+    End If
     GetCursorPos l_ptMouse
     ScreenToClient Me.hwnd, l_ptMouse
-    Menu.SetMousePosition l_ptMouse.x, l_ptMouse.y
+    Menu.SetMousePosition l_ptMouse.X, l_ptMouse.Y
 End Sub
 
 Private Sub Form_Hide()
@@ -426,19 +436,19 @@ On Error Resume Next
     Debug.Print "frmMenu_Initialize"
 End Sub
 
-Private Sub Form_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub Form_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
-    Menu.Event_MouseDown Button, Shift, x, y
+    Menu.Event_MouseDown Button, Shift, X, Y
 End Sub
 
-Private Sub Form_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub Form_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
-    Menu.Event_MouseMove Button, Shift, x, y
+    Menu.Event_MouseMove Button, Shift, X, Y
 End Sub
 
-Private Sub Form_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub Form_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
-    Menu.Event_MouseUp Button, Shift, x, y
+    Menu.Event_MouseUp Button, Shift, X, Y
 End Sub
 
 Private Sub Form_Paint()

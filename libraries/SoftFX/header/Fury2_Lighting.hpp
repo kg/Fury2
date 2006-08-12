@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 struct SpriteParam;
+class CollisionMatrix;
 
 namespace Lighting {
   
@@ -53,6 +54,14 @@ namespace Lighting {
     SpriteParam *Sprites;
     Byte ForceRaycasting;
 	  Matrix *Matrix;
+    CollisionMatrix *CollisionMatrix;
+  };
+
+  class LightSourceRenderData {
+  public:
+    float ldist, ldist11;
+    float xOffset, yOffset;
+    float angleStart, angleEnd;
   };
 
   class LightSource {
@@ -73,6 +82,7 @@ namespace Lighting {
     Image *Image;
     float ImageAlignX, ImageAlignY;
     float LightSize;
+    LightSourceRenderData Data;
   };
 
   class Obstruction {
@@ -83,6 +93,9 @@ namespace Lighting {
       pt.X = Line.Start.X + ((Line.End.X - Line.Start.X) / 2);
       pt.Y = Line.Start.Y + ((Line.End.Y - Line.Start.Y) / 2);
       return pt;
+    }
+    inline const FLine& getLine() const {
+      return Line;
     }
   };
 
@@ -139,6 +152,7 @@ namespace Lighting {
   };
 
   Pixel Raycast(Environment *Env, float X, float Y, SpriteParam *IgnoreSprite, bool EnableCulling);
+  int RaycastStrip(Environment *Env, float X1, float Y1, float X2, float Y2, SpriteParam *IgnoreSprite, bool EnableCulling, int Count, Pixel* pOut);
 
   const enum sort_entry_types {
     none,

@@ -46,6 +46,7 @@ Private mvarGenerateTileset As Boolean
 Private mvarMatteColor As Long
 
 Public Property Let GenerateTileset(ByVal vData As Boolean)
+Attribute GenerateTileset.VB_Description = "If True, a new tileset containing tiles will be generated."
     mvarGenerateTileset = vData
 End Property
 
@@ -54,6 +55,7 @@ Public Property Get GenerateTileset() As Boolean
 End Property
 
 Public Property Let MarginBottom(ByVal vData As Long)
+Attribute MarginBottom.VB_Description = "The number of margin pixels on the bottom of the image."
     mvarMarginBottom = vData
 End Property
 
@@ -62,6 +64,7 @@ Public Property Get MarginBottom() As Long
 End Property
 
 Public Property Let MarginRight(ByVal vData As Long)
+Attribute MarginRight.VB_Description = "The number of margin pixels on the right of the image."
     mvarMarginRight = vData
 End Property
 
@@ -70,6 +73,7 @@ Public Property Get MarginRight() As Long
 End Property
 
 Public Property Let MarginTop(ByVal vData As Long)
+Attribute MarginTop.VB_Description = "The number of margin pixels on the top of the image."
     mvarMarginTop = vData
 End Property
 
@@ -78,6 +82,7 @@ Public Property Get MarginTop() As Long
 End Property
 
 Public Property Let MarginLeft(ByVal vData As Long)
+Attribute MarginLeft.VB_Description = "The number of margin pixels on the left of the image."
     mvarMarginLeft = vData
 End Property
 
@@ -158,4 +163,5 @@ On Error Resume Next
         .Save mvarGenerateTileset
     End With
 End Sub
+
 

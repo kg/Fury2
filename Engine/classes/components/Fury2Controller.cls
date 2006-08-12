@@ -62,11 +62,11 @@ Private BlockAccumulator As Long
 Private InputState(0 To 3) As Boolean
 
 Public LeftBinding As String, UpBinding As String, RightBinding As String, DownBinding As String, ActivateBinding As String
-Attribute ActivateBinding.VB_VarDescription = "Specifies the control to use as an Activate button."
-Attribute DownBinding.VB_VarDescription = "Specifies the control to use as a Down arrow."
-Attribute RightBinding.VB_VarDescription = "Specifies the control to use as a Right arrow."
-Attribute UpBinding.VB_VarDescription = "Specifies the control to use as a Up arrow."
 Attribute LeftBinding.VB_VarDescription = "Specifies the control to use as a Left arrow."
+Attribute UpBinding.VB_VarDescription = "Specifies the control to use as a Up arrow."
+Attribute RightBinding.VB_VarDescription = "Specifies the control to use as a Right arrow."
+Attribute DownBinding.VB_VarDescription = "Specifies the control to use as a Down arrow."
+Attribute ActivateBinding.VB_VarDescription = "Specifies the control to use as an Activate button."
 
 Private Sub Class_Initialize()
 On Error Resume Next
@@ -192,12 +192,16 @@ Private Sub Fury2Plugin_Shutdown()
 End Sub
 
 Private Sub Fury2Plugin_Startup()
+On Error Resume Next
+    Set Engine.SoundListener = Obj
 End Sub
 
 Private Sub Fury2Plugin_SyncUpdate()
 End Sub
 
 Private Sub Fury2Plugin_Unload()
+On Error Resume Next
+    If Engine.SoundListener Is Obj Then Set Engine.SoundListener = Nothing
 End Sub
 
 Private Sub Fury2Plugin_Update()

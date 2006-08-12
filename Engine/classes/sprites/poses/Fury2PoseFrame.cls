@@ -49,6 +49,7 @@ Private mvarMatteColor As Long
 Private mvarDelay As Long
 Private mvarImage As Fury2Image
 Private mvarScript As String
+Private mvarScriptBlock As Fury2Event
 Private mvarParent As WeakReference
 Private mvarIndex As Long
 
@@ -96,13 +97,10 @@ On Error Resume Next
     If Object Is Nothing Then
         Set Object = WRGetPose(mvarParent).Parent
     End If
-    With Object.Engine
-        Set .IObjThis = Object
-        .ScriptEngine.AddCode .ScriptEngine.Language.GenerateAssignment("Object", "IObjThis", True)
-        .ScriptEngine.AddCode mvarScript
-        Set .IObjThis = Nothing
-        .ScriptEngine.AddCode .ScriptEngine.Language.GenerateAssignment("Object", "IObjThis", True)
-    End With
+    If mvarScriptBlock Is Nothing Then
+        Set mvarScriptBlock = Object.Engine.CompileScriptBlock(mvarScript, "Object")
+    End If
+    mvarScriptBlock.Invoke Object
 End Sub
 
 Public Property Get Script() As String
@@ -111,7 +109,9 @@ Attribute Script.VB_Description = "*The script to execute when the frame is play
 End Property
 
 Public Property Let Script(ByRef Value As String)
+On Error Resume Next
     mvarScript = Value
+    Set mvarScriptBlock = Nothing
 End Property
 
 Public Sub LoadGraphics(Optional ByVal Object As Fury2Sprite = Nothing)
@@ -120,6 +120,7 @@ Dim l_varVariables As Variant
 Dim l_strFilename As String
 Dim l_siImage As Fury2SecondaryImage
 Dim l_posParent As Fury2Pose
+    If mvarParent.pObj = 0 Then Exit Sub
     Set l_posParent = WRGetPose(mvarParent)
     If Object Is Nothing Then
         Set Object = l_posParent.Parent
@@ -153,6 +154,7 @@ Sub Free()
 Attribute Free.VB_MemberFlags = "40"
 On Error Resume Next
 Dim l_siImage As Fury2SecondaryImage
+    Set mvarScriptBlock = Nothing
     For Each l_siImage In mvarSecondaryImages
         l_siImage.Free
     Next l_siImage

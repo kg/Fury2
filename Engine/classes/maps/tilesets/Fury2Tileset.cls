@@ -352,6 +352,7 @@ Dim l_strFilename As String
     Embed = False
     Set mvarBuffer = Nothing
     With File
+        .Progress_Begin 0.1
         .ReadSegment_Begin
             .Load mvarFilename
             .Load mvarTileWidth
@@ -372,14 +373,15 @@ Dim l_strFilename As String
                 .Load m_lngRowWidth
             .ReadSegment_End
         .ReadSegment_End
+        .Progress_End
+        .Progress_Begin 0.9
         If Embed Then
             ReadTiles File
+        Else
+            Load
         End If
+        .Progress_End
     End With
-    If Embed Then
-    Else
-        Load
-    End If
     Err.Clear
 End Sub
 
@@ -521,19 +523,27 @@ Dim l_imgImage As Fury2Image
     DeallocateTileset
     With File
         .ReadSegment_Begin
+            .Progress_Begin 0.05
             .ReadSegment_Begin
                 .Load l_lngCount
                 .Load l_lngWidth
                 .Load l_lngHeight
             .ReadSegment_End
+            .Progress_End
+            .Progress_Begin 0.1
             Handle = AllocateEmptyTileset(l_lngCount, l_lngWidth, l_lngHeight)
+            .Progress_End
+            .Progress_Begin 0.75
             .ReadSegment_Begin
                 Set l_imgImage = New Fury2Image
                 For l_lngIndex = 1 To l_lngCount
                     .Load l_imgImage
                     ReplaceTile Handle, l_lngIndex - 1, l_imgImage.Handle
+                    .Progress_Set l_lngIndex / l_lngCount
                 Next l_lngIndex
             .ReadSegment_End
+            .Progress_End
+            .Progress_Begin 0.1
             Dim l_varData As Variant
             .ReadSegment_Begin
                 m_colTileData.Clear
@@ -547,8 +557,10 @@ Dim l_imgImage As Fury2Image
                             m_colTileData.Add l_varData
                         End If
                     .ReadSegment_End
+                    .Progress_Set l_lngIndex / l_lngCount
                 Next l_lngIndex
             .ReadSegment_End
+            .Progress_End
         .ReadSegment_End
     End With
     Engine.ContextLevelRemove

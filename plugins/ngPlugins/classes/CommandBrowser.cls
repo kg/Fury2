@@ -52,6 +52,8 @@ On Error Resume Next
     If m_frmBrowser Is Nothing Then
         Set m_frmBrowser = New frmCommandBrowser
         Set m_frmBrowser.Plugin = Me
+        m_frmBrowser.InitBrowser
+        m_frmBrowser.RefreshObjects
         m_objEditor.NewDocument m_frmBrowser
     Else
         m_objEditor.ActivateDocument m_frmBrowser

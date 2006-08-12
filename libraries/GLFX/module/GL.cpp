@@ -6,7 +6,7 @@ namespace GL {
   bool fogEnabled = false;
   bool aaEnabled = false;
   Framebuffer* activeFramebuffer = 0;
-  GLuint activeTexture[4] = {-1, -1, -1, -1};
+  GLuint activeTexture[4] = {0, 0, 0, 0};
   Texture* activeTextureObj[4] = {0, 0, 0, 0};
   int activeTextureStage = 0;
   int scaleMode[4] = {-1, -1, -1, -1};
@@ -26,7 +26,7 @@ namespace GL {
     fogEnabled = false;
     aaEnabled = false;
     for (int i = 0; i < 4; i++) 
-      activeTexture[i] = -1;
+      activeTexture[i] = 0;
     for (int i = 0; i < 4; i++) 
       activeTextureObj[i] = 0;
     for (int i = 0; i < 4; i++) 

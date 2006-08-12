@@ -368,10 +368,10 @@ On Error Resume Next
 End Sub
 
 Public Function Options(Optional ByVal XScroll As Long = 0, Optional ByVal YScroll As Long = 0, _
-Attribute Options.VB_Description = "Builds an optionset for use with the draw commands."
     Optional ByVal SelectionStart As Long = 0, Optional ByVal SelectionEnd As Long = 0, _
     Optional ByVal SelectionColor As Long = 0, Optional ByVal CaretPosition As Long = 0, _
     Optional ByVal CaretColor As Long = 0, Optional ByVal MaxCharacters As Long = 0, Optional ByVal EnableColorCodes As Boolean = True) As Variant
+Attribute Options.VB_Description = "Builds an optionset for use with the draw commands."
     Options = Array(XScroll, YScroll, SelectionStart, SelectionEnd, SelectionColor, CaretPosition, CaretColor, MaxCharacters, EnableColorCodes)
 End Function
 
@@ -779,7 +779,7 @@ On Error Resume Next
     m_cpmCharParams(Character - 1).YOffset = Value
 End Property
 
-Function ImportTTF(ByVal Font As StdFont, Optional ByVal Unicode As Boolean = False, Optional ByRef CharacterSet As String = "") As Boolean
+Function ImportTTF(ByVal Font As StdFont, Optional ByVal Unicode As Boolean = False, Optional ByRef CharacterSet As String = "", Optional ByVal ProgressCallback As Fury2Event = Nothing) As Boolean
 Attribute ImportTTF.VB_Description = "Imports a truetype font, optionally using one or more unicode character sets."
 On Error Resume Next
 Dim l_lngChars As Long, l_lngCharIndices As Long, l_lngCode As Long
@@ -864,6 +864,11 @@ Dim l_lngPointer As Long
             m_cpmCharParams(l_lngCharIndices).pImage = m_imgChar.Handle
             m_colCharImages.Add m_imgChar
             Set m_imgChar = Nothing
+        End If
+        If (l_lngCharIndices Mod 5) = 0 Then
+            If Not (ProgressCallback Is Nothing) Then
+                ProgressCallback.Invoke l_lngCharIndices / m_lngCharCount
+            End If
         End If
     Next l_lngCharIndices
     For l_lngChars = 1 To m_lngCharCount
@@ -1189,10 +1194,12 @@ Dim l_lngValue As Long
 Dim l_lngWidth As Long, l_lngHeight As Long, l_lngSize As Long, l_lngPointer As Long
 Dim l_imgChar As Fury2Image
 Dim l_lngVersion As Long
+Dim l_dblProgress As Double
     m_lngCharCount = 0
     l_lngVersion = 1
     ReDim m_lngTabStops(0 To 0)
     With File
+        .Progress_Begin 0.1
         .Load m_lngCharCount
         If m_lngCharCount < 1 Then Exit Sub
         .ReadSegment_Begin
@@ -1212,10 +1219,13 @@ Dim l_lngVersion As Long
             .RawLoad VarPtr(m_fpmFontParam), Len(m_fpmFontParam)
             If Not .EOS Then .Load m_lngFullHeight
         .ReadSegment_End
+        .Progress_End
+        .Progress_Begin 0.9
         ReDim m_cpmCharParams(0 To m_lngCharCount - 1)
         .ReadSegment_Begin
             Set m_colCharImages = New Collection
             If l_lngVersion > 3 Then
+                .Progress_Begin 0.25
                 For l_lngChars = 0 To m_lngCharCount - 1
                     .ReadSegment_Begin
                         .Load l_lngValue
@@ -1230,16 +1240,21 @@ Dim l_lngVersion As Long
                         m_cpmCharParams(l_lngChars).YOffset = l_intValue
                     .ReadSegment_End
                 Next l_lngChars
+                .Progress_End
                 .ReadSegment_Begin
                     .Load l_lngValue
                     If l_lngValue > 0 Then
                         ReDim m_bytFontBuffer(0 To l_lngValue)
+                        .Progress_Begin 0.25
                         .ReadSegment_Begin
                             .RawLoad ByVal VarPtr(m_bytFontBuffer(0)), l_lngValue
                         .ReadSegment_End
+                        .Progress_End
+                        l_dblProgress = 0.5 / m_lngCharCount
                         .ReadSegment_Begin
                             l_lngPointer = VarPtr(m_bytFontBuffer(0))
                             For l_lngChars = 0 To m_lngCharCount - 1
+                                .Progress_Begin l_dblProgress
                                 .Load l_lngWidth
                                 .Load l_lngHeight
                                 l_lngSize = l_lngWidth * l_lngHeight * 4
@@ -1251,6 +1266,7 @@ Dim l_lngVersion As Long
                                     m_colCharImages.Add l_imgChar
                                     l_lngPointer = AddUInts(l_lngPointer, l_lngSize)
                                 End If
+                                .Progress_End
                             Next l_lngChars
                         .ReadSegment_End
                     Else
@@ -1303,6 +1319,7 @@ Dim l_lngVersion As Long
                 Next l_lngChars
             End If
         .ReadSegment_End
+        .Progress_End
         Refresh
         Err.Clear
     End With
@@ -1314,6 +1331,7 @@ Dim l_lngChars As Long
 Dim l_lngWidth As Long, l_lngHeight As Long, l_lngSize As Long
 Dim l_lngTotalSize As Long, l_lngPointer As Long
     With File
+        .Progress_Begin 0.1
         .Save m_lngCharCount
         .WriteSegment_Begin
             .Save m_strTitle
@@ -1326,8 +1344,10 @@ Dim l_lngTotalSize As Long, l_lngPointer As Long
             .RawSave VarPtr(m_fpmFontParam), Len(m_fpmFontParam)
             .Save m_lngFullHeight
         .WriteSegment_End
+        .Progress_End
         .WriteSegment_Begin
             If m_colCharImages.Count > 0 Then
+                .Progress_Begin 0.15
                 For l_lngChars = 1 To m_colCharImages.Count
                     .WriteSegment_Begin
                         .Save m_cpmCharParams(l_lngChars - 1).MapValue
@@ -1337,6 +1357,7 @@ Dim l_lngTotalSize As Long, l_lngPointer As Long
                         .Save m_cpmCharParams(l_lngChars - 1).YOffset
                     .WriteSegment_End
                 Next l_lngChars
+                .Progress_End
                 .WriteSegment_Begin
                     For l_lngChars = 1 To m_colCharImages.Count
                         If m_colCharImages(l_lngChars) Is Nothing Then
@@ -1350,6 +1371,7 @@ Dim l_lngTotalSize As Long, l_lngPointer As Long
                     .Save l_lngTotalSize
 '                    ReDim Preserve m_bytFontBuffer(0 To l_lngTotalSize)
 '                    l_lngPointer = VarPtr(m_bytFontBuffer(0))
+                    .Progress_Begin 0.5
                     .WriteSegment_Begin
                         ' Buffer
                         For l_lngChars = 1 To m_colCharImages.Count
@@ -1365,10 +1387,13 @@ Dim l_lngTotalSize As Long, l_lngPointer As Long
                                     File.RawSave .Pointer(0, 0), l_lngSize
                                 End With
                             End If
+                            .Progress_Set m_colCharImages.Count / l_lngChars
                         Next l_lngChars
 '                        .RawSaveCompressed VarPtr(m_bytFontBuffer(0)), l_lngTotalSize
 '                        Erase m_bytFontBuffer
                     .WriteSegment_End
+                    .Progress_End
+                    .Progress_Begin 0.25
                     .WriteSegment_Begin
                         ' Character bitmap entries
                         For l_lngChars = 1 To m_colCharImages.Count
@@ -1383,6 +1408,7 @@ Dim l_lngTotalSize As Long, l_lngPointer As Long
                             End If
                         Next l_lngChars
                     .WriteSegment_End
+                    .Progress_End
                 .WriteSegment_End
             End If
 '            If m_colCharImages.Count > 0 Then

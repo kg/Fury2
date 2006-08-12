@@ -122,7 +122,7 @@ On Error Resume Next
             Key = Asc(UCase(KeyCode))
             Exit Property
         End If
-        If LCase(left(KeyCode, 1)) = "f" Then
+        If LCase(Left(KeyCode, 1)) = "f" Then
             Key = vbKeyF1 + CLng(Mid(KeyCode, 2)) - 1
         End If
     End Select
@@ -370,5 +370,22 @@ Public Property Get Pi() As Double
 End Property
 Public Property Get Sqrt2() As Double
     Sqrt2 = c_dblSqrt2
+End Property
+
+Public Property Get F2TM_Instant() As Long
+    F2TM_Instant = 0
+End Property
+Public Property Get F2TM_Linear() As Long
+    F2TM_Linear = 1
+End Property
+
+Public Property Get F2TT_Number() As Long
+    F2TT_Number = 0
+End Property
+Public Property Get F2TT_Integer() As Long
+    F2TT_Integer = 1
+End Property
+Public Property Get F2TT_Color() As Long
+    F2TT_Color = 2
 End Property
 

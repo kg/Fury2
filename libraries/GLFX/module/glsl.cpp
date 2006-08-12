@@ -10,7 +10,8 @@ namespace GLSL {
       GL::endDraw();
       if (program.isValid()) {
         if (program.isLinked()) {
-          glUseProgramObjectARB(program.Handle);
+          if (glUseProgramObjectARB)
+            glUseProgramObjectARB(program.Handle);
           Global->checkError();
         }
       }
@@ -20,7 +21,8 @@ namespace GLSL {
   void disableProgram() {
     if (GLSL::isSupported()) {
       GL::endDraw();
-      glUseProgramObjectARB(0);
+      if (glUseProgramObjectARB)
+        glUseProgramObjectARB(0);
       Global->checkError();
     }
   }
@@ -31,56 +33,64 @@ namespace GLSL {
 
   void Variable::set(Mat4 *values, int count) {
     if (this->isValid()) {
-      glUniformMatrix4fvARB(this->Handle, count, false, reinterpret_cast<const GLfloat*>(values));
+      if (glUniformMatrix4fvARB)
+        glUniformMatrix4fvARB(this->Handle, count, false, reinterpret_cast<const GLfloat*>(values));
       Global->checkError();
     }
   }
 
   void Variable::set(Mat3 *values, int count) {
     if (this->isValid()) {
-      glUniformMatrix3fvARB(this->Handle, count, false, reinterpret_cast<const GLfloat*>(values));
+      if (glUniformMatrix3fvARB)
+        glUniformMatrix3fvARB(this->Handle, count, false, reinterpret_cast<const GLfloat*>(values));
       Global->checkError();
     }
   }
 
   void Variable::set(Mat2 *values, int count) {
     if (this->isValid()) {
-      glUniformMatrix2fvARB(this->Handle, count, false, reinterpret_cast<const GLfloat*>(values));
+      if (glUniformMatrix2fvARB)
+        glUniformMatrix2fvARB(this->Handle, count, false, reinterpret_cast<const GLfloat*>(values));
       Global->checkError();
     }
   }
 
   void Variable::set(Vec4 *values, int count) {
     if (this->isValid()) {
-      glUniform4fvARB(this->Handle, count, reinterpret_cast<const GLfloat*>(values));
+      if (glUniform4fvARB)
+        glUniform4fvARB(this->Handle, count, reinterpret_cast<const GLfloat*>(values));
       Global->checkError();
     }
   }
 
   void Variable::set(Vec3 *values, int count) {
     if (this->isValid()) {
-      glUniform3fvARB(this->Handle, count, reinterpret_cast<const GLfloat*>(values));
+      if (glUniform3fvARB)
+        glUniform3fvARB(this->Handle, count, reinterpret_cast<const GLfloat*>(values));
       Global->checkError();
     }
   }
 
   void Variable::set(Vec2 *values, int count) {
     if (this->isValid()) {
-      glUniform2fvARB(this->Handle, count, reinterpret_cast<const GLfloat*>(values));
+      if (glUniform2fvARB)
+        glUniform2fvARB(this->Handle, count, reinterpret_cast<const GLfloat*>(values));
       Global->checkError();
     }
   }
 
   void Variable::set(float *values, int count) {
     if (this->isValid()) {
-      glUniform1fvARB(this->Handle, count, values);
+      if (glUniform1fvARB)
+        glUniform1fvARB(this->Handle, count, values);
       Global->checkError();
     }
   }
 
   void Variable::set(int *values, int count) {
     if (this->isValid()) {
-      glUniform1ivARB(this->Handle, count, values);
+      if (glUniform1ivARB)
+        glUniform1ivARB(this->Handle, count, values);
       Global->checkError();
     }
   }
@@ -89,42 +99,48 @@ namespace GLSL {
     if (this->isValid()) {
       Vec4 vec;
       Global->ColorToFloat4(value, &(vec.V[0]));
-      glUniform4fvARB(this->Handle, 1, &(vec.V[0]));
+      if (glUniform4fvARB)
+        glUniform4fvARB(this->Handle, 1, &(vec.V[0]));
       Global->checkError();
     }
   }
 
   void Variable::set(Vec4 value) {
     if (this->isValid()) {
-      glUniform4fvARB(this->Handle, 1, &(value.V[0]));
+      if (glUniform4fvARB)
+        glUniform4fvARB(this->Handle, 1, &(value.V[0]));
       Global->checkError();
     }
   }
 
   void Variable::set(Vec3 value) {
     if (this->isValid()) {
-      glUniform3fvARB(this->Handle, 1, &(value.V[0]));
+      if (glUniform3fvARB)
+        glUniform3fvARB(this->Handle, 1, &(value.V[0]));
       Global->checkError();
     }
   }
 
   void Variable::set(Vec2 value) {
     if (this->isValid()) {
-      glUniform2fvARB(this->Handle, 1, &(value.V[0]));
+      if (glUniform2fvARB)
+        glUniform2fvARB(this->Handle, 1, &(value.V[0]));
       Global->checkError();
     }
   }
 
   void Variable::set(double value) {
     if (this->isValid()) {
-      glUniform1fARB(this->Handle, (float)value);
+      if (glUniform1fvARB)
+        glUniform1fARB(this->Handle, (float)value);
       Global->checkError();
     }
   }
 
   void Variable::set(float value) {
     if (this->isValid()) {
-      glUniform1fARB(this->Handle, value);
+      if (glUniform1fvARB)
+        glUniform1fARB(this->Handle, value);
       Global->checkError();
     }
   }
@@ -132,7 +148,8 @@ namespace GLSL {
   float Variable::get() {
     float temp = -1;
     if (this->isValid()) {
-      glGetUniformfvARB(this->ProgramHandle, this->Handle, &temp);
+      if (glUniform1fvARB)
+        glGetUniformfvARB(this->ProgramHandle, this->Handle, &temp);
       Global->checkError();
     }
     return temp;
@@ -140,14 +157,16 @@ namespace GLSL {
 
   void Variable::set(int value) {
     if (this->isValid()) {
-      glUniform1iARB(this->Handle, value);
+      if (glUniform1iARB)
+        glUniform1iARB(this->Handle, value);
       Global->checkError();
     }
   }
 
   void Variable::set(bool value) {
     if (this->isValid()) {
-      glUniform1iARB(this->Handle, (int)value);
+      if (glUniform1iARB)
+        glUniform1iARB(this->Handle, (int)value);
       Global->checkError();
     }
   }
@@ -156,7 +175,8 @@ namespace GLSL {
     if (isValid()) {
       int temp = 0;
       GL::endDraw();
-      glGetObjectParameterivARB(this->Handle, GL_OBJECT_LINK_STATUS_ARB, &temp);
+      if (glGetObjectParameterivARB)
+        glGetObjectParameterivARB(this->Handle, GL_OBJECT_LINK_STATUS_ARB, &temp);
       Global->checkError();
       return (temp == 1);
     } else { 
@@ -166,16 +186,21 @@ namespace GLSL {
 
   Variable Program::getVariable(const char *name) {
     GL::endDraw();
-    GLint temp = glGetUniformLocationARB(this->Handle, name);
-    Global->checkError();
-    return Variable(this->Handle, temp);
+    if (glGetUniformLocationARB) {
+      GLint temp = glGetUniformLocationARB(this->Handle, name);
+      Global->checkError();
+      return Variable(this->Handle, temp);
+    } else {
+      return Variable(this->Handle, 0);
+    }
   }
 
   bool Shader::isCompiled() {
     if (isValid()) {
       int temp = 0;
       GL::endDraw();
-      glGetObjectParameterivARB(this->Handle, GL_OBJECT_COMPILE_STATUS_ARB, &temp);
+      if (glGetObjectParameterivARB)
+        glGetObjectParameterivARB(this->Handle, GL_OBJECT_COMPILE_STATUS_ARB, &temp);
       Global->checkError();
       return (temp == 1);
     } else { 
@@ -186,14 +211,16 @@ namespace GLSL {
   void Shader::addSource(const char* text) {
     if (this->isValid()) {
       const char **strings = &text;
-      glShaderSourceARB(this->Handle, 1, strings, 0);
+      if (glShaderSourceARB)
+        glShaderSourceARB(this->Handle, 1, strings, 0);
       Global->checkError();
     }
   }
 
   void Shader::compile() {
     if (this->isValid()) {
-      glCompileShaderARB(this->Handle);
+      if (glCompileShaderARB)
+        glCompileShaderARB(this->Handle);
       Global->checkError();
       _DebugTrace(this->getInfoLog().c_str());
     }

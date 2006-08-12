@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.3#0"; "ngUI.ocx"
 Begin VB.Form frmTileset 
    BorderStyle     =   0  'None
    Caption         =   "Untitled.f2tileset"
@@ -323,21 +323,23 @@ Dim l_lngX As Long
 Dim l_lngWidth As Long
 Dim l_rctTile As Fury2Rect
     m_imgTileList.Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
-    l_lngX = -hsTiles.Value
-    For l_lngTile = 1 To m_tsTileset.TileCount
-        Set l_imgTile = m_tsTileset.Tile(l_lngTile)
-        If m_lngSelectedTile = l_lngTile Then
-            m_imgTileList.Fill F2Rect(l_lngX, 0, ClipValue(l_imgTile.Width, 2, 999), picTileList.ScaleHeight, False), SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue)
-        End If
-        m_imgTileList.Blit F2Rect(l_lngX, 0, l_imgTile.Width, l_imgTile.Height, False), , l_imgTile, , BlitMode_SourceAlpha
-        If m_lngSelectedTile = l_lngTile Then
-            m_imgTileList.Fill F2Rect(l_lngX, 0, ClipValue(l_imgTile.Width, 2, 999), picTileList.ScaleHeight, False), SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), RenderMode_SourceAlpha
-        End If
-        l_lngX = l_lngX + ClipValue(l_imgTile.Width, 2, 999) + 1
-        l_lngWidth = l_lngWidth + ClipValue(l_imgTile.Width, 2, 999) + 1
-    Next l_lngTile
+    l_lngX = 0
+    If m_tsTileset.TileCount >= (1 + hsTiles.Value) Then
+        For l_lngTile = hsTiles.Value + 1 To m_tsTileset.TileCount
+            Set l_imgTile = m_tsTileset.Tile(l_lngTile)
+            If m_lngSelectedTile = l_lngTile Then
+                m_imgTileList.Fill F2Rect(l_lngX, 0, ClipValue(l_imgTile.Width, 2, 999), picTileList.ScaleHeight, False), SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue)
+            End If
+            m_imgTileList.Blit F2Rect(l_lngX, 0, l_imgTile.Width, l_imgTile.Height, False), , l_imgTile, , BlitMode_SourceAlpha
+            If m_lngSelectedTile = l_lngTile Then
+                m_imgTileList.Fill F2Rect(l_lngX, 0, ClipValue(l_imgTile.Width, 2, 999), picTileList.ScaleHeight, False), SetAlpha(SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue), 127), RenderMode_SourceAlpha
+            End If
+            l_lngX = l_lngX + ClipValue(l_imgTile.Width, 2, 999) + 1
+            If l_lngX > picTiles.ScaleWidth Then Exit For
+        Next l_lngTile
+    End If
     picTileList.Refresh
-    hsTiles.Max = l_lngWidth - picTileList.ScaleWidth
+    hsTiles.Max = (m_tsTileset.TileCount) - (picTiles.ScaleWidth \ (m_tsTileset.TileWidth + 2))
 End Sub
 
 Private Sub FixRectCoords(ByRef X1 As Long, ByRef Y1 As Long, ByRef X2 As Long, ByRef Y2 As Long)
@@ -696,6 +698,7 @@ On Error Resume Next
 Dim l_vfFile As VirtualFile
     Err.Clear
     Set l_vfFile = F2File()
+    Set l_vfFile.ProgressEvent = Editor.ProgressCallback
     m_tsTileset.SaveTileset l_vfFile
     l_vfFile.SaveFile Filename
     iDocument_Save = (Err.Number = 0)
@@ -851,8 +854,8 @@ Dim l_lngTile As Long
 Dim l_lngX As Long
 Dim l_lngWidth As Long
 Dim l_rctTile As Fury2Rect
-    l_lngX = -hsTiles.Value
-    For l_lngTile = 1 To m_tsTileset.TileCount
+    l_lngX = 0
+    For l_lngTile = hsTiles.Value + 1 To m_tsTileset.TileCount
         Set l_imgTile = m_tsTileset.Tile(l_lngTile)
         If l_imgTile Is Nothing Then
         Else
@@ -883,6 +886,7 @@ Dim l_rctTile As Fury2Rect
             End If
             l_lngX = l_lngX + ClipValue(l_imgTile.Width, 6, 999) + 1
         End If
+        If l_lngX > picTiles.ScaleWidth Then Exit For
     Next l_lngTile
     If Button = 2 Then
         Editor.ActionUpdate

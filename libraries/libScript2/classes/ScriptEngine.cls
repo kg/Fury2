@@ -43,6 +43,7 @@ End Function
 
 Public Function InvokeMember(ByRef Obj As Object, ByVal Member As Long, ByVal InvokeType As VbCallType, ByRef Arguments() As Variant) As Variant
 On Error Resume Next
+    If Member = -1 Then Exit Function
     InvokeMember = m_Engine.InvokeMemberArray(Obj, Member, InvokeType, Arguments)
 End Function
 

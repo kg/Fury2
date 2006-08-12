@@ -11,6 +11,9 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
+Implements Fury2Object
+Implements ICallable
+
 Public Blocking As Boolean
 Public Object
 Attribute Object.VB_VarDescription = "The object that contains the method to invoke."
@@ -217,3 +220,122 @@ On Error Resume Next
     BoundParameters = Array()
 End Sub
 
+Private Function ICallable_Invoke(ParamArray Parameters() As Variant) As Variant
+On Error Resume Next
+Dim l_objObject As Object
+Dim l_varParameters() As Variant
+Dim l_lngParameterOffset As Long
+Dim l_lngParameters As Long
+Dim l_lngParameterCount As Long
+Dim l_lngIndex As Long, l_lngIncrement As Long
+    If Blocking And Blocked Then Exit Function
+    If VarType(Object) = vbString Then
+        Set l_objObject = Engine.Evaluate(Object)
+    Else
+        If Object Is Nothing Then Exit Function
+        Set l_objObject = Object
+    End If
+    If VarType(BoundParameters) = vbObject Then
+        If (UBound(Parameters) >= 0) Then
+            ReDim l_varParameters(0 To UBound(Parameters))
+            l_lngParameterOffset = 0
+        Else
+            ReDim l_varParameters(0 To 0)
+            Erase l_varParameters
+            l_lngParameterOffset = 0
+        End If
+        If (MethodID <> -1) Then
+            l_lngIndex = UBound(l_varParameters)
+            l_lngIncrement = -1
+        Else
+            l_lngIndex = LBound(l_varParameters)
+            l_lngIncrement = 1
+        End If
+    Else
+        If (UBound(Parameters) >= 0) Then
+            ReDim l_varParameters(0 To (UBound(Parameters) - LBound(Parameters) + 1) + (UBound(BoundParameters) - LBound(BoundParameters) + 1) - 1)
+            l_lngParameterOffset = UBound(Parameters) - LBound(Parameters) + 1
+        Else
+            ReDim l_varParameters(0 To UBound(BoundParameters))
+            l_lngParameterOffset = 0
+        End If
+        If (MethodID <> -1) Then
+            l_lngIndex = UBound(l_varParameters) - l_lngParameterOffset
+            l_lngIncrement = -1
+        Else
+            l_lngIndex = LBound(l_varParameters) + l_lngParameterOffset
+            l_lngIncrement = 1
+        End If
+        For l_lngParameters = LBound(BoundParameters) To UBound(BoundParameters)
+            If VarType(BoundParameters(l_lngParameters)) = vbObject Then
+                Set l_varParameters(l_lngIndex) = BoundParameters(l_lngParameters)
+            Else
+                l_varParameters(l_lngIndex) = BoundParameters(l_lngParameters)
+            End If
+            l_lngIndex = l_lngIndex + l_lngIncrement
+        Next l_lngParameters
+    End If
+    l_lngParameterCount = -1
+    l_lngParameterCount = UBound(l_varParameters)
+    If (UBound(Parameters) >= 0) Then
+        If (MethodID <> -1) Then
+            l_lngIndex = UBound(l_varParameters)
+            l_lngIncrement = -1
+        Else
+            l_lngIndex = LBound(l_varParameters)
+            l_lngIncrement = 1
+        End If
+        For l_lngParameters = LBound(Parameters) To UBound(Parameters)
+            If VarType(Parameters(l_lngParameters)) = vbObject Then
+                Set l_varParameters(l_lngIndex) = Parameters(l_lngParameters)
+            Else
+                l_varParameters(l_lngIndex) = Parameters(l_lngParameters)
+            End If
+            l_lngIndex = l_lngIndex + l_lngIncrement
+        Next l_lngParameters
+    End If
+    Err.Clear
+    If Len(m_strContextName) = 0 Then
+        m_strContextName = "Event(" & TypeName(l_objObject) & "." & Method & ")"
+    End If
+    Engine.ContextLevelAdd m_strContextName
+    m_lngBlocked = m_lngBlocked + 1
+    If (MethodID <> -1) Then
+        Invoke = m_seEngine.InvokeMember(l_objObject, MethodID, VbMethod, l_varParameters)
+    Else
+        Select Case l_lngParameterCount
+        Case 0
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0))
+        Case 1
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1))
+        Case 2
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2))
+        Case 3
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3))
+        Case 4
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4))
+        Case 5
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5))
+        Case 6
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6))
+        Case 7
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7))
+        Case 8
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8))
+        Case 9
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9))
+        Case 10
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9), l_varParameters(10))
+        Case 11
+            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9), l_varParameters(10), l_varParameters(11))
+        Case Else
+            Invoke = CallByName(l_objObject, Method, VbMethod)
+        End Select
+    End If
+    Erase l_varParameters
+    m_lngBlocked = m_lngBlocked - 1
+    If Err = 438 Then
+        Engine.DebugOut "Invoke failed: " & m_strContextName
+    End If
+    Engine.ContextLevelRemove
+End Function

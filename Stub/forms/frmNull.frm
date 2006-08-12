@@ -54,9 +54,9 @@ On Error Resume Next
     DoEvents
     Unload Me
     If InIDE Then
-        End
+'        End
     Else
-        Fury2Terminate
+'        Fury2Terminate
     End If
 End Sub
 

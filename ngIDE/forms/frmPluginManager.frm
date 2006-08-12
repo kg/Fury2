@@ -1,9 +1,9 @@
 VERSION 5.00
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.2#0"; "ngUI.ocx"
 Begin VB.Form frmPluginManager 
    BorderStyle     =   3  'Fixed Dialog
    Caption         =   "Plugin Manager"
-   ClientHeight    =   4845
+   ClientHeight    =   4950
    ClientLeft      =   45
    ClientTop       =   345
    ClientWidth     =   5880
@@ -20,13 +20,30 @@ Begin VB.Form frmPluginManager
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   ScaleHeight     =   323
+   ScaleHeight     =   330
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   392
    ShowInTaskbar   =   0   'False
    StartUpPosition =   2  'CenterScreen
-   Begin VB.CommandButton cmdRemoveSelected 
+   Begin VB.CommandButton cmdRemoveAll 
       Cancel          =   -1  'True
+      Caption         =   "Remove &All"
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   9
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   390
+      Left            =   4335
+      TabIndex        =   21
+      Top             =   2280
+      Width           =   1500
+   End
+   Begin VB.CommandButton cmdRemoveSelected 
       Caption         =   "&Remove"
       Enabled         =   0   'False
       BeginProperty Font 
@@ -116,19 +133,19 @@ Begin VB.Form frmPluginManager
    End
    Begin VB.Frame fraPlugins 
       Caption         =   "Available Plugins"
-      Height          =   2535
+      Height          =   2655
       Left            =   30
       TabIndex        =   0
       Top             =   30
       Width           =   4275
       Begin ngUI.ngListBox lstPlugins 
-         Height          =   2220
+         Height          =   2340
          Left            =   75
          TabIndex        =   6
          Top             =   225
          Width           =   4110
          _ExtentX        =   7250
-         _ExtentY        =   3916
+         _ExtentY        =   4128
          BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
             Name            =   "Tahoma"
             Size            =   8.25
@@ -152,7 +169,7 @@ Begin VB.Form frmPluginManager
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   383
       TabIndex        =   17
-      Top             =   2940
+      Top             =   3060
       Visible         =   0   'False
       Width           =   5745
       Begin VB.CheckBox chkShowInOpenDialog 
@@ -205,7 +222,7 @@ Begin VB.Form frmPluginManager
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   383
       TabIndex        =   8
-      Top             =   2940
+      Top             =   3060
       Visible         =   0   'False
       Width           =   5745
       Begin VB.TextBox txtPluginDescription 
@@ -294,7 +311,7 @@ Begin VB.Form frmPluginManager
    Begin ngUI.ngTabStrip tsSelected 
       Height          =   2220
       Left            =   30
-      Top             =   2595
+      Top             =   2715
       Width           =   5805
       _ExtentX        =   10239
       _ExtentY        =   3916
@@ -382,6 +399,7 @@ Dim l_icnIcon As IPictureDisp
 Dim l_imgIcon As Fury2Image, l_imgDefault As Fury2Image
     Set l_imgDefault = F2ImageFromPicture(Me.Icon).Resample(16, 16, ResampleMode_Bilinear)
     With lstPlugins
+        .DisableUpdates = True
         .ListItems.Clear
         For Each l_plgPlugin In g_colPlugins
             With l_plgPlugin
@@ -399,6 +417,8 @@ Dim l_imgIcon As Fury2Image, l_imgDefault As Fury2Image
                 Set lstPlugins.ListItems.AddNew(.PluginName, , l_imgIcon).Tag = l_plgPlugin
             End With
         Next l_plgPlugin
+        .DisableUpdates = False
+        .Reflow
     End With
 End Sub
 
@@ -471,6 +491,21 @@ On Error Resume Next
     ShutdownPlugins
     InitPlugins
     LoadPlugins
+End Sub
+
+Private Sub cmdRemoveAll_Click()
+On Error Resume Next
+Dim l_lngIndex As Long
+    l_lngIndex = lstPlugins.FirstSelectedItem.Index
+    lstPlugins.ListItems.Clear
+    WriteRegSetting "Plugins\Count", 0
+    ShutdownPlugins
+    InitPlugins
+    LoadPlugins
+    RefreshPluginList
+    If (l_lngIndex > lstPlugins.ListItems.Count) Then
+        lstPlugins.SelectItems l_lngIndex
+    End If
 End Sub
 
 Private Sub cmdRemoveSelected_Click()

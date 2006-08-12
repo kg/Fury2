@@ -34,7 +34,7 @@ Dim l_bytData() As Byte
     End Select
 End Function
 
-Public Sub WriteTextFile(ByRef Filename As String, ByRef Text As String, Optional ByVal Format As TextFormats = tfUTF8)
+Public Function WriteTextFile(ByRef Filename As String, ByRef Text As String, Optional ByVal Format As TextFormats = tfUTF8) As Boolean
 On Error Resume Next
 Dim l_lngHandle As Long, l_lngLength As Long
 Dim l_bytHeader() As Byte, l_bytData() As Byte
@@ -42,12 +42,17 @@ Dim l_fmtFormat As TextFormats
 Dim l_booUTF8 As Boolean
     Err.Clear
     l_lngHandle = FreeFile()
+    If FileExists(Filename + "_") Then Kill Filename + "_"
     Open Filename + "_" For Binary Access Write As #l_lngHandle
         If Err <> 0 Then
             Err.Raise Err.Number, "WriteTextFile:OpenFile", Err.Description
-            Exit Sub
+            Exit Function
         End If
         l_bytData = EncodeTextFormat(Text, Format, l_booUTF8)
+        If Err <> 0 Then
+            Err.Raise Err.Number, "WriteTextFile:Encode", Err.Description
+            Exit Function
+        End If
         If (l_booUTF8) Then
             Put #l_lngHandle, 1, CByte(&HEF)
             Put #l_lngHandle, 2, CByte(&HBB)
@@ -59,16 +64,18 @@ Dim l_booUTF8 As Boolean
     Close #l_lngHandle
     If Err <> 0 Then
         Err.Raise Err.Number, "WriteTextFile:" & Err.Source, Err.Description
-        Exit Sub
+        Exit Function
     End If
     Err.Clear
-    Kill Filename
+    If FileExists(Filename) Then Kill Filename
     Name Filename + "_" As Filename
     If Err <> 0 Then
         Err.Raise Err.Number, "WriteTextFile:Save", Err.Description
-        Exit Sub
+        Exit Function
     End If
-End Sub
+    WriteTextFile = True
+    Err.Clear
+End Function
 
 Public Function ReadTextFile(ByRef Filename As String) As String
 On Error Resume Next
@@ -149,7 +156,7 @@ On Error Resume Next
 End Function
 
 Public Function EncodeUTF8(ByRef Text As String, Optional ByRef IsUTF8 As Boolean = False) As Byte()
-On Error Resume Next
+'On Error Resume Next
 Dim l_lngCharacter As Long
 Dim l_lngLength As Long
 Dim l_bytBuffer() As Byte, l_lngBufferLength As Long

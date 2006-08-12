@@ -33,6 +33,7 @@ On Error Resume Next
     Else
         m_booEngineInitialized = True
     End If
+    Set g_edEditor.ProgressCallback = g_engEngine.BindEvent("Fury2SetProgress", g_edEditor)
     SetStatus
 End Sub
 

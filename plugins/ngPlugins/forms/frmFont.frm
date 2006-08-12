@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.3#0"; "ngUI.ocx"
 Begin VB.Form frmFont 
    BorderStyle     =   0  'None
    ClientHeight    =   7335
@@ -348,16 +348,18 @@ Dim l_lngX As Long
 Dim l_rctCharacter As Fury2Rect
     m_imgCharacterList.Clear SwapChannels(GetSystemColor(SystemColor_Button_Face), Red, Blue)
     l_lngX = 0
-    For l_lngCharacter = 1 + hsCharacters.Value To m_fntFont.CharacterCount
-        Set l_imgCharacter = m_fntFont.Character(l_lngCharacter)
-        If m_lngSelectedCharacter = l_lngCharacter Then
-            m_imgCharacterList.Fill F2Rect(l_lngX, 0, ClipValue(l_imgCharacter.Width, 6, 999), picCharacterList.ScaleHeight, False), SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue)
-        End If
-'        m_imgCharacterList.Blit F2Rect(l_lngX, m_fntFont.CharacterYOffset(l_lngCharacter) + (m_fntFont.Height - l_imgCharacter.Height), l_imgCharacter.Width, l_imgCharacter.Height, False), , l_imgCharacter, , BlitMode_Normal, SetAlpha(SwapChannels(IIf(m_lngSelectedCharacter = l_lngCharacter, GetSystemColor(SystemColor_Highlight_Text), GetSystemColor(SystemColor_Button_Text)), Red, Blue), 255)
-        m_imgCharacterList.Blit F2Rect(l_lngX, m_fntFont.CharacterYOffset(l_lngCharacter) + (m_fntFont.Height - l_imgCharacter.Height), l_imgCharacter.Width, l_imgCharacter.Height, False), , l_imgCharacter, , BlitMode_Font_SourceAlpha, SetAlpha(SwapChannels(IIf(m_lngSelectedCharacter = l_lngCharacter, GetSystemColor(SystemColor_Highlight_Text), GetSystemColor(SystemColor_Button_Text)), Red, Blue), 255)
-        l_lngX = l_lngX + ClipValue(l_imgCharacter.Width, 6, 999) + 1
-        If l_lngX > picCharacterList.ScaleWidth Then Exit For
-    Next l_lngCharacter
+    If m_fntFont.CharacterCount >= (1 + hsCharacters.Value) Then
+        For l_lngCharacter = 1 + hsCharacters.Value To m_fntFont.CharacterCount
+            Set l_imgCharacter = m_fntFont.Character(l_lngCharacter)
+            If m_lngSelectedCharacter = l_lngCharacter Then
+                m_imgCharacterList.Fill F2Rect(l_lngX, 0, ClipValue(l_imgCharacter.Width, 6, 999), picCharacterList.ScaleHeight, False), SwapChannels(GetSystemColor(SystemColor_Highlight), Red, Blue)
+            End If
+    '        m_imgCharacterList.Blit F2Rect(l_lngX, m_fntFont.CharacterYOffset(l_lngCharacter) + (m_fntFont.Height - l_imgCharacter.Height), l_imgCharacter.Width, l_imgCharacter.Height, False), , l_imgCharacter, , BlitMode_Normal, SetAlpha(SwapChannels(IIf(m_lngSelectedCharacter = l_lngCharacter, GetSystemColor(SystemColor_Highlight_Text), GetSystemColor(SystemColor_Button_Text)), Red, Blue), 255)
+            m_imgCharacterList.Blit F2Rect(l_lngX, m_fntFont.CharacterYOffset(l_lngCharacter) + (m_fntFont.Height - l_imgCharacter.Height), l_imgCharacter.Width, l_imgCharacter.Height, False), , l_imgCharacter, , BlitMode_Font_SourceAlpha, SetAlpha(SwapChannels(IIf(m_lngSelectedCharacter = l_lngCharacter, GetSystemColor(SystemColor_Highlight_Text), GetSystemColor(SystemColor_Button_Text)), Red, Blue), 255)
+            l_lngX = l_lngX + ClipValue(l_imgCharacter.Width, 6, 999) + 1
+            If l_lngX > picCharacterList.ScaleWidth Then Exit For
+        Next l_lngCharacter
+    End If
     hsCharacters.Max = m_fntFont.CharacterCount - 1
     picCharacterList.Refresh
 End Sub
@@ -746,7 +748,7 @@ On Error Resume Next
 Dim l_vfFile As VirtualFile
     Err.Clear
     Set l_vfFile = F2File()
-    SaveToFile m_fntFont, l_vfFile
+    SaveToFile m_fntFont, l_vfFile, Editor.ProgressCallback
     l_vfFile.SaveFile Filename
     iDocument_Save = (Err.Number = 0)
     If iDocument_Save Then

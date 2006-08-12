@@ -168,7 +168,8 @@ library SoftFX {
         UpwardRect = 0,
         CenteredRect = 1,
         CenteredSphere = 2,
-        CenteredPolygon = 3
+        CenteredPolygon = 3,
+        Beam = 4
     };
 
     enum LockingModes {
@@ -183,7 +184,9 @@ library SoftFX {
         siShadow = 2,
         siLightMap = 3,
         siGlowMap = 4,
-        siShadowMap = 5
+        siShadowMap = 5,
+        siBeginCap = 6,
+        siEndCap = 7
     };
 
     struct SpriteSecondaryImage {
@@ -231,7 +234,7 @@ library SoftFX {
         int IlluminationLevel;
         byte DiffuseLight;
         byte RenderTarget;
-        byte Reserved1;
+        byte Beam;
         byte Reserved2;
     };
 
@@ -255,6 +258,7 @@ library SoftFX {
 
     struct SpritePosition {
         float X, Y, Z;
+        float AX, AY, AZ;
     };
 
     struct SpriteVelocity {
@@ -395,8 +399,15 @@ library SoftFX {
       int Sprites;
       byte ForceRaycasting;
   	  int Matrix;
+      int CollisionMatrix;
     };
-    
+
+    struct LightSourceRenderData {
+      float ldist, ldist11;
+      float xOffset, yOffset;
+      float angleStart, angleEnd;
+    };
+
     struct LightSource {
       float X, Y;
       int Color;
@@ -414,6 +425,7 @@ library SoftFX {
       int Image;
       float ImageAlignX, ImageAlignY;
       float LightSize;
+      struct LightSourceRenderData Data;
     };
 
     struct LightingObstruction {
@@ -1587,6 +1599,8 @@ library SoftFX {
         int CullSprites(int FirstSprite, struct CameraParam *Camera);
         [entry("_IterateSprites@8")]
         int IterateSprites(int FirstSprite, int IteratorFunction);
+        [entry("_FillSpriteMatrix@8")]
+        int FillSpriteMatrix(int FirstSprite, int Matrix);
 
         [entry("_CollisionCheck@20")]
         int CollisionCheck(int FirstSprite, int CheckSprite, int MustBeSolid, int RequiredType, int ExcludedType);

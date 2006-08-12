@@ -3151,6 +3151,7 @@ defOverride(BlitDeform) {
   contextCheck(Dest);
   lockCheck(Dest);
   selectContext(Dest);
+  contextSwitch(Dest);
   if (GLSL::isSupported() && GLEW_ATI_texture_float) {
     return BlitDeform_GLSL(Parameters);
   }
@@ -3266,18 +3267,23 @@ defOverride(BlitDeformMask) {
   contextCheck(Dest);
   lockCheck(Dest);
   selectContext(Dest);
+  contextSwitch(Dest);
   if (GLSL::isSupported() && GLEW_ATI_texture_float) {
     return BlitDeformMask_GLSL(Parameters);
   }
   //clipCheck(Dest, DestRect);
-  enableTexture<0>();
+  enableTextures();
+  disableTexture<2>();
   enableTexture<1>();
+  enableTexture<0>();
   selectImageAsIsolatedTextureN<0>(Source);
-  selectImageAsTextureN<1>(Mask);
+  selectImageAsIsolatedTextureN<1>(Mask);
   selectImageAsIsolatedTextureN<0>(Source);
   setTextureColor(Pixel(255, 255, 255, Opacity));
-  selectImageAsTextureN<1>(Mask);
-  setTextureColor(Pixel(255, 255, 255, Opacity));
+  selectImageAsIsolatedTextureN<1>(Mask);
+  setBlendColor(White);
+  setVertexColor(White);
+  disableFog();
   setMaskRenderer(Renderer, RenderArgument);
   setScaler(Scaler);
   DoubleWord iCX = 0, iCY = DestRect.Height + 1;  
@@ -3292,6 +3298,7 @@ defOverride(BlitDeformMask) {
   Texture* tex = getTexture(Source);
   Texture* mtex = getTexture(Mask);
   if (tex->IsolatedTexture != 0) tex = tex->IsolatedTexture;
+  if (mtex->IsolatedTexture != 0) mtex = mtex->IsolatedTexture;
   float bx = SourceRect.Left, by = SourceRect.Top;
   float bxi = (1 / (DestRect.Width / (float)(SourceRect.Width))), byi = (1 / (DestRect.Height / (float)(SourceRect.Height)));
   MeshPoint p[4];
@@ -3346,15 +3353,17 @@ defOverride(BlitDeformMask) {
       }
       if (perform_draw) {
         if (iCX == 0) pixelsToDraw--;
-        perform_draw = false;
-        glMultiTexCoord2fARB(GL_TEXTURE0_ARB, tex->U(lsx), tex->V(lsy));
-        glMultiTexCoord2fARB(GL_TEXTURE1_ARB, mtex->U(dx + MaskRect.Left), mtex->V(dy + MaskRect.Top - 1));
-        glVertex2f(dx, dy);
-        glMultiTexCoord2fARB(GL_TEXTURE0_ARB, tex->U(sx), tex->V(sy));
-        glMultiTexCoord2fARB(GL_TEXTURE1_ARB, mtex->U(dx + pixelsToDraw + MaskRect.Left), mtex->V(dy + MaskRect.Top - 1));
-        glVertex2f(dx + pixelsToDraw, dy);
-        dx += pixelsToDraw;
-        pixelsToDraw = 0;
+        if (pixelsToDraw) {
+          perform_draw = false;
+          glMultiTexCoord2fARB(GL_TEXTURE0_ARB, tex->U(lsx), tex->V(lsy));
+          glMultiTexCoord2fARB(GL_TEXTURE1_ARB, mtex->U(dx + MaskRect.Left), mtex->V(dy + MaskRect.Top));
+          glVertex2f(dx, dy);
+          glMultiTexCoord2fARB(GL_TEXTURE0_ARB, tex->U(sx), tex->V(sy));
+          glMultiTexCoord2fARB(GL_TEXTURE1_ARB, mtex->U(dx + pixelsToDraw + MaskRect.Left), mtex->V(dy + MaskRect.Top));
+          glVertex2f(dx + pixelsToDraw, dy);
+          dx += pixelsToDraw;
+          pixelsToDraw = 0;
+        }
       }
       bx += bxi;
     }

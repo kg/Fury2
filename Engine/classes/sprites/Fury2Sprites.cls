@@ -50,7 +50,13 @@ Private mvarFirst As Long, mvarSortedFirst As Long
 Private mvarFilename As String
 Private mvarParent As Fury2Map
 Private mvarEngine As Fury2Engine
+Private mvarMatrix As Long
 Private m_optOptions As RenderSpritesParam
+
+Friend Sub SetMatrix(ByVal Matrix As Long)
+On Error Resume Next
+    mvarMatrix = Matrix
+End Sub
 
 Public Sub SetOptions(ByRef NewOptions As RenderSpritesParam)
 On Error Resume Next
@@ -173,6 +179,7 @@ Dim l_sprSprite As Fury2Sprite, l_sprNext As Fury2Sprite
         l_lngFillSprites = l_lngFillSprites + 1
     Next l_sprSprite
     mvarFirst = mCol.Item(1).Pointer
+    FillSpriteMatrix mvarFirst, mvarMatrix
     Err.Clear
 End Sub
 

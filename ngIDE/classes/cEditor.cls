@@ -37,6 +37,8 @@ Private Const EM_UNDO = &HC7
 
 Private Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
 
+Public ProgressCallback As Fury2Event
+
 Public CanCut As Boolean, CanCopy As Boolean, CanPaste As Boolean, CanDelete As Boolean, CanSelectAll As Boolean, CanSelectNone As Boolean, CanUndo As Boolean, CanRedo As Boolean
 Private m_strGamePath As String
 Private m_docChild As cChildManager
@@ -48,6 +50,21 @@ Attribute m_clpClipboard.VB_VarHelpID = -1
 Private m_resResources As ngResourceFile
 Private m_optOptions As EditorOptions
 Private m_sngPauseClicked As Single
+Private m_ngcClipboard As ngClipboard
+
+Public Property Get hwnd() As Long
+On Error Resume Next
+    hwnd = frmMain.hwnd
+End Property
+
+Public Property Get Clipboard() As ngClipboard
+On Error Resume Next
+    If m_ngcClipboard Is Nothing Then
+        Set m_ngcClipboard = New ngClipboard
+        m_ngcClipboard.SetEditor Me
+    End If
+    Set Clipboard = m_ngcClipboard
+End Property
 
 Public Property Get Document() As Object
 On Error Resume Next
@@ -123,8 +140,8 @@ Dim l_clpDocument As iEditingCommands, l_ctlControl As Control
     If l_clpDocument Is Nothing Then
         Set l_ctlControl = m_docChild.Form.ActiveControl
         If TypeOf l_ctlControl Is TextBox Then
-            Clipboard.Clear
-            Clipboard.SetText l_ctlControl.SelText, vbCFText
+            VB.Clipboard.Clear
+            VB.Clipboard.SetText l_ctlControl.SelText, vbCFText
             ActionUpdate
             Action_Copy = True
         End If
@@ -147,8 +164,8 @@ Dim l_clpDocument As iEditingCommands, l_ctlControl As Control
     If l_clpDocument Is Nothing Then
         Set l_ctlControl = m_docChild.Form.ActiveControl
         If TypeOf l_ctlControl Is TextBox Then
-            Clipboard.Clear
-            Clipboard.SetText l_ctlControl.SelText, vbCFText
+            VB.Clipboard.Clear
+            VB.Clipboard.SetText l_ctlControl.SelText, vbCFText
             l_ctlControl.SelText = ""
             ActionUpdate
             Action_Cut = True
@@ -223,8 +240,8 @@ Dim l_clpDocument As iEditingCommands, l_ctlControl As Control
     If l_clpDocument Is Nothing Then
         Set l_ctlControl = m_docChild.Form.ActiveControl
         If TypeOf l_ctlControl Is TextBox Then
-            If Clipboard.GetFormat(vbCFText) Then
-                l_ctlControl.SelText = Clipboard.GetText(vbCFText)
+            If VB.Clipboard.GetFormat(vbCFText) Then
+                l_ctlControl.SelText = VB.Clipboard.GetText(vbCFText)
                 Action_Paste = True
             End If
             ActionUpdate
@@ -360,7 +377,7 @@ Dim l_edcDocument As iEditingCommands, l_ctlControl As Control
             If TypeOf l_ctlControl Is TextBox Then
                 CanCut = (l_ctlControl.SelLength > 0)
                 CanCopy = CanCut
-                CanPaste = Clipboard.GetFormat(vbCFText)
+                CanPaste = VB.Clipboard.GetFormat(vbCFText)
                 CanDelete = CanCut
                 CanSelectAll = (Len(l_ctlControl.Text) > 0) And (l_ctlControl.SelLength < Len(l_ctlControl.Text))
                 CanSelectNone = l_ctlControl.SelLength > 0
@@ -477,6 +494,7 @@ End Property
 
 Public Sub Event_ClipboardChanged()
 On Error Resume Next
+    Engine.ScriptEngine.Namespace.Editor_ClipboardChanged Document
     ActionUpdate
 End Sub
 
@@ -503,9 +521,19 @@ Public Function Event_DocumentClose(ByRef Document As cChildManager) As Boolean
 On Error Resume Next
 '    Document.Toolbars.HideToolbars frmMain
 '    If m_docChild Is Document Then Set m_docChild = Nothing
+    Engine.ScriptEngine.Namespace.Editor_DocumentClosing Document
     Event_DocumentActivate Nothing
+    Engine.ScriptEngine.Namespace.Editor_DocumentClosed Document
     frmMain.DocumentClosed Document
 End Function
+
+Public Sub Event_FileChanged(ByVal Name As String)
+On Error Resume Next
+Dim l_strPath As String
+    l_strPath = Replace(Replace(Replace(LCase(Name), LCase(GamePath), "/"), "\", "/"), "//", "/")
+    Engine.ScriptEngine.Namespace.Editor_FileChanged l_strPath
+    Event_FilesystemChanged
+End Sub
 
 Public Sub Event_FilesystemChanged()
 On Error Resume Next
@@ -543,6 +571,10 @@ Dim l_strFilename As String
     If Trim(l_strFilename) = "" Then
         l_varFilenames = SelectLocalFiles
     Else
+        If InStr(l_strFilename, "/") Then
+            ' Game path
+            l_strFilename = Filesystem.File(l_strFilename).GetRealFilename
+        End If
         l_varFilenames = Array(l_strFilename)
     End If
     If Trim(l_varFilenames(0)) = "" Then Exit Sub
@@ -563,7 +595,7 @@ Dim l_docDocument As iDocument
         If l_docDocument.Save(l_docDocument.Filename) Then
             Dim l_rdRecentDocuments As New cRecentDocuments
             l_rdRecentDocuments.AddToRecentDocs l_docDocument.Filename
-            Event_FilesystemChanged
+            Event_FileChanged l_docDocument.Filename
         Else
             ShowNotice "Error", "Error saving file """ & l_docDocument.Filename & """:" & vbCrLf & Err.Description, NoticeIcon("error")
         End If
@@ -595,7 +627,7 @@ Dim l_strFilename As String
             Dim l_rdRecentDocuments As New cRecentDocuments
             l_rdRecentDocuments.AddToRecentDocs l_docDocument.Filename
             AddRecentFile l_docDocument.Filename
-            Event_FilesystemChanged
+            Event_FileChanged l_docDocument.Filename
         Else
             ShowNotice "Error", "Error saving file """ & l_docDocument.Filename & """:" & vbCrLf & Err.Description, NoticeIcon("error")
         End If
@@ -607,7 +639,7 @@ On Error Resume Next
     Set Filesystem = DefaultEngine.Filesystem
 End Property
 
-Public Function FindCapablePlugin(ByRef Filename As String) As iFileTypePlugin
+Public Function FindCapablePlugin(ByVal Filename As String) As iFileTypePlugin
 On Error Resume Next
 Dim l_plgPlugin As iFileTypePlugin
     For Each l_plgPlugin In g_colFileTypePlugins
@@ -618,7 +650,22 @@ Dim l_plgPlugin As iFileTypePlugin
     Next l_plgPlugin
 End Function
 
-Public Function FindFileTypePlugin(ByRef Name As String) As iFileTypePlugin
+Public Function EnumDocumentsByType(ByVal DocumentType As String) As Engine.Fury2Collection
+On Error Resume Next
+Dim l_colDocuments As Engine.Fury2Collection
+Dim l_docDocument As cChildManager
+Dim l_plgPlugin As iFileTypePlugin
+    Set l_colDocuments = New Engine.Fury2Collection
+    For Each l_docDocument In Documents
+        Set l_plgPlugin = l_docDocument.Document.Plugin
+        If Trim(LCase(l_plgPlugin.FileTypeName)) = Trim(LCase(DocumentType)) Then
+            l_colDocuments.Add l_docDocument
+        End If
+    Next l_docDocument
+    Set EnumDocumentsByType = l_colDocuments
+End Function
+
+Public Function FindFileTypePlugin(ByVal Name As String) As iFileTypePlugin
 On Error Resume Next
 Dim l_plgPlugin As iFileTypePlugin
     For Each l_plgPlugin In g_colFileTypePlugins
@@ -936,15 +983,19 @@ On Error Resume Next
     frmMain.ShowChild Doc
     frmMain.HideInactiveWindows
     DoEvents
+    Engine.ScriptEngine.Namespace.Editor_DocumentOpened Doc
     SetBusyState False
     Err.Clear
 End Sub
 
-Public Function OpenFile(ByRef Filename As String) As iDocument
+Public Function OpenFile(ByVal Filename As String) As iDocument
 On Error Resume Next
 Dim l_plgPlugin As iFileTypePlugin
 Dim l_rdRecentDocuments As New cRecentDocuments
 Dim l_docDocument As cChildManager
+    If InStr(Filename, "/") Then
+        Filename = Engine.Filesystem.Root & Replace(Filename, "/", "\")
+    End If
     SetBusyState True
     For Each l_docDocument In frmMain.Documents
         If LCase(Trim(l_docDocument.Document.Filename)) = LCase(Trim(Filename)) Then
@@ -973,7 +1024,7 @@ Dim l_docDocument As cChildManager
     SetBusyState False
 End Function
 
-Public Sub OpenFiles(ByRef Files As Variant)
+Public Sub OpenFiles(ByVal Files As Variant)
 On Error Resume Next
 Dim l_docDocument As iDocument
 Dim l_cchDocument As cChildManager
@@ -1112,7 +1163,12 @@ On Error Resume Next
     frmMain.SetLocation Value
 End Sub
 
-Public Sub SetProgress(Optional ByVal Value As Single = 0)
+Public Sub Fury2SetProgress(ByVal Value As Double)
+On Error Resume Next
+    frmMain.SetProgress Value
+End Sub
+
+Public Sub SetProgress(Optional ByVal Value As Double = 0)
 On Error Resume Next
     frmMain.SetProgress Value
 End Sub
@@ -1188,6 +1244,48 @@ End Sub
 Public Function SelectFile(Optional Filter As String = "", Optional Title As String = "Open...") As String
 On Error Resume Next
     SelectFile = SelectLocalFile(Filter, Title)
+End Function
+
+Public Function SelectImage() As String
+On Error Resume Next
+Dim l_strValue As String
+    l_strValue = SelectFile("Images|" + libGraphics.SupportedGraphicsFormats, "Select Image...")
+    If Trim(l_strValue) <> "" Then
+        If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+            l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+            l_strValue = Replace(l_strValue, "\", "/")
+            SelectImage = l_strValue
+        End If
+    End If
+    SelectImage = l_strValue
+End Function
+
+Public Function SelectSound() As String
+On Error Resume Next
+Dim l_strValue As String
+    l_strValue = SelectFile("Sounds|*.it;*.oxm;*.xm;*.s3m;*.mod;*.mid;*.midi;*.wav;*.aiff;*.aif;*.flac;*.ogg;*.aac;*.wma;*.mp3;*.mp2", "Select Sound...")
+    If Trim(l_strValue) <> "" Then
+        If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+            l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+            l_strValue = Replace(l_strValue, "\", "/")
+            SelectSound = l_strValue
+        End If
+    End If
+    SelectSound = l_strValue
+End Function
+
+Public Function SelectScript() As String
+On Error Resume Next
+Dim l_strValue As String
+    l_strValue = SelectFile("Scripts|*.vbs;*.js;*.py;*.rb;*.f2script;*.f2sc", "Select Script...")
+    If Trim(l_strValue) <> "" Then
+        If InStr(l_strValue, DefaultEngine.Filesystem.Root) Then
+            l_strValue = Replace(l_strValue, DefaultEngine.Filesystem.Root, "/")
+            l_strValue = Replace(l_strValue, "\", "/")
+            SelectScript = l_strValue
+        End If
+    End If
+    SelectScript = l_strValue
 End Function
 
 Public Function SelectSaveFilename(Optional OldFilename As String = "", Optional Filter As String = "", Optional Title As String = "Save...") As String

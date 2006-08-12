@@ -119,7 +119,10 @@ Dim l_lngIndex As Long
                 For l_lngIndex = LBound(l_varCharsets) To UBound(l_varCharsets)
                     l_strCharset = l_strCharset & ReadTextFile(Editor.Path & "\character sets\" & l_varCharsets(l_lngIndex) & ".txt")
                 Next l_lngIndex
-                l_fntFont.ImportTTF DefaultEngine.TTFont(.Name, .Size, .Bold, .Italic), .EnableUnicode, l_strCharset
+                Editor.SetStatus "Importing font..."
+                l_fntFont.ImportTTF DefaultEngine.TTFont(.Name, .Size, .Bold, .Italic), .EnableUnicode, l_strCharset, Editor.ProgressCallback
+                Editor.SetStatus ""
+                Editor.SetProgress 0
                 l_frmNew.SetFont l_fntFont
                 Set iFileTypePlugin_CreateNew = l_frmNew
                 Set iFileTypePlugin_CreateNew.Plugin = Me
@@ -151,7 +154,7 @@ Dim l_frmNew As frmFont
 Dim l_fntFont As Fury2Font
     Set l_frmNew = New frmFont
     Set l_fntFont = DefaultEngine.F2Font()
-    If LoadFromFile(l_fntFont, F2File(Filename)) Then
+    If LoadFromFile(l_fntFont, F2File(Filename), Editor.ProgressCallback) Then
         l_frmNew.SetFilename Filename
         l_frmNew.SetFont l_fntFont
         Set iFileTypePlugin_LoadFromFilename = l_frmNew

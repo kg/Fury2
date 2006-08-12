@@ -180,7 +180,7 @@ Dim l_frmNew As New frmMap
 Dim l_mapMap As Fury2Map
     Set l_mapMap = DefaultEngine.F2Map()
     l_mapMap.EditMode = True
-    If Engine.LoadFromFile(l_mapMap, F2File(Filename)) Then
+    If Engine.LoadFromFile(l_mapMap, F2File(Filename), Editor.ProgressCallback) Then
         l_frmNew.SetFilename Filename
         l_frmNew.SetMap l_mapMap
         m_objEditor.LoadSettings "MapEditor\View", l_frmNew.ViewOptions

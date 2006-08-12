@@ -98,6 +98,11 @@ On Error Resume Next
     Set Toolbar = m_frmForm
 End Property
 
+Public Property Get Object() As Object
+On Error Resume Next
+    Set Object = m_frmForm
+End Property
+
 Public Property Get Document() As iDocument
 On Error Resume Next
     Set Document = m_frmForm

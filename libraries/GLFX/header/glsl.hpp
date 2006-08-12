@@ -61,7 +61,10 @@ namespace GLSL {
   public:
     Program() {
       GL::endDraw();
-      this->Handle = glCreateProgramObjectARB();
+      if (glCreateProgramObjectARB)
+        this->Handle = glCreateProgramObjectARB();
+      else
+        this->Handle = 0;
     }
 
     bool isLinked();
@@ -85,7 +88,10 @@ namespace GLSL {
   public:
     VertexShader() {
       GL::endDraw();
-      this->Handle = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
+      if (glCreateShaderObjectARB)
+        this->Handle = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
+      else
+        this->Handle = 0;
     }
   };
 
@@ -93,7 +99,10 @@ namespace GLSL {
   public:
     FragmentShader() {
       GL::endDraw();
-      this->Handle = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
+      if (glCreateShaderObjectARB)
+        this->Handle = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
+      else
+        this->Handle = 0;
     }
   };
 }

@@ -20,11 +20,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "Polygon.hpp"
 #include "Fury2_Lighting.hpp"
 
-static const int DefaultCollisionSectorSize = 256;
+static const int DefaultCollisionSectorSize = 128;
 
 class Tileset;
 class CollisionSector;
 class CollisionMatrix;
+class CollisionSpriteIterator;
 
 extern Image* ShadowImage;
 
@@ -78,7 +79,8 @@ enum SpriteObstructionTypes {
     sotUpwardRect = 0,
     sotCenteredRect = 1,
     sotCenteredSphere = 2,
-    sotCenteredPolygon = 3
+    sotCenteredPolygon = 3,
+    sotBeam = 4
 };
 
 struct SpriteObstruction {
@@ -100,7 +102,9 @@ enum SecondaryImageTypes {
     siShadow = 2,
     siLightMap = 3,
     siGlowMap = 4,
-    siShadowMap = 5
+    siShadowMap = 5,
+    siBeginCap = 6,
+    siEndCap = 7
 };
 
 struct SpriteSecondaryImage {
@@ -118,7 +122,10 @@ struct SpriteGraphic {
 };
 
 struct SpritePosition {
+    // position
     float X, Y, Z;
+    // attachment point
+    float AX, AY, AZ;
 };
 
 struct SpriteVelocity {
@@ -152,7 +159,7 @@ struct VisualParameters {
     Pixel IlluminationLevel;
     Byte DiffuseLight;
     Byte RenderTarget;
-    Byte Reserved1;
+    Byte Beam;
     Byte Reserved2;
 };
 
@@ -210,6 +217,8 @@ struct SpriteParam {
 
     FRect getRect();
     SimplePolygon* getPolygon();
+
+    bool isPolygonal() const;
 
     inline Rectangle getRectangle() {
     		Rectangle rect;
@@ -562,6 +571,7 @@ public:
 class CollisionSector {
 public:
   std::vector<FLine> Lines;
+  std::vector<SpriteParam*> Sprites;
   int Width, Height;
 
   CollisionSector(int W, int H) {
@@ -575,13 +585,21 @@ public:
   }
 
   bool addLines(FLine *Lines, int Count, int XOffset, int YOffset);
+  bool addSprite(SpriteParam *Sprite, int XOffset, int YOffset);
+  bool removeSprite(SpriteParam *Sprite);
+  bool clearSprites();
 
   inline void clear() {
     Lines.clear();
+    Sprites.clear();
   }
 
   inline int getLineCount() {
     return Lines.size();
+  }
+
+  inline int getSpriteCount() {
+    return Sprites.size();
   }
 
   bool collisionCheck(FRect *Rectangle, int XOffset = 0, int YOffset = 0);
@@ -592,6 +610,7 @@ class CollisionMatrix {
 private:
   std::vector<CollisionSector*> Sectors;
 public:
+  std::vector<SpriteParam*> Stragglers;
   int SectorWidth, SectorHeight;
   int Width, Height;
 
@@ -619,11 +638,14 @@ public:
   void resize(int W, int H);
 
   bool addLines(FLine *Lines, int Count);
+  bool addSprite(SpriteParam *Sprite);
+  bool removeSprite(SpriteParam *Sprite);
+  bool clearSprites();
 
-  bool collisionCheck(FRect *Rectangle);
-  bool collisionCheck(FRect *Rectangle, SimplePolygon *Polygon);
+  bool collisionCheck(FRect *Rectangle) const;
+  bool collisionCheck(FRect *Rectangle, SimplePolygon *Polygon) const;
 
-  inline CollisionSector* getSector(int X, int Y) {
+  inline CollisionSector* getSector(int X, int Y) const {
     if (X < 0) return Null;
     if (Y < 0) return Null;
     if (X >= Width) return Null;
@@ -637,6 +659,111 @@ public:
     this->Width = 0;
     this->Height = 0;
   };
+};
+
+class ListSpriteIterator {
+private:
+  SpriteParam* Current;
+public:
+  ListSpriteIterator(SpriteParam* first) 
+    :Current(first)
+  {
+  }
+
+  SpriteParam* current() {
+    return Current;
+  }
+
+  SpriteParam* next() {
+    SpriteParam* value = Current;
+    if (Current)
+      Current = Current->pNext;
+    return value;
+  }
+};
+
+class CollisionSpriteIterator {
+private:
+  int x, y, i;
+  const std::vector<SpriteParam*>& Items;
+  std::vector<SpriteParam*> Visited;
+public:
+  const CollisionMatrix& Matrix;
+  int X1, Y1, X2, Y2;
+
+  CollisionSpriteIterator(const CollisionMatrix& matrix, float x1, float y1, float x2, float y2) 
+    :Matrix(matrix),
+    Items(matrix.Stragglers)
+  {
+    X1 = ClipValue(floor(x1 / matrix.SectorWidth)-1, 0, matrix.Width - 1);
+    Y1 = ClipValue(floor(y1 / matrix.SectorHeight)-1, 0, matrix.Height - 1);
+    X2 = ClipValue(ceil(x2 / matrix.SectorWidth)+1, 0, matrix.Width - 1);
+    Y2 = ClipValue(ceil(y2 / matrix.SectorHeight)+1, 0, matrix.Height - 1);
+    x = -32767;
+    y = -32767;
+    i = -32767;
+  }
+
+  CollisionSpriteIterator(const CollisionMatrix& matrix, int x1, int y1, int x2, int y2, bool unused) 
+    :Matrix(matrix),
+    Items(matrix.Stragglers)
+  {
+    X1 = ClipValue(x1, 0, matrix.Width - 1);
+    Y1 = ClipValue(y1, 0, matrix.Height - 1);
+    X2 = ClipValue(x2, 0, matrix.Width - 1);
+    Y2 = ClipValue(y2, 0, matrix.Height - 1);
+    x = -32767;
+    y = -32767;
+    i = -32767;
+  }
+
+  inline bool visited(SpriteParam* param) {
+    std::vector<SpriteParam*>::const_iterator iter = std::find(Visited.begin(), Visited.end(), param);
+    return (iter != Visited.end());
+  }
+
+  inline SpriteParam* current() {
+    if (i == -1)
+      return Null;
+    if (i == -32767)
+      return Null;
+    if (i >= Items.size())
+      return Null;
+    return Items[i];
+  }
+
+  inline SpriteParam* next() {
+    if (i == -1)
+      return Null;
+    while (i < 0 || (i >= Items.size()) || visited(Items[i])) {
+      if (i == -32767)
+        i = 0;
+      else
+        i++;
+      if (i >= Items.size()) {
+        i = 0;
+        if (x == -32767) {
+          x = X1;
+          y = Y1;
+        } else {
+          x++;
+          if (x > X2) {
+            x = X1;
+            y++;
+          }
+          if (y > Y2) {
+            x = y = i = -1;
+            break;
+          }
+        }
+      }
+    }
+    if (i == -1)
+      return Null;
+    SpriteParam *current = Items[i];
+    Visited.push_back(current);
+    return current;
+  }
 };
 
 struct TilemapLayerParam {

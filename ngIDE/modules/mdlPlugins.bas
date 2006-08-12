@@ -19,6 +19,7 @@ Attribute VB_Name = "mdlPlugins"
 '
 
 Option Explicit
+Global g_colLibraries As Engine.Fury2Collection
 Global g_colPlugins As Engine.Fury2Collection
 Global g_colFileTypePlugins As Engine.Fury2Collection
 
@@ -109,21 +110,16 @@ Dim l_strName As String
         WriteRegSetting "Plugins\Count", l_lngCount
     End If
     WriteRegSetting "Plugins\" & l_lngIndex & "::Name", ClassName
-    If Not InIDE Then
-        l_lngResult = Compromise.Register(Filename)
-        If (l_lngResult = 1) Then
-            WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", Filename
+    If InStr(Filename, ":") And FileExists(Filename) Then
+        WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", Filename
+    Else
+        If FileExists(g_edEditor.folder & "\" & Filename) Then
+            WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", Replace(g_edEditor.folder & "\" & Filename, "\\", "\")
         Else
-            l_lngResult = Compromise.Register(App.Path & "\" & Filename)
-            If (l_lngResult = 1) Then
-                WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", App.Path & "\" & Filename
+            If FileExists(g_edEditor.folder & "\plugin\" & Filename) Then
+                WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", Replace(g_edEditor.folder & "\plugin\" & Filename, "\\", "\")
             Else
-                l_lngResult = Compromise.Register(App.Path & "\plugin\" & Filename)
-                If (l_lngResult = 1) Then
-                    WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", App.Path & "\plugin\" & Filename
-                Else
-                    WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", ""
-                End If
+                WriteRegSetting "Plugins\" & l_lngIndex & "::Filename", ""
             End If
         End If
     End If
@@ -148,7 +144,15 @@ Dim l_strLibrary As String, l_strClass As String
     Else
         Err.Clear
         If (Not InIDE) And (Compromise.IsSupported() = 1) Then
-            Compromise.Register Filename
+            If g_colLibraries.Find(Filename) Then
+            Else
+                g_edEditor.LogOutput "Loading plugin library " & Filename
+                g_colLibraries.Add Filename
+                Compromise.Unregister Filename
+                If Compromise.Register(Filename) = 0 Then
+                    MsgBox "Unable to register plugin library " & Filename & "!", vbExclamation, "Plugin Warning"
+                End If
+            End If
         End If
         Set XCreateObject = CreateObject(Name)
     End If
@@ -159,6 +163,7 @@ On Error Resume Next
     SetStatus "Initializing Plugin System"
     Set g_colPlugins = New Engine.Fury2Collection
     Set g_colFileTypePlugins = New Engine.Fury2Collection
+    Set g_colLibraries = New Engine.Fury2Collection
     SetStatus
 End Sub
 
@@ -222,6 +227,7 @@ Dim l_plgPlugin As iPlugin
         InstallPlugin "ngPlugins.TilesetEditor", "\ng.dll"
         InstallPlugin "ngPlugins.CommandBrowser", "\ng.dll"
         InstallPlugin "ngPlugins.UserDataEditor", "\ng.dll"
+        InstallPlugin "ngPlugins.SequenceEditor", "\ng.dll"
         InstallPlugin "ngPlugins.GamePacker", "\ng.dll"
         InstallPlugin "tk.TKTilesetImporter", "\tk.dll"
         InstallPlugin "tk.TKBoardImporter", "\tk.dll"
@@ -233,11 +239,15 @@ Dim l_plgPlugin As iPlugin
             l_strFilename = ""
             l_strFilename = ReadRegSetting("Plugins\" & l_lngPlugins & "::Filename")
             Err.Clear
-            Set l_plgPlugin = Nothing
-            Set l_plgPlugin = XCreateObject(l_strName, l_strFilename)
-            If l_plgPlugin Is Nothing Then
-            Else
-                LoadPlugin l_plgPlugin
+            If Len(Trim(l_strName)) > 0 Then
+                g_edEditor.LogOutput "Loading plugin " & l_strName
+                Set l_plgPlugin = Nothing
+                Set l_plgPlugin = XCreateObject(l_strName, l_strFilename)
+                If l_plgPlugin Is Nothing Then
+                    MsgBox "Load of plugin " & l_strName & " failed" & vbCrLf & Err.Description
+                Else
+                    LoadPlugin l_plgPlugin
+                End If
             End If
             frmMain.SetProgress ((l_lngPlugins - 1) / (l_lngCount - 1))
         Next l_lngPlugins

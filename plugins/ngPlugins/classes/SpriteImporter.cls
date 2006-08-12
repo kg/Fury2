@@ -86,13 +86,13 @@ Dim l_lngPose As Long
                     l_docSprites.SelectedSprite.Poses.Add l_posPose, , l_lngInsertionPoint + l_lngPose
                 End If
                 Set l_fraFrame = New Fury2PoseFrame
+                l_posPose.Frames.Add l_fraFrame
                 Set l_fraFrame.Rectangle = F2Rect(l_lngX * (.CellWidth + .GridWidth) + .MarginLeft, l_lngY * (.CellHeight + .GridHeight) + .MarginTop, .CellWidth, .CellHeight, False)
                 l_fraFrame.XCenter = .AlignmentX
                 l_fraFrame.YCenter = .AlignmentY
                 l_fraFrame.Delay = .FrameDelay
                 l_fraFrame.Filename = Options.Image
                 l_fraFrame.MatteColor = .MatteColor
-                l_posPose.Frames.Add l_fraFrame
                 If (l_posPose.Frames.Count = 1) And (.DuplicateFirstFrame) Then
                     l_posPose.Frames.Add l_fraFrame.Duplicate
                 End If
@@ -101,7 +101,9 @@ Dim l_lngPose As Long
                         l_booNewPose = True
                     End If
                 End If
+                m_objEditor.SetProgress (l_lngY + (l_lngX / l_lngCellsX)) / l_lngCellsY
             Next l_lngX
+            m_objEditor.SetProgress l_lngY / l_lngCellsY
         Next l_lngY
         l_docSprites.SelectedSprite.Initialize
         l_docSprites.SelectedSprite.Load

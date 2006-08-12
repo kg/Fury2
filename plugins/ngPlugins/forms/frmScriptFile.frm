@@ -207,8 +207,7 @@ On Error Resume Next
 Dim l_lngFileHandle As Long
     m_strFilename = Filename
     Err.Clear
-    WriteTextFile m_strFilename, scScript.Text
-    iDocument_Save = (Err.Number = 0)
+    iDocument_Save = WriteTextFile(m_strFilename, scScript.Text)
     If iDocument_Save Then
         SetFilename Filename
     End If

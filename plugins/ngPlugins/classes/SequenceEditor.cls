@@ -6,7 +6,7 @@ BEGIN
   DataSourceBehavior  = 0  'vbNone
   MTSTransactionMode  = 0  'NotAnMTSObject
 END
-Attribute VB_Name = "UserData"
+Attribute VB_Name = "SequenceEditor"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
@@ -35,26 +35,63 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 Option Explicit
 Implements iPlugin
 Implements iFileTypePlugin
+Public Enum SequenceEditorClipboardFormats
+    SECF_MIN_
+    SECF_MAX_
+End Enum
+Private m_lngClipboardFormats(SECF_MIN_ To SECF_MAX_)
 Private m_objEditor As Object
+Private m_clpClipboard As cCustomClipboard
+
+Friend Property Get CustomClipboard() As cCustomClipboard
+On Error Resume Next
+    Set CustomClipboard = m_clpClipboard
+End Property
+
+Public Property Get ClipboardFormat(Format As SequenceEditorClipboardFormats) As Long
+On Error Resume Next
+    ClipboardFormat = m_lngClipboardFormats(Format)
+End Property
+
+Public Property Get Editor() As Object
+    Set Editor = m_objEditor
+End Property
+
+Private Function Engine() As Fury2Engine
+On Error Resume Next
+    Set Engine = Editor.Engine
+End Function
+
+Private Sub Class_Initialize()
+On Error Resume Next
+    Set m_clpClipboard = New cCustomClipboard
+End Sub
+
+Private Sub Class_Terminate()
+On Error Resume Next
+    m_clpClipboard.ClipboardClose
+End Sub
 
 Private Sub iPlugin_ShowConfiguration()
 End Sub
 
 Private Property Get iPlugin_CanConfigure() As Boolean
+On Error Resume Next
+    iPlugin_CanConfigure = False
 End Property
 
 Private Sub iFileTypePlugin_FixUpSaveFilename(ByRef Filename As String)
 On Error Resume Next
     If Len(Trim(GetExtension(Filename))) > 0 Then
     Else
-        Filename = Filename + ".f2data"
+        Filename = Filename + ".f2seq"
     End If
 End Sub
 
 Private Function iFileTypePlugin_CanOpenFile(Filename As String) As Boolean
 On Error Resume Next
     Select Case LCase(Trim(GetExtension(Filename)))
-    Case "f2data"
+    Case "f2seq"
         iFileTypePlugin_CanOpenFile = True
     Case Else
     End Select
@@ -62,15 +99,17 @@ End Function
 
 Private Function iFileTypePlugin_CreateNew(Optional ByVal EnableWizard As Boolean = True) As iDocument
 On Error Resume Next
-Dim l_frmNew As New frmTextFile
-    l_frmNew.SetFilename ""
+Dim l_frmNew As New frmSequence
+Dim l_objNew As Object
+    Set l_frmNew.Sequence = Engine.F2Sequence
     Set iFileTypePlugin_CreateNew = l_frmNew
     Set iFileTypePlugin_CreateNew.Plugin = Me
+    Err.Clear
 End Function
 
 Private Property Get iFileTypePlugin_FileTypeName() As String
 On Error Resume Next
-    iFileTypePlugin_FileTypeName = "User Data"
+    iFileTypePlugin_FileTypeName = "Sequence"
 End Property
 
 Private Function iFileTypePlugin_LoadFromFile(File As libGraphics.VirtualFile) As iDocument
@@ -79,17 +118,17 @@ End Function
 
 Private Function iFileTypePlugin_LoadFromFilename(Filename As String) As iDocument
 On Error Resume Next
-Dim l_frmNew As New frmTextFile
-Dim l_lngFileHandle As Long, l_strText As String
-    l_lngFileHandle = FreeFile
-    Open Filename For Binary Access Read As #l_lngFileHandle
-        l_strText = Space(LOF(l_lngFileHandle))
-        Get #1, 1, l_strText
-    Close #l_lngFileHandle
-    l_frmNew.txtText.Text = l_strText
-    l_frmNew.SetFilename Filename
-    Set iFileTypePlugin_LoadFromFilename = l_frmNew
-    Set iFileTypePlugin_LoadFromFilename.Plugin = Me
+Dim l_frmNew As New frmSequence
+Dim l_objData As Fury2Sequence
+Dim l_vfFile As VirtualFile
+    Set l_vfFile = F2File(Filename)
+    Set l_objData = Engine.F2Sequence
+    If LoadFromFile(l_objData, l_vfFile, Editor.ProgressCallback) Then
+        l_frmNew.SetFilename Filename
+        Set iFileTypePlugin_LoadFromFilename = l_frmNew
+        Set iFileTypePlugin_LoadFromFilename.Plugin = Me
+        Set l_frmNew.Sequence = l_objData
+    End If
 End Function
 
 Private Property Get iFileTypePlugin_ShowInNewMenu() As Boolean
@@ -104,9 +143,9 @@ Private Property Set iPlugin_Editor(RHS As Object)
     Set m_objEditor = RHS
 End Property
 
-Private Property Get iPlugin_Icon() As stdole.Picture
+Private Property Get iPlugin_Icon() As Fury2Image
 On Error Resume Next
-    Set iPlugin_Icon = LoadResPicture("USERDATA", vbResIcon)
+    Set iPlugin_Icon = m_objEditor.LoadResources("ng").ItemData("icons\sequence.png")
 End Property
 
 Private Sub iPlugin_Initialize()
@@ -114,12 +153,12 @@ End Sub
 
 Private Property Get iPlugin_PluginDescription() As String
 On Error Resume Next
-    iPlugin_PluginDescription = "Enables loading and saving of user data."
+    iPlugin_PluginDescription = "Provides support for creating, loading, editing, and saving sequences."
 End Property
 
 Private Property Get iPlugin_PluginName() As String
 On Error Resume Next
-    iPlugin_PluginName = "User Data Plugin"
+    iPlugin_PluginName = "Sequence Editor Plugin"
 End Property
 
 Private Property Get iPlugin_PluginPath() As String
@@ -136,15 +175,16 @@ End Sub
 
 Private Property Get iFileTypePlugin_FilterString() As String
 On Error Resume Next
-    iFileTypePlugin_FilterString = "User Data|*.f2data"
+    iFileTypePlugin_FilterString = "Sequences|*.f2seq"
 End Property
 
 Private Property Get iPlugin_ToolbarIcon() As libGraphics.Fury2Image
 On Error Resume Next
+    Set iPlugin_ToolbarIcon = m_objEditor.LoadResources("ng").ItemData("icons\sequence.png")
 End Property
 
 Private Property Get iFileTypePlugin_SupportedExtensions() As Variant
 On Error Resume Next
-    iFileTypePlugin_SupportedExtensions = Array("f2data") ' Array("txt", "f2config")
+    iFileTypePlugin_SupportedExtensions = Array("f2seq")
 End Property
 

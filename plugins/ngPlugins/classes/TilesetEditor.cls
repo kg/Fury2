@@ -151,7 +151,7 @@ Dim l_frmNew As frmTileset
 Dim l_tsTileset As Fury2Tileset
     Set l_tsTileset = DefaultEngine.F2Tileset()
     Set l_frmNew = New frmTileset
-    If Engine.LoadFromFile(l_tsTileset, F2File(Filename)) Then
+    If Engine.LoadFromFile(l_tsTileset, F2File(Filename), Editor.ProgressCallback) Then
         l_frmNew.SetTileset l_tsTileset
         l_frmNew.SetFilename Filename
         Set iFileTypePlugin_LoadFromFilename = l_frmNew

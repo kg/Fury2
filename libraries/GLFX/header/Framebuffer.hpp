@@ -31,10 +31,12 @@ public:
   }
 
   inline void destroy() {
-    if (Handle != 0) {
-      glDeleteFramebuffersEXT(1, &Handle);
-      Global->checkError();
-      Handle = 0;
+    if (GLEW_EXT_framebuffer_object) {
+      if (Handle != 0) {
+        glDeleteFramebuffersEXT(1, &Handle);
+        Global->checkError();
+        Handle = 0;
+      }
     }
   }
 
@@ -55,7 +57,9 @@ public:
 
   inline bool isValid() {
     GL::endDraw();
-    return glIsFramebufferEXT(Handle) != 0;
+    if (GLEW_EXT_framebuffer_object) {
+      return glIsFramebufferEXT(Handle) != 0;
+    }
   }
 
   inline void bind() {
@@ -79,14 +83,18 @@ public:
   inline void attachTexture(Texture& tex) {
     GL::endDraw();
     GL::disableTextures();
-    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, tex.Handle, 0);
+    if (GLEW_EXT_framebuffer_object) {
+      glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, tex.Handle, 0);
+    }
     Global->checkError();
   }
 
   inline static void detachTexture() {
     GL::endDraw();
     GL::disableTextures();
-    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, 0, 0);
+    if (GLEW_EXT_framebuffer_object) {
+      glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, 0, 0);
+    }
     Global->checkError();
   }
 

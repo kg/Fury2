@@ -65,4 +65,22 @@ Dim l_lngZero As Long
     CopyMemory ByVal VarPtr(l_objObject), ByVal VarPtr(l_lngZero), 4
 End Function
 
+Public Function WRGetSequence(ByRef WR As WeakReference) As Fury2Sequence
+On Error Resume Next
+Dim l_objObject As Fury2Sequence
+Dim l_lngZero As Long
+    CopyMemory ByVal VarPtr(l_objObject), ByVal VarPtr(WR.pObj), 4
+    Set WRGetSequence = l_objObject
+    CopyMemory ByVal VarPtr(l_objObject), ByVal VarPtr(l_lngZero), 4
+End Function
+
+Public Function WRGetKeyframe(ByRef WR As WeakReference) As Fury2SequenceKeyframe
+On Error Resume Next
+Dim l_objObject As Fury2SequenceKeyframe
+Dim l_lngZero As Long
+    CopyMemory ByVal VarPtr(l_objObject), ByVal VarPtr(WR.pObj), 4
+    Set WRGetKeyframe = l_objObject
+    CopyMemory ByVal VarPtr(l_objObject), ByVal VarPtr(l_lngZero), 4
+End Function
+
 

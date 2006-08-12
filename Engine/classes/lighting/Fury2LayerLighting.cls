@@ -322,6 +322,7 @@ Dim l_lngCount As Long
     m_envEnvironment.PlaneCount = UBound(m_plnPlanes)
     m_envEnvironment.Planes = VarPtr(m_plnPlanes(1))
     m_envEnvironment.Matrix = m_lngMatrix
+    m_envEnvironment.CollisionMatrix = m_lyrLayer.CollisionMatrix
     l_lngCount = SoftFX.RenderLightingEnvironment(Camera, m_envEnvironment)
     l_lngIndex = 0
     For Each l_litLight In Lights
@@ -390,6 +391,7 @@ Dim l_litLight As Fury2LightSource
 Dim l_lsLight As LightSource
     With File
         .ReadSegment_Begin
+            .Progress_Begin 0.3333
             .ReadSegment_Begin
                 If Not .EOS Then
                     Set m_colLights = New Fury2LightSources
@@ -399,6 +401,8 @@ Dim l_lsLight As LightSource
                     m_colLights.Refresh
                 End If
             .ReadSegment_End
+            .Progress_End
+            .Progress_Begin 0.3333
             .ReadSegment_Begin
                 If Not .EOS Then
                     l_lngCount = 0
@@ -411,8 +415,10 @@ Dim l_lsLight As LightSource
                     End If
                 End If
             .ReadSegment_End
+            .Progress_End
             .ReadSegment_Begin
             .ReadSegment_End
+            .Progress_Begin 0.3333
             .ReadSegment_Begin
                 If Not .EOS Then
                     l_lngCount = 0
@@ -425,6 +431,7 @@ Dim l_lsLight As LightSource
                     End If
                 End If
             .ReadSegment_End
+            .Progress_End
             .ReadSegment_Begin
                 .Load l_lngLight
                 AmbientLight = l_lngLight

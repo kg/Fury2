@@ -383,7 +383,7 @@ Dim l_rwsHeader As RWS_Header
     ImportRWS = True
 End Function
 
-Function Load(ByRef Filename As String) As Boolean
+Function Load(ByVal Filename As String) As Boolean
 Attribute Load.VB_Description = "Loads a window skin."
 On Error Resume Next
 Dim l_strExtension As String

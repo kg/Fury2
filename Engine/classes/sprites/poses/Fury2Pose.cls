@@ -109,6 +109,7 @@ Sub LoadGraphics()
 Attribute LoadGraphics.VB_MemberFlags = "40"
 On Error Resume Next
 Dim m_lngFrames As Long
+    If mvarParent.pObj = 0 Then Exit Sub
     mvarFrames.LoadGraphics
 End Sub
 
@@ -121,6 +122,7 @@ End Sub
 Sub Play()
 Attribute Play.VB_Description = "Sets the sprite's current pose to this pose and plays it from the beginning."
 On Error Resume Next
+    If mvarParent.pObj = 0 Then Exit Sub
     With WRGetSprite(mvarParent)
         .SetPose Me
         .Animate = True
@@ -133,6 +135,7 @@ End Sub
 Sub PlayBackwards()
 Attribute PlayBackwards.VB_Description = "Sets the sprite's current pose to this pose and plays it from the end, backwards."
 On Error Resume Next
+    If mvarParent.pObj = 0 Then Exit Sub
     With WRGetSprite(mvarParent)
         .SetPose Me
         .Animate = True

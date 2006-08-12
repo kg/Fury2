@@ -245,6 +245,16 @@ Dim m_tlbFilesystem As TypeLibInfo
 Dim m_splSplitMain As New cSplitter
 Dim m_splSplitMembers As New cSplitter
 
+Private Function Editor() As Object
+On Error Resume Next
+    Set Editor = Plugin.Editor
+End Function
+
+Private Function Engine() As Fury2Engine
+On Error Resume Next
+    Set Engine = Editor.Engine
+End Function
+
 Private Sub Form_Paint()
 On Error Resume Next
     If tbrObjects.EnableTheme Then
@@ -487,7 +497,7 @@ Public Function TypeLibFromName(ByRef Name As String) As TypeLibInfo
         Set TypeLibFromName = m_tlbEngine
     Case "libgraphics"
         Set TypeLibFromName = m_tlbGraphics
-    Case "libsound"
+    Case "libsound", "libsound2"
         Set TypeLibFromName = m_tlbSound
     Case "libfilesystem"
         Set TypeLibFromName = m_tlbFilesystem
@@ -519,10 +529,10 @@ End Sub
 
 Public Sub InitBrowser()
 On Error Resume Next
-    Set m_tlbEngine = InterfaceInfoFromObject(Engine.Fury2Globals).Parent
-    Set m_tlbGraphics = InterfaceInfoFromObject(libGraphics.Fury2GEGlobal).Parent
-    Set m_tlbSound = InterfaceInfoFromObject(libSound2.Fury2SEGlobals).Parent
-    Set m_tlbFilesystem = InterfaceInfoFromObject(libFilesystem.Fury2FSGlobals).Parent
+    Set m_tlbEngine = InterfaceInfoFromObject(Engine).Parent
+    Set m_tlbGraphics = InterfaceInfoFromObject(New Fury2Image).Parent
+    Set m_tlbSound = InterfaceInfoFromObject(Engine.SoundEngine).Parent
+    Set m_tlbFilesystem = InterfaceInfoFromObject(Engine.FileSystem).Parent
 End Sub
 
 Public Sub EnumObjects(ByVal TypeLib As TypeLibInfo, ByVal Target As vbalTreeView)
@@ -661,8 +671,8 @@ End Sub
 Private Sub Form_Load()
 On Error Resume Next
     InitToolbars
-    InitBrowser
     InitSplitters
+    InitBrowser
     RefreshObjects
 End Sub
 

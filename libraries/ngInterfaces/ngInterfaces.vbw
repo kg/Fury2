@@ -1,13 +1,13 @@
 iFileTypePlugin = 0, 0, 931, 604, C
 iPlugin = 22, 23, 953, 627, C
-ngGlobals = 198, 207, 1129, 811, C
+ngGlobals = 198, 207, 1129, 811, 
 iExtendedForm = 66, 69, 993, 673, C
 iEditorEvents = 44, 46, 975, 650, C
-iDocument = 264, 276, 1195, 880, C
+iDocument = 264, 276, 1195, 880, 
 iToolbar = 22, 23, 949, 627, C
 iEditingCommands = 154, 161, 1081, 765, C
-cAccelerator = -120, 131, 807, 735, 
-cAcceleratorManager = 78, 28, 1005, 632, Z
+cAccelerator = -120, 131, 807, 735, C
+cAcceleratorManager = 78, 28, 1005, 632, C
 iCustomMenus = 0, 0, 927, 604, C
 iCustomMenuHandler = 22, 23, 949, 627, C
 basRadix64 = 44, 46, 971, 650, C

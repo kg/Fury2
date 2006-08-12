@@ -142,10 +142,15 @@ End Property
 Public Property Set Data(ByRef NewData As Object)
 On Error Resume Next
     Set m_objData = NewData
-    Set m_objUI = m_objData.CreateEditorUI()
+    Set m_objUI = Nothing
+    Set m_objUI = m_objData.CreateUI()
     If m_objUI Is Nothing Then
-        Set m_objUI = Engine.ScriptEngine.Namespace.CreateEditorUI(m_objData)
+        Set m_objUI = Engine.ScriptEngine.Namespace.Editor_CreateUI(m_objData)
     End If
+    If Err.Number <> 0 Then
+        Engine.TextOut "Unable to create UserData UI: " & Err.Description
+    End If
+    InitViews
     Set m_cntUI = m_objUI.This
     Me.Caption = IIf(Trim(m_strFilename) = "", "Untitled.f2data (" & TypeName(m_objData) & ")", GetTitle(m_strFilename) & " (" & TypeName(m_objData) & ")")
     Set m_objUI.Editor = Me
@@ -153,6 +158,11 @@ On Error Resume Next
     Err.Clear
     SelectTab 1
     Redraw
+End Property
+
+Public Property Get DataType() As String
+On Error Resume Next
+    DataType = TypeName(m_objData)
 End Property
 
 Public Sub SetTabs(ByRef Tabs As Variant)
@@ -196,6 +206,11 @@ End Property
 Public Property Get Data() As Object
 On Error Resume Next
     Set Data = m_objData
+End Property
+
+Public Property Get UI() As Object
+On Error Resume Next
+    Set UI = m_objUI
 End Property
 
 Private Property Get iDocument_Object() As Object
@@ -392,7 +407,10 @@ End Sub
 Public Sub InitViews()
 On Error Resume Next
     tsViews.Tabs.AddNew "Properties", "t" & CStr(View_Properties)
-    tsViews.Tabs.AddNew "Custom", "t" & CStr(View_Custom)
+    If m_objUI Is Nothing Then
+    Else
+        tsViews.Tabs.AddNew "Custom", "t" & CStr(View_Custom)
+    End If
 End Sub
 
 Public Sub RefreshAll()
@@ -468,17 +486,17 @@ Dim l_objPlugin As TilesetEditor
     Set CustomClipboard = l_objPlugin.CustomClipboard
 End Function
 
-Private Function Engine() As Fury2Engine
+Public Property Get Engine() As Fury2Engine
 On Error Resume Next
     Set Engine = Editor.Engine
-End Function
+End Property
 
-Private Function Editor() As Object
+Public Property Get Editor() As Object
 On Error Resume Next
 Dim l_objPlugin As UserDataEditor
     Set l_objPlugin = m_fpgPlugin
     Set Editor = l_objPlugin.Editor
-End Function
+End Property
 
 Private Sub tsViews_Resize()
 On Error Resume Next
@@ -712,6 +730,7 @@ End Property
 
 Private Sub insProperties_AfterItemChange(ByVal OldValue As Variant, ByVal NewValue As Variant)
 On Error Resume Next
+    m_objData.ItemChanged insProperties.ItemName(insProperties.SelectedItem)
     ' lol
     ' Redraw
 End Sub

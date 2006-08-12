@@ -235,6 +235,14 @@ Public Property Let Pushable(ByVal NewValue As Boolean)
     m_spParam.Stats.Pushable = CByte(Abs(CLng(NewValue)))
 End Property
 
+Public Property Get Beam() As Boolean
+    Beam = m_spParam.Params.Beam <> 0
+End Property
+
+Public Property Let Beam(ByVal NewValue As Boolean)
+    m_spParam.Params.Beam = CByte(Abs(CLng(NewValue)))
+End Property
+
 Public Property Get CanPush() As Boolean
 Attribute CanPush.VB_Description = "If True, this sprite can apply force to other sprites by colliding with them."
     CanPush = m_spParam.Stats.CanPush <> 0
@@ -547,6 +555,11 @@ End Property
 Public Property Let Alpha(ByVal NewValue As Single)
 On Error Resume Next
     m_spParam.Params.Alpha = NewValue
+End Property
+
+Public Property Get Orientation() As Variant
+On Error Resume Next
+    Orientation = Array(Sin(m_spParam.Velocity.B), -Cos(m_spParam.Velocity.B))
 End Property
 
 Public Property Get Angle() As Single
@@ -2021,48 +2034,58 @@ Dim l_sprCollided As Fury2Sprite
         End If
     End If
 
-    If m_sprAttached Is Nothing Then
+    If Beam Then
+        If m_sprAttached Is Nothing Then
+            m_spParam.Position.AX = m_sngAttachX
+            m_spParam.Position.AY = m_sngAttachY
+        Else
+            m_spParam.Position.AX = m_sprAttached.X + m_sngAttachX
+            m_spParam.Position.AY = m_sprAttached.Y + m_sngAttachY
+        End If
     Else
-        With m_sprAttached
-            Dim l_spAttached As SpriteParam
-            Dim l_varVx As Variant, l_varH As Variant, l_varV As Variant
-            Dim l_sngW As Single, l_sngH As Single
-            Dim l_sngHp As Single, l_sngVp As Single, l_sngVxw As Single, l_sngHw As Single, l_sngVw As Single
-            Dim l_sngAX As Single, l_sngAY As Single
-            Dim l_sngSw As Single, l_sngSh As Single
-            If (m_sngAttachH <> 0) Or (m_sngAttachV <> 0) Then
-                l_spAttached = .GetParam
-                l_sngSw = (l_spAttached.Graphic.Rectangle.Width)
-                l_sngSh = (l_spAttached.Graphic.Rectangle.Height)
-                l_sngW = (l_sngSw / 2) * Abs(l_spAttached.Params.ScaleLevel)
-                l_sngH = (l_sngSh / 2) * l_spAttached.Params.ScaleLevel
-                l_varVx = Array(0, 0) ' mvarEngine.RotatePoint(0, 0, l_spAttached.Velocity.B) ' -1, -1
-                With mvarEngine.Math
-                    l_varH = .RotatePoint(l_sngW, 0, l_spAttached.Velocity.B)  ' 1, -1
-                    l_varV = .RotatePoint(0, l_sngH, l_spAttached.Velocity.B)  ' -1, 1
-                End With
-                l_sngHp = (m_sngAttachH) / (l_sngW)
-                l_sngVp = (m_sngAttachV) / (l_sngH)
-                l_sngVxw = (1 - PClip(Abs(l_sngHp))) * (1 - PClip(Abs(l_sngVp)))
-                l_sngHw = (l_sngHp) * (1 - Abs(l_sngVp))
-                l_sngVw = (1 - Abs(l_sngHp)) * (l_sngVp)
-                l_sngAX = (l_varVx(0) * l_sngVxw) + (l_varH(0) * l_sngHp) + (l_varV(0) * l_sngVw)
-                l_sngAY = (l_varVx(1) * l_sngVxw) + (l_varH(1) * l_sngHw) + (l_varV(1) * l_sngVp)
-            End If
-            m_spParam.Position.X = .X + m_sngAttachX + l_sngAX
-            m_spParam.Position.Y = .Y + m_sngAttachY + l_sngAY
-            If LinkBearing Then Me.Angle = .Angle
-            If LinkBearing And Not DisplayRotation Then Me.RotationAngle = .RotationAngle
-            If LinkBearing Then Me.SpinVelocity = .SpinVelocity
-            If LinkBearing Then Me.SpinTarget = .SpinTarget
-            If LinkProperties Then Me.ScaleLevel = .ScaleLevel
-            If LinkProperties Then Me.Alpha = .Alpha
-            If LinkProperties Then Me.Visible = .Visible
-            If LinkState Then Me.State = .State
-            Me.Velocity = .Velocity
-            If LinkPose Then Me.Pose = .Pose
-            If LinkFrame Then Me.Frame = .Frame
-        End With
+        If m_sprAttached Is Nothing Then
+        Else
+            With m_sprAttached
+                Dim l_spAttached As SpriteParam
+                Dim l_varVx As Variant, l_varH As Variant, l_varV As Variant
+                Dim l_sngW As Single, l_sngH As Single
+                Dim l_sngHp As Single, l_sngVp As Single, l_sngVxw As Single, l_sngHw As Single, l_sngVw As Single
+                Dim l_sngAX As Single, l_sngAY As Single
+                Dim l_sngSw As Single, l_sngSh As Single
+                If (m_sngAttachH <> 0) Or (m_sngAttachV <> 0) Then
+                    l_spAttached = .GetParam
+                    l_sngSw = (l_spAttached.Graphic.Rectangle.Width)
+                    l_sngSh = (l_spAttached.Graphic.Rectangle.Height)
+                    l_sngW = (l_sngSw / 2) * Abs(l_spAttached.Params.ScaleLevel)
+                    l_sngH = (l_sngSh / 2) * l_spAttached.Params.ScaleLevel
+                    l_varVx = Array(0, 0) ' mvarEngine.RotatePoint(0, 0, l_spAttached.Velocity.B) ' -1, -1
+                    With mvarEngine.Math
+                        l_varH = .RotatePoint(l_sngW, 0, l_spAttached.Velocity.B)  ' 1, -1
+                        l_varV = .RotatePoint(0, l_sngH, l_spAttached.Velocity.B)  ' -1, 1
+                    End With
+                    l_sngHp = (m_sngAttachH) / (l_sngW)
+                    l_sngVp = (m_sngAttachV) / (l_sngH)
+                    l_sngVxw = (1 - PClip(Abs(l_sngHp))) * (1 - PClip(Abs(l_sngVp)))
+                    l_sngHw = (l_sngHp) * (1 - Abs(l_sngVp))
+                    l_sngVw = (1 - Abs(l_sngHp)) * (l_sngVp)
+                    l_sngAX = (l_varVx(0) * l_sngVxw) + (l_varH(0) * l_sngHp) + (l_varV(0) * l_sngVw)
+                    l_sngAY = (l_varVx(1) * l_sngVxw) + (l_varH(1) * l_sngHw) + (l_varV(1) * l_sngVp)
+                End If
+                m_spParam.Position.X = .X + m_sngAttachX + l_sngAX
+                m_spParam.Position.Y = .Y + m_sngAttachY + l_sngAY
+                If LinkBearing Then Me.Angle = .Angle
+                If LinkBearing And Not DisplayRotation Then Me.RotationAngle = .RotationAngle
+                If LinkBearing Then Me.SpinVelocity = .SpinVelocity
+                If LinkBearing Then Me.SpinTarget = .SpinTarget
+                If LinkProperties Then Me.ScaleLevel = .ScaleLevel
+                If LinkProperties Then Me.Alpha = .Alpha
+                If LinkProperties Then Me.Visible = .Visible
+                If LinkState Then Me.State = .State
+                Me.Velocity = .Velocity
+                If LinkPose Then Me.Pose = .Pose
+                If LinkFrame Then Me.Frame = .Frame
+            End With
+        End If
     End If
 
     m_spOldParam = m_spParam
@@ -2319,7 +2342,7 @@ On Error Resume Next
 Dim l_rctBounds As FRect
     If m_posPose Is Nothing Then Exit Sub
     With m_spParam.Obstruction
-        If ((m_lngBlockingType = 3) Or (m_lngBlockingType = 4)) And (Not (m_posPose.BlockingPolygon Is Nothing)) Then
+        If (m_lngBlockingType = 3) And (Not (m_posPose.BlockingPolygon Is Nothing)) Then
             .pPolygon = m_posPose.BlockingPolygon.Handle
             SoftFX.GetPolygonBounds .pPolygon, l_rctBounds
             .Width = Abs(l_rctBounds.x2) + Abs(l_rctBounds.x1)

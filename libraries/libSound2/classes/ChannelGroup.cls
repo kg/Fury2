@@ -66,7 +66,7 @@ On Error Resume Next
     m_booDisposed = True
 End Sub
 
-Friend Sub ResultCheck(ByVal Result As FMOD_RESULT)
+Private Sub ResultCheck(ByVal Result As FMOD_RESULT)
 On Error Resume Next
 End Sub
 

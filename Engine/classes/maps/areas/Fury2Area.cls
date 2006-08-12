@@ -203,27 +203,39 @@ End Function
 Public Property Get Script() As Object
 Attribute Script.VB_Description = "The object's script."
 On Error Resume Next
-Dim l_strScript As String
+Dim l_strScript As String, l_strName As String
     Err.Clear
     If Trim(ScriptSource) = "" Then Exit Property
     If m_objScript Is Nothing Then
         If (mvarScriptFailed = False) Then
             Err.Clear
-            With mvarMap.Engine.ScriptEngine.Language
-                l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
-                .GenerateClassVariable("Map") & .LineTerminator & _
-                .GenerateClassMethod("F2OInit", Array("newThis", "newMap"), _
-                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "newThis", True) & .LineTerminator & _
-                .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "newMap", True) _
-                ) & .LineTerminator & ScriptSource
-                m_objScript_Load = .ImplementsMethod(l_strScript, "Load")
-                m_objScript_Activate = .ImplementsMethod(l_strScript, "Activate")
-                m_objScript_Enter = .ImplementsMethod(l_strScript, "Enter")
-                m_objScript_Move = .ImplementsMethod(l_strScript, "Move")
-                m_objScript_Leave = .ImplementsMethod(l_strScript, "Leave")
-                Set m_objScript = mvarMap.Engine.GenerateScriptObject(l_strScript)
+            If left(Trim(m_strScript), 2) = "<@" Then
+                l_strScript = Trim(m_strScript)
+                l_strName = Mid(l_strScript, 3, Len(l_strScript) - 3)
+                Set m_objScript = mvarMap.Engine.ScriptEngine.EvalObject(l_strName)
+                m_objScript_Load = m_objScript.ImplementsMethod("Load")
+                m_objScript_Activate = m_objScript.ImplementsMethod("Activate")
+                m_objScript_Enter = m_objScript.ImplementsMethod("Enter")
+                m_objScript_Move = m_objScript.ImplementsMethod("Move")
+                m_objScript_Leave = m_objScript.ImplementsMethod("Leave")
                 BindScript
-            End With
+            Else
+                With mvarMap.Engine.ScriptEngine.Language
+                    l_strScript = .GenerateClassVariable("Object") & .LineTerminator & _
+                    .GenerateClassVariable("Map") & .LineTerminator & _
+                    .GenerateClassMethod("F2OInit", Array("newThis", "newMap"), _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Object", "newThis", True) & .LineTerminator & _
+                    .GenerateAssignment(.ThisKeyword & .MethodOperator & "Map", "newMap", True) _
+                    ) & .LineTerminator & ScriptSource
+                    m_objScript_Load = .ImplementsMethod(l_strScript, "Load")
+                    m_objScript_Activate = .ImplementsMethod(l_strScript, "Activate")
+                    m_objScript_Enter = .ImplementsMethod(l_strScript, "Enter")
+                    m_objScript_Move = .ImplementsMethod(l_strScript, "Move")
+                    m_objScript_Leave = .ImplementsMethod(l_strScript, "Leave")
+                    Set m_objScript = mvarMap.Engine.GenerateScriptObject(l_strScript)
+                    BindScript
+                End With
+            End If
             Set mvarMap.Engine.IObjThis = Me
             m_objScript.F2OInit Me, mvarMap
             m_objScript.Initialize

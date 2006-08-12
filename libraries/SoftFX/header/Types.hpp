@@ -124,12 +124,25 @@ struct FPoint {
     yd = Other.Y - this->Y;
     return (float)(sqrt((xd * xd) + (yd * yd)));
   }
+  inline float distance2(const FPoint &Other) const {
+    float xd, yd;
+    xd = Other.X - this->X;
+    yd = Other.Y - this->Y;
+    return (xd * xd) + (yd * yd);
+  }
   inline float distance(FPoint *Other) const {
 	  return this->distance(*Other);
+  }
+  inline float distance2(FPoint *Other) const {
+	  return this->distance2(*Other);
   }
   inline float length() const {
     float v = (this->X * this->X) + (this->Y * this->Y);
     return sqrt(v);
+  }
+  inline float length2() const {
+    float v = (this->X * this->X) + (this->Y * this->Y);
+    return v;
   }
   inline float cross(const FPoint& Other) const {
     return (this->X * Other.Y) - (this->Y * Other.X);
@@ -431,16 +444,16 @@ struct FLine {
       this->End = b;
     }
     FLine(ILine *Line);
-	  inline bool intersect(FLine& that, FPoint& point) {
+	  inline bool intersect(FLine& that, FPoint& point) const {
 		  // Based on the 2d line intersection method from "comp.graphics.algorithms Frequently Asked Questions"
-      if ((that.Start == this->Start) || (that.Start == this->End)) {
-        point = that.Start;
-        return true;
-      }
-      if ((that.End == this->Start) || (that.End == this->End)) {
-        point = that.End;
-        return true;
-      }
+      //if ((that.Start == this->Start) || (that.Start == this->End)) {
+      //  point = that.Start;
+      //  return true;
+      //}
+      //if ((that.End == this->Start) || (that.End == this->End)) {
+      //  point = that.End;
+      //  return true;
+      //}
       float thisx = this->End.X - this->Start.X;
       float thisy = this->End.Y - this->Start.Y;
 		  float q = (this->Start.Y - that.Start.Y) * (that.End.X - that.Start.X) - (this->Start.X - that.Start.X) * (that.End.Y - that.Start.Y);
@@ -497,6 +510,63 @@ struct FLine {
       this->Start -= vec;
       this->End += vec;
       return;
+    }
+
+    inline const FLine& getLine() const {
+      return *this;
+    }
+
+    template <class T> int intersect(T those, int numThose, FPoint& point, float tolerance2 = 0.0f) const {
+      // Based on the 2d line intersection method from "comp.graphics.algorithms Frequently Asked Questions"
+      bool tolerance = (tolerance2 > 0.0f);
+      float thisx = this->End.X - this->Start.X;
+      float thisy = this->End.Y - this->Start.Y;
+      for (int l = 1; l <= numThose; l++) {
+        const FLine& that = those[l].getLine();
+        float q = (this->Start.Y - that.Start.Y) * (that.End.X - that.Start.X) - (this->Start.X - that.Start.X) * (that.End.Y - that.Start.Y);
+        float d = (thisx) * (that.End.Y - that.Start.Y) - (thisy) * (that.End.X - that.Start.X);
+        if (d == 0.0f) continue;
+        d = 1 / d;
+        float r = q * d;
+        if (r < 0.0f || r > 1.0f) continue;
+        q = (this->Start.Y - that.Start.Y) * (thisx) - (this->Start.X - that.Start.X) * (thisy);
+        float s = q * d;
+        if (s < 0.0f || s > 1.0f ) continue;
+        point.X = this->Start.X + (r * thisx);
+        point.Y = this->Start.Y + (r * thisy);
+        if (tolerance)
+          if (point.distance2(this->End) < tolerance2)
+            continue;
+        return l;
+      }
+      return 0;
+    }
+
+    template <class T> int intersect(const std::vector<T>& those, FPoint& point, float tolerance2 = 0.0f) const {
+      // Based on the 2d line intersection method from "comp.graphics.algorithms Frequently Asked Questions"
+      bool tolerance = (tolerance2 > 0.0f);
+      float thisx = this->End.X - this->Start.X;
+      float thisy = this->End.Y - this->Start.Y;
+      int l = 1;
+      for (std::vector<T>::const_iterator iter = those.begin(); iter != those.end(); ++iter, ++l) {
+        const FLine& that = iter->getLine();
+        float q = (this->Start.Y - that.Start.Y) * (that.End.X - that.Start.X) - (this->Start.X - that.Start.X) * (that.End.Y - that.Start.Y);
+        float d = (thisx) * (that.End.Y - that.Start.Y) - (thisy) * (that.End.X - that.Start.X);
+        if (d == 0.0f) continue;
+        d = 1 / d;
+        float r = q * d;
+        if (r < 0.0f || r > 1.0f) continue;
+        q = (this->Start.Y - that.Start.Y) * (thisx) - (this->Start.X - that.Start.X) * (thisy);
+        float s = q * d;
+        if (s < 0.0f || s > 1.0f ) continue;
+        point.X = this->Start.X + (r * thisx);
+        point.Y = this->Start.Y + (r * thisy);
+        if (tolerance)
+          if (point.distance2(this->End) < tolerance2)
+            continue;
+        return l;
+      }
+      return 0;
     }
 };
 
@@ -577,6 +647,17 @@ struct TexturedVertex : FPoint {
     TexturedVertex() {
       X = Y = U = V = 0;
     }
+    TexturedVertex(const FPoint& point) {
+      this->X = point.X;
+      this->Y = point.Y;
+      U = V = 0;
+    }
+    TexturedVertex(const FPoint& point, float U, float V) {
+      this->X = point.X;
+      this->Y = point.Y;
+      this->U = U;
+      this->V = V;
+    }
     TexturedVertex(float X, float Y) {
       this->X = X;
       this->Y = Y;
@@ -585,6 +666,10 @@ struct TexturedVertex : FPoint {
     TexturedVertex(float X, float Y, float U, float V) {
       this->X = X;
       this->Y = Y;
+      this->U = U;
+      this->V = V;
+    }
+    inline void setUV(float U, float V) {
       this->U = U;
       this->V = V;
     }

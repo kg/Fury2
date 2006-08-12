@@ -482,29 +482,60 @@ if (!Layer) return Failure;
     return Success;
 }
 
+Export int FillSpriteMatrix(SpriteParam *List, CollisionMatrix *Matrix) {
+SpriteParam *current = List;
+  if (!current) return Failure;
+  if (!Matrix) return Failure;
+  return Success;
+  while (current) {
+    Matrix->addSprite(current);
+    current = current->pNext;
+  }
+  return Success;
+}
+
 int CollisionCheckEx(SpriteParam *first, SpriteParam *check, bool mustbesolid, int requiredtype, int excludedtype, SpriteParam **out) {
 SpriteParam * sCurrent = first;
 FRect rSource, rDest;
     if (!first) return 0;
     if (!check) return 0;
     if (!first->pNext) return 0;
-    rSource = check->getRect();
     while (sCurrent) {
         if (sCurrent != check) {
             if ((sCurrent->Type != excludedtype) && (((requiredtype >= 0) && (sCurrent->Type == requiredtype)) || (requiredtype < 0))) {
                 if ((sCurrent->Stats.Solid) || (!mustbesolid)) {
-                    rDest = sCurrent->getRect();
-                    if (rSource.X1 > rDest.X2) goto nevar;
-                    if (rSource.Y1 > rDest.Y2) goto nevar;
-                    if (rSource.X2 < rDest.X1) goto nevar;
-                    if (rSource.Y2 < rDest.Y1) goto nevar;
-                    if (out) *out = sCurrent;
-                    return sCurrent->Index;
+                    if (check->touches(sCurrent)) {
+                      if (out) *out = sCurrent;
+                      return sCurrent->Index;
+                    }
                 }
             }
         }
 nevar:
         sCurrent = sCurrent->pNext;
+    }
+    return 0;
+}
+
+int CollisionCheck3(SpriteParam *first, SpriteParam *check, bool mustbesolid, int requiredtype, int excludedtype, SpriteParam **out) {
+    if (!first) return 0;
+    if (!check) return 0;
+FRect rSource = check->getRect();
+ListSpriteIterator iter(first);
+    SpriteParam* sCurrent = iter.current();
+    while (sCurrent) {
+        if (sCurrent != check) {
+            if ((sCurrent->Type != excludedtype) && (((requiredtype >= 0) && (sCurrent->Type == requiredtype)) || (requiredtype < 0))) {
+                if ((sCurrent->Stats.Solid) || (!mustbesolid)) {
+                    if (check->touches(sCurrent)) {
+                      if (out) *out = sCurrent;
+                      return sCurrent->Index;
+                    }
+                }
+            }
+        }
+nevar:
+        sCurrent = iter.next();
     }
     return 0;
 }
@@ -515,7 +546,7 @@ Export int CollisionCheck(SpriteParam *first, SpriteParam *check, bool mustbesol
 
 #define _check iCollide = -Sprite->touches(Matrix); \
     if (iCollide == 0) { \
-      iCollide = CollisionCheck(List, Sprite, true, -1, -1); \
+      iCollide = CollisionCheck3(List, Sprite, true, -1, -1, Null); \
     }
 
 Export bool ResolveCollisions(SpriteParam *List, SpriteParam *Sprite, VelocityVector &ResolvedSpeed, CollisionMatrix *Matrix) {
@@ -665,6 +696,7 @@ ForceEntry newEntry;
     if (!List) return Failure;
     if (!Options) return Failure;
     if (!Options->Matrix) return Failure;
+    //FillSpriteMatrix(List, Options->Matrix);
     // reset
     while (pCurrent) {
         pCurrent->Events.CollidedWith = 0;
@@ -837,6 +869,7 @@ ForceEntry newEntry;
 
         pCurrent = pCurrent->pNext;
     }
+    FillSpriteMatrix(List, Options->Matrix);
     return Success;
 }
 
@@ -975,7 +1008,7 @@ Pixel white = Pixel(255,255,255,255);
               r = pCurrent->Params.Angle;
               scaled = (s != 1);
               rotated = (((int)r) % 360) != 0;
-              if ((!scaled) && (!rotated)) {
+              if ((!scaled) && (!rotated) && (!(pCurrent->Params.Beam))) {
                 w /= 2;
                 if ((y) < Camera->Rectangle.Top) goto nextsprite;
                 if ((y - h) > Camera->Rectangle.bottom()) goto nextsprite;
@@ -1038,7 +1071,7 @@ Pixel white = Pixel(255,255,255,255);
                     }
                 }
               } else {
-                if (rotated) {
+                if (rotated || (pCurrent->Params.Beam)) {
                   switch(pCurrent->Params.BlitMode) {
                   default:
                     renderer = Null;
@@ -1059,19 +1092,61 @@ Pixel white = Pixel(255,255,255,255);
                     renderer = RenderFunction_Merge;
                     break;
                   }
-                  x = (pCurrent->Position.X * Camera->ParallaxX) - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
-                  y = (pCurrent->Position.Y * Camera->ParallaxY) - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
-                  r *= Radian;
-                  y -= (h * s / 2);
-                  s /= 2;
-                  w *= abs(s); h *= s;
-                  poly.Empty();
-                  Rotate4Points(w, h, r, px, py);
-                  poly.Append(TexturedVertex(px[0] + x, py[0] + y, pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.Top));
-                  poly.Append(TexturedVertex(px[1] + x, py[1] + y, pCurrent->Graphic.Rectangle.right_exclusive(), pCurrent->Graphic.Rectangle.Top));
-                  poly.Append(TexturedVertex(px[2] + x, py[2] + y, pCurrent->Graphic.Rectangle.right_exclusive(), pCurrent->Graphic.Rectangle.bottom_exclusive()));
-                  poly.Append(TexturedVertex(px[3] + x, py[3] + y, pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.bottom_exclusive()));
-                  FilterSimple_ConvexPolygon_Textured(pTarget, currentImage, &poly, DefaultSampleFunction, renderer, pCurrent->Params.Color.V);
+                  if (pCurrent->Params.Beam) {
+                    w /= 2;
+                    FPoint s, e;
+                    FPoint fv, lv, rv;
+                    float xc, yc;
+                    xc = pCurrent->Graphic.XCenter - (pCurrent->Graphic.Rectangle.Width / 2.0f);
+                    yc = pCurrent->Graphic.YCenter - (pCurrent->Graphic.Rectangle.Height);
+                    s = FPoint((pCurrent->Position.AX * Camera->ParallaxX) - Camera->ViewportX + xc, 
+                      (pCurrent->Position.AY * Camera->ParallaxY) - Camera->ViewportY + yc);
+                    e = FPoint((pCurrent->Position.X * Camera->ParallaxX) - Camera->ViewportX + xc, 
+                      (pCurrent->Position.Y * Camera->ParallaxY) - Camera->ViewportY + yc);
+                    fv = e;
+                    fv -= s;
+                    float repeats = fv.length() / pCurrent->Graphic.Rectangle.Height;
+                    h = repeats * pCurrent->Graphic.Rectangle.Height;
+                    fv.normalize();
+                    lv = fv.rotate90l();
+                    lv *= w;
+                    rv = fv.rotate90r();
+                    rv *= w;
+                    FPoint pt;
+                    poly.Empty();
+                    pt = e; pt += lv;
+                    poly.Append(TexturedVertex(pt, 
+                      pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.Top + h));
+                    pt = e; pt += rv;
+                    poly.Append(TexturedVertex(pt, 
+                      pCurrent->Graphic.Rectangle.right_exclusive(), pCurrent->Graphic.Rectangle.Top + h));
+                    pt = s; pt += rv;
+                    poly.Append(TexturedVertex(pt, 
+                      pCurrent->Graphic.Rectangle.right_exclusive(), pCurrent->Graphic.Rectangle.Top));
+                    pt = s; pt += lv;
+                    poly.Append(TexturedVertex(pt, 
+                      pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.Top));
+                    ScalerFunction* sampler = DefaultSampleFunction;
+                    if ((sampler == SampleRow_Bilinear) || (sampler == SampleRow_Bilinear_Rolloff))
+                      sampler = SampleRow_Bilinear_Wrap;
+                    if ((sampler == SampleRow_Linear) || (sampler == SampleRow_Linear_Rolloff))
+                      sampler = SampleRow_Linear_Wrap;
+                    FilterSimple_ConvexPolygon_Textured(pTarget, currentImage, &poly, sampler, renderer, pCurrent->Params.Color.V);
+                  } else {
+                    x = (pCurrent->Position.X * Camera->ParallaxX) - Camera->ViewportX - (pCurrent->Graphic.XCenter - (w/2));
+                    y = (pCurrent->Position.Y * Camera->ParallaxY) - Camera->ViewportY + (h) - pCurrent->Graphic.YCenter;
+                    r *= Radian;
+                    y -= (h * s / 2);
+                    s /= 2;
+                    w *= abs(s); h *= s;
+                    poly.Empty();
+                    Rotate4Points(w, h, r, px, py);
+                    poly.Append(TexturedVertex(px[0] + x, py[0] + y, pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.Top));
+                    poly.Append(TexturedVertex(px[1] + x, py[1] + y, pCurrent->Graphic.Rectangle.right_exclusive(), pCurrent->Graphic.Rectangle.Top));
+                    poly.Append(TexturedVertex(px[2] + x, py[2] + y, pCurrent->Graphic.Rectangle.right_exclusive(), pCurrent->Graphic.Rectangle.bottom_exclusive()));
+                    poly.Append(TexturedVertex(px[3] + x, py[3] + y, pCurrent->Graphic.Rectangle.Left, pCurrent->Graphic.Rectangle.bottom_exclusive()));
+                    FilterSimple_ConvexPolygon_Textured(pTarget, currentImage, &poly, DefaultSampleFunction, renderer, pCurrent->Params.Color.V);
+                  }
                 } else {
                   if (pCurrent->Params.Scale < 0) {
                     w = w + 1;
@@ -1887,58 +1962,17 @@ FLine ln;
     return false;
 }
 
-Export int CheckLineCollide2(FRect *rct, SimplePolygon *poly, FLine *lines, int linecount) {
-int sCode = 0, eCode = 0, nCode = 0;
+Export int CheckLineCollide2(FRect *unused, SimplePolygon *poly, FLine *lines, int linecount) {
 FLine *line = lines;
 int iCount;
 FPoint pt;
 FLine ln;
-    if (!rct) return false;
+    if (!poly) return false;
     if (!lines) return false;
     for (iCount = 1; iCount <= linecount; iCount++) {
         ln = *line;
-        while(true) {
-            sCode = PointRegionCode(&ln.Start, rct);
-            eCode = PointRegionCode(&ln.End, rct);
-            if ((sCode | eCode) == 0) {
-                // trivial accept
-                if (Intersects(*poly, ln))
-                  return iCount;
-                else
-                  break;
-            } else if ((sCode & eCode) != 0) {
-                // trivial reject
-                break;
-            } else {
-                if(sCode == 0)
-                {
-                    pt = ln.Start;
-                    ln.Start = ln.End;
-                    ln.End = pt;
-                    nCode = sCode; 
-                    sCode = eCode;
-                    eCode = nCode;
-                } 
-                // nontrivial
-                if (sCode & csTop) {
-                    // top
-                    ln.Start.X +=(ln.End.X - ln.Start.X) * (rct->Y1 - ln.Start.Y) / (ln.End.Y - ln.Start.Y);
-                    ln.Start.Y = rct->Y1;
-                } else if (sCode & csBottom) {
-                    // bottom
-                    ln.Start.X +=(ln.End.X - ln.Start.X) * (rct->Y2 - ln.Start.Y) / (ln.End.Y - ln.Start.Y);
-                    ln.Start.Y = rct->Y2;
-                } else if (sCode & csRight) {
-                    // right
-                    ln.Start.Y +=(ln.End.Y - ln.Start.Y) * (rct->X2 - ln.Start.X) / (ln.End.X - ln.Start.X);
-                    ln.Start.X = rct->X2;
-                } else {
-                    // left
-                    ln.Start.Y +=(ln.End.Y - ln.Start.Y) * (rct->X1 - ln.Start.X) / (ln.End.X - ln.Start.X);
-                    ln.Start.X = rct->X1;
-                }
-            }
-        }
+        if (Intersects(*poly, ln))
+          return iCount;
         line++;
     }
     return false;
@@ -1995,56 +2029,15 @@ FLine ln;
     return false;
 }
 
-int CheckLineCollide2(FRect *rct, SimplePolygon *poly, std::vector<FLine> Lines) {
-int sCode = 0, eCode = 0, nCode = 0;
+int CheckLineCollide2(FRect *unused, SimplePolygon *poly, std::vector<FLine> Lines) {
 DoubleWord iCount;
 FPoint pt;
 FLine ln;
-    if (!rct) return false;
+    if (!poly) return false;
     for (iCount = 0; iCount < Lines.size(); iCount++) {
         ln = Lines[iCount];
-        while(true) {
-            sCode = PointRegionCode(&ln.Start, rct);
-            eCode = PointRegionCode(&ln.End, rct);
-            if ((sCode | eCode) == 0) {
-                // trivial accept
-                if (Intersects(*poly, ln))
-                  return iCount + 1;
-                else
-                  break;
-            } else if ((sCode & eCode) != 0) {
-                // trivial reject
-                break;
-            } else {
-                if(sCode == 0)
-                {
-                    pt = ln.Start;
-                    ln.Start = ln.End;
-                    ln.End = pt;
-                    nCode = sCode; 
-                    sCode = eCode;
-                    eCode = nCode;
-                } 
-                // nontrivial
-                if (sCode & csTop) {
-                    // top
-                    ln.Start.X +=(ln.End.X - ln.Start.X) * (rct->Y1 - ln.Start.Y) / (ln.End.Y - ln.Start.Y);
-                    ln.Start.Y = rct->Y1;
-                } else if (sCode & csBottom) {
-                    // bottom
-                    ln.Start.X +=(ln.End.X - ln.Start.X) * (rct->Y2 - ln.Start.Y) / (ln.End.Y - ln.Start.Y);
-                    ln.Start.Y = rct->Y2;
-                } else if (sCode & csRight) {
-                    // right
-                    ln.Start.Y +=(ln.End.Y - ln.Start.Y) * (rct->X2 - ln.Start.X) / (ln.End.X - ln.Start.X);
-                    ln.Start.X = rct->X2;
-                } else {
-                    // left
-                    ln.Start.Y +=(ln.End.Y - ln.Start.Y) * (rct->X1 - ln.Start.X) / (ln.End.X - ln.Start.X);
-                    ln.Start.X = rct->X1;
-                }
-            }
-        }
+        if (Intersects(*poly, ln))
+          return iCount + 1;
     }
     return false;
 }
@@ -2053,6 +2046,12 @@ FRect SpriteParam::getRect() {
 float w = this->Obstruction.W / 2;
 float h = this->Obstruction.H / 2;
 FRect v;
+  if (isPolygonal()) {
+    SimplePolygon* poly = this->getPolygon();
+    poly->GetBounds(v);
+    delete poly;
+    return v;
+  } else {
     switch (this->Obstruction.Type) {
       case sotUpwardRect:
         v.X1 = (this->Position.X) - (w);
@@ -2061,7 +2060,6 @@ FRect v;
         v.Y2 = (this->Position.Y);
         break;
       case sotCenteredRect:
-      case sotCenteredPolygon:
         v.X1 = (this->Position.X) - (w);
         v.X2 = (this->Position.X) + (w);
         v.Y1 = (this->Position.Y) - (h);
@@ -2076,6 +2074,7 @@ FRect v;
         break;
     }
     return v;
+  }
 }
 
 Polygon<FPoint>* SpriteParam::getPolygon() {
@@ -2113,12 +2112,52 @@ Polygon<FPoint> *base;
         v->Copy(*base);
         v->Translate(this->Position.X, this->Position.Y);
         break;
+      case sotBeam:
+        FPoint s, e;
+        FPoint fv, lv, rv;
+        float w = this->Obstruction.W / 2.0f, h = this->Obstruction.H / 2.0f;
+        s = FPoint(this->Position.AX, this->Position.AY);
+        e = FPoint(this->Position.X, this->Position.Y);
+        fv = e;
+        fv -= s;
+        fv.normalize();
+        lv = fv.rotate90l();
+        lv *= w;
+        rv = fv.rotate90r();
+        rv *= w;
+        fv *= h;
+        s -= fv;
+        e += fv;
+        FPoint pt;
+        v->Allocate(4);
+        pt = s; pt += lv;
+        v->Append(pt);
+        pt = s; pt += rv;
+        v->Append(pt);
+        pt = e; pt += rv;
+        v->Append(pt);
+        pt = e; pt += lv;
+        v->Append(pt);
+        break;
     }
     return v;
 }
 
+bool SpriteParam::isPolygonal() const {
+  switch (this->Obstruction.Type) {
+    case sotUpwardRect:
+    case sotCenteredSphere:
+    case sotCenteredRect:
+      return false;
+    case sotCenteredPolygon:
+    case sotBeam:
+      return true;
+  }
+  return false;
+}
+
 bool SpriteParam::touches(SpriteParam *other) {
-  if ((this->Obstruction.Type == sotCenteredPolygon) || (other->Obstruction.Type == sotCenteredPolygon)) {
+  if (this->isPolygonal() || other->isPolygonal()) {
     Polygon<FPoint> *pOther = other->getPolygon();
     bool result = this->touches(pOther);
     delete pOther;
@@ -2138,7 +2177,7 @@ FRect rMe;
 }
 
 bool SpriteParam::touches(SimplePolygon *other) {
-Polygon<FPoint> *pMe = this->getPolygon();
+  Polygon<FPoint> *pMe = this->getPolygon();
   bool result = Intersects(*pMe, *other);
   delete pMe;
   return result;
@@ -2152,7 +2191,7 @@ bool SpriteParam::touches(SpriteParam *other, VelocityVector *other_speed) {
 
 inline int SpriteParam::touches(FLine *lines, int line_count) {
 FRect rct = this->getRect();
-  if ((this->Obstruction.Type == sotCenteredPolygon)) {
+  if (this->isPolygonal()) {
     Polygon<FPoint> *poly = this->getPolygon();
     int result = CheckLineCollide2(&rct, poly, lines, line_count);
     delete poly;
@@ -2165,7 +2204,7 @@ FRect rct = this->getRect();
 inline int SpriteParam::touches(CollisionMatrix *Matrix) {
 FRect rct;
   rct = this->getRect();
-  if ((this->Obstruction.Type == sotCenteredPolygon)) {
+  if (this->isPolygonal()) {
     Polygon<FPoint> *poly = this->getPolygon();
     bool result = Matrix->collisionCheck(&rct, poly);
     delete poly;
@@ -2246,11 +2285,13 @@ Export int SightCheck(Lighting::Environment *Env, float FromX, float FromY, floa
 	for (my = my1; my <= my2; my++) {
 		for (mx = mx1; mx <= mx2; mx++) {
 			Sector = Env->Matrix->getSector(mx, my);
-			for (Obstruction = Sector->Obstructions.begin(); Obstruction != Sector->Obstructions.end(); ++Obstruction) {
-				if (LightRay.intersect((*(FLine*)&(*Obstruction)), IntersectionPoint)) {
-          return 0;
-				}
-			}
+      if (LightRay.intersect(Sector->Obstructions, IntersectionPoint))
+        return 0;
+			//for (Obstruction = Sector->Obstructions.begin(); Obstruction != Sector->Obstructions.end(); ++Obstruction) {
+			//	if (LightRay.intersect((*(FLine*)&(*Obstruction)), IntersectionPoint)) {
+   //       return 0;
+			//	}
+			//}
 		}
 	}
 
@@ -2298,7 +2339,11 @@ Export int SightCheck(Lighting::Environment *Env, float FromX, float FromY, floa
 }
 
 Export Pixel RaycastPoint(Lighting::Environment *Env, float X, float Y, SpriteParam *Ignore) {
-  return Lighting::Raycast(Env, X, Y, Ignore, false);
+  if (Env->LightCount < 1) {
+    return Env->AmbientLight;
+  } else {
+    return Lighting::Raycast(Env, X, Y, Ignore, false);
+  }
 }
 
 Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpriteParam *IgnoreSprite, bool EnableCulling) {
@@ -2309,18 +2354,14 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
   AlphaLevel *aDistance;
   SpriteParam *Sprite;
   FLine SpriteLine;
-#ifdef ACCURATE_PYTHAGORAS
   int XDistance, YDistance;
-#else
-  float XDistance, YDistance;
-#endif
   int Distance;
-  float DistanceMultiplier;
+  float DistanceMultiplier = 0;
   float ldist, ldist11;
   bool Obscured, Falloff;
   int mx1 = 0, my1 = 0, mx2 = 0, my2 = 0, mx = 0, my = 0;
   Lighting::Sector *Sector = Null;
-  std::vector<Lighting::Obstruction>::iterator Obstruction;
+  std::vector<Lighting::Obstruction>::const_iterator Obstruction;
   if (Env->LightCount < 1) {
     return Color;
   }
@@ -2330,8 +2371,8 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
     Obscured = false;
 	  if (((!Env->Lights[l].Culled) || (!Env->Lights[l].PlaneCulled) || (!EnableCulling)) && (Env->Lights[l].Visible)) {
       LightColor = Pixel(0, 0, 0, 0);
-      ldist = Env->Lights[l].FalloffDistance;
-      ldist11 = ldist * 1.1f;
+      ldist = Env->Lights[l].Data.ldist;
+      ldist11 = Env->Lights[l].Data.ldist11;
       Falloff = Env->Lights[l].FalloffDistance > 0;
       if (Falloff) {
         DistanceMultiplier = (255.0F / ldist);
@@ -2347,32 +2388,17 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
       if (Env->Lights[l].Image) {
         Distance = 0;
         Falloff = false;
-        float w = Env->Lights[l].Image->Width / 2;
-        float h = Env->Lights[l].Image->Height / 2;
-        int x = floor(X - Env->Lights[l].X + w + Env->Lights[l].ImageAlignX);
-        int y = floor(Y - Env->Lights[l].Y + h + Env->Lights[l].ImageAlignY);
-        LightColor = Env->Lights[l].Image->getPixelClipNO(x, y);
+        int x = floor(X - Env->Lights[l].Data.xOffset);
+        int y = floor(Y - Env->Lights[l].Data.yOffset);
+        LightColor = Env->Lights[l].Image->getPixelRolloffNO(x, y);
         LightColor = ScaleAlpha(LightColor, Env->Lights[l].Color[::Alpha]);
         Obscured = (LightColor[::Alpha] == 0);
         LightColor = Premultiply(LightColor);
-        ldist = _Max(w, h);
-        ldist11 = ldist * 1.1f;
         if (Obscured) goto found;
       } else if (Falloff) {
-        float doff = 0.0f, dramp = 1.0f / 0.95f;
-        if (Env->Lights[l].LightSize > 0)
-        {
-          doff = (Env->Lights[l].LightSize / Env->Lights[l].FalloffDistance) * 255.0f;
-          dramp = (1.0f + (doff / 255.0f)) / 0.95f;
-        }
-        YDistance = (abs(LightRay.End.Y - LightRay.Start.Y) * DistanceMultiplier);
         XDistance = (abs(LightRay.End.X - LightRay.Start.X) * DistanceMultiplier);
-  #ifdef ACCURATE_PYTHAGORAS
+        YDistance = (abs(LightRay.End.Y - LightRay.Start.Y) * DistanceMultiplier);
         Distance = PythagorasLookup(ClipByte(XDistance), ClipByte(YDistance));
-  #else
-  //      Distance = ClipByte(sqrt((XDistance * XDistance) + (YDistance * YDistance)) / 0.707106781186547);
-        Distance = ClipByte(clamp((sqrt((XDistance * XDistance) + (YDistance * YDistance))) - doff, 0.0f, 255.0f) * dramp);
-  #endif
         LightColor = Env->Lights[l].Color;
       } else {
         LightColor = Env->Lights[l].Color;
@@ -2383,10 +2409,9 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
         if (Env->Lights[l].Image) {
         } else if ((Env->Lights[l].Spread < 180.0f) && (Distance > 0)) {
           // directional
-          float ls = Env->Lights[l].Spread / 2;
           float a_l = NormalizeAngle(AngleBetween(LightRay.Start, LightRay.End));
-          float a_s = NormalizeAngle(Env->Lights[l].Angle - ls);
-          float a_e = NormalizeAngle(Env->Lights[l].Angle + ls);
+          float a_s = Env->Lights[l].Data.angleStart;
+          float a_e = Env->Lights[l].Data.angleEnd;
           if (a_e < a_s) {
             float a_d = a_s - a_e;
             a_l = NormalizeAngle(a_l + a_d);
@@ -2399,57 +2424,55 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
         }
         if (Obscured) goto found;
 
-		  for (my = my1; my <= my2; my++) {
-			  for (mx = mx1; mx <= mx2; mx++) {
-				  Sector = Env->Matrix->getSector(mx, my);
-				  for (Obstruction = Sector->Obstructions.begin(); Obstruction != Sector->Obstructions.end(); ++Obstruction) {
-					  if (LightRay.intersect((*(FLine*)&(*Obstruction)), IntersectionPoint)) {
-						  if (IntersectionPoint.distance(&(LightRay.End)) < 2) {
-						  } else {
-							  Obscured = true;
-							  goto found;
-						  }
-					  }
-				  }
-			  }
-		  }
+		    for (my = my1; my <= my2; my++) {
+			    for (mx = mx1; mx <= mx2; mx++) {
+				    Sector = Env->Matrix->getSector(mx, my);
+            if (LightRay.intersect(Sector->Obstructions, IntersectionPoint, 4.0f)) {
+              Obscured = true;
+              goto found;
+            }
+			    }
+		    }
 
         if (Env->Sprites != Null) {
+          ListSpriteIterator sprites(Env->Sprites);
           FPoint lp = FPoint(Env->Lights[l].X, Env->Lights[l].Y);
-          Sprite = Env->Sprites;
+          Sprite = sprites.current();
           while (Sprite) {
             if (Sprite == IgnoreSprite) {
-              Sprite = Sprite->pNext; 
+              Sprite = sprites.next(); 
               continue;
             }
             if (Sprite == Env->Lights[l].Attached) {
-              Sprite = Sprite->pNext; 
+              Sprite = sprites.next(); 
               continue;
             }
             FPoint p = FPoint(Sprite->Position.X, Sprite->Position.Y);
-            if (p.distance(&lp) > (ldist11)) {
-              Sprite = Sprite->pNext; 
+            if (p.distance2(&lp) > (ldist11)) {
+              Sprite = sprites.next(); 
               continue;
             }
             FPoint vl = FLine(p, lp).vector(), vr;
-            float d = vl.length();
+            float d = vl.length2();
             switch (Sprite->Params.SpecialFX) {
             default:
-              Sprite = Sprite->pNext;
+              Sprite = sprites.next();
               continue;
               break;
             case fxCastShadow:
             case fxCastGraphicShadow:
               if (Falloff) {
                 if (d > ldist11) {
-                  Sprite = Sprite->pNext;
+                  Sprite = sprites.next();
                   continue;
                 }
               }
               break;
             }
+            d = sqrt(d);
             float sdist = Sprite->ZHeight;
             if (sdist <= 0.0f) sdist = 10000.0f;
+            sdist *= sdist;
             float s = (Sprite->Obstruction.W + Sprite->Obstruction.H) / 4.0f;
             float h = Sprite->Obstruction.H / 2.0f;
             vl /= d;
@@ -2462,8 +2485,8 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
             SpriteLine.Start += vl;
             SpriteLine.End += vr;
             if (LightRay.intersect(SpriteLine, IntersectionPoint)) {
-              float d = IntersectionPoint.distance(&(LightRay.End));
-              if (d < 2.0f) {
+              float d = IntersectionPoint.distance2(&(LightRay.End));
+              if (d < 4.0f) {
               } else {
                 if (d < sdist) {
                   Obscured = true;
@@ -2471,7 +2494,7 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
                 }
               }
             }
-            Sprite = Sprite->pNext;
+            Sprite = sprites.next();
           }
         }
 		  found:
@@ -2492,6 +2515,190 @@ Pixel Lighting::Raycast(Lighting::Environment *Env, float X, float Y, SpritePara
     }
   }
   return Color;
+}
+
+int Lighting::RaycastStrip(Lighting::Environment *Env, float X1, float Y1, float X2, float Y2, SpriteParam *IgnoreSprite, bool EnableCulling, int Count, Pixel* pOut) {
+  Pixel Color = Env->AmbientLight;
+  Pixel LightColor;
+  FLine LightRay;
+  FPoint IntersectionPoint;
+  AlphaLevel *aDistance;
+  SpriteParam *Sprite;
+  FLine SpriteLine;
+  int XDistance, YDistance;
+  int Distance;
+  float DistanceMultiplier = 0;
+  float ldist, ldist11;
+  bool Obscured, Falloff;
+  int mx1 = 0, my1 = 0, mx2 = 0, my2 = 0, mx = 0, my = 0;
+  Lighting::Sector *Sector = Null;
+  std::vector<Lighting::Obstruction>::const_iterator Obstruction;
+  float X = X1, Y = Y1;
+  int Length = floor(FPoint(X1, Y1).distance(FPoint(X2, Y2)));
+  float Xd = (X2 - X1) / (float)Length;
+  float Yd = (Y2 - Y1) / (float)Length;
+  if (Length > Count) Length = Count;
+  if (Env->LightCount < 1) {
+    _Fill(pOut, Color, Length);
+    return 0;
+  }
+  float fsw = (float)Env->Matrix->SectorWidth;
+  float fsh = (float)Env->Matrix->SectorHeight;
+  for (int pixels = 0; pixels < Length; pixels++) {
+    Color = Env->AmbientLight;
+    for (int l = 0; l < Env->LightCount; ++l) {
+      Obscured = false;
+	    if (((!Env->Lights[l].Culled) || (!Env->Lights[l].PlaneCulled) || (!EnableCulling)) && (Env->Lights[l].Visible)) {
+        LightColor = Pixel(0, 0, 0, 0);
+        ldist = Env->Lights[l].Data.ldist;
+        ldist11 = Env->Lights[l].Data.ldist11;
+        Falloff = Env->Lights[l].FalloffDistance > 0;
+        if (Falloff) {
+          DistanceMultiplier = (255.0F / ldist);
+        }
+        LightRay.Start.X = Env->Lights[l].X;
+        LightRay.Start.Y = Env->Lights[l].Y;
+        LightRay.End.X = X;
+        LightRay.End.Y = Y;
+	      mx1 = ClipValue(floor(_Min(LightRay.Start.X, LightRay.End.X) / fsw), Env->Matrix->Width - 1);
+  	    my1 = ClipValue(floor(_Min(LightRay.Start.Y, LightRay.End.Y) / fsh), Env->Matrix->Height - 1);
+	      mx2 = ClipValue(ceil(_Max(LightRay.Start.X, LightRay.End.X) / fsw), Env->Matrix->Width - 1);
+	      my2 = ClipValue(ceil(_Max(LightRay.Start.Y, LightRay.End.Y) / fsh), Env->Matrix->Height - 1);
+        if (Env->Lights[l].Image) {
+          Distance = 0;
+          Falloff = false;
+          int x = floor(X - Env->Lights[l].Data.xOffset);
+          int y = floor(Y - Env->Lights[l].Data.yOffset);
+          LightColor = Env->Lights[l].Image->getPixelRolloffNO(x, y);
+          LightColor = ScaleAlpha(LightColor, Env->Lights[l].Color[::Alpha]);
+          Obscured = (LightColor[::Alpha] == 0);
+          LightColor = Premultiply(LightColor);
+          if (Obscured) goto found;
+        } else if (Falloff) {
+          XDistance = (abs(LightRay.End.X - LightRay.Start.X) * DistanceMultiplier);
+          YDistance = (abs(LightRay.End.Y - LightRay.Start.Y) * DistanceMultiplier);
+          Distance = PythagorasLookup(ClipByte(XDistance), ClipByte(YDistance));
+          LightColor = Env->Lights[l].Color;
+        } else {
+          LightColor = Env->Lights[l].Color;
+          Distance = 0;
+        }
+        if (Distance < 255) {
+          Obscured = false;
+          if (Env->Lights[l].Image) {
+          } else if ((Env->Lights[l].Spread < 180.0f) && (Distance > 0)) {
+            // directional
+            float a_l = NormalizeAngle(AngleBetween(LightRay.Start, LightRay.End));
+            float a_s = Env->Lights[l].Data.angleStart;
+            float a_e = Env->Lights[l].Data.angleEnd;
+            if (a_e < a_s) {
+              float a_d = a_s - a_e;
+              a_l = NormalizeAngle(a_l + a_d);
+              a_s = NormalizeAngle(a_s + a_d);
+              a_e = NormalizeAngle(a_e + a_d);
+              if ((a_l < a_s) || (a_l > a_e)) Obscured = true;
+            } else {
+              if ((a_l < a_s) || (a_l > a_e)) Obscured = true;
+            }
+          }
+          if (Obscured) goto found;
+
+		      for (my = my1; my <= my2; my++) {
+			      for (mx = mx1; mx <= mx2; mx++) {
+				      Sector = Env->Matrix->getSector(mx, my);
+              if (LightRay.intersect(Sector->Obstructions, IntersectionPoint, 4.0f)) {
+                Obscured = true;
+                goto found;
+              }
+			      }
+		      }
+
+          if (Env->Sprites != Null) {
+            FPoint lp = FPoint(Env->Lights[l].X, Env->Lights[l].Y);
+            ListSpriteIterator sprites(Env->Sprites);
+            Sprite = sprites.current();
+            while (Sprite) {
+              if (Sprite == IgnoreSprite) {
+                Sprite = sprites.next(); 
+                continue;
+              }
+              if (Sprite == Env->Lights[l].Attached) {
+                Sprite = sprites.next(); 
+                continue;
+              }
+              FPoint p = FPoint(Sprite->Position.X, Sprite->Position.Y);
+              if (p.distance2(&lp) > (ldist11)) {
+                Sprite = sprites.next(); 
+                continue;
+              }
+              FPoint vl = FLine(p, lp).vector(), vr;
+              float d = vl.length2();
+              switch (Sprite->Params.SpecialFX) {
+              default:
+                Sprite = sprites.next();
+                continue;
+                break;
+              case fxCastShadow:
+              case fxCastGraphicShadow:
+                if (Falloff) {
+                  if (d > ldist11) {
+                    Sprite = sprites.next();
+                    continue;
+                  }
+                }
+                break;
+              }
+              d = sqrt(d);
+              float sdist = Sprite->ZHeight;
+              if (sdist <= 0.0f) sdist = 10000.0f;
+              sdist *= sdist;
+              float s = (Sprite->Obstruction.W + Sprite->Obstruction.H) / 4.0f;
+              float h = Sprite->Obstruction.H / 2.0f;
+              vl /= d;
+              vl *= s;
+              vr = vl.rotate90r();
+              vl = vl.rotate90l();
+              p.Y -= h;
+              SpriteLine.Start = p;
+              SpriteLine.End = p;
+              SpriteLine.Start += vl;
+              SpriteLine.End += vr;
+              if (LightRay.intersect(SpriteLine, IntersectionPoint)) {
+                float d = IntersectionPoint.distance2(&(LightRay.End));
+                if (d < 4.0f) {
+                } else {
+                  if (d < sdist) {
+                    Obscured = true;
+                    break;
+                  }
+                }
+              }
+              Sprite = sprites.next();
+            }
+          }
+		    found:
+
+          if (!Obscured) {
+            if ((Falloff) && (Distance > 0)) {
+              aDistance = AlphaLevelLookup(Distance ^ 0xFF);
+              Color[::Blue] = ClipByteHigh(Color[::Blue] + AlphaFromLevel(aDistance, LightColor[::Blue]));
+              Color[::Green] = ClipByteHigh(Color[::Green] + AlphaFromLevel(aDistance, LightColor[::Green]));
+              Color[::Red] = ClipByteHigh(Color[::Red] + AlphaFromLevel(aDistance, LightColor[::Red]));
+            } else {
+              Color[::Blue] = ClipByteHigh(Color[::Blue] + LightColor[::Blue]);
+              Color[::Green] = ClipByteHigh(Color[::Green] + LightColor[::Green]);
+              Color[::Red] = ClipByteHigh(Color[::Red] + LightColor[::Red]);
+            }
+          }
+        }
+      }
+    }
+    *pOut = Color;
+    ++pOut;
+    X += Xd;
+    Y += Yd;
+  }
+  return Length;
 }
 
 Export int RenderLightingEnvironment(Lighting::Camera *Camera, Lighting::Environment *Environment) {
@@ -2556,6 +2763,23 @@ float FuzzyOffset = 0, FlickerAmount = 0;
       Light->Y = Light->Attached->Position.Y + Light->AttachY + (-cos(Light->Angle * Radian) * Light->AttachV) + (-cos((Light->Angle + 90) * Radian) * Light->AttachH);
     }
     Light->Angle = NormalizeAngle(Light->Angle);
+    if (Light->Image) {
+      float w = (Light->Image->Width / 2.0f);
+      float h = (Light->Image->Height / 2.0f);
+      Light->Data.xOffset = Light->X - w - Light->ImageAlignX;
+      Light->Data.yOffset = Light->Y - h - Light->ImageAlignY;
+      Light->Data.ldist = _Max(w, h);
+      Light->Data.ldist11 = pow(Light->Data.ldist * 1.1f, 2);
+    } else {
+      Light->Data.ldist = Light->FalloffDistance;
+      Light->Data.ldist11 = pow(Light->FalloffDistance * 1.1f, 2);
+      Light->Data.xOffset = Light->Data.yOffset = 0;
+    }
+    if (Light->Spread < 180.0f) {
+      float ls = Light->Spread / 2.0f;
+      Light->Data.angleStart = NormalizeAngle(Light->Angle - ls);
+      Light->Data.angleEnd = NormalizeAngle(Light->Angle + ls);
+    }
     if ((Light->Cache != Null) && (Light->CacheValid == false)) {
       CameraRect = Light->Cache->getRectangle();
       RenderTarget = Light->Cache;
@@ -3117,8 +3341,8 @@ fuzzyrender:
         xo2 = (x2 - rctWall.right());
 		    if (Plane->Height != 0) FilterSimple_Fill(Camera->OutputBuffer, &rctTop, Environment->AmbientLight);
           if ((rctWall.Width > 0) && (rctWall.Height > 0)) {
-            if (rctWall.Width > PlaneTexture->Width) {
-              PlaneTexture->resize(rctWall.Width, 1);
+            if (rctWall.Width + 16 > PlaneTexture->Width) {
+              PlaneTexture->resize(rctWall.Width + 16, 1);
             }
             rctSource.Width = rctWall.Width;
             rctSource.Height = 1;
@@ -3137,17 +3361,18 @@ fuzzyrender:
                 Environment->Lights[l].PlaneCulled = !(Environment->Lights[l].Rect.intersect(rctWall));
               }
             }
-            for (float x = sx; x <= ex; x += 1.0f) {
-      			  if (i >= imax) break;
-			        color = Raycast(Environment, x + xo, y, Null, true);
-              *pDest = color;
-              pDest++;
-              i++;
-            }
+            RaycastStrip(Environment, sx + xo, y, ex, y, Null, true, imax, pDest);
+           // for (float x = sx; x <= ex; x += 1.0f) {
+      			  //if (i >= imax) break;
+			        //color = Raycast(Environment, x + xo, y, Null, true);
+           //   *pDest = color;
+           //   pDest++;
+           //   i++;
+           // }
             PlaneTexture->dirty();
             int pw = PlaneTexture->Width;
             PlaneTexture->Width = rctSource.Width;
-            BlitResample_Normal(Camera->OutputBuffer, PlaneTexture, &rctWall, &rctSource, DefaultSampleFunction);
+            BlitResample_Normal(Camera->OutputBuffer, PlaneTexture, &rctWall, &rctSource, SampleRow_Linear);
             iCount++;
             PlaneTexture->Width = pw;
           }
@@ -3582,7 +3807,34 @@ bool CollisionMatrix::addLines(FLine *Lines, int Count) {
   return true;
 }
 
-bool CollisionMatrix::collisionCheck(FRect *Rectangle) {
+bool CollisionMatrix::addSprite(SpriteParam *Sprite) {
+  FRect rect = Sprite->getRect();
+  int x1 = ClipValue(floor(rect.X1 / this->SectorWidth)-1, 0, this->Width - 1);
+  int y1 = ClipValue(floor(rect.Y1 / this->SectorHeight)-1, 0, this->Height - 1);
+  int x2 = ClipValue(ceil(rect.X2 / this->SectorWidth)+1, 0, this->Width - 1);
+  int y2 = ClipValue(ceil(rect.Y2 / this->SectorHeight)+1, 0, this->Height - 1);
+  bool added = false;
+  for (int y = y1; y <= y2; y++) {
+    for (int x = x1; x <= x2; x++) {
+      added |= this->getSector(x, y)->addSprite(Sprite, x * this->SectorWidth, y * this->SectorHeight);
+    }
+  }
+  if (!added)
+    Stragglers.push_back(Sprite);
+  return true;
+}
+
+bool CollisionMatrix::clearSprites() {
+  for (int y = 0; y < this->Height; y++) {
+    for (int x = 0; x < this->Width; x++) {
+      this->getSector(x, y)->clearSprites();
+    }
+  }
+  Stragglers.clear();
+  return true;
+}
+
+bool CollisionMatrix::collisionCheck(FRect *Rectangle) const {
   int xMin = Rectangle->X1 / this->SectorWidth, yMin = Rectangle->Y1 / this->SectorHeight, 
       xMax = Rectangle->X2 / this->SectorWidth, yMax = Rectangle->Y2 / this->SectorHeight;
   xMin = ClipValue(xMin, this->Width - 1);
@@ -3599,7 +3851,7 @@ bool CollisionMatrix::collisionCheck(FRect *Rectangle) {
   return false;
 }
 
-bool CollisionMatrix::collisionCheck(FRect *Rectangle, SimplePolygon *Polygon) {
+bool CollisionMatrix::collisionCheck(FRect *Rectangle, SimplePolygon *Polygon) const {
   int xMin = Rectangle->X1 / this->SectorWidth, yMin = Rectangle->Y1 / this->SectorHeight, 
       xMax = Rectangle->X2 / this->SectorWidth, yMax = Rectangle->Y2 / this->SectorHeight;
   xMin = ClipValue(xMin, this->Width - 1);
@@ -3651,6 +3903,29 @@ bool CollisionSector::addLines(FLine *Lines, int Count, int XOffset, int YOffset
     }
     Pointer++;
   }
+  return true;
+}
+
+bool CollisionSector::addSprite(SpriteParam *Sprite, int XOffset, int YOffset) {
+  FRect ThisRectangle(XOffset - 1, YOffset - 1, this->Width + 2, this->Height + 2);
+  if (Sprite->touches(&ThisRectangle)) {
+    this->Sprites.push_back(Sprite);
+    return true;
+  }
+  return false;
+}
+
+bool CollisionSector::removeSprite(SpriteParam *Sprite) {
+  std::vector<SpriteParam*>::iterator iter = std::find(this->Sprites.begin(), this->Sprites.end(), Sprite);
+  if (iter != this->Sprites.end()) {
+    this->Sprites.erase(iter);
+    return true;
+  }
+  return false;
+}
+
+bool CollisionSector::clearSprites() {
+  this->Sprites.clear();
   return true;
 }
 

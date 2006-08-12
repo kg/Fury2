@@ -37,6 +37,7 @@ Option Explicit
 Implements Fury2Object
 
 Private mvarFireCode As String
+Private mvarFireEvent As Fury2Event
 Private mvarDelay As Long
 Private mvarBuildup As Long
 Private mvarEnabled As Boolean
@@ -102,7 +103,9 @@ End Property
 
 Public Property Let FireCode(ByVal vData As String)
 Attribute FireCode.VB_Description = "The code that will be executed when this timer fires."
+On Error Resume Next
     mvarFireCode = vData
+    Set mvarFireEvent = Nothing
 End Property
 
 Public Property Get FireCode() As String
@@ -119,6 +122,9 @@ Dim m_lngUpdates As Long
     If mvarLastFiring = 0 Then
         mvarLastFiring = CLng(Engine.HiTimer * 1000)
     End If
+    If mvarFireEvent Is Nothing Then
+        Set mvarFireEvent = Engine.CompileScriptBlock(mvarFireCode)
+    End If
     Err.Clear
     m_lngTime = CLng(Engine.HiTimer * 1000)
     If mvarRealtime Then
@@ -133,7 +139,7 @@ Dim m_lngUpdates As Long
                 If mvarOneShot Then mvarEnabled = False
                 Engine.ContextLevelAdd "Timer_Fire"
                 Err.Clear
-                Engine.ScriptEngine.AddCode mvarFireCode
+                mvarFireEvent.Invoke
                 If Err <> 0 Then mvarEnabled = False
                 Err.Clear
                 Engine.ContextLevelRemove
@@ -147,7 +153,7 @@ Dim m_lngUpdates As Long
                 mvarLastFiring = m_lngTime
                 Engine.ContextLevelAdd "Timer_Fire"
                 Err.Clear
-                Engine.ScriptEngine.AddCode mvarFireCode
+                mvarFireEvent.Invoke
                 If Err <> 0 Then mvarEnabled = False
                 Err.Clear
                 Engine.ContextLevelRemove

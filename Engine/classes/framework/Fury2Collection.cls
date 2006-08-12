@@ -54,6 +54,11 @@ Private m_strAddHook As String
 Private m_strRemoveHook As String
 Private m_engEngine As Fury2Engine
 
+Public Function Class_ToString() As String
+On Error Resume Next
+    Class_ToString = "Fury2Collection: " & Count & " items"
+End Function
+
 Public Function Duplicate() As Fury2Collection
 Attribute Duplicate.VB_Description = "Creates and returns a shallow copy of the collection."
 On Error Resume Next
@@ -112,20 +117,22 @@ On Error Resume Next
 Dim l_objObject As Object
 Dim l_objResult As Object
 Dim l_varResult As Variant
+Dim l_vtType As VbVarType
     If mCol.Count < 1 Then Exit Function
+    l_vtType = VarType(Value)
     For Each l_objObject In mCol
         Err.Clear
-        Set l_objResult = Nothing
-        Set l_objResult = VBA.CallByName(l_objObject, PropertyName, VbGet)
-        If l_objResult Is Value Then
-            Set FindByProperty = l_objObject
-            Exit For
+        If l_vtType = vbObject Then
+            Set l_objResult = Nothing
+            Set l_objResult = VBA.CallByName(l_objObject, PropertyName, VbGet)
+            If l_objResult Is Value Then
+                Set FindByProperty = l_objObject
+                Exit For
+            End If
         Else
-            If Err <> 0 Then
-                l_varResult = VBA.CallByName(l_objObject, PropertyName, VbGet)
-                If l_varResult = Value Then
-                    Set FindByProperty = l_objObject
-                End If
+            l_varResult = VBA.CallByName(l_objObject, PropertyName, VbGet)
+            If l_varResult = Value Then
+                Set FindByProperty = l_objObject
             End If
         End If
     Next l_objObject
@@ -263,6 +270,18 @@ On Error Resume Next
     End If
 End Sub
 
+Public Property Get Contains(ByVal vntIndexKey) As Boolean
+On Error Resume Next
+Dim l_varTemp As Variant
+    l_varTemp = mCol(vntIndexKey)
+    If (Err.Number = 5) Then
+        Contains = False
+    Else
+        Contains = True
+    End If
+    Err.Clear
+End Property
+
 Public Property Get Item(ByVal vntIndexKey)
 Attribute Item.VB_UserMemId = 0
 On Error Resume Next
@@ -272,18 +291,20 @@ On Error Resume Next
         vntIndexKey = CLng(vntIndexKey)
     End If
     Err.Clear
-    Set Item = mCol(vntIndexKey)
-    If Err <> 0 Then
+    If VarType(mCol(vntIndexKey)) = vbObject Then
+        Set Item = mCol(vntIndexKey)
+    Else
         Item = mCol(vntIndexKey)
     End If
     Err.Clear
 End Property
 
-Public Function Find(ByVal Var) As Long
+Public Function Find(ByRef Var) As Long
 On Error Resume Next
 Dim m_lngItems As Long, m_objItem As Object
     If mCol.Count <= 0 Then Exit Function
-    If IsObject(Var) Then
+    Find = 0
+    If VarType(Var) = vbObject Then
         m_lngItems = 1
         For Each m_objItem In mCol
             If m_objItem Is Var Then
@@ -369,9 +390,11 @@ End Sub
 Public Sub Clear()
 Attribute Clear.VB_Description = "Removes all items from the collection."
 On Error Resume Next
-    Do While mCol.Count > 0
-        mCol.Remove 1
-    Loop
+    If Not (mCol Is Nothing) Then
+        Do While mCol.Count > 0
+            mCol.Remove 1
+        Loop
+    End If
     Set mCol = New Collection
     RaiseEvent Clear
     If mHook Is Nothing Then

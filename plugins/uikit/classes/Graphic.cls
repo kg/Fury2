@@ -159,6 +159,7 @@ Dim l_imgImage As Fury2Image
 Dim l_gphImage As Fury2Graphic
     If Visible = False Then Exit Sub
     With Surface
+        DispatchEvent "Redraw"
         Set l_rctNew = Rectangle.Copy.Translate(XOffset, YOffset)
         .PushClipRectangle l_rctNew
         If TypeOf Image Is Fury2Image Then

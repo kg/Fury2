@@ -213,7 +213,9 @@ On Error Resume Next
     mvarMatrix = SoftFX.CreateCollisionMatrix(Width, Height)
     If mvarMatrix <> 0 Then
         AppendLinesToCollisionMatrix mvarMatrix, mvarBlockingLines(0), (UBound(mvarBlockingLines) - LBound(mvarBlockingLines)) + 1
+        FillSpriteMatrix mvarSprites.Pointer, mvarMatrix
     End If
+    mvarSprites.SetMatrix mvarMatrix
 End Sub
 
 Public Sub DeallocateCollisionMatrix()
@@ -222,6 +224,7 @@ On Error Resume Next
         DeleteCollisionMatrix mvarMatrix
         mvarMatrix = 0
     End If
+    mvarSprites.SetMatrix mvarMatrix
 End Sub
 
 Public Property Get Depthmap() As String
@@ -415,6 +418,7 @@ Dim m_lngValue As Long
 Dim m_lngLineCount As Long
     mvarParent.Engine.ContextLevelAdd "Load Layer"
     With File
+        .Progress_Begin 0.1
         .ReadSegment_Begin
             .ReadSegment_Begin
                 .Skip 4
@@ -449,6 +453,8 @@ Dim m_lngLineCount As Long
                 .Load mvarColor
                 .Load mvarRenderTarget
             .ReadSegment_End
+            .Progress_End
+            .Progress_Begin 0.1
             mvarTileset.Free
             Set mvarTileset = Nothing
             Set mvarTileset = New Fury2Tileset
@@ -467,6 +473,8 @@ Dim m_lngLineCount As Long
             End If
             .Load m_lngValue
             .Skip m_lngValue
+            .Progress_End
+            .Progress_Begin 0.2
             mdlFileUtils.Load2DIntArray mvarTiles, File
             If ((UBound(mvarTiles, 1) <> (mvarWidth - 1)) Or (UBound(mvarTiles, 2) <> (mvarHeight - 1))) Then
                 ResizePreserve mvarWidth, mvarHeight
@@ -474,15 +482,21 @@ Dim m_lngLineCount As Long
             If Prerendered Then
                 ResizePreserve 1, 1
             End If
+            .Progress_End
             .ReadSegment_Begin
             .ReadSegment_End
+            .Progress_Begin 0.05
             .Load mvarAnimations
+            .Progress_End
+            .Progress_Begin 0.2
             mvarSprites.Free
             Set mvarSprites = New Fury2Sprites
             mvarSprites.SetEngine Me.Parent.Engine
             mvarSprites.SetParent Me.Parent
             .Load mvarSprites
+            .Progress_End
             .Load mvarDisableBlocking
+            .Progress_Begin 0.2
             .ReadSegment_Begin
                 .Load m_lngLineCount
                 If m_lngLineCount > 0 Then
@@ -492,10 +506,13 @@ Dim m_lngLineCount As Long
                     ReDim mvarBlockingLines(0)
                 End If
             .ReadSegment_End
+            .Progress_End
+            .Progress_Begin 0.1
             mvarLighting.Free
             Set mvarLighting = New Fury2LayerLighting
             mvarLighting.SetParent Me
             .Load mvarLighting
+            .Progress_End
         .ReadSegment_End
     End With
     mvarParent.Engine.ContextLevelRemove
@@ -840,7 +857,10 @@ End Function
 
 Public Property Set Sprites(vData As Fury2Sprites)
 Attribute Sprites.VB_Description = "~The layer's sprites."
+On Error Resume Next
+    mvarSprites.SetMatrix 0
     Set mvarSprites = vData
+    mvarSprites.SetMatrix mvarMatrix
 End Property
 
 Public Property Get Sprites() As Fury2Sprites

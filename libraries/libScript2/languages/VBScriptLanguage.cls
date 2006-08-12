@@ -52,7 +52,12 @@ On Error Resume Next
 End Function
 
 Private Function IScriptLanguage_GenerateFunction(Name As String, Args As Variant, Code As String) As String
-
+On Error Resume Next
+    If (VarType(Args) And vbArray) = vbArray Then
+        IScriptLanguage_GenerateFunction = "Public Function " & Name & "(" & Join(Args, ",") & ")" & vbCrLf & Code & vbCrLf & "End Function" & vbCrLf
+    Else
+        IScriptLanguage_GenerateFunction = "Public Function " & Name & "(" & Args & ")" & vbCrLf & Code & vbCrLf & "End Function" & vbCrLf
+    End If
 End Function
 
 Private Function IScriptLanguage_GenerateSubCall(Name As String, Args As Variant) As String
@@ -153,7 +158,7 @@ Dim l_booData As Boolean
             l_strToken = LCase(Trim(l_varTokens(0)))
             l_strToken2 = l_varTokens(1)
             If InStr(l_strToken, "public") Or InStr(l_strToken, "private") Or l_strToken = "dim" Then
-                l_strToken = l_varTokens(1)
+                l_strToken = LCase(Trim(l_varTokens(1)))
                 l_strToken2 = l_varTokens(2)
             End If
             Select Case l_strToken

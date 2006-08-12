@@ -1,5 +1,6 @@
 Attribute VB_Name = "mdlSound"
 Option Explicit
+Public EnableCallbacks As Boolean
 
 Public Function FMod_Channel_Callback(ByVal Channel As Long, ByVal CallbackType As FMOD_CHANNEL_CALLBACKTYPE, ByVal Command As Long, ByVal Data1 As Long, ByVal Data2 As Long) As Long
 On Error Resume Next
@@ -12,6 +13,7 @@ Dim l_bytName(0 To 256) As Byte
 Dim l_strName As String
 Dim l_lngOffset As Long
 'Dim l_lngHandle As Long
+    If Not EnableCallbacks Then Exit Function
     Debug.Print "FMod_Channel_Callback"
     ' Grab object handle
     FMOD_Channel_GetUserData Channel, l_lngUserData
@@ -53,4 +55,14 @@ Dim l_lngOffset As Long
     CopyMemory ByVal VarPtr(l_chnChannel), ByVal VarPtr(l_lngUserData), 4
     
     FMod_Channel_Callback = FMOD_OK
+End Function
+
+Public Function FModVector(ByRef Values As Variant) As FMOD_VECTOR
+On Error Resume Next
+Dim l_vecResult As FMOD_VECTOR
+    l_vecResult.X = CSng(Values(0))
+    l_vecResult.Y = CSng(Values(1))
+    l_vecResult.Z = CSng(Values(2))
+    Err.Clear
+    FModVector = l_vecResult
 End Function

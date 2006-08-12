@@ -18,6 +18,7 @@ Begin VB.MDIForm frmMain
    StartUpPosition =   3  'Windows Default
    Begin VB.PictureBox picStatus 
       Align           =   2  'Align Bottom
+      AutoRedraw      =   -1  'True
       BorderStyle     =   0  'None
       BeginProperty Font 
          Name            =   "Tahoma"
@@ -594,18 +595,21 @@ Public Sub SetStatus(Optional ByRef Status As String = "Ready")
 On Error Resume Next
     m_strStatusText = Status
     picStatus_Paint
+    picStatus.Refresh
 End Sub
 
 Public Sub SetLocation(Optional ByRef Value As String = "")
 On Error Resume Next
     m_strProgressText = Value
     picStatus_Paint
+    picStatus.Refresh
 End Sub
 
 Public Sub SetProgress(Optional ByVal Progress As Single = 0)
 On Error Resume Next
     m_sngProgress = Progress
     picStatus_Paint
+    picStatus.Refresh
 End Sub
 
 Public Sub ShowChild(ByRef Child As Object)
@@ -1165,7 +1169,7 @@ Dim l_rctStatus As RECT
     DrawText picStatus.hdc, m_strStatusText, Len(m_strStatusText), l_rctStatus, DrawText_Align_Left Or DrawText_Align_Center_Vertical Or DrawText_NoPrefix Or DrawText_Wrap_None
     l_rctStatus.Left = l_rctStatus.Right + 1
     l_rctStatus.Right = picStatus.ScaleWidth - 2
-    If m_sngProgress < 1 Then
+    If m_sngProgress < 0.01 Then
         DrawText picStatus.hdc, m_strProgressText, Len(m_strProgressText), l_rctStatus, DrawText_Align_Left Or DrawText_Align_Center_Vertical Or DrawText_NoPrefix Or DrawText_Wrap_None
     Else
         picStatus.Line (l_rctStatus.Left, l_rctStatus.Top)-(l_rctStatus.Left + (200 * m_sngProgress), l_rctStatus.Bottom), GetSystemColor(SystemColor_Highlight), BF
@@ -1698,7 +1702,7 @@ Dim l_objObject As Object
             End If
             .Items("Action:CloseAllWindows").Enabled = l_lngWindowsAdded > 0
         ElseIf l_mnuMenu Is m_mnuHelp Then
-            .Items("Help:About").Enabled = GameIsLoaded
+'            .Items("Help:About").Enabled = GameIsLoaded
         End If
     End With
 '    Case "view"

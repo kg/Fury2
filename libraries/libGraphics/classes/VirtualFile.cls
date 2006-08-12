@@ -19,6 +19,10 @@ Implements IVirtualFileSaveable
 
 Private Declare Sub memcpyvb Lib "kernel32" Alias "RtlMoveMemory" (Destination As Any, Source As Any, ByVal Length As Long)
 
+Private Const ProgressThreshold As Double = 0.01
+
+Public Event Progress(ByVal Progress As Double)
+
 Private m_lngSegmentMode As Long
 Private m_booWriteMode As Boolean
 Private m_bytData() As Byte
@@ -26,9 +30,14 @@ Private m_lngCursorPos As Long
 Private m_colSegEnds As New Collection
 Private m_colSegStarts As New Collection
 Private m_colSegLengths As New Collection
+Private m_colProgress As New Collection
+Private m_colProgressLengths As New Collection
+Private m_dblProgress As Double
+Private m_dblLastProgress As Double
 Private m_lngBookmark As Long
 Private m_lngSegmentCount As Long
 Private m_booBigEndian As Boolean
+Public ProgressEvent As ICallable
 
 Public Property Get SegmentMode() As Long
 On Error Resume Next
@@ -694,10 +703,12 @@ Dim l_varData As Variant
             Load m_lngCount
             If m_lngCount > 0 Then
                 For m_lngItems = 1 To m_lngCount
+                    Progress_Begin (1 / m_lngCount)
                     Set m_objLoad = Nothing
                     Set m_objLoad = m_colData.CreateNew
                     Load m_objLoad
                     m_colData.AddItem m_objLoad
+                    Progress_End
                 Next m_lngItems
             End If
             ReadSegment_End
@@ -733,12 +744,10 @@ Dim l_varData As Variant
         m_lngLength = UBound(Data)
         If (m_lngLength >= 0) And (Err = 0) Then
             For m_lngItems = LBound(Data) To UBound(Data)
-                l_varData = LoadVariant
-'                If (VarType(l_varData) And vbObject) = vbObject Then
-'                    Set Data(m_lngItems) = l_varData
-'                Else
+                Progress_Begin (1 / (m_lngLength + 1))
+                    l_varData = LoadVariant
                     Data(m_lngItems) = l_varData
-'                End If
+                Progress_End
             Next m_lngItems
         End If
     Case vbBoolean
@@ -938,6 +947,51 @@ On Error Resume Next
     m_lngCursorPos = m_lngBookmark
 End Sub
 
+Public Sub Progress_Begin(Optional ByVal Length As Double = 1#)
+On Error Resume Next
+Dim l_dblLength As Double
+    If m_colProgress.Count > 0 Then
+        l_dblLength = CDbl(m_colProgressLengths(m_colProgressLengths.Count))
+    Else
+        l_dblLength = 1
+    End If
+    m_colProgress.Add m_dblProgress
+    m_colProgressLengths.Add Length * l_dblLength
+End Sub
+
+Public Sub Progress_End()
+On Error Resume Next
+Dim l_dblLength As Double, l_dblStart As Double
+    Progress_Set 1#
+    If m_colProgress.Count > 0 Then
+        m_colProgress.Remove m_colProgress.Count
+        m_colProgressLengths.Remove m_colProgressLengths.Count
+    End If
+End Sub
+
+Public Sub Progress_Set(ByVal ProgressLevel As Double)
+On Error Resume Next
+Dim l_dblLength As Double, l_dblStart As Double
+    If ProgressLevel < 0 Then ProgressLevel = 0
+    If ProgressLevel > 1 Then ProgressLevel = 1
+    If m_colProgress.Count > 0 Then
+        l_dblStart = CDbl(m_colProgress(m_colProgress.Count))
+        l_dblLength = CDbl(m_colProgressLengths(m_colProgressLengths.Count))
+    Else
+        l_dblStart = 0
+        l_dblLength = 1
+    End If
+    m_dblProgress = (ProgressLevel * l_dblLength) + l_dblStart
+    If m_dblProgress > 1 Then m_dblProgress = 1
+    If Abs(m_dblProgress - m_dblLastProgress) < ProgressThreshold Then
+    Else
+        m_dblLastProgress = m_dblProgress
+        ProgressEvent.Invoke m_dblProgress
+        RaiseEvent Progress(m_dblProgress)
+    End If
+    Err.Clear
+End Sub
+
 Public Sub WriteSegment_Begin()
 Attribute WriteSegment_Begin.VB_Description = "Begins writing a new segment"
 On Error Resume Next
@@ -1023,9 +1077,11 @@ On Error Resume Next
 End Sub
 
 Private Sub Class_Initialize()
+On Error Resume Next
     Erase m_bytData()
     m_lngCursorPos = 1
     m_lngBookmark = 1
+    m_dblLastProgress = -1
 End Sub
 
 Public Function Class_ToString() As String

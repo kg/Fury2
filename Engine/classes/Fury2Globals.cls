@@ -162,8 +162,12 @@ End Enum
 Public Enum Fury2TweenModes
     F2TM_Instant = 0
     F2TM_Linear = 1
-    F2TM_Exponential = 2
-    F2TM_Sinusoidal = 3
+End Enum
+
+Public Enum Fury2TweenTypes
+    F2TT_Number = 0
+    F2TT_Integer = 1
+    F2TT_Color = 2
 End Enum
 
 Public Enum Fury2ControllerStyles
@@ -237,8 +241,8 @@ Dim l_engNew As Fury2Engine
     End If
     m_booIDE = InIDE
     If Not (Trim(Parameters) = "") Then
-        If left(Parameters, 1) = """" Then Parameters = Mid(Parameters, 2)
-        If right(Parameters, 1) = """" Then Parameters = left(Parameters, Len(Parameters) - 1)
+        If Left(Parameters, 1) = """" Then Parameters = Mid(Parameters, 2)
+        If right(Parameters, 1) = """" Then Parameters = Left(Parameters, Len(Parameters) - 1)
     End If
     If (Len(Trim(Dir(Parameters, vbDirectory))) > 0) Or (Len(Trim(Parameters)) <= 0) Then
         Set Fury2Load = l_engNew
@@ -271,7 +275,7 @@ End Function
 '    F2Shutdown
 'End Sub
 
-Public Function SaveToFile(ByRef Obj As Object, ByRef File As Object) As Boolean
+Public Function SaveToFile(ByRef Obj As Object, ByRef File As Object, Optional ByVal Callback As ICallable = Nothing) As Boolean
 On Error Resume Next
 Dim m_vfFile As VirtualFile
     If Obj Is Nothing Then Exit Function
@@ -281,6 +285,7 @@ Dim m_vfFile As VirtualFile
     ElseIf TypeOf File Is VirtualFile Then
         Set m_vfFile = File
     End If
+    Set m_vfFile.ProgressEvent = Callback
     m_vfFile.Save g_strHeader
     m_vfFile.Save Obj
     If TypeOf File Is Fury2File Then
@@ -291,7 +296,7 @@ Dim m_vfFile As VirtualFile
     SaveToFile = True
 End Function
 
-Public Function LoadFromFile(ByRef Obj As Object, ByRef File As Object) As Boolean
+Public Function LoadFromFile(ByRef Obj As Object, ByRef File As Object, Optional ByVal Callback As ICallable = Nothing) As Boolean
 On Error Resume Next
 Dim m_vfFile As VirtualFile
     If Obj Is Nothing Then Exit Function
@@ -301,6 +306,7 @@ Dim m_vfFile As VirtualFile
     ElseIf TypeOf File Is VirtualFile Then
         Set m_vfFile = File
     End If
+    Set m_vfFile.ProgressEvent = Callback
     If ValidateFileHeader(m_vfFile) Then
         m_vfFile.Load Obj
     Else

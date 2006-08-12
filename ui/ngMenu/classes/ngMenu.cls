@@ -31,9 +31,9 @@ Private Const SWP_NOACTIVATE = &H10
 Private Const SWP_SHOWWINDOW = &H40
 Private Const SWP_NOZORDER = &H4
 
-Event MouseDown(ByRef Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
-Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
-Event MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
+Event MouseDown(ByRef Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+Event MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+Event MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
 Event ItemClick(Item As ngMenuItem)
 Event ItemPress(Item As ngMenuItem, ByRef Cancel As Boolean)
 Event ItemHover(Item As ngMenuItem)
@@ -247,21 +247,21 @@ Dim l_miNewHover As ngMenuItem
             l_miNewHover.MouseEnter
         Else
         End If
-        If Not (Host Is Nothing) Then Host.Redraw m_miHover.Rectangle
+        If Not (Host Is Nothing) And Not (m_miHover Is Nothing) Then Host.Redraw m_miHover.Rectangle
         Set m_miHover = l_miNewHover
         RaiseEvent ItemHover(m_miHover)
-        If Not (Host Is Nothing) Then Host.Redraw m_miHover.Rectangle
+        If Not (Host Is Nothing) And Not (m_miHover Is Nothing) Then Host.Redraw m_miHover.Rectangle
         DoShowChildMenu
     End If
 End Sub
 
-Public Function ItemFromPoint(ByVal x As Long, ByVal y As Long) As ngMenuItem
+Public Function ItemFromPoint(ByVal X As Long, ByVal Y As Long) As ngMenuItem
 On Error Resume Next
 Dim l_miItem As ngMenuItem
     If m_miItems Is Nothing Then Exit Function
     For Each l_miItem In m_miItems
         With l_miItem
-            If .Rectangle.PointInside(x, y) Then
+            If .Rectangle.PointInside(X, Y) Then
                 Set ItemFromPoint = l_miItem
                 Exit For
             End If
@@ -366,6 +366,7 @@ End Sub
 Friend Sub Event_ItemPress()
 On Error Resume Next
 Dim l_booCancel As Boolean
+    If m_miHover Is Nothing Then Exit Sub
     If m_miHover.Enabled Then
         RaiseEvent ItemPress(m_miHover, l_booCancel)
         If Not l_booCancel Then
@@ -413,7 +414,11 @@ On Error Resume Next
         Host.This.Release
         Unload Host.This
         Set Host.This = Nothing
-        SetFocus Parent.Host.hwnd
+        If Not (Parent Is Nothing) Then
+            If Not (Parent.Host Is Nothing) Then
+                SetFocus Parent.Host.hwnd
+            End If
+        End If
     End If
     m_booVisible = False
 End Sub
@@ -424,17 +429,23 @@ Dim l_frmHost As frmMenu
     m_booClosed = True
     ReleaseCapture
     Hide
-    Parent.DoClose
+    If Not (Parent Is Nothing) Then Parent.DoClose
     ResetItems
-    Set l_frmHost = Host.This
-    l_frmHost.Tag = "Unload"
-    Unload l_frmHost
+    If Not (Host Is Nothing) Then
+        If Not (Host.This Is Nothing) Then
+            Set l_frmHost = Host.This
+            l_frmHost.Tag = "Unload"
+            Unload l_frmHost
+        End If
+    End If
     Set Host = Nothing
 End Sub
 
 Friend Sub DoShowChildMenu()
 On Error Resume Next
     If Host Is Nothing Then Exit Sub
+    If Host.This Is Nothing Then Exit Sub
+    If m_miHover Is Nothing Then Exit Sub
     If Host.This.ChildMenu Is m_miHover.ChildMenu Then
     Else
         If GetCapture = Host.This.ChildMenu.Host.hwnd Then
@@ -457,13 +468,13 @@ Friend Sub Event_KeyUp(KeyCode As Integer, Shift As Integer)
 On Error Resume Next
 End Sub
 
-Friend Sub Event_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
+Friend Sub Event_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
-    RaiseEvent MouseDown(Button, Shift, x, y)
-    m_lngMouseX = x
-    m_lngMouseY = y
+    RaiseEvent MouseDown(Button, Shift, X, Y)
+    m_lngMouseX = X
+    m_lngMouseY = Y
     UpdateMouse
-    If (x >= 0) And (y >= 0) And (x < Host.Width) And (y < Host.Height) Then
+    If (X >= 0) And (Y >= 0) And (X < Host.Width) And (Y < Host.Height) Then
         m_booMouseTouched = True
     End If
     If Button = 1 Then
@@ -471,20 +482,20 @@ On Error Resume Next
     End If
 End Sub
 
-Friend Sub SetMousePosition(ByVal x As Long, ByVal y As Long)
+Friend Sub SetMousePosition(ByVal X As Long, ByVal Y As Long)
 On Error Resume Next
-    m_lngMouseX = x
-    m_lngMouseY = y
+    m_lngMouseX = X
+    m_lngMouseY = Y
 End Sub
 
-Friend Sub Event_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
+Friend Sub Event_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim m_miHover As ngMenuItem
 Dim l_booCancel As Boolean
-    m_lngMouseX = x
-    m_lngMouseY = y
-    RaiseEvent MouseMove(Button, Shift, x, y)
-    If (x >= 0) And (y >= 0) And (x < Host.Width) And (y < Host.Height) Then
+    m_lngMouseX = X
+    m_lngMouseY = Y
+    RaiseEvent MouseMove(Button, Shift, X, Y)
+    If (X >= 0) And (Y >= 0) And (X < Host.Width) And (Y < Host.Height) Then
         m_booMouseTouched = True
         If Host.This.ChildMenu Is Nothing Then
         Else
@@ -492,8 +503,12 @@ Dim l_booCancel As Boolean
         End If
     Else
         If GetCapture = Host.hwnd Then
-            Host.This.ChildMenu.DoStealCapture
-            Parent.DoStealCapture
+            If Not (Host.This Is Nothing) Then
+                If Not (Host.This.ChildMenu Is Nothing) Then
+                    Host.This.ChildMenu.DoStealCapture
+                End If
+            End If
+            If Not (Parent Is Nothing) Then Parent.DoStealCapture
         Else
             DoStealCapture
         End If
@@ -502,21 +517,23 @@ Dim l_booCancel As Boolean
     Host.Redraw
 End Sub
 
-Friend Sub Event_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
+Friend Sub Event_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
 On Error Resume Next
 Dim m_miHover As ngMenuItem
-    RaiseEvent MouseUp(Button, Shift, x, y)
-    Set m_miHover = ItemFromPoint(x, y)
+    RaiseEvent MouseUp(Button, Shift, X, Y)
+    Set m_miHover = ItemFromPoint(X, Y)
     If m_miHover Is Nothing Then
         'If m_booMouseTouched Then Hide
     Else
         Event_ItemRelease
     End If
     UpdateMouse
-    Host.Redraw
-    If (x >= 0) And (y >= 0) And (x < Host.Width) And (y < Host.Height) Then
-        If Host.This.ChildMenu Is Nothing Then
-            'DoClose
+    If Not (Host Is Nothing) Then
+        Host.Redraw
+        If (X >= 0) And (Y >= 0) And (X < Host.Width) And (Y < Host.Height) Then
+            If Host.This.ChildMenu Is Nothing Then
+                'DoClose
+            End If
         End If
     End If
 End Sub
@@ -532,8 +549,9 @@ Friend Sub DoStealCapture()
 On Error Resume Next
 Dim l_ptMouse As PointAPI
     GetCursorPos l_ptMouse
+    If Host Is Nothing Then Exit Sub
     ScreenToClient Host.hwnd, l_ptMouse
-    If (l_ptMouse.x >= 0) And (l_ptMouse.y >= 0) And (l_ptMouse.x < Host.Width) And (l_ptMouse.y < Host.Height) Then
+    If (l_ptMouse.X >= 0) And (l_ptMouse.Y >= 0) And (l_ptMouse.X < Host.Width) And (l_ptMouse.Y < Host.Height) Then
         If GetCapture <> Host.hwnd Then
             SetCapture Host.hwnd
         End If
@@ -554,7 +572,7 @@ Public Property Get Visible() As Boolean
     Visible = m_booVisible
 End Property
 
-Public Function Show(Optional ByVal x As Long = -32767, Optional ByVal y As Long = -32767, Optional ByVal Parent As Long = 0, Optional ByVal AutoCapture As Boolean = True, Optional ByVal Absolute As Boolean = True, Optional ByVal CloseOtherMenus As Boolean = True) As ngMenuItem
+Public Function Show(Optional ByVal X As Long = -32767, Optional ByVal Y As Long = -32767, Optional ByVal Parent As Long = 0, Optional ByVal AutoCapture As Boolean = True, Optional ByVal Absolute As Boolean = True, Optional ByVal CloseOtherMenus As Boolean = True) As ngMenuItem
 On Error Resume Next
 Dim l_ptMouse As PointAPI
 Dim l_lngWindow As Long
@@ -585,15 +603,15 @@ Dim l_frmHost As Form
     Set m_miSelected = Nothing
     Set m_miHover = Nothing
     GetCursorPos l_ptMouse
-    If x = -32767 Then x = l_ptMouse.x
-    If y = -32767 Then y = l_ptMouse.y
+    If X = -32767 Then X = l_ptMouse.X
+    If Y = -32767 Then Y = l_ptMouse.Y
     If Absolute Then
     Else
-        l_ptMouse.x = x
-        l_ptMouse.y = y
+        l_ptMouse.X = X
+        l_ptMouse.Y = Y
         ClientToScreen Parent, l_ptMouse
-        x = l_ptMouse.x
-        y = l_ptMouse.y
+        X = l_ptMouse.X
+        Y = l_ptMouse.Y
     End If
     m_booClosed = False
     m_booVisible = True
@@ -608,19 +626,19 @@ Dim l_frmHost As Form
     SetWindowLong Host.hwnd, SWW_HPARENT, l_lngWindow
     Host.This.Visible = False
     Reflow
-    If (x + IdealWidth) > (Screen.Width / Screen.TwipsPerPixelX) Then x = ((Screen.Width / Screen.TwipsPerPixelX) - IdealWidth)
-    If (y + IdealHeight) > (Screen.Height / Screen.TwipsPerPixelY) Then y = ((Screen.Height / Screen.TwipsPerPixelY) - IdealHeight)
-    If (x < 0) Then x = 0
-    If (y < 0) Then y = 0
+    If (X + IdealWidth) > (Screen.Width / Screen.TwipsPerPixelX) Then X = ((Screen.Width / Screen.TwipsPerPixelX) - IdealWidth)
+    If (Y + IdealHeight) > (Screen.Height / Screen.TwipsPerPixelY) Then Y = ((Screen.Height / Screen.TwipsPerPixelY) - IdealHeight)
+    If (X < 0) Then X = 0
+    If (Y < 0) Then Y = 0
     Host.This.SetParent Parent
     SetFocus Host.hwnd
 '    ShowWindow Host.hwnd, SW_SHOWNOACTIVATE
     Err.Clear
     g_colOpenMenus.Add Me
-    Host.This.Move x * Screen.TwipsPerPixelX, y * Screen.TwipsPerPixelY, (IdealWidth * Screen.TwipsPerPixelX) + Host.This.BorderWidth * 2, (IdealHeight * Screen.TwipsPerPixelY) + Host.This.BorderWidth * 2
-    SetWindowPos Host.hwnd, HWND_TOP, x, y, IdealWidth + (Host.This.BorderWidth * 2), IdealHeight + (Host.This.BorderWidth * 2), SWP_NOACTIVATE
+    Host.This.Move X * Screen.TwipsPerPixelX, Y * Screen.TwipsPerPixelY, (IdealWidth * Screen.TwipsPerPixelX) + Host.This.BorderWidth * 2, (IdealHeight * Screen.TwipsPerPixelY) + Host.This.BorderWidth * 2
+    SetWindowPos Host.hwnd, HWND_TOP, X, Y, IdealWidth + (Host.This.BorderWidth * 2), IdealHeight + (Host.This.BorderWidth * 2), SWP_NOACTIVATE
     SetWindowLong Host.hwnd, SWW_HPARENT, l_lngWindow
-    SetWindowPos Host.hwnd, HWND_TOP, x, y, IdealWidth + (Host.This.BorderWidth * 2), IdealHeight + (Host.This.BorderWidth * 2), SWP_NOACTIVATE Or SWP_SHOWWINDOW
+    SetWindowPos Host.hwnd, HWND_TOP, X, Y, IdealWidth + (Host.This.BorderWidth * 2), IdealHeight + (Host.This.BorderWidth * 2), SWP_NOACTIVATE Or SWP_SHOWWINDOW
     SetWindowLong Host.hwnd, SWW_HPARENT, l_lngWindow
     Host.This.HasFocus = True
     m_booMouseTouched = False
@@ -629,7 +647,7 @@ Dim l_frmHost As Form
             ReleaseCapture
             SetCapture Host.hwnd
             GetCursorPos l_ptMouse
-            Event_MouseDown 1, 0, l_ptMouse.x - x, l_ptMouse.y - y
+            Event_MouseDown 1, 0, l_ptMouse.X - X, l_ptMouse.Y - Y
         End If
     End If
     Do While m_booVisible
@@ -640,8 +658,12 @@ Dim l_frmHost As Form
         DoEvents
         Sleep 1
     Loop
-    Set l_frmHost = Host.This
-    l_frmHost.Tag = "Unload"
+    If Not (Host Is Nothing) Then
+        If Not (Host.This Is Nothing) Then
+            Set l_frmHost = Host.This
+            l_frmHost.Tag = "Unload"
+        End If
+    End If
     Set Show = m_miSelected
     Set m_miSelected = Nothing
     If Show.Parent Is Me Then
@@ -651,9 +673,10 @@ Dim l_frmHost As Form
     Host.This.ChildMenu.Hide
     Hide
     m_lngParentWindow = 0
-    Set Host.This.Menu = Nothing
-    Unload l_frmHost
-    Unload l_frmHost
+    If Not (l_frmHost Is Nothing) Then
+        Set l_frmHost.Menu = Nothing
+        Unload l_frmHost
+    End If
     Set Host = Nothing
     Set l_frmHost = Nothing
     If Me.Parent Is Nothing Then
@@ -696,5 +719,5 @@ End Sub
 Friend Sub ItemSelected(ByRef Item As ngMenuItem)
 On Error Resume Next
     Set m_miSelected = Item
-    Parent.ItemSelected Item
+    If Not (Parent Is Nothing) Then Parent.ItemSelected Item
 End Sub

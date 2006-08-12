@@ -24,3 +24,4 @@ Fury2ConvolutionFilter = 132, 150, 934, 655, C
 Fury2RasterFont = 88, 100, 903, 563, C
 IEditableCollection = 66, 75, 486, 570, C
 Fury2Polygon = 22, 31, 921, 534, C
+ICallable = 110, 125, 958, 544, C

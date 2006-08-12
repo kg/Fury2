@@ -458,19 +458,30 @@ On Error Resume Next
             .ReadSegment_Begin
                 .Load m_strScriptSource
             .ReadSegment_End
+            .Progress_Set 0.1
             Set m_araAreas = New Fury2Areas
             m_araAreas.SetParent Me
+            .Progress_Begin 0.15
             .Load m_araAreas
+            .Progress_End
             Set m_lyrLayers = New Fury2MapLayers
             Set m_lyrLayers.Parent = Me
+            .Progress_Begin 0.6
             .Load m_lyrLayers
+            .Progress_End
+            .Progress_Begin 0.05
             .ReadSegment_Begin
                 .Load m_strSettings()
             .ReadSegment_End
+            .Progress_End
+            .Progress_Begin 0.05
             .Load m_tmrTimerEvents
+            .Progress_End
+            .Progress_Begin 0.05
             Set m_mobObjects = New Fury2MapObjects
             m_mobObjects.SetParent Me
             .Load m_mobObjects
+            .Progress_End
         .ReadSegment_End
     End With
 End Sub

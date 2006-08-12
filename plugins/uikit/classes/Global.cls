@@ -323,6 +323,7 @@ Dim l_strChosenName As String
     If DebugForms Then
         Engine.FileSystem.CreateFile(Path & ".f2script").Text = l_strScript
     End If
+    Engine.ContextLevelAdd Path
     Set LoadForm = Engine.GenerateScriptObject(l_strScript)
     l_strChosenName = l_strName
     l_strChosenName = CStr(LoadForm.Name)
@@ -331,6 +332,7 @@ Dim l_strChosenName As String
     Set Engine.IObjThis = LoadForm
     Engine.RunCode Engine.ScriptEngine.Language.GenerateAssignment(l_strChosenName, "IObjThis", True)
     Set Engine.IObjThis = Nothing
+    Engine.ContextLevelRemove
 End Function
 
 Function DuplicateForm(ByVal Form As Object) As Object

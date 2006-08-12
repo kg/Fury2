@@ -18,7 +18,7 @@ Attribute VB_Ext_KEY = "Top_Level" ,"Yes"
 '   ::fury² Sound engine::
 '
 Private Const c_lngMaxChannels = 512
-Private Const c_lngMaxSoftwareChannels = 24
+Private Const c_lngMaxSoftwareChannels = 32
 
 Private m_colGroups As Collection
 Private m_colSounds As Collection
@@ -26,6 +26,7 @@ Private m_lngFMod As Long
 Private m_cgMaster As Channelgroup
 Public Enabled As Boolean
 Public m_Engine As Object
+Public AudioScaleMin As Single, AudioScaleMax As Single
 
 Public Property Get CPUUsage() As Variant
 On Error Resume Next
@@ -112,6 +113,20 @@ Dim l_lngHandle As Long
     Debug.Print fmodex.FMOD_System_GetMasterChannelGroup(m_lngFMod, l_lngHandle)
     Set m_cgMaster = CreateChannelGroupH(l_lngHandle)
     m_cgMaster.Disposed = True
+    EnableCallbacks = True
+End Sub
+
+Public Sub SetListenerAttributes(ByRef Position As Variant, ByRef Velocity As Variant, ByRef Orientation As Variant)
+On Error Resume Next
+Dim l_vecPosition As FMOD_VECTOR, l_vecVelocity As FMOD_VECTOR, l_vecOrientation As FMOD_VECTOR, l_vecOrientationUp As FMOD_VECTOR
+    If Enabled = False Then Exit Sub
+    l_vecPosition = FModVector(Position)
+    l_vecVelocity = FModVector(Velocity)
+    l_vecOrientation = FModVector(Orientation)
+    l_vecOrientationUp.X = 0
+    l_vecOrientationUp.Y = 0
+    l_vecOrientationUp.z = 1
+    fmodex.FMOD_System_Set3DListenerAttributes m_lngFMod, 0, l_vecPosition, l_vecVelocity, l_vecOrientation, l_vecOrientationUp
 End Sub
 
 Public Sub Update()
@@ -122,11 +137,23 @@ End Sub
 
 Public Sub Shutdown()
 On Error Resume Next
+    EnableCallbacks = False
     If m_lngFMod <> 0 Then
+        'MsgBox "Flush cache"
         FlushCache
+        Do While m_colGroups.Count > 0
+            m_colGroups(1).Free
+            m_colGroups.Remove 1
+        Loop
+        Do While m_colSounds.Count > 0
+            m_colSounds(1).Free
+        Loop
+        'MsgBox "Free com references"
         Set m_colGroups = Nothing
         Set m_colSounds = Nothing
+        'MsgBox "System_Close"
         fmodex.FMOD_System_Close m_lngFMod
+        'MsgBox "System_Release"
         fmodex.FMOD_System_Release m_lngFMod
         m_lngFMod = 0
     End If
@@ -199,9 +226,9 @@ Dim l_strFilename As String
                 ' todo: FMOD_UNICODE? Not sure if this works on win9x/FAT32 so i'm not adding it yet
                 Select Case LCase(Trim(Soundtype))
                 Case "stream"
-                    Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_2D Or FMOD_CREATESTREAM Or FMOD_ACCURATETIME, l_lngHandle)
+                    Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_3D Or FMOD_CREATESTREAM Or FMOD_ACCURATETIME, l_lngHandle)
                 Case "sample"
-                    Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_2D Or FMOD_CREATESAMPLE, l_lngHandle)
+                    Call fmodex.FMOD_System_CreateSound(m_lngFMod, l_strFilename, FMOD_SOFTWARE Or FMOD_3D Or FMOD_CREATESAMPLE, l_lngHandle)
                 Case Else
                 End Select
                 If l_lngHandle Then

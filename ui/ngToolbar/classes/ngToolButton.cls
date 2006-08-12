@@ -121,7 +121,7 @@ Friend Sub MouseEnter()
 On Error Resume Next
     If m_booHovering Then Exit Sub
     m_booHovering = True
-    m_evtHover.Invoke
+    If Not (m_evtHover Is Nothing) Then m_evtHover.Invoke
 End Sub
 
 Friend Sub MouseLeave()

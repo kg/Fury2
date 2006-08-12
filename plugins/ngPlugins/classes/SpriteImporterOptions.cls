@@ -63,6 +63,7 @@ On Error Resume Next
 End Sub
 
 Public Property Let MaxPoses(ByVal vData As Long)
+Attribute MaxPoses.VB_Description = "The maximum number of poses to import. If the image contains more poses they will be omitted."
     mvarMaxPoses = vData
 End Property
 
@@ -71,6 +72,7 @@ Public Property Get MaxPoses() As Long
 End Property
 
 Public Property Let MaxFrames(ByVal vData As Long)
+Attribute MaxFrames.VB_Description = "The maximum number of frames to import in a single pose. If a pose contains more frames, they will be omitted."
     mvarMaxFrames = vData
 End Property
 
@@ -79,6 +81,7 @@ Public Property Get MaxFrames() As Long
 End Property
 
 Public Property Let GridHeight(ByVal vData As Long)
+Attribute GridHeight.VB_Description = "The height of the gridlines between each cell."
     mvarGridHeight = vData
 End Property
 
@@ -87,6 +90,7 @@ Public Property Get GridHeight() As Long
 End Property
 
 Public Property Let GridWidth(ByVal vData As Long)
+Attribute GridWidth.VB_Description = "The width of the gridlines between each cell."
     mvarGridWidth = vData
 End Property
 
@@ -95,6 +99,7 @@ Public Property Get GridWidth() As Long
 End Property
 
 Public Property Let MarginBottom(ByVal vData As Long)
+Attribute MarginBottom.VB_Description = "The number of margin pixels on the bottom of the image."
     mvarMarginBottom = vData
 End Property
 
@@ -103,6 +108,7 @@ Public Property Get MarginBottom() As Long
 End Property
 
 Public Property Let MarginRight(ByVal vData As Long)
+Attribute MarginRight.VB_Description = "The number of margin pixels on the right of the image."
     mvarMarginRight = vData
 End Property
 
@@ -111,6 +117,7 @@ Public Property Get MarginRight() As Long
 End Property
 
 Public Property Let MarginTop(ByVal vData As Long)
+Attribute MarginTop.VB_Description = "The number of margin pixels on the top of the image."
     mvarMarginTop = vData
 End Property
 
@@ -119,6 +126,7 @@ Public Property Get MarginTop() As Long
 End Property
 
 Public Property Let MarginLeft(ByVal vData As Long)
+Attribute MarginLeft.VB_Description = "The number of margin pixels on the left of the image."
     mvarMarginLeft = vData
 End Property
 
@@ -136,6 +144,7 @@ Public Property Get DuplicateFirstFrame() As Boolean
 End Property
 
 Public Property Let MultiRowPoses(ByVal vData As Boolean)
+Attribute MultiRowPoses.VB_Description = "If True, the importer will insert as many frames as possible into a pose until either running out of frames or hitting MaxFrames. Otherwise, each row of the image is a seperate pose."
     mvarMultiRowPoses = vData
 End Property
 
@@ -172,6 +181,7 @@ Public Property Get Image() As String
 End Property
 
 Public Property Get ImageSize() As String
+Attribute ImageSize.VB_Description = "The size of the image."
 On Error Resume Next
     ImageSize = mvarImageWidth & "x" & mvarImageHeight
 End Property
@@ -195,6 +205,7 @@ Public Property Get CellWidth() As Long
 End Property
 
 Public Property Let CellsX(ByVal NewValue As Single)
+Attribute CellsX.VB_Description = "The number of columns in the image."
 On Error Resume Next
     mvarCellWidth = ((mvarImageWidth - mvarMarginLeft - mvarMarginRight) / NewValue) - mvarGridWidth
 End Property
@@ -205,6 +216,7 @@ On Error Resume Next
 End Property
 
 Public Property Let CellsY(ByVal NewValue As Single)
+Attribute CellsY.VB_Description = "The number of rows in the image."
 On Error Resume Next
     mvarCellHeight = ((mvarImageHeight - mvarMarginTop - mvarMarginBottom) / NewValue) - mvarGridHeight
 End Property
@@ -215,6 +227,7 @@ On Error Resume Next
 End Property
 
 Public Property Let AlignmentX(ByVal vData As Single)
+Attribute AlignmentX.VB_Description = "The default horizontal alignment value for new frames."
     mvarAlignmentX = vData
 End Property
 
@@ -223,6 +236,7 @@ Public Property Get AlignmentX() As Single
 End Property
 
 Public Property Let AlignmentY(ByVal vData As Single)
+Attribute AlignmentY.VB_Description = "The default vertical alignment value for new frames."
     mvarAlignmentY = vData
 End Property
 
@@ -231,6 +245,7 @@ Public Property Get AlignmentY() As Single
 End Property
 
 Public Property Let FrameDelay(ByVal vData As Long)
+Attribute FrameDelay.VB_Description = "The default animation delay for new frames."
     mvarFrameDelay = vData
 End Property
 
@@ -295,4 +310,5 @@ On Error Resume Next
         .Save mvarMultiRowPoses
     End With
 End Sub
+
 

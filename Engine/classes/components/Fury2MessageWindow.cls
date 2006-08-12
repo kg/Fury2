@@ -81,8 +81,8 @@ Attribute WindowSkin.VB_VarDescription = "The windowskin to draw the window with
 Public WrapMode As Long
 Attribute WrapMode.VB_VarDescription = "Determines how text will be wrapped."
 Public First As Boolean, Last As Boolean
-Attribute Last.VB_VarDescription = "If True, the window is the last in the queue"
 Attribute First.VB_VarDescription = "If True, the window is the first in the queue"
+Attribute Last.VB_VarDescription = "If True, the window is the last in the queue"
 Private mvarOldDisable As Boolean
 
 Public Sub CloseWindow()
@@ -172,7 +172,7 @@ Private Sub Fury2Plugin_MouseDown(ByVal Button As Long, ByVal Shift As Long, ByR
 On Error Resume Next
     If Me.Active Then Else Exit Sub
     If (Engine.Mouse.Visible = False) And (Engine.MouseCursor Is Nothing) Then Exit Sub
-    If (X >= Rectangle.left) And (Y >= Rectangle.top) And (X < Rectangle.right) And (Y < Rectangle.bottom) Then
+    If (X >= Rectangle.Left) And (Y >= Rectangle.Top) And (X < Rectangle.right) And (Y < Rectangle.bottom) Then
         X = -32767
         Y = -32767
     End If
@@ -182,7 +182,7 @@ Private Sub Fury2Plugin_MouseMove(ByVal Button As Long, ByVal Shift As Long, ByR
 On Error Resume Next
     If Me.Active Then Else Exit Sub
     If (Engine.Mouse.Visible = False) And (Engine.MouseCursor Is Nothing) Then Exit Sub
-    If (X >= Rectangle.left) And (Y >= Rectangle.top) And (X < Rectangle.right) And (Y < Rectangle.bottom) Then
+    If (X >= Rectangle.Left) And (Y >= Rectangle.Top) And (X < Rectangle.right) And (Y < Rectangle.bottom) Then
         X = -32767
         Y = -32767
     End If
@@ -197,7 +197,7 @@ On Error Resume Next
         Exit Sub
     End If
     If (Engine.Mouse.Visible = False) And (Engine.MouseCursor Is Nothing) Then Exit Sub
-    If (X >= Rectangle.left) And (Y >= Rectangle.top) And (X < Rectangle.right) And (Y < Rectangle.bottom) Then
+    If (X >= Rectangle.Left) And (Y >= Rectangle.Top) And (X < Rectangle.right) And (Y < Rectangle.bottom) Then
         X = -32767
         Y = -32767
         If Button = 2 Then
@@ -248,7 +248,7 @@ Dim oImage As Object
             Set oImage = Image
         End If
         If (Image Is Nothing) Or (oImage.Width <= 0) Or (oImage.Height <= 0) Then
-            Set m_rctText = F2Rect(m_rctNewRectangle.left + m_lngSpace, m_rctNewRectangle.top + m_lngSpace, m_rctNewRectangle.right - m_lngSpace, m_rctNewRectangle.bottom - m_lngSpace)
+            Set m_rctText = F2Rect(m_rctNewRectangle.Left + m_lngSpace, m_rctNewRectangle.Top + m_lngSpace, m_rctNewRectangle.right - m_lngSpace, m_rctNewRectangle.bottom - m_lngSpace)
             Call Font.Draw(Engine.Backbuffer, m_strText, m_rctText, TextColor, Alpha, Font.Options(, ScrollY), TotalHeight)
         Else
             m_lngSpace2 = m_lngSpace
@@ -257,20 +257,20 @@ Dim oImage As Object
             m_rctText.Adjust -m_lngSpace2, -m_lngSpace2
             Set .ClipRectangle = m_rctText
             If Image.AlphaChannel Then
-                .Blit F2Rect(m_rctNewRectangle.left + m_lngSpace2, m_rctNewRectangle.top + m_lngSpace, Image.Width, Image.Height, False), Image.Rectangle, Image, Alpha, BlitMode_SourceAlpha
+                .Blit F2Rect(m_rctNewRectangle.Left + m_lngSpace2, m_rctNewRectangle.Top + m_lngSpace, Image.Width, Image.Height, False), Image.Rectangle, Image, Alpha, BlitMode_SourceAlpha
             Else
-                .Blit F2Rect(m_rctNewRectangle.left + m_lngSpace2, m_rctNewRectangle.top + m_lngSpace, Image.Width, Image.Height, False), Image.Rectangle, Image, Alpha
+                .Blit F2Rect(m_rctNewRectangle.Left + m_lngSpace2, m_rctNewRectangle.Top + m_lngSpace, Image.Width, Image.Height, False), Image.Rectangle, Image, Alpha
             End If
-            Set m_rctText = F2Rect(Image.Width + m_rctNewRectangle.left + m_lngSpace2, m_rctNewRectangle.top + m_lngSpace2, m_rctNewRectangle.right - m_lngSpace2, m_rctNewRectangle.bottom - m_lngSpace2)
+            Set m_rctText = F2Rect(Image.Width + m_rctNewRectangle.Left + m_lngSpace2, m_rctNewRectangle.Top + m_lngSpace2, m_rctNewRectangle.right - m_lngSpace2, m_rctNewRectangle.bottom - m_lngSpace2)
             Call Font.Draw(Engine.Backbuffer, m_strText, m_rctText, TextColor, Alpha, Font.Options(, ScrollY), TotalHeight)
             .UpdateClipRect
         End If
         If MiddleImage Is Nothing Then
         Else
             If MiddleImage.AlphaChannel Then
-                .Blit F2Rect(Me.Rectangle.left + ((Me.Rectangle.Width - MiddleImage.Width) \ 2), Me.Rectangle.top + ((Me.Rectangle.Height - MiddleImage.Height) \ 2), MiddleImage.Width, MiddleImage.Height, False), MiddleImage.Rectangle, MiddleImage, 1, BlitMode_SourceAlpha
+                .Blit F2Rect(Me.Rectangle.Left + ((Me.Rectangle.Width - MiddleImage.Width) \ 2), Me.Rectangle.Top + ((Me.Rectangle.Height - MiddleImage.Height) \ 2), MiddleImage.Width, MiddleImage.Height, False), MiddleImage.Rectangle, MiddleImage, 1, BlitMode_SourceAlpha
             Else
-                .Blit F2Rect(Me.Rectangle.left + ((Me.Rectangle.Width - MiddleImage.Width) \ 2), Me.Rectangle.top + ((Me.Rectangle.Height - MiddleImage.Height) \ 2), MiddleImage.Width, MiddleImage.Height, False), MiddleImage.Rectangle, MiddleImage
+                .Blit F2Rect(Me.Rectangle.Left + ((Me.Rectangle.Width - MiddleImage.Width) \ 2), Me.Rectangle.Top + ((Me.Rectangle.Height - MiddleImage.Height) \ 2), MiddleImage.Width, MiddleImage.Height, False), MiddleImage.Rectangle, MiddleImage
             End If
         End If
         If WindowSkin.EdgeOverlap Then

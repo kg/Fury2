@@ -21,6 +21,7 @@ Public Name As String
 Public Label As String
 Public AutoSizeHeight As Boolean
 Public SelectedItem As Long
+Public AllowDeselect As Boolean
 Private m_colItems As ItemCollection
 Private m_staState As SkinState
 Private m_sbrScrollbar As Scrollbar
@@ -143,6 +144,7 @@ Private Sub Class_Initialize()
 On Error Resume Next
     ListBoxCount = ListBoxCount + 1
     Name = "ListBox" & ListBoxCount
+    AllowDeselect = True
     Set Rectangle = New Fury2Rect
     Set m_colItems = New ItemCollection
     Set m_colItems.Parent = Me
@@ -218,6 +220,7 @@ Dim l_staState As SkinState
 Dim l_lngHeight As Long, l_itmItem As Object, l_lngItem As Long, l_lngY As Long, l_lngItemHeight As Long
 Dim l_lngWidth As Long
 Dim l_lngMouseY As Long
+Dim l_lngSelection As Long
     If Visible = False Then Exit Sub
     Parent.SetFocus Me
     Parent.SetCapture Me
@@ -240,13 +243,8 @@ Dim l_lngMouseY As Long
                 Err.Clear
             End If
             If (l_lngMouseY >= l_lngY) And (l_lngMouseY < (l_lngY + l_lngItemHeight)) Then
-                If Button = 1 Then
-                    Me.SelectedItem = l_lngItem
-                    DispatchEvent "Select", l_lngItem
-                ElseIf Button = 2 Then
-                    Me.SelectedItem = l_lngItem
-                    DispatchEvent "Select", l_lngItem
-                    DispatchEvent "ContextMenu", l_lngItem
+                If Button >= 1 Then
+                    l_lngSelection = l_lngItem
                 End If
                 Exit For
             End If
@@ -256,6 +254,17 @@ Dim l_lngMouseY As Long
             l_lngHeight = l_lngHeight + l_lngItemHeight
             l_lngItem = l_lngItem + 1
         Next l_itmItem
+        If (l_lngSelection <> SelectedItem) Then
+            If (l_lngSelection > 0) Or (AllowDeselect) Then
+                Me.SelectedItem = l_lngSelection
+                If Button = 1 Then
+                    DispatchEvent "Select", l_lngSelection
+                ElseIf Button = 2 Then
+                    DispatchEvent "Select", l_lngSelection
+                    DispatchEvent "ContextMenu", l_lngSelection
+                End If
+            End If
+        End If
     Else
         m_sbrScrollbar.Widget.MouseDown Nothing, Button, Shift, X - Me.Rectangle.Left, Y - Me.Rectangle.Top
     End If

@@ -49,11 +49,12 @@ On Error Resume Next
     m_sndSound.StopEvent.Invoke
 End Sub
 
-Public Property Get Channelgroup() As Channelgroup
+Public Property Get ChannelGroup() As ChannelGroup
+Attribute ChannelGroup.VB_Description = "The channel group this channel is in."
 On Error Resume Next
 Dim l_lngGroup As Long
     ResultCheck fmodex.FMOD_Channel_GetChannelGroup(m_lngHandle, l_lngGroup)
-    Set Channelgroup = m_seEngine.CreateChannelGroupH(l_lngGroup)
+    Set ChannelGroup = m_seEngine.CreateChannelGroupH(l_lngGroup)
 End Property
 
 Public Property Get Disposed() As Boolean
@@ -62,6 +63,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Sound() As Sound
+Attribute Sound.VB_Description = "The sound this channel is currently playing."
 On Error Resume Next
 Dim l_lngValue As Long
     ResultCheck fmodex.FMOD_Channel_GetCurrentSound(m_lngHandle, l_lngValue)
@@ -102,20 +104,17 @@ On Error Resume Next
     m_booDisposed = True
 End Sub
 
-Friend Sub ResultCheck(ByVal Result As FMOD_RESULT)
+Private Sub ResultCheck(ByVal Result As FMOD_RESULT)
 On Error Resume Next
 Dim l_lngHandle As Long
     If Result = FMOD_ERR_CHANNEL_STOLEN Then Free
     If (Result = FMOD_OK) Then
     Else
-'        l_lngHandle = FreeFile
-'        Open "C:\fmod.log" For Append As #l_lngHandle
-'        Print #l_lngHandle, "FMod returned error code " & l_lngHandle
-'        Close #l_lngHandle
     End If
 End Sub
 
 Public Property Get Playing() As Boolean
+Attribute Playing.VB_Description = "If True this channel is currently playing a sound."
 On Error Resume Next
 Dim l_lngValue As Long
     ResultCheck fmodex.FMOD_Channel_IsPlaying(m_lngHandle, l_lngValue)
@@ -123,6 +122,7 @@ Dim l_lngValue As Long
 End Property
 
 Public Property Get Virtual() As Boolean
+Attribute Virtual.VB_Description = "If True this channel is currently virtualized."
 On Error Resume Next
 Dim l_lngValue As Long
     ResultCheck fmodex.FMOD_Channel_IsVirtual(m_lngHandle, l_lngValue)
@@ -130,6 +130,7 @@ Dim l_lngValue As Long
 End Property
 
 Public Property Get Muted() As Boolean
+Attribute Muted.VB_Description = "If True this channel is muted."
 On Error Resume Next
 Dim l_lngMuted As Long
     ResultCheck fmodex.FMOD_Channel_GetMute(m_lngHandle, l_lngMuted)
@@ -142,6 +143,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Paused() As Boolean
+Attribute Paused.VB_Description = "If True this channel is paused."
 On Error Resume Next
 Dim l_lngPaused As Long
     ResultCheck fmodex.FMOD_Channel_GetPaused(m_lngHandle, l_lngPaused)
@@ -154,6 +156,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Audibility() As Single
+Attribute Audibility.VB_Description = "The current output volume of the channel."
 On Error Resume Next
 Dim l_sngValue As Single
     ResultCheck fmodex.FMOD_Channel_GetAudibility(m_lngHandle, l_sngValue)
@@ -161,6 +164,7 @@ Dim l_sngValue As Single
 End Property
 
 Public Property Get Volume() As Single
+Attribute Volume.VB_Description = "The volume factor of the channel."
 On Error Resume Next
 Dim l_sngValue As Single
     ResultCheck fmodex.FMOD_Channel_GetVolume(m_lngHandle, l_sngValue)
@@ -173,6 +177,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Frequency() As Single
+Attribute Frequency.VB_Description = "The playback frequency of the channel."
 On Error Resume Next
 Dim l_sngValue As Single
     ResultCheck fmodex.FMOD_Channel_GetFrequency(m_lngHandle, l_sngValue)
@@ -185,6 +190,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Pan() As Single
+Attribute Pan.VB_Description = "The pan position of the channel (-1.0 - 1.0)"
 On Error Resume Next
 Dim l_sngValue As Single
     ResultCheck fmodex.FMOD_Channel_GetPan(m_lngHandle, l_sngValue)
@@ -197,6 +203,7 @@ On Error Resume Next
 End Property
 
 Public Property Get Priority() As Long
+Attribute Priority.VB_Description = "The playback priority of this channel. Determines whether the channel will be virtualized if the sound engine runs out of available playback channels."
 On Error Resume Next
 Dim l_lngValue As Long
     ResultCheck fmodex.FMOD_Channel_GetPriority(m_lngHandle, l_lngValue)
@@ -208,7 +215,38 @@ On Error Resume Next
     ResultCheck fmodex.FMOD_Channel_SetPriority(m_lngHandle, NewValue)
 End Property
 
+Public Property Get Location() As Variant
+On Error Resume Next
+Dim l_vecLocation As FMOD_VECTOR, l_vecVelocity As FMOD_VECTOR
+    ResultCheck fmodex.FMOD_Channel_Get3DAttributes(m_lngHandle, l_vecLocation, l_vecVelocity)
+    Location = Array(l_vecLocation.X, l_vecLocation.Y, l_vecLocation.Z)
+End Property
+
+Public Property Let Location(ByRef NewLocation As Variant)
+On Error Resume Next
+Dim l_vecLocation As FMOD_VECTOR, l_vecVelocity As FMOD_VECTOR
+    ResultCheck fmodex.FMOD_Channel_Get3DAttributes(m_lngHandle, l_vecLocation, l_vecVelocity)
+    l_vecLocation = FModVector(NewLocation)
+    ResultCheck fmodex.FMOD_Channel_Set3DAttributes(m_lngHandle, l_vecLocation, l_vecVelocity)
+End Property
+
+Public Property Get Velocity() As Variant
+On Error Resume Next
+Dim l_vecLocation As FMOD_VECTOR, l_vecVelocity As FMOD_VECTOR
+    ResultCheck fmodex.FMOD_Channel_Get3DAttributes(m_lngHandle, l_vecLocation, l_vecVelocity)
+    Velocity = Array(l_vecVelocity.X, l_vecVelocity.Y, l_vecVelocity.Z)
+End Property
+
+Public Property Let Velocity(ByRef NewVelocity As Variant)
+On Error Resume Next
+Dim l_vecLocation As FMOD_VECTOR, l_vecVelocity As FMOD_VECTOR
+    ResultCheck fmodex.FMOD_Channel_Get3DAttributes(m_lngHandle, l_vecLocation, l_vecVelocity)
+    l_vecVelocity = FModVector(NewVelocity)
+    ResultCheck fmodex.FMOD_Channel_Set3DAttributes(m_lngHandle, l_vecLocation, l_vecVelocity)
+End Property
+
 Public Property Let Position(ByVal NewPosition As Double)
+Attribute Position.VB_Description = "The playback position of the channel."
 On Error Resume Next
 Dim l_lngValue As Long
     l_lngValue = Floor(NewPosition * 1000)
@@ -223,15 +261,7 @@ Dim l_lngValue As Long
 End Property
 
 Public Sub Kill()
+Attribute Kill.VB_Description = "Stops playback."
 On Error Resume Next
-'Dim l_lngHandle As Long
-'    l_lngHandle = FreeFile
-'    Open "C:\fmod.log" For Append As #l_lngHandle
-'    If m_sndSound Is Nothing Then
-'        Print #l_lngHandle, "Stopping sound {unknown} in channel " & m_lngHandle
-'    Else
-'        Print #l_lngHandle, "Stopping sound " & m_sndSound.Handle & " in channel " & m_lngHandle
-'    End If
-'    Close #l_lngHandle
     ResultCheck fmodex.FMOD_Channel_Stop(m_lngHandle)
 End Sub

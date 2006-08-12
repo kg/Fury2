@@ -184,7 +184,11 @@ namespace GL {
     GLuint handle = 0;
     tex = getTexture(image);
     if (tex) {
-      if (tex->IsolatedTexture) {
+      if ((tex->Width != SoftFX::GetImageWidth(image)) || (tex->Height != SoftFX::GetImageHeight(image))) {
+        delete tex;
+        setNamedTag(image, Texture, 0);
+        tex = 0;
+      } else if (tex->IsolatedTexture) {
         handle = tex->IsolatedTexture->Handle;
       } else {
         handle = tex->Handle;
@@ -194,6 +198,7 @@ namespace GL {
       if (checkNamedTag(image, Context)) {
         // this is a context
         endDraw();
+        glFinish();
         tex = createTextureFromFramebuffer(image, false);
         if (tex) handle = tex->Handle;
       } else {
@@ -208,12 +213,17 @@ namespace GL {
         if (SoftFX::GetImageDirty(image)) {
           // the texture is out of sync with the framebuffer
           endDraw();
+          Framebuffer *fb_old = activeFramebuffer;
+          setFramebuffer(0);
           copyFramebufferToTexture(tex, image);
+          setFramebuffer(fb_old);
         }
       } else if (checkNamedTag(image, Framebuffer)) {
         // this is a framebuffer
         Framebuffer *fb = (Framebuffer*)getNamedTag(image, Framebuffer);
-        if (SoftFX::GetImageDirty(image)) {
+        if (SoftFX::GetImageLocked(image)) {
+          // locked framebuffers are always in sync
+        } else if (SoftFX::GetImageDirty(image)) {
           // the texture is out of sync with the framebuffer
           endDraw();
           Framebuffer *fb_old = activeFramebuffer;

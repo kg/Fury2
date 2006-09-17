@@ -96,3 +96,13 @@ Dim m_lngWidth As Long, m_lngHeight As Long
     End With
 End Sub
 
+Function FileExists(ByRef Filename As String) As Boolean
+On Error Resume Next
+Dim l_lngLength As Long
+    Err.Clear
+    l_lngLength = -1
+    l_lngLength = FileLen(Filename)
+    If Err <> 0 Then Exit Function
+    If l_lngLength < 0 Then Exit Function
+    FileExists = True
+End Function

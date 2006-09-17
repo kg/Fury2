@@ -106,7 +106,7 @@ Dim l_rfFile As ngResourceFile
         Set l_rfFile.Archive = New XZip.Zip
         l_rfFile.Filename = Filename
         l_rfFile.Refresh
-        g_colResourceCache.Add l_rfFile
+        g_colResourceCache.Add l_rfFile, Filename
     End If
     Set LoadResourceFile = l_rfFile
 End Function

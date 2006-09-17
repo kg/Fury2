@@ -212,7 +212,7 @@ Dim l_strScript As String, l_strName As String
             If left(Trim(m_strScript), 2) = "<@" Then
                 l_strScript = Trim(m_strScript)
                 l_strName = Mid(l_strScript, 3, Len(l_strScript) - 3)
-                Set m_objScript = mvarMap.Engine.ScriptEngine.EvalObject(l_strName)
+                Set m_objScript = mvarMap.Engine.ScriptEngine.Eval(l_strName)
                 m_objScript_Load = m_objScript.ImplementsMethod("Load")
                 m_objScript_Activate = m_objScript.ImplementsMethod("Activate")
                 m_objScript_Enter = m_objScript.ImplementsMethod("Enter")

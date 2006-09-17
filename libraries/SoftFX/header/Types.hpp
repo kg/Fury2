@@ -592,7 +592,9 @@ public:
   }
 
   inline bool intersects(FInterval& other) const {
-    return ((Min >= other.Min) && (Min <= other.Max)) || ((Max >= other.Min) && (Max <= other.Max));
+	  if (Min > other.Max) return false;
+	  if (Max < other.Min) return false;
+    return true;
   }
 };
 

@@ -1,0 +1,826 @@
+Copyright � Kevin Gadd 2003, 2004, 2005, 2006
+This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
+
+Fury� Beta 09
+Maintenance/improvement release.
+
+Changes in this version include:
+Added CollisionType property to sprites. Allows changing the alignment of a sprite's collision rectangle. (Spherical collision not yet implemented)
+Added Preview tab to sprite editor
+Added Tile Data to Tilesets
+Added Tile Collision to Tilesets
+Changed ToString to wrap arrays in () instead of {}
+Extended collection support in editor object inspector
+Added RelativeRotation property to sprites. If you set both DisplayRotation and this property, image rotation will be used to approximate the difference between poses to give more accurate onscreen rotation.
+Changed Collection.Count from a read-only property to a read/write property (Setting it higher adds Nothing items, setting it lower removes items from the end of the collection)
+Added attribute filtering to tile picker control (type in an attribute name or part of an attribute name to hide any tiles that lack that attribute)
+Changed display resize logic in various editor windows to remove some flicker on certain video driver configurations
+Added Fury2Polygon object
+Fixed underflow bug in WrapValue/WrapInteger
+Added support for polygonal sprite blocking
+Added new Compromise library
+Implemented Compromise in engine and editor
+Implemented automatic library registration in engine and editor
+Implemented plugin installation/removal in editor
+Implemented lookup caching for map/sprite scripts and Fury2Events (should improve .Invoke and event dispatch speeds)
+Bugfixes to Compromise and lookup caching
+Fixed some unhandled exceptions
+Fixed broken copy/paste/duplicate/delete in map editor listboxes
+Rewrote Compromise to fix numerous bugs and decrease resource usage
+Fixed a resource leak in Event.Invoke
+Fixed Sprite.Ignore breaking animation, rotation and attached graphics/sprites
+Switched to a new ZIP archiving library for the editor which sucked
+Added support for automatic data variables in object scripts (Use 'PublicData' and 'PrivateData' to declare data variables instead of 'Public' and 'Private')
+Fixed bug that caused sprites with negative scalelevels to be culled
+Added ActionQueue that allows you to queue a Fury2Event to execute at the end of the current update
+Fixed bugs in Fury2Event.Invoke parameter handling
+Editor now remembers status of the log and filesystem panels
+Editor now has options for displaying sprite blocking and sprite rectangles in all views
+Editor now displays polygonal collision for sprites
+Editor now allows editing sprite polygonal collision
+Fixed some issues with subthreads and the framerate balancer
+Added basic support for isometric sprite sorting
+Various improvements to sprite importer options window
+Performance optimizations to Sprite.Duplicate
+Added Sprite.Clone method that returns a fast copy of a sprite which shares the states and poses of the original sprite
+Added LightFromSprite method to Fury2LayerLighting to retrieve the light that is attached to a given sprite
+Removed CodeSense from editor since it sucked and was freaking out randomly
+Layer ghosting now applies to Sprites
+Entity lists now display tooltips containing full names of items (helpful when a long name is truncated)
+Added support for Widget syntax to UIKit (drastically simplifies creation of Forms)
+Fixed tab/shift-tab implementation in UIKit to work properly with containers
+Added Label property to UIKit ListBox widget
+Fixed invisible text in about box
+Added Fury2Controller.Angles property that allows specifying angles for all 8 walk directions
+Removed deprecated Fury2Pose.XVelocity and Fury2Pose.YVelocity properties
+Added DefaultControllerAngles and DefaultControllerStyle configuration variables
+Improved Engine to generate a default cursor for menus when no cursor is specified, instead of using a blank cursor (you can manually generate a default cursor by calling CreateDefaultCursor)
+Added Parallelogram tool to Map Editor Blocking tab (useful for drawing blocking in non-square perspectives, for example isometric)
+Reduced camera jitter when changing View options in Map Editor
+Added GridScale View option in Map Editor (allows scaling the size of the grid by a constant factor - useful for snapping to the center of a tile or to groups of tiles)
+Fixed bug that caused libSound2 to log useless information to C:\
+Added support for game packing (you can now pack a game and libraries into fury2.exe and they will be auto-extracted and run)
+Improved fury2.exe to auto-run a game if there is a game.f2config in its current folder
+Added Game Packer plugin to editor
+Added Save Image command to Map Editor's document menu
+Added ArrayRotate function
+Converted transitions to a generic rendering system
+Changed DefaultTransition from an integer to a Fury2Event specifying a 'Transition Manager' (A transition manager is a sub that takes two arguments: Length, and Mode - mode 0 is transition in, mode 1 is transition out.)
+Added SetDefaultTransition command
+Added multiple new transitions (wipe {dir}, slide {dir}, smoothwipe {dir} {size})
+! Changed Fury2Event parameter ordering. Bound parameters now come AFTER manually passed parameters. If you relied on the old behavior, well, uh. Oops :) !
+Fixed game packer not including OpenGL shaders
+Improved Video_OpenGL to warn when shaders are not found
+Bug fixes to packer's subdirectory support
+Improved packer to generate modified version resources and reorder output
+Bug fixes to packer's version resource generation code
+Cleaned up reference leaks in LoadSprites and LoadSprite
+Cleaned up reference leaks in Fury2Map and Fury2Controller
+Fixed bug that caused ControlDeactivate/KeyUp events to sometimes fire twice instead of once
+Converted poses, paths and frames to use weak references in some places (should improve performance and lower memory usage, but may cause crashes if i mucked it up :) )
+Fixed divide by zero when a sprite's state had DirectionPoses set to 0
+Performance improvements in Command Browser
+Overhauled Command Browser member display
+Fixed helpstring display in Command Browser
+Updated helpstrings in the following classes: Fury2Engine, Fury2Sprite, Fury2Map, Fury2MapLayer
+Fixed some corner case exceptions related to sprite destruction
+Fixed bug that could cause a crash or undefined behavior if an object died after causing an event but before the event was processed
+Disabled UPX compression on a couple plugins that were intermittently crashing when compressed
+Updated helpstrings in various classes
+Slight API cleanups to Menu and MessageWindow
+Fixed crash bug in script engine
+Updated libSound2 to FMod Ex 4.04.23
+Added LoopPoints property to Fury2Sound
+Fixed some bugs in editor's plugin management code
+Added logging to editor's plugin system
+Added error notification to editor's plugin system
+Added support for Home and End keys to in-game console
+Added support for scrolling the in-game console using the up and down arrow keys
+Fixed crash in SoundEngine.Shutdown when freeing large numbers of sounds
+Fixed bug in GLFX that caused certain sequences of rendering operations in OpenGL mode to result in a white screen
+Fixed bug that caused sprite importer to intermittently fail to import frames and/or poses
+Significant performance improvements in lighting engine
+Improvements to editor scripting API - added various event notifications and a few new utility functions
+Added load/save progress tracking support to VirtualFile API
+Updated various engine objects to support progress tracking
+Updated editor to display load/save progress for complex files (font, map, sprites, etc)
+Performance improvements to tileset editor
+Added progress display to sprite importer and image map importer
+Fixed bug in BindEvent that caused it to mangle calls that included floating-point arguments
+Fixed bug that intermittently disabled Help->About
+Fixed bug that prevented libSound objects from showing up in the command browser
+Added Fury2PictureSlot class (an object that represents a specific picture slot, with properties to manipulate it)
+Added GetPictureSlot(index) and NewPictureSlot() functions to retrieve a specific picture slot or the first available picture slot as an object
+Added support for rotating the contents of a picture slot (GetPictureRotation/SetPictureRotation)
+Updated libSound2 to FMod Ex 4.04.25
+Added GetHookedObjects/SetHookedObjects to allow swapping in and out sets of hooked objects
+Added Sequence Editor to ngPlugins
+Added support for multiple tween value types to sequence system (number, integer, color)
+Fixed bug that could cause ShowPicture/HidePicture to 'leak' picture slots and give ActivePictureSlots an invalid value
+--- hard disk failure ---
+Fixed bug in BlitResample_SourceAlpha_Tint_Opacity that was causing tinting to not work
+Fixed bug in UiKit.TextField that could set the caret position to before the beginning of the textfield, resulting in weird character insertion behavior
+Fixed bug similar to the above in the engine console
+Fixed loading/saving of Fury2Graphic objects
+Various changes to Sequence system
+Fixed handling of return values in Eval, Invoke, and others
+Added support for setting the default cursor to a saved Fury2Graphic
+Fixed ArrayInsert failing if Index was below 0 (it now inserts at 0 in this case)
+Added Fury2Graphic.Play method (restarts a graphic's animation and optionally sets an OnFinish handler for one-shot animations)
+Fixed bug in polygonal collision for nonrectangular shapes that caused it to intermittently return false negatives
+Added Tag property to Fury2SequenceKeyframe
+Added GetKeyframeByTag function to Fury2Sequence
+Extended Fury2SequenceKeyframe.AddNewEvent to accept either a string or a Fury2Event
+Added GetEvent and SetEvent methods to Fury2SequenceEvent
+Fixed bug in resource loader that caused it to load the same resource file multiple times
+Fixed Sequence.OnPlaybackStart and Sequence.OnPlaybackHalt events to correctly invoke
+Changed Fury2Graphic class to use asynchronous updating (graphics will now automatically update whenever drawn instead of being updated once per frame)
+Added LoadGraphic function
+Added Load and Save methods to Fury2Graphic class
+Added GetPictureGraphic function for retrieving a graphic attached to a picture slot
+Fixed CompileScriptBlock and GenerateScriptObject requiring static typed strings
+--- pre-failure (not reimplemented) ---
+Updated the editor's Help menu to point to the new wiki
+Added PictureDrawPosition variable for controlling the draw order of picture slots
+Added support for begin and end caps to beam sprites
+Reimplemented script syntax highlighting via scintilla/editawy
+Replaced packages3 with zlib/minilib
+Removed various deprecated functions and variables
+Improved game packer to pack engine libraries in addition to game data
+Fixed packed games leaving stray zip files in temporary folder
+
+Fury� Beta 08
+Big fat improvement/bugfix/overhaul/new feature release.
+
+Changes in this version include:
+Corrected the F2LM_ constants
+Added arguments to F2Graphic for loop mode and animation delay
+Fixed a freeze bug in Fury2Graphic
+Added Title and TitleFont properties to Fury2Menu
+Corrected dispatch order for plugin mouse events (MouseMove did not dispatch in the same order as MouseDown/MouseUp... ick)
+Added support for saving/loading Fury2Collections of objects and/or strings
+Fixed a CursorPos related bug in VirtualFile, and added a secondary name for CursorPos (Position)
+Replaced Party.Item/Add/Remove/Count with Party.Members (which is a Fury2Collection)
+Added Duplicate function to Fury2Collection
+Added support for interrupting scripts during execution (useful for stopping an infinite loop)
+Made some changes to keyboard accelerator handling
+  Characters should not be inserted after you press a hotkey anymore (usually this happened if a hotkey took a while to do its job)
+  The editor should no longer 'forget' the state of Control or Shift
+  Accelerators should not be activated incorrectly while a dialog is open (select file, about, options, whatever) anymore
+Added Ctrl+Pause hotkey for pausing/unpausing games in the editor
+Fixed a crash bug in image clip rectangle handling
+Fixed clipping-related bugs in gradient routines (none of the gradient routines worked correctly when the target image had a clip rectangle set; this has been fixed at the cost of some performance)
+Fixed bug that caused frames not to load their graphics when they were pasted into a pose in the sprite editor
+Fixed the camera system so you can add new cameras again (my bad)
+Fixed a bug in the Add method of the various collection classes that could cause an add to fail if the index specified was outside the range of the collection
+Replaced the crappy, unreliable listboxes in the sprite editor with shiney new custom ones
+Added support for selecting multiple states/poses/frames at once in the sprite editor
+Added support for dragging states/poses/frames in the sprite editor to rearrange them
+Added support for editing the properties of multiple states/poses/frames at once in the sprite editor
+Added support for cutting/copying/pasting/deleting multiple states/poses/frames at once in the sprite editor
+Added Find method to Fury2States and Fury2PoseFrames
+Added a workaround for the MDI bug that could cause crashes if a sprite or map was closed when certain controls were active
+Got rid of the vbAccelerator List Box control (yay!)
+Changed Mouse.Visible so the mouse is only hidden when it is over the game display (before, it was also hidden over the titlebar)
+Added the Keyboard object
+Added Mouse.Enabled, Keyboard.Enabled, and Joystick.Enabled
+Overhauled keyboard input code
+Added Video_OpenGL video plugin
+Made the map engine faster by fixing an obscenely stupid clipping bug I introduced a while ago (this will be particularly noticable on large maps)
+Fixed a bug in BindEvent (old-style "Object.Method" event strings work like before)
+Fixed the Fury2MapLayer.Effect property (oops)
+Updated the Basic, Rain, and Menus examples to look correct in OpenGL
+Fixed a clipping bug in radial gradients (primarily affected lights in the lighting engine that had EnableCache set to False)
+Altered the MaskBlit command to use the mask's Alpha values instead of Red values
+Tweaked the Intro example to multiply spark velocity by the screen ratio (basically, this makes it so that the sparks move at about the same speed regardless of resolution - before, the speed depended on the screen resolution the intro was run in)
+Changed the setup program's behavior to (hopefully) properly handle systems with newer/older versions of vbscript.dll and/or tlbinf32.dll
+Fixed bug that would cause a Fury2Graphic to animate at the wrong speed if it was being used by more than one Fury2Menu object at once
+Lots of tweaks and improvements to event handling and its interaction with subthreads
+Fixed a bug that could cause a key repeat to trigger during a transition
+Fixed a bug that caused Mute to not affect BGMs
+Changed editor to only allow opening one copy at a time
+Fixed bug that could cause the editor to silently refuse to open files in some cases
+Added editor_scripts.f2config and editor_packages.f2config for customizing the scripts and packages loaded by the editor
+Added User Data support (.f2data files)
+Added Explore option to file sidebar context menu (opens Windows Explorer in the selected folder)
+Fixed an input bug that prevented scripts and script objects from intercepting mouse events
+Added Title property to UIKit TextField widget
+Added Resize event to UIKit Window and Container widgets
+Added MultiRowPoses option to sprite importer
+Added Explosion example
+Fixed some memory leaks in the map and sprite editors
+Enabled the image cache in the editor (should reduce memory usage and speed up loading of sprites/maps, but may cause changes to image files to not show up immediately)
+Changed Fury2Sprites.SpritesFromDistance to take a sprite object instead of an index
+Fixed the SpritesFrom* and SpriteFrom* methods of the Map.Sprites object so they act like the Map.Layers(N).Sprites equivalents
+Fixed SpritesFromDistance so all the arguments work (oops)
+Added Alpha property to light sources
+Improved Fury2Font to not import unsupported characters from TTFs
+Implemented character editing in the Font Editor
+Fixed bug that caused a sprite's Load event to fire multiple times under certain circumstances
+Added support for macros to the map editor
+Renamed Play Game button to Debug Game
+Added Run Game button to the Game toolbar
+Fixed bug that caused various window-related bugs and issues after closing the game debugger
+Added constant force properties to Fury2Sprite
+Fixed bug that caused the editor to exit if you hit Alt+F4 while debugging a game
+Added BlitMode_Normal support to the MaskBlit command
+Added support for customizable render targets to the sprite and camera classes
+Changed file saving behavior to decrease chance of data loss
+Changed the sprite engine so both sprites involved in a collision recieve a Hit event (instead of just the one that caused the collision)
+Added support for render targets to the map layer class
+Added Reveal example
+Added Useful Scripts folder in the Examples folder
+Tweaked console so shift-enter inserts a new line
+Added RenderEvent property to map layers
+Fixed bug that caused some file types not to show up in the open dialog
+Fixed bug that caused inline variables not to work in AddTextElement unless Realtime was true
+Added support for vertically flipping sprites by giving them a negative ScaleLevel
+Added F2Sprite function for creating new sprites at runtime
+Added support for replacing a sprite's Poses and States collections
+Added LinkProperties property to sprites for more control over behavior when Attached
+Added Reflect example
+Added Editor object to editor scripting interface
+Added macro support to editor
+Fixed UIKit.ListBox so that items wrap correctly
+Fixed UIKit.Menu so that items wrap correctly
+Made the joystick stuff work again and overhauled it to support multiple joysticks
+Added AVI playback support (no audio yet)
+Fixed bug that could cause tiles not to show up after switching maps
+Added AVI codec detection so Video For Windows will not explode if a codec is missing
+Fixed the DestroyAllTimers command
+Changed engine behavior so it will refuse to load if given a bad game path (i.e. nonexistent folder)
+Added Paused property to Fury2Slider object
+Made engine prompt for a game if you run it without specifying one
+Changed configuration window so it says 'Configure {Game Name}' instead of 'Configure Fury2'
+Made LoadImage properly trigger an error when a file is not found
+Added broken script engine detection
+Added support for HTTP Post requests
+Changed engine to terminate any executing scripts when closing (prevents endless loops from locking up the engine on exit)
+Fixed bug that caused engine to throw a critical error if LoadImage failed, even if you specified IgnoreErrors = True
+Added LostFocus and GotFocus events to notify a game when its window has lost/regained focus (alt-tab, etc)
+Fixed bug that caused Mouse.Move to have an effect even when the game window was not active
+Removed Map.CollisionType property since it didn't work right in any mode other than CT_Line anyway
+Improved sprite editor to automatically select all the frames in each pose when you have more than one pose selected (you can use this to batch-modify all the frames in one or more poses quickly)
+Added AVI example
+Added ENet networking support (vbenet.dll is required for the support to work)
+Added Chat example
+Fixed UIKit bug that caused mousedown/mousemove/mouseup events to recieve incorrect X/Y coordinates
+Fixed a bug in Image.ClipRectangle that could result in crashes if you tried to set a clip rectangle larger than the image
+Implemented new Tabstrip control
+Fixed bug that would cause documents not to close properly if you hit the close shortcut (Ctrl+F4) rapidly
+Implemented cut/copy/paste/insert/delete in font editor
+Fixed 'no-selection' bug in map editor lists
+Fixed a parameter bug in CallByName
+Added a hack to Video_OpenGL to make Matte work in most cases
+Fixed bug that caused the Tileset class to incorrectly reuse other tilesets that shared the same image, even if they did not have the same mattecolor (this broke matte transparency in situations where a map had multiple layers with the same tileset image but with different matte colors)
+Implemented a texture cache in Video_OpenGL (improves performance for maps and fonts in particular)
+Implemented new FMod Ex (FMod 4.0) based sound library, libSound2
+Fixed obscure drag-drop bug in editor (thanks acylein)
+Made grid color in map editor customizable (thanks acylein)
+Fixed bug in Fury2Font.RemoveCharacter that made the CharacterCount property incorrect
+Overhauled script caching system to reduce memory usage
+Added filter textbox to property grids
+Fixed some property grid bugs
+Fixed bug with tile picker not showing up when a map is first opened
+Made map editor number newly created layers instead of just calling them 'New Layer' (thanks acylein)
+Removed HTML plugin (didn't work good anyway)
+Implemented renaming in filesystem sidebar (thanks acylein)
+Added tileset embedding
+Added Tileset Editor
+Added batch tile paste to tileset editor
+Added character image copy/paste to font editor
+Added tileset toolbar to map editor tile picker
+Added support for editing embedded tilesets in map editor
+Added quick tileset import button to tile picker (thanks acylein)
+Changed Fury2Graphic's animation code to support floating point frame lengths
+Increased size of recent file and recent game lists in editor
+Fixed a really stupid bug in VirtualFile.LoadGeneric related to booleans
+Added DefaultSampleVolume global variable (behaves like DefaultBGMVolume, but affects PlaySample instead)
+Added Sound Volume configuration variable (controls DefaultSampleVolume)
+Added Playing property to Fury2Video object
+Fixed grid color defaulting to transparent (thanks acylein)
+Fixed installer not correctly erasing old editor settings (thanks acylein)
+Fixed SetHotspot so hotspots properly initialize as hovering/non-hovering when placed (hotspots previously kept the hovering state of whatever hotspot was occupying their slot)
+Fixed bug that allowed tilesets to contain improperly sized/null images (thanks acylein)
+Fixed bug that allowed multiple layers to incorrectly share the same tileset object (thanks acylein)
+Improvements made to polyline tool in blocking (thanks acylein)
+Made the background of the map editor window a different color than the background of the map (thanks acylein)
+Fixed bug in sprite editor list boxes that caused items to dissapear and move around randomly
+Added RowWidth metadata to tilesets (fixes 'preserve rows' option in map editor's tile picker)
+Fixed bug that prevented duplicating/adding layers in map editor from working anymore
+Fixed minor bug in listboxes that could cause accidental drags to be easier than they should be
+Fixed some wrapping bugs in the font engine
+Disabled misguided codec check in Fury2Video
+Fixed bug that could cause a sound effect or BGM to be loaded multiple times if its filename was malformed
+Fixed bug that could cause ChangeBGM to consider a BGM to be new if its filename was malformed
+Added debug warning about malformed filenames to Filesystem.File and Filesystem.FileExists
+Fixed timing bug in Fury2Graphic
+Optimized Video_OpenGL
+Optimized Fury2Controller
+Optimized Engine.UpdatePictures
+Optimized collection objects
+Fixed bug that caused tileset importing to not properly update the map editor tile picker (thanks acylein)
+Fixed bug in the TK board importer that didn't enable alpha transparency on layers by default (thanks Ross L)
+Fixed some bugs in ScrHost
+Hacked ScrHost so Python will work (Python's active scripting implementation has a flaw and generates malformed error data that normally causes ScrHost to crash)
+Added Python support to libScript
+Made tweaks to Engine's scripting interfaces to support python properly
+Removed long-deprecated values from ResampleMode enumeration and added _Wrap and _Clamp versions of Linear and Bilinear
+Implemented mesh deformation blitting
+Added DeformBlit method to Fury2Image class
+Added Fury2DeformationMesh class
+Added F2DeformationMesh function for creating mesh objects
+Added optional distortion effect to Reflect example (change the flag at the top of the source code to enable it)
+Optimized Fury2Controller some more :)
+Added ResetClipRectangle method to Fury2Image class (it turns out that doing Set Image.ClipRectangle = Image.Rectangle has quite a bit of unnecessary overhead)
+Reworked video driver API to use a pair of predefined interfaces for better performance
+Added PushClipRectangle, PopClipRectangle, and ResetClipRectangleStack to Fury2Image class (so you don't have to do it manually)
+Improved speed of Image.Rectangle by making it re-use rectangles when possible (this shouldn't break any situations where people mess with the rectangle they get from it, though)
+Optimized UIKit to use the new clip rectangle methods (it previously did the same things manually)
+Fixed bug in Intro that prevented it from working with the new sound library
+Fixed typo in definition of SwitchMap that caused it to behave differently than LoadMap
+Optimized Fury2Font.GetTextRectangle
+Fixed bug that caused automatic unlocking not to work for convolution filters, masked blits, and deformation blits
+Added NamePattern property to Area class (allows you to exclude sprites from area events based on their name using a wildcard)
+Rewrote map editor tile picker to improve performance
+Added rectangle reuse to Image.ClipRectangle
+Converted F2Rect to use a cache to improve performance for temporary rectangles
+Removed revision data structures (they weren't used anyway)
+Fixed broken cancel button in 'save open documents' prompt in editor on exit (thanks dyluck)
+Fixed bug that caused the dropdown arrow in object inspector controls to lock up the editor if you selected it on a Variant (thanks hellblazer)
+Fixed bug that caused mouse move events to still fire if Mouse.Enabled was set to false (thanks hellblazer)
+Fixed bug in TK tileset importer that could cause it to miss tiles when importing
+Fixed bug in the new tile picker that caused horizontal scrolling not to work while 'preserve rows' was enabled
+Added FindTile method to Fury2Tileset for finding a tile that matches an image
+Added Image Map Importer plugin to editor
+Fixed a refresh bug in the Paste operation for frames in the sprite editor
+Added Index property to Poses and Pose Frames
+Added support for inline expressions in pose frame filenames <%=expr%>
+Added support for custom-defined variables to ParseString
+Added constant variables in pose frame filenames: n/Name for sprite name, pn/PoseName for pose name, p/Pose for pose index, and i/Index for frame index (useful for automating the process of adding sprite frames if you use individual images)
+Changed the behavior of Sprite.IdleState and Sprite.WalkState so that if you change them while the sprite is idle or walking, the sprite's current state is changed accordingly
+Increased limit on Tileset.TileWidth and Tileset.TileHeight from 256 to 10240 (for large, single-tile maps)
+Adjusted minimum and maximum map size from 2x2-1024x1024 to 1x1-4096x4096
+Rewrote rendering code for prerendered layers to remove a couple weird clipping bugs (should be faster, too)
+Removed Tileset Assembler plugin
+Added support for Windows Bitmaps to editor clipboard code
+Changed HookEvents to allow hooking objects that do not have an Engine property (you get a debug warning instead of failure)
+Added WindowSkin.UnadjustRectangle method
+Added Speech_Bubble example
+Fixed editor bug that made document tabs invisible if no toolbars were visible
+Added Engine.TakeScreenshot method and ScreenshotPattern and ScreenshotOverlay global options
+Updated libSound2 to FMod Ex Beta 32
+Changed file save behavior to take advantage of filesystem tunneling
+Added file logging (controlled by LogToFile config variable; on by default; logs to fury2.log in engine directory by default)
+Increased debug output verbosity (particularly in LoadGame)
+Fixed bug that caused object inspector not to redraw when you dragged the scrollbar
+Added State variable to ScriptEngine object (contains information on loaded scripts)
+Added User Data to File->New menu
+Added Create User Data dialog
+Added AttachX, AttachY, AttachH and AttachV properties to light sources (controls position of the light when attached to a sprite)
+Added support to object inspector for assigning values to empty variables (the type is autodetected as either String, Boolean, Long, or Single)
+Added AttachX, AttachY, AttachH and AttachV properties to sprites
+Updated libSound2 to FMod Ex 4.0.34
+Added ChannelGroup support to libSound2
+Added MaskDeformBlit method to Fury2Image class
+Finally implemented the Insert Sprite tool in the map editor
+Fixed the Sprite.Template property so it actually works right again
+Made VelocityMultiplier and AnimationMultiplier work right again
+Added 'bullet time' to Explosion example
+Added temporary fix for FMod Ex Freeze-on-exit bug
+Updated libSound2 to FMod Ex 4.0.36 and removed temporary fix
+Added CopyTo method to Fury2Map
+Added BaseNToInteger, BaseNToBaseN and IntegerToBaseN functions to Fury2Engine (along with function constants HexDigits, BinaryDigits, and OctalDigits)
+Added LoadMapFile and LoadTileset functions to Fury2Engine
+Found bug that was making TTF importer take ages to import a font (it's fast now)
+Added Mouse example
+Added Flip and Mirror commands to map editor
+Added Flip and Mirror methods to Fury2Brush object
+Added support for using Shift and Ctrl to add/remove to selections in the map editor's blocking and lighting modes
+Fixed the textbox in the alignment and rectangle tabs in the sprite editor
+Made the blocking tab in the sprite editor actually work
+Fixed bug in Fury2Tileset.Duplicate that caused duplication not to work correctly for embedded/f2tileset tilesets
+Finally fixed the Save All command in the editor so it works reliably
+Added AntiAliasConvexPolygon and AntiAliasTexturedConvexPolygon methods to Fury2Image class
+Added Camera.AntiAliasLighting property
+Fixed dropdown buttons in editor Object Inspector control
+Fixed some focus bugs in the script editor and text editor plugins
+Fixed bug that caused the BGMVolume engine property to return the wrong value sometimes
+Fixed some positioning bugs in Sprite.Render and Sprite.Rectangle
+Added RotationOffset property to Fury2Sprite (applies when DisplayRotation is set)
+Fixed bug that caused the Sprite.Tag property not to be copied during duplication
+Added LinkBearing property to Fury2Sprite and made LinkProperties apply to less properties
+Fixed bug that caused the Link* Sprite properties not to be copied during duplication
+Fixed bug in RotatePoint's handling of straight lines (stupid atan)
+Fixed some bugs in handling of horizontal sprite alignment (it was reversed in some places)
+Implemented WrapX and WrapY for prerendered map layers
+Added AntiAliasFilledEllipse method to Fury2Image class
+Added FilledPie method to Fury2Image class
+Added AntiAliasFilledPie method to Fury2Image class
+Added Stroke method to Fury2Image class
+Added AntiAliasEllipse method to Fury2Image class
+Added AntiAliasPie method to Fury2Image class
+Added RepeatDelay property to Fury2InputControl object
+Added ActivateEvent and DeactivateEvent properties to Fury2InputControl object
+Fixed a bug that could cause ArrayAdd to omit the last item if an array of items was added
+Implemented support for partial OpenGL acceleration of strokes and antialiased polygons (this also applies to ellipses, pies, etc)
+Added AntiAliasArc method to Fury2Image class
+Added BezierStroke method to Fury2Image class
+Added RenderMode_Additive_SourceAlpha
+Added RenderMode_Subtractive_SourceAlpha
+Added RenderMode_Font_SourceAlpha
+Fixed antialiased pixel/line routines to properly handle clipping
+Updated libSound2 to FMod Ex 4.01.00
+Fixed crash bug in SoundEngine.FlushCache
+Reworked handling of Prerendered map layers (width/height are now in pixels; tile data is disabled)
+Fixed Fury2Sprite so that sprites still render even if they have no states defined
+Fixed ngMenu so that menus cannot be shown offscreen
+Implemented support for pixel shaders
+Reworked Filter system to use generic rendering like polygons and strokes
+Added pixel shader based Filter support
+Added pixel shader based DeformBlit support
+Added pixel shader based MaskDeformBlit support
+Changed behavior of DeformBlit (the 'correct' size for a mesh is (width-1, height-1), instead of (width, height) as it was before, and the mesh is centered on the output area)
+Added hardware compositing support to polygon, stroke, and filter routines
+Fixed bug in SoftFX::Initialize that resulted in a memory leak
+Corrected the formulas for Gamma, Gamma_RGB, and Gamma_Channel
+Added new Multiply, Multiply_RGB and Multiply_Channel routines (they behave like the old gamma routines)
+Added MaskFilter method to Fury2DeformationFilter class
+Added pixel shader based MaskFilter support
+Added pixel shader based support for the following filters:
+  Grayscale
+  Gamma*
+  Multiply*
+  Invert*
+  CopyChannel
+  SwapChannels
+Fixed a clipping bug that resulted in incorrect blit output when source coordinates extended off the top/left edges of a bitmap
+Fixed update issue when DisableCameraBuffers was set to False
+Tweaked Camera.Gamma property behavior
+Added EnableThemes option to editor
+Added Paths property to Fury2Sprite
+Added SwitchPath method to Fury2Sprite
+Added Paths tab to Sprites view in map editor
+Updated libSound2 to FMod Ex 4.01.04
+Fixed bug that caused map editor UI not to update after an undo/redo in some cases
+Changed map editor so that selected path nodes are automatically displayed in the inspector on the Path tab
+Fixed bug that caused pressing Enter to reset the selected field in object inspector controls
+Tweaked AutoScroll behavior so that automatic scrolling speed takes zoom level into account
+Fixed bug in Fury2Camera that prevented ConstrainToMap from working correctly with prerendered layers
+Disabled SSE/MMX copy and fill routines in SoftFX.dll in response to reports of hard-to-reproduce image artifacts on certain systems
+Reworked path system (waypoints are no longer removed from a path once reached, the path now has a location that it uses to traverse its waypoints)
+Fixed bug in sprite editor that caused it to display blocking rectangles at the wrong y coordinates
+Tweaked Fury2Video to use the AVI decoder's image buffer instead of making a copy
+Added the following methods to Fury2Image:
+  FilledArc
+  AntiAliasFilledArc
+  GradientFilledArc
+Fixed bug in gradient polygon rendering (incorrect alpha values were generated sometimes)
+Added callback events to Sound and Channel objects (StartEvent, EndEvent, BeforeEndEvent, and StopEvent)
+Added PatternMatch function
+Tweaked FadeBGM to cancel previous fades of the same BGM when it's called
+Fixed bug in StopBGM that caused BGM channels not to stop playing once they had faded out (resulted in excessive CPU usage and weird EndEvent/BeforeEndEvent behavior)
+Fixed GLSL DeformBlit to properly handle Linear_Wrap and Bilinear_Wrap scale modes
+Added SaveScriptData property to Fury2Sprite
+Added Data tab to Sprites view in map editor
+Added ReloadScript method to Fury2Sprite
+Added automatic script reloading to sprites in the map editor
+Changed tileset/image flush debug messages so they only appear if an image or tileset was flushed
+Changed image cache automatic flushing behavior (the editor now only auto-flushes every 60 seconds, and the engine will now auto-flush after 600 seconds; auto-flushing only triggers when you load a new image or map. Additionally, auto-flushing is now less aggressive and should perform less unnecessary flushing of images.)
+Fixed a bug in OpenGL textured polygon implementation that caused opacity/color values to be incorrect occasionally
+Added Data tab to sprite editor
+Improved multiselect in sprite editor (Blocking and Alignment tabs now fully support multiselect, and the Rectangle tab supports multiselect as long as all frames use the same image)
+Fixed fullscreen sizing bug in Video_OpenGL (the window had an extra pixel of border on each side, making it 2 pixels too small in each axis)
+Fixed some type detection bugs in the object inspector control (should eliminate most problems with it not understanding what type of data you're putting into it)
+Added the AutoListSwitch option to the map editor (the cursor tool in the sprites and lighting tabs will now automatically switch to the appropriate list when you select an object if this option is enabled)
+Added the Sprite Painter tool to the map editor
+Changed intro in examples so you can skip it with Esc
+Improved Speech Bubble example to demonstrate the new Data tab
+Added support for substring coloring to font engine (use the #[RRGGBBAA], #[RRGGBB], #[VVAA] or #[VV] escape sequences to set color, and #[] to restore to default)
+Added support for subfonts to font engine (used the ~[name] escape sequence to switch to a subfont, and ~[] escape sequence to switch back to the original font)
+Added AddSubFont method to Fury2Font
+Implemented partial unicode support into Fury2Font.ImportTTF
+Added support for restricting unicode imports with character set strings in Fury2Font.ImportTTF
+Updated font editor in ngIDE to allow you to change the preview text by double-clicking the preview and selecting a TXT file
+Updated preview text in font editor to contain text from various languages
+Added various character set templates for use with the TTF importer
+Implemented IME input support in engine
+Fixed bug in engine that caused strings with nulls in them to be truncated by Font.Draw
+Implemented new more efficient (smaller, loads quicker) version of font format (resave your fonts to take advantage of it)
+Added TileBased property to Fury2Controller
+Added TileX, TileY, XDelta, and YDelta properties to Fury2Sprite
+Added initial implementation of Sequence system (Engine.F2Sequence(), etc)
+Added interpolation utility functions (Interpolate, CosineInterpolate, CubicInterpolate)
+Added some more effects to the Drawing example
+Added initial support for premultiplied alpha
+Tweaked InputControl repeat behavior to handle low framerates better
+Added AutoOptimizeImages option (default value is True) to automatically Optimize images loaded by LoadImage
+Added NormalMapBlit method to Fury2Image
+Implemented GLSL-based version of NormalMapBlit
+Fixed a GL bug that could cause framebuffer object operations to fail if you had previously used an antialiased line or pixel routine
+Added support for Secondary Images to Fury2PoseFrame
+Added support for attaching normal maps to sprites as secondary images
+Added normal map support to lighting engine
+Fixed a bug in the lighting engine that caused rendering errors in frames immediately after a light's cache was invalidated (only occurred when you had one or more lights with EnableCache set to true)
+Implemented bitmapped light sources
+Implemented ScreenScaleMode configuration variable (named 'Output Scaling Mode' in configuration file)
+Added Scale2x scaling mode (currently OpenGL-only)
+Implemented GLSL-based radial gradient routine
+Fixed exception handling bug in SoftFX
+Updated FMod Ex to 4.02.00
+Fixed bug that caused WrapNumber to behave identically to WrapInteger
+Moved utility functions into namespaces
+Added Math namespace
+Added Strings namespace
+Added Arrays namespace
+
+Fury� Beta 07
+Improvement/bugfix release.
+
+Changes in this version include:
+Fixed bug that could cause the image grid remover to crop a few pixels off the bottom and/or right edges of an image
+Fixed bug that caused AnimateWhileMoving to function incorrectly when facing some directions
+Fixed bug that could cause the Map variable in a sprite's script to be nothing
+Fixed bug that could cause the Index and Layer variables to be 0 when a sprite's Load event fired
+Fixed setup bug that didn't register editor\vbalEdit.ocx (and prevented the game debugger from loading)
+Fixed bug that could cause the map editor's properties tab to be invisible until you resized the window
+Fixed bug that could cause toolbar and menu icons not to show up on some systems
+Overhauled type library source code to use better syntax
+Removed some deprecated functions from SoftFX
+Added SourceAlpha_ColorMask blit mode to graphics library
+Replaced map editor toolbar with new ngToolbar component, this should keep the map editor from crashing on exit
+Fixed a bug that could cause the a crash on close if you had the layers list selected in a map editor window
+Stopped static-linking corona into SoftFX
+Added support for automatically loading the game that files belong to
+Added support for automatically switching games when loading files that belong to another game
+Added options dialog
+Added support for automatically opening the previous game at startup
+Added support for automatically opening previous documents at startup
+Added support for disabling the 'save open documents' dialog
+About dialog is much cooler (and much less crashy)
+Added 'Save All' option to toolbar and file menu
+Removed stupid docking panel component and replaced it with a lighter weight custom panel system (should reduce crashes and improve efficiency)
+Fixed Audio Player plugin so it works again
+Added OLE Drag & Drop support to main editor window (you can drop files from explorer on the window to open them now)
+Added file associations tab to options dialog
+Added changelog option to help menu
+Added UTF-8 and UCS-2 support to text routines
+Reworked console (opens faster, more visible)
+Added movable caret to console
+Fixed bug that caused console text to go away if an error occurred
+Fixed rounding error in convolution filtering routines
+Rewrote all the Merge blit routines (they were broken, but it was hard to notice)
+Fixed bug that caused pressing Alt+F4 when running a game in the editor to close both the editor AND the game
+Changed default for the HarassCPU option to True (this causes the engine to run as fast as possible, instead of the previous behavior of running at 'about 60fps'. Since the option would cause games to run slowly under certain circumstances even if your computer was fast enough to play them, I decided to change the default so people's games will run correctly without needing to set the option manually.)
+Changed the setup's install behavior for vbscript.dll and tlbinf32.dll to work better on systems with outdated or missing versions of the files
+Reimplemented the sprite Pushable property
+Added the CanPush property to sprites
+Added the XForce and YForce properties to sprites
+Added the Pressure property to sprites
+Rewrote filesystem library:
+  You can mount more than one hard disk folder in the filesystem at once now
+  Files have Size, CreatedDate, and ModifiedDate properties now
+  Packages don't work yet, though
+Added Intro example (it's commented, and can be used as a standalone script in games/examples, too!)
+Added support for calling BindEvent like this:
+  BindEvent("FunctionName Parameter, Parameter")
+Fixed bug that could cause the editor to think a file wasn't already open when it actually was
+Fixed bug that caused an incorrect error dialog to appear if you used the Save All or Save commands while a game was running
+Implemented longhorn-style notifications in the editor (many modal message boxes have been replaced with non-modal notifications)
+Fixed bug that could cause the editor to think it had successfully loaded a nonexistent file
+Fixed bug that caused the editor to open a file dropdown if you clicked an empty part of a toolbar
+Fixed bug that caused the editor to respond to a button click even if you canceled the click by moving the mouse off the button before releasing the mouse button
+Tweaked the error for opening more than 32 files at once
+Added helpful info notice to New Game
+Fixed a little bug in the notice system
+Added EmptyImageCache command and made it run automatically on shutdown (should help prevent memory leaks when debugging games in the editor)
+Fixed a freeze bug in Fury2Graphic
+Updated FMod Ex from beta 26 to beta 28
+Fixed issues with BGMs not looping correctly
+Fixed bug that caused areas to recieve incorrect Enter events when a map was loaded
+Fixed bug in Sprites.MoveTo that caused it not to work if you passed in a sprite object instead of an index or name
+Fixed bug that caused PlaySample to load sounds as streams (which prevented the same sample from being played multiple times at once)
+Added LoadSample function to make it easier to load samples
+
+Fury� Beta 06
+Improvement/bugfix release.
+
+Changes in this version include:
+Fixed delete key behavior in script editor
+Implemented cut/copy/paste in show picture designer
+Fixed undo/redo in map editor's script tab
+Fixed undo/redo/cut/copy/paste/delete behavior in area/sprite script editors in map editor
+Fixed find/replace hotkeys in script editor
+Added RPG Toolkit Tileset Importer plugin
+Added RPG Toolkit Board Importer plugin (note: disabled in this release)
+Removed TSFilename stuff from the tileset class
+Added Add and Remove methods to Fury2Tileset
+Fixed bug that prevented modifying a layer that had no tileset loaded
+Fixed bug that caused the editor not to load a new tileset until you changed the TileWidth or TileHeight values in certain circumstances
+Fixed bug that caused the engine to create an empty 'icon.ico' in the game folder
+Fixed bug that caused the engine and editor icons to show up incorrectly under certain circumstances
+Updated logo and icons
+Fixed bug that caused the UIKit plugin to lose the ability to render after you switched output plugins (this happens because the Backbuffer object changes; there is now a OutputPluginChanged event to notify you of this)
+Added debugging API to engine
+Added debugging thunk library
+Changed editor to use debugging thunk library to run games instead of running a copy of the engine EXE
+Added game debugger
+Reworked engine to support multiple instances
+Added multiple instance support to UIKit
+Added multiple instance support to editor (You can now debug and edit games at the same time)
+Fixed bug that caused the engine to incorrectly shut down the graphics library before it was done being used
+Fixed bug that caused the editor to nag you about saving on exit when you didn't have any documents open
+Implemented renaming in file sidebar
+Implemented folder creation in file sidebar
+Fixed bug that could cause property values to get lost when switching between objects in the various editors
+Removed some engine cruft (ShowAreas, ShowCollision, MatureContent, etc) since most of it didn't work and wasn't used
+Fixed bug in keyboard handler (keyboard events went out in reverse order)
+Fixed bug in menu class (if individual items didn't have their own select event, the menu's select event didn't fire)
+Fixed bug that could cause the map editor not to redraw after you deleted an area
+Moved lots of useless engine messages to debug output (by default only shows up in editor)
+Added more debug output
+Added NullEvent function (creates an event object that does nothing when invoked)
+Added Fury2SoundFader object
+Added FadeBGM command
+Added Fade option to StopBGM and PlayBGM
+Added Crossfade option to SwitchBGM, PushBGM, and PopBGM
+Changed volume values from {0 - 255} to {0.0 - 1.0}
+Changed pan values from {0 - 255} to {-1 - 1}
+Tweaked the Yield command so it gives timers and plugins a chance to update (this can be disabled by passing it False as its first parameter)
+Fixed bug that prevented DirectDraw plugin from clipping output once it had resized
+Updated FMod from 3.71 to 3.74
+* Re-release fix: Editor's New Game feature did not create a game.f2config file
+
+Fury� Beta 05
+Improvement/bugfix release.
+
+Changes in this version include:
+Added some more variants
+Fixed bug that caused duplicated/added map layers to have a width and height of 0 in some circumstances
+Fixed bug that caused imported sprites to not display anything until the sprite collection was reloaded
+Fixed bug that caused new files to not show up in the file sidebar until it was refreshed manually
+Fixed up some parameter lists in Fury2Map and Fury2MapLayer
+Removed the utterly useless and outdated Fury2Minimap object
+Added SliceImages option to the Image Grid Remover plugin
+Fixed some quirks in the property grid
+Changed the behavior of the enter key in option dialogs
+Fixed off-by-one bug in the Image Grid Remover plugin
+Fixed bug that caused passing a bad/nonexistent filename into LoadWindowSkin to cause a critical engine error
+Improved UIKit to allow specifying a skin's image manually
+Fixed bug in UIKit.ShowForm that made it fail to set focus to the form
+Fixed bug in Video_DirectDraw that prevented mouse events from registering
+Added Background property to UIKit.Window
+Made some performance improvements to event handling
+Added support for tinting rotated sprites in sourcealpha mode
+Fixed bug that prevented sprite importer settings from being remembered
+Improved map editor paste so that sprites are pasted at the mouse coordinates if the mouse is inside the viewport
+Added LinkState, LinkPose, and LinkFrame properties to sprite class
+Added Class parameter to Sprite.ActionAhead
+Implemented undo/redo for vector map blocking
+Reverted the tile picker's multiselect behavior so it will work right when scrolled
+Implemented the Brush tab in the map editor
+Implemented cut/copy/paste/delete for brushes
+Fixed position memory for the editor window
+
+Fury� Beta 04.1
+Bugfix re-release.
+
+Changes in this version include:
+Fixed bug that prevented For Each from working on the Party object
+Added TabStops property to Font class
+Added CharacterWidth property to Font class
+Added SaveTGA method to Image class
+Fixed bug that caused the map editor to select too much blocking data when using the Paste command
+Fixed bug that caused list options to show up incorrectly in the property grid (only affected objects that had more than one list property)
+Fixed Fury2Sprite.DisplayRotation
+Fixed some bugs in the map editor tile picker that could cause tiles to be invisible or display incorrectly
+Enabled delete option in Show Picture Designer
+
+Fury� Beta 04
+Improvement/bugfix release.
+
+Changes in this version include:
+Renamed tileset's MaskColor property to MatteColor
+Added TileMatteColor option to Create Map wizard
+Fixed bug that prevented .f2config files from showing up in the Open dialog
+Improved BindKey to support the new event system
+Fixed bug that broke scripts on maps that had a number as the first character of their filename
+Performed maintenance on some old commands to change parameter types from variants to their proper types
+Added Font Editor plugin
+Added ShowPicture Designer plugin
+Added DuplicateFirstFrame option to Sprite Importer plugin
+Added online docs to help menu
+Implemented RM2kX Sprite Importer plugin (GUI isn't done yet though)
+Fixed a bug in the Default Start Position setting
+Fixed a bug in the LoadSprites and LoadSprite functions
+Fixed a bug in the property grid control that could cause color properties to be displayed incorrectly
+Fixed scrolling bugs in map editor tile picker
+Implemented tile picker multiselect
+Added DirectDraw video plugin (yes, with fullscreen)
+Updated configuration window to show all installed video plugins
+Fixed some bugs in the SpritesFrom* and SpriteFrom* methods of the Fury2Sprites class
+Made the map editor display tile indexes when you hover over tiles in the tile picker
+Added row/column display in the script editor
+Added Wait property to waypoints
+Fixed a bug in softfx.dll
+Fixed PathTarget function
+Fixed GoFullscreen/GoWindowed commands
+Added Alt+Enter support to DirectDraw plugin
+Added HTTPGet command and Fury2HTTPRequest class
+Added HTTP example
+Fixed stupid bug in AngleBetween that showed up recently
+Fixed bug in Party.Add
+
+Fury� Beta 04 Pre-Release 2
+Improvement/bugfix release.
+
+Changes in this version include:
+Added named subthreads:
+    Subthread "Name"
+    Break "Name"
+Fixed a bug where subthreads could cause one-shot timers (for example, one-shot timers created by DelayEvent) to fire more than once
+Improved the BindEvent function:
+    You can now bind an object using an expression, like this: BindEvent("Method", "ObjectExpression")
+    You can now bind extra parameters to an event, like this: BindEvent(Method, Object, Array(ExtraParameter, ExtraParameter))
+Changed HookEvent to use the new event system (this affects update hooks, redraw hooks, and mouse event hooks)
+Changed Font.Duplicate from a property to a function (oops)
+Fixed bug that made the engine skip a bit after a transition completed
+Added Font.AddDropShadow and Font.AddOutline methods
+Added MatteColor option to sprite importer
+Added warning to image/file selectors if you choose a file not inside your game folder
+Added command to Map Editor's Document menu to place blocking around your map's edges
+Added command to Map Editor's Document menu to reload all tilesets
+Fixed bug that caused the map editor to omit the bottommost and rightmost pixel of maps from display
+
+Fury� Beta 04 Pre-Release 1
+Improvement/bugfix release.
+
+Changes in this version include:
+Added Sprite.PushPath and Sprite.PopPath commands to allow you to temporarily replace a sprite's path.
+Fixed Lighting Obstruction Mover tool
+Fixed Lighting Plane Mover tool
+Added sprite path editing (select a sprite and use the add/select path node tools)
+Added FindByNames function to Sprite and LightSource lists
+Added Sprite.Tag property
+Fixed animation bug that could cause animations to run extremely fast if played right after a sprite was standing still
+Added Sprite.VelocityMultiplier and Sprite.AnimationMultiplier properties
+Added Sprite.DiffuseLight property
+Fixed path bug where a sprite would keep moving once it reached its last waypoint
+Made sprites with paths pay attention to IdleState and WalkState
+Added support for custom sprite script objects (use <@ObjectExpression> as your script code)
+Fixed multiple memory leaks related to map loading/unloading. The engine and editor still leak some memory when unloading maps but not nearly as much as before.
+Added PathColor and PathNodeColor view options
+Fixed bug that prevented State.MaxVelocity from being loaded/saved
+Implemented property view dropdowns for enumerations
+Made hotspots work again ( >_> )
+Partially fixed some loading bugs in the sprite and map editors that required you to save and reload a file to get it to show up correctly
+Fixed tile picker scrollbar bugs
+Added status bar location display for map editor
+Fixed bug in Draw Area tool
+Fixed a font file bug (FullHeight property was not saved/loaded)
+Fixed Transitions.Crossfade bug related to map switches and the camera
+Fixed bug that prevented the engine from shutting down if a subthread was running (oops)
+Implemented display for the Rectangle and Alignment tabs in the sprite editor (you can't edit in those tabs yet, though)
+Added Create Map dialog with setting memory
+Fixed bug in ResetHotspots command (I think)
+Implemented part of new event system (THIS WILL BREAK EXISTING CODE):
+    Fury2Menu, Fury2MessageBox, and SetHotspot all use the new event system.
+    The new event system either accepts a string containing the name of a global function, or a bound event.
+    To create a bound event, you do this: BindEvent(MethodName, Object)
+Implemented a hack to keep keyboard keys from getting 'stuck' due to bad keyboard drivers or loss of window focus
+
+Fury� Beta 03
+Improvement/bugfix release.
+
+Changes in this version include:
+Files may be dragged from Windows Explorer and dropped onto the filesystem sidebar to copy them to your project folder.
+Added 'Command Browser' plugin.
+Fixed bug in the Show Grid option that could cause the map editor to lock up.
+Fixed crash bug in the Fury2Image.GradientLine command.
+Updated setup and uninstaller to erase editor settings from the registry.
+Fixed issue with the map editor where the Snap To Grid and Show Grid toolbar buttons would display as unchecked when they were actually checked.
+Fixed issue with Snap To Grid that made it hard to select small sprites/areas.
+Fixed WindowSkin.EdgeOffset after I broke it who knows when (I really should do regression tests).
+Fixed issues with closing the editor while it is minimized.
+Added rain example to setup
+Added menus example to setup
+Fixed bug that prevented Subthread from working if called in Engine_Start (still doesn't work in Engine_Init, though, but that's not important)
+Removed the DirectDraw plugin from the configuration window (since it's not included anyway)
+
+Fury� Beta 02
+Minor update release, primarily intended to fix compatibility issues.
+
+Changes in this version include:
+Fixed error preventing the editor and engine from running on processors without SSE (Visual C++ is dumb)
+Fixed 'Stop Statement Encountered' error caused by a tileset being unable to load
+Fixed cut/copy/paste for scripts in map editor
+Fixed script editing for areas and sprites in map editor
+Fixed property grids being blank on some machines
+Fixed syntax highlighting not functioning correctly on some machines
+Fixed editor freezing at startup on some machines (NSIS is dumb)
+Test game updated and added to setup
+Applied patch to make engine and editor run properly on versions of Windows XP without Service Pack 2
+Added style manifest for editor (enables visual styles on Windows XP)
+
+Fury� Beta 01
+First release. Sucked.

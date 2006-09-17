@@ -17,6 +17,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include "../header/SoftFX Main.hpp"
 // #include "../header/Blend_Template.hpp"
 #include "../header/Blend.hpp"
@@ -1961,7 +1964,7 @@ BLITTERRESAMPLE_END
 BLITTERRESAMPLE_SIGNATURE(SourceAlpha_Tint)
     , Pixel Tint) {
 BLITTERRESAMPLE_INIT
-    if (Tint[::Alpha] = 0) return BlitResample_SourceAlpha(Dest, Source, DestRect, SourceRect, Scaler);
+    if (Tint[::Alpha] == 0) return BlitResample_SourceAlpha(Dest, Source, DestRect, SourceRect, Scaler);
     _RBOS(BlitResample_SourceAlpha_Tint, 1) , Tint _RBOE
 BLITTERRESAMPLE_BEGIN
     AlphaLevel *aSource, *aDest, *aTint;

@@ -35,6 +35,17 @@ Attribute VB_Ext_KEY = "Member0" ,"Fury2Engine"
 '
 Option Explicit
 
+Public Enum Fury2SecondaryImageTypes
+    F2SI_Overlay = 0
+    F2SI_NormalMap = 1
+    F2SI_Shadow = 2
+    F2SI_LightMap = 3
+    F2SI_GlowMap = 4
+    F2SI_ShadowMap = 5
+    F2SI_BeginCap = 6
+    F2SI_EndCap = 7
+End Enum
+
 Public Enum Fury2ScreenScaleModes
     SSM_Fast = 0
     SSM_Bilinear = 1
@@ -110,6 +121,7 @@ Public Enum Fury2SpriteBlockingTypes
     F2BT_CenteredRect
     F2BT_CenteredSphere
     F2BT_CenteredPolygon
+    F2BT_Beam
 End Enum
 
 Public Enum Fury2SpriteClasses
@@ -241,8 +253,8 @@ Dim l_engNew As Fury2Engine
     End If
     m_booIDE = InIDE
     If Not (Trim(Parameters) = "") Then
-        If Left(Parameters, 1) = """" Then Parameters = Mid(Parameters, 2)
-        If right(Parameters, 1) = """" Then Parameters = Left(Parameters, Len(Parameters) - 1)
+        If left(Parameters, 1) = """" Then Parameters = Mid(Parameters, 2)
+        If right(Parameters, 1) = """" Then Parameters = left(Parameters, Len(Parameters) - 1)
     End If
     If (Len(Trim(Dir(Parameters, vbDirectory))) > 0) Or (Len(Trim(Parameters)) <= 0) Then
         Set Fury2Load = l_engNew

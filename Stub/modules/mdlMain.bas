@@ -78,7 +78,6 @@ Dim l_booOptional As Boolean
         Exit Function
     End If
     Set l_colLibraries = New Collection
-    l_colLibraries.Add "packages3.dll"
     l_colLibraries.Add "!vbscript.dll"
     l_colLibraries.Add "scriptengine.dll"
     l_colLibraries.Add "graphics.dll"
@@ -346,6 +345,7 @@ End Sub
 
 Function PerformUnzip() As Boolean
 On Error Resume Next
+#If 0 Then
 Dim l_zipZip As XZip.Zip
 Dim l_lngArchives As Long
 Dim l_strFile As String
@@ -379,5 +379,8 @@ Dim l_strItemPath As String
         Unload frmLoading
     End If
     Set UnzipQueue = Nothing
+#Else
+    PerformUnzip = True
+#End If
 End Function
 

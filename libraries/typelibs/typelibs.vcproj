@@ -41,12 +41,12 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
-				MinimalRebuild="TRUE"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -62,7 +62,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/typelibs.exe"
 				LinkIncremental="2"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/typelibs.pdb"
 				SubSystem="2"
 				TargetMachine="1"
@@ -78,6 +78,9 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
@@ -117,7 +120,7 @@
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -133,7 +136,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/typelibs.exe"
 				LinkIncremental="1"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -150,6 +153,9 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
@@ -184,7 +190,7 @@
 					>
 					<Tool
 						Name="VCMIDLTool"
-						TypeLibraryName=".\../../../libraries/tlb/Win32.tlb"
+						TypeLibraryName="\Windows\System32\Win32.tlb"
 						HeaderFileName=""
 						DLLDataFileName=""
 					/>
@@ -206,7 +212,7 @@
 					>
 					<Tool
 						Name="VCMIDLTool"
-						TypeLibraryName=".\../../../libraries/tlb/FMod.tlb"
+						TypeLibraryName="\Windows\System32\FMod.tlb"
 						HeaderFileName=""
 						DLLDataFileName=""
 					/>
@@ -228,10 +234,10 @@
 					>
 					<Tool
 						Name="VCMIDLTool"
-						TypeLibraryName=".\../../../libraries/tlb/SoftFX.tlb"
+						TypeLibraryName="\Windows\System32\SoftFX.tlb"
 						HeaderFileName=""
 						DLLDataFileName=""
-						ValidateParameters="TRUE"
+						ValidateParameters="true"
 					/>
 				</FileConfiguration>
 			</File>

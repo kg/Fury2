@@ -337,7 +337,7 @@ End Function
 
 Function DuplicateForm(ByVal Form As Object) As Object
 On Error Resume Next
-    Set DuplicateForm = Engine.ScriptEngine.EvalObject(Engine.ScriptEngine.Language.GenerateInstantiation(TypeName(Form)))
+    Set DuplicateForm = Engine.ScriptEngine.Eval(Engine.ScriptEngine.Language.GenerateInstantiation(TypeName(Form)))
 End Function
 
 Sub LoadSkinDef(ByRef Skin As SkinState, ByRef Path As String)

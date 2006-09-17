@@ -126,7 +126,7 @@ Dim m_lngItems As Long
         Exit Sub
     End If
     Err.Clear
-    If Index < m_lngLB Then Exit Sub
+    If Index < m_lngLB Then Index = m_lngLB
     If Index > (m_lngUB + 1) Then
         ReDim Preserve Arr(m_lngLB To Index)
         m_lngUB = Index

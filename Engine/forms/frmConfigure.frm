@@ -190,7 +190,7 @@ Dim l_strPlugin As String
     With Engine
         cmbGraphicsPlugin.Clear
         If m_booIDE Then
-            l_strPlugin = Dir(App.Path & "\..\..\binary\sys\video_*.dll")
+            l_strPlugin = Dir(App.Path & "\..\sys\video_*.dll")
         Else
             l_strPlugin = Dir(App.Path & "\video_*.dll")
         End If

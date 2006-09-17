@@ -110,7 +110,7 @@ Public Property Get SelectionStart() As Long
     SelectionStart = m_lngSelectionStart
 End Property
 Public Property Let SelectionStart(NewStart As Long)
-    m_lngSelectionStart = NewStart
+    m_lngSelectionStart = ClipValue(NewStart, 1, Len(Me.Text) + 1)
     m_lngSelectionDir = 1
 End Property
 Public Property Get SelectionLength() As Long

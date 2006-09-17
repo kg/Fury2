@@ -382,10 +382,12 @@ namespace GL {
   }
 
   void disableTextures() {
-    endDraw();
-    disableTexture<2>();
-    disableTexture<1>();
-    disableTexture<0>();
+    if (texturesEnabled[2] || texturesEnabled[1] || texturesEnabled[0]) {
+      endDraw();
+      disableTexture<2>();
+      disableTexture<1>();
+      disableTexture<0>();
+    }
   }
 
   void enableFog() {

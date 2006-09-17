@@ -59,7 +59,11 @@ On Error Resume Next
 End Function
 
 Private Function IScriptLanguage_GenerateFunction(Name As String, Args As Variant, Code As String) As String
-
+    If (VarType(Args) And vbArray) = vbArray Then
+        IScriptLanguage_GenerateClassMethod = "def " & Name & "(self, " & Join(Args, ",") & "):" & vbCrLf & DoIndent(Code) & vbCrLf
+    Else
+        IScriptLanguage_GenerateClassMethod = "def " & Name & "(self" & IIf(Len(Args) > 0, ", ", "") & Args & "):" & vbCrLf & DoIndent(Code) & vbCrLf
+    End If
 End Function
 
 Private Function IScriptLanguage_GenerateSubCall(Name As String, Args As Variant) As String

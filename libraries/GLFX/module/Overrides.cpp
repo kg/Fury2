@@ -174,6 +174,8 @@ defOverride(Allocate_Context) {
   glViewport(0, 0, Global->OutputWidth, Global->OutputHeight);
   glScissor(0, 0, Global->OutputWidth, Global->OutputHeight);
   glLineWidth(1.0f);
+  if(wglSwapInterval)
+    wglSwapInterval(0);
   setNamedTagAndKey(Image, Context, Global->Context);
   setNamedTag(Image, DC, Global->DC);
   setNamedTag(Image, Pointer, malloc(Width * Height * 4));
@@ -1362,7 +1364,7 @@ defOverride(BlitResample_Normal) {
 
 defOverride(BlitResample_Normal_Opacity) {
   readParam(int, Dest, 0);
-  readParam(int, Opacity, 5);
+  readParam(int, Opacity, 6);
   contextCheck(Dest);
   lockCheck(Dest);
   selectContext(Dest);
@@ -1393,6 +1395,41 @@ defOverride(BlitResample_SourceAlpha_Opacity) {
   setBlendMode<SourceAlpha>();
   setVertexColor(Pixel(255, 255, 255, Opacity));
   BlitResample_Core(Parameters);
+  return Success;
+}
+
+defOverride(BlitResample_SourceAlpha_Tint) {
+  readParam(int, Dest, 0);
+  readParam(int, tint, 5);
+  Pixel Tint(tint);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<SourceAlpha>();
+  setVertexColor(White);
+  setFogColor(Tint);
+  setFogOpacity(Global->FloatLookup[Tint[::Alpha]]);
+  enableFog();
+  BlitResample_Core(Parameters);
+  disableFog();
+  return Success;
+}
+
+defOverride(BlitResample_SourceAlpha_Tint_Opacity) {
+  readParam(int, Dest, 0);
+  readParam(int, tint, 5);
+  Pixel Tint(tint);
+  readParam(int, Opacity, 6);
+  contextCheck(Dest);
+  lockCheck(Dest);
+  selectContext(Dest);
+  setBlendMode<SourceAlpha>();
+  setVertexColor(Pixel(255, 255, 255, Opacity));
+  setFogColor(Tint);
+  setFogOpacity(Global->FloatLookup[Tint[::Alpha]]);
+  enableFog();
+  BlitResample_Core(Parameters);
+  disableFog();
   return Success;
 }
 
@@ -3485,6 +3522,8 @@ void InstallOverrides() {
   addOverride(BlitResample_Normal_Opacity);
   addOverride(BlitResample_SourceAlpha);
   addOverride(BlitResample_SourceAlpha_Opacity);
+  addOverride(BlitResample_SourceAlpha_Tint);
+  addOverride(BlitResample_SourceAlpha_Tint_Opacity);
   addOverride(BlitResample_Additive);
   addOverride(BlitResample_Additive_Opacity);
   addOverride(BlitResample_Subtractive);
@@ -3609,6 +3648,8 @@ void UninstallOverrides() {
   removeOverride(BlitResample_Normal_Opacity);
   removeOverride(BlitResample_SourceAlpha);
   removeOverride(BlitResample_SourceAlpha_Opacity);
+  removeOverride(BlitResample_SourceAlpha_Tint);
+  removeOverride(BlitResample_SourceAlpha_Tint_Opacity);
   removeOverride(BlitResample_Additive);
   removeOverride(BlitResample_Additive_Opacity);
   removeOverride(BlitResample_Subtractive);

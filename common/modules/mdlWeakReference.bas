@@ -1,8 +1,36 @@
 Attribute VB_Name = "mdlWeakReference"
 Option Explicit
+Public Type tVar
+    v As Variant
+    vt As VbVarType
+End Type
+
 Public Type WeakReference
     pObj As Long
 End Type
+
+Public Function VarCopy(ByRef Source As Variant, ByRef Destination As Variant)
+On Error Resume Next
+Dim vt As VbVarType
+    vt = VarType(Source)
+    If (vt And vbObject) = vbObject Then
+        Set Destination = Source
+    Else
+        Destination = Source
+    End If
+End Function
+
+Public Function Encapsulate(ByRef Value As Variant) As tVar
+On Error Resume Next
+Dim l_tvResult As tVar
+    l_tvResult.vt = VarType(Value)
+    If (l_tvResult.vt And vbObject) = vbObject Then
+        Set l_tvResult.v = Value
+    Else
+        l_tvResult.v = Value
+    End If
+    Encapsulate = l_tvResult
+End Function
 
 Public Sub WRSet(ByRef WR As WeakReference, ByRef NewObject As Object)
 On Error Resume Next
@@ -28,6 +56,8 @@ Dim l_lngZero As Long
     Set WRGet = l_objObject
     CopyMemory ByVal VarPtr(l_objObject), ByVal VarPtr(l_lngZero), 4
 End Function
+
+#If fury2 = 1 Then
 
 Public Function WRGetSprites(ByRef WR As WeakReference) As Fury2Sprites
 On Error Resume Next
@@ -83,4 +113,4 @@ Dim l_lngZero As Long
     CopyMemory ByVal VarPtr(l_objObject), ByVal VarPtr(l_lngZero), 4
 End Function
 
-
+#End If

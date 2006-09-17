@@ -17,6 +17,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include "../header/SoftFX Main.hpp"
 #include <string.h>
 #include "../header/Debug_Flags.hpp"
@@ -422,7 +426,7 @@ if (!Layer) return Failure;
                 pTile++;
             }
           } else {
-            for (cx = sx; cx < ex; ++cx) {
+            for (int cx = sx; cx < ex; ++cx) {
                 rctDest.Left = dx;
                 if (Layer->WrapX) {
                     pTile = pRow + (cx % maxX);
@@ -439,7 +443,7 @@ if (!Layer) return Failure;
           }
         } else {
           if (Layer->TintColor[::Alpha]) {
-            for (cx = sx; cx < ex; ++cx) {
+            for (int cx = sx; cx < ex; ++cx) {
                 rctDest.Left = dx;
                 if (Layer->WrapX) {
                     pTile = pRow + (cx % maxX);
@@ -454,7 +458,7 @@ if (!Layer) return Failure;
                 pTile++;
             }
           } else {
-            for (cx = sx; cx < ex; ++cx) {
+            for (int cx = sx; cx < ex; ++cx) {
                 rctDest.Left = dx;
                 if (Layer->WrapX) {
                     pTile = pRow + (cx % maxX);

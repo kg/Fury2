@@ -53,6 +53,7 @@ Public Event Clear()
 Private m_strAddHook As String
 Private m_strRemoveHook As String
 Private m_engEngine As Fury2Engine
+Public Tag As Variant
 
 Public Function Class_ToString() As String
 On Error Resume Next

@@ -17,6 +17,7 @@ Implements IVirtualFileSaveable
 Implements IInspectable
 Public Tweens As Fury2Collection
 Public Events As Fury2Collection
+Public Tag As String
 Private m_dblTime As Double
 Private m_seqSequence As WeakReference
 
@@ -57,6 +58,7 @@ Dim l_evtEvent As Fury2SequenceEvent
         For Each l_evtEvent In Events
             .AddEvent l_evtEvent.Duplicate
         Next l_evtEvent
+        .Tag = Tag
     End With
     Set Duplicate = l_kfNew
 End Function
@@ -136,11 +138,15 @@ On Error Resume Next
     Tweens.Add AddNewTween
 End Function
 
-Public Function AddNewEvent(Optional ByVal Script As String = "") As Fury2SequenceEvent
+Public Function AddNewEvent(Optional ByVal Script As Variant = Nothing) As Fury2SequenceEvent
 On Error Resume Next
     Set AddNewEvent = New Fury2SequenceEvent
     AddNewEvent.SetKeyframe Me
-    AddNewEvent.Script = Script
+    If VarType(Script) = vbString Then
+        AddNewEvent.Script = Script
+    ElseIf (VarType(Script) And vbObject) = vbObject Then
+        AddNewEvent.SetScript Script
+    End If
     Events.Add AddNewEvent
 End Function
 
@@ -236,6 +242,9 @@ Dim l_twTween As Fury2SequenceTween, l_evtEvent As Fury2SequenceEvent
                     Events.Add l_evtEvent
                 Next l_lngItems
             End If
+            .ReadSegment_Begin
+                .Load Tag
+            .ReadSegment_End
         .ReadSegment_End
     End With
 End Sub
@@ -256,6 +265,9 @@ Dim l_twTween As Fury2SequenceTween, l_evtEvent As Fury2SequenceEvent
             For Each l_evtEvent In Events
                 .Save l_evtEvent
             Next l_evtEvent
+        .WriteSegment_End
+        .WriteSegment_Begin
+            .Save Tag
         .WriteSegment_End
     End With
 End Sub

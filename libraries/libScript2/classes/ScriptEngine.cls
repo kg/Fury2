@@ -44,7 +44,7 @@ End Function
 Public Function InvokeMember(ByRef Obj As Object, ByVal Member As Long, ByVal InvokeType As VbCallType, ByRef Arguments() As Variant) As Variant
 On Error Resume Next
     If Member = -1 Then Exit Function
-    InvokeMember = m_Engine.InvokeMemberArray(Obj, Member, InvokeType, Arguments)
+    VarCopy m_Engine.InvokeMemberArray(Obj, Member, InvokeType, Arguments), InvokeMember
 End Function
 
 Public Function ResolveName(ByVal Name As String) As INamedItem
@@ -92,28 +92,28 @@ Dim l_lngBefore As Long
     Err.Clear
     l_lngBefore = ScriptsRunning
     If IsMissing(Parameters) Then
-        Exec = CallByName(l_objNamespace, Name, VbMethod)
+        VarCopy CallByName(l_objNamespace, Name, VbMethod), Exec
     Else
         ' I'll come up with a beautiful hack for this... later
         Select Case UBound(Parameters)
         Case 0
-            Exec = CallByName(l_objNamespace, Name, VbMethod, Parameters(0))
+            VarCopy CallByName(l_objNamespace, Name, VbMethod, Parameters(0)), Exec
         Case 1
-            Exec = CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1))
+            VarCopy CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1)), Exec
         Case 2
-            Exec = CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2))
+            VarCopy CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2)), Exec
         Case 3
-            Exec = CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2), Parameters(3))
+            VarCopy CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2), Parameters(3)), Exec
         Case 4
-            Exec = CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2), Parameters(3), Parameters(4))
+            VarCopy CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2), Parameters(3), Parameters(4)), Exec
         Case 5
-            Exec = CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2), Parameters(3), Parameters(4), Parameters(5))
+            VarCopy CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2), Parameters(3), Parameters(4), Parameters(5)), Exec
         Case 6
-            Exec = CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2), Parameters(3), Parameters(4), Parameters(5), Parameters(6))
+            VarCopy CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2), Parameters(3), Parameters(4), Parameters(5), Parameters(6)), Exec
         Case 7
-            Exec = CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2), Parameters(3), Parameters(4), Parameters(5), Parameters(6), Parameters(7))
+            VarCopy CallByName(l_objNamespace, Name, VbMethod, Parameters(0), Parameters(1), Parameters(2), Parameters(3), Parameters(4), Parameters(5), Parameters(6), Parameters(7)), Exec
         Case Else
-            Exec = CallByName(l_objNamespace, Name, VbMethod, Parameters)
+            VarCopy CallByName(l_objNamespace, Name, VbMethod, Parameters), Exec
         End Select
     End If
     If Err <> 0 Then
@@ -146,20 +146,13 @@ On Error Resume Next
     End Select
 End Function
 
-Public Function EvalObject(ByRef Expr As String) As Object
-On Error Resume Next
-Dim l_strScript As String
-    l_strScript = ParseCodes(Expr)
-    Err.Clear
-    Set EvalObject = m_Engine.EvalExpr(l_strScript, "")
-End Function
-
 Public Function Eval(ByRef Expr As String) As Variant
 On Error Resume Next
 Dim l_strScript As String
+Dim l_varValue As tVar
     l_strScript = ParseCodes(Expr)
     Err.Clear
-    Eval = m_Engine.EvalExpr(l_strScript, "")
+    VarCopy m_Engine.EvalExpr(l_strScript, ""), Eval
 End Function
 
 Public Function ParseCodes(ByRef Str As String) As String

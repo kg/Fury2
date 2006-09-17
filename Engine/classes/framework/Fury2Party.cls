@@ -91,7 +91,7 @@ On Error Resume Next
     Err.Clear
     With Engine.ScriptEngine
         .AddCode .Language.GenerateAssignment("NewPartyMember", .Language.GenerateInstantiation("PartyMember"), True)
-        Set CreateMember = .EvalObject("NewPartyMember")
+        Set CreateMember = .Eval("NewPartyMember")
     End With
     Err.Clear
 End Function

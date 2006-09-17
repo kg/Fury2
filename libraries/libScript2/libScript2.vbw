@@ -9,3 +9,4 @@ ScriptFunction = 154, 175, 975, 638, C
 ScriptClass = 176, 200, 997, 663, C
 ScriptVariable = 66, 75, 887, 538, C
 ScriptArgument = 132, 150, 953, 613, C
+mdlWeakReference = 66, 75, 1363, 600, C

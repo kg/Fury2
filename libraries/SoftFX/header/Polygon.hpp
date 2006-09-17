@@ -85,18 +85,6 @@ template <class T> inline bool Intersects(T& a, T& b) {
     if (!aInterval.intersects(bInterval))
       return false;
   }
-  //for (int e = 0; e < aEdges; e++) {
-  //  normal = a.GetEdgeLine(e).vector();
-  //  FInterval aInterval = CalculateInterval(normal, a), bInterval = CalculateInterval(normal, b);
-  //  if (!aInterval.intersects(bInterval))
-  //    return false;
-  //}
-  //for (int e = 0; e < bEdges; e++) {
-  //  normal = b.GetEdgeLine(e).vector();
-  //  FInterval aInterval = CalculateInterval(normal, a), bInterval = CalculateInterval(normal, b);
-  //  if (!aInterval.intersects(bInterval))
-  //    return false;
-  //}
   return true;
 }
 

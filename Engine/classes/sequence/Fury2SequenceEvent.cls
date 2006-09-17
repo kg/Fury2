@@ -15,10 +15,16 @@ Option Explicit
 Implements Fury2Object
 Implements IVirtualFileSaveable
 Implements IInspectable
+Private m_booCustomScript As Boolean
 Private m_strScript As String
 Private m_evtScript As Fury2Event
 Private m_skfKeyframe As WeakReference
 Private m_booTriggered As Boolean
+
+Public Sub SetScript(ByVal Script As Fury2Event)
+On Error Resume Next
+    Set m_evtScript = Script
+End Sub
 
 Public Property Get Script() As String
     Script = m_strScript
@@ -38,6 +44,7 @@ Dim l_evtNew As Fury2SequenceEvent
     Set l_evtNew = New Fury2SequenceEvent
     With l_evtNew
         .Script = Script
+        .SetScript m_evtScript
     End With
     Set Duplicate = l_evtNew
 End Function
@@ -62,13 +69,19 @@ End Property
 Public Sub Initialize()
 On Error Resume Next
     m_booTriggered = False
-    Set m_evtScript = Keyframe.Sequence.Engine.CompileScriptBlock(Script, "Sequence, Keyframe")
+    If m_evtScript Is Nothing Then
+        Set m_evtScript = Keyframe.Sequence.Engine.CompileScriptBlock(Script, "Sequence, Keyframe")
+        m_evtScript.BoundParameters = Array(Keyframe.Sequence, Keyframe)
+    End If
 End Sub
 
 Public Sub Reinitialize()
 On Error Resume Next
     m_booTriggered = False
-    Set m_evtScript = Keyframe.Sequence.Engine.CompileScriptBlock(Script, "Sequence, Keyframe")
+    If m_evtScript Is Nothing Then
+        Set m_evtScript = Keyframe.Sequence.Engine.CompileScriptBlock(Script, "Sequence, Keyframe")
+        m_evtScript.BoundParameters = Array(Keyframe.Sequence, Keyframe)
+    End If
 End Sub
 
 Public Sub Trigger()
@@ -76,7 +89,7 @@ On Error Resume Next
     If m_booTriggered Then
     Else
         m_booTriggered = True
-        m_evtScript.Invoke Keyframe.Sequence, Keyframe
+        m_evtScript.Invoke
         Err.Clear
     End If
 End Sub

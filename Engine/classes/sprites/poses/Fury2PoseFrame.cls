@@ -53,7 +53,7 @@ Private mvarScriptBlock As Fury2Event
 Private mvarParent As WeakReference
 Private mvarIndex As Long
 
-Public Function AddSecondaryImage(Optional ByRef Filename As String = "", Optional ByVal ImageType As SecondaryImageTypes = siOverlay) As Fury2SecondaryImage
+Public Function AddSecondaryImage(Optional ByRef Filename As String = "", Optional ByVal ImageType As Fury2SecondaryImageTypes = F2SI_Overlay) As Fury2SecondaryImage
 Attribute AddSecondaryImage.VB_Description = "Adds a new secondary image to this frame."
 On Error Resume Next
 Dim l_siImage As Fury2SecondaryImage

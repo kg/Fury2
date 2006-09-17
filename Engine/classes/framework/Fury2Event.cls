@@ -173,35 +173,35 @@ Dim l_lngIndex As Long, l_lngIncrement As Long
     Engine.ContextLevelAdd m_strContextName
     m_lngBlocked = m_lngBlocked + 1
     If (MethodID <> -1) Then
-        Invoke = m_seEngine.InvokeMember(l_objObject, MethodID, VbMethod, l_varParameters)
+        VarCopy m_seEngine.InvokeMember(l_objObject, MethodID, VbMethod, l_varParameters), Invoke
     Else
         Select Case l_lngParameterCount
         Case 0
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0)), Invoke
         Case 1
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1)), Invoke
         Case 2
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2)), Invoke
         Case 3
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3)), Invoke
         Case 4
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4)), Invoke
         Case 5
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5)), Invoke
         Case 6
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6)), Invoke
         Case 7
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7)), Invoke
         Case 8
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8)), Invoke
         Case 9
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9)), Invoke
         Case 10
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9), l_varParameters(10))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9), l_varParameters(10)), Invoke
         Case 11
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9), l_varParameters(10), l_varParameters(11))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9), l_varParameters(10), l_varParameters(11)), Invoke
         Case Else
-            Invoke = CallByName(l_objObject, Method, VbMethod)
+            VarCopy CallByName(l_objObject, Method, VbMethod), Invoke
         End Select
     End If
     Erase l_varParameters
@@ -301,35 +301,35 @@ Dim l_lngIndex As Long, l_lngIncrement As Long
     Engine.ContextLevelAdd m_strContextName
     m_lngBlocked = m_lngBlocked + 1
     If (MethodID <> -1) Then
-        Invoke = m_seEngine.InvokeMember(l_objObject, MethodID, VbMethod, l_varParameters)
+        VarCopy m_seEngine.InvokeMember(l_objObject, MethodID, VbMethod, l_varParameters), ICallable_Invoke
     Else
         Select Case l_lngParameterCount
         Case 0
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0)), ICallable_Invoke
         Case 1
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1)), ICallable_Invoke
         Case 2
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2)), ICallable_Invoke
         Case 3
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3)), ICallable_Invoke
         Case 4
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4)), ICallable_Invoke
         Case 5
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5)), ICallable_Invoke
         Case 6
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6)), ICallable_Invoke
         Case 7
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7)), ICallable_Invoke
         Case 8
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8)), ICallable_Invoke
         Case 9
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9)), ICallable_Invoke
         Case 10
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9), l_varParameters(10))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9), l_varParameters(10)), ICallable_Invoke
         Case 11
-            Invoke = CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9), l_varParameters(10), l_varParameters(11))
+            VarCopy CallByName(l_objObject, Method, VbMethod, l_varParameters(0), l_varParameters(1), l_varParameters(2), l_varParameters(3), l_varParameters(4), l_varParameters(5), l_varParameters(6), l_varParameters(7), l_varParameters(8), l_varParameters(9), l_varParameters(10), l_varParameters(11)), ICallable_Invoke
         Case Else
-            Invoke = CallByName(l_objObject, Method, VbMethod)
+            VarCopy CallByName(l_objObject, Method, VbMethod), ICallable_Invoke
         End Select
     End If
     Erase l_varParameters

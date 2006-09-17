@@ -38,7 +38,7 @@ Implements IVirtualFileSaveable
 Private mvarFilename As String
 Private mvarImage As Fury2Image
 Private mvarParent As Fury2PoseFrame
-Private mvarType As SecondaryImageTypes
+Private mvarType As Fury2SecondaryImageTypes
 Private mvarIndex As Long
 
 Friend Sub SetIndex(ByVal Index As Long)
@@ -102,12 +102,12 @@ Friend Sub SetImage(Img As Fury2Image)
     Set mvarImage = Img
 End Sub
 
-Public Property Get ImageType() As SecondaryImageTypes
+Public Property Get ImageType() As Fury2SecondaryImageTypes
 On Error Resume Next
     ImageType = mvarType
 End Property
 
-Public Property Let ImageType(ByVal NewValue As SecondaryImageTypes)
+Public Property Let ImageType(ByVal NewValue As Fury2SecondaryImageTypes)
 On Error Resume Next
     mvarType = NewValue
 End Property

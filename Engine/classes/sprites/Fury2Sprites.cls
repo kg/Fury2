@@ -234,10 +234,10 @@ Public Function SpriteFromArea(ByVal Area As Fury2Rect, Optional ByVal Exclude A
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
-    l_rctArea.x1 = Area.left
-    l_rctArea.y1 = Area.top
-    l_rctArea.x2 = Area.right
-    l_rctArea.y2 = Area.bottom
+    l_rctArea.x1 = Area.Left
+    l_rctArea.y1 = Area.Top
+    l_rctArea.x2 = Area.Right
+    l_rctArea.y2 = Area.Bottom
     Set SpriteFromArea = Nothing
     If mCol.Count < 1 Then Exit Function
     l_lngExclude = Exclude.Pointer
@@ -249,10 +249,10 @@ Public Function SpriteFromScreenArea(ByVal Area As Fury2Rect, Optional ByVal Exc
 On Error Resume Next
 Dim l_lngResult As Long, l_lngExclude As Long
 Dim l_rctArea As FRect
-    l_rctArea.x1 = Area.left
-    l_rctArea.y1 = Area.top
-    l_rctArea.x2 = Area.right
-    l_rctArea.y2 = Area.bottom
+    l_rctArea.x1 = Area.Left
+    l_rctArea.y1 = Area.Top
+    l_rctArea.x2 = Area.Right
+    l_rctArea.y2 = Area.Bottom
     Set SpriteFromScreenArea = Nothing
     If mCol.Count < 1 Then Exit Function
     l_lngExclude = Exclude.Pointer
@@ -303,10 +303,10 @@ Dim l_lngCount As Long, l_lngSize As Long
 Dim l_rctArea As FRect
 Dim l_lngExclude As Long
     l_lngExclude = Exclude.Pointer
-    l_rctArea.x1 = Area.left
-    l_rctArea.y1 = Area.top
-    l_rctArea.x2 = Area.right
-    l_rctArea.y2 = Area.bottom
+    l_rctArea.x1 = Area.Left
+    l_rctArea.y1 = Area.Top
+    l_rctArea.x2 = Area.Right
+    l_rctArea.y2 = Area.Bottom
     ReDim l_varResult(0 To 7)
     l_lngSize = 8
     l_lngStart = Item(1).Pointer
@@ -341,10 +341,10 @@ Dim l_lngCount As Long, l_lngSize As Long
 Dim l_rctArea As FRect
 Dim l_lngExclude As Long
     l_lngExclude = Exclude.Pointer
-    l_rctArea.x1 = Area.left
-    l_rctArea.y1 = Area.top
-    l_rctArea.x2 = Area.right
-    l_rctArea.y2 = Area.bottom
+    l_rctArea.x1 = Area.Left
+    l_rctArea.y1 = Area.Top
+    l_rctArea.x2 = Area.Right
+    l_rctArea.y2 = Area.Bottom
     ReDim l_varResult(0 To 7)
     l_lngSize = 8
     l_lngStart = Item(1).Pointer
@@ -511,8 +511,8 @@ Dim l_lngRenderTargets() As Long
             .ParallaxX = 1
             .ParallaxY = 1
             .Alpha = 255
-            .Rectangle.left = 0
-            .Rectangle.top = 0
+            .Rectangle.Left = 0
+            .Rectangle.Top = 0
             .Rectangle.Width = Surface.Width
             .Rectangle.Height = Surface.Height
         End With

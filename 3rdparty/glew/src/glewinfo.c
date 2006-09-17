@@ -1,7 +1,7 @@
 /*
 ** The OpenGL Extension Wrangler Library
-** Copyright (C) 2002-2005, Milan Ikits <milan ikits[]ieee org>
-** Copyright (C) 2002-2005, Marcelo E. Magallon <mmagallo[]debian org>
+** Copyright (C) 2002-2006, Milan Ikits <milan ikits[]ieee org>
+** Copyright (C) 2002-2006, Marcelo E. Magallon <mmagallo[]debian org>
 ** Copyright (C) 2002, Lev Povalahev
 ** All rights reserved.
 ** 
@@ -589,6 +589,7 @@ static void _glewInfo_GL_ARB_imaging (void)
 {
   glewPrintExt("GL_ARB_imaging", GLEW_ARB_imaging, glewGetExtension("GL_ARB_imaging"));
 
+  glewInfoFunc("glBlendEquation", glBlendEquation == NULL);
   glewInfoFunc("glColorSubTable", glColorSubTable == NULL);
   glewInfoFunc("glColorTable", glColorTable == NULL);
   glewInfoFunc("glColorTableParameterfv", glColorTableParameterfv == NULL);
@@ -931,6 +932,11 @@ static void _glewInfo_GL_ARB_texture_rectangle (void)
 static void _glewInfo_GL_ARB_transpose_matrix (void)
 {
   glewPrintExt("GL_ARB_transpose_matrix", GLEW_ARB_transpose_matrix, glewGetExtension("GL_ARB_transpose_matrix"));
+
+  glewInfoFunc("glLoadTransposeMatrixdARB", glLoadTransposeMatrixdARB == NULL);
+  glewInfoFunc("glLoadTransposeMatrixfARB", glLoadTransposeMatrixfARB == NULL);
+  glewInfoFunc("glMultTransposeMatrixdARB", glMultTransposeMatrixdARB == NULL);
+  glewInfoFunc("glMultTransposeMatrixfARB", glMultTransposeMatrixfARB == NULL);
 }
 
 #endif /* GL_ARB_transpose_matrix */
@@ -1615,6 +1621,28 @@ static void _glewInfo_GL_EXT_fragment_lighting (void)
 
 #endif /* GL_EXT_fragment_lighting */
 
+#ifdef GL_EXT_framebuffer_blit
+
+static void _glewInfo_GL_EXT_framebuffer_blit (void)
+{
+  glewPrintExt("GL_EXT_framebuffer_blit", GLEW_EXT_framebuffer_blit, glewGetExtension("GL_EXT_framebuffer_blit"));
+
+  glewInfoFunc("glBlitFramebufferEXT", glBlitFramebufferEXT == NULL);
+}
+
+#endif /* GL_EXT_framebuffer_blit */
+
+#ifdef GL_EXT_framebuffer_multisample
+
+static void _glewInfo_GL_EXT_framebuffer_multisample (void)
+{
+  glewPrintExt("GL_EXT_framebuffer_multisample", GLEW_EXT_framebuffer_multisample, glewGetExtension("GL_EXT_framebuffer_multisample"));
+
+  glewInfoFunc("glRenderbufferStorageMultisampleEXT", glRenderbufferStorageMultisampleEXT == NULL);
+}
+
+#endif /* GL_EXT_framebuffer_multisample */
+
 #ifdef GL_EXT_framebuffer_object
 
 static void _glewInfo_GL_EXT_framebuffer_object (void)
@@ -1747,6 +1775,15 @@ static void _glewInfo_GL_EXT_multisample (void)
 }
 
 #endif /* GL_EXT_multisample */
+
+#ifdef GL_EXT_packed_depth_stencil
+
+static void _glewInfo_GL_EXT_packed_depth_stencil (void)
+{
+  glewPrintExt("GL_EXT_packed_depth_stencil", GLEW_EXT_packed_depth_stencil, glewGetExtension("GL_EXT_packed_depth_stencil"));
+}
+
+#endif /* GL_EXT_packed_depth_stencil */
 
 #ifdef GL_EXT_packed_pixels
 
@@ -1902,6 +1939,15 @@ static void _glewInfo_GL_EXT_shared_texture_palette (void)
 }
 
 #endif /* GL_EXT_shared_texture_palette */
+
+#ifdef GL_EXT_stencil_clear_tag
+
+static void _glewInfo_GL_EXT_stencil_clear_tag (void)
+{
+  glewPrintExt("GL_EXT_stencil_clear_tag", GLEW_EXT_stencil_clear_tag, glewGetExtension("GL_EXT_stencil_clear_tag"));
+}
+
+#endif /* GL_EXT_stencil_clear_tag */
 
 #ifdef GL_EXT_stencil_two_side
 
@@ -2091,6 +2137,15 @@ static void _glewInfo_GL_EXT_texture_rectangle (void)
 
 #endif /* GL_EXT_texture_rectangle */
 
+#ifdef GL_EXT_texture_sRGB
+
+static void _glewInfo_GL_EXT_texture_sRGB (void)
+{
+  glewPrintExt("GL_EXT_texture_sRGB", GLEW_EXT_texture_sRGB, glewGetExtension("GL_EXT_texture_sRGB"));
+}
+
+#endif /* GL_EXT_texture_sRGB */
+
 #ifdef GL_EXT_vertex_array
 
 static void _glewInfo_GL_EXT_vertex_array (void)
@@ -2174,6 +2229,17 @@ static void _glewInfo_GL_EXT_vertex_weighting (void)
 }
 
 #endif /* GL_EXT_vertex_weighting */
+
+#ifdef GL_GREMEDY_string_marker
+
+static void _glewInfo_GL_GREMEDY_string_marker (void)
+{
+  glewPrintExt("GL_GREMEDY_string_marker", GLEW_GREMEDY_string_marker, glewGetExtension("GL_GREMEDY_string_marker"));
+
+  glewInfoFunc("glStringMarkerGREMEDY", glStringMarkerGREMEDY == NULL);
+}
+
+#endif /* GL_GREMEDY_string_marker */
 
 #ifdef GL_HP_convolution_border_modes
 
@@ -2342,6 +2408,15 @@ static void _glewInfo_GL_KTX_buffer_region (void)
 }
 
 #endif /* GL_KTX_buffer_region */
+
+#ifdef GL_MESAX_texture_stack
+
+static void _glewInfo_GL_MESAX_texture_stack (void)
+{
+  glewPrintExt("GL_MESAX_texture_stack", GLEW_MESAX_texture_stack, glewGetExtension("GL_MESAX_texture_stack"));
+}
+
+#endif /* GL_MESAX_texture_stack */
 
 #ifdef GL_MESA_pack_invert
 
@@ -3632,6 +3707,17 @@ static void _glewInfo_WGL_3DFX_multisample (void)
 
 #endif /* WGL_3DFX_multisample */
 
+#ifdef WGL_3DL_stereo_control
+
+static void _glewInfo_WGL_3DL_stereo_control (void)
+{
+  glewPrintExt("WGL_3DL_stereo_control", WGLEW_3DL_stereo_control, wglewGetExtension("WGL_3DL_stereo_control"));
+
+  glewInfoFunc("wglSetStereoEmitterState3DL", wglSetStereoEmitterState3DL == NULL);
+}
+
+#endif /* WGL_3DL_stereo_control */
+
 #ifdef WGL_ARB_buffer_region
 
 static void _glewInfo_WGL_ARB_buffer_region (void)
@@ -4715,6 +4801,12 @@ static void glewInfo (void)
 #ifdef GL_EXT_fragment_lighting
   _glewInfo_GL_EXT_fragment_lighting();
 #endif /* GL_EXT_fragment_lighting */
+#ifdef GL_EXT_framebuffer_blit
+  _glewInfo_GL_EXT_framebuffer_blit();
+#endif /* GL_EXT_framebuffer_blit */
+#ifdef GL_EXT_framebuffer_multisample
+  _glewInfo_GL_EXT_framebuffer_multisample();
+#endif /* GL_EXT_framebuffer_multisample */
 #ifdef GL_EXT_framebuffer_object
   _glewInfo_GL_EXT_framebuffer_object();
 #endif /* GL_EXT_framebuffer_object */
@@ -4745,6 +4837,9 @@ static void glewInfo (void)
 #ifdef GL_EXT_multisample
   _glewInfo_GL_EXT_multisample();
 #endif /* GL_EXT_multisample */
+#ifdef GL_EXT_packed_depth_stencil
+  _glewInfo_GL_EXT_packed_depth_stencil();
+#endif /* GL_EXT_packed_depth_stencil */
 #ifdef GL_EXT_packed_pixels
   _glewInfo_GL_EXT_packed_pixels();
 #endif /* GL_EXT_packed_pixels */
@@ -4784,6 +4879,9 @@ static void glewInfo (void)
 #ifdef GL_EXT_shared_texture_palette
   _glewInfo_GL_EXT_shared_texture_palette();
 #endif /* GL_EXT_shared_texture_palette */
+#ifdef GL_EXT_stencil_clear_tag
+  _glewInfo_GL_EXT_stencil_clear_tag();
+#endif /* GL_EXT_stencil_clear_tag */
 #ifdef GL_EXT_stencil_two_side
   _glewInfo_GL_EXT_stencil_two_side();
 #endif /* GL_EXT_stencil_two_side */
@@ -4841,6 +4939,9 @@ static void glewInfo (void)
 #ifdef GL_EXT_texture_rectangle
   _glewInfo_GL_EXT_texture_rectangle();
 #endif /* GL_EXT_texture_rectangle */
+#ifdef GL_EXT_texture_sRGB
+  _glewInfo_GL_EXT_texture_sRGB();
+#endif /* GL_EXT_texture_sRGB */
 #ifdef GL_EXT_vertex_array
   _glewInfo_GL_EXT_vertex_array();
 #endif /* GL_EXT_vertex_array */
@@ -4850,6 +4951,9 @@ static void glewInfo (void)
 #ifdef GL_EXT_vertex_weighting
   _glewInfo_GL_EXT_vertex_weighting();
 #endif /* GL_EXT_vertex_weighting */
+#ifdef GL_GREMEDY_string_marker
+  _glewInfo_GL_GREMEDY_string_marker();
+#endif /* GL_GREMEDY_string_marker */
 #ifdef GL_HP_convolution_border_modes
   _glewInfo_GL_HP_convolution_border_modes();
 #endif /* GL_HP_convolution_border_modes */
@@ -4895,6 +4999,9 @@ static void glewInfo (void)
 #ifdef GL_KTX_buffer_region
   _glewInfo_GL_KTX_buffer_region();
 #endif /* GL_KTX_buffer_region */
+#ifdef GL_MESAX_texture_stack
+  _glewInfo_GL_MESAX_texture_stack();
+#endif /* GL_MESAX_texture_stack */
 #ifdef GL_MESA_pack_invert
   _glewInfo_GL_MESA_pack_invert();
 #endif /* GL_MESA_pack_invert */
@@ -5221,6 +5328,9 @@ static void wglewInfo ()
 #ifdef WGL_3DFX_multisample
   _glewInfo_WGL_3DFX_multisample();
 #endif /* WGL_3DFX_multisample */
+#ifdef WGL_3DL_stereo_control
+  _glewInfo_WGL_3DL_stereo_control();
+#endif /* WGL_3DL_stereo_control */
 #ifdef WGL_ARB_buffer_region
   _glewInfo_WGL_ARB_buffer_region();
 #endif /* WGL_ARB_buffer_region */

@@ -16,8 +16,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\../../../binary/sys"
-			IntermediateDirectory=".\../../../binary/sys/temp"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
@@ -83,17 +83,13 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="../../../libraries/lib/corona.lib"
-				OutputFile=".\../../../binary/sys/SoftFX.dll"
+				AdditionalDependencies="../../lib/corona.lib"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\../../../binary/sys/SoftFX.pdb"
-				GenerateMapFile="false"
-				MapFileName=".\../../../binary/sys/temp/SoftFX.map"
+				GenerateMapFile="true"
 				TurnOffAssemblyGeneration="true"
-				ImportLibrary=".\../../../binary/sys/SoftFX.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -119,13 +115,13 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Fury2 0.9\sys&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\../../../binary/sys"
-			IntermediateDirectory=".\../../../binary/sys/temp"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
@@ -200,19 +196,15 @@
 				Name="VCLinkerTool"
 				RegisterOutput="false"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="../../../libraries/lib/corona.lib"
-				OutputFile=".\../../../binary/sys/SoftFX.dll"
+				AdditionalDependencies="../../lib/corona.lib"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateManifest="false"
-				ProgramDatabaseFile=".\../../../binary/sys/SoftFX.pdb"
-				GenerateMapFile="false"
-				MapFileName=".\../../../binary/sys/temp/SoftFX.map"
+				GenerateMapFile="true"
 				MapExports="false"
 				OptimizeReferences="0"
 				EnableCOMDATFolding="0"
 				OptimizeForWindows98="2"
-				ImportLibrary=".\../../../binary/sys/SoftFX.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -238,13 +230,13 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Fury2 0.9\sys&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Development|Win32"
-			OutputDirectory=".\../../../binary/sys"
-			IntermediateDirectory=".\../../../binary/sys/temp"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
@@ -291,6 +283,7 @@
 				DisableLanguageExtensions="false"
 				DefaultCharIsUnsigned="true"
 				TreatWChar_tAsBuiltInType="true"
+				OpenMP="false"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\../../../binary/sys/temp/SoftFX.pch"
 				AssemblerOutput="2"
@@ -319,22 +312,19 @@
 				RegisterOutput="false"
 				IgnoreImportLibrary="true"
 				AdditionalOptions="/LTCG /PROFILE"
-				AdditionalDependencies="../../../libraries/lib/corona.lib"
+				AdditionalDependencies="../../lib/corona.lib"
 				ShowProgress="2"
-				OutputFile=".\../../../binary/sys/SoftFX.dll"
 				LinkIncremental="0"
 				SuppressStartupBanner="true"
 				GenerateManifest="true"
+				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\../../../binary/sys/SoftFX.pdb"
-				GenerateMapFile="false"
-				MapFileName=".\../../../binary/sys/temp/SoftFX.map"
+				GenerateMapFile="true"
 				MapExports="false"
 				OptimizeReferences="0"
 				EnableCOMDATFolding="0"
 				OptimizeForWindows98="2"
 				TurnOffAssemblyGeneration="true"
-				ImportLibrary=".\../../../binary/sys/SoftFX.lib"
 				TargetMachine="1"
 				Profile="false"
 			/>
@@ -361,7 +351,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;"
+				CommandLine="copy &quot;$(TargetPath)*&quot; &quot;C:\Windows\System32&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)*&quot; &quot;C:\Program Files\Fury2 0.9\sys&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

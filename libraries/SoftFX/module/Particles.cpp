@@ -17,6 +17,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include "../header/SoftFX Main.hpp"
 #include "../header/MersenneTwister.h"
 #include "../header/Fury2.hpp"
@@ -182,6 +185,7 @@ void ParticleEngine::tick(float elapsed) {
   ParticleTypeList::iterator typeiter;
   ParticleModifierList::iterator modifier;
   ParticleGeneratorList::iterator generator;
+  std::vector<int> killList;
   ParticleDieEvent evt;
   evt.Engine = this;
   bool kill = false;
@@ -225,12 +229,70 @@ void ParticleEngine::tick(float elapsed) {
     iter = listiter->begin();
     i = 0;
     c = *countiter;
+#ifdef _OPENMP
+    bool* killList = StaticAllocate<bool>(ListBuffer, c);
+    #pragma omp parallel    
+    {
+      #pragma omp for
+      for (int i = 0; i < c; i++) {
+        state.Particle = &(listiter->at(i));
+        // particle::tick returns true if the particle has expired and needs to be removed
+        kill = state.Particle->tick(state);
+        killList[i] = kill;
+      }
+    }
+    int kc = c;
+    #pragma omp parallel    
+    {
+      #pragma omp for
+      for (int i = 0; i < kc; i++) {
+        if (killList[i]) {
+          state.Particle = &(listiter->at(i));
+	        assert(c > 0);
+          if (state.Type->DieCallback) 
+          {
+            evt.Particle = state.Particle;
+            state.Type->DieCallback(&evt);
+          }
+          // swap the dead particle with the last live particle in the particle list
+          Particle temp = (*listiter)[c - 1];
+          (*listiter)[c - 1] = (*listiter)[i];
+          (*listiter)[i] = temp;
+          // decrease the size of the particle list (the dead particle is now outside the list)
+          c--;
+        }
+      }
+    }
+#else
+    bool* killList = StaticAllocate<bool>(ListBuffer, c);
     while (i < c) {
       state.Particle = &(*iter);
       // particle::tick returns true if the particle has expired and needs to be removed
       kill = iter->tick(state);
-      if (kill) {
-		    assert(c > 0);
+      killList[i] = kill;
+      //if (kill) {
+		    //assert(c > 0);
+      //  if (state.Type->DieCallback) 
+      //  {
+      //    evt.Particle = state.Particle;
+      //    state.Type->DieCallback(&evt);
+      //  }
+      //  // swap the dead particle with the last live particle in the particle list
+      //  Particle temp = (*listiter)[c - 1];
+      //  (*listiter)[c - 1] = *iter;
+      //  *iter = temp;
+      //  // decrease the size of the particle list (the dead particle is now outside the list)
+      //  c--;
+      //} else {
+        ++iter;
+        i++;
+      //}
+    }
+    int kc = c;
+    for (int i = 0; i < kc; i++) {
+      if (killList[i]) {
+        state.Particle = &(listiter->at(i));
+	      assert(c > 0);
         if (state.Type->DieCallback) 
         {
           evt.Particle = state.Particle;
@@ -238,15 +300,13 @@ void ParticleEngine::tick(float elapsed) {
         }
         // swap the dead particle with the last live particle in the particle list
         Particle temp = (*listiter)[c - 1];
-        (*listiter)[c - 1] = *iter;
-        *iter = temp;
+        (*listiter)[c - 1] = (*listiter)[i];
+        (*listiter)[i] = temp;
         // decrease the size of the particle list (the dead particle is now outside the list)
         c--;
-      } else {
-        ++iter;
-        i++;
       }
     }
+#endif
 
     // update the stored list count to reflect any dead particles from this update
     *countiter = c;

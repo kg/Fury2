@@ -1034,7 +1034,7 @@ Dim l_pthPath As Fury2Path
                 .Load Tag
             .ReadSegment_End
             .ReadSegment_Begin
-                .RawLoad VarPtr(m_spParam.Velocity.V), 4
+                .RawLoad VarPtr(m_spParam.Velocity.v), 4
                 .RawLoad VarPtr(m_spParam.Velocity.X), 4 * 3
                 .RawLoad VarPtr(m_spParam.Velocity.BR), 4
                 .Load l_sngValue
@@ -1229,7 +1229,7 @@ Dim l_pthPath As Fury2Path
                 .Save Tag
             .WriteSegment_End
             .WriteSegment_Begin
-                .RawSave VarPtr(m_spParam.Velocity.V), 4
+                .RawSave VarPtr(m_spParam.Velocity.v), 4
                 .RawSave VarPtr(m_spParam.Velocity.X), 4 * 3
                 .RawSave VarPtr(m_spParam.Velocity.BR), 4
                 .Save CSng(0)
@@ -1692,7 +1692,7 @@ Dim l_strName As String
             If left(Trim(m_strScript), 2) = "<@" Then
                 l_strScript = Trim(m_strScript)
                 l_strName = Mid(l_strScript, 3, Len(l_strScript) - 3)
-                Set m_objScript = mvarEngine.ScriptEngine.EvalObject(l_strName)
+                Set m_objScript = mvarEngine.ScriptEngine.Eval(l_strName)
                 m_booScript_Update = m_objScript.ImplementsMethod("Update")
                 m_booScript_Hit = m_objScript.ImplementsMethod("Hit")
                 m_booScript_HitMap = m_objScript.ImplementsMethod("HitMap")
@@ -1934,11 +1934,6 @@ Dim l_sprCollided As Fury2Sprite
                 mvarEngine.ContextLevelRemove
             End If
         End If
-    End If
-
-    If AttachedGraphic Is Nothing Then
-    Else
-        AttachedGraphic.Update
     End If
 
     'm_spParam.Params.SpecialFX = fxSoftShadow
@@ -2400,12 +2395,12 @@ End Property
 
 Public Property Get Velocity() As Single
 Attribute Velocity.VB_Description = "*The sprite's current movement speed."
-    Velocity = m_spParam.Velocity.V
+    Velocity = m_spParam.Velocity.v
 End Property
 
 Public Property Let Velocity(ByVal NewValue As Single)
 On Error Resume Next
-    m_spParam.Velocity.V = NewValue
+    m_spParam.Velocity.v = NewValue
 End Property
 
 Public Property Get WalkSpeed() As Single
@@ -2603,7 +2598,7 @@ Public Property Get YDelta() As Single
 End Property
 
 Public Property Get LastVelocity() As Single
-    LastVelocity = m_spOldParam.Velocity.V
+    LastVelocity = m_spOldParam.Velocity.v
 End Property
 
 

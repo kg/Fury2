@@ -177,7 +177,6 @@ Private m_colReversePluginStack As Collection
 Private m_Flags As Collection
 Private m_FlagNames As Collection
 Private Hosts As Fury2Collection
-Private Graphics As Fury2Collection
 Private Videos As Fury2Collection
 Private m_objConstants As Fury2ScriptConstants
 Private m_objTransitions As Fury2Transitions
@@ -426,13 +425,13 @@ On Error Resume Next
         Method = ToString(Method)
         If InStr(Method, "(") Then
             BindParameters = m_ScriptEngine.Eval("Array" & Mid(Method, InStr(Method, "(")))
-            Method = Left(Method, InStr(Method, "(") - 1)
+            Method = left(Method, InStr(Method, "(") - 1)
         ElseIf InStr(Method, " ") Then
             BindParameters = m_ScriptEngine.Eval("Array(" & Mid(Method, InStr(Method, " ") + 1) & ")")
-            Method = Left(Method, InStr(Method, " ") - 1)
+            Method = left(Method, InStr(Method, " ") - 1)
         End If
         If InStr(Method, ".") Then
-            Object = Left(Method, InStr(Method, ".") - 1)
+            Object = left(Method, InStr(Method, ".") - 1)
             Method = Mid(Method, InStr(Method, ".") + 1)
         End If
         If VarType(Object) = vbString Then
@@ -628,25 +627,6 @@ On Error Resume Next
     Err.Clear
 End Function
 
-Function CreateTimerEvent(ByVal BeginTime As Long, ByVal EndTime As Long, ByVal Script As String, Optional ByVal RepeatDelay As Long = 0, Optional ByVal ActivationType As Long = F2TE_Normal)
-Attribute CreateTimerEvent.VB_Description = "Creates a timer event."
-On Error Resume Next
-Dim m_teNew As Fury2TimerEvent
-    Set m_teNew = New Fury2TimerEvent
-    With m_teNew
-        .SetEngine Me
-        .BeginTime = BeginTime
-        .EndTime = EndTime
-        .ScriptSource = Script
-        .RepeatDelay = RepeatDelay
-        If RepeatDelay > 0 Then
-            .Repeat = True
-        End If
-        .ActivationType = ActivationType
-    End With
-    Set CreateTimerEvent = m_teNew
-End Function
-
 Function DataType(ByRef Data As Variant) As String
 Attribute DataType.VB_Description = "Returns the data type of a value."
 On Error Resume Next
@@ -689,19 +669,11 @@ On Error Resume Next
     DistanceBetween = Sqr((Rx * Rx) + (Ry * Ry))
 End Function
 
-Function Evaluate(ByRef Expr)
+Function Evaluate(ByRef Expr) As Variant
 Attribute Evaluate.VB_Description = "Evaluates an expression and returns its value."
 On Error Resume Next
-Dim l_varValue As Variant
-Dim l_objValue As Object
     Err.Clear
-    Set l_objValue = m_ScriptEngine.EvalObject(ToString(Expr))
-    If l_objValue Is Nothing Then
-        l_varValue = m_ScriptEngine.Eval(ToString(Expr))
-        Evaluate = l_varValue
-    Else
-        Set Evaluate = l_objValue
-    End If
+    VarCopy m_ScriptEngine.Eval(ToString(Expr)), Evaluate
 End Function
 
 Function ResolveName(ByRef Name) As Object
@@ -716,7 +688,7 @@ On Error Resume Next
     If Rectangle Is Nothing Then Set Rectangle = Backbuffer.Rectangle
     Set F2Camera = New Fury2Camera
     F2Camera.Map = Map
-    F2Camera.Reposition Rectangle.Left, Rectangle.Top, Rectangle.Width, Rectangle.Height, False
+    F2Camera.Reposition Rectangle.left, Rectangle.top, Rectangle.Width, Rectangle.Height, False
     F2Camera.SetEngine Me
 End Function
 
@@ -831,7 +803,7 @@ Dim l_lngImages As Long
         .LoopMode = LoopMode
         .AnimationDelay = AnimationDelay
         .BlitMode = BlitMode
-        Graphics.Add l_gfcGraphic
+'        Graphics.Add l_gfcGraphic
 '        RemoveRef l_gfcGraphic
     End With
     Err.Clear
@@ -975,7 +947,7 @@ Dim l_fadFader As Fury2SoundFader
     Err.Clear
 End Function
 
-Public Function CompileScriptBlock(ByRef Source As String, Optional ByRef Arguments As String = "") As Fury2Event
+Public Function CompileScriptBlock(ByVal Source As String, Optional ByVal Arguments As String = "") As Fury2Event
 On Error Resume Next
 Dim l_csScript As Fury2ScriptCache
 Dim l_strSource As String
@@ -1012,7 +984,7 @@ Dim l_strArgs As String
     ContextLevelRemove
 End Function
 
-Public Function GenerateScriptObject(ByRef Source As String) As Object
+Public Function GenerateScriptObject(ByVal Source As String) As Object
 Attribute GenerateScriptObject.VB_Description = "Creates an object from a specified object script."
 On Error Resume Next
 Dim l_csScript As Fury2ScriptCache
@@ -1030,7 +1002,7 @@ Dim l_strSourceL As String
     For l_lngLine = LBound(l_strLines) To UBound(l_strLines)
         l_strLine = Trim(l_strLines(l_lngLine))
         If InStr(l_strLine, " ") Then
-            l_strToken = Left(l_strLine, InStr(l_strLine, " ") - 1)
+            l_strToken = left(l_strLine, InStr(l_strLine, " ") - 1)
             l_strArgs = Mid(l_strLine, InStr(l_strLine, " ") + 1)
             Select Case LCase(l_strToken)
             Case "publicdata", "privatedata"
@@ -1060,7 +1032,7 @@ Dim l_strSourceL As String
     l_strSourceL = LCase(Trim(l_strSource))
     For Each l_csScript In ScriptCache
         If l_csScript.Source = l_strSourceL Then
-            Set GenerateScriptObject = ScriptEngine.EvalObject(ScriptEngine.Language.GenerateInstantiation(l_csScript.Name))
+            Set GenerateScriptObject = ScriptEngine.Eval(ScriptEngine.Language.GenerateInstantiation(l_csScript.Name))
             Exit Function
         End If
     Next l_csScript
@@ -1073,7 +1045,7 @@ Dim l_strSourceL As String
     With ScriptEngine.Language
         ScriptEngine.AddCode .GenerateClass(l_csScript.Name, l_strSource)
     End With
-    Set GenerateScriptObject = ScriptEngine.EvalObject(ScriptEngine.Language.GenerateInstantiation(l_csScript.Name))
+    Set GenerateScriptObject = ScriptEngine.Eval(ScriptEngine.Language.GenerateInstantiation(l_csScript.Name))
     ContextLevelRemove
 End Function
 
@@ -1133,6 +1105,11 @@ On Error Resume Next
     Set GetPictureImage = m_picPictures(Slot).Picture
 End Function
 
+Public Function GetPictureGraphic(ByVal Slot As Long) As Fury2Graphic
+On Error Resume Next
+    Set GetPictureGraphic = m_picPictures(Slot).Picture
+End Function
+
 Public Function GetPictureRotation(ByVal Slot As Long) As Single
 On Error Resume Next
     GetPictureRotation = m_picPictures(Slot).Rotation
@@ -1165,13 +1142,13 @@ End Function
 Public Function GetPictureX(ByVal Slot As Long) As Long
 Attribute GetPictureX.VB_Description = "Returns the X coordinate of a picture slot (top-left)."
 On Error Resume Next
-    GetPictureX = m_picPictures(Slot).DestRect.Left
+    GetPictureX = m_picPictures(Slot).DestRect.left
 End Function
 
 Public Function GetPictureY(ByVal Slot As Long) As Long
 Attribute GetPictureY.VB_Description = "Returns the Y coordinate of a picture slot (top-right)."
 On Error Resume Next
-    GetPictureY = m_picPictures(Slot).DestRect.Top
+    GetPictureY = m_picPictures(Slot).DestRect.top
 End Function
 
 Public Function GetReferenceCount(ByVal Obj As Object) As Long
@@ -1245,34 +1222,6 @@ Dim l_plgObj As Fury2Plugin
     Err.Clear
 End Function
 
-Function HTTPGet(ByVal URL As String, Optional ByVal Port As Long = 80, Optional ByRef CompleteEvent = "", Optional ByRef ProgressEvent = "") As Fury2HTTPRequest
-Attribute HTTPGet.VB_Description = "Performs an HTTP Get operation. A request object is returned that can be used to check the status of the operation."
-On Error Resume Next
-Dim l_reqRequest As Fury2HTTPRequest
-    Set l_reqRequest = New Fury2HTTPRequest
-    With l_reqRequest
-        .SetEngine Me
-        Set .CompleteEvent = BindEvent(CompleteEvent)
-        Set .ProgressEvent = BindEvent(ProgressEvent)
-        .Go URL, Port
-    End With
-    Set HTTPGet = l_reqRequest
-End Function
-
-Function HTTPPost(ByVal URL As String, Optional ByRef Data As Variant = Nothing, Optional ByVal Port As Long = 80, Optional ByRef CompleteEvent = "", Optional ByRef ProgressEvent = "") As Fury2HTTPRequest
-Attribute HTTPPost.VB_Description = "Performs an HTTP Post operation. A request object is returned that can be used to check the status of the operation."
-On Error Resume Next
-Dim l_reqRequest As Fury2HTTPRequest
-    Set l_reqRequest = New Fury2HTTPRequest
-    With l_reqRequest
-        .SetEngine Me
-        Set .CompleteEvent = BindEvent(CompleteEvent)
-        Set .ProgressEvent = BindEvent(ProgressEvent)
-        .Go URL, Port, Data
-    End With
-    Set HTTPPost = l_reqRequest
-End Function
-
 Function IIf(ByVal Expression As Boolean, ByRef TruePart, Optional ByRef FalsePart = 0)
 Attribute IIf.VB_Description = "If Expression is True, TruePart is returned, otherwise FalsePart is returned."
 On Error Resume Next
@@ -1292,7 +1241,7 @@ Static m_lngHere As Long
     Err.Clear
     If InStr(Filename, "%") Then
         l_strSuffix = Mid(Filename, InStrRev(Filename, "%"))
-        Filename = Left(Filename, InStrRev(Filename, "%") - 1)
+        Filename = left(Filename, InStrRev(Filename, "%") - 1)
     End If
     Filename = Filesystem.AutoSelectExtension(Filename, "png;f2g;tga;jpg;bmp;gif")
     m_strName = Filename
@@ -1430,7 +1379,7 @@ Dim l_strName As String, l_varValue As Variant, l_lngType As Long, l_strType As 
                     Case vbObject
                         .Load l_strType
                         l_varValue = Nothing
-                        Set l_varValue = ScriptEngine.EvalObject("New " & l_strType)
+                        Set l_varValue = ScriptEngine.Eval("New " & l_strType)
                     End Select
                     .Load l_varValue
                     m_FlagNames.Add LCase(l_strName)
@@ -1566,7 +1515,7 @@ Dim l_strError As String
             frmConfigure.SetFocus
             Do While frmConfigure.Visible
                 If Not InIDE Then
-                    If GetActiveWindow <> frmConfigure.hwnd Then frmConfigure.SetFocus
+                    If GetActiveWindow <> frmConfigure.hWnd Then frmConfigure.SetFocus
                 End If
                 Call SleepEx(1, True)
                 DoEvents
@@ -1704,7 +1653,7 @@ Dim l_strError As String
     MenuCursor.SetEngine Me
     If Trim(LCase(DefaultCursor)) = "none" Then
     ElseIf DefaultCursor <> "" Then
-        Set MenuCursor = F2Graphic(LoadImage(Trim(Split(DefaultCursor, "@")(0))), Split(Split(DefaultCursor, "@")(1), ",")(0), Split(Split(DefaultCursor, "@")(1), ",")(1))
+        Set MenuCursor = LoadGraphic(DefaultCursor)
     Else
         Set MenuCursor = CreateDefaultCursor()
         DebugOut "No default cursor specified"
@@ -1746,6 +1695,17 @@ Dim l_strError As String
     End If
     ContextLevelRemove
     DebugOut "Game loaded"
+End Function
+
+Public Function LoadGraphic(ByVal Filename As String) As Fury2Graphic
+On Error Resume Next
+    If InStr(Filename, "@") Then
+        Set LoadGraphic = F2Graphic(LoadImage(Trim(Split(DefaultCursor, "@")(0))), Split(Split(DefaultCursor, "@")(1), ",")(0), Split(Split(DefaultCursor, "@")(1), ",")(1))
+    Else
+        Set LoadGraphic = New Fury2Graphic
+        LoadGraphic.SetEngine Me
+        LoadGraphic.Load Filename
+    End If
 End Function
 
 Public Function LoadImage(ByVal Filename As String, Optional ByVal IgnoreErrors As Boolean = False) As Fury2Image
@@ -1838,7 +1798,7 @@ Dim l_objTemp As Object
     If l_objTemp Is Nothing Then Exit Function
     l_objTemp.HookEvents Me
     SetAppIcon l_objTemp.Window
-    m_lngLastWindow = l_objTemp.Window.hwnd
+    m_lngLastWindow = l_objTemp.Window.hWnd
     Set LoadOutputPlugin = l_objTemp
     Set l_objTemp = Nothing
 End Function
@@ -2126,7 +2086,7 @@ Dim l_varVariables As Variant, l_lngVariables As Long, l_booFound As Boolean
                 l_strValue = ToString(m_ScriptEngine.Eval(l_strConstant))
                 If (Err.Number <> 0) Then l_strValue = "<error>"
             End If
-            l_strText = Left(l_strText, l_lngRelStartPos - 1) + l_strValue + Mid(l_strText, l_lngRelStartPos + l_lngLength + 5)
+            l_strText = left(l_strText, l_lngRelStartPos - 1) + l_strValue + Mid(l_strText, l_lngRelStartPos + l_lngLength + 5)
             l_lngPos = l_lngStartPos + l_lngLength + 5
             l_lngRelPos = l_lngRelStartPos + Len(l_strValue)
             l_lngStartPos = InStr(l_lngPos, l_strOldText, "<%=")
@@ -2787,13 +2747,13 @@ Dim l_strLeft As String, l_strRight As String
     l_strLeft = Mid(ConsoleText, 1, m_lngConsoleCaretPosition - 2)
     l_strRight = Mid(ConsoleText, m_lngConsoleCaretPosition)
     ConsoleText = l_strLeft + l_strRight
-    m_lngConsoleCaretPosition = m_lngConsoleCaretPosition - 1
+    m_lngConsoleCaretPosition = ClipValue(m_lngConsoleCaretPosition - 1, 1, Len(ConsoleText) + 1)
 End Sub
 
 Public Sub ConsoleCommand(ByVal Command As String)
 Attribute ConsoleCommand.VB_Description = "Executes a command as if it was entered into the console."
 On Error Resume Next
-    If Left(Trim(Command), 1) = "?" Then
+    If left(Trim(Command), 1) = "?" Then
         Err.Clear
         ScriptEngine.AddCode ScriptEngine.Language.GenerateSubCall("TextOut", Mid(Command, 2))
     Else
@@ -2813,10 +2773,11 @@ End Sub
 Friend Sub ConsoleInsert(ByVal Text As String)
 On Error Resume Next
 Dim l_strLeft As String, l_strRight As String
+    If m_lngConsoleCaretPosition < 1 Then m_lngConsoleCaretPosition = 1
     l_strLeft = Mid(ConsoleText, 1, m_lngConsoleCaretPosition - 1)
     l_strRight = Mid(ConsoleText, m_lngConsoleCaretPosition)
     ConsoleText = l_strLeft + Text + l_strRight
-    m_lngConsoleCaretPosition = m_lngConsoleCaretPosition + Len(Text)
+    m_lngConsoleCaretPosition = ClipValue(m_lngConsoleCaretPosition + Len(Text), 1, Len(ConsoleText) + 1)
     Err.Clear
 End Sub
 
@@ -3767,7 +3728,7 @@ Dim l_strTemp As String
         If ConsoleVisible Then
             ConsoleBackspace
         ElseIf TrapKeys Then
-            l_strBuffer = Left(l_strBuffer, Len(l_strBuffer) - 1)
+            l_strBuffer = left(l_strBuffer, Len(l_strBuffer) - 1)
             ContextLevelAdd "Engine_KeyPress"
             ScriptEngine.Exec "Engine_KeyPress", KeyAscii
             ContextLevelRemove
@@ -4024,7 +3985,7 @@ Dim l_lngThreadID As Long
             m_lngFPSAccumulator = 0
             If ShowFPS Then
                 If Fullscreen Then
-                    SetWindowText m_objOutputPlugin.Window.hwnd, WindowCaption & " (" & FPS & " FPS)"
+                    SetWindowText m_objOutputPlugin.Window.hWnd, WindowCaption & " (" & FPS & " FPS)"
                 Else
                     m_objOutputPlugin.Window.Caption = WindowCaption & " (" & FPS & " FPS)"
                 End If
@@ -4243,7 +4204,7 @@ Friend Sub InitIME()
 On Error Resume Next
     Set m_imeIMEEngine = New IMEEngine
     #If EnableIME = 1 Then
-        m_imeIMEEngine.Hook m_objOutputPlugin.Window.hwnd
+        m_imeIMEEngine.Hook m_objOutputPlugin.Window.hWnd
     #End If
 End Sub
 
@@ -4343,7 +4304,7 @@ Dim l_varTest As Variant
     Set m_ScriptEngine.Language = m_ScriptEngine.LoadLanguage(ScriptLanguage)
     Load frmScriptSink
     frmScriptSink.Visible = False
-    m_ScriptEngine.Init frmScriptSink.hwnd
+    m_ScriptEngine.Init frmScriptSink.hWnd
     m_ScriptEngine.AddObject "Engine", Me
     Using m_Graphics, "GraphicsEngine"
     Using m_objConstants, "Constants"
@@ -4404,7 +4365,6 @@ On Error Resume Next
     Set MessageQueue = F2Collection()
     Set MessageWindows = F2Collection()
     Set ActionQueue = F2Collection()
-    Set Graphics = F2Collection()
     Set Hosts = F2Collection()
     Set Videos = F2Collection()
     Set BGMStack = F2Collection()
@@ -4748,12 +4708,12 @@ Dim m_lngWidth As Long, m_lngHeight As Long
     With m_picPictures(Slot)
         If NewX <> -32767 Then
             m_lngWidth = .DestRect.Width
-            .DestRect.Left = NewX
+            .DestRect.left = NewX
             .DestRect.right = NewY + m_lngWidth
         End If
         If NewY <> -32767 Then
             m_lngHeight = .DestRect.Height
-            .DestRect.Top = NewY
+            .DestRect.top = NewY
             .DestRect.bottom = NewY + m_lngHeight
         End If
         If NewAlpha <> -1 Then .Alpha = CSng(NewAlpha)
@@ -4865,7 +4825,7 @@ On Error Resume Next
         Set CurrentBGM = SoundEngine.Load(CStr(Filename))
     End If
     CurrentBGM.LoopMode = LoopMode_Normal
-    CurrentBGM.LoopCount = -1
+    CurrentBGM.Loopcount = -1
     Set CurrentBGMChannel = CurrentBGM.Play(True)
     If Not (CurrentBGMChannel Is Nothing) Then
         CurrentBGMChannel.Priority = 0
@@ -5116,7 +5076,7 @@ Dim l_lngStart As Long
                 Next l_lngItems
             End If
         End If
-        Set l_rctTextbox = F2Rect(l_rctConsole.Left, l_rctConsole.bottom - l_lngHeight - 2, l_rctConsole.right, l_rctConsole.bottom, True)
+        Set l_rctTextbox = F2Rect(l_rctConsole.left, l_rctConsole.bottom - l_lngHeight - 2, l_rctConsole.right, l_rctConsole.bottom, True)
         .ResetClipRectangle
         .ClippedSetClipRectangle l_rctTextbox
         .GradientFill l_rctTextbox, Array(F2RGB(0, 0, 0, 32), F2RGB(0, 0, 0, 32), F2RGB(0, 0, 0, 96), F2RGB(0, 0, 0, 96)), RenderMode_SourceAlpha
@@ -5148,17 +5108,17 @@ Dim l_lngCandidates As Long, l_lngY As Long, l_lngHeight As Long
         If Err <> 0 Or l_lngCandidates < 0 Then
         Else
             Set l_rctCandidates = Font.GetTextRectangle(Join(l_strCandidates, vbCrLf), Backbuffer.Width, False)
-            l_rctCandidates.Translate (Backbuffer.Width - l_rctCandidates.Width) \ 2, l_rctText.Top - l_rctCandidates.Height - 5
+            l_rctCandidates.Translate (Backbuffer.Width - l_rctCandidates.Width) \ 2, l_rctText.top - l_rctCandidates.Height - 5
             l_rctCandidates.Adjust 2, 2
             Backbuffer.Fill l_rctCandidates, F2RGB(0, 0, 0, 192), RenderMode_SourceAlpha
             Backbuffer.Box l_rctCandidates, F2White
             l_rctCandidates.Adjust -2, -2
-            l_lngY = l_rctCandidates.Top
+            l_lngY = l_rctCandidates.top
             For l_lngCandidates = 0 To UBound(l_strCandidates)
                 If l_lngCandidates = m_imeIMEEngine.SelectedCandidate Then
-                    Backbuffer.Fill F2Rect(l_rctCandidates.Left, l_lngY, l_rctCandidates.Width, Font.FullHeight, False), F2RGB(32, 63, 240, 220), RenderMode_SourceAlpha
+                    Backbuffer.Fill F2Rect(l_rctCandidates.left, l_lngY, l_rctCandidates.Width, Font.FullHeight, False), F2RGB(32, 63, 240, 220), RenderMode_SourceAlpha
                 End If
-                Font.Draw Backbuffer, l_strCandidates(l_lngCandidates), F2Rect(l_rctCandidates.Left, l_lngY, l_rctCandidates.right, l_rctCandidates.bottom, True), F2White, 1, Font.Options(0, 0, 0, 0, 0, 0, 0, 0, False), l_lngHeight
+                Font.Draw Backbuffer, l_strCandidates(l_lngCandidates), F2Rect(l_rctCandidates.left, l_lngY, l_rctCandidates.right, l_rctCandidates.bottom, True), F2White, 1, Font.Options(0, 0, 0, 0, 0, 0, 0, 0, False), l_lngHeight
                 l_lngY = l_lngY + (l_lngHeight - Font.FullHeight + Font.Height)
             Next l_lngCandidates
         End If
@@ -5337,15 +5297,15 @@ Dim l_objData As Object
     Err.Clear
 End Sub
 
-Public Sub SetHotspot(ByVal Index As Long, Optional ByVal Left As Long = 0, Optional ByVal Top As Long = 0, Optional ByVal Width As Long = 0, Optional ByVal Height As Long = 0, Optional ByRef ClickEvent = Nothing, Optional ByRef EnterEvent = Nothing, Optional ByRef LeaveEvent = Nothing)
+Public Sub SetHotspot(ByVal Index As Long, Optional ByVal left As Long = 0, Optional ByVal top As Long = 0, Optional ByVal Width As Long = 0, Optional ByVal Height As Long = 0, Optional ByRef ClickEvent = Nothing, Optional ByRef EnterEvent = Nothing, Optional ByRef LeaveEvent = Nothing)
 Attribute SetHotspot.VB_Description = "Creates a hotspot."
 On Error Resume Next
     With m_hsHotspots(CLng(Index))
         .Enabled = True
-        .x1 = Left
-        .y1 = Top
-        .x2 = Left + Width
-        .y2 = Top + Height
+        .x1 = left
+        .y1 = top
+        .x2 = left + Width
+        .y2 = top + Height
         Set .ClickEvent = BindEvent(ClickEvent)
         Set .EnterEvent = BindEvent(EnterEvent)
         Set .LeaveEvent = BindEvent(LeaveEvent)
@@ -5369,13 +5329,13 @@ On Error Resume Next
 Dim l_lngBorderWidth As Long, l_lngTitleHeight As Long, l_lngOldMode As Long
 Dim l_lngWidth As Long, l_lngHeight As Long
     With m_objOutputPlugin.Window
-        If GetForegroundWindow() = .hwnd Then
+        If GetForegroundWindow() = .hWnd Then
             l_lngOldMode = .ScaleMode
             .ScaleMode = 1
             l_lngBorderWidth = (.Width - .ScaleWidth) \ 2
             l_lngTitleHeight = (.Height - .ScaleHeight) - (l_lngBorderWidth * 2)
             .ScaleMode = l_lngOldMode
-            SetCursorPos (X * (.ScaleWidth / ScreenWidth)) + (l_lngBorderWidth / Screen.TwipsPerPixelX) + (.Left / Screen.TwipsPerPixelX), (Y * (.ScaleHeight / ScreenHeight)) + ((l_lngBorderWidth + l_lngTitleHeight) / Screen.TwipsPerPixelY) + (.Top / Screen.TwipsPerPixelY)
+            SetCursorPos (X * (.ScaleWidth / ScreenWidth)) + (l_lngBorderWidth / Screen.TwipsPerPixelX) + (.left / Screen.TwipsPerPixelX), (Y * (.ScaleHeight / ScreenHeight)) + ((l_lngBorderWidth + l_lngTitleHeight) / Screen.TwipsPerPixelY) + (.top / Screen.TwipsPerPixelY)
         Else
             g_lngMouseX = X
             g_lngMouseY = Y
@@ -5524,7 +5484,7 @@ Friend Sub ShutdownIME()
 On Error Resume Next
     If m_imeIMEEngine Is Nothing Then Exit Sub
     #If EnableIME = 1 Then
-        m_imeIMEEngine.Unhook m_objOutputPlugin.Window.hwnd
+        m_imeIMEEngine.Unhook m_objOutputPlugin.Window.hWnd
     #End If
     Set m_imeIMEEngine = Nothing
 End Sub
@@ -5748,7 +5708,7 @@ On Error Resume Next
         frmTrace.Show
     End If
     If Len(frmTrace.txtTrace.Text) > 4096 Then
-        frmTrace.txtTrace.Text = Left(frmTrace.txtTrace.Text, InStrRev(frmTrace.txtTrace.Text, vbCrLf) - 1)
+        frmTrace.txtTrace.Text = left(frmTrace.txtTrace.Text, InStrRev(frmTrace.txtTrace.Text, vbCrLf) - 1)
     End If
     frmTrace.txtTrace.Text = ToString(Text) + vbCrLf + frmTrace.txtTrace.Text
     DoEvents
@@ -6082,7 +6042,6 @@ Dim m_lngPictures As Long, l_objGraph As Fury2Graphic
             Else
                 If TypeOf .Picture Is Fury2Graphic Then
                     Set l_objGraph = .Picture
-                    l_objGraph.Update
                 End If
             End If
             If .Fading Then
@@ -6133,8 +6092,8 @@ Dim m_lngPictures As Long, l_objGraph As Fury2Graphic
                         m_ScriptEngine.AddCode .EndAnimationScript
                     End If
                 Else
-                    m_sngX = (.StartRect.Left * (m_sngProgress2)) + (.EndRect.Left * m_sngProgress)
-                    m_sngY = (.StartRect.Top * (m_sngProgress2)) + (.EndRect.Top * m_sngProgress)
+                    m_sngX = (.StartRect.left * (m_sngProgress2)) + (.EndRect.left * m_sngProgress)
+                    m_sngY = (.StartRect.top * (m_sngProgress2)) + (.EndRect.top * m_sngProgress)
                     m_sngW = (.StartRect.right * (m_sngProgress2)) + (.EndRect.right * m_sngProgress)
                     m_sngH = (.StartRect.bottom * (m_sngProgress2)) + (.EndRect.bottom * m_sngProgress)
                     .DestRect.SetValues CLng(m_sngX), CLng(m_sngY), CLng(m_sngW), CLng(m_sngH)
@@ -6186,9 +6145,6 @@ Dim l_vidVideo As Fury2Video
             ContextLevelRemove
         End If
     End If
-    For Each l_gphGraphic In Graphics
-        l_gphGraphic.Update
-    Next l_gphGraphic
     For Each l_vidVideo In Videos
         l_vidVideo.Update
     Next l_vidVideo
@@ -6213,7 +6169,7 @@ Friend Sub UpdateWindow()
 On Error Resume Next
 Dim l_lngWindow As Long, l_lngGameWindow
     l_lngWindow = GetForegroundWindow()
-    l_lngGameWindow = m_objOutputPlugin.Window.hwnd
+    l_lngGameWindow = m_objOutputPlugin.Window.hWnd
     If l_lngWindow <> m_lngLastWindow Then
         m_lngLastWindow = l_lngWindow
         If l_lngWindow <> l_lngGameWindow Then
@@ -6268,7 +6224,7 @@ Dim l_objObject As Object
         If Len(Alias) < 1 Then
             Alias = VariableName(Namespace)
         End If
-        Set l_objObject = m_ScriptEngine.EvalObject(CStr(Namespace))
+        Set l_objObject = m_ScriptEngine.Eval(CStr(Namespace))
     Else
         Set l_objObject = Namespace
     End If

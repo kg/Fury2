@@ -17,8 +17,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\../../../binary/sys"
-			IntermediateDirectory=".\../../../binary/sys/temp"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -64,7 +64,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="opengl32.lib glu32.lib user32.lib gdi32.lib kernel32.lib"
-				OutputFile="$(OutDir)/GLFX.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
@@ -96,13 +95,12 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Fury2 0.9\sys&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\../../../binary/sys"
-			IntermediateDirectory=".\../../../binary/sys/temp"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -154,7 +152,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="opengl32.lib glu32.lib user32.lib gdi32.lib kernel32.lib"
-				OutputFile="$(OutDir)/GLFX.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
@@ -187,13 +184,13 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Fury2 0.9\sys&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Development|Win32"
-			OutputDirectory=".\../../../binary/sys"
-			IntermediateDirectory=".\../../../binary/sys/temp"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -225,6 +222,7 @@
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
 				FloatingPointModel="2"
+				OpenMP="false"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="3"
@@ -245,7 +243,6 @@
 				Name="VCLinkerTool"
 				AdditionalOptions=" /PROFILE"
 				AdditionalDependencies="opengl32.lib glu32.lib user32.lib gdi32.lib kernel32.lib"
-				OutputFile="$(OutDir)/GLFX.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
@@ -278,7 +275,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Windows\System32&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Fury2 0.9\sys&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

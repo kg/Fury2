@@ -1126,3 +1126,10 @@ Private Sub IVirtualFileSaveable_Serialize(File As VirtualFile)
         .WriteSegment_End
     End With
 End Sub
+
+Public Function LoadArray() As Variant
+Dim Data As Variant
+    Data = Array()
+    Load Data
+    LoadArray = Data
+End Function

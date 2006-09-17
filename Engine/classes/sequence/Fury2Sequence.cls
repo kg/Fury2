@@ -20,14 +20,15 @@ Public Elements As Fury2Collection
 Public Keyframes As Fury2Collection
 Public Variables As Fury2Collection
 Public Filename As String
-Public PlaybackStart As Fury2SequenceKeyframe
+Public PlaybackStart As String
 Attribute PlaybackStart.VB_VarDescription = "The keyframe executed before beginning playback."
 Public OnPlaybackStart As Fury2Event
-Public PlaybackHalt As Fury2SequenceKeyframe
+Public PlaybackHalt As String
 Attribute PlaybackHalt.VB_VarDescription = "The keyframe executed before halting playback."
 Public OnPlaybackHalt As Fury2Event
 Public Looping As Boolean
 Attribute Looping.VB_VarDescription = "If True, this sequence will play infinitely."
+Public AutoHook As Boolean
 Private m_booPlaying As Boolean
 Private m_cntTime As Fury2Counter
 Private m_dblInterval As Double
@@ -141,10 +142,9 @@ Dim l_kfKeyframe As Fury2SequenceKeyframe
         For Each l_kfKeyframe In Keyframes
             .InsertKeyframe l_kfKeyframe.Duplicate
         Next l_kfKeyframe
-        Set .PlaybackStart = PlaybackStart.Duplicate
-        .PlaybackStart.SetSequence l_seqNew
-        Set .PlaybackHalt = PlaybackHalt.Duplicate
-        .PlaybackHalt.SetSequence l_seqNew
+        .PlaybackStart = PlaybackStart
+        .PlaybackHalt = PlaybackHalt
+        .AutoHook = AutoHook
     End With
     Set Duplicate = l_seqNew
 End Function
@@ -185,6 +185,17 @@ Dim l_skfKeyframe As Fury2SequenceKeyframe
     For Each l_skfKeyframe In Keyframes
         If l_skfKeyframe.Time >= Time Then
             Set GetKeyframe = l_skfKeyframe
+            Exit Function
+        End If
+    Next l_skfKeyframe
+End Function
+
+Public Function GetKeyframeByTag(ByVal Value As String) As Fury2SequenceKeyframe
+On Error Resume Next
+Dim l_skfKeyframe As Fury2SequenceKeyframe
+    For Each l_skfKeyframe In Keyframes
+        If LCase(Trim(l_skfKeyframe.Tag)) = LCase(Trim(Value)) Then
+            Set GetKeyframeByTag = l_skfKeyframe
             Exit Function
         End If
     Next l_skfKeyframe
@@ -255,10 +266,6 @@ On Error Resume Next
     If Elements Is Nothing Then Set Elements = m_engEngine.F2Collection()
     If Keyframes Is Nothing Then Set Keyframes = m_engEngine.F2Collection()
     If Variables Is Nothing Then Set Variables = m_engEngine.F2Collection()
-    If PlaybackStart Is Nothing Then Set PlaybackStart = New Fury2SequenceKeyframe
-    PlaybackStart.SetSequence Me
-    If PlaybackHalt Is Nothing Then Set PlaybackHalt = New Fury2SequenceKeyframe
-    PlaybackHalt.SetSequence Me
 End Sub
 
 Public Property Get Length() As Double
@@ -283,7 +290,11 @@ End Sub
 
 Public Sub Play(Optional ByVal Speed As Double = 1#)
 On Error Resume Next
+Dim l_seqMe As Fury2Sequence
     If m_booPlaying Then Halt
+    If AutoHook Then
+        m_engEngine.HookEvents Me
+    End If
     If Speed < 0 Then Speed = 0
     Set m_cntTime = m_engEngine.F2Counter()
     m_booPaused = False
@@ -296,17 +307,25 @@ On Error Resume Next
         m_cntTime.Start 1 / Speed
     End If
     Initialize
-    PlaybackStart.Update 1
+    Set l_seqMe = Me
+    m_engEngine.CompileScriptBlock(PlaybackStart, "Sequence").Invoke l_seqMe
+    OnPlaybackStart.Invoke
     BeginPlayback
 End Sub
 
 Public Sub Halt()
 On Error Resume Next
 Dim l_selElement As Fury2SequenceElement
+Dim l_seqMe As Fury2Sequence
     m_cntTime.Paused = True
     m_booPlaying = False
     m_booPaused = False
-    PlaybackHalt.Update 1
+    Set l_seqMe = Me
+    m_engEngine.CompileScriptBlock(PlaybackHalt, "Sequence").Invoke l_seqMe
+    OnPlaybackHalt.Invoke
+    If AutoHook Then
+        m_engEngine.UnHookEvents Me
+    End If
 End Sub
 
 Public Sub Unpause()
@@ -357,8 +376,6 @@ Dim l_skfKeyframe As Fury2SequenceKeyframe
         l_skfKeyframe.SetSequence Me
         l_skfKeyframe.Initialize
     Next l_skfKeyframe
-    PlaybackStart.Initialize
-    PlaybackHalt.Initialize
 End Sub
 
 Friend Function GoToPreviousKeyframe(Time As Double) As Boolean
@@ -574,11 +591,7 @@ Dim l_eleElement As Fury2SequenceElement, l_kfKeyframe As Fury2SequenceKeyframe
             End If
         .ReadSegment_End
         .ReadSegment_Begin
-            Set PlaybackStart = New Fury2SequenceKeyframe
-            PlaybackStart.SetSequence Me
             .Load PlaybackStart
-            Set PlaybackHalt = New Fury2SequenceKeyframe
-            PlaybackHalt.SetSequence Me
             .Load PlaybackHalt
         .ReadSegment_End
     End With

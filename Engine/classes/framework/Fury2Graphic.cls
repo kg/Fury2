@@ -37,8 +37,6 @@ Implements IVirtualFileSaveable
 
 Public Name As String
 Attribute Name.VB_VarDescription = "The name of this graphic."
-Public ImageFilenames As Fury2Collection
-Attribute ImageFilenames.VB_VarDescription = "The filenames of the images in this graphic."
 Public Images As Fury2Collection
 Attribute Images.VB_VarDescription = "The images in this graphic."
 Public XCenter As Single, YCenter As Single
@@ -58,6 +56,8 @@ Public AnimationFrame As Long
 Attribute AnimationFrame.VB_VarDescription = "The current animation frame."
 Public AnimationDirection As Long
 Attribute AnimationDirection.VB_VarDescription = "The direction in which animation will go."
+Public OnFinished As Fury2Event
+Private m_booAnimate As Boolean
 Private m_parParam As AnimatedGraphicParam
 Private m_lngImages() As Long
 Private m_sngLastFrame As Double
@@ -67,7 +67,6 @@ Friend Sub SetEngine(Engine As Fury2Engine)
 On Error Resume Next
     Set m_engEngine = Engine
     Set Images = Engine.F2Collection()
-    Set ImageFilenames = Engine.F2Collection()
 End Sub
 
 Public Property Get Engine() As Fury2Engine
@@ -86,7 +85,6 @@ On Error Resume Next
     With Duplicate
         Duplicate.SetEngine Engine
         Set .Images = Images.Duplicate()
-        Set .ImageFilenames = ImageFilenames.Duplicate()
         .Name = Name
         .XCenter = XCenter
         .YCenter = YCenter
@@ -160,22 +158,14 @@ On Error Resume Next
 Dim l_imgFrame As Fury2Image
     If Images.Count = 0 Then Exit Sub
     If Surface Is Nothing Then Exit Sub
-    AnimationFrame = WrapValue(AnimationFrame, 1, Images.Count)
-    Set l_imgFrame = Images(AnimationFrame)
-    If l_imgFrame Is Nothing Then Exit Sub
-    With l_imgFrame
-        .Draw Surface, X - XCenter, Y - YCenter, Alpha * Me.Alpha, ScalePercentage, RotationAngle, BlitMode, , IIf(m_engEngine.SmoothScaling, ResampleMode_Bilinear, ResampleMode_Linear)
-'        Surface.Blit F2Rect(Floor(X - XCenter), Floor(Y - YCenter), .Width, .Height, False), .Rectangle, l_imgFrame, Alpha * Me.Alpha, BlitMode
-    End With
-End Sub
-
-Sub Update()
-Attribute Update.VB_Description = "Updates the graphic's animation."
-On Error Resume Next
 Dim l_dblElapsed As Double
+    If m_sngLastFrame <= 0 Then m_sngLastFrame = Engine.HiTimer
     If Images.Count > 1 Then
         l_dblElapsed = (Engine.HiTimer - m_sngLastFrame) / ((1 / Engine.DesiredFramerate) * AnimationDelay)
         If (l_dblElapsed >= 1) Then
+            Alpha = Alpha + (FadeSpeed * l_dblElapsed)
+            If Alpha > 1 Then Alpha = 1
+            If Alpha < 0 Then Alpha = 0
             m_sngLastFrame = Engine.HiTimer - ((l_dblElapsed - Floor(l_dblElapsed)) * (1 / Engine.DesiredFramerate) * AnimationDelay)
             Select Case LoopMode
             Case F2LM_Restart
@@ -190,14 +180,30 @@ Dim l_dblElapsed As Double
                     AnimationDirection = -1
                 End If
             Case F2LM_OneShot
-                AnimationFrame = ClipValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.Count)
+                AnimationFrame = AnimationFrame + (AnimationDirection * Floor(l_dblElapsed))
+                If (AnimationFrame > Images.Count) Or (AnimationFrame < 1) Then
+                    If Not (OnFinished Is Nothing) Then OnFinished.Invoke
+                End If
+                AnimationFrame = ClipValue(AnimationFrame, 1, Images.Count)
             End Select
+            Refresh
         End If
     End If
-    Alpha = Alpha + FadeSpeed
-    If Alpha > 1 Then Alpha = 1
-    If Alpha < 0 Then Alpha = 0
-    Refresh
+    AnimationFrame = WrapValue(AnimationFrame, 1, Images.Count)
+    Set l_imgFrame = Images(AnimationFrame)
+    If l_imgFrame Is Nothing Then Exit Sub
+    With l_imgFrame
+        .Draw Surface, X + XCenter, Y + YCenter, Alpha * Me.Alpha, ScalePercentage, RotationAngle, BlitMode, , IIf(m_engEngine.SmoothScaling, ResampleMode_Bilinear, ResampleMode_Linear)
+'        Surface.Blit F2Rect(Floor(X - XCenter), Floor(Y - YCenter), .Width, .Height, False), .Rectangle, l_imgFrame, Alpha * Me.Alpha, BlitMode
+    End With
+End Sub
+
+Sub Play(Optional ByVal OnFinish As Engine.Fury2Event = Nothing)
+On Error Resume Next
+    AnimationFrame = 1
+    AnimationDirection = 1
+    Animate = True
+    Set OnFinished = OnFinish
 End Sub
 
 Private Sub Class_Initialize()
@@ -210,20 +216,16 @@ On Error Resume Next
     Err.Clear
 End Sub
 
-Public Sub ReloadImages()
-Attribute ReloadImages.VB_Description = "Reloads the graphic's frames."
+Public Property Get Animate() As Boolean
 On Error Resume Next
-Dim l_lngImage As Long, l_imgFile As Fury2Image
-    Set Images = Engine.F2Collection()
-    If ImageFilenames.Count > 0 Then
-        For l_lngImage = 1 To ImageFilenames.Count
-            Set l_imgFile = Nothing
-            Set l_imgFile = Engine.LoadImage(CStr(ImageFilenames(l_lngImage)))
-            Images.Add l_imgFile
-            Err.Clear
-        Next
-    End If
-End Sub
+    Animate = m_booAnimate
+End Property
+
+Public Property Let Animate(ByVal NewValue As Boolean)
+On Error Resume Next
+    m_booAnimate = NewValue
+    m_sngLastFrame = 0
+End Property
 
 Private Sub Class_Terminate()
 On Error Resume Next
@@ -235,40 +237,39 @@ End Sub
 
 Private Sub IVirtualFileSaveable_Deserialize(File As libGraphics.VirtualFile)
 On Error Resume Next
-Dim l_lngFilenames As Long, l_lngCount As Long
-Dim l_strFilename As String, l_imgFile As Fury2Image
+Dim l_lngImages As Long, l_lngCount As Long
+Dim l_imgImage As Fury2Image
     With File
-        .WriteSegment_Begin
+        .ReadSegment_Begin
             .Load l_lngCount
-            Set ImageFilenames = Engine.F2Collection()
             If l_lngCount > 0 Then
-                For l_lngFilenames = 1 To l_lngCount
-                    l_strFilename = ""
-                    .Load l_strFilename
-                    ImageFilenames.Add l_strFilename
-                Next l_lngFilenames
-                ReloadImages
+                For l_lngImages = 1 To l_lngCount
+                    Set l_imgImage = New Fury2Image
+                    .Load l_imgImage
+                    Images.Add l_imgImage
+                Next l_lngImages
             End If
-        .WriteSegment_End
+        .ReadSegment_End
         .Load Alpha
         .Load AnimationDelay
         .Load BlitMode
         .Load XCenter
         .Load YCenter
         .Load Name
+        .Load LoopMode
     End With
     Err.Clear
 End Sub
 
 Private Sub IVirtualFileSaveable_Serialize(File As libGraphics.VirtualFile)
 On Error Resume Next
-Dim l_lngFilenames As Long
+Dim l_lngImages As Long
     With File
         .WriteSegment_Begin
-            .Save CLng(ImageFilenames.Count)
-            For l_lngFilenames = 1 To ImageFilenames.Count
-                .Save CStr(ImageFilenames(l_lngFilenames))
-            Next l_lngFilenames
+            .Save CLng(Images.Count)
+            For l_lngImages = 1 To Images.Count
+                .Save Images(l_lngImages)
+            Next l_lngImages
         .WriteSegment_End
         .Save Alpha
         .Save AnimationDelay
@@ -276,7 +277,18 @@ Dim l_lngFilenames As Long
         .Save XCenter
         .Save YCenter
         .Save Name
+        .Save CLng(LoopMode)
     End With
     Err.Clear
 End Sub
+
+Function Load(ByVal Filename) As Boolean
+On Error Resume Next
+    Load = Engine.LoadFromFile(Me, Engine.Filesystem.File(Filename))
+End Function
+
+Function Save(ByVal Filename) As Boolean
+On Error Resume Next
+    Save = Engine.SaveToFile(Me, Engine.Filesystem.CreateFile(Filename))
+End Function
 

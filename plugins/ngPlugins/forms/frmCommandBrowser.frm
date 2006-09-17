@@ -2,7 +2,7 @@ VERSION 5.00
 Object = "{F588DF24-2FB2-4956-9668-1BD0DED57D6C}#1.4#0"; "MDIActiveX.ocx"
 Object = "{396F7AC0-A0DD-11D3-93EC-00C0DFE7442A}#1.0#0"; "vbalIml6.ocx"
 Object = "{CA5A8E1E-C861-4345-8FF8-EF0A27CD4236}#2.0#0"; "vbalTreeView6.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.2#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.6#0"; "ngUI.ocx"
 Begin VB.Form frmCommandBrowser 
    BorderStyle     =   0  'None
    Caption         =   "Command Browser"
@@ -233,7 +233,7 @@ Implements iExtendedForm
 Implements iDocument
 
 Private Const WM_SETREDRAW = &HB
-Private Declare Function InvalidateRect Lib "user32" (ByVal hwnd As Long, lpRect As Rect, ByVal bErase As Long) As Long
+Private Declare Function InvalidateRect Lib "user32" (ByVal hwnd As Long, lpRect As RECT, ByVal bErase As Long) As Long
 
 Public Plugin As CommandBrowser
 Dim m_miSelectedMember As MemberInfo
@@ -750,7 +750,7 @@ End Sub
 
 Private Sub picMembers_Resize()
 On Error Resume Next
-Dim l_rctArea As Rect
+Dim l_rctArea As RECT
     tbrMembers.Move 0, 0, tbrMembers.IdealWidth, tbrMembers.IdealHeight
     txtFilterMembers.Move tbrMembers.Width, 3, picMembers.ScaleWidth - tbrMembers.Width - 3, tbrMembers.Height - 6
     lstMembers.Move 0, tbrMembers.IdealHeight, picMembers.ScaleWidth, picMembers.ScaleHeight - tbrMembers.IdealHeight
@@ -776,7 +776,7 @@ End Sub
 
 Private Sub picObjects_Resize()
 On Error Resume Next
-Dim l_rctArea As Rect
+Dim l_rctArea As RECT
     tbrObjects.Move 0, 0, tbrObjects.IdealWidth, tbrObjects.IdealHeight
     txtFilterObjects.Move tbrObjects.Width, 3, picObjects.ScaleWidth - tbrObjects.Width - 3, tbrObjects.Height - 6
     tvObjects.Move 0, tbrObjects.IdealHeight, picObjects.ScaleWidth, picObjects.ScaleHeight - tbrObjects.IdealHeight

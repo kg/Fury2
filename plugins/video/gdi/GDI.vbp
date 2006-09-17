@@ -1,9 +1,9 @@
 Type=OleDll
-Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\WINDOWS\system32\stdole2.tlb#OLE Automation
-Reference=*\G{64651516-73E5-402B-B989-94EAE4C6A049}#1.0#409#..\..\..\..\libraries\tlb\Win32.tlb#Win32 API
-Reference=*\G{3B10323B-FEC1-4FAA-9A62-89666AC5A420}#2.0#0#..\..\..\..\binary\sys\graphics.dll#Fury² Game Creation System Graphics Engine
-Reference=*\G{3CB89DD9-2E5A-45D3-A6FF-E87B0081CDCC}#1.0#409#..\..\..\..\libraries\tlb\SoftFX.tlb#Fury² Game Creation System SoftFX library
-Reference=*\G{DCC41FE5-D299-4803-98FD-A606AE74162B}#2.0#0#..\..\..\..\binary\sys\video.dll#Fury² Game Creation System Video Driver Interfaces
+Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#..\..\..\..\..\..\..\..\WINDOWS\system32\stdole2.tlb#OLE Automation
+Reference=*\G{64651516-73E5-402B-B989-94EAE4C6A049}#1.0#409#..\..\..\..\..\..\..\..\WINDOWS\system32\Win32.tlb#Win32 API
+Reference=*\G{3B10323B-FEC1-4FAA-9A62-89666AC5A420}#2.0#0#..\..\..\..\..\..\..\..\Program Files\Fury2 0.9\sys\graphics.dll#Fury² Game Creation System Graphics Engine
+Reference=*\G{3CB89DD9-2E5A-45D3-A6FF-E87B0081CDCC}#1.0#409#..\..\..\..\..\..\..\..\WINDOWS\system32\SoftFX.tlb#Fury² Game Creation System SoftFX library
+Reference=*\G{DCC41FE5-D299-4803-98FD-A606AE74162B}#2.0#0#..\..\..\..\..\..\..\..\Program Files\Fury2 0.9\sys\video.dll#Fury² Game Creation System Video Driver Interfaces
 Class=GDIEngine; classes\GDIEngine.cls
 Module=mdlUtility; ..\..\..\common\modules\mdlUtility.bas
 Form=forms\frmGDI.frm

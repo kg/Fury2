@@ -783,6 +783,7 @@ void Particle::render(ParticleEngineState& state) {
       strokePoints[1].Color = c.V;
       strokePoints[1].Thickness = type.Thickness * _One(this->A + this->AV);
       FilterSimple_RenderStroke(renderTarget, &stroke, renderer, 0);
+      break;
 
     case prtGraphic:
       if (type.Graphic) {

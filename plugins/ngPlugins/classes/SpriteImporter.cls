@@ -143,6 +143,7 @@ Private Property Set iPlugin_Editor(RHS As Object)
 End Property
 
 Private Property Get iPlugin_Icon() As Fury2Image
+On Error Resume Next
     Set iPlugin_Icon = m_objEditor.LoadResources("ng").ItemData("icons\sprite importer.png")
 End Property
 

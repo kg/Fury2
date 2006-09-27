@@ -101,7 +101,7 @@ AutoIncrementVer=1
 ServerSupportFiles=0
 VersionCompanyName="Squared Interactive"
 VersionFileDescription="Fury² Next Generation Editor Default Plugins"
-CondComp="ResPack = 1 : ResZip = 1"
+CondComp="ResPack = 0 : ResZip = 0"
 CompilationType=0
 OptimizationType=2
 FavorPentiumPro(tm)=0

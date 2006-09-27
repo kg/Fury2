@@ -70,6 +70,7 @@ Public Title As String
 Attribute Title.VB_VarDescription = "The title string to display at the top of the menu."
 Public TitleFont As Fury2Font
 Attribute TitleFont.VB_VarDescription = "The font to use to draw the title string."
+Public TabStops As Variant
 #If EnableBehaviors = 1 Then
 Public Behaviors As Fury2Behaviors
 #End If
@@ -207,8 +208,13 @@ Dim m_lngArrowCoord As Long
 Dim m_lngSpace As Long, m_lngAlpha As Long
 Dim m_strCaption As String
 Dim l_rctTitle As Fury2Rect
+Dim l_varStops As Variant
     If m_lngSelectedItem < 1 Then m_lngSelectedItem = 1
     If m_lngSelectedItem > mCol.Count Then m_lngSelectedItem = mCol.Count
+    If (TabStops <> vbEmpty) Then
+        l_varStops = Font.TabStops
+        Font.TabStops = TabStops
+    End If
     m_lngAlpha = Alpha * 255
     m_lngVisibleLines = (Rectangle.Height - (m_lngSpace * 2)) \ Font.Height
     If mCol.Count > m_lngVisibleLines Then
@@ -281,6 +287,9 @@ Dim l_rctTitle As Fury2Rect
         If ScrollOffset > (mCol.Count - m_lngVisibleLines) + 1 Then ScrollOffset = (mCol.Count - m_lngVisibleLines) + 1
     Else
         ScrollOffset = 0
+    End If
+    If (TabStops <> vbEmpty) Then
+        Font.TabStops = l_varStops
     End If
     Err.Clear
 End Sub

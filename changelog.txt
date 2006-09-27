@@ -139,9 +139,10 @@ Added LoadGraphic function
 Added Load and Save methods to Fury2Graphic class
 Added GetPictureGraphic function for retrieving a graphic attached to a picture slot
 Fixed CompileScriptBlock and GenerateScriptObject requiring static typed strings
+Added TabStops property to Fury2Menu and Fury2MessageWindow
+Added PictureDrawPosition variable for controlling the draw order of picture slots
 --- pre-failure (not reimplemented) ---
 Updated the editor's Help menu to point to the new wiki
-Added PictureDrawPosition variable for controlling the draw order of picture slots
 Added support for begin and end caps to beam sprites
 Reimplemented script syntax highlighting via scintilla/editawy
 Replaced packages3 with zlib/minilib

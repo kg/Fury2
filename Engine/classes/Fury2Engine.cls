@@ -299,6 +299,7 @@ Public DefaultControllerStyle As Fury2ControllerStyles
 Attribute DefaultControllerStyle.VB_VarDescription = "Specifies the default style to use when creating a Fury2Controller."
 Public ConsoleEnabled As Boolean
 Attribute ConsoleEnabled.VB_VarDescription = "If True, the player can open a debugging console by pressing the ` key."
+Public PictureDrawPosition As Long
 
 ' Private state/configuration variables
 Private m_dblLastFlushTime As Double
@@ -4438,6 +4439,7 @@ On Error Resume Next
     HarassCPU = True
     Paused = False
     Running = Not EditMode
+    PictureDrawPosition = 1
     LogToFile = True
     LogToClipboard = False
     DefaultControllerAngles = Array(0, 45, 90, 135, 180, 225, 270, 315)
@@ -4999,7 +5001,9 @@ Dim pObj As Fury2Plugin, Obj As Object
     ContextLevelAdd "Redraw"
     If ClearEveryFrame Then m_imgBackbuffer.Clear ClearBackgroundColor
     m_imgBackbuffer.ResetClipRectangle
+    If PictureDrawPosition = -1 Then RedrawPictures
     RedrawCameras
+    If PictureDrawPosition = 0 Then RedrawPictures
     If m_colReversePluginStack.Count > 0 Then
         For Each Obj In m_colReversePluginStack
             Set pObj = Nothing
@@ -5012,7 +5016,7 @@ Dim pObj As Fury2Plugin, Obj As Object
             End If
         Next Obj
     End If
-    RedrawPictures
+    If PictureDrawPosition = 1 Then RedrawPictures
     If m_colReversePluginStack.Count > 0 Then
         For Each Obj In m_colReversePluginStack
             If Not (Obj Is Nothing) Then
@@ -5029,9 +5033,11 @@ Dim pObj As Fury2Plugin, Obj As Object
             End If
         Next Obj
     End If
+    If PictureDrawPosition = 2 Then RedrawPictures
     If Not (RedrawHook Is Nothing) Then
         RedrawHook.Invoke
     End If
+    If PictureDrawPosition = 3 Then RedrawPictures
     RedrawConsole
     RedrawIME
     ContextLevelRemove
@@ -5143,28 +5149,28 @@ Dim l_lngScaler As Long
                             Set l_objGraph = .Picture
                             Set l_objPic = l_objGraph.CurrentImage
                         End If
-                        If .Rotation <> 0 Then
                         Dim l_sngScale As Single
-                            l_sngScale = ((.DestRect.Width / .SourceRect.Width) + (.DestRect.Height / .SourceRect.Height)) / 2
-                            If l_objGraph Is Nothing Then
+                        l_sngScale = ((.DestRect.Width / .SourceRect.Width) + (.DestRect.Height / .SourceRect.Height)) / 2
+                        If l_objGraph Is Nothing Then
+                            If .Rotation <> 0 Then
                                 l_objPic.Draw m_imgBackbuffer, .DestRect.XCenter, .DestRect.YCenter, .Alpha, l_sngScale, .Rotation, .EffectMode - 1, .EffectColor, l_lngScaler
                             Else
-                                l_objGraph.Draw m_imgBackbuffer, .DestRect.XCenter, .DestRect.YCenter, .Alpha, l_sngScale, .Rotation
+                                If .Tile Then
+                                    If .EffectMode = 0 Then
+                                        m_imgBackbuffer.TileBlit .DestRect, l_objPic
+                                    ElseIf .Alpha > 0 Then
+                                        m_imgBackbuffer.TileBlit .DestRect, l_objPic, .Alpha, .EffectMode - 1, .EffectColor
+                                    End If
+                                Else
+                                    If .EffectMode = 0 Then
+                                        m_imgBackbuffer.Blit .DestRect, .SourceRect, l_objPic, , , , l_lngScaler
+                                    ElseIf .Alpha > 0 Then
+                                        m_imgBackbuffer.Blit .DestRect, .SourceRect, l_objPic, .Alpha, .EffectMode - 1, .EffectColor, l_lngScaler
+                                    End If
+                                End If
                             End If
                         Else
-                            If .Tile Then
-                                If .EffectMode = 0 Then
-                                    m_imgBackbuffer.TileBlit .DestRect, l_objPic
-                                ElseIf .Alpha > 0 Then
-                                    m_imgBackbuffer.TileBlit .DestRect, l_objPic, .Alpha, .EffectMode - 1, .EffectColor
-                                End If
-                            Else
-                                If .EffectMode = 0 Then
-                                    m_imgBackbuffer.Blit .DestRect, .SourceRect, l_objPic, , , , l_lngScaler
-                                ElseIf .Alpha > 0 Then
-                                    m_imgBackbuffer.Blit .DestRect, .SourceRect, l_objPic, .Alpha, .EffectMode - 1, .EffectColor, l_lngScaler
-                                End If
-                            End If
+                            l_objGraph.Draw m_imgBackbuffer, .DestRect.left, .DestRect.top, .Alpha, l_sngScale, .Rotation
                         End If
                     End If
                 End If
@@ -5411,11 +5417,13 @@ On Error Resume Next
 Dim m_lngSlot As Long
     If Slot < 0 Or Slot > c_lngMaxPictureSlot Then Exit Sub
     If Slot + 1 > ActivePictureSlots Then ActivePictureSlots = Slot + 1
+    If Width = -1 Then Width = Pic.Width
+    If Height = -1 Then Height = Pic.Height
     With m_picPictures(Slot)
-        Set .DestRect = F2Rect(X, Y, IIf(Width = -1, Pic.Width, Width), IIf(Height = -1, Pic.Height, Height), False)
-        Set .SourceRect = F2Rect(x2, y2, IIf(Width = -1, Pic.Width, Width), IIf(Height = -1, Pic.Height, Height), False)
         If EffectMode = BlitMode_Default Then
             If TypeOf Pic Is Fury2Graphic Then
+                X = X - Pic.XCenter
+                Y = Y - Pic.YCenter
                 .EffectMode = Pic.BlitMode
             ElseIf TypeOf Pic Is Fury2Image Then
                 If Pic.AlphaChannel Then
@@ -5427,6 +5435,8 @@ Dim m_lngSlot As Long
         Else
             .EffectMode = CLng(EffectMode) + 1
         End If
+        Set .DestRect = F2Rect(X, Y, Width, Height, False)
+        Set .SourceRect = F2Rect(x2, y2, Width, Height, False)
         .EffectColor = EffectColor
         .Alpha = Alpha
         .Rotation = 0

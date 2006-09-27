@@ -105,6 +105,7 @@ Private Property Set iPlugin_Editor(RHS As Object)
 End Property
 
 Private Property Get iPlugin_Icon() As Fury2Image
+On Error Resume Next
     Set iPlugin_Icon = LoadResPicture("TILESET", vbResIcon)
 End Property
 

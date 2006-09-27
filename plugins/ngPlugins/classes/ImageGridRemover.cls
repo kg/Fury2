@@ -116,7 +116,6 @@ Private Property Set iPlugin_Editor(RHS As Object)
 End Property
 
 Private Property Get iPlugin_Icon() As Fury2Image
-    Set iPlugin_Icon = LoadResPicture("GRIDREMOVER", vbResIcon)
 End Property
 
 Private Sub iPlugin_Initialize()

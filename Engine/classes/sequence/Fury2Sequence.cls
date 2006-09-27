@@ -383,7 +383,7 @@ On Error Resume Next
 Dim l_skfKeyframe As Fury2SequenceKeyframe
 Dim l_lngKeyframe As Long
 Dim l_dblCurrentTime As Double
-    Debug.Print "GoToPreviousKeyframe"
+'    Debug.Print "GoToPreviousKeyframe"
     Set m_skfNextKeyframe = m_skfCurrentKeyframe
     Set m_skfCurrentKeyframe = m_skfPreviousKeyframe
     Set m_skfPreviousKeyframe = Nothing
@@ -408,7 +408,7 @@ Friend Function GoToNextKeyframe(Time As Double) As Boolean
 On Error Resume Next
 Dim l_skfKeyframe As Fury2SequenceKeyframe
 Dim l_dblCurrentTime As Double
-    Debug.Print "GoToNextKeyframe"
+'    Debug.Print "GoToNextKeyframe"
     Set m_skfPreviousKeyframe = m_skfCurrentKeyframe
     Set m_skfCurrentKeyframe = m_skfNextKeyframe
     Set m_skfNextKeyframe = Nothing

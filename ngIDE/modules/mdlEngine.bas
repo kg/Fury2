@@ -41,7 +41,7 @@ Sub ShutdownEngine()
 On Error Resume Next
     If m_booEngineInitialized = False Then Exit Sub
     m_booEngineInitialized = False
-    g_engEngine.Shutdown
+    'g_engEngine.Quit
     Set g_engEngine = Nothing
 End Sub
 

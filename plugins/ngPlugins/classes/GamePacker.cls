@@ -54,6 +54,7 @@ Dim l_bytVersion() As Byte
 Dim l_filFile As VirtualFile
 Dim l_verVersion As cVersionInfo
 Dim l_filFiles As Fury2Files
+#If ResPack = 1 Then
     With Options
         Err.Clear
         m_objEditor.SetBusyState True
@@ -163,6 +164,7 @@ Dim l_filFiles As Fury2Files
         m_objEditor.SetStatus l_manManifest.FilesPacked & " file(s) packed into " & l_manManifest.FileCount & " resource blocks."
         m_objEditor.SetBusyState False
     End With
+#End If
 End Sub
 
 Private Sub iPlugin_ShowConfiguration()
@@ -173,6 +175,7 @@ End Property
 
 Private Sub iPlugin_Activate()
 On Error Resume Next
+#If ResPack = 1 Then
 Dim l_plgPlugin As iFileTypePlugin
     Load frmGamePacker
     m_objEditor.LoadSettings "GamePacker\Settings", frmGamePacker.Options
@@ -185,6 +188,7 @@ Dim l_plgPlugin As iFileTypePlugin
     End If
     Unload frmGamePacker
     Err.Clear
+#End If
 End Sub
 
 Private Property Set iPlugin_Editor(RHS As Object)
@@ -192,6 +196,7 @@ Private Property Set iPlugin_Editor(RHS As Object)
 End Property
 
 Private Property Get iPlugin_Icon() As Fury2Image
+On Error Resume Next
     Set iPlugin_Icon = m_objEditor.LoadResources("ng").ItemData("icons\game packer.png")
 End Property
 

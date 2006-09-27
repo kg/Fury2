@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{801EF197-C2C5-46DA-BA11-46DBBD0CD4DF}#1.1#0"; "cFScroll.ocx"
-Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#12.13#0"; "ngUI.ocx"
+Object = "{DBCEA9F3-9242-4DA3-9DB7-3F59DB1BE301}#13.6#0"; "ngUI.ocx"
 Begin VB.UserControl TilePicker 
    AutoRedraw      =   -1  'True
    BackColor       =   &H80000014&
@@ -576,6 +576,7 @@ Public Property Get Tileset() As Fury2Tileset
 End Property
 
 Public Property Set Tileset(NewTileset As Fury2Tileset)
+On Error Resume Next
     Set m_tstTileset = NewTileset
     ReDim m_booTileIsSelected(0 To m_tstTileset.TileCount - 1)
     ReDim m_booTileIsHidden(0 To m_tstTileset.TileCount - 1)

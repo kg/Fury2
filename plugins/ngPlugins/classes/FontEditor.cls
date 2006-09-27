@@ -160,7 +160,7 @@ Dim l_fntFont As Fury2Font
         Set iFileTypePlugin_LoadFromFilename = l_frmNew
         Set iFileTypePlugin_LoadFromFilename.Plugin = Me
     Else
-        l_fntFont.ImportRFN F2File(Filename)
+'        l_fntFont.ImportRFN F2File(Filename)
         If l_fntFont.CharacterCount > 0 Then
             l_frmNew.SetFilename Filename
             l_frmNew.SetFont l_fntFont

@@ -156,17 +156,22 @@ Sub Draw(ByVal Surface As Fury2Image, ByVal X As Single, ByVal Y As Single, Opti
 Attribute Draw.VB_Description = "Draws the graphic to an image at a given location."
 On Error Resume Next
 Dim l_imgFrame As Fury2Image
+Dim l_dblFrameLength As Double
+Dim l_dblElapsed As Double
+Dim l_dblNow As Double
     If Images.Count = 0 Then Exit Sub
     If Surface Is Nothing Then Exit Sub
-Dim l_dblElapsed As Double
-    If m_sngLastFrame <= 0 Then m_sngLastFrame = Engine.HiTimer
+    l_dblNow = Engine.HiTimer
+    If m_sngLastFrame <= 0 Then m_sngLastFrame = l_dblNow
     If Images.Count > 1 Then
-        l_dblElapsed = (Engine.HiTimer - m_sngLastFrame) / ((1 / Engine.DesiredFramerate) * AnimationDelay)
+        l_dblFrameLength = ((1 / Engine.DesiredFramerate) * AnimationDelay)
+        l_dblElapsed = (l_dblNow - m_sngLastFrame)
+        l_dblElapsed = l_dblElapsed / l_dblFrameLength
         If (l_dblElapsed >= 1) Then
             Alpha = Alpha + (FadeSpeed * l_dblElapsed)
             If Alpha > 1 Then Alpha = 1
             If Alpha < 0 Then Alpha = 0
-            m_sngLastFrame = Engine.HiTimer - ((l_dblElapsed - Floor(l_dblElapsed)) * (1 / Engine.DesiredFramerate) * AnimationDelay)
+            m_sngLastFrame = m_sngLastFrame + (Floor(l_dblElapsed) * l_dblFrameLength)
             Select Case LoopMode
             Case F2LM_Restart
                 AnimationFrame = WrapValue(AnimationFrame + (AnimationDirection * Floor(l_dblElapsed)), 1, Images.Count)
@@ -203,6 +208,7 @@ On Error Resume Next
     AnimationFrame = 1
     AnimationDirection = 1
     Animate = True
+    LoopMode = F2LM_OneShot
     Set OnFinished = OnFinish
 End Sub
 

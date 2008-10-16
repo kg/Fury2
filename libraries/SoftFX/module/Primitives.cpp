@@ -2986,7 +2986,7 @@ Export int FilterSimple_RenderStroke(Image *Dest, Stroke *TheStroke, RenderFunct
   int x1 = ClipValue(floor(Bounds.X1), Dest->ClipRectangle.Left, Dest->ClipRectangle.right_exclusive());
   int y1 = ClipValue(floor(Bounds.Y1), Dest->ClipRectangle.Top, Dest->ClipRectangle.bottom_exclusive());
   int x2 = ClipValue(ceil(Bounds.X2), Dest->ClipRectangle.Left, Dest->ClipRectangle.right_exclusive());
-  int y2 = ClipValue(ceil(Bounds.Y2), Dest->ClipRectangle.Left, Dest->ClipRectangle.bottom_exclusive());
+  int y2 = ClipValue(ceil(Bounds.Y2), Dest->ClipRectangle.Top, Dest->ClipRectangle.bottom_exclusive());
 
   int r = 0, g = 0, b = 0, a = 0;
   int d;
